@@ -49,16 +49,20 @@ public class FileDM3 extends FileBase {
     private boolean isScale = false;
     private boolean isUnits = false;
     private int imageNum = -1;
-    private int numDimArray[] = new int[10];
-    private int dimArray[][] = new int[10][4];
-    private int arraySizeArray[] = new int[10];
-    private long arrayLocationArray[] = new long[10];
-    private int dataTypeArray[] = new int[10];
-    private float pixelScaleArray[][] = new float[10][4];
-    private String pixelUnitsArray[] = new String[10];
+    private int numDimArray[] = new int[100];
+    private int dimArray[][] = new int[100][10];
+    private int arraySizeArray[] = new int[100];
+    private long arrayLocationArray[] = new long[100];
+    private int dataTypeArray[] = new int[100];
+    private float pixelScaleArray[][] = new float[100][10];
+    private String pixelUnitsArray[][] = new String[100][10];
+    private String desiredPixelUnitsArray[] = new String[10];
+    private int pixelUnitsNumber[] = new int[100];
     private int scaleIndex = 0;
+    private int unitsIndex = 0;
     private int desiredImageNumber;
     private int desiredArraySize;
+    private int identicalDesiredArraySize = 0;
     private int routineTagEntry = 0;
     private int routineTagGroup = 0;
 
@@ -93,7 +97,7 @@ public class FileDM3 extends FileBase {
     *   @exception IOException if there is an error reading the file
     */
     public ModelImage readImage(boolean one) throws IOException {
-        int i;
+        int i, j;
         int bufferSize;
         float imgBuffer[];
         float imgBufferI[];
@@ -154,6 +158,7 @@ public class FileDM3 extends FileBase {
 
             desiredImageNumber = 0;
             desiredArraySize = arraySizeArray[0];
+            identicalDesiredArraySize = 1;
             // In 4 images that I examined a smaller 192 by 192 image is the first image present.
             // This image is in ARGB representation although it has R = G = B so a black and
             // white image appears.  It is a smaller version of the second image.
@@ -162,8 +167,14 @@ public class FileDM3 extends FileBase {
                 if (arraySizeArray[i] > desiredArraySize) {
                     desiredImageNumber = i;
                     desiredArraySize = arraySizeArray[i];
+                    identicalDesiredArraySize = 1;
+                }
+                else if (arraySizeArray[i] == desiredArraySize) {
+                    identicalDesiredArraySize++;
                 }
             }
+            Preferences.debug("Number of arrays of largest size = " +
+                              identicalDesiredArraySize + "\n");
 
             nDimensions = numDimArray[desiredImageNumber];
             imgExtents = new int[nDimensions];
@@ -273,18 +284,33 @@ public class FileDM3 extends FileBase {
                 image = new ModelImage(sourceType, imgExtents, fileInfo.getFileName(), UI);
             }
             fileInfo.setDataType(sourceType);
-            for (i = 0; i < nDimensions; i++) {
-                fileInfo.setResolutions(pixelScaleArray[desiredImageNumber][i], i);
-            }
-            if (pixelUnitsArray[desiredImageNumber].trim().equalsIgnoreCase("n")) {
+            if ((nDimensions == 3) && (pixelScaleArray[desiredImageNumber][0] !=
+                 pixelScaleArray[desiredImageNumber][1]) && (pixelScaleArray[desiredImageNumber][1] ==
+                 pixelScaleArray[desiredImageNumber][2])) {
                 for (i = 0; i < nDimensions; i++) {
-                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, i);
+                    fileInfo.setResolutions(pixelScaleArray[desiredImageNumber][
+                                            nDimensions - i - 1], i);
                 }
             }
-            // micro sign = 00B5 Greek letter mu = 03BC
-            else if (pixelUnitsArray[desiredImageNumber].trim().equals("\u00B5")) {
+            else {
                 for (i = 0; i < nDimensions; i++) {
+                    fileInfo.setResolutions(pixelScaleArray[desiredImageNumber][i], i);
+                }
+            }
+            for (i = nDimensions-1, j = 0; i >= 0; i--, j++) {
+                desiredPixelUnitsArray[i] =
+                pixelUnitsArray[desiredImageNumber][pixelUnitsNumber[desiredImageNumber]-1-j].trim();
+            }
+            for (i = 0; i < nDimensions; i++) {
+                if (desiredPixelUnitsArray[i].equals("n")) {
+                    fileInfo.setUnitsOfMeasure(FileInfoBase.NANOMETERS, i);
+                }
+                // micro sign = 00B5 Greek letter mu = 03BC
+                else if (desiredPixelUnitsArray[i].equals("\u00B5")) {
                     fileInfo.setUnitsOfMeasure(FileInfoBase.MICROMETERS, i);
+                }
+                else {
+                    fileInfo.setUnitsOfMeasure(FileInfoBase.UNKNOWN_MEASURE, i);
                 }
             }
 
@@ -862,6 +888,7 @@ public class FileDM3 extends FileBase {
                      isDimension = true;
                      dimensionEntry = routineTagEntry;
                      scaleIndex = 0;
+                     unitsIndex = 0;
                  }
                  else if (entryString.equalsIgnoreCase("Scale")) {
                      isScale = true;
@@ -1077,7 +1104,12 @@ public class FileDM3 extends FileBase {
                 isData = false;
             }
             if ((isImageData) && (isCalibrations) && (isDimension) && (isUnits)) {
-                pixelUnitsArray[imageNum] = getString(elementBytes);
+                pixelUnitsArray[imageNum][unitsIndex] = getString(elementBytes);
+                Preferences.debug("pixelUnitsArray[" + imageNum + "][ " +
+                                  unitsIndex + "] = " +
+                                 pixelUnitsArray[imageNum][unitsIndex] + "\n");
+                unitsIndex++;
+                pixelUnitsNumber[imageNum] = unitsIndex;
                 isUnits = false;
             }
             Preferences.debug("Array location = " + arrayLocation + "\n");
@@ -1245,6 +1277,8 @@ public class FileDM3 extends FileBase {
                 dataFloat = getFloat(dataEndianess);
                 Preferences.debug(dataFloat + "\n");
                 if ((isImageData) && (isCalibrations) && (isDimension) && (isScale)) {
+                    Preferences.debug("About to set pixelScaleArray[" +
+                            imageNum + "][" + scaleIndex + "]\n");
                     pixelScaleArray[imageNum][scaleIndex++] = dataFloat;
                     isScale = false;
                 }
