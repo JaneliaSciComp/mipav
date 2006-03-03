@@ -1,0 +1,1207 @@
+package gov.nih.mipav.model.file;
+
+import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.*;
+
+import java.util.Vector;
+
+/**
+*   This structures contains the information that describes how
+*   a NIFTI image is stored on disk.  NIFTI is intended to be "mostly compatible"
+*   with the ANALYZE 7.5 file format.  Most of the "unused" fields in that
+*   format have been taken, and some of the lesser-used fields have been
+*   co-opted for other purposes.
+*   We have extended this format to store image orientation and the origin.
+*   We have used
+*   unused variables to store these data. Almost all programs ignore these
+*   variables and should not have any problems reading images saved with MIPAV, except SPM.
+*   A new format for MIPAV is now XML based.
+*
+*
+*   RGB NIFTI images are store in chunky format rgb, rgb, rgb ......
+*
+*   Note that there is a short datatype field.
+*
+*       @see        FileNIFTI
+*
+*/
+
+public class FileInfoNIFTI extends FileInfoBase
+{
+
+   /**
+    * Should always be a length of 348
+    */
+   private     int     sizeof_hdr           = -1;
+
+   /**
+    *  Is always 16384
+    */
+   private     int     extents              = 0;
+    private     int     freq_dim            = 0;
+    private     int     phase_dim           = 0;
+    private     int     slice_dim           = 0;
+    private     short   sliceStart          = -1;
+    private     short   sliceEnd            = -1;
+    private     byte    sliceCode           = 0;
+
+   //public     short   dim[]  = new short[8]; // image dimension data
+                              //  stored in FileInfoBase
+                              //  dim[0] = number of dimensions; usually 4
+                              //  dim[1] = image width
+                              //  dim[2] = image height
+                              //  dim[3] = image depth (# of slices)
+                              //  dim[4] = volumes in image  --- must be one for 3D image
+
+    private float intentP1;
+    private float intentP2;
+    private float intentP3;
+    private short intentCode = 0;
+    private String intentName = null;
+
+    /** Default, no intent indicated */
+    public final static short NIFTI_INTENT_NONE           = 0;
+
+    /** Correlation coefficient R (1 param):
+       p1 = degrees of freedom
+       R/sqrt(1-R*R) is t-distributed with p1 DOF */
+    public final static short NIFTI_INTENT_CORREL         = 2;
+
+    /** Student t statistic (1 param): p1 = DOF */
+    public final static short NIFTI_INTENT_TTEST          = 3;
+
+    /** Fisher F statistic (2 params):
+       p1 = numerator DOF, p2 = denominator DOF */
+    public final static short NIFTI_INTENT_FTEST          = 4;
+
+    /** Standard normal (0 params): Density = N(0,1) */
+    public final static short NIFTI_INTENT_ZSCORE         = 5;
+
+    /** Chi-squared (1 param): p1 = DOF
+       Density(x) proportional to exp(-x/2) * x^(p1/2 - 1) */
+    public final static short NIFTI_INTENT_CHISQ          = 6;
+
+    /** Beta distribution (2 params): p1 = a, p2 = b
+       Density (x) proportional to x^(a-1) * (1-x)^(b-1) */
+    public final static short NIFTI_INTENT_BETA           = 7;
+
+    /** Binomial distribution (2 params):
+       p1 = number of trials, p2 = probability per trial
+       Prob(x) = (p1 choose x) * p2^x * (1-p2)^(p1-x), for x = 0,1,...p1 */
+    public final static short NIFTI_INTENT_BINOM          = 8;
+
+    /** Gamma distribution (2 params):
+       p1 = shape, p2 = scale
+       Density (x) proportional to x^(p1-1) * exp(-p2*x) */
+    public final static short NIFTI_INTENT_GAMMA          = 9;
+
+    /** Poisson distribution (1 param): p1 = mean
+       Prob(x) = exp(-p1) * p1^x/x!, for x = 0, 1, 2, ... */
+    public final static short NIFTI_INTENT_POISSON        = 10;
+
+    /** Normal distribution (2 params):
+       p1 = mean, p2 = standard deviation */
+    public final static short NIFTI_INTENT_NORMAL         = 11;
+
+    /** Noncentral F statistic (3 params):
+       p1 = numerator DOF, p2 = denominator DOF,
+       p3 = numerator noncentrality parameter */
+    public final static short NIFTI_INTENT_FTEST_NONC     = 12;
+
+    /** Noncentral chi-squared statistic (2 params):
+       p1 = DOF, p2 = noncentrality parameter */
+    public final static short NIFTI_INTENT_CHISQ_NONC     = 13;
+
+    /** Logistic distribution (2 params):
+       p1 = location, p2 = scale
+       Density (x) proportional to sech^2((x-p1)/(2*p2)) */
+    public final static short NIFTI_INTENT_LOGISTIC       = 14;
+
+    /** Laplace distribution (2 params):
+       p1 = location, p2 = scale
+       Density (x) proportional to exp(-abs(x-p1)/p2) */
+    public final static short NIFTI_INTENT_LAPLACE        = 15;
+
+    /** Uniform distribution: p1 = lower end, p2 = upper end */
+    public final static short NIFTI_INTENT_UNIFORM        = 16;
+
+    /** Noncentral t statistic (2 params):
+       p1 = DOF, p2 = noncentrality parameter */
+    public final static short NIFTI_INTENT_TTEST_NONC     = 17;
+
+    /** Weibull distribution (3 params):
+       p1 = location, p2 = scale, p3 = power
+       Density (x) proportional to
+       ((x-p1)/p2)^(p3-1) * exp(-((x-p1)/p2)^p3) for x > p1 */
+    public final static short NIFTI_INTENT_WEIBULL        = 18;
+
+    /** Chi distribution (1 param): p1 = DOF
+       Density (x) proportional to x^(p1-1) * exp(-x^2/2) for x > 0
+       p1 = 1 = 'half normal distribution
+       p1 = 2 = Rayleigh distribution
+       p1 = 3 = Maxwell_Boltzmann distribution */
+
+    public final static short NIFTI_INTENT_CHI            = 19;
+
+    /** Inverse Gaussian (2 params):
+       p1 = mu, p2 = lambda
+       Density (x) proportional to
+       exp(-p2*(x-p1)^2/(2*p1^2*x)) / x^3 for x > 0 */
+    public final static short NIFTI_INTENT_INVGAUSS       = 20;
+
+    /** Extreme value type I (2 params):
+       p1 = location, p2 = scale
+       cdf(x) = exp(-exp(-(x-p1)/p2)) */
+    public final static short NIFTI_INTENT_EXTVAL         = 21;
+
+    /** Data is a 'p-value' (no params) */
+    public final static short NIFTI_INTENT_PVAL           = 22;
+
+    /** Data is ln(p-value) (no params).
+      To be safe, a program should compute p = exp(-abs(this_value)).
+      The nifti_stats.c library returns this_value
+      as positive, so that this_value = -log(p). */
+     public final static short NIFTI_INTENT_LOGPVAL       = 23;
+
+    /** Data is log10(p-value) (no params).
+      To be safe, a program should compute p = pow(10.,-abs(this_value)).
+      The nifti_stats.c library returns this_value
+      as positive, so that this_value = -log10(p). */
+    public final static short NIFTI_INTENT_LOG10PVAL      = 24;
+
+    /** Smallest intent code that indicates a statistic */
+    public final static short NIFTI_FIRST_STATCODE        = 2;
+
+    /** Largest intent code that indicates a statistic */
+    public final static short NIFTI_LAST_STATCODE         = 22;
+
+    // The following intent code values are not for statistics
+    /** The value at each voxel is an estimate of some parameter
+       The name of the parameter may be stored in intentName. */
+    public final static short NIFTI_INTENT_ESTIMATE       = 1001;
+    /** The value at each voxel is an index into some set of labels
+       The filename with the labels may be stored in auxFile. */
+    public final static short NIFTI_INTENT_LABEL          = 1002;
+    /** The value at each voxel is an index into the NeuroNames
+       labels set */
+    public final static short NIFTI_INTENT_NEURONAME      = 1003;
+    /** To store an M x N matrix at each voxel
+       Dataset must have a 5th dimension (dim[0] = 5 and dim[5] > 1)
+       dim[5] must be M*N
+       intentP1 must be M (in float format)
+       intentP2 must be N (in float format)
+       the matrix values A[i][j] are stored in row order:
+       A[0][0] A[0][1] ... A[0][N-1]
+       A[1][0] A[1][1] ... A[1][N-1]
+       ...
+       A[M-1][0] A[M-1][1] ... A[M-1][N-1] */
+    public final static short NIFTI_INTENT_GENMATRIX      = 1004;
+
+    /** To store an NxN symmetric matrix at each voxel
+       Dataset must have a 5th dimension
+       dim[5] must be N*(N+1)/2
+       intentP1 must be N (in float format)
+       The matrix values A[i][j] are stored in row order
+       A[0][0]
+       A[1][0] A[1][1]
+       A{2][0] A[2][1] A[2][2] */
+    public final static short NIFTI_INTENT_SYMMATRIX      = 1005;
+
+    /** To signify that the vector value at each voxel is to be taken as
+       a displacement field or vector:
+       Dataset must have a 5th dimension
+       dim[5] must be the dimensionality of the displacement vector
+       (e.g., 3 for spatial displacement, 2 for in-plane) */
+    public final static short NIFTI_INTENT_DISPVECT = 1006;/* specifically for displacements */
+    public final static short NIFTI_INTENT_VECTOR = 1007; /* for any other type of vector */
+
+    /** To signify that the vector value at each voxel is really a spatial coordinate
+       (e.g., the verticies or nodes of a surface mesh):
+       dim[0] = 5
+       dim[1] = number of points
+       dim[2] = dim[3] = dim[4] = 1
+       dim[5] must be the dimensionality of space (e.g., 3 => 3D space)
+       intentName may describe the object these points come from
+       (e.g., "pial", "gray/white", "EEG", "MEG") */
+    public final static short NIFTI_INTENT_POINTSET = 1008;
+
+    /** To signify that the vector value at each voxel is really a triple
+       of indexes (e.g., forming a triangle) from a pointset dataset:
+       Dataset must have a fifth dimension
+       dim[0] = 5
+       dim[1] = number of triangles
+       dim[2] = dim[3] = dim[4] = 1
+       dim[5] = 3
+       dataType should be an integer type (preferably DT_INT32)
+       The data values are indexes (0,1,...) into a pointset dataset. */
+    public final static short NIFTI_INTENT_TRIANGLE = 1009;
+
+    /** To signify that the vector value at each voxel is a quaternion:
+       Dataset must have a 5th dimension
+       dim[0] = 5
+       dim[5] = 4
+       dataType should be a floating point type. */
+    public final static short NIFTI_INTENT_QUATERNION = 1010;
+
+    /** Dimensionless value - no params - although, as in _ESTIMATE
+     the name of the parameter may be stored in intent_name.     */
+    public final static short NIFTI_INTENT_DIMLESS    = 1011;
+
+
+    private     short   sourceType             = -1;
+
+    public final  static short  DT_NONE                  =    0;
+    public final  static short  DT_UNKNOWN               =    0;
+    public final  static short  DT_BINARY                =    1;
+    public final  static short  NIFTI_TYPE_UINT8         =    2;
+    public final  static short  NIFTI_TYPE_INT16         =    4;
+    public final  static short  NIFTI_TYPE_INT32         =    8;
+    public final  static short  NIFTI_TYPE_FLOAT32       =   16;
+
+ // 64 bit COMPLEX = 2 32 bit floats
+    public final  static short  NIFTI_TYPE_COMPLEX64     =   32;
+    public final  static short  NIFTI_TYPE_FLOAT64       =   64;
+    public final  static short  NIFTI_TYPE_RGB24         =  128;
+    public final  static short  NIFTI_TYPE_INT8          =  256;
+    public final  static short  NIFTI_TYPE_UINT16        =  512;
+    public final  static short  NIFTI_TYPE_UINT32        =  768;
+    public final  static short  NIFTI_TYPE_INT64         = 1024;
+    public final  static short  NIFTI_TYPE_UINT64        = 1280;
+    public final  static short  NIFTI_TYPE_FLOAT128      = 1536;
+    // 128 bit COMPLEX = 2 64 bit floats
+    public final  static short  NIFTI_TYPE_COMPLEX128    = 1792;
+    // 256 bit COMPLEX = 2 128 bit floats
+    public final  static short  NIFTI_TYPE_COMPLEX256    = 2048;
+
+    public final  static int NIFTI_UNITS_UNKNOWN = 0;
+    public final  static int NIFTI_UNITS_METER = 1;
+    public final  static int NIFTI_UNITS_MM = 2;
+    public final  static int NIFTI_UNITS_MICRON = 3;
+    public final  static int NIFTI_UNITS_SEC = 8;
+    public final  static int NIFTI_UNITS_MSEC = 16;
+    public final  static int NIFTI_UNITS_USEC = 24;
+    public final  static int NIFTI_UNITS_HZ = 32;
+    public final  static int NIFTI_UNITS_PPM = 40;
+    public final  static int NIFTI_UNITS_RADS = 48;
+
+    public final static byte NIFTI_SLICE_SEQ_INC = 1;
+    public final static byte NIFTI_SLICE_SEQ_DEC = 2;
+    public final static byte NIFTI_SLICE_ALT_INC = 3;
+    public final static byte NIFTI_SLICE_ALT_DEC = 4;
+    public final static byte NIFTI_SLICE_ALT_INC2 = 5;
+    public final static byte NIFTI_SLICE_ALT_DEC2 = 6;
+
+
+    /**
+     * Bits per pixel : 1,8,16,32,64,128 24(rgb)
+     */
+    private     short   sourceBitPix         = -1;
+    private     short   bitpix               = -1;
+
+    //public     float   pixdim               = new float[8]; // image resolutions info mm or ms
+                              //  stored in FileInfoBase
+                              //  pixdim[0] = number of dimensions
+                              //  pixdim[1] = voxel width
+                              //  pixdim[2] = voxel height
+                              //  pixdim[3] = voxel thickness
+                              //  pixdim[4] = time
+
+   /**
+    * Byte offset in the ".img" file at which voxels start. This value can be negative to
+    * specify that the absolute value is applied for every image in the file
+    */
+   private     float   vox_offset           = -1;
+
+    /**
+     * Data is scaled according to:scaled_data[i] = unscaled_data[i]*scl_slope + scl_inter
+     */
+    private     float   scl_slope = 1.0f;
+    private     float   scl_inter = 0.0f;
+    private     float   funused3             = -1;
+
+    /**
+     * range of calibration values
+     */
+    private     float   cal_max              =  0;
+
+    /**
+     * values of 0.0 for both fields imply that no calibration min and max values are used !
+     */
+    private     float   cal_min              =  0;
+    private     float   sliceDuration        = -1.0f;
+
+    private     String  descrip              = null;
+    private     String  aux_file             = null;
+
+    private     byte    orient               = -1;
+    private     short   coord_code = 0;
+
+    // Codes for type of X, Y, Z coordinate system.
+    /** Arbitrary coordinates */
+    public      final static short   NIFTI_XFORM_UNKNOWN = 0;
+
+    /** Scanner based anatomical coordinates */
+    public      final static short   NIFTI_XFORM_SCANNER_ANAT = 1;
+
+    /**  Coordinates aligned to another file's or to anatomical "truth" */
+    public      final static short   NIFTI_XFORM_ALIGNED_ANAT = 2;
+
+    /** Coordinates aligned to Talairach-Tournoux Atlas; (0,0,0) = AC, etc. */
+    public      final static short   NIFTI_XFORM_TALAIRACH = 3;
+
+    /** MNI 152 normalized coordiantes */
+    public      final static short   NIFTI_XFORM_MNI_152 = 4;
+
+    /** Transformation matrix */
+    private TransMatrix matrix = new TransMatrix(4);
+
+    /**
+    *  file info storage constructor
+    *  @param name        file name
+    *  @param directory   directory
+    *  @param format      file format
+    */
+    public FileInfoNIFTI(String name, String directory, int format) {
+        super(name, directory, format);
+    }
+
+    /**
+    *  Displays the file information
+    *  @param dlog    dialog box that is written to
+    *  @param matrix  transformation matrix
+    */
+    public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix){
+        JDialogFileInfo dialog = (JDialogFileInfo) dlog;
+        int[] extents;
+        int i;
+        int[] editorChoice = new int[1];
+        editorChoice[0] = JDialogEditor.STRING;
+
+        dialog.displayAboutInfo(this);  // setup layout in the dialog
+
+        extents = super.getExtents();
+        for(i = 0; i < extents.length; i++){
+            dialog.appendPrimaryData("Dimension " + i, Integer.toString(extents[i]));
+        }
+
+        dialog.appendPrimaryData("Type", ModelStorageBase.getBufferTypeStr(getDataType()));
+        if (ModelImage.isColorImage(getDataType())) {
+            dialog.appendPrimaryData("Min red",   Double.toString(getMinR()));
+            dialog.appendPrimaryData("Max red",   Double.toString(getMaxR()));
+            dialog.appendPrimaryData("Min green", Double.toString(getMinG()));
+            dialog.appendPrimaryData("Max green", Double.toString(getMaxG()));
+            dialog.appendPrimaryData("Min blue",  Double.toString(getMinB()));
+            dialog.appendPrimaryData("Max blue",  Double.toString(getMaxB()));
+
+        }
+        else {
+            dialog.appendPrimaryData("Min", Double.toString(getMin()));
+            dialog.appendPrimaryData("Max", Double.toString(getMax()));
+        }
+        dialog.appendPrimaryData("Modality", FileInfoBase.getModalityStr(getModality()));
+
+        dialog.appendPrimaryData("Orientation", getImageOrientationStr(getImageOrientation()));
+
+        float[] resolutions;// = new float[5];
+        resolutions = getResolutions();
+        int[] measure;// = new int[5];
+        measure = getUnitsOfMeasure();
+        for (i=0; i < extents.length; i++) {
+          if (resolutions[i] > 0.0) {
+            String pixelRes = "Pixel resolution " + i;
+            dialog.appendPrimaryData(pixelRes, Float.toString(resolutions[i]) +" "+ getUnitsOfMeasureStr(measure[i]));
+          }  // end of if (resolutions[i] > 0.0)
+        }  // for (i=0; i < 5; i++)
+
+        if ( getEndianess() == FileBase.LITTLE_ENDIAN) {
+            dialog.appendPrimaryData("Endianess", "Little Endian");
+        }
+        else {
+            dialog.appendPrimaryData("Endianess", "Big Endian");
+        }
+
+        if (matrix != null) {
+            // when using displayAboutInfo(dialog) this doesn't appear
+            // calling prg might use an editing panel to adjust this matrix
+            dialog.appendPrimaryData("Matrix", matrix.matrixToString(10,4));
+        }
+
+
+
+
+        // description
+        try {
+            editorChoice[0] = JDialogEditor.ANALYZE_DESCRIPTION;
+            dialog.appendSecondaryData("Description", descrip.trim(), editorChoice);
+        }
+        catch (NullPointerException npe) {
+            editorChoice[0] = JDialogEditor.ANALYZE_DESCRIPTION;
+            dialog.appendSecondaryData("Description", "", editorChoice);
+        }
+
+
+
+        if (vox_offset != -1) {     // vox offset
+            //dialog.append("voxel offset: " + vox_offset + "\n");
+            editorChoice[0] = JDialogEditor.FLOAT_STRING;
+            dialog.appendSecondaryData("Voxel Offset", Float.toString(vox_offset), editorChoice);
+        }
+
+        switch(intentCode) {
+            case FileInfoNIFTI.NIFTI_INTENT_NONE:
+            dialog.appendSecondaryData("Intent code", "No intention");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_CORREL:
+            dialog.appendSecondaryData("Statistics code", "Correlation coefficient R");
+            dialog.appendSecondaryData("Degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_TTEST:
+            dialog.appendSecondaryData("Statistics code","Student t test");
+            dialog.appendSecondaryData("Degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_FTEST:
+            dialog.appendSecondaryData("Statistics code","Fisher F statistic");
+            dialog.appendSecondaryData("Numerator degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            dialog.appendSecondaryData("Denominator degrees of freedom",
+                                        Integer.toString(Math.round(intentP2)));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_ZSCORE:
+            dialog.appendSecondaryData("Statistics code",
+                                       "Standard normal - N(0,1) distributed");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_CHISQ:
+            dialog.appendSecondaryData("Statistics code","Chi - squared");
+            dialog.appendSecondaryData("Degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_BETA:
+            dialog.appendSecondaryData("Statistics code","Beta distribution");
+            dialog.appendSecondaryData("a parameter",Float.toString(intentP1));
+            dialog.appendSecondaryData("b parameter",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_BINOM:
+            dialog.appendSecondaryData("Statistics code","Binomial distribution");
+            dialog.appendSecondaryData("Number of trials",
+                                        Integer.toString(Math.round(intentP1)));
+            dialog.appendSecondaryData("Probability per trial",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_GAMMA:
+            dialog.appendSecondaryData("Statistics code","Gamma with PDF = x**(shape-1) * exp(-Scale*x)");
+            dialog.appendSecondaryData("Shape",Float.toString(intentP1));
+            dialog.appendSecondaryData("Scale",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_POISSON:
+            dialog.appendSecondaryData("Statistics code","Poisson distribution");
+            dialog.appendSecondaryData("Mean",Float.toString(intentP1));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_NORMAL:
+            dialog.appendSecondaryData("Statistics code","Normal distribution");
+            dialog.appendSecondaryData("Mean",Float.toString(intentP1));
+            dialog.appendSecondaryData("Standard deviation",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_FTEST_NONC:
+            dialog.appendSecondaryData("Statistics code","Nocentral F statistic");
+            dialog.appendSecondaryData("Numerator degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            dialog.appendSecondaryData("Denominator degrees of freedom",
+                                        Integer.toString(Math.round(intentP2)));
+            dialog.appendSecondaryData("Numerator noncentrality parameter",
+                                        Float.toString(intentP3));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_CHISQ_NONC:
+            dialog.appendSecondaryData("Statistics code","Nocentral chi-squared statistic");
+            dialog.appendSecondaryData("Degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            dialog.appendSecondaryData("Noncentrality parameter",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_LOGISTIC:
+            dialog.appendSecondaryData("Statistics code","Logistic distribution");
+            dialog.appendSecondaryData("Location",Float.toString(intentP1));
+            dialog.appendSecondaryData("Scale",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_LAPLACE:
+            dialog.appendSecondaryData("Statistics code","Laplace distribution");
+            dialog.appendSecondaryData("Location",Float.toString(intentP1));
+            dialog.appendSecondaryData("Scale",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_UNIFORM:
+            dialog.appendSecondaryData("Statistics code","Uniform distribution");
+            dialog.appendSecondaryData("Start",Float.toString(intentP1));
+            dialog.appendSecondaryData("End",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_TTEST_NONC:
+            dialog.appendSecondaryData("Statistics code","Nocentral t statistic");
+            dialog.appendSecondaryData("Degrees of freedom",
+                                        Integer.toString(Math.round(intentP1)));
+            dialog.appendSecondaryData("Noncentrality parameter",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_WEIBULL:
+            dialog.appendSecondaryData("Statistics code","Weibull distribution");
+            dialog.appendSecondaryData("Location",Float.toString(intentP1));
+            dialog.appendSecondaryData("Scale",Float.toString(intentP2));
+            dialog.appendSecondaryData("Power",Float.toString(intentP3));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_CHI:
+            dialog.appendSecondaryData("Statistics code","Chi distribution");
+            int p1 = Math.round(intentP1);
+            dialog.appendSecondaryData("Degrees of freedom",
+                                        Integer.toString(p1));
+            if (p1 == 1) {
+                dialog.appendSecondaryData("DOF = 1", "Half normal distribution");
+            }
+            else if (p1 == 2) {
+                dialog.appendSecondaryData("DOF = 2", "Rayleigh distribution");
+            }
+            else if (p1 == 3) {
+                dialog.appendSecondaryData("DOF = 3", "Maxwell-Boltzmann distribution");
+            }
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_INVGAUSS:
+            dialog.appendSecondaryData("Statistics code","Inverse Gaussian");
+            dialog.appendSecondaryData("Mu",Float.toString(intentP1));
+            dialog.appendSecondaryData("Lambda",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_EXTVAL:
+            dialog.appendSecondaryData("Statistics code","Extreme value type 1");
+            dialog.appendSecondaryData("Location",Float.toString(intentP1));
+            dialog.appendSecondaryData("Scale",Float.toString(intentP2));
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_PVAL:
+            dialog.appendSecondaryData("Statistics code", "Data is a p-value");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_LOGPVAL:
+            dialog.appendSecondaryData("Statistics code", "Data is a ln(p-value)");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_LOG10PVAL:
+            dialog.appendSecondaryData("Statistics code", "Data is a log10(p-value)");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_ESTIMATE:
+            dialog.appendSecondaryData("Intent code", "Parameter estimate");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_LABEL:
+            dialog.appendSecondaryData("Intent code", "Label index");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_NEURONAME:
+            dialog.appendSecondaryData("Intent code", "NeuroNames labels index");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_GENMATRIX:
+            dialog.appendSecondaryData("Intent code", "M x N matrix");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_SYMMATRIX:
+            dialog.appendSecondaryData("Intent code", "N x N symmetric matrix");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_DISPVECT:
+            dialog.appendSecondaryData("Intent code", "Displacement vector");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_VECTOR:
+            dialog.appendSecondaryData("Intent code", "Vector");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_POINTSET:
+            dialog.appendSecondaryData("Intent code", "Spatial coordinate");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_TRIANGLE:
+            dialog.appendSecondaryData("Intent code", "Triple of indexes");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_QUATERNION:
+            dialog.appendSecondaryData("Intent code", "Quaternion");
+            break;
+            case FileInfoNIFTI.NIFTI_INTENT_DIMLESS:
+            dialog.appendSecondaryData("Intent code", "Dimless");
+            default:
+            dialog.appendSecondaryData("Unrecognized intent code",
+                                        Short.toString(intentCode));
+        } // switch(intentCode)
+
+        String coordString = null;
+        switch(coord_code) {
+            case NIFTI_XFORM_UNKNOWN:
+                coordString = "Arbitrary";
+                break;
+            case NIFTI_XFORM_SCANNER_ANAT:
+                coordString = "Scanner-based anatomical";
+                break;
+            case NIFTI_XFORM_ALIGNED_ANAT:
+                coordString = "Aligned to another anatomy";
+            case NIFTI_XFORM_TALAIRACH:
+                coordString = "Talairach-Tournoux Atlas";
+                break;
+            case NIFTI_XFORM_MNI_152:
+                coordString = "MNI 152 normalized coordinates";
+                break;
+        }
+
+        dialog.appendSecondaryData("X,Y,Z Coordinate system",coordString);
+
+        String sourceTypeString = null;
+        switch(sourceType) {
+            case DT_UNKNOWN:
+                sourceTypeString = "UNKNOWN";
+                break;
+            case DT_BINARY:
+                sourceTypeString = "BOOLEAN";
+                break;
+            case NIFTI_TYPE_UINT8:
+                sourceTypeString = "UNSIGNED BYTE";
+                break;
+            case NIFTI_TYPE_INT16:
+                sourceTypeString = "SIGNED SHORT";
+                break;
+            case NIFTI_TYPE_INT32:
+                sourceTypeString = "SIGNED INTEGER";
+                break;
+            case NIFTI_TYPE_FLOAT32:
+                sourceTypeString = "FLOAT";
+                break;
+            case NIFTI_TYPE_COMPLEX64:
+                sourceTypeString = "COMPLEX";
+                break;
+            case NIFTI_TYPE_FLOAT64:
+                sourceTypeString = "DOUBLE";
+                break;
+            case NIFTI_TYPE_RGB24:
+                sourceTypeString = "RGB";
+                break;
+            case NIFTI_TYPE_INT8:
+                sourceTypeString = "SIGNED BYTE";
+                break;
+            case NIFTI_TYPE_UINT16:
+                sourceTypeString = "UNSIGNED SHORT";
+                break;
+            case NIFTI_TYPE_INT64:
+                sourceTypeString = "SIGNED LONG";
+                break;
+            case NIFTI_TYPE_UINT64:
+                sourceTypeString = "UNSIGNED LONG";
+                break;
+            case NIFTI_TYPE_FLOAT128:
+                sourceTypeString = "128 BIT FLOAT";
+                break;
+            case NIFTI_TYPE_COMPLEX128:
+                sourceTypeString = "DCOMPLEX";
+                break;
+            case NIFTI_TYPE_COMPLEX256:
+                sourceTypeString = "256 bit COMPLEX";
+                break;
+        }
+        dialog.appendSecondaryData("Source type", sourceTypeString);
+
+        dialog.appendSecondaryData("Slope scale",Float.toString(scl_slope));
+
+        dialog.appendSecondaryData("Added offset",Float.toString(scl_inter));
+
+        switch(freq_dim) {
+            case 0:
+                dialog.appendSecondaryData("Frequency encoding direction", "none");
+                break;
+            case 1:
+                dialog.appendSecondaryData("Frequency encoding direction", "x dimension");
+                break;
+            case 2:
+                dialog.appendSecondaryData("Frequency encoding direction", "y dimension");
+                break;
+            case 3:
+                dialog.appendSecondaryData("Frequency encoding direction", "z dimension");
+                break;
+        }
+
+        switch(phase_dim) {
+            case 0:
+                dialog.appendSecondaryData("Phase encoding direction", "none");
+                break;
+            case 1:
+                dialog.appendSecondaryData("Phase encoding direction", "x dimension");
+                break;
+            case 2:
+                dialog.appendSecondaryData("Phase encoding direction", "y dimension");
+                break;
+            case 3:
+                dialog.appendSecondaryData("Phase encoding direction", "z dimension");
+                break;
+        }
+
+        switch(slice_dim) {
+            case 0:
+                dialog.appendSecondaryData("Slice acquisition direction", "none");
+                break;
+            case 1:
+                dialog.appendSecondaryData("Slice acquisition direction", "x dimension");
+                break;
+            case 2:
+                dialog.appendSecondaryData("Slice acquisition direction", "y dimension");
+                break;
+            case 3:
+                dialog.appendSecondaryData("Slice acquisition direction", "z dimension");
+                break;
+        }
+
+        if (sliceDuration > 0) {
+            dialog.appendSecondaryData("Time used to acquire 1 slice",
+                                       String.valueOf(sliceDuration));
+        }
+
+        if (sliceCode == NIFTI_SLICE_SEQ_INC) {
+            dialog.appendSecondaryData("Timing pattern of slice acquisition",
+                                       "sequentially increasing");
+        }
+        else if (sliceCode == NIFTI_SLICE_SEQ_DEC) {
+            dialog.appendSecondaryData("Timing pattern of slice acquisition",
+                                        "sequentially decreasing");
+        }
+        else if (sliceCode == NIFTI_SLICE_ALT_INC) {
+            dialog.appendSecondaryData("Timing pattern of slice acquisition",
+                                        "alternately increasing");
+        }
+        else if (sliceCode == NIFTI_SLICE_ALT_DEC) {
+            dialog.appendSecondaryData("Timing pattern of slice acquisition",
+                                       "alternately decreasing");
+        }
+        else if (sliceCode == NIFTI_SLICE_ALT_INC2) {
+            dialog.appendSecondaryData("Timing pattern of slice acquisition",
+                                       "alternately increasing #2");
+        } else if (sliceCode == NIFTI_SLICE_ALT_DEC2) {
+            dialog.appendSecondaryData("Timing pattern of slice acquisition",
+                                       "alternately decreasing #2");
+        }
+
+        if (sliceStart > 0) {
+            dialog.appendSecondaryData("Timing pattern starts",
+                                       "slice " + String.valueOf(sliceStart+1));
+        }
+
+        if (sliceEnd > 0) {
+            dialog.appendSecondaryData("Timing pattern ends",
+                                       "slice " + String.valueOf(sliceEnd+1));
+        }
+
+        editorChoice[0] = JDialogEditor.ANALYZE_AXIS_ORIENTATION;
+        dialog.appendSecondaryData("Axis: x-orientation", getAxisOrientationStr(
+                super.getAxisOrientation(0)), editorChoice);
+        dialog.appendSecondaryData("Axis: y-orientation", getAxisOrientationStr(
+                super.getAxisOrientation(1)), editorChoice);
+        dialog.appendSecondaryData("Axis: z-orientation", getAxisOrientationStr(
+                super.getAxisOrientation(2)), editorChoice);
+
+
+        editorChoice[0] = JDialogEditor.FLOAT_STRING;
+        dialog.appendSecondaryData("X Origin: ", Float.toString(
+                super.getOrigin(0)), editorChoice);
+        dialog.appendSecondaryData("Y Origin: ", Float.toString(
+                super.getOrigin(1)), editorChoice);
+        dialog.appendSecondaryData("Z Origin: ", Float.toString(
+                super.getOrigin(2)), editorChoice);
+
+        if (cal_min != -1) {
+            editorChoice[0] = JDialogEditor.FLOAT_STRING;
+            dialog.appendSecondaryData("cal_min", Float.toString(cal_min), editorChoice);
+        }
+
+        if (cal_max != -1) {
+            editorChoice[0] = JDialogEditor.FLOAT_STRING;
+            dialog.appendSecondaryData("cal_max", Float.toString(cal_max), editorChoice);
+        }
+
+        if (bitpix != -1) {
+            dialog.appendSecondaryData("Bits per Pixel", Integer.toString(bitpix));
+        }
+
+        if (aux_file != null)   {
+            if (aux_file.trim().length() > 0)
+                dialog.appendSecondaryData("aux", aux_file.trim());
+        }
+
+        if (intentName != null) {
+            dialog.appendSecondaryData("Name or meaning of data", intentName);
+        }
+
+    }
+
+
+    /** verifies string is not larger than len length;
+    *   strings larger than len, are clipped before being returned
+    *   @see String#substring(int, int)
+    *   @return String new substring
+    */
+    protected String setString(String str, int len) {
+        if (str.length() < len) {return str;}
+        else {return str.substring(0, len);}
+    }
+
+
+    /**
+    *  Accessor that sets first statistical parameter
+    *  @param intentP1
+    */
+    public void setIntentP1(float intentP1) {
+        this.intentP1 = intentP1;
+    }
+
+    /**
+    *  Accessor that returns first statistical parameter
+    *  @return intentP1
+    */
+    public float getIntentP1() {
+        return intentP1;
+    }
+
+    /**
+    *  Accessor that sets second statistical parameter
+    *  @param intentP2
+    */
+    public void setIntentP2(float intentP2) {
+        this.intentP2 = intentP2;
+    }
+
+    /**
+    *  Accessor that returns second statistical parameter
+    *  @return intentP2
+    */
+    public float getIntentP2() {
+        return intentP2;
+    }
+
+    /**
+    *  Accessor that sets third statistical parameter
+    *  @param intentP3
+    */
+    public void setIntentP3(float intentP3) {
+        this.intentP3 = intentP3;
+    }
+
+    /**
+    *  Accessor that returns third statistical parameter
+    *  @return intentP3
+    */
+    public float getIntentP3() {
+        return intentP3;
+    }
+
+    /**
+    *  Accessor that sets the stat code
+    *  @param intentCode
+    */
+    public void setIntentCode(short intentCode) {
+        this.intentCode = intentCode;
+    }
+
+    /**
+    *  Accessor that returns the intent code
+    *  @return intentCode
+    */
+    public short getIntentCode() {
+        return intentCode;
+    }
+
+    /** accessor to supply coded datatype. */
+    // Data type before conversion for scl_slope and scl_offset
+    public void setSourceType(short dtype) {
+                sourceType = dtype;
+    }
+
+    /** accessor to coded datatype value.
+    *   @return short datatype
+    */
+    public short getSourceType() {return sourceType;}
+
+
+    /** allows no more than 80 characters to fill in the analyze-image description. */
+    public void setDescription(String description) {
+        descrip = setString(description, 80);
+    }
+
+    /** accessor to the current analyze-image description.
+    *   @return String description
+    */
+    public String getDescription() {return descrip;}
+
+    /** supplies auxiliary-file string; permits no more than 24 characters. */
+    public void setAuxFile(String aux) {
+        aux_file = setString(aux, 24);
+    }
+
+    /** accessor to the aux_file string.
+    *   @return String aux_file
+    */
+    public String getAuxFile() {return aux_file;}
+
+    /** sets bitpix; any value other than 1, 8, 16, 32, 64, 128, or 24
+    *   gets set to the dissalowed trap value, -1.
+    */
+    public void setBitPix(short bp) {
+        if ((bp == 1) ||
+            (bp == 8) ||
+            (bp == 16)||
+            (bp == 32)||
+            (bp == 64)||
+            (bp == 128) ||
+            (bp == 24)) {
+                bitpix  = bp;
+        }
+        else {  bitpix = -1;}   // a disallowed trap value
+    }
+
+    /** accessor to the bitpix value.
+    *   @return short the bitpix value.
+    */
+    public short getBitPix() {return bitpix;}
+
+    /** sets sourceBitPix; any value other than 1, 8, 16, 32, 64, 128, or 24
+    *   gets set to the disallowed trap value, -1.
+    */
+    public void setSourceBitPix(short bp) {
+        if ((bp == 1) ||
+            (bp == 8) ||
+            (bp == 16)||
+            (bp == 32)||
+            (bp == 64)||
+            (bp == 128) ||
+            (bp == 24)) {
+                sourceBitPix  = bp;
+        }
+        else {  sourceBitPix = -1;}   // a disallowed trap value
+    }
+
+    /** accessor to the sourceBitPix value.
+    *   @return short the sourceBitPix value.
+    */
+    public short getSourceBitPix() {return sourceBitPix;}
+
+    /** sets vox offset value. */
+    public void setVoxOffset(float vox) {
+        vox_offset = vox;
+    }
+
+    /** accessor to the vox offset value
+    *   @return float vox_offset
+    */
+    public float getVoxOffset() {return vox_offset;}
+
+    /** sets cal-max.  if supplied value is less than
+    *   cal-min, the cal-min gets reset to the supplied
+    *   value as well, so that cal-min is still no
+    *   greater than cal-max.
+    */
+    public void setCalMax(float cal) {
+        cal_max = cal;
+        if (cal_max < cal_min) {
+            cal_min = cal_max;
+        }
+    }
+
+    /** accessor to cal-max
+    *   @return float cal_max
+    */
+    public float getCalMax() {return cal_max;}
+
+    /** sets cal-min.  if supplied value is greater than
+    *   cal-max, the cal-max gets reset to the supplied
+    *   value as well, so that cal-max is still no
+    *   less than cal-min.
+    */
+    public void setCalMin(float cal) {
+        cal_min = cal;
+        if (cal_min > cal_max) {
+            cal_max = cal_min;
+        }
+    }
+
+    /** accessor to cal-min
+    *   @return float cal_min
+    */
+    public float getCalMin() {return cal_min;}
+
+    /** sets the sliceDuration variable */
+    public void setSliceDuration(float sliceDuration) {
+        this.sliceDuration = sliceDuration;
+    }
+
+    /** provides the sliceDuration value
+    *   @return float sliceDuration
+    */
+    public float getSliceDuration() {return sliceDuration;}
+
+
+    /**
+    *  Sets type of xyz coordinates
+    *  @param coord_code
+    */
+    public void setCoordCode(short coord_code) {
+        this.coord_code = coord_code;
+    }
+
+    /**
+    *  Returns type of x, y, z coordinates
+    *  @return coord_code
+    */
+    public short getCoordCode() {
+        return coord_code;
+    }
+
+    public TransMatrix getMatrix() {
+        return this.matrix;
+    }
+
+    public void setMatrix(TransMatrix matrix) {
+        this.matrix = matrix;
+    }
+
+    public void setIntentName(String intentName) {
+        this.intentName = intentName;
+    }
+
+    public String getIntentName() {
+        return intentName;
+    }
+
+    /**
+    *  Sets the data scaling multiplicative factor
+    *  @param scl_slope
+    */
+    public void setSclSlope(float scl_slope) {
+        this.scl_slope = scl_slope;
+    }
+
+    /**
+    *  Gets the data scaling multiplicative factor
+    *  @return scl_slope
+    */
+    public float getSclSlope() {
+        return scl_slope;
+    }
+
+    /**
+    *  Sets the data additive factor
+    *  @param scl_inter
+    */
+    public void setSclInter(float scl_inter) {
+        this.scl_inter = scl_inter;
+    }
+
+    /**
+    *  Gets the data additive factor
+    *  @return scl_inter
+    */
+    public float getSclInter() {
+        return scl_inter;
+    }
+
+    public void setSliceStart(short sliceStart) {this.sliceStart = sliceStart;}
+    public short getSliceStart() {return sliceStart;}
+
+    public void setSliceEnd(short sliceEnd) {this.sliceEnd = sliceEnd;}
+    public short getSliceEnd() {return sliceEnd;}
+
+    public void setSliceCode(byte sliceCode) {this.sliceCode = sliceCode;}
+    public byte getSliceCode() {return sliceCode;}
+
+    public void setFreqDim(int freq_dim) {this.freq_dim = freq_dim;}
+    public int getFreqDim() {return freq_dim;}
+
+    public void setPhaseDim(int phase_dim) {this.phase_dim = phase_dim;}
+    public int getPhaseDim() {return phase_dim;}
+
+    public void setSliceDim(int slice_dim) {this.slice_dim = slice_dim;}
+    public int getSliceDim() {return slice_dim;}
+
+    public void setSizeOfHeader(int size) {sizeof_hdr = size;}
+    public int getSizeOfHeader() {return sizeof_hdr;}
+
+    public void setFileExtents(int ext) {extents = ext;}
+    public int getFileExtents() {return extents;}
+
+    /** <table>
+    *   <tr><td>ce[0] = table           </td><td>0 = primary, 1 = secondary, etC</td></tr>
+    *   <tr><td>ce[1] = line of table   </td><td>          </td></tr>
+    *   <tr><td>ce[2] = string name     </td><td>eg, "Type"</td></tr>
+    *   <tr><td>ce[3] = Vector codeValue</td><td>eg, "B"   </td></tr>
+    *   <tr><td>ce[4] = string value    </td><td>eg, "Big" </td></tr>
+    *   </table>
+    *   "ce" comes from ChangeEvent upon which this is based.  care to
+    *   make our own ChangeEvent to store and handle this?
+    */
+    public void stateChanged(Vector ce) {
+        String tname = (String) ce.elementAt(2);  // [t]able [name]
+        Vector tcvalue = (Vector) ce.elementAt(3);// [t]able [c]ode [value]
+        String tvalue= (String) ce.elementAt(4);  // [t]able [value]
+
+        if (tname.equalsIgnoreCase ("Description")) {
+            setDescription(tvalue);
+        }
+        else if (tname.equalsIgnoreCase("voxel offset")) {
+            setVoxOffset( Float.parseFloat((String) tcvalue.elementAt(0)));
+        }
+        else if (tname.equalsIgnoreCase("cal_min")) {
+            setCalMin( Float.parseFloat( (String)tcvalue.elementAt(0)));
+        }
+        else if (tname.equalsIgnoreCase("cal_max")) {
+            setCalMax(Float.parseFloat((String) tcvalue.elementAt(0)));
+        }
+        else if (tname.equalsIgnoreCase("Orientation")) {
+            super.setImageOrientation(((Integer)tcvalue.elementAt(0)).intValue());
+            //setImageOrientation(((Byte) tcvalue.elementAt(0)).byteValue());
+        }
+         else if (tname.startsWith("Axis: x-orientation")) {
+            super.setAxisOrientation(((Integer) tcvalue.elementAt(0)).intValue(),0);
+        }
+        else if (tname.startsWith("Axis: y-orientation")) {
+            super.setAxisOrientation(((Integer) tcvalue.elementAt(0)).intValue(),1);
+        }
+        else if (tname.startsWith("Axis: z-orientation")) {
+            super.setAxisOrientation(((Integer) tcvalue.elementAt(0)).intValue(),2);
+        }
+        else if (tname.startsWith("Start Location: x-axis")) {
+            super.setOrigin(Float.parseFloat((String) tcvalue.elementAt(0)), 0);
+
+        }
+        else if (tname.startsWith("Start Location: y-axis")) {
+            super.setOrigin(Float.parseFloat((String) tcvalue.elementAt(0)), 1);
+        }
+        else if (tname.startsWith("Start Location: z-axis")) {
+            super.setOrigin(Float.parseFloat((String) tcvalue.elementAt(0)), 2);
+        }
+        else if (tname.equalsIgnoreCase("Orientation")) {
+            setImageOrientation( ((Integer)tcvalue.elementAt(0)).intValue());
+            //setOrientation(((Byte)tcvalue.elementAt(0)).byteValue());
+
+        }
+        else {Preferences.debug("tname: "+tname + ", not found.");}
+    }
+
+
+
+    /** Propogates the current file info to another FileInfoNIFTI
+    *   <p>
+    *   It does not copy over the datatypeCode. (though, aside from, "it isn't
+    *   in the about table", I can't think of a reason why it shouldn't.
+    *   but it doesn't.)  Also, copied over is bitPix, aux_file.
+    *
+    */
+    public void updateFileInfos(FileInfoNIFTI fInfo) {
+        if (this == fInfo) {
+            return;
+        }
+        //fInfo.setAuxFile            (this.getAuxFile());// not editable by the table!!
+        //fInfo.setBitPix             (this.getBitPix()); // not editable by the table!!
+        fInfo.setIntentCode         (this.getIntentCode());
+        fInfo.setIntentP1           (this.getIntentP1());
+        fInfo.setIntentP2           (this.getIntentP2());
+        fInfo.setIntentP3           (this.getIntentP3());
+        fInfo.setCoordCode          (this.getCoordCode());
+        fInfo.setCalMin             (this.getCalMin());
+        fInfo.setCalMax             (this.getCalMax());
+        fInfo.setSliceDuration      (this.getSliceDuration());
+        //fInfo.setDataTypeCode       (this.getDataTypeCode());//not edited by the table!!
+        fInfo.setDescription        (this.getDescription());
+        fInfo.setSliceStart         (this.getSliceStart());
+        fInfo.setSliceEnd           (this.getSliceEnd());
+        fInfo.setFreqDim            (this.getFreqDim());
+        fInfo.setPhaseDim           (this.getPhaseDim());
+        fInfo.setSliceDim           (this.getSliceDim());
+        fInfo.setImageOrientation   (this.getImageOrientation());
+        fInfo.setVoxOffset          (this.getVoxOffset());
+        fInfo.setIntentName         (this.getIntentName());
+    }
+}

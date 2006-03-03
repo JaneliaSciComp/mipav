@@ -1,0 +1,505 @@
+package gov.nih.mipav.view.dialogs;
+
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
+
+import java.awt.event.*;
+import java.awt.*;
+import java.util.*;
+import javax.swing.*;
+
+/**
+ *  Creates the dialog to create a 3D subset image from a 4D image.
+ *  User selects dimension to be eliminated and the value of that
+ *  dimension in the 3D subset.
+ *  Allows only 4D images; 2D or 3D images would
+ *  not make sense with this operation.
+ *
+ *
+ */
+public class JDialogSubset
+    extends JDialogBase
+    implements AlgorithmInterface, ScriptableInterface {
+  private AlgorithmSubset subsetAlgo;
+  private ViewUserInterface userInterface;
+  private ModelImage image; // source image
+  private ModelImage resultImage = null; // result image
+
+  private JRadioButton xButton, yButton, zButton, tButton;
+  private JLabel labelSlice;
+  private JTextField textSlice;
+  private String textString;
+
+  private int xSlices;
+  private int ySlices;
+  private int zSlices;
+  private int tSlices; // number of t slices in image
+  private int removeDim;
+  private int sliceNum;
+  private int destExtents[]; //length along an axis of the destination image
+
+  private String resultString;
+
+  private String titles[]; // title of the frame shown when image is NULL
+
+
+  /**
+   *  Creates new dialog for getting subset.
+   *  @param theParentFrame    Parent frame
+   *  @param im                Source image
+   */
+  public JDialogSubset(Frame theParentFrame, ModelImage im) {
+    super(theParentFrame, false);
+    image = im; // set the image from the arguments to an image in this class
+    userInterface = ( (ViewJFrameBase) (parentFrame)).getUserInterface();
+    init();
+  }
+
+  /**
+   *	Used primarily for the script to store variables and run the algorithm.  No
+   *	actual dialog will appear but the set up info and result image will be stored here.
+   *	@param UI   The user interface, needed to create the image frame.
+   *	@param im	Source image.
+   */
+  public JDialogSubset(ViewUserInterface UI, ModelImage im) {
+    super(false);
+    userInterface = UI;
+    image = im;
+    parentFrame = image.getParentFrame();
+  }
+
+  /**
+   * Empty constructor needed for dynamic instantiation (used during scripting).
+   */
+  public JDialogSubset() {}
+
+  /**
+   * Run this algorithm from a script.
+   * @param parser the script parser we get the state from
+   * @throws IllegalArgumentException if there is something wrong with the arguments in the script
+   */
+  public void scriptRun (AlgorithmScriptParser parser) throws IllegalArgumentException {
+      String srcImageKey = null;
+      String destImageKey = null;
+
+      try {
+          srcImageKey = parser.getNextString();
+      } catch (Exception e) {
+          throw new IllegalArgumentException();
+      }
+      ModelImage im = parser.getImage(srcImageKey);
+
+      setModal(false);
+      image = im;
+      userInterface = image.getUserInterface();
+      parentFrame = image.getParentFrame();
+
+      // the result image
+      try {
+          destImageKey = parser.getNextString();
+      } catch (Exception e) {
+          throw new IllegalArgumentException();
+      }
+
+      try {
+          setRemoveDim(parser.getNextInteger());
+          setSliceNum(parser.getNextInteger());
+      } catch (Exception e) {
+          throw new IllegalArgumentException();
+      }
+
+      setActiveImage(parser.isActiveImage());
+      setSeparateThread(false);
+      callAlgorithm();
+      if (!srcImageKey.equals(destImageKey)) {
+          parser.putVariable(destImageKey, getResultImage().getImageName());
+      }
+  }
+
+  /**
+   * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
+   * @param algo the algorithm to make an entry for
+   */
+  public void insertScriptLine (AlgorithmBase algo) {
+      if (algo.isCompleted()) {
+          if (userInterface.isScriptRecording()) {
+              //check to see if the match image is already in the ImgTable
+              if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
+                  if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
+                      userInterface.getScriptDialog().putActiveVar(image.getImageName());
+                  }
+              }
+
+              userInterface.getScriptDialog().append("Subset " +
+                                                     userInterface.getScriptDialog().
+                                                     getVar(image.getImageName()) +
+                                                     " ");
+              userInterface.getScriptDialog().putVar(resultImage.getImageName());
+              userInterface.getScriptDialog().append(userInterface.getScriptDialog().
+                                                     getVar(resultImage.
+                                                            getImageName()) + " " + removeDim + " " + sliceNum + "\n");
+          }
+      }
+  }
+
+  /**
+   *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+   */
+  private void init() {
+    setTitle("Extract 3D subset");
+    setForeground(Color.black);
+
+    xSlices = image.getExtents()[0];
+    ySlices = image.getExtents()[1];
+    zSlices = image.getExtents()[2];
+    tSlices = image.getExtents()[3];
+
+    int max = (xSlices < ySlices) ? ySlices : xSlices;
+    max = (zSlices < max) ? max : zSlices;
+    max = (tSlices < max) ? max : tSlices;
+
+    JPanel removePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+    ButtonGroup removeGroup = new ButtonGroup();
+    xButton = new JRadioButton("X", false);
+    xButton.setFont(serif12);
+    removeGroup.add(xButton);
+    removePanel.add(xButton);
+    xButton.addActionListener(this);
+    xButton.setActionCommand("XAxis");
+
+    yButton = new JRadioButton("Y", false);
+    yButton.setFont(serif12);
+    removeGroup.add(yButton);
+    removePanel.add(yButton);
+    yButton.addActionListener(this);
+    yButton.setActionCommand("YAxis");
+
+    zButton = new JRadioButton("Z", true);
+    zButton.setFont(serif12);
+    removeGroup.add(zButton);
+    removePanel.add(zButton);
+    zButton.addActionListener(this);
+    zButton.setActionCommand("ZAxis");
+
+    tButton = new JRadioButton("T", false);
+    tButton.setFont(serif12);
+    removeGroup.add(tButton);
+    removePanel.add(tButton);
+    tButton.addActionListener(this);
+    tButton.setActionCommand("TAxis");
+
+    JPanel textPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+    textSlice = new JTextField(5);
+    textSlice.setText("1");
+    textSlice.setFont(serif12);
+    textSlice.setEnabled(true);
+    textSlice.addFocusListener(this);
+    textPanel.add(textSlice);
+
+    labelSlice = new JLabel("Select index from 1 to " + max);
+    labelSlice.setForeground(Color.black);
+    labelSlice.setFont(serif12);
+    labelSlice.setEnabled(true);
+    textPanel.add(labelSlice);
+
+    JPanel mainPanel = new JPanel();
+    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+    mainPanel.add(removePanel);
+    mainPanel.add(textPanel);
+    mainPanel.setBorder(buildTitledBorder("Select removed dimension"));
+
+    JPanel buttonPanel = new JPanel(new FlowLayout());
+    /*
+    buildOKButton();
+    OKButton.setText("Remove");
+    buttonPanel.add(OKButton);
+    buildCancelButton();
+    buttonPanel.add(cancelButton);
+    */
+    buttonPanel.add(buildButtons());
+    OKButton.setText("Remove");
+
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(mainPanel);
+    panel.add(buttonPanel, BorderLayout.SOUTH);
+    panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+    getContentPane().add(panel);
+    pack();
+    labelSlice.setText("Select index from 1 to " + zSlices);
+    setVisible(true);
+  }
+
+  /**
+   *  Accessor that returns the image
+   *  @return          the result image
+   */
+  public ModelImage getResultImage() {
+    return resultImage;
+  }
+
+  /**
+   *   Accessor that sets the Dimension to remove according to the parameter
+   *   @param dim  Which dimension to remove (either REMOVE_X, REMOVE_Y, REMOVE_Z, REMOVE_T)
+   */
+  public void setRemoveDim(int dim) {
+    removeDim = dim;
+  }
+
+  /**
+   *   Accessor that sets the slice number to be used to the parameter
+   *   @param n    The slice index number to be use
+   */
+  public void setSliceNum(int n) {
+    sliceNum = n;
+  }
+
+  /**
+   *  Closes dialog box when the OK button is pressed and
+   *  calls the algorithm
+   *  @param event Event that triggers function
+   */
+  public void actionPerformed(ActionEvent event) {
+    String command = event.getActionCommand();
+
+    if (command.equals("Remove")) {
+      if (setVariables()) {
+        callAlgorithm();
+      }
+    }
+    else if (command.equals("Cancel")) {
+      dispose();
+    }
+    else if ( command.equals("Help")) {
+       // MipavUtil.showHelp("");
+    }
+    else if (command.equals("XAxis")) {
+      labelSlice.setText("Select index from 1 to " + xSlices);
+    }
+    else if (command.equals("YAxis")) {
+      labelSlice.setText("Select index from 1 to " + ySlices);
+    }
+    else if (command.equals("ZAxis")) {
+      labelSlice.setText("Select index from 1 to " + zSlices);
+    }
+    else if (command.equals("TAxis")) {
+      labelSlice.setText("Select index from 1 to " + tSlices);
+    }
+  }
+
+  /**
+   *	Use the GUI results to set up the variables needed to run the algorithm.
+   *	@return		<code>true</code> if parameters set successfully, <code>false</code> otherwise.
+   */
+  private boolean setVariables() {
+
+    if (xButton.isSelected()) {
+      removeDim = AlgorithmSubset.REMOVE_X;
+    }
+    else if (yButton.isSelected()) {
+      removeDim = AlgorithmSubset.REMOVE_Y;
+    }
+    else if (zButton.isSelected()) {
+      removeDim = AlgorithmSubset.REMOVE_Z;
+    }
+    else {
+      removeDim = AlgorithmSubset.REMOVE_T;
+    }
+
+    textString = textSlice.getText();
+    sliceNum = Integer.parseInt(textString) - 1;
+
+    return true;
+  }
+
+  /**
+   *	Once all the necessary variables are set, call the Gaussian Blur
+   *	algorithm based on what type of image this is and whether or not there
+   *	is a separate destination image.
+   */
+  private void callAlgorithm() {
+
+    destExtents = new int[3];
+
+    xSlices = image.getExtents()[0];
+    ySlices = image.getExtents()[1];
+    zSlices = image.getExtents()[2];
+    tSlices = image.getExtents()[3];
+
+    if (removeDim == AlgorithmSubset.REMOVE_X) {
+      destExtents[0] = ySlices;
+      destExtents[1] = zSlices;
+      destExtents[2] = tSlices;
+
+    }
+    else if (removeDim == AlgorithmSubset.REMOVE_Y) {
+      destExtents[0] = xSlices;
+      destExtents[1] = zSlices;
+      destExtents[2] = tSlices;
+
+    }
+    else if (removeDim == AlgorithmSubset.REMOVE_Z) {
+      destExtents[0] = xSlices;
+      destExtents[1] = ySlices;
+      destExtents[2] = tSlices;
+
+    }
+    else {
+      destExtents[0] = xSlices;
+      destExtents[1] = ySlices;
+      destExtents[2] = zSlices;
+    }
+
+    if (sliceNum < 0) {
+      MipavUtil.displayError("Slice number must be at least 1");
+      textSlice.requestFocus();
+      textSlice.selectAll();
+      return;
+    }
+    else if ( (removeDim == AlgorithmSubset.REMOVE_X) && (sliceNum >= xSlices)) {
+      MipavUtil.displayError("X number must not exceed " + xSlices);
+      textSlice.requestFocus();
+      textSlice.selectAll();
+      return;
+    }
+    else if ( (removeDim == AlgorithmSubset.REMOVE_Y) && (sliceNum >= ySlices)) {
+      MipavUtil.displayError("Y number must not exceed " + ySlices);
+      textSlice.requestFocus();
+      textSlice.selectAll();
+      return;
+    }
+    else if ( (removeDim == AlgorithmSubset.REMOVE_Z) && (sliceNum >= zSlices)) {
+      MipavUtil.displayError("Z number must not exceed " + zSlices);
+      textSlice.requestFocus();
+      textSlice.selectAll();
+      return;
+    }
+    else if ( (removeDim == AlgorithmSubset.REMOVE_T) && (sliceNum >= tSlices)) {
+      MipavUtil.displayError("T number must not exceed " + tSlices);
+      textSlice.requestFocus();
+      textSlice.selectAll();
+      return;
+    }
+
+    if (removeDim == AlgorithmSubset.REMOVE_X) {
+      resultString = image.getImageName() + "X=" + textString;
+    }
+    else if (removeDim == AlgorithmSubset.REMOVE_Y) {
+      resultString = image.getImageName() + "Y=" + textString;
+    }
+    else if (removeDim == AlgorithmSubset.REMOVE_Z) {
+      resultString = image.getImageName() + "Z=" + textString;
+    }
+    else {
+      resultString = image.getImageName() + "T=" + textString;
+    }
+
+    try {
+      // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
+      resultImage = new ModelImage(image.getType(),
+                                   destExtents,
+                                   resultString,
+                                   image.getUserInterface());
+
+      // Make algorithm:
+      subsetAlgo = new AlgorithmSubset(image, resultImage, removeDim, sliceNum);
+
+      // This is very important. Adding this object as a listener allows the algorithm to
+      // notify this object when it has completed of failed. See algorithm performed event.
+      // This is made possible by implementing AlgorithmedPerformed interface
+      subsetAlgo.addListener(this);
+      setVisible(false); // Hide dialog
+
+      if (runInSeparateThread) {
+        // Start the thread as a low priority because we wish to still have user interface work fast.
+        if (subsetAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+          MipavUtil.displayError("A thread is already running on this object");
+        }
+      }
+      else {
+        subsetAlgo.setActiveImage(isActiveImage);
+        if (!userInterface.isAppFrameVisible()) {
+          subsetAlgo.setProgressBarVisible(false);
+        }
+        subsetAlgo.run();
+      }
+
+    }
+    catch (OutOfMemoryError x) {
+      if (resultImage != null) {
+        resultImage.disposeLocal(); // Clean up image memory
+        resultImage = null;
+      }
+      MipavUtil.displayError(
+          "JDialogSubset reports: unable to allocate enough memory");
+      return;
+    }
+  }
+
+  //************************************************************************
+   //************************** Algorithm Events ****************************
+    //************************************************************************
+
+     /**
+      *	This method is required if the AlgorithmPerformed interface is implemented. It is called by the
+      *   algorithms when it has completed or failed to to complete, so that the dialog can be display
+      *   the result image and/or clean up.
+      *   @param algorithm   Algorithm that caused the event.
+      */
+     public void algorithmPerformed(AlgorithmBase algorithm) {
+
+       ViewJFrameImage imageFrame = null;
+       if (algorithm instanceof AlgorithmSubset) {
+         if (subsetAlgo.isCompleted() == true && resultImage != null) {
+
+           //The algorithm has completed and produced a new image to be displayed.
+           try {
+             // put the new image into a new frame
+             imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+           }
+           catch (OutOfMemoryError error) {
+             MipavUtil.displayError("JDialogSubset reports: out of memory; " +
+                                    "unable to open a new frame");
+           }
+         }
+         else if (resultImage == null) {
+
+           // These next lines set the titles in all frames where the source image is displayed to
+           // image name so as to indicate that the image is now unlocked!
+           // The image frames are enabled and then registed to the userinterface.
+           Vector imageFrames = image.getImageFrameVector();
+           for (int i = 0; i < imageFrames.size(); i++) {
+             ( (Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+             ( (Frame) (imageFrames.elementAt(i))).setEnabled(true);
+             if ( ( (Frame) (imageFrames.elementAt(i))) != parentFrame) {
+               userInterface.registerFrame( (Frame) (imageFrames.elementAt(i)));
+             }
+           }
+           if (parentFrame != null)
+             userInterface.registerFrame(parentFrame);
+           image.notifyImageDisplayListeners(null, true);
+         }
+         else if (resultImage != null) {
+           //algorithm failed but result image still has garbage
+           resultImage.disposeLocal(); // clean up memory
+           resultImage = null;
+           System.gc();
+         }
+
+       }
+
+       insertScriptLine(algorithm);
+
+       // Update frame
+       //((ViewJFrameBase)parentFrame).updateImages(true);
+       subsetAlgo.finalize();
+       subsetAlgo = null;
+       dispose();
+     }
+
+}
