@@ -22,7 +22,7 @@ Version:	 2.1  (2006-03-03)
 
 Project Leader:
 
-     Matthew J. McAuliffe, Ph.D.
+     Matt J. McAuliffe, Ph.D.
      Biomedical Imaging Research Services Section, ISL, CIT, NIH
      matthew.mcauliffe@nih.gov
      (301) 594 - 2432
