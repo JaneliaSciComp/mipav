@@ -201,20 +201,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     protected JLabel absLabel;
 
-    /**
-     * Label the absolute x value in the image volume.
-     */
-    protected JLabel labelXPos;
-
-    /**
-     * Label the absolute y value in the image volume.
-     */
-    protected JLabel labelYPos;
-
-    /**
-     * Label the absolute z value in the image volume.
-     */
-    protected JLabel labelZPos;
+    protected JLabel labelXPos; // Label the absolute x value in the image volume.
+    protected JLabel labelYPos; // Label the absolute y value in the image volume.
+    protected JLabel labelZPos; // Label the absolute z value in the image volume.
 
     /**
      * Label heading for the anatomical position x, y, z values in the image volume.
@@ -239,20 +228,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     protected JLabel labelZRef;
     protected JLabel scannerLabelZ;
 
-    /**
-     * Label the talairach position x value in the image volume.
-     */
-    protected JLabel labelXTal;
-
-    /**
-     * Label the talairach position y value in the image volume.
-     */
-    protected JLabel labelYTal;
-
-    /**
-     * Label the talairach position z value in the image volume.
-     */
-    protected JLabel labelZTal;
+    protected JLabel labelXTal; // Label the talairach position x value in the image volume.
+    protected JLabel labelYTal; // Label the talairach position y value in the image volume.
+    protected JLabel labelZTal; // Label the talairach position z value in the image volume.
 
     /** Color chooser to use when selecting paint color. */
     protected ViewJColorChooser colorChooser;
@@ -364,27 +342,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     protected Vector coordinateListeners = new Vector();
 
-    // Used to set the paint spinner
+    // Used to setup the paint spinner
     private double spinnerDefaultValue = 1, spinnerMin = 0, spinnerMax = 255, spinnerStep = 1;
 
-    protected int defaultPreferredHeight = 1000;
-    public static final int MAX_TRI_IMAGES = 9;
-    protected boolean oldLayout = Preferences.is(Preferences.PREF_TRIPLANAR_2X2_LAYOUT);
-    protected static final String OLD_LAYOUT = "OldLayout";
-    protected static final String PANEL_PLUGIN = "PanelPlugin";
-    protected static final int DEFAULT_OPTIMAL_ZOOM = 256;
+    protected int defaultPreferredHeight = 1000; // the default hight of the window, if it cannot be calculated
+    public static final int MAX_TRI_IMAGES = 9; // maximum number of tri-images
+    protected boolean oldLayout = Preferences.is(Preferences.PREF_TRIPLANAR_2X2_LAYOUT); // flag to indicated whether or not to use the old tri-planar layout
+    protected static final String OLD_LAYOUT = "OldLayout"; // a constant for which to test in the actionPerformed
+    protected static final String PANEL_PLUGIN = "PanelPlugin"; // a constant for which to test in the actionPerformed
+    protected static final int DEFAULT_OPTIMAL_ZOOM = 256; // constant to determine how many pixels would be optimal for the image to be initially zoomed to
 
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
 
-    protected JPanel pluginPanel;
-    protected JPanel volumePositionPanel;
-    protected VolumePositionFrame volumePositionFrame;
+    protected JPanel pluginPanel; // reference to the plug-in panel in the 2x2 (old) layout
+    protected JPanel volumePositionPanel; // reference to the volume coordinate panel when it is in the plug-in position
+    protected VolumePositionFrame volumePositionFrame; // reference to the volume coordinate frame
 
-    private Point3D boundingBoxPoints[] = new Point3D[8];
+    private Point3D boundingBoxPoints[] = new Point3D[8]; // array of points that specify the corners of the bounding box
 
-    // these constants are used to index into the boundingBoxPoints[] array, and are
-    // relative to the image's ORIGINAL orientation
+    // these constants are used to index into the boundingBoxPoints[] array, and represent the
+    // corners of the bounding box. relative to the image's ORIGINAL orientation
     public static final int UPPER_LEFT_FRONT = 0;
     public static final int UPPER_RIGHT_FRONT = 1;
     public static final int LOWER_RIGHT_FRONT = 2;
@@ -395,7 +373,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public static final int LOWER_LEFT_BACK = 7;
 
     /**
-     * @deprecated
+     *   @deprecated use ViewJFrameTriImage(ModelImage, ModelLUT, ModelImage, ModelLUT, ViewControlsImage, ViewJFrameImage)
      *   Make a frame and puts an image component into it.
      *   @param _imageA        First image to display
      *   @param LUTa           LUT of the imageA (if null grayscale LUT is constructed)
@@ -687,6 +665,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         return Math.min(optimalZoomWidth, optimalZoomHeight);
     }
 
+    /**
+     * Initialized the bounding box array. This is an array of volume space points that represent the 8
+     * corners of the tri-planar's bounding box.
+     */
     private void setupBoundingBoxPoints()
     {
         boundingBoxPoints[UPPER_LEFT_FRONT] = new Point3D((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f), (int) (extents[2] * 0.25f));
@@ -699,15 +681,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         boundingBoxPoints[LOWER_LEFT_BACK] = new Point3D((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f), (int) (extents[2] * 0.75f));
     }
 
+    /**
+     * Gets the array of 3D volume space points that represent the 8 corners of the bounding box
+     * @return Point3D[] the array of 3D points
+     */
     public Point3D[] getBoundingBoxPoints()
     {
         return boundingBoxPoints;
     }
 
-    public void setBoundingBoxPoints(Point3D [] newBoundingBoxPoints)
-    {
-        boundingBoxPoints = newBoundingBoxPoints;
-    }
 
     /**
      * This method should be called whenever the layout of the tri-images has changed. For example,
@@ -718,6 +700,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     {
         if (oldLayout)
         {
+            // the old layout does it differently
             doOldLayout();
             return;
         }
@@ -855,6 +838,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
     }
 
+    /**
+     * This is an alternative layout arrangement. It is the original layout before the tri-planar and
+     * the dual tri-planar were merged into this class.
+     */
     protected void doOldLayout()
     {
         GridBagLayout gbLayout = new GridBagLayout();
@@ -1185,7 +1172,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     {}
 
     /**
-     * Get control widgets for frame.
+     * Gets reference to control widgets for frame.
      * @return       controls
      */
     public ViewControlsImage getControls()
@@ -1291,7 +1278,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     *   Accessor that sets the reference to imageB.  Includes changing the frame's reference and the references the components keep.
+     *   Accessor that sets the reference to imageB.  Includes changing the frame's reference
+     *   and the references the components keep.
      *   @param _imageB  image to set the frame to
      */
     public void setImageB(ModelImage _imageB)
@@ -1383,13 +1371,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void setPaintBitmapSwitch(boolean paintBitmapSwitch)
     {}
 
+    /**
+     * Returns a reference to one of the component tri-image components.
+     * @param index int the index of the component tri-image to get. Possibilies are
+     * AXIAL_A, AXIAL_B, AXIAL_AB, CORONAL_A, CORONAL_B, CORONAL_AB, SAGITTAL_A,
+     * SAGITTAL_B, SAGITTAL_AB
+     * @return ViewJComponentTriImage
+     */
     public ViewJComponentTriImage getTriImage(int index)
     {
         return triImage[index];
     }
 
     /**
-     *  Sets paint intensity in imageXY.
+     *  Sets paint intensity in axial image.
      *  @param intensityDropper  the paint intensity value for the XY image
      */
     public void setXYIntensityDropper(float intensityDropper)
@@ -1409,7 +1404,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     *  Sets paint intensity in imageXZ.
+     *  Sets paint intensity in coronal image.
      *  @param intensityDropper  the paint intensity value for the XZ image
      */
     public void setXZIntensityDropper(float intensityDropper)
@@ -1429,7 +1424,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     *  Sets paint intensity in imageZY.
+     *  Sets paint intensity in sagittal image.
      *  @param intensityDropper  the paint intensity value for the ZY image
      */
     public void setZYIntensityDropper(float intensityDropper)
@@ -1489,8 +1484,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     *  Sets sagittalComponentSlice in.
-     *  @param sagittalComponentSlice
+     *  Sets sagittalComponentSlice
+     *  @param sagittalComponentSlice the slice to set
      */
     public void setSagittalComponentSlice(int _sagittalComponentSlice)
     {
@@ -1498,8 +1493,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     *  Sets coronalComponentSlice in.
-     *  @param coronalComponentSlice
+     *  Sets coronalComponentSlice
+     *  @param coronalComponentSlice the slice to set
      */
     public void setCoronalComponentSlice(int _coronalComponentSlice)
     {
@@ -1507,8 +1502,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     *  Sets axialComponentSlice in.
-     *  @param axialComponentSlice
+     *  Sets axialComponentSlice
+     *  @param axialComponentSlice the slice to set
      */
     public void setAxialComponentSlice(int _axialComponentSlice)
     {
@@ -2572,8 +2567,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
     }
 
-
-    // The following 3 functions set the point to be the center of the transformed image
     /**
      *   Sets the x coordinate of the point to be the center of the transformed image.
      *   @param   x	The x coordinate of the center.
@@ -2653,7 +2646,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     * Converts to DICOM positions.
+     * Converts to DICOM positions.  TODO: This method really should be relocated
      * Convert from input image oriented x,y,z to Dicom x,y,z
      * (x axis = R->L, y axis = A->P, z axis = I->S)
      * Image distances are oriented the same as DICOM,
@@ -2755,7 +2748,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     * Connverts DICOM back to original.
+     * Converts DICOM back to original. TODO: This method really should be relocated
      * @param image   Image to convert.
      * @param in      Original point.
      * @param orient  The image orientation.
@@ -3910,7 +3903,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            this.requestFocusInWindow();
        }
 
-    protected JPanel buildVolumePositionPanel()
+       /**
+        * Builds the volume position panel, which is the panel that sits in the plug-in area
+        * of the 2x2 tri-planar layout
+        * @return JPanel
+        */
+       protected JPanel buildVolumePositionPanel()
     {
         JPanel volumePositionPanel = new JPanel();
 
@@ -4070,7 +4068,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     protected JCheckBox chkShowTalairachGrid;
     protected JCheckBox chkShowTalairachGridMarkers;
 
-
+    /**
+     * This method will load a plug-in into the plug-in panel area of the tri-planar frame.
+     */
     protected void handlePluginPanelSelection()
     {
         if (oldLayout == false)
@@ -4694,6 +4694,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         buildToggleButton(icon, toolTip, action, iconroll, group, toolbar, false);
     }
 
+    /**
+     *   Helper method to build a toggle button for the toolbar.
+     *   @param icon     Name of icon for button.
+     *   @param toolTip  Tool tip to be associated with button.
+     *   @param action   Action command for button.
+     *   @param iconroll Name of icon for rollover.
+     *   @param group    Button group to add this toggle to.
+     *   @param toolbar  Tool bar to add this button to.
+     *   @param selected whether or not the button is initially selected
+     */
     protected void buildToggleButton(String icon, String toolTip, String action,
                                      String iconroll, ButtonGroup group, JToolBar toolbar,
                                      boolean selected)
@@ -4894,6 +4904,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         System.gc();
     }
 
+    /**
+     * Sets the orientation variable, which determines the last component tha was interacted with
+     * @param orientation int
+     */
     public void setOrientation(int orientation)
     {
         this.orientation = orientation;
