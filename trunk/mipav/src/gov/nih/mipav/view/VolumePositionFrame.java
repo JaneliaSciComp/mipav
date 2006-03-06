@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 import javax.swing.*;
+
 import java.io.*;
 import java.awt.*;
 
@@ -23,6 +24,8 @@ public class VolumePositionFrame extends JFrame implements CoordinateChangeListe
     public JLabel labelXRef = new JLabel("");
     public JLabel labelYRef = new JLabel("");
     public JLabel labelZRef = new JLabel("");
+    
+    public JLabel talairachVoxelLabel = new JLabel("");
 
     public JCheckBox chkShowTalairachGrid = new JCheckBox("Show talairach grid");
     public JCheckBox chkShowTalairachGridMarkers = new JCheckBox("Show talairach grid markers");
@@ -55,17 +58,45 @@ public class VolumePositionFrame extends JFrame implements CoordinateChangeListe
         labelZPos.setText(Integer.toString(z+1));
     }
 
+    /**
+     * Sets the "Show talairach grid" checkbox. Also enables or
+     * disables the "Show talairach grid markers" checkbox
+     * based on this flag
+     * @param flag true to set the checkbox to 'selected'; false otherwise
+     */
     public void setShowTalairachGrid(boolean flag)
     {
         chkShowTalairachGrid.setSelected(flag);
         chkShowTalairachGridMarkers.setEnabled(flag);
     }
 
+    /**
+     * Sets the "Show talairach grid markers" checkbox. 
+     * @param flag true to set the checkbox to 'selected'; flase otherwise
+     */
     public void setShowTalairachGridMarkers(boolean flag)
     {
         chkShowTalairachGridMarkers.setSelected(flag);
     }
+    
+    /**
+     * Sets the text to display in the talairach voxel label. This text
+     * has a format corresponding to the talairach grid. Example:
+     * "AcL3" - an full explanation of what the text means is beyond the 
+     * scope of this comment.
+     * @param newLabelText the text to display in the talairach voxel
+     * label
+     */
+    public void setTalairachVoxelLabel(String newLabelText)
+    {
+    	talairachVoxelLabel.setText(newLabelText);
+    }
 
+    /**
+     * Builds the volume position panel, which is the main panel for 
+     * this component
+     * @return JPanel the JPanel that has been constructed
+     */
     protected JPanel buildVolumePositionPanel()
     {
         JPanel volumePositionPanel = new JPanel();
@@ -104,11 +135,11 @@ public class VolumePositionFrame extends JFrame implements CoordinateChangeListe
         gbConstraints = new GridBagConstraints();
         JPanel talairachPanel = new JPanel(gbLayout);
 
-        chkShowTalairachGrid = new JCheckBox("Show talairach grid");
+        chkShowTalairachGrid = new JCheckBox("Show Talairach grid");
         chkShowTalairachGrid.setActionCommand("ShowTalairachGrid");
         chkShowTalairachGrid.addActionListener(parentFrame);
         chkShowTalairachGrid.setFont(MipavUtil.font12B);
-        chkShowTalairachGridMarkers = new JCheckBox("Show talairach grid markers");
+        chkShowTalairachGridMarkers = new JCheckBox("Show Talairach grid markers");
         chkShowTalairachGridMarkers.setActionCommand("ShowTalairachGridmarkers");
         chkShowTalairachGridMarkers.setEnabled(chkShowTalairachGrid.isSelected());
         chkShowTalairachGridMarkers.addActionListener(parentFrame);
@@ -153,6 +184,12 @@ public class VolumePositionFrame extends JFrame implements CoordinateChangeListe
         talairachSubPanel.add(new JLabel("Z: "), gbSubConstraints);
         gbSubConstraints.gridx = 1;
         talairachSubPanel.add(labelZTal, gbSubConstraints);
+        
+        gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
+        gbSubConstraints.gridy = 4;
+        talairachSubPanel.add(new JLabel("Talairach voxel: "), gbSubConstraints);
+        gbSubConstraints.gridx = 1;
+        talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
 
         float[] tCoord = new float[3];
         parentFrame.getImageA().getScannerCoordLPS(parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[0] / 2,

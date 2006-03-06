@@ -588,6 +588,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid)
             {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
+                
+                Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+                computeTalairachVoxelPosition(pt.x, pt.y);
             }
 
         } // end of if (triComponentOrientation == AXIAL)
@@ -606,6 +609,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid)
             {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
+
+                Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+                computeTalairachVoxelPosition(pt.x, pt.y);
             }
 
         } // end of else if (triComponentOrientation == CORONAL)
@@ -625,6 +631,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
 
+                Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+                computeTalairachVoxelPosition(pt.x, pt.y);
             } // if (showTalairach)
         } // end of else if (triComponentOrientation == SAGITTAL)
 
@@ -986,8 +994,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(0, zS68, getSize().width, zS68);
         offscreenGraphics2d.drawLine(0, zS78, getSize().width, zS78);
         
-        verticalTalGridPts = new int [] {0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34};
-        horizontalTalGridPts = new int [] {0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04};
+        verticalTalGridPts = new int [] {0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34, Integer.MAX_VALUE};
+        horizontalTalGridPts = new int [] {0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04, Integer.MAX_VALUE};
 
         if (showTalairachGridmarkers)
         {
@@ -1102,8 +1110,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(x64, 0, x64, getSize().height);
         offscreenGraphics2d.drawLine(x74, 0, x74, getSize().height);
         
-        verticalTalGridPts = new int [] {0, x14, x24, x34, xSliceT, x54, x64, x74};
-        horizontalTalGridPts = new int [] {0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34};
+        verticalTalGridPts = new int [] {0, x14, x24, x34, xSliceT, x54, x64, x74, Integer.MAX_VALUE};
+        horizontalTalGridPts = new int [] {0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34, Integer.MAX_VALUE};
 
         if (showTalairachGridmarkers)
         {
@@ -1292,8 +1300,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(x64, 0, x64, getSize().height);
         offscreenGraphics2d.drawLine(x74, 0, x74, getSize().height);
         
-        verticalTalGridPts = new int [] {0, x14, x24, x34, xSliceT, x54, x64, x74};
-        horizontalTalGridPts = new int [] {0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04};
+        verticalTalGridPts = new int [] {0, x14, x24, x34, xSliceT, x54, x64, x74, Integer.MAX_VALUE};
+        horizontalTalGridPts = new int [] {0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04, Integer.MAX_VALUE};
 
         if (showTalairachGridmarkers)
         {
@@ -3118,6 +3126,120 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         return;
     }
+    
+    /**
+     * Computes the talairach grid voxel from a screen coordinate.
+     * Also updates the talairach voxel label in the tri-planar frame.
+     */
+    public void computeTalairachVoxelPosition(int x, int y)
+    {
+    	if (horizontalTalGridPts == null || verticalTalGridPts == null)
+    	{
+    		return;
+    	}
+    	    	
+    	StringBuffer talVoxelLabelText = new StringBuffer(triImageFrame.getTalairachVoxelLabelText());
+    	if (talVoxelLabelText == null)
+    	{
+    		talVoxelLabelText = new StringBuffer(5);
+    	}
+    	    	
+    	if (triComponentOrientation == AXIAL)
+    	{
+    		final String [] verticalIndexArray = new String [] {"d", "c", "b", "a", "a", "b", "c", "d"};
+    		final String [] horizontalIndexArray = new String[] {"A", "B", "C", "D", "E", "F", "G", "H", "I"};
+    		
+    		for (int i = 0; i <= verticalTalGridPts.length; i++)
+    		{
+    			if (x >= verticalTalGridPts[i] &&
+    				x <= verticalTalGridPts[i+1])
+    			{
+    				talVoxelLabelText.replace(1, 2, verticalIndexArray[i]);
+    				break;
+    			}
+    		}
+    		
+    		for (int i = 0; i <= horizontalTalGridPts.length; i++)
+    		{
+    			if (y >= horizontalTalGridPts[i] &&
+    				y <= horizontalTalGridPts[i+1])
+    			{
+    				talVoxelLabelText.replace(0, 1, horizontalIndexArray[i]);
+    				break;
+    			}
+    		}
+    		
+    		if (x > verticalTalGridPts[4])
+    		{
+    			talVoxelLabelText.replace(2, 3, "R");
+    		}
+    		else
+    		{
+    			talVoxelLabelText.replace(2, 3, "L");
+    		}
+    	}
+    	else if (triComponentOrientation == SAGITTAL)
+    	{
+    		final String [] verticalIndexArray = new String [] {"A", "B", "C", "D", "E", "F", "G", "H", "I"};
+    		final String [] horizontalIndexArray = new String [] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"};
+    		
+    		for (int i = 0; i <= verticalTalGridPts.length; i++)
+    		{
+    			if (x >= verticalTalGridPts[i] &&
+    				x <= verticalTalGridPts[i+1])
+    			{
+    				talVoxelLabelText.replace(0, 1, verticalIndexArray[i]);
+    				break;
+    			}
+    		}
+    		
+    		for (int i = 0; i <= horizontalTalGridPts.length; i++)
+    		{
+    			if (y >= horizontalTalGridPts[i] &&
+    				y <= horizontalTalGridPts[i+1])
+    			{
+    				talVoxelLabelText.replace(3, 5, horizontalIndexArray[i]);
+    				break;
+    			}
+    		}
+    	}
+    	else // CORONAL
+    	{
+    		final String [] verticalIndexArray = new String [] {"d", "c", "b", "a", "a", "b", "c", "d"};
+    		final String [] horizontalIndexArray = new String[] {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13"};
+    		
+    		for (int i = 0; i <= verticalTalGridPts.length; i++)
+    		{
+    			if (x >= verticalTalGridPts[i] &&
+    				x <= verticalTalGridPts[i+1])
+    			{
+    				talVoxelLabelText.replace(1, 2, verticalIndexArray[i]);
+    				break;
+    			}
+    		}
+    		
+    		for (int i = 0; i <= horizontalTalGridPts.length; i++)
+    		{
+    			if (y >= horizontalTalGridPts[i] &&
+    				y <= horizontalTalGridPts[i+1])
+    			{
+    				talVoxelLabelText.replace(3, 5, horizontalIndexArray[i]);
+    				break;
+    			}
+    		}
+    		
+    		if (x > verticalTalGridPts[4])
+    		{
+    			talVoxelLabelText.replace(2, 3, "R");
+    		}
+    		else
+    		{
+    			talVoxelLabelText.replace(2, 3, "L");
+    		}
+    	}
+    	
+    	triImageFrame.setTalairachVoxelLabelText(new String(talVoxelLabelText));
+    }
 
     /**
      * A mouse-dragged event.
@@ -3129,6 +3251,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         String pointString;
         int distX, distY;
         int nVOI;
+        
+        if (mouseEvent.getX() < 0 || mouseEvent.getY() < 0 ||
+        	mouseEvent.getX() > getWidth() || mouseEvent.getY() > getHeight())
+        {
+        	return;
+        }
+        
         ViewVOIVector VOIs = imageActive.getVOIs();
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
@@ -3153,6 +3282,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         {
             yS = imageDim.height - 1;
         }
+        
+        //computeTalairachVoxelPosition(mouseEvent.getX(), mouseEvent.getY());
 
         if (moveLineEndpoint) // if user is dragging the intensityLineEndpoint
         {

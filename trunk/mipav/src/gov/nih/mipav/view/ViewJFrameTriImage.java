@@ -32,7 +32,7 @@ import gov.nih.mipav.MipavMath;
  *	<p>
  *   There are 2 menus - a file menu and an options menu.  The file menu only has a close
  *   frame command.  The Options menu has a Show Axes command,a Show Crosshairs command,
- *   a show Talairach Grid, a show Talairach Position command, and a Link to another
+ *   a show Talairach grid, a show Talairach position command, and a Link to another
  *   image command.
  *	<p>
  *   There are 2 rows of toolbar buttons.  The first row has 15 toolbar buttons:<br>
@@ -228,9 +228,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     protected JLabel labelZRef;
     protected JLabel scannerLabelZ;
 
-    protected JLabel labelXTal; // Label the talairach position x value in the image volume.
-    protected JLabel labelYTal; // Label the talairach position y value in the image volume.
-    protected JLabel labelZTal; // Label the talairach position z value in the image volume.
+    protected JLabel labelXTal; // Label the Talairach position x value in the image volume.
+    protected JLabel labelYTal; // Label the Talairach position y value in the image volume.
+    protected JLabel labelZTal; // Label the Talairach position z value in the image volume.
 
     /** Color chooser to use when selecting paint color. */
     protected ViewJColorChooser colorChooser;
@@ -371,6 +371,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public static final int UPPER_RIGHT_BACK = 5;
     public static final int LOWER_RIGHT_BACK = 6;
     public static final int LOWER_LEFT_BACK = 7;
+    
+    private JLabel talairachVoxelLabel;
 
     /**
      *   @deprecated use ViewJFrameTriImage(ModelImage, ModelLUT, ModelImage, ModelLUT, ViewControlsImage, ViewJFrameImage)
@@ -1137,6 +1139,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         scannerLabelX = new JLabel();
         scannerLabelY = new JLabel();
         scannerLabelZ = new JLabel();
+        
+        talairachVoxelLabel = new JLabel("     "); // must be initialized to 5 empty spaces
     }
 
     /**
@@ -3906,7 +3910,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
        /**
         * Builds the volume position panel, which is the panel that sits in the plug-in area
         * of the 2x2 tri-planar layout
-        * @return JPanel
+        * @return JPanel the JPanel that has been constructed
         */
        protected JPanel buildVolumePositionPanel()
     {
@@ -3935,22 +3939,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         gbConstraints.gridy = 2;
         gbConstraints.gridx = 0;
-
         gbConstraints.anchor = GridBagConstraints.EAST;
         volumePanel.add(new JLabel("Z: "), gbConstraints);
         gbConstraints.anchor = GridBagConstraints.WEST;
         gbConstraints.gridx = 1;
-        volumePanel.add(labelZPos, gbConstraints);
+        volumePanel.add(labelZPos, gbConstraints);       
 
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
         JPanel talairachPanel = new JPanel(gbLayout);
 
-        chkShowTalairachGrid = new JCheckBox("Show talairach grid");
+        chkShowTalairachGrid = new JCheckBox("Show Talairach grid");
         chkShowTalairachGrid.setActionCommand("ShowTalairachGrid");
         chkShowTalairachGrid.addActionListener(this);
         chkShowTalairachGrid.setFont(MipavUtil.font12B);
-        chkShowTalairachGridMarkers = new JCheckBox("Show talairach grid markers");
+        chkShowTalairachGridMarkers = new JCheckBox("Show Talairach grid markers");
         chkShowTalairachGridMarkers.setActionCommand("ShowTalairachGridmarkers");
         chkShowTalairachGridMarkers.setEnabled(chkShowTalairachGrid.isSelected());
         chkShowTalairachGridMarkers.addActionListener(this);
@@ -3995,6 +3998,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         talairachSubPanel.add(new JLabel("Z: "), gbSubConstraints);
         gbSubConstraints.gridx = 1;
         talairachSubPanel.add(labelZTal, gbSubConstraints);
+
+        gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
+        gbSubConstraints.gridy = 4;
+        talairachSubPanel.add(new JLabel("Talairach voxel: "), gbSubConstraints);
+        gbSubConstraints.gridx = 1;
+        talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints); 
 
         float[] tCoord = new float[3];
         imageA.getScannerCoordLPS(triImage[AXIAL_A].getActiveImage().getExtents()[0] / 2,
@@ -4272,7 +4281,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             Preferences.is(Preferences.PREF_FAST_TRIPLANAR_REPAINT)),
                              menuObj.buildCheckBoxMenuItem("Use 2x2 tri-planar layout", OLD_LAYOUT, oldLayout),
                              separator,
-                             menuObj.buildMenuItem("Show volume coordinates and talairach controls", "PositionFrame", 0, null, false),
+                             menuObj.buildMenuItem("Show volume coordinates and Talairach controls", "PositionFrame", 0, null, false),
                              menuObj.buildMenuItem("Link to another TriImage frame", "LinkFrame", 0, null, false),
                              menuObj.buildMenuItem("Select panel plug-in", PANEL_PLUGIN, 0, null, false)}));
 
@@ -5353,5 +5362,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
 
         return ViewJComponentBase.IMAGE_A;
+    }
+    
+    /**
+     * Sets the text to display in the Talairach voxel label. This text
+     * has a format corresponding to the Talairach grid. Example:
+     * "AcL3" - an full explanation of what the text means is beyond the 
+     * scope of this comment.
+     * @param newLabelText the text to display in the Talairach voxel
+     * label
+     */
+    public void setTalairachVoxelLabelText(String newLabelText)
+    {
+    	talairachVoxelLabel.setText(newLabelText);
+    	if (volumePositionFrame != null)
+    	{
+    		volumePositionFrame.setTalairachVoxelLabel(newLabelText);
+    	}
+    }
+    
+    /**
+     * Gets the text stored in the Talairach voxel label
+     * @return
+     */
+    public String getTalairachVoxelLabelText()
+    {
+    	return talairachVoxelLabel.getText();
     }
 }
