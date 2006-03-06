@@ -202,14 +202,14 @@ public class RayCastColorComposite
             float fSrcA = afAlphasFrontToBack[iStep];
 
             // Scale so that alpha is in [0,1] range
-            fSrcA /= 255.0f;
-
+            //fSrcA /= 255.0f;
+            fSrcA *= 0.003922f;
             float fSrcR = kColor.x;
             float fSrcG = kColor.y;
             float fSrcB = kColor.z;
 
             // voxel is opaque
-            if (fSrcA == 1.0f) {
+            if (fSrcA >= 1.0f) {
                 m_aiRImage[iIndex] =
                     (((int)fSrcR & 0xff) << 16) |
                     (((int)fSrcG & 0xff) <<  8) |

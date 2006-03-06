@@ -275,7 +275,7 @@ public class RayCastColorLighting
             float fSrcB = m_kColor.z * 255.0f;
 
             // voxel is opaque
-            if (fSrcA == 1.0f) {
+            if (fSrcA >= 1.0f) {
                 m_aiRImage[iIndex] =
                     (((int)fSrcR & 0xff) << 16) |
                     (((int)fSrcG & 0xff) <<  8) |
