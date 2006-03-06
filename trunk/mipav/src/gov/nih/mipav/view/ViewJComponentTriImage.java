@@ -227,6 +227,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
     private Color talairachMajorLineColor = new Color(253, 253, 253);
     private Color talairachMinorLineColor = new Color(213, 178, 183);
+    
+    private int [] horizontalTalGridPts;
+    private int [] verticalTalGridPts;
 
 
     /***
@@ -458,11 +461,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
+    /**
+     * Sets the protractor to either a visible or invisible state   
+     * @param visible true to set the protractor visible, false to set it invisible
+     */
     public void setProtractorVisible(boolean visible)
     {
         protractorVisible = visible;
     }
 
+    /**
+     * Gets the status of the protractor
+     * @return boolean indicating whether the protractor is visible or invisible
+     */
     public boolean isProtractorVisible()
     {
         return protractorVisible;
@@ -766,6 +777,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(getSize().width, pt.y, getSize().width - 10, pt.y);
     }
 
+    /**
+     * Draws the VOI intensity line
+     * @param offscreenGraphics2d the graphics context to draw in
+     */
     private void drawVOIIntensityLine(Graphics2D offscreenGraphics2d)
     {
         if (intensityLine != null)
@@ -777,6 +792,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
+    /**
+     * Draws the protractor
+     * @param offscreenGraphics2d the graphics context to drw in
+     */
     private void drawProtractor(Graphics2D offscreenGraphics2d)
     {
         if (voiProtractor != null)
@@ -966,6 +985,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(0, zS58, getSize().width, zS58);
         offscreenGraphics2d.drawLine(0, zS68, getSize().width, zS68);
         offscreenGraphics2d.drawLine(0, zS78, getSize().width, zS78);
+        
+        verticalTalGridPts = new int [] {0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34};
+        horizontalTalGridPts = new int [] {0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04};
 
         if (showTalairachGridmarkers)
         {
@@ -1079,6 +1101,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(x54, 0, x54, getSize().height);
         offscreenGraphics2d.drawLine(x64, 0, x64, getSize().height);
         offscreenGraphics2d.drawLine(x74, 0, x74, getSize().height);
+        
+        verticalTalGridPts = new int [] {0, x14, x24, x34, xSliceT, x54, x64, x74};
+        horizontalTalGridPts = new int [] {0, yA14, yA24, yA34, ySliceT, ySliceT2, yP14, yP24, yP34};
 
         if (showTalairachGridmarkers)
         {
@@ -1266,6 +1291,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         offscreenGraphics2d.drawLine(x54, 0, x54, getSize().height);
         offscreenGraphics2d.drawLine(x64, 0, x64, getSize().height);
         offscreenGraphics2d.drawLine(x74, 0, x74, getSize().height);
+        
+        verticalTalGridPts = new int [] {0, x14, x24, x34, xSliceT, x54, x64, x74};
+        horizontalTalGridPts = new int [] {0, zS78, zS68, zS58, zS48, zS38, zS28, zS18, zSliceT, zI34, zI24, zI14, zI04};
 
         if (showTalairachGridmarkers)
         {
@@ -1325,6 +1353,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
+    /**
+     * Builds the dashed stroke used to render the minor talairach grid lines
+     * @return the BasicStroke object used to render the minor talairach grid lines
+     */
     private BasicStroke getDashedStroke()
     {
         BasicStroke stroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
@@ -2846,7 +2878,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int xOrg = 0;
         int yOrg = 0;
         int zOrg = 0;
-        int i, j, k;
+        int i, j;
         int nVOI;
         boolean doNewVOI;
         lastMouseX = mouseEvent.getX();
@@ -3787,27 +3819,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public boolean nearBoundsPoint(int mouseX, int mouseY, int boundsX, int boundsY)
     {
-        float boundsXD, boundsYD;
         double dist;
 
-        /*if ( (triComponentOrientation == SAGITTAL) && (hasOrientation))
-                 {
-            boundsXD = boundsX * zoomY * resolutionY;
-            boundsYD = boundsY * zoomX * resolutionX;
-                 }
-                 else
-                 {
-            boundsXD = boundsX * zoomX * resolutionX;
-            boundsYD = boundsY * zoomY * resolutionY;
-                 }*/
         Point3D pt = getTriImagePosition(mouseX, mouseY);
         mouseX = pt.x;
         mouseY = pt.y;
-        int mouseZ = pt.z;
 
         dist = Math.sqrt( (mouseX - boundsX) * (mouseX - boundsX) + (mouseY - boundsY) * (mouseY - boundsY));
 
-        //dist = Math.sqrt( (mouseX - boundsXD) * (mouseX - boundsXD) + (mouseY - boundsYD) * (mouseY - boundsYD));
         if (dist < 3.0)
         {
             return true;
@@ -6589,11 +6608,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
+    /**
+     * Sets the intensity line to visible or invisible
+     * @param visible true if the intensity line should be made visible, false otherwise
+     */
     public void setIntensityLineVisible(boolean visible)
     {
         intensityLineVisible = visible;
     }
 
+    /**
+     * Returns a boolean indicating whether the intensity line is currently visible or invisible
+     * @return true if the intensity line is visible, false otherwise
+     */
     public boolean isIntensityLineVisible()
     {
         return intensityLineVisible;
