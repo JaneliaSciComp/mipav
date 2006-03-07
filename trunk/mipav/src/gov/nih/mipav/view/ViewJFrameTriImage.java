@@ -376,6 +376,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public static final int LOWER_LEFT_BACK = 7;
     
     private JLabel talairachVoxelLabel;
+    private JToggleButton addPointToggleButton;
 
     /**
      *   @deprecated use ViewJFrameTriImage(ModelImage, ModelLUT, ModelImage, ModelLUT, ViewControlsImage, ViewJFrameImage)
@@ -3709,11 +3710,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                        triImage[i].setMode(ViewJComponentBase.NEW_VOI);
                    }
                }
-
            }
            else if (command.equals("deleteVOI"))
            {
-               if (triImage[AXIAL_A] != null)
+               /*if (triImage[AXIAL_A] != null)
                {
                    triImage[AXIAL_A].deleteSelectedContours();
                }
@@ -3748,9 +3748,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                if (triImage[CORONAL_B] != null)
                {
                    triImage[CORONAL_B].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
+               }*/
+               
+               for (int i = 0; i < MAX_TRI_IMAGES; i++)
+               {
+            	   if (triImage[i] != null)
+            	   {
+            		   triImage[i].deleteSelectedContours();
+            	   }
                }
-               updateImages(true);
-               traverseButton.setSelected(true);
+               
+               //updateImages(true);
+               imageA.notifyImageDisplayListeners();
+               imageB.notifyImageDisplayListeners();
+               //traverseButton.setSelected(true);
            }
            else if (command.equals("boundingBox"))
            {
@@ -4353,9 +4364,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             "createTransformation"));
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        imageToolBar.add(toolbarBuilder.buildToggleButton("addPoint", "Add point", "pointROI", VOIGroup));
+        addPointToggleButton = toolbarBuilder.buildToggleButton("addPoint", "Add point", "pointROI", VOIGroup);
+        addPointToggleButton.addChangeListener(this);
+        imageToolBar.add(addPointToggleButton);
         imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
-        imageToolBar.add(toolbarBuilder.buildToggleButton("deleteVOI", "Delete Point VOI", "delete", VOIGroup));
+        imageToolBar.add(toolbarBuilder.buildButton("deleteVOI", "Delete point VOI", "delete"));
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
@@ -4813,10 +4826,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void stateChanged(ChangeEvent e)
     {
         Object source = e.getSource();
-        int newValue = 1;
-
+        
         if (source == tImageSlider)
         {
+        	int newValue = 1;
+        	
             if (tImageSlider.getValueIsAdjusting() == true)
             {
                 return;
@@ -4836,6 +4850,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     triImage[i].setIntensityDropper(intensityDropper);
                 }
             }
+        }
+        else if (source == addPointToggleButton)
+        {
+        	// we don't want the user to affect both images when
+        	// adding a VOI point in the tri-planar frame,
+        	// so the "Both" radio button is disabled
+        	if (addPointToggleButton.isSelected())
+        	{
+        		if (radioImageBoth.isSelected())
+        		{
+        			radioImageA.setSelected(true);
+        		}
+        		radioImageBoth.setEnabled(false);
+        	}
+        	else
+        	{
+        		// "add point" button de-selected, so re-enable
+        		// the "Both" radio button
+        		radioImageBoth.setEnabled(true);
+        	}
         }
     }
 
