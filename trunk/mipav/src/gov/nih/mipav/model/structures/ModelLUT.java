@@ -1168,6 +1168,23 @@ public class ModelLUT
     }
 
     /**
+     * Sets a specific index of the LUT with the given color
+     * and updates the compressed LUT
+     * @param index int index of the LUT
+     * @param alpha int 0-255 alpha
+     * @param red int 0-255 red
+     * @param green int 0-255 green
+     * @param blue int 0-255 blue
+     */
+    public void setColor(int index, int alpha, int red, int green, int blue) {
+        set(0, index, alpha); // set alpha value to 1.0
+        set(1, index, red); // set red channel
+        set(2, index, green); // set green channel
+        set(3, index, blue); // set blue channel
+        indexedLUT[index] = (255 << 24) | (red << 16) | (green << 8) | blue;
+    }
+
+    /**
      *   Special LUT to be used to display java image.
      *   Assumes RGB values that range between (0 and 255) are stored in the LUT;
      *   @param opacityArray
