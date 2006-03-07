@@ -176,6 +176,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
     /** Radio button of the SURFACE mode option. */
     private JRadioButton radioSURFACE;
 
+    /** Radio button of the SURFACE mode option. */
+    private JRadioButton radioSURFACEFAST;
+
     /** Radio button of the MIP mode option. */
     private JRadioButton radioMIPShear;
 
@@ -1981,6 +1984,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         radioSURFACE = new JRadioButton( "Surface", false );
         radioSURFACE.setFont( serif12 );
         group1.add( radioSURFACE );
+        radioSURFACEFAST = new JRadioButton( "Fast", false );
+        radioSURFACEFAST.setFont( serif12 );
+        group1.add( radioSURFACEFAST );
 
         int rayCastMode = raycastRender.getRenderMode();
 
@@ -1990,18 +1996,23 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
             radioXRAY.setSelected( true );
         } else if ( rayCastMode == ViewJComponentRenderImage.ModeCOMPOSITE ) {
             radioCOMPOSITE.setSelected( true );
-        } else {
+        } else if ( rayCastMode == ViewJComponentRenderImage.ModeSURFACE ) {
             radioSURFACE.setSelected( true );
+        } else if ( rayCastMode == ViewJComponentRenderImage.ModeSURFACEFAST ) {
+            radioSURFACEFAST.setSelected( true );
         }
+
 
         radioMIP.addItemListener( this );
         radioXRAY.addItemListener( this );
         radioCOMPOSITE.addItemListener( this );
         radioSURFACE.addItemListener( this );
+        radioSURFACEFAST.addItemListener( this );
         rayCastToolBar.add( radioMIP );
         rayCastToolBar.add( radioXRAY );
         rayCastToolBar.add( radioCOMPOSITE );
         rayCastToolBar.add( radioSURFACE );
+        rayCastToolBar.add( radioSURFACEFAST );
         rayCastToolBar.add( ViewToolBarBuilder.makeSeparator() );
         rayCastToolBar.add(toolbarBuilder.buildButton("AutoCapture" ,  "Auto snapshot screen", "camera") );
 
@@ -2496,7 +2507,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
             } else if ( radioSURFACE.isSelected() && source == radioSURFACE  ) {
                 raycastRender.setRenderMode( ViewJComponentRenderImage.ModeSURFACE );
                 raycastRender.SURMode();
+            } else if ( radioSURFACEFAST.isSelected() && source == radioSURFACEFAST  ) {
+                raycastRender.setRenderMode( ViewJComponentRenderImage.ModeSURFACEFAST );
+                raycastRender.SURFASTMode();
             }
+
         }
 
         if ( shearwarpRender != null ) {
