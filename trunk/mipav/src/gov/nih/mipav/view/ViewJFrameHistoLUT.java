@@ -496,12 +496,17 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase
      * @return boolean is dual threshold inversing
      */
     public boolean isThresholding() {
-        if ( lutPanel.isImageASelected() && getHistoLUTComponentA() != null
-                && getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV ) {
-            return true;
-        } else if ( lutPanel.isImageBSelected() && getHistoLUTComponentB() != null
-                && getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV ) {
-            return true;
+        if ( lutPanel.isImageASelected() && getHistoLUTComponentA() != null) {
+            if ( getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV   ||
+                 getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD  )    {
+                return true;
+            }
+        }
+        else if ( lutPanel.isImageBSelected() && getHistoLUTComponentB() != null) {
+            if ( getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV   ||
+                 getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD  )    {
+                return true;
+            }
         }
         return false;
     }

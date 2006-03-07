@@ -2181,9 +2181,9 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             panelParent.setDisplayMode(panelParent.IMAGE_B);
             panelParent.setLUTB(panelParent.getLUTb());
             panelParent.setTitle("Lookup Table: " + panelParent.getImageB().getImageName());
-             if (panelParent.doCalcThresholdVolume()) {
-                 calculateThreshold();
-             }
+            if (panelParent.doCalcThresholdVolume()) {
+                calculateThreshold();
+            }
         }
 
         if (source == mouseSlider)
@@ -2304,9 +2304,11 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     {
         threshLowerF.setText(Float.toString(lower));
         threshUpperF.setText(Float.toString(upper));
-         if (panelParent.doCalcThresholdVolume()) {
-             calculateThreshold(lower, upper);
-         }
+        if (panelParent.isThresholding()) {
+            if (panelParent.doCalcThresholdVolume()) {
+                calculateThreshold(lower, upper);
+            }
+        }
     }
 
     /**
@@ -2314,10 +2316,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      */
     private void calculateThreshold()
     {
-        if (panelParent.getImageA().getNDims() == 3)
-            calculateThresholdVolume(Float.parseFloat(threshLowerF.getText()), Float.parseFloat(threshUpperF.getText()));
-        else
-            calculateThresholdArea(Float.parseFloat(threshLowerF.getText()), Float.parseFloat(threshUpperF.getText()));
+        if (panelParent.isThresholding()) {
+            if (panelParent.getImageA().getNDims() == 3)
+                calculateThresholdVolume(Float.parseFloat(threshLowerF.getText()),
+                                         Float.parseFloat(threshUpperF.getText()));
+            else
+                calculateThresholdArea(Float.parseFloat(threshLowerF.getText()),
+                                       Float.parseFloat(threshUpperF.getText()));
+        }
     }
 
     /**
@@ -2434,10 +2440,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      */
     public void setRangeText(float x, float y, int _index)
     {
-        if (panelParent.isThresholding()) {
-             if (panelParent.doCalcThresholdVolume()) {
-                 calculateThreshold();
-             }
+        if (panelParent.doCalcThresholdVolume()) {
+            calculateThreshold();
         }
 
         String start, mid, end;
