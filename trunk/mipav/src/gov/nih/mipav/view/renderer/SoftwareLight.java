@@ -215,8 +215,8 @@ public abstract class SoftwareLight {
         float fRdU = m_kReflect.dot(m_kView);
         if (fRdU < 0.0f) {
             fRdU = (float) Math.pow( -fRdU, kMaterial.shininess);
-            //float fSpecAmpl =  m_fAttenuate * m_fSpot * fRdU; //Correct method ?
-            float fSpecAmpl = 2 * kMaterial.shininess * m_fAttenuate * m_fSpot * fRdU;
+            float fSpecAmpl =  m_fAttenuate * m_fSpot * fRdU; //Correct method ?
+            //float fSpecAmpl = 2 * kMaterial.shininess * m_fAttenuate * m_fSpot * fRdU;
             m_kColor.x += fSpecAmpl * specular.x * kSpecular.x;
             m_kColor.y += fSpecAmpl * specular.y * kSpecular.y;
             m_kColor.z += fSpecAmpl * specular.z * kSpecular.z;
