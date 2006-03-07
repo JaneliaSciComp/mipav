@@ -1552,8 +1552,8 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
                     threshLowerBF.setEnabled(true);
                     threshUpperBF.setEnabled(true);
                     threshFillBF.setEnabled(true);
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    float upper = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
+                    float lower = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
                     threshLowerBF.setText(Float.toString(lower));
                     threshUpperBF.setText(Float.toString(upper));
                     if (panelParent.doCalcThresholdVolume()) {
@@ -2302,12 +2302,25 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      */
     public void updateThresholdFields(float lower, float upper)
     {
-        threshLowerF.setText(Float.toString(lower));
-        threshUpperF.setText(Float.toString(upper));
-        if (panelParent.isThresholding()) {
-            if (panelParent.doCalcThresholdVolume()) {
-                calculateThreshold(lower, upper);
+
+        if (isImageASelected()) {
+            threshLowerF.setText(Float.toString(lower));
+            threshUpperF.setText(Float.toString(upper));
+            if (panelParent.isThresholding()) {
+                if (panelParent.doCalcThresholdVolume()) {
+                    calculateThreshold(lower, upper);
+                }
             }
+        }
+        else {
+            threshLowerBF.setText(Float.toString(lower));
+            threshUpperBF.setText(Float.toString(upper));
+            if (panelParent.isThresholding()) {
+                if (panelParent.doCalcThresholdVolume()) {
+                    calculateThreshold(lower, upper);
+                }
+            }
+
         }
     }
 
@@ -2316,13 +2329,25 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
      */
     private void calculateThreshold()
     {
-        if (panelParent.isThresholding()) {
-            if (panelParent.getImageA().getNDims() == 3)
-                calculateThresholdVolume(Float.parseFloat(threshLowerF.getText()),
-                                         Float.parseFloat(threshUpperF.getText()));
-            else
-                calculateThresholdArea(Float.parseFloat(threshLowerF.getText()),
-                                       Float.parseFloat(threshUpperF.getText()));
+        if (isImageASelected()) {
+            if (panelParent.isThresholding()) {
+                if (panelParent.getImageA().getNDims() == 3)
+                    calculateThresholdVolume(Float.parseFloat(threshLowerF.getText()),
+                                             Float.parseFloat(threshUpperF.getText()));
+                else
+                    calculateThresholdArea(Float.parseFloat(threshLowerF.getText()),
+                                           Float.parseFloat(threshUpperF.getText()));
+            }
+        }
+        else {
+            if (panelParent.isThresholding()) {
+                if (panelParent.getImageB().getNDims() == 3)
+                    calculateThresholdVolume(Float.parseFloat(threshLowerBF.getText()),
+                                             Float.parseFloat(threshUpperBF.getText()));
+                else
+                    calculateThresholdArea(Float.parseFloat(threshLowerBF.getText()),
+                                           Float.parseFloat(threshUpperBF.getText()));
+            }
         }
     }
 
