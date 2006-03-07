@@ -292,6 +292,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
     /** Radio button for selecting both images as active. */
     protected JRadioButton radioImageBoth;
+    
+    protected JCheckBox chkShowTalairachGrid; // "Show talairach grid" checkbox
+    protected JCheckBox chkShowTalairachGridMarkers; // "Show talairach gridmarkers" checkbox
 
     /** Tells "commit" and "apply rotations" which images to work on. */
     protected int imagesDone = ViewJComponentBase.IMAGE_A;
@@ -355,7 +358,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
 
-    protected JPanel pluginPanel; // reference to the plug-in panel in the 2x2 (old) layout
+    protected Component pluginPanel; // reference to the plug-in panel in the 2x2 (old) layout
     protected JPanel volumePositionPanel; // reference to the volume coordinate panel when it is in the plug-in position
     protected VolumePositionFrame volumePositionFrame; // reference to the volume coordinate frame
 
@@ -3054,12 +3057,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
                showTalairachGrid = sourceCheckbox.isSelected();
                chkShowTalairachGrid.setSelected(showTalairachGrid);
+               chkShowTalairachGridMarkers.setEnabled(showTalairachGrid);
+
                if (volumePositionFrame != null)
                {
                    volumePositionFrame.setShowTalairachGrid(showTalairachGrid);
                }
 
-               chkShowTalairachGridMarkers.setEnabled(showTalairachGrid);
                menuObj.setMenuItemSelected("ShowXHairs", !showTalairachGrid);
                menuObj.setMenuItemSelected("ShowAxes", !showTalairachGrid);
 
@@ -4074,11 +4078,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         return volumePositionPanel;
     }
 
-    protected JCheckBox chkShowTalairachGrid;
-    protected JCheckBox chkShowTalairachGridMarkers;
-
     /**
-     * This method will load a plug-in into the plug-in panel area of the tri-planar frame.
+     * This method will load a plug-in into the plug-in area of the 
+     * tri-planar frame. The plug-in must extend java.awt.Component,
+     * and take this class as the only parameter to its constructor.
      */
     protected void handlePluginPanelSelection()
     {
@@ -4106,7 +4109,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         if (response == JFileChooser.APPROVE_OPTION)
         {
             File selectedFile = fileChooser.getSelectedFile();
-            System.out.println("file selected == " + selectedFile.getName());
 
             try
             {
@@ -4115,25 +4117,24 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 Class pluginClass = Class.forName(filename);
 
                 Constructor pluginConstructor = pluginClass.getConstructor(new Class [] {getClass()});
-                pluginPanel = (JPanel) pluginConstructor.newInstance(new Object [] {this});
-                System.out.println("OK");
+                pluginPanel = (Component) pluginConstructor.newInstance(new Object [] {this});
+                Preferences.debug("Tri-planar plug-in loaded OK", Preferences.DEBUG_MINOR);
+            }
+            catch (NoSuchMethodException nsme)
+            {
+            	MipavUtil.displayError("Class loading failed! The plug-in class must take ViewJFrameTriImage as an argument to its constructor.");
+            	return;
+            }
+            catch (ClassCastException cce)
+            {
+            	MipavUtil.displayError("Class loading failed! The plug-in class must extend java.awt.Component.");
+            	return;
             }
             catch (Exception e)
             {
                 MipavUtil.displayError("Class loading failed!");
                 return;
             }
-            /*catch (NoSuchMethodException nsme)
-            {
-                MipavUtil.displayError("Constructor not found!");
-                return;
-            }
-            catch (InstantiationException ie)
-            {
-                MipavUtil.displayError("Constructor not found!");
-                return;
-            }
-            catch (ClassCastException cce)*/
         }
         else
         {
