@@ -1618,6 +1618,7 @@ public class FileImageXML extends FileXML {
     private void addFunctionToLUT() {
 
         if ( LUT == null ) {
+            System.err.println("making a ModelLUT.GRAY");
             LUT = new ModelLUT( ModelLUT.GRAY, 256, new int[] { 4, 256 } );
         }
 
@@ -1723,20 +1724,17 @@ public class FileImageXML extends FileXML {
         LUValue lv;
         int m;
 
+
         for ( m = 0; m < height; m++ ) {
             lv = (LUValue) lutVector.elementAt( m );
             Preferences.debug(
                     TAB + m + " alpha: " + lv.alpha + ", red: " + lv.red + ", green: " + lv.green + ", blue: " + lv.blue
                     + "\n", Preferences.DEBUG_FILEIO );
-            LUT.set( 0, m, lv.alpha );
-            LUT.set( 1, m, lv.red );
-            LUT.set( 2, m, lv.green );
-            LUT.set( 3, m, lv.blue );
+
+            LUT.setColor(m, (int)lv.alpha, (int)lv.red, (int)lv.green, (int)lv.blue);
         }
 
         this.usesLUT = true;
-        // LUT.makeLUT(256);
-        // LUT.makeIndexedLUT();
     }
 
     /**
