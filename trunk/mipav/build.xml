@@ -289,7 +289,7 @@
         <mkdir dir="${dir.doc}"/>
         <javadoc destdir="${dir.doc}"
                 packagenames="gov.nih.*"
-                maxmemory="200M"
+                maxmemory="500M"
                 access="${doc.access}"
                 author="true"
                 windowtitle="${project.name.upper} API Documentation"
