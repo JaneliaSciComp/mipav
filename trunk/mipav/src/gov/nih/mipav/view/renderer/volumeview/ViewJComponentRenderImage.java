@@ -33,6 +33,9 @@ public abstract class ViewJComponentRenderImage
     /** COMPOSITE rendering mode constant. */
     public static final int ModeCOMPOSITE = 4;
 
+    /** Surface faset rendering mode constant. */
+    public static final int ModeSURFACEFAST = 5;
+
     protected BufferedImage m_kImage;
 
     protected Dimension m_kImageDim;

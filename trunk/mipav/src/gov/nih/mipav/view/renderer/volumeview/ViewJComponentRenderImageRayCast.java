@@ -76,6 +76,9 @@ public class ViewJComponentRenderImageRayCast extends ViewJComponentRenderImage
         } else if ( renderingMode == ModeSURFACE ) {
             rayTracerA = new RayCastColorLighting( m_kImageA, m_kImageDim.width, renBufferA );
             rayTracerB = null;
+        } else if ( renderingMode == ModeSURFACEFAST ) {
+              rayTracerA = new RayCastColorReflection( m_kImageA, m_kImageDim.width, renBufferA );
+              rayTracerB = null;
         } else if ( renderingMode == ModeCOMPOSITE ) {
             rayTracerA = new RayCastColorComposite( m_kImageA, m_kImageDim.width, renBufferA );
             rayTracerB = null;

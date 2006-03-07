@@ -907,6 +907,16 @@ public abstract class VolumeRenderer extends RenderViewBase
     }
 
     /**
+     * Invoke the SURFACEFAST rendering mode.
+     */
+    public void SURFASTMode() {
+      setRenderMode(ViewJComponentRenderImage.ModeSURFACEFAST);
+      lightControl.refreshLighting();
+      updateImages(true);
+    }
+
+
+    /**
      * Invoke the composite rendering mode.
      */
     public void CMPMode() {
