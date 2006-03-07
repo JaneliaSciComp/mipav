@@ -1525,7 +1525,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
         }
 
-
         if (VOIs != null)
         {
             int nVOI = VOIs.size();
@@ -2887,8 +2886,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int yOrg = 0;
         int zOrg = 0;
         int i, j;
-        int nVOI;
-        boolean doNewVOI;
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2936,7 +2933,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 // the call below is needed because nearOuterPoint actually changes the state of the
                 // voiProtractor. this prevents an exception that happened when the user dragged the
                 // outer point of the protractor and released the mouse, and then re-dragged it without
-                // moving the mouse position again
+                // moving the mouse position again -- lorsino
                 voiProtractor.nearOuterPoint(mouseEvent.getX(), mouseEvent.getY(), slice, 0, getZoomX(), resolutionX,
                                              resolutionY);
             }
@@ -2999,10 +2996,29 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 yOrg = mousePt.y;
                 zOrg = mousePt.z;
 
-                doNewVOI = true;
+                boolean doNewVOI = true;
+                
+                if (this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_B) ||
+                	this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_B) ||
+                	this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_B))
+                {
+                	imageActive = imageA;
+                }
+                else
+                {
+	                if (triImageFrame.getSelectedImage() == IMAGE_B)
+	                {
+	                	imageActive = imageB;
+	                }
+	                else
+	                {	
+	                	imageActive = imageA;
+	                }
+                }
+                
                 ViewVOIVector VOIs = imageActive.getVOIs();
 
-                nVOI = VOIs.size();
+                int nVOI = VOIs.size();
                 for (i = nVOI - 1; i >= 0; i--)
                 {
                     if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
@@ -3031,47 +3047,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     catch (OutOfMemoryError error)
                     {
                         System.gc();
-                        MipavUtil.displayError("Out of memory: ComponentTriImage.mouseReleased");
+                        MipavUtil.displayError("Out of memory: ViewJComponentTriImage.mouseReleased");
                         setMode(DEFAULT);
                         return;
                     }
                     // lastPointVOI is a protected variable in ViewJComponentEditImage
                     lastPointVOI = voiID;
-
-                    if (this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_AB) ||
-                        this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB) ||
-                        this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_AB))
-                    {
-                        // was pressed on a composite image
-                        int selectedImage = triImageFrame.getSelectedImage();
-
-                        if (selectedImage == ViewJComponentBase.IMAGE_A || selectedImage == ViewJComponentBase.BOTH)
-                        {
-                            imageA.registerVOI(newPointVOI);
-                            //System.out.println("registering A");
-                        }
-
-                        if (selectedImage == ViewJComponentBase.IMAGE_B || selectedImage == ViewJComponentBase.BOTH)
-                        {
-                            if (imageB != null) // should never be null, but just in case
-                            {
-                                //System.out.println("registering B");
-                                imageB.registerVOI(newPointVOI);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        imageA.registerVOI(newPointVOI);
-                    }
+                    
+                    imageActive.registerVOI(newPointVOI);
 
                     newPointVOI.setActive(true);
-                    ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[ (int) z[0]].elementAt(0))).setActive(true);
+                    ( (VOIPoint) (newPointVOI.getCurves()[ (int) z[0]].elementAt(0))).setActive(true);
                     frame.updateImages();
                     triImageFrame.updatevoiID(voiID);
-                    triImageFrame.setTraverseButton();
+                    
                     if (mouseEvent.isShiftDown() != true)
                     {
+                    	triImageFrame.setTraverseButton();
                         triImageFrame.setDefault();
                     }
                 } // end of if ((voiID == -1) || (doNewVOI))
@@ -3094,29 +3086,30 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             }
                             else
                             {
-                                MipavUtil.displayError("Can't add point VOI to other VOI structure.");
+                                MipavUtil.displayError("Can't add point VOI to existing VOI structure.");
                                 return;
                             }
                         }
                     }
 
-                    /*int end = imageActive.getExtents()[2];
+                    int end = imageActive.getExtents()[2];
                     for (j = 0; j < end; j++)
                     {
                         index = VOIs.VOIAt(i).getCurves()[j].size();
-                        for (k = 0; k < index; k++)
+                        for (int k = 0; k < index; k++)
                         {
                             ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[j].elementAt(k))).setActive(false);
                         }
-                    }*/
+                    }
 
                     index = VOIs.VOIAt(i).getCurves()[ (int) z[0]].size();
                     ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[ (int) z[0]].elementAt(index - 1))).setActive(true);
                     frame.updateImages();
-                    triImageFrame.setTraverseButton();
                     triImageFrame.updatevoiID(voiID);
+                    
                     if (mouseEvent.isShiftDown() != true)
                     {
+                    	triImageFrame.setTraverseButton();
                         triImageFrame.setDefault();
                     }
                     return;
@@ -3360,6 +3353,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == PROTRACTOR)
         {
+        	if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
+        	{
+        		// adjust window and level when in DEFAULT mode and dragging with right-button
+        		super.mouseDragged(mouseEvent);
+        		return;
+        	}
+        	
             // Hides the cursor during dragging so it doesn't get in the way.
             if (showCrosshairs == true)
             {
@@ -4249,7 +4249,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
         if (i == nVOI)
         {
-            MipavUtil.displayError("VOI must be selected.");
             return; // No VOI to delete
         }
 
