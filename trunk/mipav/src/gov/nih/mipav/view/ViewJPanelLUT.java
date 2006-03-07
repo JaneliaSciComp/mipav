@@ -2325,30 +2325,50 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     /**
-     * Calculates the volume or area of the image between the two values from the upper and lower bounds text areas.
+     * Calculates the volume (for 3D images) or area (for 2D images)
+     * of the image between the two values from the upper and lower 
+     * bounds text areas.
      */
     private void calculateThreshold()
     {
-        if (isImageASelected()) {
-            if (panelParent.isThresholding()) {
-                if (panelParent.getImageA().getNDims() == 3)
-                    calculateThresholdVolume(Float.parseFloat(threshLowerF.getText()),
-                                             Float.parseFloat(threshUpperF.getText()));
-                else
-                    calculateThresholdArea(Float.parseFloat(threshLowerF.getText()),
-                                           Float.parseFloat(threshUpperF.getText()));
-            }
-        }
-        else {
-            if (panelParent.isThresholding()) {
-                if (panelParent.getImageB().getNDims() == 3)
-                    calculateThresholdVolume(Float.parseFloat(threshLowerBF.getText()),
-                                             Float.parseFloat(threshUpperBF.getText()));
-                else
-                    calculateThresholdArea(Float.parseFloat(threshLowerBF.getText()),
-                                           Float.parseFloat(threshUpperBF.getText()));
-            }
-        }
+    	float upper, lower;
+
+    	if (panelParent.isThresholding())
+    	{
+	    	try
+	    	{
+		    	if (isImageASelected())
+		    	{
+		    		lower = Float.parseFloat(threshLowerF.getText());
+		    		upper = Float.parseFloat(threshUpperF.getText());
+		    	}
+		    	else // image B is selected
+		    	{
+		    		lower = Float.parseFloat(threshLowerBF.getText());
+		    		upper = Float.parseFloat(threshUpperBF.getText());
+		    	}
+	    	}
+	    	catch (Exception e)
+	    	{
+	    		return;
+	    	}
+	    	
+	
+	    	if (isImageASelected())
+	    	{
+		        if (panelParent.getImageA().getNDims() == 3)
+		            calculateThresholdVolume(lower, upper);
+		        else
+		            calculateThresholdArea(lower, upper);
+	    	}
+	    	else // image B is selected
+	    	{
+		        if (panelParent.getImageB().getNDims() == 3)
+		            calculateThresholdVolume(lower, upper);
+		        else
+		            calculateThresholdArea(lower, upper);
+	    	}
+    	}
     }
 
     /**
