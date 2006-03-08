@@ -339,6 +339,86 @@ public abstract class RayCastRenderer extends Renderer {
                 }
             }
         }
+
+        // Blur the final 2D image
+        int vCenter, vLeft, vRight, vTop, vBottom;
+        float fSrcR, fSrcG, fSrcB;
+        float fTrgR, fTrgG, fTrgB;
+        int iIndex;
+        for ( iY = 1; iY < m_iRBound-1; iY++) {
+           int iY_renBound = m_iRBound * iY;
+           for ( int iX = 1; iX < m_iRBound - 1; iX++ ) {
+             iIndex = iX + iY_renBound;
+             vCenter = m_aiRImage[iIndex];
+             vLeft = m_aiRImage[iIndex - 1];
+             vRight = m_aiRImage[iIndex + 1];
+             vTop = m_aiRImage[iX + (m_iRBound * (iY - 1))];
+             vBottom = m_aiRImage[iX + (m_iRBound * (iY + 1))];
+
+             // composite the color values
+             // vCenter
+             fSrcR = ( (vCenter >> 16) & 0xff);
+             fSrcG = ( (vCenter >> 8) & 0xff);
+             fSrcB = ( (vCenter) & 0xff);
+
+             fTrgR = ( (m_aiRImage[iIndex] >> 16) & 0xff);
+             fTrgG = ( (m_aiRImage[iIndex] >> 8) & 0xff);
+             fTrgB = ( (m_aiRImage[iIndex]) & 0xff);
+
+             fTrgR += fSrcR;
+             fTrgG += fSrcG;
+             fTrgB += fSrcB;
+
+             // vLeft
+             fSrcR = ( (vLeft >> 16) & 0xff);
+             fSrcG = ( (vLeft >> 8) & 0xff);
+             fSrcB = ( (vLeft) & 0xff);
+
+             fTrgR += fSrcR;
+             fTrgG += fSrcG;
+             fTrgB += fSrcB;
+
+             // vRight
+             fSrcR = ( (vRight >> 16) & 0xff);
+             fSrcG = ( (vRight >> 8) & 0xff);
+             fSrcB = ( (vRight) & 0xff);
+
+             fTrgR += fSrcR;
+             fTrgG += fSrcG;
+             fTrgB += fSrcB;
+
+             // vTop
+             fSrcR = ( (vTop >> 16) & 0xff);
+             fSrcG = ( (vTop >> 8) & 0xff);
+             fSrcB = ( (vTop) & 0xff);
+
+             fTrgR += fSrcR;
+             fTrgG += fSrcG;
+             fTrgB += fSrcB;
+
+             // vBottom
+             fSrcR = ( (vBottom >> 16) & 0xff);
+             fSrcG = ( (vBottom >> 8) & 0xff);
+             fSrcB = ( (vBottom) & 0xff);
+
+             fTrgR += fSrcR;
+             fTrgG += fSrcG;
+             fTrgB += fSrcB;
+
+             fTrgR /= 5;
+             fTrgG /= 5;
+             fTrgB /= 5;
+
+             m_aiRImage[iIndex] =
+                 //(((int)255   & 0xff) << 24) |
+                 ( ( (int) (fTrgR) & 0xff) << 16) |
+                 ( ( (int) (fTrgG) & 0xff) << 8) |
+                 ( ( (int) (fTrgB) & 0xff));
+
+
+           }
+        }
+
         now = System.currentTimeMillis();
         elapsedTime = (double) ( now - startTime );
         if ( elapsedTime <= 0 ) {
