@@ -2995,125 +2995,58 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 xOrg = mousePt.x;
                 yOrg = mousePt.y;
                 zOrg = mousePt.z;
-
-                boolean doNewVOI = true;
                 
-                if (this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_B) ||
-                	this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_B) ||
-                	this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_B))
-                {
-                	imageActive = imageA;
-                }
-                else
+                imageActive = imageA;
+                
+                if (this == triImageFrame.getTriImage(ViewJFrameTriImage.AXIAL_AB) ||
+                	this == triImageFrame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB) ||
+                	this == triImageFrame.getTriImage(ViewJFrameTriImage.CORONAL_AB))
                 {
 	                if (triImageFrame.getSelectedImage() == IMAGE_B)
 	                {
 	                	imageActive = imageB;
 	                }
-	                else
-	                {	
-	                	imageActive = imageA;
-	                }
                 }
-                
-                ViewVOIVector VOIs = imageActive.getVOIs();
-
-                int nVOI = VOIs.size();
-                for (i = nVOI - 1; i >= 0; i--)
-                {
-                    if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
-                    {
-                        doNewVOI = false;
-                    }
-                }
+                                
                 float[] x = new float[1];
                 float[] y = new float[1];
                 float[] z = new float[1];
 
                 // voiID is a protected variable set to -1 by NEW_VOI in ViewJComponentEditImage
-                if ( (voiID == -1) || (doNewVOI))
-                { // create new VOI
-                    VOI newPointVOI;
-                    try
-                    {
-                        voiID = imageActive.getVOIs().size();
-                        newPointVOI = new VOI( (short) imageActive.getVOIs().size(), "point3D_" + (voiID + 1),
-                                              imageActive.getExtents()[2], VOI.POINT, -1.0f);
-                        x[0] = xOrg;
-                        y[0] = yOrg;
-                        z[0] = zOrg;
-                        newPointVOI.importCurve(x, y, z, zOrg);
-                    }
-                    catch (OutOfMemoryError error)
-                    {
-                        System.gc();
-                        MipavUtil.displayError("Out of memory: ViewJComponentTriImage.mouseReleased");
-                        setMode(DEFAULT);
-                        return;
-                    }
-                    // lastPointVOI is a protected variable in ViewJComponentEditImage
-                    lastPointVOI = voiID;
-                    
-                    imageActive.registerVOI(newPointVOI);
-
-                    newPointVOI.setActive(true);
-                    ( (VOIPoint) (newPointVOI.getCurves()[ (int) z[0]].elementAt(0))).setActive(true);
-                    frame.updateImages();
-                    triImageFrame.updatevoiID(voiID);
-                    
-                    if (mouseEvent.isShiftDown() != true)
-                    {
-                    	triImageFrame.setTraverseButton();
-                        triImageFrame.setDefault();
-                    }
-                } // end of if ((voiID == -1) || (doNewVOI))
-                else
-                { // add point to existing VOI
-                    int index;
-
+                VOI newPointVOI;
+                try
+                {
+                    voiID = imageActive.getVOIs().size();
+                    newPointVOI = new VOI( (short) imageActive.getVOIs().size(), "point3D_" + (voiID + 1),
+                                          imageActive.getExtents()[2], VOI.POINT, -1.0f);
                     x[0] = xOrg;
                     y[0] = yOrg;
                     z[0] = zOrg;
-
-                    for (i = 0; i < nVOI; i++)
-                    {
-                        if (VOIs.VOIAt(i).getID() == voiID)
-                        {
-                            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
-                            {
-                                VOIs.VOIAt(i).importCurve(x, y, z, zOrg);
-                                break;
-                            }
-                            else
-                            {
-                                MipavUtil.displayError("Can't add point VOI to existing VOI structure.");
-                                return;
-                            }
-                        }
-                    }
-
-                    int end = imageActive.getExtents()[2];
-                    for (j = 0; j < end; j++)
-                    {
-                        index = VOIs.VOIAt(i).getCurves()[j].size();
-                        for (int k = 0; k < index; k++)
-                        {
-                            ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[j].elementAt(k))).setActive(false);
-                        }
-                    }
-
-                    index = VOIs.VOIAt(i).getCurves()[ (int) z[0]].size();
-                    ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[ (int) z[0]].elementAt(index - 1))).setActive(true);
-                    frame.updateImages();
-                    triImageFrame.updatevoiID(voiID);
-                    
-                    if (mouseEvent.isShiftDown() != true)
-                    {
-                    	triImageFrame.setTraverseButton();
-                        triImageFrame.setDefault();
-                    }
+                    newPointVOI.importCurve(x, y, z, zOrg);
+                }
+                catch (OutOfMemoryError error)
+                {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: ViewJComponentTriImage.mouseReleased");
+                    setMode(DEFAULT);
                     return;
-                } // end of else add point to existing VOI
+                }
+                // lastPointVOI is a protected variable in ViewJComponentEditImage
+                lastPointVOI = voiID;
+                
+                imageActive.registerVOI(newPointVOI);
+
+                newPointVOI.setActive(true);
+                ( (VOIPoint) (newPointVOI.getCurves()[ (int) z[0]].elementAt(0))).setActive(true);
+                frame.updateImages();
+                triImageFrame.updatevoiID(voiID);
+                
+                if (mouseEvent.isShiftDown() != true)
+                {
+                	triImageFrame.setTraverseButton();
+                    triImageFrame.setDefault();
+                }
+                
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
         } // end of else if (mode == POINT_VOI)
 

@@ -2935,21 +2935,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             }
         }
 
-        if (active == ViewJComponentBase.IMAGE_A)
-        {
-            displayMode = ViewJComponentBase.IMAGE_A;
-            setTitle();
-            radioImageA.setSelected(true);
-
-            setSpinnerValues(imageA.getType());
-            imagesDone = ViewJComponentBase.IMAGE_A;
-        }
-        else
+        if (active == ViewJComponentBase.IMAGE_B)
         {
             displayMode = ViewJComponentBase.IMAGE_B;
             setTitle();
             radioImageB.setSelected(true);
+            setSpinnerValues(imageB.getType());
             imagesDone = ViewJComponentBase.IMAGE_B;
+        }
+        else
+        {
+            displayMode = ViewJComponentBase.IMAGE_A;
+            setTitle();
+            radioImageA.setSelected(true);
+            setSpinnerValues(imageA.getType());
+            imagesDone = ViewJComponentBase.IMAGE_A;
         }
 
         updateImages(false);
@@ -4367,7 +4367,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         addPointToggleButton = toolbarBuilder.buildToggleButton("addPoint", "Add point", "pointROI", VOIGroup);
         addPointToggleButton.addChangeListener(this);
         imageToolBar.add(addPointToggleButton);
-        imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
+        //imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
         imageToolBar.add(toolbarBuilder.buildButton("deleteVOI", "Delete point VOI", "delete"));
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
