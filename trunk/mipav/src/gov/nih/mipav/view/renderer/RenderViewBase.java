@@ -1092,6 +1092,9 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
         float[] afData = kValueImageA.data;
         akNormal = new Vector3f[afData.length];
         Arrays.fill(akNormal, m_kZeroVector);
+        
+        Vector3f[] akNormalTmp = new Vector3f[afData.length];
+        Arrays.fill(akNormalTmp, m_kZeroVector);
 
         int iXBound = m_iSizeX;
         int iYBound = m_iSizeY;
@@ -1125,38 +1128,38 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
 
                     fDX =
                             ((bMinX ? afData[i] : afData[i - iOffX - iXBound]) -
-                            (bMaxX ? afData[i] : afData[i + iOffX - iXBound]) ) * 0.71f  +
+                             (bMaxX ? afData[i] : afData[i + iOffX - iXBound]) ) * 0.71f  +
 
                             (bMinX ? afData[i] : afData[i - iOffX]) -
                             (bMaxX ? afData[i] : afData[i + iOffX]) +
 
                             ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
-                            (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f;
+                             (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f;
 
                         fDY =
-                            ((bMinY ? afData[i] : afData[i - iOffY - iYBound]) -
-                            (bMaxY ? afData[i] : afData[i + iOffY - iYBound])) * 0.71f +
+                            ((bMinY ? afData[i] : afData[i - iOffY - 1]) -
+                             (bMaxY ? afData[i] : afData[i + iOffY - 1 ])) * 0.71f +
 
                             (bMinY ? afData[i] : afData[i - iOffY]) -
                             (bMaxY ? afData[i] : afData[i + iOffY]) +
 
-                            ((bMinY ? afData[i] : afData[i - iOffY + iYBound]) -
-                            (bMaxY ? afData[i] : afData[i + iOffY  + iYBound])) * 0.71f;
+                            ((bMinY ? afData[i] : afData[i - iOffY + 1]) -
+                             (bMaxY ? afData[i] : afData[i + iOffY + 1] )) * 0.71f;
 
                         fDZ =
-                            ((bMinZ ? afData[i] : afData[i - iOffZ - iZBound]) -
-                            (bMaxZ ? afData[i] : afData[i + iOffZ - iZBound]) ) * 0.71f +
+                            ((bMinZ ? afData[i] : afData[i - iOffZ - 1]) -
+                            (bMaxZ ? afData[i] : afData[i + iOffZ  - 1]) ) * 0.71f +
 
                             (bMinZ ? afData[i] : afData[i - iOffZ]) -
                             (bMaxZ ? afData[i] : afData[i + iOffZ]) +
 
-                            ((bMinZ ? afData[i] : afData[i - iOffZ + iZBound]) -
-                            (bMaxZ ? afData[i] : afData[i + iOffZ + iZBound])) * 0.71f;
+                            ((bMinZ ? afData[i] : afData[i - iOffZ + 1]) -
+                             (bMaxZ ? afData[i] : afData[i + iOffZ + 1])) * 0.71f;
 
 
                     if (fDX != 0.0f || fDY != 0.0f || fDZ != 0.0f) {
-                        akNormal[i] = new Vector3f(fDX, fDY, fDZ);
-                        akNormal[i].normalize();
+                        akNormalTmp[i] = new Vector3f(fDX, fDY, fDZ);
+                        //akNormalTmp[i].normalize();
                     }
                 }
             }
@@ -1171,20 +1174,21 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
 
                     int i = iX + offset;
 
-                    if (afData[i] != 0.0f) {
-                        akNormal[i] = new Vector3f(0.0f, 0.0f, 0.0f);
-                        akNormal[i].add(akNormal[i - 1]);
-                        akNormal[i].add(akNormal[i + 1]);
-                        akNormal[i].add(akNormal[i - iXBound]);
-                        akNormal[i].add(akNormal[i + iXBound]);
-                        akNormal[i].add(akNormal[i - iXYBound]);
-                        akNormal[i].add(akNormal[i + iXYBound]);
+                    //if (afData[i] != 0.0f) {
+                        akNormal[i] = akNormalTmp[i];
+                        akNormal[i].add(akNormalTmp[i - 1]);
+                        akNormal[i].add(akNormalTmp[i + 1]);
+                        akNormal[i].add(akNormalTmp[i - iXBound]);
+                        akNormal[i].add(akNormalTmp[i + iXBound]);
+                        akNormal[i].add(akNormalTmp[i - iXYBound]);
+                        akNormal[i].add(akNormalTmp[i + iXYBound]);
                         akNormal[i].normalize();
-                    }
+                    //}
                 }
             }
         }
-
+        akNormalTmp = null;
+        System.gc();
         return akNormal;
     }
 
