@@ -21,16 +21,15 @@ import javax.swing.*;
  *
  */
 
-public class JDialogInstallPlugin
-    extends JDialogBase implements ActionListener {
+public class JDialogInstallPlugin extends JDialogBase implements ActionListener {
 
     private JTextField textName;
     private JButton browseButton;
     private Vector files = new Vector();
-    private String fileName = null;
-    private String directory = null;
     private String pluginDir = System.getProperty("user.home") + File.separator +
-        "mipav" + File.separator + "plugins" + File.separator;
+                               "mipav" + File.separator + "plugins" +
+                               File.separator;
+    private String docsDir = pluginDir + File.separator + "docs";
     private ViewUserInterface ui;
 
     /**
@@ -126,9 +125,10 @@ public class JDialogInstallPlugin
                    JFileChooser chooser = new JFileChooser();
                    chooser.setDialogTitle("Select Plugin File(s)");
                    chooser.addChoosableFileFilter(new ViewImageFileFilter(
-                       ViewImageFileFilter.PLUGIN)); //shows only files with .class, .jar, .zip extensions
-                   chooser.setCurrentDirectory(new File(System.getProperty("user.dir") +
-                       File.separator + "plugins"));
+                           ViewImageFileFilter.PLUGIN)); //shows only files with .class, .jar, .zip extensions
+                   chooser.setCurrentDirectory(new File(System.getProperty(
+                           "user.dir") +
+                           File.separator + "plugins"));
                    chooser.setMultiSelectionEnabled(true);
                    int returnValue = chooser.showOpenDialog(this);
 
@@ -147,17 +147,15 @@ public class JDialogInstallPlugin
                        if (files.size() > 0) {
                            textName.setText(fileNames);
                            if (fileNames.length() > 100) {
-                               textName.setToolTipText(fileNames.substring(0, 99) + "...");
-                           }
-                           else {
+                               textName.setToolTipText(fileNames.substring(0,
+                                       99) + "...");
+                           } else {
                                textName.setToolTipText(fileNames);
                            }
                        }
 
-                   }
-                   else return;
-               }
-               catch (OutOfMemoryError e) {
+                   } else return;
+               } catch (OutOfMemoryError e) {
                    MipavUtil.displayError("Out of memory");
                    return;
                }
@@ -194,8 +192,9 @@ public class JDialogInstallPlugin
                    if (currentFile.getName().endsWith(".class")) {
                        try {
                            fr = new FileInputStream(currentFile); //sets the fileinput to the directory chosen from the browse option
-                           fw = new FileOutputStream(pluginDir + File.separatorChar +
-                               currentFile.getName()); // the location to be copied is MIPAV's class path
+                           fw = new FileOutputStream(pluginDir +
+                                   File.separatorChar +
+                                   currentFile.getName()); // the location to be copied is MIPAV's class path
 
                            br = new BufferedInputStream(fr);
                            bw = new BufferedOutputStream(fw);
@@ -210,8 +209,7 @@ public class JDialogInstallPlugin
                                }
                            }
 
-                       }
-                       catch (FileNotFoundException fnfe) {
+                       } catch (FileNotFoundException fnfe) {
                            MipavUtil.displayError("InstallPlugin: " + fnfe);
                            dispose();
                            return;
@@ -219,8 +217,8 @@ public class JDialogInstallPlugin
 
                        catch (IOException ioe) {
                            MipavUtil.displayError(
-                               "Error reading/writing plugin files.  Try manually copying .class files to " +
-                               pluginDir);
+                                   "Error reading/writing plugin files.  Try manually copying .class files to " +
+                                   pluginDir);
                            dispose();
                            return;
                        }
@@ -229,8 +227,7 @@ public class JDialogInstallPlugin
                            try {
                                if (br != null) br.close();
                                if (bw != null) bw.close();
-                           }
-                           catch (IOException ioe) {
+                           } catch (IOException ioe) {
                                ioe.printStackTrace();
                            }
                        }
@@ -239,44 +236,76 @@ public class JDialogInstallPlugin
                    else {
                        try {
                            zFile = new ZipFile(currentFile);
-                           zIn = new ZipInputStream(new FileInputStream(currentFile));
+                           zIn = new ZipInputStream(new FileInputStream(
+                                   currentFile));
                            entry = null;
 
                            int numEntries = zFile.size();
 
-                           //System.err.println("Number of entries in zip: " + numEntries);
-
                            //if the entry is a directory of is a class file, extract it
-                           while ( (entry = zIn.getNextEntry()) != null) {
-                               if ( (entry.isDirectory() || entry.getName().endsWith(".class"))) {
-                                   if (entry.isDirectory()) {
-                                       String dirname = pluginDir + File.separator +
-                                           entry.getName().substring(0, entry.getName().length() - 1);
-                                       new File(dirname).mkdir();
-                                   }
-                                   else {
-                                       fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
+                           while ((entry = zIn.getNextEntry()) != null) {
+
+                               if (entry.isDirectory()) {
+                                   String dirname = pluginDir + File.separator +
+                                           entry.getName().substring(0,
+                                           entry.getName().length() - 1);
+                                   new File(dirname).mkdir();
+                               } else {
+                                   if (entry.getName().endsWith(".class")) {
+
+                                       try {
+                                           new File(pluginDir +
+                                                   File.separator +
+                                                   entry.getName()).
+                                                   getParentFile().mkdirs();
+                                       } catch (Exception ex) {
+                                           //do nothing...no parent dir here
+                                       }
+                                       fw = new FileOutputStream(pluginDir +
+                                               File.separator +
+                                               entry.getName());
 
                                        // Transfer bytes from the ZIP file to the output file
                                        buf = new byte[1024];
 
-                                       while ( (len = zIn.read(buf)) > 0) {
+                                       while ((len = zIn.read(buf)) > 0) {
                                            fw.write(buf, 0, len);
                                        }
                                        fw.close();
+                                   } else {
+                                       //these are not .class files so put them in pluginDir/docs
+                                       String fileName = null;
+                                       if (new File(entry.getName()).
+                                           getParentFile() != null) {
+                                           fileName = new File(entry.getName()).
+                                                   getName();
+                                       } else {
+                                           fileName = entry.getName();
+                                       }
+                                       new File(docsDir).mkdirs();
+
+                                       fw = new FileOutputStream(docsDir +
+                                               File.separator + fileName);
+
+                                       // Transfer bytes from the ZIP file to the output file
+                                       buf = new byte[1024];
+
+                                       while ((len = zIn.read(buf)) > 0) {
+                                           fw.write(buf, 0, len);
+                                       }
+                                       fw.close();
+
                                    }
                                }
                            }
-                       }
-                       catch (Exception e) {
-                           System.err.println("caught exception: " + e.toString());
-                       }
-                       finally {
+
+                       } catch (Exception e) {
+                           e.printStackTrace();
+                       } finally {
                            try {
                                if (zIn != null) zIn.close();
                                if (fw != null) fw.close();
-                           }
-                           catch (IOException ioe) {
+                           } catch (IOException ioe) {
                                ioe.printStackTrace();
                            }
                        }
@@ -289,8 +318,7 @@ public class JDialogInstallPlugin
                    if (fw != null) fw.close();
                    if (bw != null) bw.close();
                    if (br != null) br.close();
-               }
-               catch (IOException ioe) {
+               } catch (IOException ioe) {
                    ioe.printStackTrace();
                }
 
@@ -299,10 +327,10 @@ public class JDialogInstallPlugin
                if (imageFrames.size() < 1) {
                    ui.buildMenu();
                    ui.setControls();
-               }
-               else {
+               } else {
                    for (i = 0; i < imageFrames.size(); i++) {
-                       ( (ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+                       ((ViewJFrameImage) (imageFrames.elementAt(i))).
+                               updateMenubar();
                    }
                }
 
