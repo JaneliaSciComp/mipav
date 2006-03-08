@@ -275,9 +275,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** Opacity of paint. */
     protected float OPACITY = 0.25f;
 
-    /** Intensity of paint. */
-    protected float intensityDropper;
-
     /** Slider for 4D images, time dimension. */
     protected JSlider tImageSlider;
 
@@ -295,9 +292,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     
     protected JCheckBox chkShowTalairachGrid; // "Show talairach grid" checkbox
     protected JCheckBox chkShowTalairachGridMarkers; // "Show talairach gridmarkers" checkbox
-
-    /** Tells "commit" and "apply rotations" which images to work on. */
-    protected int imagesDone = ViewJComponentBase.IMAGE_A;
 
     /** Orientations of the three axes. */
     protected int[] orient = new int[3];
@@ -377,6 +371,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     
     private JLabel talairachVoxelLabel;
     private JToggleButton addPointToggleButton;
+    private JToggleButton dropperPaintToggleButton;
+    private JToggleButton paintCanToggleButton;
 
     /**
      *   @deprecated use ViewJFrameTriImage(ModelImage, ModelLUT, ModelImage, ModelLUT, ViewControlsImage, ViewJFrameImage)
@@ -1395,60 +1391,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      *  Sets paint intensity in axial image.
      *  @param intensityDropper  the paint intensity value for the XY image
      */
-    public void setXYIntensityDropper(float intensityDropper)
+    public void setIntensityDropper(float intensityDropper)
     {
-        if (triImage[AXIAL_AB] != null)
-        {
-            triImage[AXIAL_AB].setIntensityDropper(intensityDropper);
-        }
-        if (triImage[AXIAL_B] != null)
-        {
-            triImage[AXIAL_B].setIntensityDropper(intensityDropper);
-        }
-        if (triImage[AXIAL_A] != null)
-        {
-            triImage[AXIAL_A].setIntensityDropper(intensityDropper);
-        }
-    }
-
-    /**
-     *  Sets paint intensity in coronal image.
-     *  @param intensityDropper  the paint intensity value for the XZ image
-     */
-    public void setXZIntensityDropper(float intensityDropper)
-    {
-        if (triImage[CORONAL_AB] != null)
-        {
-            triImage[CORONAL_AB].setIntensityDropper(intensityDropper);
-        }
-        if (triImage[CORONAL_A] != null)
-        {
-            triImage[CORONAL_A].setIntensityDropper(intensityDropper);
-        }
-        if (triImage[CORONAL_B] != null)
-        {
-            triImage[CORONAL_B].setIntensityDropper(intensityDropper);
-        }
-    }
-
-    /**
-     *  Sets paint intensity in sagittal image.
-     *  @param intensityDropper  the paint intensity value for the ZY image
-     */
-    public void setZYIntensityDropper(float intensityDropper)
-    {
-        if (triImage[SAGITTAL_AB] != null)
-        {
-            triImage[SAGITTAL_AB].setIntensityDropper(intensityDropper);
-        }
-        if (triImage[SAGITTAL_B] != null)
-        {
-            triImage[SAGITTAL_B].setIntensityDropper(intensityDropper);
-        }
-        if (triImage[SAGITTAL_A] != null)
-        {
-            triImage[SAGITTAL_A].setIntensityDropper(intensityDropper);
-        }
+    	for (int i = 0; i < MAX_TRI_IMAGES; i++)
+    	{
+    		if (triImage[i] != null)
+    		{
+    			triImage[i].setIntensityDropper(intensityDropper);
+    		}
+    	}
     }
 
     /**
@@ -2941,7 +2892,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             setTitle();
             radioImageB.setSelected(true);
             setSpinnerValues(imageB.getType());
-            imagesDone = ViewJComponentBase.IMAGE_B;
         }
         else
         {
@@ -2949,7 +2899,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             setTitle();
             radioImageA.setSelected(true);
             setSpinnerValues(imageA.getType());
-            imagesDone = ViewJComponentBase.IMAGE_A;
         }
 
         updateImages(false);
@@ -3123,49 +3072,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            }
            else if (command.equals("Dropper"))
            {
-
-               if (imageB != null)
+        	   for (int i = 0; i < MAX_TRI_IMAGES; i++)
                {
-                   if (radioImageBoth.isSelected())
+                   if (triImage[i] != null)
                    {
-                       radioImageBoth.setSelected(false);
-                       radioImageA.setSelected(true);
-                       imagesDone = ViewJComponentBase.IMAGE_A;
-
-                       if (triImage[AXIAL_AB] != null)
-                       {
-                           triImage[AXIAL_AB].setImagesDone(ViewJComponentBase.IMAGE_A);
-                           triImage[AXIAL_AB].setMode(ViewJComponentBase.DEFAULT);
-                       }
-                       if (triImage[CORONAL_AB] != null)
-                       {
-                           triImage[CORONAL_AB].setImagesDone(ViewJComponentBase.IMAGE_A);
-                           triImage[CORONAL_AB].setMode(ViewJComponentBase.DEFAULT);
-                       }
-                       if (triImage[SAGITTAL_AB] != null)
-                       {
-                           triImage[SAGITTAL_AB].setImagesDone(ViewJComponentBase.IMAGE_A);
-                           triImage[SAGITTAL_AB].setMode(ViewJComponentBase.DEFAULT);
-                       }
-
+                       triImage[i].setMode(ViewJComponentBase.DROPPER_PAINT);
                    }
-                   radioImageBoth.setEnabled(false);
-
-                   triImage[AXIAL_B].setImagesDone(ViewJComponentBase.IMAGE_A);
-                   triImage[AXIAL_B].setMode(ViewJComponentBase.DROPPER_PAINT);
-                   triImage[SAGITTAL_B].setImagesDone(ViewJComponentBase.IMAGE_A);
-                   triImage[SAGITTAL_B].setMode(ViewJComponentBase.DROPPER_PAINT);
-                   triImage[CORONAL_B].setImagesDone(ViewJComponentBase.IMAGE_A);
-                   triImage[CORONAL_B].setMode(ViewJComponentBase.DROPPER_PAINT);
-               } // end of if (imageB != null)
-
-               triImage[AXIAL_A].setImagesDone(ViewJComponentBase.IMAGE_A);
-               triImage[AXIAL_A].setMode(ViewJComponentBase.DROPPER_PAINT);
-               triImage[SAGITTAL_A].setImagesDone(ViewJComponentBase.IMAGE_A);
-               triImage[SAGITTAL_A].setMode(ViewJComponentBase.DROPPER_PAINT);
-               triImage[CORONAL_A].setImagesDone(ViewJComponentBase.IMAGE_A);
-               triImage[CORONAL_A].setMode(ViewJComponentBase.DROPPER_PAINT);
-
+               }
            }
            else if (command.equals("Eraser"))
            {
@@ -3395,97 +3308,81 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            else if (command.equals("CommitPaint"))
            {
 
-               if (imagesDone == ViewJComponentEditImage.BOTH)
+               if (getSelectedImage() == ViewJComponentBase.BOTH)
                {
                    if (triImage[AXIAL_AB] != null)
                    {
-                       triImage[AXIAL_AB].commitMask(imagesDone, true, true);
+                       triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, true);
+                       triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
                    }
                    else
                    {
-                       triImage[AXIAL_A].commitMask(imagesDone, true, true);
+                       //triImage[AXIAL_A].commitMask(ViewJComponentBase.BOTH, true, true);
                    }
                }
-               else if (imagesDone == IMAGE_A)
+               else if (getSelectedImage() == ViewJComponentBase.IMAGE_A)
                {
                    if (triImage[AXIAL_A] != null)
                    {
-                       triImage[AXIAL_A].commitMask(imagesDone, true, true);
+                       triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, true);
+                       triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                    }
                }
-               else if (imagesDone == IMAGE_B)
+               else if (getSelectedImage() == ViewJComponentBase.IMAGE_B)
                {
-                   // must set imagesDone to IMAGE_A because in the XYB, XZB, and ZYB images,
+                   // must set IMAGE_A because in the AXIAL_B, SAGITTAL_B, and CORONAL_B images,
                    // imageB is in the imageA slot
-                   imagesDone = IMAGE_A;
                    if (triImage[AXIAL_B] != null)
                    {
-                       triImage[AXIAL_B].commitMask(imagesDone, true, true);
+                       triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, true);
+                       triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
                    }
-                   imagesDone = IMAGE_B;
                }
 
-               updateImages(true);
+               //updateImages(true);
            }
            else if (command.equals("CommitPaintExt"))
            {
-               if (imagesDone == ViewJComponentEditImage.BOTH)
+               if (getSelectedImage() == ViewJComponentBase.BOTH)
                {
                    if (triImage[AXIAL_AB] != null)
                    {
-                       triImage[AXIAL_AB].commitMask(imagesDone, true, false);
+                       triImage[AXIAL_AB].commitMask(ViewJComponentBase.BOTH, true, false);
+                       triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
                    }
                    else
                    {
-                       triImage[AXIAL_A].commitMask(imagesDone, true, false);
+                       //triImage[AXIAL_A].commitMask(ViewJComponentBase.BOTH, true, false);
                    }
-                   triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
+                   
                }
-               else if (imagesDone == IMAGE_A)
+               else if (getSelectedImage() == ViewJComponentBase.IMAGE_A)
                {
                    if (triImage[AXIAL_A] != null)
                    {
-                       triImage[AXIAL_A].commitMask(imagesDone, true, false);
+                       triImage[AXIAL_A].commitMask(ViewJComponentBase.IMAGE_A, true, false);
+                       triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
                    }
-                   triImage[AXIAL_A].getImageA().notifyImageDisplayListeners(null, true);
+                   //triImage[AXIAL_A].getImageA().notifyImageDisplayListeners(null, true);
                }
-               else if (imagesDone == IMAGE_B)
+               else if (getSelectedImage() == ViewJComponentBase.IMAGE_B)
                {
-                   // must set imagesDone to IMAGE_A because in the XYB, XZB, and ZYB images,
+            	   // must set IMAGE_A because in the AXIAL_B, SAGITTAL_B, and CORONAL_B images,
                    // imageB is in the imageA slot
-                   imagesDone = IMAGE_A;
                    if (triImage[AXIAL_B] != null)
                    {
-                       triImage[AXIAL_B].commitMask(imagesDone, true, false);
-                   }
-                   if (triImage[AXIAL_B] != null)
-                   {
+                       triImage[AXIAL_B].commitMask(ViewJComponentBase.IMAGE_A, true, false);
                        triImage[AXIAL_B].getImageA().notifyImageDisplayListeners(null, true);
                    }
-                   updateImages(true);
-                   imagesDone = IMAGE_B;
+                   //updateImages(true);
                }
            }
            else if (command.equals("PaintCan"))
            {
-
-               if (radioImageA.isSelected() || radioImageBoth.isSelected())
-               {
-                   radioImageBoth.setEnabled(false);
-                   radioImageA.setSelected(true);
-                   imagesDone = ViewJComponentBase.IMAGE_A;
-               }
-               else
-               {
-                   imagesDone = ViewJComponentBase.IMAGE_B;
-               }
-
                for (int i = 0; i < MAX_TRI_IMAGES; i++)
                {
                    if (triImage[i] != null)
                    {
-
-                       triImage[i].setImagesDone(imagesDone);
                        triImage[i].setMode(ViewJComponentBase.PAINT_CAN);
                    }
                }
@@ -3610,7 +3507,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                JDialogTriImageTransformation dialog;
                float originalZoom = triImage[AXIAL_A].getZoomX();
 
-               if (imagesDone == ViewJComponentBase.IMAGE_A)
+               if (getSelectedImage() == ViewJComponentBase.IMAGE_A)
                {
                    dialog = new JDialogTriImageTransformation(this, imageA);
                    if (!dialog.doNew())
@@ -3634,7 +3531,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                        }
                    }
                }
-               else if (imagesDone == ViewJComponentBase.IMAGE_B)
+               else if (getSelectedImage() == ViewJComponentBase.IMAGE_B)
                {
                    dialog = new JDialogTriImageTransformation(this, imageB);
                    if (!dialog.doNew())
@@ -3658,7 +3555,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                        }
                    }
                }
-               else if (imagesDone == ViewJComponentBase.BOTH)
+               else if (getSelectedImage() == ViewJComponentBase.BOTH)
                {
                    dialog = new JDialogTriImageTransformation(this, imageA, imageB);
                    if (!dialog.doNew())
@@ -3862,32 +3759,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                if (radioImageA.isSelected())
                {
                    setSpinnerValues(imageA.getType());
-                   imagesDone = ViewJComponentBase.IMAGE_A;
                    parentFrame.setActiveImage(IMAGE_A);
                }
                else if (radioImageB.isSelected())
                {
                    setSpinnerValues(imageB.getType());
-                   imagesDone = ViewJComponentBase.IMAGE_B; // Image B
                    parentFrame.setActiveImage(IMAGE_B);
-               }
-               else if (radioImageBoth.isSelected())
-               {
-                   imagesDone = ViewJComponentBase.BOTH;
                }
 
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setMinimum(new Double(spinnerMin));
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setMaximum(new Double(spinnerMax));
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(new Double(spinnerStep));
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setValue(new Double(spinnerDefaultValue));
-
-               for (int i = 0; i < MAX_TRI_IMAGES; i++)
-               {
-                   if (triImage[i] != null)
-                   {
-                       triImage[i].setImagesDone(imagesDone);
-                   }
-               }
 
                updateImages();
            }
@@ -4365,7 +4248,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         addPointToggleButton = toolbarBuilder.buildToggleButton("addPoint", "Add point", "pointROI", VOIGroup);
-        addPointToggleButton.addChangeListener(this);
+        addPointToggleButton.addItemListener(this);
         imageToolBar.add(addPointToggleButton);
         //imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
         imageToolBar.add(toolbarBuilder.buildButton("deleteVOI", "Delete point VOI", "delete"));
@@ -4392,12 +4275,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         paintToolBar.setFloatable(false);
 
         paintToolBar.add(toolbarBuilder.buildToggleButton("PaintBrush", "Draw using a brush", "brush", VOIGroup));
-        paintToolBar.add(toolbarBuilder.buildToggleButton("Dropper", "Picks up a color from the image", "dropper",
-            VOIGroup));
-        paintToolBar.add(toolbarBuilder.buildToggleButton("PaintCan", "Fills an area with desired color", "paintcan",
-            VOIGroup));
+        dropperPaintToggleButton = toolbarBuilder.buildToggleButton("Dropper", "Picks up a color from the image", "dropper",
+                VOIGroup);
+        dropperPaintToggleButton.addItemListener(this);
+        paintToolBar.add(dropperPaintToggleButton);
+        
+        paintCanToggleButton = toolbarBuilder.buildToggleButton("PaintCan", "Fills an area with desired color", "paintcan",
+                VOIGroup);
+        paintCanToggleButton.addItemListener(this);
+        paintToolBar.add(paintCanToggleButton);
+        
         paintToolBar.add(toolbarBuilder.buildToggleButton("Eraser", "Erases paint", "eraser", VOIGroup));
-        paintToolBar.add(toolbarBuilder.buildToggleButton("EraseAll", "Erase all paint", "clear", VOIGroup));
+        paintToolBar.add(toolbarBuilder.buildButton("EraseAll", "Erase all paint", "clear"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup paintThicknessGroup = new ButtonGroup();
@@ -4605,7 +4494,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     {
         panelActiveImage = new JPanel();
         panelActiveImage.setLayout(new GridLayout(1, 3));
-        TitledBorder borderActiveImage = new TitledBorder("Active Image");
+        TitledBorder borderActiveImage = new TitledBorder("Image to affect");
         borderActiveImage.setTitleColor(Color.black);
         borderActiveImage.setBorder(new EtchedBorder());
         panelActiveImage.setBorder(borderActiveImage);
@@ -4826,7 +4715,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void stateChanged(ChangeEvent e)
     {
         Object source = e.getSource();
-        
+
         if (source == tImageSlider)
         {
         	int newValue = 1;
@@ -4841,57 +4730,59 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
         else if (source == intensitySpinner)
         {
-            intensityDropper = ( (SpinnerNumberModel) intensitySpinner.getModel()).getNumber().floatValue();
+        	float paintIntensity = ( (SpinnerNumberModel) intensitySpinner.getModel()).getNumber().floatValue();
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++)
             {
                 if (triImage[i] != null)
                 {
-                    triImage[i].setIntensityDropper(intensityDropper);
+                    triImage[i].setIntensityDropper(paintIntensity);
                 }
             }
         }
-        else if (source == addPointToggleButton)
-        {
-        	// we don't want the user to affect both images when
-        	// adding a VOI point in the tri-planar frame,
-        	// so the "Both" radio button is disabled
-        	if (addPointToggleButton.isSelected())
-        	{
-        		if (radioImageBoth.isSelected())
-        		{
-        			radioImageA.setSelected(true);
-        		}
-        		radioImageBoth.setEnabled(false);
-        	}
-        	else
-        	{
-        		// "add point" button de-selected, so re-enable
-        		// the "Both" radio button
-        		radioImageBoth.setEnabled(true);
-        	}
-        }
     }
 
-    /**
-     *   Does setBorderPainted for the appropriate button.
-     *   @param event    Event that triggered this function
-     */
-    public void itemStateChanged(ItemEvent event)
-    {
-        Object source = event.getSource();
-        int state = event.getStateChange();
-
-        if (state == ItemEvent.SELECTED)
-        {
-            ( (AbstractButton) source).setBorderPainted(true);
-        }
-        else
-        {
-
-            ( (AbstractButton) source).setBorderPainted(false);
-        }
-    }
+	/**
+	 *   Does setBorderPainted for the appropriate button.
+	 *   @param event    Event that triggered this function
+	 */
+	public void itemStateChanged(ItemEvent event)
+	{
+	    Object source = event.getSource();
+	    int state = event.getStateChange();
+	
+	    if (state == ItemEvent.SELECTED)
+	    {
+	        ( (AbstractButton) source).setBorderPainted(true);
+	    }
+	    else
+	    {
+	
+	        ( (AbstractButton) source).setBorderPainted(false);
+	    }
+	    
+	    if (source == addPointToggleButton || source == dropperPaintToggleButton ||
+	   		source == paintCanToggleButton)
+	    {
+		   	// for certain operations, we don't support affecting both images
+		    // so the "Both" radio button is disabled and imageA is selected by default
+		    //if (((JToggleButton) source).isSelected())
+	    	if (state == ItemEvent.SELECTED)
+			{
+				if (radioImageBoth.isSelected())
+				{
+					radioImageA.setSelected(true);
+				}
+				radioImageBoth.setEnabled(false);
+			}
+			else
+			{
+				// "add point" button de-selected, so re-enable
+				// the "Both" radio button
+			   	radioImageBoth.setEnabled(true);
+			}
+		}
+	}
 
     /**
      *   Sets the traverse button to selected.
@@ -4926,8 +4817,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             triImage[AXIAL_AB] = null;
             triImage[SAGITTAL_AB] = null;
             triImage[CORONAL_AB] = null;
-
-            imagesDone = ViewJComponentBase.IMAGE_A;
 
             setImageSelectorPanelVisible(false);
 
@@ -5423,5 +5312,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public String getTalairachVoxelLabelText()
     {
     	return talairachVoxelLabel.getText();
+    }
+    
+    /**
+     * Returns a reference to the ViewJFrameImage object that is the parent of this frame.
+     * @return a reference to the ViewJFrameImage object that is the parent of this frame
+     */
+    public ViewJFrameImage getParentFrame()
+    {
+    	return parentFrame;
     }
 }

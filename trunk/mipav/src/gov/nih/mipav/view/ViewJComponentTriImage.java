@@ -73,11 +73,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private int[] unitsOfMeasure = new int[3];
 
     /**
-     * Whether IMAGE_A, IMAGE_B, or BOTH should be transformed and have paint commit changes applied to them.
-     */
-    private int imagesDone = IMAGE_A;
-
-    /**
      * If true, show XY, XZ, or ZY orientation axes in a corner of the component.
      */
     private boolean showAxes = true;
@@ -317,15 +312,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             zColor = Color.yellow;
         }
-    }
-
-    /**
-     * Sets whether IMAGEA, IMAGEB, or BOTH should be transformed and have paint commit changes applied to them.
-     * @param imagesDone  how to transform the image(s) and treat paint changes
-     */
-    public void setImagesDone(int imagesDone)
-    {
-        this.imagesDone = imagesDone;
     }
 
     /**
@@ -2383,7 +2369,25 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     public void mouseClicked(MouseEvent mouseEvent)
-    { }
+    { 
+    	// this logic changes the slice of the 2D image in the ViewJFrameImage. Note that it only
+    	// works when you double click on the image that has the original orientation
+    	if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0 && mouseEvent.getClickCount() == 2)
+    	{
+    		if (axisOrder[2] == 2)
+    		{
+        		int flippedSlice = slice;
+        		
+        		if (axisFlip[2])
+        		{
+        			flippedSlice = imageA.getExtents()[2] - slice - 1;
+        		}
+        		
+    			((ViewJFrameImage) triImageFrame.getParentFrame()).setSlice(flippedSlice);
+    		}
+    	}
+    	
+    }
 
     /**
      * A mouse-pressed event.  Sets the mode of the program depending on the cursor mode.  If the mode is move,
@@ -2470,13 +2474,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)
         {
-            handleMouseButton3PressedEvent(mouseEvent);
+        	// check to see if the user right-clicked over the intensity line
+            handleIntensityLineBtn3(mouseEvent);
             return;
         } // if (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)
         else if (mode == LINE && intensityLine == null)
         {
             anchorPt.setLocation(xS, yS);
-
             return;
         } // else if (mode == LINE)
         else if (mode == MOVE)
@@ -2494,99 +2498,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             return;
             // do not do a notifyImageDisplayListeners in mode MOVE or VOISpecial labels will disappear
         } // end of if (mode == MOVE)
-        /*else if (mode == CUBE_BOUNDS)
-        {
-            if ( (triComponentOrientation == AXIAL || !hasOrientation) &&
-                (slice >= lowZ) && (slice <= highZ))
-            {
-                if (nearBoundsPoint(mouseEvent.getX(), mouseEvent.getY(), lowX, lowY))
-                {
-                    doxyC0 = true;
-                    return;
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), mouseEvent.getY(), highX, lowY))
-                {
-                    doxyC1 = true;
-                    return;
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), mouseEvent.getY(), highX, highY))
-                {
-                    doxyC2 = true;
-                    return;
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), mouseEvent.getY(), lowX, highY))
-                {
-                    doxyC3 = true;
-                    return;
-                }
-            } // if ((triComponentOrientation == XY) && (zSlice >= lowZ) && (zSlice <= highZ))
-            else if ( (triComponentOrientation == CORONAL || !hasOrientation) && (screenPt.y >= lowY) && (screenPt.y <= highY))
-            {
-                if (hasOrientation)
-                {
-                    nearZ = MipavMath.round(
-                        (imageActive.getExtents()[axisOrder[1]] - 1) * getZoomY() * resolutionY - mouseEvent.getY());
-                }
-                else
-                {
-                    nearZ = mouseEvent.getY();
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), nearZ, lowX, lowZ))
-                {
-                    doxzC0 = true;
-                    return;
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), nearZ, highX, lowZ))
-                {
-                    doxzC1 = true;
-                    return;
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), nearZ, highX, highZ))
-                {
-                    doxzC2 = true;
-                    return;
-                }
-                if (nearBoundsPoint(mouseEvent.getX(), nearZ, lowX, highZ))
-                {
-                    doxzC3 = true;
-                    return;
-                }
-            } // else if ((triComponentOrientation == XZ) && (screenPt.y >= lowY) && (screenPt.y <= highY))
-            else if ( (triComponentOrientation == SAGITTAL || !hasOrientation) && (screenPt.x >= lowX) && (screenPt.x <= highX))
-            {
-                if (hasOrientation)
-                {
-                    nearZ = MipavMath.round(
-                        (imageActive.getExtents()[axisOrder[1]] - 1) * getZoomY() * resolutionY - mouseEvent.getY());
-                    nearY = mouseEvent.getX();
-                }
-                else
-                {
-                    nearZ = mouseEvent.getX();
-                    nearY = mouseEvent.getY();
-                }
-                if (nearBoundsPoint(nearZ, nearY, lowZ, lowY))
-                {
-                    dozyC0 = true;
-                    return;
-                }
-                if (nearBoundsPoint(nearZ, nearY, highZ, lowY))
-                {
-                    dozyC1 = true;
-                    return;
-                }
-                if (nearBoundsPoint(nearZ, nearY, highZ, highY))
-                {
-                    dozyC2 = true;
-                    return;
-                }
-                if (nearBoundsPoint(nearZ, nearY, lowZ, highY))
-                {
-                    dozyC3 = true;
-                    return;
-                }
-            } // else if ((triComponentOrientation == ZY) && (screenPt.x >= lowX) && (screenPt.x <= highX))
-        }*/ // else if (mode == CUBE_BOUNDS)
         else if (mode == PAINT_VOI)
         {
             boolean isLeftMouseButtonDown = mouseEvent.getModifiers() == MouseEvent.BUTTON1_MASK;
@@ -2608,7 +2519,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // end of else if (mode == ERASER_PAINT)
         else if (mode == DROPPER_PAINT)
         {
-            if (imagesDone == IMAGE_A)
+            if (triImageFrame.getSelectedImage() == IMAGE_A || imageBufferB == null)
             {
                 intensityDropper = imageBufferA[yS * imageDim.width + xS];
             }
@@ -2616,23 +2527,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 intensityDropper = imageBufferB[yS * imageDim.width + xS];
             }
-
-            if (triComponentOrientation == AXIAL || !hasOrientation)
-            {
-                triImageFrame.setXZIntensityDropper(intensityDropper);
-                triImageFrame.setZYIntensityDropper(intensityDropper);
-            }
-            else if (triComponentOrientation == CORONAL)
-            {
-                triImageFrame.setXYIntensityDropper(intensityDropper);
-                triImageFrame.setZYIntensityDropper(intensityDropper);
-            }
-            else
-            {
-                triImageFrame.setXYIntensityDropper(intensityDropper);
-                triImageFrame.setXZIntensityDropper(intensityDropper);
-            }
+            
+            triImageFrame.setIntensityDropper(intensityDropper);
             triImageFrame.setIntensityPaintName(intensityDropper);
+            
             imageActive.notifyImageDisplayListeners(null, true);
         } // end of else if (mode == DROPPER_PAINT)
 
@@ -2641,7 +2539,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         return;
     }
 
-    private void handleMouseButton3PressedEvent(MouseEvent mouseEvent)
+    private void handleIntensityLineBtn3(MouseEvent mouseEvent)
     {
         if (intensityLineVisible == true)
         {
@@ -2985,7 +2883,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 seedVal = imageBufferActive[yS * imageActive.getExtents()[0] + xS];
                 regionGrow( (short) xS, (short) yS, (short) slice, seedVal, null, true);
             }
-
+            triImageFrame.updateImages();
         } // end of else if (mode == PAINT_CAN)
         else if (mode == POINT_VOI)
         {
@@ -3720,7 +3618,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // end of else if (mode == ERASER_PAINT)
         else if (mode == DROPPER_PAINT)
         {
-            if (imagesDone == IMAGE_A)
+            if (triImageFrame.getSelectedImage() == IMAGE_A || imageBufferB == null)
             {
                 intensityDropper = imageBufferA[yS * imageDim.width + xS];
             }
@@ -3728,21 +3626,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 intensityDropper = imageBufferB[yS * imageDim.width + xS];
             }
-            if (triComponentOrientation == AXIAL || !hasOrientation)
-            {
-                triImageFrame.setXZIntensityDropper(intensityDropper);
-                triImageFrame.setZYIntensityDropper(intensityDropper);
-            }
-            else if (triComponentOrientation == CORONAL)
-            {
-                triImageFrame.setXYIntensityDropper(intensityDropper);
-                triImageFrame.setZYIntensityDropper(intensityDropper);
-            }
-            else
-            {
-                triImageFrame.setXYIntensityDropper(intensityDropper);
-                triImageFrame.setXZIntensityDropper(intensityDropper);
-            }
+            
+            triImageFrame.setIntensityDropper(intensityDropper);
             triImageFrame.setIntensityPaintName(intensityDropper);
 
             return;
