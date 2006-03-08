@@ -157,8 +157,8 @@ public abstract class ViewJComponentBase extends JComponent
     private short imDataG[];
     private short imDataB[];
 
-    protected boolean [] axisFlip = new boolean[3];
-    protected int [] axisOrder = new int[3];
+    protected boolean [] axisFlip = new boolean[3]; // axis flip represents the ACTUAL axis, regardless of how its ordered
+    protected int [] axisOrder = new int[3]; // axis order represents the APPARENT axis, as seen by the user
     protected int showAxis;
 
     /** created to handle VOI updates.  Must fireVOIUpdate(...)
