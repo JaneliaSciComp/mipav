@@ -172,7 +172,7 @@ public class RayCastColorReflection
         // Save the information along the ray.
         //akVertexProperty[iNumStepsFrontToBack] = kVertexProperty;
 
-        if (fSrcA >= 50) {
+        if (fSrcA >= 1) {
           afAlphasFrontToBack[iNumStepsFrontToBack] = fSrcA;
           // Interpolate normal vector.
           Vector3f kNormal000 = m_akNormal[i000];
@@ -278,12 +278,10 @@ public class RayCastColorReflection
       // Access alpha along the ray.
       // Scale it so that it is in [0,1] range.
       if (iNumStepsFrontToBack == 0) return;
+      
       float fSrcA = afAlphasFrontToBack[iNumStepsFrontToBack-1];
+      if (fSrcA == 0) return;
 
-     // if( fSrcA < 50 ) {
-     //   m_aiRImage[iIndex] = 0;
-      //  return;
-      //}
 
       //fSrcA = fSrcA * 0.003922f;
 
@@ -311,17 +309,7 @@ public class RayCastColorReflection
         float fTrgB = ( (m_aiRImage[iIndex]) & 0xff);
 
         //float fTrgA = 1.0f - fSrcA;
- /*
-        // composite the color values
-        float fResR = fSrcR * fSrcA + fTrgR * fTrgA;
-        float fResG = fSrcG * fSrcA + fTrgG * fTrgA;
-        float fResB = fSrcB * fSrcA + fTrgB * fTrgA;
-        m_aiRImage[iIndex] =
-            //(((int)255   & 0xff) << 24) |
-            ( ( (int) fResR & 0xff) << 16) |
-            ( ( (int) fResG & 0xff) << 8) |
-            ( ( (int) fResB & 0xff));
-    */
+
         m_aiRImage[iIndex] =
             //(((int)255   & 0xff) << 24) |
             ( ( (int) (fTrgR +fSrcR) & 0xff) << 16) |
