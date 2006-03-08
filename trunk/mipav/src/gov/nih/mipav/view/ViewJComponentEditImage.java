@@ -1604,7 +1604,7 @@ public class ViewJComponentEditImage
             voiIDb = voiID;
             voiID = voiIDa;
         }
-        else {
+        else if (active == IMAGE_B){
             imageActive = imageB;
             imageBufferActive = imageBufferB;
             voiIDa = voiID;
