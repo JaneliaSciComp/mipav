@@ -111,10 +111,10 @@ public class RayCastColorReflection
     float fX = m_kP0.x;
     float fY = m_kP0.y;
     float fZ = m_kP0.z;
+    int iStep;
 
-    boolean flag = true;
     // Iterate from the front to back.
-    for (int iStep = 0; iStep < iNumSteps; iStep++) {
+    for (iStep = 0; iStep < iNumSteps; iStep++) {
 
       // compute the "min" corner of the nearest voxel.
       int iX = (int) fX;
@@ -169,10 +169,9 @@ public class RayCastColorReflection
             fS110 * (m_acImageA[i110] & 0x0ff) +
             fS111 * (m_acImageA[i111] & 0x0ff);
 
-        // Save the information along the ray.
-        //akVertexProperty[iNumStepsFrontToBack] = kVertexProperty;
 
-        if (fSrcA >= 1) {
+        if ( fSrcA >= 1) {
+              
           afAlphasFrontToBack[iNumStepsFrontToBack] = fSrcA;
           // Interpolate normal vector.
           Vector3f kNormal000 = m_akNormal[i000];
@@ -183,6 +182,7 @@ public class RayCastColorReflection
           Vector3f kNormal101 = m_akNormal[i101];
           Vector3f kNormal011 = m_akNormal[i011];
           Vector3f kNormal111 = m_akNormal[i111];
+          
           float fNx =
               fS000 * kNormal000.x +
               fS001 * kNormal001.x +
@@ -212,47 +212,10 @@ public class RayCastColorReflection
               fS111 * kNormal111.z;
           kVertexProperty.setNormal(fNx, fNy, fNz);
 
-          // Interpolate material RGB colors.
-          float fR =
-              fS000 * (m_acImageR[i000] & 0x0ff) +
-              fS001 * (m_acImageR[i001] & 0x0ff) +
-              fS010 * (m_acImageR[i010] & 0x0ff) +
-              fS011 * (m_acImageR[i011] & 0x0ff) +
-              fS100 * (m_acImageR[i100] & 0x0ff) +
-              fS101 * (m_acImageR[i101] & 0x0ff) +
-              fS110 * (m_acImageR[i110] & 0x0ff) +
-              fS111 * (m_acImageR[i111] & 0x0ff);
-          float fG =
-              fS000 * (m_acImageG[i000] & 0x0ff) +
-              fS001 * (m_acImageG[i001] & 0x0ff) +
-              fS010 * (m_acImageG[i010] & 0x0ff) +
-              fS011 * (m_acImageG[i011] & 0x0ff) +
-              fS100 * (m_acImageG[i100] & 0x0ff) +
-              fS101 * (m_acImageG[i101] & 0x0ff) +
-              fS110 * (m_acImageG[i110] & 0x0ff) +
-              fS111 * (m_acImageG[i111] & 0x0ff);
-          float fB =
-              fS000 * (m_acImageB[i000] & 0x0ff) +
-              fS001 * (m_acImageB[i001] & 0x0ff) +
-              fS010 * (m_acImageB[i010] & 0x0ff) +
-              fS011 * (m_acImageB[i011] & 0x0ff) +
-              fS100 * (m_acImageB[i100] & 0x0ff) +
-              fS101 * (m_acImageB[i101] & 0x0ff) +
-              fS110 * (m_acImageB[i110] & 0x0ff) +
-              fS111 * (m_acImageB[i111] & 0x0ff);
+          kVertexProperty.setDiffuse(0.99f, 0.80f, 0.80f);
+          //kVertexProperty.setSpecular(0.0f, 0.9f, 0.0f);
 
-          // 1/255 =  * 0.003922f
-          kVertexProperty.setDiffuse(fR * 0.003922f, fG * 0.003922f,
-                                     fB * 0.003922f);
-          kVertexProperty.setSpecular(fR * 0.003922f, fG * 0.003922f,
-                                      fB * 0.003922f);
-
-          iNumStepsFrontToBack++;
-
-          if ( flag  ) {
-            iNumSteps = iStep;
-            flag = false;
-          }
+          iStep = iNumSteps;
         }
         else {
           kVertexProperty.setNormal(0f, 0f, 0f);
@@ -271,52 +234,33 @@ public class RayCastColorReflection
       fY += fStepY;
       fZ += fStepZ;
     }
-
-    // Iterate through the ray samples in reverse order.
-    //for (int iStep = iNumStepsFrontToBack - 1; iStep >= 0; --iStep) {
-
+//System.out.println(" istep " + iStep + " iNumStepsFrontToBack = " + iNumStepsFrontToBack);
       // Access alpha along the ray.
       // Scale it so that it is in [0,1] range.
-      if (iNumStepsFrontToBack == 0) return;
       
-      float fSrcA = afAlphasFrontToBack[iNumStepsFrontToBack-1];
+      float fSrcA = afAlphasFrontToBack[iNumStepsFrontToBack];
       if (fSrcA == 0) return;
 
-
-      //fSrcA = fSrcA * 0.003922f;
-
       // apply the lighting to determine the color
-      m_kColor = m_kLightSet.getCellColor(m_kMaterial, akVertexProperty[iNumStepsFrontToBack-1],m_kEyeModel);
+      m_kColor = m_kLightSet.getCellColor(m_kMaterial, akVertexProperty[iNumStepsFrontToBack], m_kEyeModel);
 
       float fSrcR = m_kColor.x * 255.0f;
       float fSrcG = m_kColor.y * 255.0f;
       float fSrcB = m_kColor.z * 255.0f;
 
-      // voxel is opaque
-      if (fSrcA == 2.0f) {
-        m_aiRImage[iIndex] =
-            ( ( (int) fSrcR & 0xff) << 16) |
-            ( ( (int) fSrcG & 0xff) << 8) |
-            ( ( (int) fSrcB & 0xff));
-      }
 
-      // voxel is semitransparent so need to blend
-      else {
-        // get the RGBA values from the destination
+      // get the RGBA values from the destination
+      float fTrgR = ( (m_aiRImage[iIndex] >> 16) & 0xff);
+      float fTrgG = ( (m_aiRImage[iIndex] >> 8) & 0xff);
+      float fTrgB = ( (m_aiRImage[iIndex]) & 0xff);
 
-        float fTrgR = ( (m_aiRImage[iIndex] >> 16) & 0xff);
-        float fTrgG = ( (m_aiRImage[iIndex] >> 8) & 0xff);
-        float fTrgB = ( (m_aiRImage[iIndex]) & 0xff);
 
-        //float fTrgA = 1.0f - fSrcA;
-
-        m_aiRImage[iIndex] =
+      m_aiRImage[iIndex] =
             //(((int)255   & 0xff) << 24) |
             ( ( (int) (fTrgR +fSrcR) & 0xff) << 16) |
             ( ( (int) (fTrgG +fSrcG) & 0xff) << 8) |
             ( ( (int) (fTrgB +fSrcB) & 0xff));
 
-      }
 
   }
 

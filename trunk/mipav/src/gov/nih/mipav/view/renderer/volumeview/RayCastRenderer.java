@@ -267,6 +267,8 @@ public abstract class RayCastRenderer extends Renderer {
      *   Once the image is finished rotating, a final trace is made with a
      *   spacing of 1.
      */
+    
+
     public final synchronized void trace( int rayTraceStepSize, int iSpacing ) {
         long startTime = 0, now = 0;
         double elapsedTime = 0d;
@@ -276,6 +278,7 @@ public abstract class RayCastRenderer extends Renderer {
 
         startTime = System.currentTimeMillis();
         traceInit();
+        int[] temp = new int[m_aiRImage.length];
 
         mod = m_iRBound / 10;
         for ( iY = 0; iY < m_iRBound; iY += iSpacing ) {
@@ -361,9 +364,9 @@ public abstract class RayCastRenderer extends Renderer {
              fSrcG = ( (vCenter >> 8) & 0xff);
              fSrcB = ( (vCenter) & 0xff);
 
-             fTrgR = ( (m_aiRImage[iIndex] >> 16) & 0xff);
-             fTrgG = ( (m_aiRImage[iIndex] >> 8) & 0xff);
-             fTrgB = ( (m_aiRImage[iIndex]) & 0xff);
+             fTrgR = 0;
+             fTrgG = 0;
+             fTrgB = 0;
 
              fTrgR += fSrcR;
              fTrgG += fSrcG;
@@ -409,7 +412,7 @@ public abstract class RayCastRenderer extends Renderer {
              fTrgG /= 5;
              fTrgB /= 5;
 
-             m_aiRImage[iIndex] =
+             temp[iIndex] =
                  //(((int)255   & 0xff) << 24) |
                  ( ( (int) (fTrgR) & 0xff) << 16) |
                  ( ( (int) (fTrgG) & 0xff) << 8) |
@@ -418,7 +421,9 @@ public abstract class RayCastRenderer extends Renderer {
 
            }
         }
-
+        for (int i = 0; i < temp.length; i++) {
+            m_aiRImage[i] = temp[i];
+        }
         now = System.currentTimeMillis();
         elapsedTime = (double) ( now - startTime );
         if ( elapsedTime <= 0 ) {
