@@ -78,6 +78,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
     private ViewJComponentRegistration regComponent = null;
 
+    private boolean calcThresholdVolume = true;
+
     /**
      *   Makes a frame of the histogram
      *   @param _imageA         Model of imageA
@@ -286,7 +288,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                     new JComponent[] {
                 menuObj.buildMenuItem( "Reset transfer function", "Linear", 0, null, false ),
                 menuObj.buildMenuItem( "Reset histogram & LUT A", "UpdateA", 0, null, false ),
-                menuObj.buildMenuItem( "Reset histogram & LUT B", "UpdateB", 0, null, false ), } ) );
+                menuObj.buildMenuItem( "Reset histogram & LUT B", "UpdateB", 0, null, false ),
+                menuObj.buildCheckBoxMenuItem( "Calculate threshold volume", "calcThresholdVolume", true),} ) );
             menuObj.setMenuItemEnabled( "Reset histogram & LUT A", false );
             menuObj.setMenuItemEnabled( "Reset histogram & LUT B", false );
 
@@ -388,9 +391,9 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         fillLabel.setFont( MipavUtil.font12 );
         fillLabel.setForeground( Color.black );
 
-        voxelVolumeLabel = new JLabel( "Threshold volume:" );
+        voxelVolumeLabel = new JLabel( "Threshold volume:                       " );
 
-        voxelVolumeLabel.setFont( MipavUtil.font12 );
+        voxelVolumeLabel.setFont( MipavUtil.font10 );
         voxelVolumeLabel.setForeground( Color.black );
 
         threshLowerF = new JTextField( 8 );
@@ -567,7 +570,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         voxelVolumeLabelB = new JLabel( "Threshold volume:" );
 
-        voxelVolumeLabelB.setFont( MipavUtil.font12 );
+        voxelVolumeLabelB.setFont( MipavUtil.font10 );
         voxelVolumeLabelB.setForeground( Color.black );
 
         threshLowerBF = new JTextField( 8 );
@@ -692,69 +695,142 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
      * {@inheritDoc}
      */
     public void updateThresholdFields( float lower, float upper ) {
-        float voxelVolume = calculateThresholdVolume(lower, upper);
 
-        if (isImageASelected())
-        {
+        if (isImageASelected()) {
             threshLowerF.setText(Float.toString(lower));
             threshUpperF.setText(Float.toString(upper));
 
-            voxelVolumeLabel.setText("Threshold volume: " + String.valueOf(voxelVolume));
-        }
-        else // imageB selected
-        {
+            if (getHistoLUTComponentA().getMode() == ViewJComponentHistoRGB.ALL) {
+                return;
+            }
+        } else {
             threshLowerBF.setText(Float.toString(lower));
             threshUpperBF.setText(Float.toString(upper));
+            if (getHistoLUTComponentB().getMode() == ViewJComponentHistoRGB.ALL) {
+                return;
+            }
+        }
 
-            voxelVolumeLabelB.setText("Threshold volume: " + String.valueOf(voxelVolume));
+        if (calcThresholdVolume) {
+
+            float voxelAmount = 0f;
+            voxelAmount = calcThresholdVolume(lower, upper);
+
+            if (imageA.getNDims() > 2) {
+                if (isImageASelected()) {
+                    voxelVolumeLabel.setText("Threshold volume: " +
+                                             String.valueOf(voxelAmount) +
+                                             imageA.getFileInfo(0).getAreaUnitsOfMeasureStr());
+                } else { // imageB selected
+                    voxelVolumeLabelB.setText("Threshold volume: " +
+                                              String.valueOf(voxelAmount) +
+                                              imageB.getFileInfo(0).getAreaUnitsOfMeasureStr());
+                }
+
+            } else {
+                if (isImageASelected()) {
+                    voxelVolumeLabel.setText("Threshold area: " +
+                                             String.valueOf(voxelAmount) +
+                                             imageA.getFileInfo(0).getAreaUnitsOfMeasureStr());
+                } else { // imageB selected
+                    voxelVolumeLabelB.setText("Threshold area: " +
+                                              String.valueOf(voxelAmount) +
+                                              imageB.getFileInfo(0).getAreaUnitsOfMeasureStr());
+                }
+
+            }
+
         }
     }
 
-    private float calculateThresholdVolume(float lower, float upper)
+    /**
+     * Clears (blanks out) the threshold voxel information (when RGB mode or not thresholding)
+     */
+    private void clearVoxelLabel() {
+        if (isImageASelected()) {
+            if (imageA.getNDims() > 2) {
+
+            } else {
+                voxelVolumeLabel.setText("Threshold area:");
+            }
+        } else { // imageB selected
+            if (imageB.getNDims() > 2) {
+                voxelVolumeLabel.setText("Threshold volume:");
+            } else {
+                voxelVolumeLabelB.setText("Threshold volume:");
+            }
+        }
+
+    }
+
+    private float calcThresholdVolume(float lower, float upper)
     {
         ModelImage image;
+        int colorIndex = 0;
 
-        if (isImageASelected())
-        {
+        boolean isInverse = false;
+
+        if (isImageASelected()) {
             image = imageA;
-        }
-        else
-        {
+            colorIndex = getHistoLUTComponentA().getMode() - 6;
+            if (getHistoLUTComponentA().getThresholdMode() == ViewJComponentHistoRGB.DUAL_THRESHOLD_INV) {
+                isInverse = true;
+            }
+
+        } else {
             image = imageB;
+            colorIndex = getHistoLUTComponentB().getMode() - 6;
+            if (getHistoLUTComponentB().getThresholdMode() == ViewJComponentHistoRGB.DUAL_THRESHOLD_INV) {
+                isInverse = true;
+            }
+
         }
 
-        int imageBuffer [] = new int[image.getExtents()[0] * image.getExtents()[1]];
+        int imageBuffer[] = new int[image.getExtents()[0] * image.getExtents()[1] *
+                            4];
         int numVoxels = 0;
 
-        for (int i = 0; i < image.getExtents()[2]; i++)
-        {
-            try
-            {
-                image.exportData(i * image.getExtents()[0] * image.getExtents()[1], imageBuffer.length, imageBuffer);
+        int z = 1;
+        if (image.getNDims() > 2) {
+            z = image.getExtents()[2];
+        }
 
-                for (int j = 0; j < imageBuffer.length; j++)
-                {
-                    if (imageBuffer[j] > lower && imageBuffer[j] < upper)
-                    {
-                        numVoxels++;
+        for (int i = 0; i < z; i++) {
+            try {
+                image.exportData(i * image.getExtents()[0] * image.getExtents()[1],
+                                 imageBuffer.length, imageBuffer);
+
+                for (int j = 0; j < imageBuffer.length; j += 4) {
+                    if (!isInverse) {
+                        if (imageBuffer[j + colorIndex] >= lower &&
+                            imageBuffer[j + colorIndex] <= upper) {
+                            numVoxels++;
+                        }
+                    } else {
+                        if (imageBuffer[j + colorIndex] <= lower ||
+                            imageBuffer[j + colorIndex] >= upper) {
+                            numVoxels++;
+                        }
+
                     }
                 }
-            }
-            catch (IOException ioe)
-            {
+            } catch (IOException ioe) {
                 return 0.0f;
             }
         }
 
-        float res[] = new float[3];
-        res[0] = Math.abs(image.getFileInfo(0).getResolutions()[0]);
-        res[1] = Math.abs(image.getFileInfo(0).getResolutions()[1]);
-        res[2] = Math.abs(image.getFileInfo(0).getResolutions()[2]);
-        //String units[] = image.getFileInfo(0).getUnitsOfMeasureAbbrevStr();
+        if (image.getNDims() > 2) {
+            return (numVoxels *
+                    Math.abs(image.getFileInfo(0).getResolutions()[0]) *
+                    Math.abs(image.getFileInfo(0).getResolutions()[1]) *
+                    Math.abs(image.getFileInfo(0).getResolutions()[2]));
+        } else {
+            return (numVoxels *
+                    Math.abs(image.getFileInfo(0).getResolutions()[0]) *
+                    Math.abs(image.getFileInfo(0).getResolutions()[1]));
 
-        return numVoxels * res[0] * res[1] * res[2];
+        }
     }
-
     /**
      * Returns whether the imageA LUT panel is the one being worked on.
      * @return  whether the imageA LUT panel is the one being worked on
@@ -1170,6 +1246,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                 }
             }
         } else if ( command.equals( "all" ) ) {
+            clearVoxelLabel();
             redRGBButton.setBorderPainted( false );
             greenRGBButton.setBorderPainted( false );
             blueRGBButton.setBorderPainted( false );
@@ -1209,6 +1286,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
             }
 
         } else if ( command.equals( "resetLinearLUT" ) ) {
+            clearVoxelLabel();
             allRGBButton.setEnabled( true );
             if ( tabbedPane.getSelectedComponent() == panelA ) {
                 if ( getHistoLUTComponentA() != null ) {
@@ -1220,6 +1298,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
                 }
             }
         } else if ( command.equals( "evendistriLUT" ) ) {
+            clearVoxelLabel();
             allRGBButton.setEnabled( true );
             if ( tabbedPane.getSelectedComponent() == panelA ) {
                 if ( getHistoLUTComponentA() != null ) {
@@ -1379,6 +1458,12 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         } else if ( event.getActionCommand().equals( "UpdateB" ) ) {
             updateHistoRGB( null, imageB, false );
             menuObj.setMenuItemEnabled( "Reset histogram & LUT B", false );
+        } else if ( command.equals( "calcThresholdVolume" ) ) {
+            calcThresholdVolume = menuObj.isMenuItemSelected("Calculate threshold volume");
+
+            if (!calcThresholdVolume) {
+                clearVoxelLabel();
+            }
         }
     }
 

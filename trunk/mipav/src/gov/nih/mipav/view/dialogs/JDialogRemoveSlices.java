@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmReplaceRemovedSlices;
 
 import java.awt.event.*;
 import java.awt.*;
@@ -38,6 +39,7 @@ public class JDialogRemoveSlices extends JDialogBase
     public final static int USER_DEFINED = 2;
 
     private AlgorithmRemoveSlices removeSlicesAlgo;
+    private AlgorithmReplaceRemovedSlices replaceSlicesAlgo;
     private ViewUserInterface userInterface;
     private ModelImage image; // source image
     private ModelImage resultImage = null; // result image
@@ -73,6 +75,9 @@ public class JDialogRemoveSlices extends JDialogBase
     private JLabel exampleLabel;
     private JLabel exampleLabel2;
     private JScrollPane scrollPane;
+
+    private JCheckBox replaceBox;
+    private boolean doReplace;
 
     private boolean dontOpenFrame = false;
     private int origExtents[] = null;
@@ -340,6 +345,20 @@ public class JDialogRemoveSlices extends JDialogBase
         gbc.gridwidth = 2;
         checkPanel.add( rangePanel, gbc );
 
+        JPanel optionsPanel = new JPanel();
+        optionsPanel.setLayout( new BoxLayout( optionsPanel, BoxLayout.Y_AXIS ) );
+
+        optionsPanel.setForeground( Color.black );
+        optionsPanel.setBorder( buildTitledBorder( "Options" ) );
+
+        replaceBox = new JCheckBox("Replace slices (using averages)", false);
+        replaceBox.setFont(MipavUtil.font12);
+        optionsPanel.add(replaceBox);
+
+        gbc.gridy++;
+        checkPanel.add(optionsPanel, gbc);
+
+
         // destination goes in the left of the lower box
         JPanel destinationPanel = new JPanel();
         destinationPanel.setLayout( new BoxLayout( destinationPanel, BoxLayout.Y_AXIS ) );
@@ -373,18 +392,7 @@ public class JDialogRemoveSlices extends JDialogBase
         JPanel buttonPanel = new JPanel( new FlowLayout() );
         // Make & set the OK (remove) and Cancel buttons--place outside the border
 
-        /*
-         buildOKButton();
-         OKButton.setText("Remove");
-         OKButton.setPreferredSize(new Dimension( 95, 30 ));
-         buttonPanel.add(OKButton);
-         buildCancelButton();
-         cancelButton.setPreferredSize(new Dimension( 95, 30 ));
-         buttonPanel.add(cancelButton);
-         buildHelpButton();
-         helpButton.setPreferredSize(new Dimension( 95, 30 ));
-         buttonPanel.add(helpButton);
-         */
+
         buttonPanel.add( buildButtons() );
         OKButton.setText( "Remove" );
 
@@ -568,6 +576,8 @@ public class JDialogRemoveSlices extends JDialogBase
         } else if ( newImage.isSelected() ) {
             displayLoc = NEW;
         }
+
+        doReplace = replaceBox.isSelected();
 
         // copy the selection of whether or not to remove from the list of boxes:
         checkListRemove = new boolean[nSlices];
@@ -834,7 +844,7 @@ public class JDialogRemoveSlices extends JDialogBase
                     //The algorithm has completed and produced a new image to be displayed.
                     try {
                         // put the new image into a new frame
-                        if ( !dontOpenFrame ) {
+                        if ( !dontOpenFrame && !doReplace) {
                             new ViewJFrameImage( resultImage, null, new Dimension( 25, 32 ) );
                         }
                         successful = true;
@@ -892,6 +902,9 @@ public class JDialogRemoveSlices extends JDialogBase
                 }
                 // last case is that algorithm failed, but no image was produced.
                 // since there is no image, don't need to clean up anything!
+
+
+
             }
             if ( displayLoc == REPLACE ) {
                 // need to clean up locks that were set during replace.
@@ -959,12 +972,57 @@ public class JDialogRemoveSlices extends JDialogBase
                 } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
             }
 
-        }
+            //will now replace slices with averages if requested
+            if (doReplace && successful) {
+                if ( displayLoc == REPLACE ) {
+                    replaceSlicesAlgo = new AlgorithmReplaceRemovedSlices(image, checkListRemove, false, false);
+                } else {
+                    replaceSlicesAlgo = new AlgorithmReplaceRemovedSlices(resultImage, checkListRemove, false, false);
+                }
+                replaceSlicesAlgo.addListener(this);
+                if (runInSeparateThread) {
+                   // Start the thread as a low priority because we wish to still have user interface work fast.
+                   if (replaceSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                       MipavUtil.displayError(
+                           "A thread is already running on this object");
+                   }
+               }
+               else {
+                   // replaceSlicesAlgo.setSeparateThread(false);
+                   replaceSlicesAlgo.setActiveImage(false);
+                   replaceSlicesAlgo.run();
+               }
+            }
 
+
+        } else if (algorithm instanceof AlgorithmReplaceRemovedSlices) {
+
+            if (displayLoc == NEW) {
+                if (replaceSlicesAlgo.isCompleted() == true && resultImage != null) {
+                    try {
+                        // put the new image into a new frame
+                        if ( !dontOpenFrame) {
+                            new ViewJFrameImage( resultImage, null, new Dimension( 25, 32 ) );
+                        }
+                        successful = true;
+                    } catch ( OutOfMemoryError error ) {
+                        MipavUtil.displayError( "Remove Slices reports: out of memory; " + "unable to open a new frame" );
+                        successful = false;
+                    }
+
+                }
+            } else {
+                if (replaceSlicesAlgo.isCompleted() == true) {
+                    image.notifyImageExtentsListeners();
+                    successful = true;
+
+                }
+            }
+        }
         insertScriptLine( algorithm );
 
-        removeSlicesAlgo.finalize();
-        removeSlicesAlgo = null;
+        algorithm.finalize();
+        algorithm = null;
         dispose();
     }
 

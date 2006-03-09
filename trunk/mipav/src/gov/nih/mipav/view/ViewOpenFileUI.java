@@ -382,6 +382,7 @@ public class ViewOpenFileUI
 
         //image.getMatrix().identity();
         LUT = fileIO.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
+
         modelRGB = fileIO.getModelRGB();
 
         ModelImage linkedImage = readLinkedImage();

@@ -2393,13 +2393,22 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     {
         ModelImage image;
 
+        boolean isInverse = false;
+
         if (isImageASelected())
         {
             image = panelParent.getImageA();
+            if (getHistoLUTComponentA().getMode() == ViewJComponentHistoLUT.DUAL_THRESHOLD_INV) {
+                isInverse = true;
+            }
         }
         else
         {
             image = panelParent.getImageB();
+            if (getHistoLUTComponentB().getMode() == ViewJComponentHistoLUT.DUAL_THRESHOLD_INV) {
+               isInverse = true;
+           }
+
         }
 
         int imageBuffer [] = new int[image.getExtents()[0] * image.getExtents()[1]];
@@ -2413,9 +2422,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
                 for (int j = 0; j < imageBuffer.length; j++)
                 {
-                    if (imageBuffer[j] >= lower && imageBuffer[j] <= upper)
-                    {
-                        numVoxels++;
+                    if (!isInverse) {
+                        if (imageBuffer[j] >= lower && imageBuffer[j] <= upper) {
+                            numVoxels++;
+                        }
+                    } else{
+                        if (imageBuffer[j] <= lower || imageBuffer[j] >= upper) {
+                            numVoxels++;
+                        }
                     }
                 }
             }

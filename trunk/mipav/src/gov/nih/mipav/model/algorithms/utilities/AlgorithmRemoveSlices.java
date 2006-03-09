@@ -628,7 +628,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
      *   @param image       Source image.
      *   @param resultImage Resultant image.
      */
-    public void updateFileInfo( ModelImage image, ModelImage resultImage ) {
+    public static void updateFileInfo( ModelImage image, ModelImage resultImage ) {
         FileInfoBase[] fileInfo;
 
         if ( resultImage.getNDims() == 3 ) {

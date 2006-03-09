@@ -273,6 +273,9 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     /** whether or not to use center of gravity for first translation. */
     private boolean ignoreCOG = false;
 
+
+    private double [] sliceCosts = null;
+
     /**
      * Creates new automatic internal registration algorithm and sets necessary variables.
      * @param _image		 Input image
@@ -350,6 +353,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             maxDim = inputImage.getExtents()[1];
         }
 
+        sliceCosts = new double[inputImage.getExtents()[2]];
     }
 
     /**
@@ -432,6 +436,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         if ( inputImage.getExtents()[1] > maxDim ) {
             maxDim = inputImage.getExtents()[1];
         }
+        sliceCosts = new double[inputImage.getExtents()[2]];
     }
 
     /**
@@ -476,6 +481,14 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      */
     public float[][] getTrans() {
         return trans;
+    }
+
+    /**
+     * accessor for costs
+     * @return double[] costs
+     */
+    public double[] getCosts() {
+        return this.sliceCosts;
     }
 
     /**
@@ -1143,7 +1156,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 }
 
                 Preferences.debug( " Starting level 1 ************************************************\n" );
-                answer = levelOne( simpleRef_1, simpleInput_1, item );
+                answer = levelOne( simpleRef_1, simpleInput_1, item, iNumber );
             } // if (DOF >= 3)
             else {
                 Preferences.debug( " Starting level 1 ************************************************\n" );
@@ -2535,7 +2548,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      *   @return         Best minimum after optimization.
      */
     private MatrixListItem levelOne( ModelSimpleImage ref, ModelSimpleImage input,
-            MatrixListItem item ) {
+            MatrixListItem item, int frame ) {
         int degree;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D( ref, input, costChoice, 256, 1 );
         if ( weighted ) {
@@ -2559,6 +2572,9 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
         MatrixListItem item2 = new MatrixListItem( powell.getCost(), powell.getMatrix( input.xRes ), powell.getFinal() );
         Preferences.debug( "Best answer: \n" + item2 + "\n" );
+
+        sliceCosts[frame] = item2.getCost();
+
         cost.disposeLocal();
         powell.finalize();
         return item2;
@@ -2915,6 +2931,14 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             for ( int i = 0; i < initial.length; i++ ) {
                 initial[i] = _initial[i];
             }
+        }
+
+        /**
+         * Gets the cost
+         * @return double the cost
+         */
+        public double getCost() {
+            return this.cost;
         }
 
         /**

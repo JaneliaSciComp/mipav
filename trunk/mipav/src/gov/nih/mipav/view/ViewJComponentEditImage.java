@@ -1832,6 +1832,8 @@ public class ViewJComponentEditImage
 
         lutHeightA = LUTa.getExtents()[1];
 
+        //System.err.println("SHOW IN VJCOMP\n" + LUTa.toString());
+
         xDim = imageExtents[0];
         yDim = imageExtents[1];
         zDim = 1;

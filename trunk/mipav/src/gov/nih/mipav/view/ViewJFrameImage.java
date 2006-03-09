@@ -974,6 +974,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void setImageB(ModelImage _imageB)
     {
+
         Vector frameList = imageA.getImageFrameVector();
         float min, max;
 
