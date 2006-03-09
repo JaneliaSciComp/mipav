@@ -3096,19 +3096,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            }
            else if (command.equals("EraseAll"))
            {
-               if (triImage[AXIAL_A] != null)
-               {
-                   triImage[AXIAL_A].eraseAllPaint(false);
-               }
-               if (triImage[AXIAL_B] != null)
-               {
-                   triImage[AXIAL_B].eraseAllPaint(false);
-               }
-               if (triImage[AXIAL_AB] != null)
-               {
-                   triImage[AXIAL_AB].getActiveImage().notifyImageDisplayListeners(null, true);
-               }
-           } // VOIs
+        	   triImage[AXIAL_A].eraseAllPaint(false);
+
+        	   imageA.notifyImageDisplayListeners(null, true);
+               imageB.notifyImageDisplayListeners(null, true);
+           }
            else if (command.equals("PaintMask"))
            {
                if (triImage[AXIAL_AB] != null)

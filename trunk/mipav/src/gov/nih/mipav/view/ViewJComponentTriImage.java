@@ -4606,108 +4606,38 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int volSlice = getCurrentTriImageSlice();
 
         int[] iterFactors = getVolumeIterationFactors();
-        if (triComponentOrientation == AXIAL || !hasOrientation)
+
+        for (j = jMin; j <= jMax; j++)
         {
-            for (j = jMin; j <= jMax; j++)
+            if (axisFlip[1])
             {
-                if (axisFlip[1])
+                rj = imageActive.getExtents()[axisOrder[1]] - 1 - j;
+            }
+            else
+            {
+                rj = j;
+            }
+            for (i = iMin; i <= iMax; i++)
+            {
+                if (axisFlip[0])
                 {
-                    rj = imageActive.getExtents()[axisOrder[1]] - 1 - j;
+                    ri = imageActive.getExtents()[axisOrder[0]] - 1 - i;
                 }
                 else
                 {
-                    rj = j;
+                    ri = i;
                 }
-                for (i = iMin; i <= iMax; i++)
+                index = iterFactors[0] * ri + iterFactors[1] * rj + iterFactors[2] * volSlice;
+                if (paintPixels)
                 {
-                    if (axisFlip[0])
-                    {
-                        ri = imageActive.getExtents()[axisOrder[0]] - 1 - i;
-                    }
-                    else
-                    {
-                        ri = i;
-                    }
-                    index = iterFactors[0] * ri + iterFactors[1] * rj + iterFactors[2] * volSlice;
-                    if (paintPixels)
-                    {
-                        paintBitmap.set(index);
-                    }
-                    else
-                    {
-                        paintBitmap.clear(index);
-                    }
-                }
-            }
-        } // end of if (triComponentOrientation == XY)
-        else if (triComponentOrientation == CORONAL)
-        {
-            for (j = jMin; j <= jMax; j++)
-            {
-                if (axisFlip[1])
-                {
-                    rj = imageActive.getExtents()[axisOrder[1]] - 1 - j;
+                    paintBitmap.set(index);
                 }
                 else
                 {
-                    rj = j;
-                }
-                for (i = iMin; i <= iMax; i++)
-                {
-                    if (axisFlip[0])
-                    {
-                        ri = imageActive.getExtents()[axisOrder[0]] - 1 - i;
-                    }
-                    else
-                    {
-                        ri = i;
-                    }
-                    index = iterFactors[0] * ri + iterFactors[1] * rj + iterFactors[2] * volSlice;
-                    if (paintPixels)
-                    {
-                        paintBitmap.set(index);
-                    }
-                    else
-                    {
-                        paintBitmap.clear(index);
-                    }
+                    paintBitmap.clear(index);
                 }
             }
-        } // end of else if (triComponentOrientation == XZ)
-        else
-        { // triComponentOrientation == ZY
-            for (j = jMin; j <= jMax; j++)
-            {
-                if (axisFlip[1])
-                {
-                    rj = imageActive.getExtents()[axisOrder[1]] - 1 - j;
-                }
-                else
-                {
-                    rj = j;
-                }
-                for (i = iMin; i <= iMax; i++)
-                {
-                    if (axisFlip[0])
-                    {
-                        ri = imageActive.getExtents()[axisOrder[0]] - 1 - i;
-                    }
-                    else
-                    {
-                        ri = i;
-                    }
-                    index = iterFactors[0] * ri + iterFactors[1] * rj + iterFactors[2] * volSlice;
-                    if (paintPixels)
-                    {
-                        paintBitmap.set(index);
-                    }
-                    else
-                    {
-                        paintBitmap.clear(index);
-                    }
-                }
-            }
-        } // end of else for triComponentOrientation == ZY
+        }
 
         if (imageActive.getType() == ModelStorageBase.COMPLEX)
         {
