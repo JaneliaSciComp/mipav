@@ -72,6 +72,17 @@ public class VolumeRendererRayCast extends VolumeRenderer
     }
 
     /**
+     * Blur the result ray traced image or not
+     * @param flag  true bluring to reduce contract, false not bluring
+     */
+    public void setBlurFlag(boolean flag) {
+       if ( componentImageXY != null ) {
+         ((ViewJComponentRenderImageRayCast)componentImageXY).setBlurFlag( flag );
+       }
+    }
+
+
+    /**
      * Call from the parent frame to dispose memory
      * @throws Throwable
      */

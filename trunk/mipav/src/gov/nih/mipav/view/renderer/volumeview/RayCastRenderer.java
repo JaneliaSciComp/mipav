@@ -114,6 +114,8 @@ public abstract class RayCastRenderer extends Renderer {
         m_kPDiff = new Vector3f();
         m_kP = new Point3f();
         m_kRotate = new Matrix3f();
+
+        tempImage = new int[m_aiRImage.length];
     }
 
     /**
@@ -267,7 +269,7 @@ public abstract class RayCastRenderer extends Renderer {
      *   Once the image is finished rotating, a final trace is made with a
      *   spacing of 1.
      */
-    
+
 
     public final synchronized void trace( int rayTraceStepSize, int iSpacing ) {
         long startTime = 0, now = 0;
@@ -278,7 +280,6 @@ public abstract class RayCastRenderer extends Renderer {
 
         startTime = System.currentTimeMillis();
         traceInit();
-        int[] temp = new int[m_aiRImage.length];
 
         mod = m_iRBound / 10;
         for ( iY = 0; iY < m_iRBound; iY += iSpacing ) {
@@ -342,87 +343,87 @@ public abstract class RayCastRenderer extends Renderer {
                 }
             }
         }
+        if ( bluring ) {
+          // Blur the final 2D image
+          int vCenter, vLeft, vRight, vTop, vBottom;
+          float fSrcR, fSrcG, fSrcB;
+          float fTrgR, fTrgG, fTrgB;
+          int iIndex;
+          for (iY = 1; iY < m_iRBound - 1; iY++) {
+            int iY_renBound = m_iRBound * iY;
+            for (int iX = 1; iX < m_iRBound - 1; iX++) {
+              iIndex = iX + iY_renBound;
+              vCenter = m_aiRImage[iIndex];
+              vLeft = m_aiRImage[iIndex - 1];
+              vRight = m_aiRImage[iIndex + 1];
+              vTop = m_aiRImage[iX + (m_iRBound * (iY - 1))];
+              vBottom = m_aiRImage[iX + (m_iRBound * (iY + 1))];
 
-        // Blur the final 2D image
-        int vCenter, vLeft, vRight, vTop, vBottom;
-        float fSrcR, fSrcG, fSrcB;
-        float fTrgR, fTrgG, fTrgB;
-        int iIndex;
-        for ( iY = 1; iY < m_iRBound-1; iY++) {
-           int iY_renBound = m_iRBound * iY;
-           for ( int iX = 1; iX < m_iRBound - 1; iX++ ) {
-             iIndex = iX + iY_renBound;
-             vCenter = m_aiRImage[iIndex];
-             vLeft = m_aiRImage[iIndex - 1];
-             vRight = m_aiRImage[iIndex + 1];
-             vTop = m_aiRImage[iX + (m_iRBound * (iY - 1))];
-             vBottom = m_aiRImage[iX + (m_iRBound * (iY + 1))];
+              // composite the color values
+              // vCenter
+              fSrcR = ( (vCenter >> 16) & 0xff);
+              fSrcG = ( (vCenter >> 8) & 0xff);
+              fSrcB = ( (vCenter) & 0xff);
 
-             // composite the color values
-             // vCenter
-             fSrcR = ( (vCenter >> 16) & 0xff);
-             fSrcG = ( (vCenter >> 8) & 0xff);
-             fSrcB = ( (vCenter) & 0xff);
+              fTrgR = 0;
+              fTrgG = 0;
+              fTrgB = 0;
 
-             fTrgR = 0;
-             fTrgG = 0;
-             fTrgB = 0;
+              fTrgR += fSrcR;
+              fTrgG += fSrcG;
+              fTrgB += fSrcB;
 
-             fTrgR += fSrcR;
-             fTrgG += fSrcG;
-             fTrgB += fSrcB;
+              // vLeft
+              fSrcR = ( (vLeft >> 16) & 0xff);
+              fSrcG = ( (vLeft >> 8) & 0xff);
+              fSrcB = ( (vLeft) & 0xff);
 
-             // vLeft
-             fSrcR = ( (vLeft >> 16) & 0xff);
-             fSrcG = ( (vLeft >> 8) & 0xff);
-             fSrcB = ( (vLeft) & 0xff);
+              fTrgR += fSrcR;
+              fTrgG += fSrcG;
+              fTrgB += fSrcB;
 
-             fTrgR += fSrcR;
-             fTrgG += fSrcG;
-             fTrgB += fSrcB;
+              // vRight
+              fSrcR = ( (vRight >> 16) & 0xff);
+              fSrcG = ( (vRight >> 8) & 0xff);
+              fSrcB = ( (vRight) & 0xff);
 
-             // vRight
-             fSrcR = ( (vRight >> 16) & 0xff);
-             fSrcG = ( (vRight >> 8) & 0xff);
-             fSrcB = ( (vRight) & 0xff);
+              fTrgR += fSrcR;
+              fTrgG += fSrcG;
+              fTrgB += fSrcB;
 
-             fTrgR += fSrcR;
-             fTrgG += fSrcG;
-             fTrgB += fSrcB;
+              // vTop
+              fSrcR = ( (vTop >> 16) & 0xff);
+              fSrcG = ( (vTop >> 8) & 0xff);
+              fSrcB = ( (vTop) & 0xff);
 
-             // vTop
-             fSrcR = ( (vTop >> 16) & 0xff);
-             fSrcG = ( (vTop >> 8) & 0xff);
-             fSrcB = ( (vTop) & 0xff);
+              fTrgR += fSrcR;
+              fTrgG += fSrcG;
+              fTrgB += fSrcB;
 
-             fTrgR += fSrcR;
-             fTrgG += fSrcG;
-             fTrgB += fSrcB;
+              // vBottom
+              fSrcR = ( (vBottom >> 16) & 0xff);
+              fSrcG = ( (vBottom >> 8) & 0xff);
+              fSrcB = ( (vBottom) & 0xff);
 
-             // vBottom
-             fSrcR = ( (vBottom >> 16) & 0xff);
-             fSrcG = ( (vBottom >> 8) & 0xff);
-             fSrcB = ( (vBottom) & 0xff);
+              fTrgR += fSrcR;
+              fTrgG += fSrcG;
+              fTrgB += fSrcB;
 
-             fTrgR += fSrcR;
-             fTrgG += fSrcG;
-             fTrgB += fSrcB;
+              fTrgR /= 5;
+              fTrgG /= 5;
+              fTrgB /= 5;
 
-             fTrgR /= 5;
-             fTrgG /= 5;
-             fTrgB /= 5;
+              tempImage[iIndex] =
+                  //(((int)255   & 0xff) << 24) |
+                  ( ( (int) (fTrgR) & 0xff) << 16) |
+                  ( ( (int) (fTrgG) & 0xff) << 8) |
+                  ( ( (int) (fTrgB) & 0xff));
 
-             temp[iIndex] =
-                 //(((int)255   & 0xff) << 24) |
-                 ( ( (int) (fTrgR) & 0xff) << 16) |
-                 ( ( (int) (fTrgG) & 0xff) << 8) |
-                 ( ( (int) (fTrgB) & 0xff));
-
-
-           }
-        }
-        for (int i = 0; i < temp.length; i++) {
-            m_aiRImage[i] = temp[i];
+            }
+          }
+          for (int i = 0; i < tempImage.length; i++) {
+            m_aiRImage[i] = tempImage[i];
+          }
         }
         now = System.currentTimeMillis();
         elapsedTime = (double) ( now - startTime );
@@ -431,6 +432,14 @@ public abstract class RayCastRenderer extends Renderer {
         }
         //System.out.println( "Raycast elapse time = " + (double) ( elapsedTime / 1000.0 ) ); // in seconds
         Preferences.debug( "Raycast elapse time = " + (double) ( elapsedTime / 1000.0 ) + "\n" );
+    }
+
+    /**
+     * Blur the resulting image or not
+     * @param flag  true blur the image, false not blur.
+     */
+    public void setBlurFlag( boolean flag ) {
+      bluring = flag;
     }
 
     /**
@@ -692,5 +701,8 @@ public abstract class RayCastRenderer extends Renderer {
     /** temporary variables to avoid 'new' call */
     protected Point3f m_kP;
     protected float red, green, blue;
+    private int[] tempImage;
 
+    /** Blur the final image to reduce voxel contrast. */
+    private boolean bluring = true;
 }

@@ -171,7 +171,7 @@ public class RayCastColorReflection
 
 
         if ( fSrcA >= 1) {
-              
+
           afAlphasFrontToBack[iNumStepsFrontToBack] = fSrcA;
           // Interpolate normal vector.
           Vector3f kNormal000 = m_akNormal[i000];
@@ -182,7 +182,7 @@ public class RayCastColorReflection
           Vector3f kNormal101 = m_akNormal[i101];
           Vector3f kNormal011 = m_akNormal[i011];
           Vector3f kNormal111 = m_akNormal[i111];
-          
+
           float fNx =
               fS000 * kNormal000.x +
               fS001 * kNormal001.x +
@@ -212,7 +212,7 @@ public class RayCastColorReflection
               fS111 * kNormal111.z;
           kVertexProperty.setNormal(fNx, fNy, fNz);
 
-          kVertexProperty.setDiffuse(0.99f, 0.80f, 0.80f);
+          kVertexProperty.setDiffuse(1.0f, 1.0f, 1.0f);
           //kVertexProperty.setSpecular(0.0f, 0.9f, 0.0f);
 
           iStep = iNumSteps;
@@ -237,7 +237,7 @@ public class RayCastColorReflection
 //System.out.println(" istep " + iStep + " iNumStepsFrontToBack = " + iNumStepsFrontToBack);
       // Access alpha along the ray.
       // Scale it so that it is in [0,1] range.
-      
+
       float fSrcA = afAlphasFrontToBack[iNumStepsFrontToBack];
       if (fSrcA == 0) return;
 

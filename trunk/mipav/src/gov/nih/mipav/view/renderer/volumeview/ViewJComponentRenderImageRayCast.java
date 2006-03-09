@@ -40,6 +40,22 @@ public class ViewJComponentRenderImageRayCast extends ViewJComponentRenderImage
                rvolBufferA, rvolBufferB, extents, renderMode, maxExtent );
     }
 
+
+    /**
+     * Blur the result ray traced image or not
+     * @param flag  true bluring to reduce contract, false not bluring
+     */
+    public void setBlurFlag(boolean flag) {
+      if (null != rayTracerA) {
+        ( (RayCastRenderer) rayTracerA).setBlurFlag(flag);
+      }
+
+      if (null != rayTracerB) {
+        ( (RayCastRenderer) rayTracerB).setBlurFlag(flag);
+      }
+    }
+
+
     /**
      * Change the camera model.
      * @param renderMode  rendering mode.
@@ -97,7 +113,6 @@ public class ViewJComponentRenderImageRayCast extends ViewJComponentRenderImage
             rayTracerB.rotateFrameBy( transformBU );
         }
     }
-
 
     /**
      * Ray trace by step size

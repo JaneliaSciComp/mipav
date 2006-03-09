@@ -64,6 +64,9 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
      /** Button Panel */
      private JPanel buttonPanel;
 
+     /** Blur image check box. */
+     private JCheckBox blurBox;
+
     /**
      *   Creates new dialog for turning bounding box
      *   frame on and off.
@@ -223,6 +226,15 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         kMaxRenExtentPanel.add( m_kRadioMaxRenExtent_512 );
         kMaxRenExtentPanel.add( m_kRadioMaxRenExtent_1024 );
 
+        JPanel blurPanel = new JPanel();
+        blurPanel.setBorder(buildTitledBorder("Smooth Surface"));
+        blurBox = new JCheckBox();
+        blurBox.setSelected( true );
+        blurBox.addActionListener( this );
+        blurBox.setActionCommand( "Blur" );
+        blurBox.setText( "Smooth" );
+        blurBox.setFont( serif12 );
+        blurPanel.add(blurBox);
 
         Box contentBox = new Box( BoxLayout.Y_AXIS );
 
@@ -230,6 +242,7 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         contentBox.add( projectionTypePanel );
         contentBox.add( stepPanel );
         contentBox.add( kMaxRenExtentPanel );
+        contentBox.add( blurPanel );
 
         buttonPanel = new JPanel();
 
@@ -287,6 +300,14 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         } else if ( source == closeButton ) {
             setVisible( false );
         }
+        else if ( source == blurBox ) {
+           if ( !blurBox.isSelected() ) {
+              myParent.setBlurFlag( false );
+           } else {
+              myParent.setBlurFlag( true );
+           }
+       }
+
 
     }
 

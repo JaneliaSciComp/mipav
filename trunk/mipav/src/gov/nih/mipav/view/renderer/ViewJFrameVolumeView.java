@@ -2489,7 +2489,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
     }
 
     /**
-     *   Sets the flags for the checkboxes and resets labels.
+     *   Sets the flags for the getOptionses and resets labels.
      *   @param event       Event that triggered this function.
      */
     public void itemStateChanged( ItemEvent event ) {
