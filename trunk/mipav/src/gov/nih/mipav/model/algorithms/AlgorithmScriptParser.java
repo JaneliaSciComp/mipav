@@ -8,7 +8,7 @@ import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
 import java.util.*;
-import java.awt.*;
+import java.awt.event.ActionEvent;
 import javax.swing.*;
 
 
@@ -859,6 +859,35 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 isRunning = false;
                 return false;
             }
+        } else if ( command.equals( "SaveAllVOIs" ) ) {
+            try {
+                String var1 = getNextString();
+                String name = (String)variableTable.get(var1);
+                
+                ModelImage image = UI.getRegisteredImageByName(name);
+                ViewJFrameImage frame = image.getParentFrame();
+                
+                frame.saveAllVOIs();
+            } catch ( Exception e ) {
+                MipavUtil.displayError( "Error in script file near \"SaveAllVOIs\"." );
+                isRunning = false;
+                return false;
+            }
+        } else if ( command.equals( "SaveAllVOIsTo" ) ) {
+            try {
+                String var1 = getNextString();
+                String name = (String)variableTable.get(var1);
+                
+                ModelImage image = UI.getRegisteredImageByName(name);
+                ViewJFrameImage frame = image.getParentFrame();
+                
+                String saveDir = getNextString();
+                frame.saveAllVOIsTo(saveDir);
+            } catch ( Exception e ) {
+                MipavUtil.displayError( "Error in script file near \"SaveAllVOIs\"." );
+                isRunning = false;
+                return false;
+            }
         } else if ( command.equals( "Clone" ) ) {
             try {
                 String var1 = getNextString();
@@ -887,17 +916,18 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         } else if ( command.equals( "VOI_to_BinaryMask" ) ) {
             try {
                 String var1 = getNextString();
+                String var2 = getNextString();
                 String name = (String) variableTable.get( var1 );
 
                 ModelImage image, maskImage;
-                ViewJFrameImage imageFrameMask;
 
                 image = UI.getRegisteredImageByName( name );
                 try {
                     maskImage = image.generateBinaryImage();
                     if ( maskImage != null ) {
                         maskImage.setImageName( "Binary image" );
-                        imageFrameMask = new ViewJFrameImage(maskImage, null, null, false );
+                        new ViewJFrameImage(maskImage, null, null, false );
+                        this.putVariable(var2, maskImage.getImageName());
                     }
                 } catch ( OutOfMemoryError error ) {
                     MipavUtil.displayError( "Out of memory: unable to open new frame" );
@@ -912,17 +942,18 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         } else if ( command.equals( "VOI_to_ShortMask" ) ) {
             try {
                 String var1 = getNextString();
+                String var2 = getNextString();
                 String name = (String) variableTable.get( var1 );
 
                 ModelImage image, shortImage;
-                ViewJFrameImage imageFrameMask;
 
                 image = UI.getRegisteredImageByName( name );
                 try {
                     shortImage = image.generateShortImage( 1 );
                     if ( shortImage != null ) {
                         shortImage.setImageName( "Short image" );
-                        imageFrameMask = new ViewJFrameImage( shortImage, null, null, false );
+                        new ViewJFrameImage( shortImage, null, null, false );
+                        this.putVariable(var2, shortImage.getImageName());
                     }
                 } catch ( OutOfMemoryError error ) {
                     MipavUtil.displayError( "Out of memory: unable to open new frame" );
@@ -937,17 +968,18 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         } else if ( command.equals( "VOI_to_UnsignedByteMask" ) ) {
             try {
                 String var1 = getNextString();
+                String var2 = getNextString();
                 String name = (String) variableTable.get( var1 );
 
                 ModelImage image, ubyteImage;
-                ViewJFrameImage imageFrameMask;
 
                 image = UI.getRegisteredImageByName( name );
                 try {
                     ubyteImage = image.generateUnsignedByteImage( 1 );
                     if ( ubyteImage != null ) {
                         ubyteImage.setImageName( "UBYTE image" );
-                        imageFrameMask = new ViewJFrameImage( ubyteImage, null, null, false );
+                        new ViewJFrameImage( ubyteImage, null, null, false );
+                        this.putVariable(var2, ubyteImage.getImageName());
                     }
                 } catch ( OutOfMemoryError error ) {
                     MipavUtil.displayError( "Out of memory: unable to open new frame" );
@@ -956,6 +988,65 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 }
             } catch ( Exception e ) {
                 MipavUtil.displayError( "Error in script file near \"VOI_to_UnsignedByteMask\"." );
+                isRunning = false;
+                return false;
+            }
+        } else if (command.equals("MaskToVOI")) {
+            try {
+                String var1 = getNextString();
+                String name = (String) variableTable.get( var1 );
+
+                ModelImage image = UI.getRegisteredImageByName( name );
+                ViewJFrameImage frame = image.getParentFrame();
+                
+                frame.actionPerformed(new ActionEvent(frame, 0, command));
+            } catch ( Exception e ) {
+                MipavUtil.displayError( "Error in script file near \"MaskToVOI\"." );
+                isRunning = false;
+                return false;
+            }
+        } else if (command.equals("MaskToPaint")) {
+            try {
+                String var1 = getNextString();
+                String name = (String) variableTable.get( var1 );
+
+                ModelImage image = UI.getRegisteredImageByName( name );
+                ViewJFrameImage frame = image.getParentFrame();
+                
+                frame.actionPerformed(new ActionEvent(frame, 0, command));
+            } catch ( Exception e ) {
+                MipavUtil.displayError( "Error in script file near \"MaskToPaint\"." );
+                isRunning = false;
+                return false;
+            }
+        } else if (command.equals("PaintToVOI")) {
+            try {
+                String var1 = getNextString();
+                String name = (String) variableTable.get( var1 );
+
+                ModelImage image = UI.getRegisteredImageByName( name );
+                ViewJFrameImage frame = image.getParentFrame();
+                
+                frame.actionPerformed(new ActionEvent(frame, 0, command));
+            } catch ( Exception e ) {
+                MipavUtil.displayError( "Error in script file near \"PaintToVOI\"." );
+                isRunning = false;
+                return false;
+            }
+        } else if (command.equals("PaintToShortMask")) {
+            try {
+                String var1 = getNextString();
+                String var2 = getNextString();
+                String name = (String) variableTable.get( var1 );
+
+                ModelImage image = UI.getRegisteredImageByName( name );
+                ViewJFrameImage frame = image.getParentFrame();
+                
+                String maskImageName = frame.getComponentImage().commitPaintToMask();
+                
+                this.putVariable(var2, maskImageName);
+            } catch ( Exception e ) {
+                MipavUtil.displayError( "Error in script file near \"PaintToShortMask\"." );
                 isRunning = false;
                 return false;
             }

@@ -197,7 +197,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      *   @param _imageA         First image to display
      *   @param LUTa           LUT of the imageA (if null grayscale LUT is constructed)
      *   @param loc            location where image should be initially placed
-     *   @param ui             main user interface frame.
      *   @param logMagDisplay  Display log magnitude of image
      */
     public ViewJFrameImage(ModelImage _imageA, ModelLUT LUTa, Dimension loc,
@@ -2179,8 +2178,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 try
                 {
-                    ModelImage destImage = new ModelImage(imageA.getType(), imageA.getExtents(), "maskImage",
-                        userInterface);
+                    ModelImage destImage = new ModelImage(imageA.getType(), imageA.getExtents(), "maskImage");
 
                     AlgorithmImageCalculator algImageCalc = new
                         AlgorithmImageCalculator(destImage, imageA, imageB, AlgorithmImageCalculator.AND,
@@ -2219,16 +2217,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (imageA.isColorImage())
             {
-                imageB = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(),
-                                        imageA.getImageName()+"_mask", userInterface);
+                imageB = new ModelImage(ModelStorageBase.ARGB, imageA.getExtents(), imageA.getImageName()+"_mask");
                 imageB.copyFileTypeInfoSansBufferType(imageA);
                 imageB.calcMinMax();
                 setImageB(imageB);
             }
             else
             {
-                imageB = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(),
-                                        imageA.getImageName()+"_ubMask", userInterface);
+                imageB = new ModelImage(ModelStorageBase.UBYTE, imageA.getExtents(), imageA.getImageName()+"_ubMask");
                 imageB.copyFileTypeInfoSansBufferType(imageA);
                 imageB.calcMinMax();
                 setImageB(imageB);
@@ -2256,7 +2252,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 if (imageA.isColorImage())
                 {
-                    ModelImage imgB = new ModelImage(imageA.getType(), imageA.getExtents(), " Blank", userInterface);
+                    ModelImage imgB = new ModelImage(imageA.getType(), imageA.getExtents(), " Blank");
 
                     setImageB(imgB);
                     menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
@@ -2813,7 +2809,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("BinaryMask"))
         {
-            ViewJFrameImage imageFrameMask;
             ModelImage maskImage = null;
 
             try
@@ -2826,8 +2821,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (maskImage != null)
                 {
                     maskImage.setImageName( getActiveImage().getImageName() + "_bmask" );
-                    imageFrameMask = new ViewJFrameImage(maskImage, null, new Dimension(610, 200), userInterface,
-                        false);
+                    new ViewJFrameImage(maskImage, null, new Dimension(610, 200), false);
                 }
             }
             catch (OutOfMemoryError error)
@@ -2849,7 +2843,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("ShortMask"))
         {
-            ViewJFrameImage imageFrameMask;
             ModelImage shortImage = null;
 
             try
@@ -2862,8 +2855,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (shortImage != null)
                 {
                     shortImage.setImageName( getActiveImage().getImageName() + "_smask" );
-                    imageFrameMask = new ViewJFrameImage(shortImage, null, new Dimension(610, 200), userInterface,
-                        false);
+                    new ViewJFrameImage(shortImage, null, new Dimension(610, 200), false);
                 }
             }
             catch (OutOfMemoryError error)
@@ -2885,7 +2877,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("UnsignedByteMask"))
         {
-            ViewJFrameImage imageFrameMask;
             ModelImage uByteImage = null;
 
             try
@@ -2899,8 +2890,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (uByteImage != null)
                 {
                     uByteImage.setImageName( getActiveImage().getImageName() + "_ubmask" );
-                    imageFrameMask = new ViewJFrameImage(uByteImage, null, new Dimension(610, 200), userInterface,
-                        false);
+                    new ViewJFrameImage(uByteImage, null, new Dimension(610, 200),false);
                 }
             }
             catch (OutOfMemoryError error)
@@ -2913,20 +2903,57 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 uByteImage = null;
                 return;
             }
-            if (userInterface.isScriptRecording())
-            {
-                userInterface.getScriptDialog().append(
-                    "VOI_to_UnsignedByteMask "
-                    + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " \n");
+            // add the conversion to the script, if one is being recorded
+            if (userInterface.isScriptRecording() && uByteImage != null) {
+                //check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                    }
+                }
+
+                String line = "VOI_to_UnsignedByteMask " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
+                userInterface.getScriptDialog().putVar(uByteImage.getImageName());
+                line += userInterface.getScriptDialog().getVar(uByteImage.getImageName()) + "\n";
+
+                userInterface.getScriptDialog().append(line);
             }
         }
         else if (command.equals("MaskToVOI"))
         {
             new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
+            
+            // add the conversion to the script, if one is being recorded
+            if (userInterface.isScriptRecording()) {
+                //check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                    }
+                }
+
+                String line = "MaskToVOI " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + "\n";
+
+                userInterface.getScriptDialog().append(line);
+            }
         }
         else if (command.equals("MaskToPaint"))
         {
             handleMaskToPaint();
+            
+            // add the conversion to the script, if one is being recorded
+            if (userInterface.isScriptRecording()) {
+                //check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                    }
+                }
+
+                String line = "MaskToPaint " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + "\n";
+
+                userInterface.getScriptDialog().append(line);
+            }
         }
         else if (command.equals("PaintToVOI"))
         {
@@ -2966,11 +2993,42 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             algoPaintToVOI.setActiveImage(false);
             algoPaintToVOI.run();
+            
+            // add the conversion to the script, if one is being recorded
+            if (userInterface.isScriptRecording()) {
+                //check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                    }
+                }
+
+                String line = "PaintToVOI " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + "\n";
+
+                userInterface.getScriptDialog().append(line);
+            }
+            
             updateImages();
         }
         else if (command.equals("PaintToShortMask"))
         {
-            componentImage.commitPaintToMask();
+            String maskImageName = componentImage.commitPaintToMask();
+            
+            // add the conversion to the script, if one is being recorded
+            if (userInterface.isScriptRecording() && maskImageName != null) {
+                //check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                    }
+                }
+
+                String line = "PaintToShortMask " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
+                userInterface.getScriptDialog().putVar(maskImageName);
+                line += userInterface.getScriptDialog().getVar(maskImageName) + "\n";
+
+                userInterface.getScriptDialog().append(line);
+            }
         }
         else if (command.equals("Open VOI"))
         {
@@ -3079,6 +3137,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         else if (command.equals("Save all VOIs"))
         {
             saveAllVOIs();
+            
+            if (userInterface.isScriptRecording()) {
+                //check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                    }
+                }
+
+                String line = "SaveAllVOIs " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + "\n";
+                userInterface.getScriptDialog().append(line);
+            }
         }
         else if (command.equals("Save all VOIs to..."))
         {
@@ -3110,6 +3180,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 voiDir = new String(directory + fileName + File.separator);
                 saveAllVOIsTo(voiDir);
+                
+                if (userInterface.isScriptRecording()) {
+                    //check to see if the match image is already in the ImgTable
+                    if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
+                        if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
+                            userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
+                        }
+                    }
+    
+                    String line = "SaveAllVOIsTo " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
+                    line += voiDir + "\n";
+                    userInterface.getScriptDialog().append(line);
+                }
             }
         }
         else if (command.equals("Snake"))
@@ -3134,19 +3217,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } // Paint
         else if (command.equals("ThinPaint"))
         {
-            componentImage.setPaintBrushSize(componentImage.thinPaint);
+            componentImage.setPaintBrushSize(ViewJComponentEditImage.thinPaint);
         }
         else if (command.equals("MedPaint"))
         {
-            componentImage.setPaintBrushSize(componentImage.medPaint);
+            componentImage.setPaintBrushSize(ViewJComponentEditImage.medPaint);
         }
         else if (command.equals("ThickPaint"))
         {
-            componentImage.setPaintBrushSize(componentImage.thickPaint);
+            componentImage.setPaintBrushSize(ViewJComponentEditImage.thickPaint);
         }
         else if (command.equals("ThickestPaint"))
         {
-            componentImage.setPaintBrushSize(componentImage.thickestPaint);
+            componentImage.setPaintBrushSize(ViewJComponentEditImage.thickestPaint);
         }
         else if (command.equals("colorPaint"))
         { // new colour dialog only when null
@@ -3229,7 +3312,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("Clone"))
         {
-            ViewJFrameImage imageFrameClone;
             ModelImage clonedImage = null;
 
             try
@@ -3246,8 +3328,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 {
                     lutClone = (ModelLUT) LUTb.clone();
                 }
-                imageFrameClone = new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200), userInterface,
-                    getActiveImage().getLogMagDisplay());
+                new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200), getActiveImage().getLogMagDisplay());
                 System.gc();
                 if (userInterface.isScriptRecording())
                 {
@@ -4102,8 +4183,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         if (algoRef.newReferenceCreated())
                         {
                             refImage = algoRef.getNewReferenceImage();
-                            ViewJFrameImage newRefFrame = new ViewJFrameImage(refImage, null, new Dimension(0, 0),
-                                userInterface);
+                            ViewJFrameImage newRefFrame = new ViewJFrameImage(refImage, null, new Dimension(0, 0));
                         }
                         else
                         {
@@ -4112,8 +4192,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         if (algoRef.newAdjustedCreated())
                         {
                             adjImage = algoRef.getNewAdjustedImage();
-                            ViewJFrameImage newAdjFrame = new ViewJFrameImage(adjImage, null, new Dimension(0, 0),
-                                userInterface);
+                            ViewJFrameImage newAdjFrame = new ViewJFrameImage(adjImage, null, new Dimension(0, 0));
                         }
                         else
                         {
@@ -5583,22 +5662,22 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 incSlice();
                 return;
             case KeyEvent.VK_1:
-                componentImage.setPaintBrushSize(componentImage.thinPaint);
+                componentImage.setPaintBrushSize(ViewJComponentEditImage.thinPaint);
                 componentImage.repaint();
                 return;
 
             case KeyEvent.VK_2:
-                componentImage.setPaintBrushSize(componentImage.medPaint);
+                componentImage.setPaintBrushSize(ViewJComponentEditImage.medPaint);
                 componentImage.repaint();
                 return;
 
             case KeyEvent.VK_3:
-                componentImage.setPaintBrushSize(componentImage.thickPaint);
+                componentImage.setPaintBrushSize(ViewJComponentEditImage.thickPaint);
                 componentImage.repaint();
                 return;
 
             case KeyEvent.VK_4:
-                componentImage.setPaintBrushSize(componentImage.thickestPaint);
+                componentImage.setPaintBrushSize(ViewJComponentEditImage.thickestPaint);
                 componentImage.repaint();
                 return;
             case KeyEvent.VK_UP:

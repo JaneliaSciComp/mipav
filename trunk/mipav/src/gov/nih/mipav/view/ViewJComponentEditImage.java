@@ -9525,8 +9525,11 @@ public class ViewJComponentEditImage
         }
     }
 
-    /** Creates a new short image from the paint mask */
-    public void commitPaintToMask() {
+    /**
+     * Creates a new short image from the paint mask.
+     * @return the name of the new short image
+     */
+    public String commitPaintToMask() {
         AlgorithmMask maskAlgo = null;
         Color fillColor;
         ModelImage imageACopy = null, imageBCopy = null;
@@ -9606,7 +9609,13 @@ public class ViewJComponentEditImage
                 imageBCopy.disposeLocal();
                 imageBCopy = null;
             }
-            return;
+            return null;
+        }
+        
+        if (imageACopy != null) {
+            return imageACopy.getImageName();
+        } else {
+            return imageBCopy.getImageName();
         }
     }
 
