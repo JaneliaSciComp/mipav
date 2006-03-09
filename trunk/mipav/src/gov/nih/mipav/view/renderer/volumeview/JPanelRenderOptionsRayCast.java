@@ -67,6 +67,12 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
      /** Blur image check box. */
      private JCheckBox blurBox;
 
+     /** Diffuse color button for vertex material. */
+     private JButton diffuseButton;
+
+     /** Specular color button for vertex material. */
+     private JButton specularButton;
+
     /**
      *   Creates new dialog for turning bounding box
      *   frame on and off.
@@ -236,6 +242,39 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         blurBox.setFont( serif12 );
         blurPanel.add(blurBox);
 
+
+        diffuseButton = new JButton();
+        diffuseButton.setPreferredSize( new Dimension( 25, 25 ) );
+        diffuseButton.setToolTipText( "Change diffuse color" );
+        diffuseButton.addActionListener( this );
+        diffuseButton.setBackground( Color.white );
+
+        JLabel fissueLabel = new JLabel( "diffuse color" );
+        fissueLabel.setFont( serif12 );
+        fissueLabel.setForeground( Color.black );
+
+        specularButton = new JButton();
+        specularButton.setPreferredSize( new Dimension( 25, 25 ) );
+        specularButton.setToolTipText( "Change sepcular color" );
+        specularButton.addActionListener( this );
+        specularButton.setBackground( Color.white );
+
+        JLabel specularLabel = new JLabel( "specular color" );
+        specularLabel.setFont( serif12 );
+        specularLabel.setForeground( Color.black );
+
+        JPanel materialPanel = new JPanel();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        materialPanel.add( diffuseButton, gbc );
+        gbc.gridx = 1;
+        materialPanel.add( fissueLabel, gbc );
+        gbc.gridx = 2;
+        materialPanel.add( specularButton, gbc );
+        gbc.gridx = 3;
+        materialPanel.add( specularLabel, gbc );
+        materialPanel.setBorder( buildTitledBorder( "Material Color" ) );
+
         Box contentBox = new Box( BoxLayout.Y_AXIS );
 
         contentBox.add( panel2 );
@@ -243,6 +282,7 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         contentBox.add( stepPanel );
         contentBox.add( kMaxRenExtentPanel );
         contentBox.add( blurPanel );
+        contentBox.add( materialPanel );
 
         buttonPanel = new JPanel();
 
@@ -299,15 +339,19 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
             setSpaceSize();
         } else if ( source == closeButton ) {
             setVisible( false );
-        }
-        else if ( source == blurBox ) {
+        } else if ( source == blurBox ) {
            if ( !blurBox.isSelected() ) {
               myParent.setBlurFlag( false );
            } else {
               myParent.setBlurFlag( true );
            }
-       }
-
+        } else if ( source == diffuseButton ) {
+             colorChooser = new ViewJColorChooser( new Frame(), "Pick color", new OkColorListener( diffuseButton ),
+                    new CancelListener() );
+        } else if ( source == specularButton ) {
+             colorChooser = new ViewJColorChooser( new Frame(), "Pick color", new OkColorListener( specularButton ),
+                    new CancelListener() );
+        }
 
     }
 
@@ -328,6 +372,10 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
             myParent.setBoxColor( color );
         } else if ( button == colorButtonBackground ) {
             myParent.setBackgroundColor( color );
+        } else if ( button == diffuseButton ) {
+            myParent.setVertexDiffuse( color );
+        } else if ( button == specularButton ) {
+            myParent.setVertexSpecular( color );
         }
     }
 
@@ -427,7 +475,6 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
          */
         public void actionPerformed( ActionEvent e ) {
             Color color = colorChooser.getColor();
-
             button.setBackground( color );
             setBoxColor( button, color );
         }
@@ -462,6 +509,7 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         }
 
     }
+
 
     /**
      *    Does nothing.

@@ -81,6 +81,28 @@ public class VolumeRendererRayCast extends VolumeRenderer
        }
     }
 
+    /**
+     * Set the vertex diffuse color.
+     * @param color Color
+     */
+    public void setVertexDiffuse( Color color ) {
+      if ( componentImageXY != null ) {
+        ((ViewJComponentRenderImageRayCast)componentImageXY).setVertexDiffuseColor( color );
+      }
+
+    }
+
+    /**
+     * Set the vertex specular color.
+     * @param color Color
+     */
+    public void setVertexSpecular( Color color) {
+      if ( componentImageXY != null ) {
+        ((ViewJComponentRenderImageRayCast)componentImageXY).setVertexSpecularColor( color );
+      }
+
+    }
+
 
     /**
      * Call from the parent frame to dispose memory

@@ -212,8 +212,8 @@ public class RayCastColorReflection
               fS111 * kNormal111.z;
           kVertexProperty.setNormal(fNx, fNy, fNz);
 
-          kVertexProperty.setDiffuse(1.0f, 1.0f, 1.0f);
-          //kVertexProperty.setSpecular(0.0f, 0.9f, 0.0f);
+          kVertexProperty.setDiffuse(vertexDiffuse);
+          kVertexProperty.setSpecular(vertexSpecular);
 
           iStep = iNumSteps;
         }
@@ -234,7 +234,7 @@ public class RayCastColorReflection
       fY += fStepY;
       fZ += fStepZ;
     }
-//System.out.println(" istep " + iStep + " iNumStepsFrontToBack = " + iNumStepsFrontToBack);
+
       // Access alpha along the ray.
       // Scale it so that it is in [0,1] range.
 

@@ -489,12 +489,12 @@ public class ViewJComponentSurfaceVolume {
                     try {
                         if (tf_compA != null) {
                             paintBuffer[index] = ( (opacityValA << 24) | 0x00ffffff) & lutBufferRemapped[pix];
-                            //paintBuffer[index] = ( (opacityValA << 24) | 0x00ffffff) & lutBufferRemapped[200];
+                            // paintBuffer[index] = ( (opacityValA << 24) | 0x00ffffff) & lutBufferRemapped[200];
                         }
                         else {
-                            
+
                             paintBuffer[index] = lutBufferRemapped[pix];
-                            //paintBuffer[index] = lutBufferRemapped[200];
+                            // paintBuffer[index] = lutBufferRemapped[200];
                         }
                     }
                     catch (Exception e) {

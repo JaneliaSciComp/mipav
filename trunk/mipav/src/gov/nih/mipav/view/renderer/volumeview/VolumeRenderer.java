@@ -1151,7 +1151,6 @@ public abstract class VolumeRenderer extends RenderViewBase
         updateImage();
     }
 
-
     /**
      * One of the overrides necessary to be a MouseListener.  This member only
      * exists to satisfy the conditions of being a MouseListener.  It does
@@ -1620,6 +1619,5 @@ public abstract class VolumeRenderer extends RenderViewBase
 
     /** Update the window level flag, call by the plane renderer. */
     private boolean updateWinlevel = true;
-
 
 }

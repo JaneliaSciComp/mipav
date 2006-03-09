@@ -198,8 +198,8 @@ public class RayCastColorLighting
                 kVertexProperty.setNormal(fNx, fNy, fNz);
 
                 // 1/255 =  * 0.003922f
-                kVertexProperty.setDiffuse(1.0f, 1.0f, 1.0f);
-                // kVertexProperty.setSpecular(1.0f, 1.0f, 1.0f);
+                kVertexProperty.setDiffuse(vertexDiffuse);
+                kVertexProperty.setSpecular(vertexSpecular);
 
                 // Interpolate alpha
                  float fSrcA =

@@ -1,7 +1,7 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
 import gov.nih.mipav.model.structures.*;
-
+import java.awt.*;
 import java.awt.event.*;
 
 
@@ -55,6 +55,34 @@ public class ViewJComponentRenderImageRayCast extends ViewJComponentRenderImage
       }
     }
 
+
+    /**
+     * Set the vertex material diffuse color
+     * @param color diffuse color
+     */
+    public void setVertexDiffuseColor( Color color ) {
+      if (null != rayTracerA) {
+        ( (RayCastRenderer) rayTracerA).setDiffuse( color );
+      }
+
+      if (null != rayTracerB) {
+        ( (RayCastRenderer) rayTracerB).setDiffuse( color );
+      }
+    }
+
+    /**
+     * Set the vertex material specular color
+     * @param color specular color
+     */
+    public void setVertexSpecularColor( Color color ) {
+      if (null != rayTracerA) {
+        ( (RayCastRenderer) rayTracerA).setSpecular( color );
+      }
+
+      if (null != rayTracerB) {
+        ( (RayCastRenderer) rayTracerB).setSpecular( color );
+      }
+    }
 
     /**
      * Change the camera model.

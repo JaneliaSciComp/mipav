@@ -443,6 +443,22 @@ public abstract class RayCastRenderer extends Renderer {
     }
 
     /**
+     * Set vertex material diffuse color
+     * @param flag  true blur the image, false not blur.
+     */
+    public void setDiffuse( Color color ) {
+      vertexDiffuse = new Color3f( color );
+    }
+
+    /**
+     * Set vertex material specular color
+     * @param flag  true blur the image, false not blur.
+     */
+    public void setSpecular(Color color) {
+      vertexSpecular = new Color3f( color );
+    }
+
+    /**
      * Support for clipping line segments against coordinate planes.
      * The function computes the line segment parameter corresponding to the
      * intersection of the segment with a coordinate plane.  However, the
@@ -705,4 +721,11 @@ public abstract class RayCastRenderer extends Renderer {
 
     /** Blur the final image to reduce voxel contrast. */
     private boolean bluring = true;
+
+    /** Vertex material diffuse color. */
+    protected Color3f vertexDiffuse = new Color3f( Color.white );
+
+    /** Vertex material specular color. */
+    protected Color3f vertexSpecular = new Color3f( Color.white );
+
 }
