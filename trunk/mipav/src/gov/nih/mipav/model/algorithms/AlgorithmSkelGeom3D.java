@@ -157,7 +157,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
     private basisS b = null;
     private simplex chRoot;
     private basisS bCheckPerps = null;
-    private simplex ns = new simplex();
+    private simplex ns;
     private int vNum = -1;
     private int ssTri = 2000;
     private simplex stTri[] = null;
@@ -166,6 +166,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
     private simplex pole2[];
     // array of lower bounds for lfs of each sample
     private double lfsLb[];
+    private int sqbtest = 0;
 
     /**
      * Constructor for putting a 3D skeleton into the source image
@@ -676,6 +677,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         pNeigh = new neighbor();
         pNeigh.setNull();
         ttBasis = new basisS();
+        basisSList.insertAtBack(ttBasis);
         ttBasis.setRefCount(1);
         ttBasis.setLScale(-1);
         ttBasis.setSqa(0.0);
@@ -1796,18 +1798,23 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 return;
             }
             vertIndex = cn[0];
+            Preferences.debug("Doing outOfFlat\n");
             if (outOfFlat(root, p, vertIndex)) {
+                Preferences.debug("Doing extendSimplices\n");
                 extendSimplices(root);
             }
             else {
+                Preferences.debug("Doing search\n");
                 s = search(root);
                 if (errorStatus == -1) {
                     return;
                 }
+                Preferences.debug("Doing makeFacets\n");
                 t = makeFacets(s);
                 if (errorStatus == -1) {
                     return;
                 }
+                Preferences.debug("Doing connect\n");
                 connect(t);
             }
         } // while (cDim < rDim)
@@ -1824,6 +1831,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 return;
             }
             connect(t);
+            if (errorStatus == -1) {
+                return;
+            }
         }
         return;
     } // private void buildHull(simplex root)
@@ -1847,23 +1857,20 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         }
         if (s.getPeak().getVert() != null) {
             MipavUtil.displayError("s.getPeak().getVert() != null in connect");
-            disposeProgressBar();
-            setCompleted(false);
-            System.exit(1);
+            errorStatus = -1;
+            return;
         }
         if (s.getPeak().getSimp().getPeak().getVertIndex() != vertIndex) {
             MipavUtil.displayError(
                     "s.getPeak().getSimp().getPeak().getVertIndex != vertIndex in connect");
-            disposeProgressBar();
-            setCompleted(false);
-            System.exit(1);
+            errorStatus = -1;
+            return;
         }
         if (opVert(s, p, vertIndex).getSimp().getPeak().getVert() != null) {
             MipavUtil.displayError(
                     "opVert(s, p, vertIndex).getSimp().getPeak().getVert() != null) in connect");
-            disposeProgressBar();
-            setCompleted(false);
-            System.exit(1);
+            errorStatus = -1;
+            return;
         }
         if (s.getVisit() == pNum) {
             return;
@@ -1871,6 +1878,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         s.setVisit(pNum);
         seen = s.getPeak().getSimp();
         xfi = opSimp(seen, s).getVert();
+        if (errorStatus == -1) {
+            return;
+        }
         fiIndex = opSimp(seen, s).getVertIndex();
         for (i = 0, sn = s.getNeigh(0); i < cDim; i++, sn = s.getNeigh(i)) {
             xb = sn.getVert();
@@ -1882,8 +1892,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             sf = sn.getSimp();
             xf = xfi;
             fIndex = fiIndex;
-            if (sf.getPeak().getVert() == null) { /* are we done already */
+            if (sf.getPeak().getVert() == null) { /* are we done already? */
                 sf = opVert(seen, xb, bIndex).getSimp();
+                if (errorStatus == -1) {
+                    return;
+                }
                 if (sf.getPeak().getVert() != null) {
                     continue;
                 }
@@ -1892,13 +1905,22 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 xb = xf;
                 bIndex = fIndex;
                 xf = opSimp(sf, sb).getVert();
+                if (errorStatus == -1) {
+                    return;
+                }
                 fIndex = opSimp(sf, sb).getVertIndex();
                 sb = sf;
                 sf = opVert(sb, xb, bIndex).getSimp();
+                if (errorStatus == -1) {
+                    return;
+                }
             } while (sf.getPeak().getVert() != null);
 
             sn.setSimp(sf);
             opVert(sf, xf, fIndex).setSimp(s);
+            if (errorStatus == -1) {
+                return;
+            }
 
             connect(sf);
         } // for (i = 0, sn = s.getNeigh(0); i < cDim; i++, sn = s.getNeigh(i))
@@ -1914,7 +1936,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         int j;
         neighbor neigh;
         basisS bas;
-        neighbor x;
 
         if (seen == null) {
             return null;
@@ -1963,6 +1984,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             }
             ns.setVisit(0);
             ns.getPeak().setVert(null);
+            ns.getPeak().setVertIndex(Integer.MIN_VALUE);
             ns.setNormal(null);
             ns.getPeak().setSimp(seen);
             bas = ns.getNeigh(i).getBasisS();
@@ -1978,6 +2000,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             ns.getNeigh(i).setVert(p);
             ns.getNeigh(i).setVertIndex(vertIndex);
             (opSimp(n, seen)).setSimp(ns);
+            if (errorStatus == -1) {
+                return null;
+            }
             bn.setSimp(ns);
         } // for (i = 0; i < cDim; i++)
         return ns;
@@ -1992,13 +2017,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             if (i < cDim) {
                 return x;
             } else {
+                MipavUtil.displayError("Adjacency failure in opSimp\n");
                 printSimplexF(a);
                 printSimplexF(b);
                 visitTriangGen(a);
-                disposeProgressBar();
-                setCompleted(false);
-                MipavUtil.displayError("Adjacency failure in opSimp\n");
-                System.exit(1);
+                errorStatus = -1;
                 return null;
             }
         } // for (i = 0; x = a.getNeigh(0);
@@ -2015,7 +2038,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             if (i < cDim) {
                 return x;
             } else {
-                
+                MipavUtil.displayError("Adjacency failure in opVert\n");
                 printSimplexF(a);
                 if (b == null) {
                     Preferences.debug("b is null in opVert\n");
@@ -2026,10 +2049,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                     }
                 }
                 visitTriangGen(a);
-                disposeProgressBar();
-                setCompleted(false);
-                MipavUtil.displayError("Adjacency failure in opVert\n");
-                System.exit(1);
+                errorStatus = -1;
                 return null;
             }
         } // for (i = 0; x = a.getNeigh(0);
@@ -2082,13 +2102,13 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             sn = t.getPeak();
             if ((sn.getSimp() != null) && (sn.getSimp().getVisit() != vNum)) {
                 stTri[tms] = new simplex();
-                stTri[tms++] = s;
+                stTri[tms++] = sn.getSimp();
             }
             for (i = 0; i < cDim; i++) {
                 sn = t.getNeigh(i);
                 if ((sn.getSimp() != null) && (sn.getSimp().getVisit() != vNum)) {
                     stTri[tms] = new simplex();
-                    stTri[tms++] = s;
+                    stTri[tms++] = sn.getSimp();
                 }
             } // for (i = 0; i < cDim; i++)
         } // while (tms > 0)
@@ -2192,11 +2212,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
 
         if (b == null) {
             b = new basisS();
+            basisSList.insertAtBack(b);
         }
         else {
             b.setLScale(0);
         }
-        zz = b.getVecs();
         if (cDim == 0) {
             return false;
         }
@@ -2229,20 +2249,25 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             } // if (Double.isInfinite(p[0]))
             else {
                 for (i = 0; i < pDim; i++) {
-                    zz[i+rDim] = zz[i] = p[i] - tt[i];
+                    b.setVecs(i, p[i] - tt[i]);
+                    b.setVecs(i+rDim, p[i] - tt[i]);
                 }
                 if (vdCh) {
+                    zz = b.getVecs();
                     zz[2*rDim-1] = zz[rDim-1] = vecDotPDim(zz,zz)*Math.pow(2.0, -DELIFT);
+                    b.setVecs(rDim-1, zz[rDim-1]);
+                    b.setVecs(2*rDim-1, zz[2*rDim-1]);
                 }
             }
         } // if (vdCh || powerDiagram)
         else {
             for (i = 0; i < pDim; i++) {
-                zz[i+rDim] = zz[i] = p[i] - tt[i];
+                b.setVecs(i, p[i] - tt[i]);
+                b.setVecs(i+rDim, p[i] - tt[i]);
             }
         } // else
         for (i = 0; i < 3; i++) {
-            dd = vecDot(zz, s.getNormal().getVecs());
+            dd = vecDot(b.getVecs(), s.getNormal().getVecs());
             if (dd == 0.0) {
                 Preferences.debug("Degeneracy in sees\n");
                 Preferences.debug("siteNumm(p, vertIndex) = " + siteNumm(p, vertIndex) + "\n");
@@ -2252,7 +2277,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 printSimplexF(s);
                 return false;
             } // if (dd == 0.0)
-            dds = dd * dd/s.getNormal().getSqb()/norm2(zz);
+            dds = dd * dd/s.getNormal().getSqb()/norm2(b.getVecs());
             if (dds > bErrMinSq) {
                 return (dd < 0.0);
             }
@@ -2286,10 +2311,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             s.setNormal(new basisS());
             basisSList.insertAtBack(s.getNormal());
             s.getNormal().setRefCount(1);
+            
+            s.getNormal().setVecs(0, a[1]*b[2] - a[2]*b[1]);
+            s.getNormal().setVecs(1, a[2]*b[0] - a[0]*b[2]);
+            s.getNormal().setVecs(2, a[0]*b[1] - a[1]*b[0]);
             c = s.getNormal().getVecs();
-            c[0] = a[1]*b[2] - a[2]*b[1];
-            c[1] = a[2]*b[0] - a[0]*b[2];
-            c[2] = a[0]*b[1] - a[1]*b[0];
             s.getNormal().setSqb(norm2(c));
             for (i = cDim+1; i > 0; i--) {
                 if (i > 1) {
@@ -2298,12 +2324,12 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 else {
                     rn = chRoot.getPeak();
                 }
-                for (j = 0; j < cDim && rn.getVert() != s.getNeigh(j).getVert(); j++);
+                for (j = 0; j < cDim && rn.getVertIndex() != s.getNeigh(j).getVertIndex(); j++);
                 if (j < cDim) {
                     continue;
                 }
                 if (Double.isInfinite(rn.getVert()[0])) {
-                    if (c[2] > -bErrMin) {
+                    if (s.getNormal().getVecs()[2] > -bErrMin) {
                         continue;
                     }
                 } // if (Double.isInfinite(rn.getVert()[0]))
@@ -2313,9 +2339,13 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                     }
                     continue;
                 }
+                c = s.getNormal().getVecs();
                 c[0] = -c[0];
                 c[1] = -c[1];
                 c[2] = -c[2];
+                s.getNormal().setVecs(0, c[0]);
+                s.getNormal().setVecs(1, c[1]);
+                s.getNormal().setVecs(2, c[2]);
                 break;
             } // for (i = cDim+1; i > 0; i--)
             if (!checkPerps(s)) {
@@ -2332,7 +2362,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             else {
                 rn = chRoot.getPeak();
             }
-            for (j = 0; j < cDim && rn.getVert() != s.getNeigh(j).getVert(); j++);
+            for (j = 0; j < cDim && rn.getVertIndex() != s.getNeigh(j).getVertIndex(); j++);
             if (j < cDim) {
                 continue;
             }
@@ -2352,7 +2382,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         double z[];
         double y[];
         double tt[];
-        double dd;
         int i;
         int j;
         int k;
@@ -2364,11 +2393,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         } // for (i = 1; i < cDim; i++)
         if (bCheckPerps == null) {
             bCheckPerps = new basisS();
+            basisSList.insertAtBack(bCheckPerps);
         }
         else {
             bCheckPerps.setLScale(0);
         }
-        z = bCheckPerps.getVecs();
         tt = s.getNeigh(0).getVert();
         for (i = 1; i < cDim; i++) {
             y = s.getNeigh(i).getVert();
@@ -2381,10 +2410,14 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             }
             else {
                 for (k = 0; k < pDim; k++) {
-                    z[k+rDim] = z[k] = y[k] - tt[k];
+                    bCheckPerps.setVecs(k, y[k] - tt[k]);
+                    bCheckPerps.setVecs(k+rDim, y[k] - tt[k]);
                 }
                 if (vdCh) {
+                    z = bCheckPerps.getVecs();
                     z[2*rDim-1] = z[rDim-1] = vecDotPDim(z,z) * Math.pow(2.0, -DELIFT);
+                    bCheckPerps.setVecs(rDim-1, z[rDim-1]);
+                    bCheckPerps.setVecs(2*rDim-1, z[2*rDim-1]);
                 }
             } // else
             if ((s.getNormal() != null) && (cosAngleSq(bCheckPerps, s.getNormal()) > bErrMinSq)) {
@@ -2504,7 +2537,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         basisS bas;
         neighbor neigh;
 
-
         if (s.getVisit() == pNum) {
             if (s.getPeak().getVert() != null) {
                 return s.getNeigh(ocDim).getSimp();
@@ -2558,6 +2590,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             } // for (i = 0; i < cDim; i++)
             s.getNeigh(ocDim).setSimp(ns);
             ns.getPeak().setVert(null);
+            ns.getPeak().setVertIndex(Integer.MIN_VALUE);
             ns.getPeak().setSimp(s);
             ns.setNeigh(ocDim, s.getPeak());
             if (s.getPeak().getBasisS() != null) {
@@ -2576,11 +2609,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         neighbor neigh, neigh2;
         double vert[] = null;
         int vertIndex2 = -1;
-        int i;
         
         bas = pNeigh.getBasisS();
         if (bas == null) {
             bas = new basisS();
+            basisSList.insertAtBack(bas);
             pNeigh.setBasisS(bas);
         }
         pNeigh.setVert(p);
@@ -2592,7 +2625,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             vertIndex2 = neigh.getVertIndex();
         } // if (neigh != null)
         neigh2 = root.getNeigh(cDim-1);
-        if ((vert != null) && (neigh2 != null)) {
+        if (neigh2 != null) {
             neigh2.setVert(vert);
             neigh2.setVertIndex(vertIndex2);
         } // if ((vert != null) && (neigh2 != null))
@@ -2608,12 +2641,15 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             } // if (bas != null)
         } // if (neigh2 != null)
         
+        Preferences.debug("Doing getBasisSede in outOfFlat\n");
         getBasisSede(root);
         if ((vdCh || powerDiagram) &&(root.getNeigh(0) != null) &&
                 (root.getNeigh(0).getVert() != null) &&
                 (Double.isInfinite(root.getNeigh(0).getVert()[0]))) {
             return true;
         }
+  
+        Preferences.debug("Doing reduce in outOfFlat\n");
         reduce(pNeigh.getBasisS(), p, root, cDim);
         if (pNeigh.getBasisS().getSqa() != 0.0) {
             return true;
@@ -2678,7 +2714,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         return;
     } // private void getBasisSede(simplex s)
 
-    private boolean reduce(basisS v, double point[], simplex s, int k) {
+    private boolean reduce(basisS v, double p[], simplex s, int k) {
         double z[];
         neighbor neigh;
         double tt[];
@@ -2688,14 +2724,15 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         if (v == null) {
             v = new basisS();
             basisSList.insertAtBack(v);
+            v.setRefCount(1);
         }
         else {
             v.setLScale(0);
         }
-        z = v.getVecs();
         if (vdCh || powerDiagram) {
             if (Double.isInfinite(p[0])) {
-                v = new basisS(infinityBasis.getNext());
+                v = new basisS();
+                basisSList.insertAtBack(v);
                 v.setRefCount(infinityBasis.getRefCount());
                 v.setLScale(infinityBasis.getLScale());
                 v.setVecsCopy(infinityBasis.getVecs());
@@ -2704,24 +2741,31 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             } // if (Double.isInfinite(p[0]))
             else {
                 for (i = 0; i < pDim; i++) {
-                    z[i+rDim] = z[i] = p[i] - tt[i];
+                    v.setVecs(i, p[i] - tt[i]);
+                    v.setVecs(i+rDim, p[i] - tt[i]);
                 }
                 if (vdCh) {
+                    z = v.getVecs();
                     z[2*rDim-1] = z[rDim-1] = vecDotPDim(z, z) * Math.pow(2.0,-DELIFT);
+                    v.setVecs(rDim-1, z[rDim-1]);
+                    v.setVecs(2*rDim-1, z[2*rDim-1]);
                 }
             } // else
         } // if (vdCh || powerDiagram)
         else {
             for (i = 0; i < pDim; i++) {
-                z[i+rDim] = z[i] = p[i] - tt[i];
+                v.setVecs(i, p[i] - tt[i]);
+                v.setVecs(i+rDim, p[i] - tt[i]);
             }
         } // else
+        Preferences.debug("Doing reduceInner in reduce\n");
         return reduceInner(v, s, k);
     } // private boolean reduce(basisS v, double point[], simplex s, int k)
 
     private boolean reduceInner(basisS v, simplex s, int k) {
-        double va[];
-        double va2[];
+        double va[] = new double[rDim];
+        double vb[];
+        double va2[] = new double[rDim];
         double vb2[];
         int i;
         int j;
@@ -2731,8 +2775,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         basisS snibv;
         neighbor sni;
         double nrm2;
+        
+       for (i = 0; i < 2*rDim; i++) {
+           Preferences.debug("reduceInner entry vec[" + i + "] = " + v.getVecs()[i] + "\n");
+       }
 
-        va = new double[rDim];
         for (i = rDim; i < 2*rDim; i++) {
             va[i-rDim] = v.getVecs()[i];
         }
@@ -2757,11 +2804,14 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 snibv = sni.getBasisS();
                 vb2 = snibv.getVecs();
                 dd = -vecDot(vb2, v.getVecs())/snibv.getSqb();
-                va2 = new double[rDim];
-                for (m = rDim; m < vb2.length; m++) {
+                for (m = rDim; m < 2*rDim; m++) {
                     va2[m-rDim] = vb2[m];
                 }
-                aXPlusY(dd, va2, v.getVecs());
+                vb = v.getVecs();
+                aXPlusY(dd, va2, vb);
+                for (m = 0; m < rDim; m++) {
+                    v.setVecs(m, vb[m]);
+                }
             } // for (i = k-1; i > 0; i--)
             v.setSqb(norm2(v.getVecs()));
             v.setSqa(norm2(va));
@@ -2783,13 +2833,12 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 vb2 = snibv.getVecs();
                 dd = -vecDot(vb2, va)/snibv.getSqb();
                 dd = Math.floor(dd + 0.5);
-                va2 = new double[vb2.length-rDim];
-                for (m = rDim; m < vb2.length; m++) {
+                for (m = rDim; m < 2*rDim; m++) {
                     va2[m-rDim] = vb2[m];
                 }
                 aXPlusYTest(dd, va2, va);
-                for (i = 0; i < rDim; i++) {
-                    v.setVecs(i+rDim, va[i]);
+                for (m = 0; m < rDim; m++) {
+                    v.setVecs(m+rDim, va[m]);
                 }
             } // for (i = k-1; i > 0; i--)
         } // for (j = 0; j < 250; j++)
@@ -3030,16 +3079,15 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         double vecs[] = new double[8]; /* The actual vectors */
 
         public basisS() {
-            this(null);
         }
 
-        public basisS(basisS next) {
+        /*public basisS(basisS next) {
             this.nextNode = next;
         }
         
         public void setNext(basisS next) {
             this.nextNode = next;
-        }
+        }*/
 
         public basisS getNext() {
             return nextNode;
@@ -3164,6 +3212,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
 
         public neighbor() {
            basis = new basisS();
+           basisSList.insertAtBack(basis);
         }
         public void setNull() {
             simp = null;
@@ -3240,26 +3289,27 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         neighbor neigh[] = new neighbor[4]; /* neighbors of simplex */
 
         public simplex() {
-            this(null);
             peak = new neighbor();
             for (int i = 0; i < 4; i++) {
                 neigh[i]= new neighbor();
             }
             normal = new basisS();
+            basisSList.insertAtBack(normal);
         }
 
-        public simplex(simplex next) {
+        /*public simplex(simplex next) {
             this.nextNode = next;
             peak = new neighbor();
             for (int i = 0; i < 4; i++) {
                 neigh[i] = new neighbor();
             }
             normal = new basisS();
+            basisSList.insertAtBack(normal);
         }
 
         public void setNextNode(simplex next) {
             this.nextNode = next;
-        }
+        }*/
 
         public simplex getNextNode() {
             return nextNode;
@@ -3399,8 +3449,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 edgeStatus[i] = sim.getEdgeStatus()[i];
             }
             visit = sim.getVisit();
-            normal = new basisS();
-            normal.setNext(sim.getNormal().getNext());
             normal.setRefCount(sim.getNormal().getRefCount());
             normal.setLScale(sim.getNormal().getLScale());
             normal.setSqa(sim.getNormal().getSqa());
@@ -3409,7 +3457,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             peak = new neighbor();
             peak.setVertCopy(sim.getPeak().getVert());
             peak.setVertIndex(sim.getPeak().getVertIndex());
-            peak.getBasisS().setNext(sim.getPeak().getBasisS().getNext());
             peak.getBasisS().setRefCount(sim.getPeak().getBasisS().getRefCount());
             peak.getBasisS().setLScale(sim.getPeak().getBasisS().getLScale());
             peak.getBasisS().setSqa(sim.getPeak().getBasisS().getSqa());
@@ -3420,7 +3467,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 neigh[i] = new neighbor();
                 neigh[i].setVertCopy(sim.getNeigh()[i].getVert());
                 neigh[i].setVertIndex(sim.getNeigh()[i].getVertIndex());
-                neigh[i].getBasisS().setNext(sim.getNeigh()[i].getBasisS().getNext());
                 neigh[i].getBasisS().setRefCount(sim.getNeigh()[i].getBasisS().getRefCount());
                 neigh[i].getBasisS().setLScale(sim.getNeigh()[i].getBasisS().getLScale());
                 neigh[i].getBasisS().setSqa(sim.getNeigh()[i].getBasisS().getSqa());
