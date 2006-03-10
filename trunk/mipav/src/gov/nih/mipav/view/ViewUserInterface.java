@@ -2894,6 +2894,7 @@ public class ViewUserInterface
                     }
                 }
                 catch (Exception ex) { //System.err.println(ex.toString());
+                    MipavUtil.displayError("Unable to find plugin: " + name);
                 }
             }
 
