@@ -2,7 +2,6 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.structures.*;
 import javax.swing.*;
-import java.awt.event.*;
 
 /**
  * Build the menus for an image loaded into MIPAV.
@@ -561,7 +560,6 @@ public class ViewMenuBar {
       //  if (!InsightToolkitSupport.isLibraryPresent()) {
       //      menuBuilder.setMenuItemEnabled("Insight toolkit (ITK)", false);
       //  }
-        menuBuilder.setMenuItemEnabled("Triplanar - dual", false);
         menuBuilder.setMenuItemEnabled("Close image(B)", false);
         if (numberOfDimensions == 4) {
             menuBuilder.setMenuItemEnabled("Edge detection", false);
@@ -621,7 +619,9 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Watershed", false);
             menuBuilder.setMenuItemEnabled("Clone (copy)", false);
             menuBuilder.setMenuItemEnabled("Histogram summary", false);
-            menuBuilder.setMenuItemEnabled("RGB", false);
+            menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
+            menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
+            menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             menuBuilder.setMenuItemEnabled("Surface plotter", false);
             menuBuilder.setMenuItemEnabled("Evolve boundary 2D", false);
             menuBuilder.setMenuItemEnabled("Convert 3D to 4D", false);
@@ -658,7 +658,6 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Light box", false);
             menuBuilder.setMenuItemEnabled("Propagate", false);
             menuBuilder.setMenuItemEnabled("Triplanar", false);
-            menuBuilder.setMenuItemEnabled("Triplanar - dual", false);
             menuBuilder.setMenuItemEnabled("Volume renderers", false);
             menuBuilder.setMenuItemEnabled("Insert slice", false);
             menuBuilder.setMenuItemEnabled("Remove slices", false);
@@ -724,7 +723,9 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
         }
         else {
-            menuBuilder.setMenuItemEnabled("RGB", false);
+            menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
+            menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
+            menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             if (numberOfDimensions == 2) {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
             }

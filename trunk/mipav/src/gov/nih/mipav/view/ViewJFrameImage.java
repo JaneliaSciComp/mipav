@@ -2109,7 +2109,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     if (this.canCloseImageBAfterLoad())
                     {
-                        menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
                         menuBuilder.setMenuItemEnabled("Close image(B)", true);
                     }
 
@@ -2143,8 +2142,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
                                           menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOI_ID());
                 }
-
-                menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
 
                 if (this.canCloseImageBAfterLoad())
                 {
@@ -2238,7 +2235,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 linkTriFrame.setImageSelectorPanelVisible(true); // set the selector panel to visible in the ViewJFrameTriImage, if it exists
             }
 
-            menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
 
             setActiveImage(ViewJFrameImage.IMAGE_B); // set image B to active by default, for convenience of user
@@ -2256,7 +2252,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     ModelImage imgB = new ModelImage(imageA.getType(), imageA.getExtents(), " Blank");
 
                     setImageB(imgB);
-                    menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
                     menuBuilder.setMenuItemEnabled("Close image(B)", true);
                     setControls();
                     setTitle();
@@ -2268,7 +2263,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     if (blankImageDialog.isCancelled() == false)
                     {
                         setImageB(blankImageDialog.getImage());
-                        menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
                         menuBuilder.setMenuItemEnabled("Close image(B)", true);
                         setControls();
                         setTitle();
@@ -2365,8 +2359,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
                 closeImageB();
 
-
-                menuBuilder.setMenuItemEnabled("Triplanar - dual", false);
                 menuBuilder.setMenuItemEnabled("Close image(B)", false);
                 setControls();
                 setTitle();
@@ -5195,7 +5187,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     public void enableImageB(boolean enable)
     {
-        menuBuilder.setMenuItemEnabled("Triplanar - dual", enable);
         menuBuilder.setMenuItemEnabled("Close image(B)", enable);
     }
 
@@ -5447,7 +5438,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                       menuBuilder.isMenuItemSelected("Paint toolbar"),
                                       menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOI_ID());
             }
-            menuBuilder.setMenuItemEnabled("Triplanar - dual", true);
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
 
             setControls();

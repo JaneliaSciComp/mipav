@@ -31,6 +31,9 @@ public class ViewMenuBuilder {
         menuItemVector = new Vector();
     }
 
+    /**
+     * Clean up memory used by the menu builder.
+     */
     public void finalize() {
         if (menuItemVector != null) {
             menuItemVector.removeAllElements();
@@ -177,10 +180,10 @@ public class ViewMenuBuilder {
         }
 
         gbc.gridx = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
 
         gbc.insets = new Insets(0, paddingX, 5, 0);
 
@@ -202,8 +205,8 @@ public class ViewMenuBuilder {
 
                 menuAccel.setHorizontalAlignment(SwingConstants.TRAILING);
                 gbc.gridx = 1;
-                gbc.anchor = gbc.EAST;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.anchor = GridBagConstraints.EAST;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.insets = new Insets(0, 0, 0, 5);
 
                 menuEntry.add(menuAccel, gbc);
@@ -264,10 +267,10 @@ public class ViewMenuBuilder {
         }
 
         gbc.gridx = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
 
         gbc.insets = new Insets(0, paddingX, 5, 0);
 
@@ -290,8 +293,8 @@ public class ViewMenuBuilder {
 
                     menuAccel.setHorizontalAlignment(SwingConstants.TRAILING);
                     gbc.gridx = 1;
-                    gbc.anchor = gbc.EAST;
-                    gbc.gridwidth = gbc.REMAINDER;
+                    gbc.anchor = GridBagConstraints.EAST;
+                    gbc.gridwidth = GridBagConstraints.REMAINDER;
                     gbc.insets = new Insets(0, 0, 0, 5);
 
                     menuEntry.add(menuAccel, gbc);
@@ -373,10 +376,10 @@ public class ViewMenuBuilder {
         }
 
         gbc.gridx = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
 
         gbc.insets = new Insets(0, paddingX, 0, 0);
 
@@ -402,8 +405,8 @@ public class ViewMenuBuilder {
 
                 menuAccel.setHorizontalAlignment(SwingConstants.TRAILING);
                 gbc.gridx = 1;
-                gbc.anchor = gbc.EAST;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.anchor = GridBagConstraints.EAST;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.insets = new Insets(0, 0, 0, 5);
 
                 menuEntry.add(menuAccel, gbc);
@@ -424,7 +427,7 @@ public class ViewMenuBuilder {
 
         menuEntry.setPreferredSize(d);
 
-        menuItemVector.addElement(new MipavMenuItem("text", menuEntry));
+        menuItemVector.addElement(new MipavMenuItem(text, menuEntry));
 
         return menuEntry;
     }
@@ -460,10 +463,10 @@ public class ViewMenuBuilder {
 
 
         gbc.gridx = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
 
         gbc.insets = new Insets(0, paddingX, 5, 0);
 
@@ -482,8 +485,8 @@ public class ViewMenuBuilder {
                 menuAccel.setForeground(Color.GRAY);
                 menuAccel.setHorizontalAlignment(SwingConstants.TRAILING);
                 gbc.gridx = 1;
-                gbc.anchor = gbc.EAST;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.anchor = GridBagConstraints.EAST;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.insets = new Insets(0, 0, 0, 5);
 
                 menuEntry.add(menuAccel, gbc);
@@ -535,10 +538,10 @@ public class ViewMenuBuilder {
         paddingX += MipavUtil.DEFAULT_ICON_WIDTH;
 
         gbc.gridx = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
 
         gbc.insets = new Insets(0, paddingX, 5, 0);
 
@@ -561,8 +564,8 @@ public class ViewMenuBuilder {
                 menuAccel.setForeground(Color.GRAY);
                 menuAccel.setHorizontalAlignment(SwingConstants.TRAILING);
                 gbc.gridx = 1;
-                gbc.anchor = gbc.EAST;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.anchor = GridBagConstraints.EAST;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 gbc.insets = new Insets(0, 0, 0, 5);
 
                 menuEntry.add(menuAccel, gbc);
@@ -736,7 +739,7 @@ public class ViewMenuBuilder {
         }
 
         if (!found) {
-            Preferences.debug("Unable to find menu item named " + name, 2);
+            Preferences.debug("Unable to find menu item named " + name + "\n", Preferences.DEBUG_MINOR);
         }
     }
 
@@ -874,12 +877,9 @@ public class ViewMenuBuilder {
     }
 
     /**
-     * <p>Title: QuickList</p>
-     * <p>Description: QuickList class uses Preferences to build a list of the most
-     *    recently opened images.  the frame is passed in for purposes of ActionListener
-     *    The QuickList is stored as JMenuItems in a Vector that can be retrieved  </p>
-     * <p>Copyright: Copyright (c) 2004</p>
-     * <p>Company: </p>
+     * QuickList class uses Preferences to build a list of the most
+     * recently opened images.  the frame is passed in for purposes of ActionListener
+     * The QuickList is stored as JMenuItems in a Vector that can be retrieved.
      * @author not attributable
      * @version 1.0
      */
