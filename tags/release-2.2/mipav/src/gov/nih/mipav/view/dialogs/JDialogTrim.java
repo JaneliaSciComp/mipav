@@ -1,0 +1,178 @@
+package gov.nih.mipav.view.dialogs;
+
+import gov.nih.mipav.view.*;
+
+import java.awt.event.*;
+import java.awt.*;
+
+import javax.swing.*;
+import javax.swing.event.*;
+
+/**
+*   Simple dialog to change Magnification Box Settings
+*
+*		@version    1.0 Sep 15, 1999
+*		@author     Matthew J. McAuliffe
+*
+*/
+
+public class JDialogTrim extends JDialogBase implements ActionListener, ChangeListener, WindowListener {
+
+
+    private     JSlider                  trimSlider;
+
+    private     JLabel                   maximum;
+    private     JLabel                   minimum;
+    private     JLabel                   current;
+    private     JCheckBox                trimCheckbox;
+
+    /**
+    *  Creates new trim parameter dialog with slider.
+    *  @param theParentFrame    Parent frame
+    */
+	public JDialogTrim (Frame theParentFrame) {
+        super(theParentFrame, false);
+        init();
+    }
+
+    /**
+    *   Makes slider to set opacity of VOI. Opaque = 1, Transparency = 0.
+    *   @param initValue    Initial value of slider.
+    */
+    private void init() {
+
+        setTitle("VOI trim parameter");
+        int initialVal = 50;
+        if (Preferences.getProperty("TRIM") != null) {
+            initialVal = (int)(Float.valueOf(Preferences.getProperty("TRIM")).floatValue()*100);
+        }
+        trimSlider = new JSlider(JSlider.HORIZONTAL, 0, 200, initialVal);
+
+        trimSlider.setMajorTickSpacing(20);
+        trimSlider.setPaintTicks(true);
+        trimSlider.setEnabled(true);
+        trimSlider.addChangeListener(this);
+
+        maximum = new JLabel(String.valueOf((trimSlider.getMaximum())/100.0f));
+        maximum.setForeground(Color.black);
+        maximum.setFont(serif12);
+
+        current = new JLabel(String.valueOf(trimSlider.getValue()/100.0f));
+        current.setForeground(Color.black);
+        current.setFont(serif12B);
+
+        minimum = new JLabel(String.valueOf(trimSlider.getMinimum()/100.0f));
+        minimum.setForeground(Color.black);
+        minimum.setFont(serif12);
+
+        boolean flag = true;
+        if (Preferences.getProperty("TRIM_FLAG") != null) {
+            if (Preferences.getProperty("TRIM_FLAG").equals("false")) {
+                flag = false;
+            }
+        }
+
+        trimCheckbox = new JCheckBox("Trim adjacent points.", flag);
+        trimCheckbox.setEnabled(true);
+        trimCheckbox.setFont(MipavUtil.font12);
+        trimCheckbox.setForeground(Color.black);
+        trimCheckbox.addActionListener(this);
+
+    	JPanel              sliderPanel = new JPanel(new GridBagLayout());
+    	GridBagConstraints  gbc         = new GridBagConstraints();
+
+    	gbc.gridx   = 0; gbc.gridy      = 0;      gbc.gridwidth = 3;
+    	gbc.weightx = 1; gbc.gridheight = 1;      gbc.fill      = gbc.HORIZONTAL;
+
+    	sliderPanel.add(trimSlider, gbc);
+
+    	gbc.gridx   = 0; gbc.gridy  = 1;          gbc.gridwidth = 1;
+    	gbc.weightx = 0; gbc.anchor = gbc.WEST;   gbc.fill      = gbc.NONE;
+
+    	sliderPanel.add(minimum, gbc);
+
+    	gbc.gridx = 1;   gbc.anchor = gbc.CENTER; gbc.weightx   = .5;
+
+    	sliderPanel.add(current, gbc);
+
+    	gbc.gridx = 2;   gbc.anchor = gbc.EAST;   gbc.weightx   = 0;
+
+    	sliderPanel.add(maximum, gbc);
+
+    	gbc.gridx = 0;   gbc.gridy  = 2;          gbc.gridwidth = 3;
+    	gbc.weightx = 1; gbc.gridheight = 1;      gbc.fill      = gbc.HORIZONTAL;
+
+    	sliderPanel.add(trimCheckbox, gbc);
+
+        sliderPanel.setBorder(buildTitledBorder("Trim parameter"));
+
+	    JPanel buttonPanel = new JPanel();
+	    buildOKButton();
+	    OKButton.setText("Apply");
+	    buildCancelButton();
+	    cancelButton.setText("Close");
+	    buttonPanel.add(OKButton);
+	    buttonPanel.add(cancelButton);
+
+	    JPanel mainPanel = new JPanel(new BorderLayout());
+	    mainPanel.add(sliderPanel);
+	    mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+	    mainPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+
+        getContentPane().add(mainPanel);
+
+        pack();
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+		setVisible(true);
+    }
+
+    /**
+    *    Sets values based on knob along slider
+    *    @param e  Event that triggered this function
+    */
+    public void stateChanged(ChangeEvent e){
+        Object source = e.getSource();
+
+        if (source == trimSlider){
+            current.setText(String.valueOf(trimSlider.getValue()/(float)100));
+        }
+    }
+
+    //************************************************************************
+    //**************************** Action Events *****************************
+    //************************************************************************
+
+    /**
+    *  Calls various methods depending on the action
+    *  @param event      Event that triggered function
+    */
+	public void actionPerformed(ActionEvent event) {
+   	    Object source = event.getSource();
+
+        if ( source == trimCheckbox) {
+            if (trimCheckbox.isSelected()) {
+                // Enable trim slider and set preferences to slider value
+                Preferences.setProperty("TRIM_FLAG", "true");
+            }
+            else {
+                // Disable trim slider
+                Preferences.setProperty("TRIM_FLAG", "false");
+            }
+        }
+        else if ( source == OKButton ) {
+            if (trimCheckbox.isSelected()) {
+                Preferences.setProperty("TRIM_FLAG", "true");
+            }
+            else {
+                Preferences.setProperty("TRIM_FLAG", "false");
+            }
+            Preferences.setProperty("TRIM", String.valueOf(trimSlider.getValue()/(float)100));
+        }
+
+       else if ( source == cancelButton ) {
+            Preferences.setProperty("TRIM", String.valueOf(trimSlider.getValue()/(float)100));
+            dispose();
+        }
+    }
+
+}

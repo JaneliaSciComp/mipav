@@ -1,0 +1,279 @@
+package gov.nih.mipav.model.dicomcomm;
+
+import java.util.*;
+
+
+/**
+*
+*/
+
+public class DICOM_Object {
+
+    protected Hashtable   groups  = new Hashtable();
+    private boolean popGroupLength = true;
+
+
+    /**
+    * Removes all VRs from hash table
+    */
+    public final void clear() { groups.clear(); }
+
+
+    /**
+    * Retrieves a string value from a DICOM object
+    * @param ddType
+    * @return        the string value
+    */
+    public final String getStr( int ddType ){
+        String s = getVRString( DICOM_RTC.getGroup( ddType ), DICOM_RTC.getElement( ddType ) );
+        if (s == null) return (s = "");
+        else return( s.trim());
+    }
+
+    /**
+    * Sets a string value in a DICOM object
+    * @param ddType
+    * @param s   the string value
+    */
+    public final void setStr( int ddType, String s ) {
+        // Should I be making sure its even and padding ?
+        push( new DICOM_VR( DICOM_RTC.getGroup(ddType), DICOM_RTC.getElement(ddType), new String(s), ddType) );
+    }
+
+
+    /**
+    * Retrieves an integer (16 bit) value from a DICOM object
+    * @param ddType
+    * @return        the 16 bit integer value
+    */
+    public final int getInt16( int ddType ) {
+        int returnVal = 0;
+        DICOM_VR vr = getVR( DICOM_RTC.getGroup(ddType), DICOM_RTC.getElement(ddType) );
+
+        if( vr != null ) {
+            if( vr.data.length == 2 ) {
+                returnVal = DICOM_Comms.bufferToInt16( vr.data, 0, DICOM_Comms.LITTLE_ENDIAN );
+            }
+        }
+        return( returnVal );
+    }
+
+    /**
+    * Sets an integer (16 bit) value in a DICOM object
+    * @param ddType
+    * @param val     the 16 bit integer value
+    */
+    public final void setInt16( int ddType, int val ) {
+        push( new DICOM_VR( DICOM_RTC.getGroup(ddType), DICOM_RTC.getElement(ddType ), val, 2) );
+    }
+
+    /**
+    * Makes a deep copy of the DICOM_DataObject
+    */
+    public DICOM_Object copy() {
+        DICOM_Object newddo;
+        Object obj;
+        GroupElements ge;
+        Integer element;
+
+        newddo  = new DICOM_Object();
+
+        for (Enumeration e1 = groups.keys(); e1.hasMoreElements(); ) {
+            obj = e1.nextElement();
+            ge = (GroupElements) groups.get( (Integer)obj );
+            for( Enumeration e2 = ge.keys() ; e2.hasMoreElements() ;) {
+                element = (Integer) e2.nextElement();
+                newddo.push ( ((DICOM_VR)(ge.get(element))).copy() );
+            }
+        }
+        return( newddo );
+    }
+
+
+
+    /**
+    * Adds DICOM_VR to this list (object)
+    * @param vr the vr to be added to the list
+    */
+    public void push( DICOM_VR vr ) {
+        DICOM_VR oldvr;
+
+        if( vr == null )           { return; }
+        if( vr.element == 0x0000 ) { return; } // don't push onto the table -
+                                               //   group lengths automatically calculated
+
+        Integer       group   = new Integer( vr.group   );
+        Integer       element = new Integer( vr.element );
+        GroupElements ge;
+
+        ge = (GroupElements)groups.get( group );
+
+        if( ge == null ) {
+            ge = new GroupElements();
+            groups.put( group, ge );
+        }
+        else {
+            oldvr = (DICOM_VR) ge.get( element );
+            if( oldvr != null ) {
+                ge.grpLength -= makeEven(oldvr.data.length) + 8;
+            }
+        }
+
+        ge.put( element, vr );
+        ge.grpLength += makeEven(vr.data.length) + 8;
+    }
+
+    /**
+    *   Pops a VR of the list
+    *   @return vr drom the lsit
+    */
+    public DICOM_VR pop() {
+
+        int     lowgroup   = 65536;
+        int     lowelement = 65536;
+        int     tmpInt;
+        GroupElements grpElement;
+
+        if( groups.size() == 0 ) {
+           popGroupLength = true;
+           return( null );
+        }
+
+        // look for lowest in Group
+        for( Enumeration g = groups.keys() ; g.hasMoreElements() ;) {
+            tmpInt = ( (Integer) g.nextElement() ).intValue();
+            if( tmpInt < lowgroup ) {
+                lowgroup = tmpInt;
+            }
+        }
+
+        Integer lowGroup = new Integer( lowgroup );
+        grpElement = (GroupElements) groups.get(lowGroup);
+
+        if( popGroupLength  == true ) {
+            popGroupLength = false;
+            return( new DICOM_VR( lowgroup, 0x0000, grpElement.grpLength, 4) );
+        }
+
+        // look for lowest element in group
+        for( Enumeration e = grpElement.keys() ; e.hasMoreElements() ;) {
+            tmpInt = ( (Integer) e.nextElement() ).intValue();
+            if( tmpInt < lowelement ) {
+                lowelement = tmpInt;
+            }
+        }
+
+        Integer lowElement = new Integer( lowelement );
+        DICOM_VR vr = (DICOM_VR) grpElement.get(lowElement);
+        grpElement.remove(lowElement);
+
+        if( grpElement.size() == 0 ) {
+            groups.remove( lowGroup );
+            popGroupLength = true;
+        }
+
+        return( vr );
+    }
+
+    /**
+    *   Gets the value representation
+    *   @param grp  group value
+    *   @param elem element value
+    *   @return the VR for the group and element
+    */
+    private final DICOM_VR getVR( int grp, int elem ) {
+        Integer       group   = new Integer( grp );
+        Integer       element = new Integer( elem );
+        GroupElements grpElement;
+
+        grpElement = (GroupElements) groups.get( group );
+
+        if( grpElement == null ) {  return( null ); }
+
+        if( elem == 0x0000 ) {
+            return( new DICOM_VR( grp, elem, grpElement.grpLength, 4 ) );
+        }
+
+        return( (DICOM_VR)grpElement.get(element) );
+    }
+
+    /**
+    *   Returns the string representation of the VR
+    *   @param group    group value
+    *   @param element  element value
+    *   @return         the string representation VR for the group and element
+    */
+    public final String getVRString( int group, int element ) {
+        String returnval = null;
+        DICOM_VR vr = getVR(group, element);
+
+        if( vr != null ) {
+            returnval = DICOM_Util.unpadStringVal( vr.data );
+        }
+
+        return( returnval );
+    }
+
+    /**
+    *   Makes length even
+    *   @param length  value to make even
+    *   @return        the even value
+    */
+    public final static int makeEven( int length ) {
+        if( (length%2) != 0 ) { length++; }     // make even
+        return( length );
+    }
+
+    /**
+    *   Creates a description of the entire DICOM_VR list
+    *   @param s  the str to append the debug string
+    *   @return   the debug string
+    */
+    public String toString( String s ){
+        String str;
+        DICOM_Object tmpObjectList = new DICOM_Object();
+        DICOM_VR vr;
+
+        str = "***** DICOM Object List " + s + " Begin *****\n";
+        while( ( vr = pop() ) != null ) {
+            tmpObjectList.push( vr );
+            str += "       " + vr.toString( s ) + "\n";
+        }
+        str += "***** DICOM Object List " + s + " End ***** \n\n";
+
+
+        while( ( vr = tmpObjectList.pop() ) != null ) {
+            push( vr );
+        }
+
+        return( str );
+    }
+
+    /**
+    *  Used for dicom data objects
+    */
+public String toString() {
+        String returnString = "";
+        String str;
+
+        str = getStr(DICOM_RTC.DD_PatientName              ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_PatientAge               ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_PatientSex               ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_PatientID                ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_StudyID                  ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_Modality                 ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_StudyDescription         ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_AdditionalPatientHistory ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_ReferringPhysicianName   ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_OperatorName             ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_SeriesNumber             ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_ImageIndex               ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_ContentDate              ); if(str!=null) { returnString += ("|" + str); }
+        str = getStr(DICOM_RTC.DD_ContentTime              ); if(str!=null) { returnString += ("|" + str); }
+        return( returnString );
+    }
+
+    private class GroupElements extends Hashtable {
+        public int grpLength = 0;
+    }
+}
