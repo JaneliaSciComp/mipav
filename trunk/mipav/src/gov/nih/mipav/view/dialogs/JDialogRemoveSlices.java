@@ -77,7 +77,7 @@ public class JDialogRemoveSlices extends JDialogBase
     private JScrollPane scrollPane;
 
     private JCheckBox replaceBox;
-    private boolean doReplace;
+    private boolean doReplace = false;
 
     private boolean dontOpenFrame = false;
     private int origExtents[] = null;
@@ -149,6 +149,8 @@ public class JDialogRemoveSlices extends JDialogBase
         }
 
         try {
+            doReplace = parser.getNextBoolean();
+
             int removeMode = parser.getNextInteger();
 
             if ( removeMode == JDialogRemoveSlices.CHECKED_EVEN ) {
@@ -213,6 +215,8 @@ public class JDialogRemoveSlices extends JDialogBase
                     userInterface.getScriptDialog().append(
                             userInterface.getScriptDialog().getVar( image.getImageName() ) + " " );
                 }
+
+                 userInterface.getScriptDialog().append(Boolean.toString(doReplace) + " ");
 
                 if ( pressedCheckEven && isEvenSelected() ) {
                     userInterface.getScriptDialog().append( CHECKED_EVEN + "\n" );
@@ -1019,7 +1023,12 @@ public class JDialogRemoveSlices extends JDialogBase
                 }
             }
         }
-        insertScriptLine( algorithm );
+
+        if (!doReplace && algorithm.isCompleted() && algorithm instanceof AlgorithmRemoveSlices) {
+            insertScriptLine(algorithm);
+        } else if (doReplace && algorithm.isCompleted() && algorithm instanceof AlgorithmReplaceRemovedSlices) {
+            insertScriptLine(algorithm);
+        }
 
         algorithm.finalize();
         algorithm = null;

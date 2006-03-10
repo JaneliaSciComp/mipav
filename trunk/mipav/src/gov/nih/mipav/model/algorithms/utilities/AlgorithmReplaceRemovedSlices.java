@@ -2,6 +2,8 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.model.file.FileInfoBase;
 import java.io.IOException;
 
 /**
@@ -288,9 +290,15 @@ public class AlgorithmReplaceRemovedSlices
 
         //put it back into the srcImage if no result image wanted
         if (!destFlag) {
-            System.err.println("importing result back into srcImage (calcInPlace)");
+            //System.err.println("importing result back into srcImage (calcInPlace)");
             srcImage.setExtents(resultImage.getExtents());
             srcImage.recomputeDataSize();
+
+            FileInfoBase [] fInfos = new FileInfoBase[destExtents[2]];
+            for (int i = 0; i < destExtents[2]; i++) {
+                fInfos[i] = (FileInfoBase)srcImage.getFileInfo()[0].clone();
+            }
+            srcImage.setFileInfo(fInfos);
 
             // import the result buffer from the resultImage into the srcImage
             // do this a slice at a time to conserve memory
@@ -342,12 +350,12 @@ public class AlgorithmReplaceRemovedSlices
                 return;
             }
 
-           // AlgorithmRemoveSlices.updateFileInfo(resultImage, srcImage);
+            AlgorithmRemoveSlices.updateFileInfo(resultImage, srcImage);
 
             // Clean up and let the calling dialog know that algorithm did its job
             srcImage.releaseLock();
 
-            resultImage.disposeLocal(); // this was not here before... MEMORY LEAK!
+            resultImage.disposeLocal();
         }
 
 
@@ -355,8 +363,6 @@ public class AlgorithmReplaceRemovedSlices
         progressBar.dispose();
         System.gc();
         setCompleted(true);
-        notifyListeners(this);
-
     }
 
     /**
