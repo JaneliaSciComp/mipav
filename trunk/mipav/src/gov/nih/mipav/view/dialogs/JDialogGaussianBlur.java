@@ -655,9 +655,7 @@ public class JDialogGaussianBlur extends JDialogBase
                 try {
                     // Make algorithm
                     gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep( image, sigmas, outputOptionsPanel.isProcessWholeImageSet(), image25D );
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
+                    gaussianBlurSepAlgo.addListener( this );
                     gaussianBlurSepAlgo.setRed( colorChannelPanel.isRedProcessingRequested() );
                     gaussianBlurSepAlgo.setGreen( colorChannelPanel.isGreenProcessingRequested() );
                     gaussianBlurSepAlgo.setBlue( colorChannelPanel.isBlueProcessingRequested() );
