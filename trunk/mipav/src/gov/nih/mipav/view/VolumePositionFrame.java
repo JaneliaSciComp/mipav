@@ -5,7 +5,7 @@ import javax.swing.*;
 import java.io.*;
 import java.awt.*;
 
-public class VolumePositionFrame extends JFrame implements CoordinateChangeListener
+public class VolumePositionFrame extends JFrame
 {
     protected ViewJFrameTriImage parentFrame;
 
@@ -36,7 +36,6 @@ public class VolumePositionFrame extends JFrame implements CoordinateChangeListe
         this.parentFrame = parentFrame;
         setSize(250, 225);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        parentFrame.addCoordinateChangeListener(this);
 
         try
         {
@@ -49,13 +48,6 @@ public class VolumePositionFrame extends JFrame implements CoordinateChangeListe
 
         getContentPane().setLayout(new GridLayout(1, 1));
         getContentPane().add(buildVolumePositionPanel());
-    }
-
-    public void coordinateChanged( int x, int y, int z )
-    {
-        labelXPos.setText(Integer.toString(x+1));
-        labelYPos.setText(Integer.toString(y+1));
-        labelZPos.setText(Integer.toString(z+1));
     }
 
     /**

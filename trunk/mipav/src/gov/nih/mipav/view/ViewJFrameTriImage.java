@@ -247,9 +247,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     /** Color of the paint. */
     protected Color color = new Color(225, 0, 0);
 
-    /** Mouse mode. */
-    protected int mode;
-
     /**
      * The point to become center of transformed image.
      */
@@ -2297,7 +2294,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     * Sets the slice index for each plane in the frame and components. Should be zero indexed.
+     * Sets the slice index for each plane in the frame and components. 
+     * Should be zero indexed.
      * @param x slice index in the patient
      * @param y slice index in the patient
      * @param z slice index in the patient
@@ -2373,6 +2371,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         labelXPos.setText(Integer.toString(x + 1));
         labelYPos.setText(Integer.toString(y + 1));
         labelZPos.setText(Integer.toString(z + 1));
+        
+        if (volumePositionFrame != null)
+        {
+        	volumePositionFrame.labelXPos.setText(Integer.toString(x + 1));
+        	volumePositionFrame.labelYPos.setText(Integer.toString(y + 1));
+        	volumePositionFrame.labelZPos.setText(Integer.toString(z + 1));
+        }
     }
 
     /**
@@ -2570,7 +2575,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void setTimeSlice(int slice)
     {
-
         if ( ( (imageA.getNDims() <= 3) && (imageB == null))
             || ( (imageA.getNDims() <= 3) && (imageB != null) && (imageB.getNDims() <= 3)))
         {
@@ -2605,7 +2609,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     * Converts to DICOM positions.  TODO: This method really should be relocated
+     * Converts to DICOM positions.  TODO: This method really should be relocated as it is essentially just
+     * a worker method. Shouldn't be in a GUI class
      * Convert from input image oriented x,y,z to Dicom x,y,z
      * (x axis = R->L, y axis = A->P, z axis = I->S)
      * Image distances are oriented the same as DICOM,
@@ -2707,7 +2712,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     }
 
     /**
-     * Converts DICOM back to original. TODO: This method really should be relocated
+     * Converts DICOM back to original. 
+     * TODO: This method really should be relocated as it is essentially just
+     * a worker method. Shouldn't be in a GUI class
      * @param image   Image to convert.
      * @param in      Original point.
      * @param orient  The image orientation.
@@ -3124,7 +3131,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                    }
                }
 
-               mode = ViewJComponentBase.DEFAULT;
                updateImages(true);
            }
            else if (command.equals("Center"))
@@ -3182,8 +3188,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                            triImage[i].repaint();
                        }
                    }
-
-                   mode = ViewJComponentTriImage.PROTRACTOR;
                }
                else
                {
@@ -3193,12 +3197,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                        {
                            triImage[i].setMode(ViewJComponentBase.DEFAULT);
                            triImage[i].setProtractorVisible(false);
-                           //triImage[i].setIntensityLineVisible(true);
                            triImage[i].repaint();
                        }
                    }
-
-                   mode = ViewJComponentBase.DEFAULT;
                }
            }
            else if (command.equals("Line"))
@@ -3588,7 +3589,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                        triImage[i].setMode(ViewJComponentBase.POINT_VOI);
                    }
                }
-               mode = ViewJComponentBase.POINT_VOI;
            }
            else if (command.equals("NewVOI"))
            {
@@ -3601,44 +3601,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                }
            }
            else if (command.equals("deleteVOI"))
-           {
-               /*if (triImage[AXIAL_A] != null)
-               {
-                   triImage[AXIAL_A].deleteSelectedContours();
-               }
-               if (triImage[AXIAL_B] != null)
-               {
-                   triImage[AXIAL_B].deleteSelectedContours();
-               }
-               if (triImage[AXIAL_AB] != null)
-               {
-                   triImage[AXIAL_AB].deleteSelectedContours();
-               }
-               if (triImage[CORONAL_AB] != null)
-               {
-                   triImage[CORONAL_AB].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
-               }
-               if (triImage[SAGITTAL_AB] != null)
-               {
-                   triImage[SAGITTAL_AB].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
-               }
-               if (triImage[SAGITTAL_A] != null)
-               {
-                   triImage[SAGITTAL_A].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
-               }
-               if (triImage[SAGITTAL_B] != null)
-               {
-                   triImage[SAGITTAL_B].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
-               }
-               if (triImage[CORONAL_A] != null)
-               {
-                   triImage[CORONAL_A].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
-               }
-               if (triImage[CORONAL_B] != null)
-               {
-                   triImage[CORONAL_B].setVOI_ID(triImage[AXIAL_A].getVOI_ID());
-               }*/
-               
+           {               
                for (int i = 0; i < MAX_TRI_IMAGES; i++)
                {
             	   if (triImage[i] != null)
@@ -3647,10 +3610,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             	   }
                }
                
-               //updateImages(true);
                imageA.notifyImageDisplayListeners();
                imageB.notifyImageDisplayListeners();
-               //traverseButton.setSelected(true);
            }
            else if (command.equals("boundingBox"))
            {
@@ -3751,12 +3712,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                if (radioImageA.isSelected())
                {
                    setSpinnerValues(imageA.getType());
-                   parentFrame.setActiveImage(IMAGE_A);
+                   parentFrame.setActiveImage(ViewJComponentBase.IMAGE_A);
+                   setImageActiveInTriComponents(ViewJComponentBase.IMAGE_A);
                }
                else if (radioImageB.isSelected())
                {
                    setSpinnerValues(imageB.getType());
                    parentFrame.setActiveImage(IMAGE_B);
+                   setImageActiveInTriComponents(ViewJComponentBase.IMAGE_B);
                }
 
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setMinimum(new Double(spinnerMin));
@@ -4106,6 +4069,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         if (volumePositionFrame != null)
         {
             volumePositionFrame.dispose();
+            volumePositionFrame = null;
         }
         close();
         this.disposeLocal();
@@ -4122,7 +4086,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     public void disposeLocal()
     {
-
+    	if (volumePositionFrame != null)
+    	{
+    		volumePositionFrame.dispose();
+    		volumePositionFrame = null;
+    	}
+    	
         for (int i = 0; i < MAX_TRI_IMAGES; i++)
         {
             if (triImage[i] != null)
@@ -4209,7 +4178,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         traverseButton = toolbarBuilder.buildToggleButton("traverse", "Traverse image", "translate", VOIGroup);
         imageToolBar.add(traverseButton);
-        mode = ViewJComponentBase.DEFAULT;
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
         imageToolBar.add(toolbarBuilder.buildButton("MagImage", "Magnify image 2.0x", "zoomin"));
@@ -5313,5 +5281,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public ViewJFrameImage getParentFrame()
     {
     	return parentFrame;
+    }
+    
+    protected void setImageActiveInTriComponents(int activeImage)
+    {
+		for (int i = 0; i < MAX_TRI_IMAGES; i++)
+		{
+			if (triImage[i] != null)
+			{
+				triImage[i].setActiveImage(ViewJComponentBase.IMAGE_A);
+			}
+		}
+    	
+    	if (activeImage == ViewJComponentBase.IMAGE_B)
+    	{
+    		if (triImage[AXIAL_AB] != null)
+			{
+				triImage[AXIAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
+			}
+    		if (triImage[SAGITTAL_AB] != null)
+			{
+				triImage[SAGITTAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
+			}
+    		if (triImage[CORONAL_AB] != null)
+			{
+				triImage[CORONAL_AB].setActiveImage(ViewJComponentBase.IMAGE_B);
+			}
+    		
+    	}
     }
 }

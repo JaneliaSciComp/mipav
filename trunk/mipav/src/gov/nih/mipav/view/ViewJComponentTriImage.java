@@ -2463,8 +2463,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 {
                     dragCenterPt = false;
                 }
-             }
-
+            }
 
             if (mode == DEFAULT)
             {
@@ -2783,7 +2782,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int xOrg = 0;
         int yOrg = 0;
         int zOrg = 0;
-        int i, j;
+
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2804,12 +2803,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
         else if (mode == MOVE_POINT)
         {
+        	int j;
+        	
             if (voiProtractor != null && moveProtractor)
             {
                 float[] x = new float[3];
                 float[] y = new float[3];
                 float[] z = new float[3];
-
+                
                 voiProtractor.exportArrays(x, y, z, slice);
 
                 theta = ( (VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).getTheta2();
@@ -2865,25 +2866,26 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // else if (mode == CUBE_BOUNDS)
         else if (mode == PAINT_CAN)
         {
-            Point3D mousePt = getVolumePosition(xS, yS, slice);
+            Point3D volumePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
 
-            xPG = (short) mousePt.x;
-            yPG = (short) mousePt.y;
-            zPG = (short) mousePt.z;
-
+            xPG = (short) volumePt.x;
+            yPG = (short) volumePt.y;
+            zPG = (short) volumePt.z;
+            
             if (imageActive.isColorImage()) {
                 int index = 4 * (yS + imageActive.getExtents()[0] + xS);
                 seedValR = imageBufferActive[index + 1];
                 seedValG = imageBufferActive[index + 2];
                 seedValB = imageBufferActive[index + 3];
-                regionGrow( (short) xS, (short) yS, (short) slice, seedValR,
+                regionGrow( xPG, yPG, zPG, seedValR,
                            seedValG, seedValB, null, true);
             }
             else {
                 seedVal = imageBufferActive[yS * imageActive.getExtents()[0] + xS];
-                regionGrow( (short) xS, (short) yS, (short) slice, seedVal, null, true);
+                regionGrow( xPG, yPG, zPG, seedVal, null, true);
             }
-            triImageFrame.updateImages();
+            triImageFrame.updatePaint(imageActive.getMask());
+            triImageFrame.updateImages();            
         } // end of else if (mode == PAINT_CAN)
         else if (mode == POINT_VOI)
         {
