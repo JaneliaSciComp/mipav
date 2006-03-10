@@ -2866,7 +2866,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // else if (mode == CUBE_BOUNDS)
         else if (mode == PAINT_CAN)
         {
-            Point3D volumePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+            Point3D volumePt = getVolumePosition(xS + 1, yS + 1, slice + 1);
 
             xPG = (short) volumePt.x;
             yPG = (short) volumePt.y;
@@ -2881,7 +2881,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                            seedValG, seedValB, null, true);
             }
             else {
-                seedVal = imageBufferActive[yS * imageActive.getExtents()[0] + xS];
+            	seedVal = imageBufferActive[yS * imageDim.width + xS]; 
                 regionGrow( xPG, yPG, zPG, seedVal, null, true);
             }
             triImageFrame.updatePaint(imageActive.getMask());
