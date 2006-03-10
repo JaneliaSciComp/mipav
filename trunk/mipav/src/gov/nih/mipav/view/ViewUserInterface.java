@@ -2139,6 +2139,8 @@ public class ViewUserInterface
         //this can be triggered by trying to "close the output window frame also"
         messageFrame.setVisible(doShow);
         Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, Boolean.toString(doShow));
+        
+        itemOutput.setSelected(doShow);
 
         Enumeration e = this.getRegisteredImages();
         while (e.hasMoreElements()) {

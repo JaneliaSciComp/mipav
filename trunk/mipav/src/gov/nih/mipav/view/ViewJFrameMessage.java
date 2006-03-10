@@ -2,7 +2,6 @@ package gov.nih.mipav.view;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import java.util.*;
 import java.awt.event.*;
 import java.io.*;
 import java.awt.*;
@@ -23,10 +22,16 @@ import java.awt.*;
 public class ViewJFrameMessage
     extends JFrame implements ActionListener, ChangeListener {
 
-    /** Are used to indicate which of the 2 JTextAreas the data (message) is to be displayed
+    /**
+     * Used to indicate which of the 2 JTextAreas the data (message) is to be displayed
      * @see #setMessage(String, int)
      */
     public static final int DATA = 0;
+    
+    /**
+     * Used to indicate which of the 2 JTextAreas the data (message) is to be displayed
+     * @see #setMessage(String, int)
+     */
     public static final int DEBUG = 1;
 
     private Insets frameInsets;
