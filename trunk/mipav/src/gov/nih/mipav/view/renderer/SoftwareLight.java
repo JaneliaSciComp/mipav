@@ -96,7 +96,7 @@ public abstract class SoftwareLight {
      * @param kVertexProperty SoftwareVertexProperty Contains the position
      * of the point to be lit and the unit-length vector at the point.
      */
-    protected void initView(Point3f kEye, SoftwareVertexProperty kVertexProperty) {
+    protected final void initView(Point3f kEye, SoftwareVertexProperty kVertexProperty) {
         m_kView.sub(kVertexProperty.getPosition(), kEye);
         normalize(m_kView);
 
@@ -118,7 +118,7 @@ public abstract class SoftwareLight {
      * @param kV the vector to be normalized
      * @return the length of the input vector
      */
-    protected float normalize(Vector3f kV) {
+    protected final  float normalize(Vector3f kV) {
         float fLengthSquared = kV.x * kV.x + kV.y * kV.y + kV.z * kV.z;
         if (0.0f < fLengthSquared) {
             float fLength = (float)Math.sqrt(fLengthSquared);
