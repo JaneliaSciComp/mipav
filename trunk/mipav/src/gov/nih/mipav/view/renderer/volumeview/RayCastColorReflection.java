@@ -170,7 +170,7 @@ public class RayCastColorReflection
             fS111 * (m_acImageA[i111] & 0x0ff);
 
 
-        if ( fSrcA >= 1) {
+        if ( fSrcA > 0) {
 
           afAlphasFrontToBack[iNumStepsFrontToBack] = fSrcA;
           // Interpolate normal vector.
@@ -211,7 +211,6 @@ public class RayCastColorReflection
               fS110 * kNormal110.z +
               fS111 * kNormal111.z;
           kVertexProperty.setNormal(fNx, fNy, fNz);
-
           kVertexProperty.setDiffuse(vertexDiffuse);
           kVertexProperty.setSpecular(vertexSpecular);
 
@@ -248,20 +247,11 @@ public class RayCastColorReflection
       float fSrcG = m_kColor.y * 255.0f;
       float fSrcB = m_kColor.z * 255.0f;
 
-
-      // get the RGBA values from the destination
-      float fTrgR = ( (m_aiRImage[iIndex] >> 16) & 0xff);
-      float fTrgG = ( (m_aiRImage[iIndex] >> 8) & 0xff);
-      float fTrgB = ( (m_aiRImage[iIndex]) & 0xff);
-
-
       m_aiRImage[iIndex] =
             //(((int)255   & 0xff) << 24) |
-            ( ( (int) (fTrgR +fSrcR) & 0xff) << 16) |
-            ( ( (int) (fTrgG +fSrcG) & 0xff) << 8) |
-            ( ( (int) (fTrgB +fSrcB) & 0xff));
-
-
+            ( ( (int)(fSrcR) & 0xff) << 16) |
+            ( ( (int)(fSrcG) & 0xff) << 8) |
+            ( ( (int)(fSrcB) & 0xff));
   }
 
   /**

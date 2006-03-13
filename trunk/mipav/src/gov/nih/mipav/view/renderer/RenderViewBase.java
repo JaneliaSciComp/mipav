@@ -1159,7 +1159,7 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
 
                     if (fDX != 0.0f || fDY != 0.0f || fDZ != 0.0f) {
                         akNormalTmp[i] = new Vector3f(fDX, fDY, fDZ);
-                        //akNormalTmp[i].normalize();
+                        akNormalTmp[i].normalize();
                     }
                 }
             }
@@ -1173,17 +1173,14 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
                 for (iX = 1; iX < iXBound - 1; iX++) {
 
                     int i = iX + offset;
-
-                    //if (afData[i] != 0.0f) {
-                        akNormal[i] = akNormalTmp[i];
-                        akNormal[i].add(akNormalTmp[i - 1]);
-                        akNormal[i].add(akNormalTmp[i + 1]);
-                        akNormal[i].add(akNormalTmp[i - iXBound]);
-                        akNormal[i].add(akNormalTmp[i + iXBound]);
-                        akNormal[i].add(akNormalTmp[i - iXYBound]);
-                        akNormal[i].add(akNormalTmp[i + iXYBound]);
-                        akNormal[i].normalize();
-                    //}
+                    akNormal[i] = akNormalTmp[i];
+                    akNormal[i].add(akNormalTmp[i - 1]);
+                    akNormal[i].add(akNormalTmp[i + 1]);
+                    akNormal[i].add(akNormalTmp[i - iXBound]);
+                    akNormal[i].add(akNormalTmp[i + iXBound]);
+                    akNormal[i].add(akNormalTmp[i - iXYBound]);
+                    akNormal[i].add(akNormalTmp[i + iXYBound]);
+                    akNormal[i].normalize();
                 }
             }
         }
