@@ -677,7 +677,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         pNeigh = new neighbor();
         pNeigh.setNull();
         ttBasis = new basisS();
-        basisSList.insertAtBack(ttBasis);
+        //basisSList.insertAtBack(ttBasis);
         ttBasis.setRefCount(1);
         ttBasis.setLScale(-1);
         ttBasis.setSqa(0.0);
@@ -1040,16 +1040,6 @@ private void tetCircumcenter(double a[], double b[], double c[], double d[],
  double u3[] = new double[1];
  int vlength, wlength;
  double negate;
-
- double bvirt;
- double avirt, bround, around;
- double c;
- double abig;
- double ahi, alo, bhi, blo;
- double err1, err2, err3;
- double _i, _j, _k;
- double _0;
- int i;
 
  adx = pa[0] - pd[0];
  bdx = pb[0] - pd[0];
@@ -1436,8 +1426,6 @@ private int fastExpansionSumZeroElim(int elen, double e[][], int flen,
     double Q;
     double Qnew[] = new double[1];
     double hh[] = new double[1];
-    double bvirt;
-    double avirt, bround, around;
     int eindex, findex, hindex;
     double enow, fnow;
 
@@ -1525,14 +1513,8 @@ private int scaleExpansionZeroElim(int elen, double e[][],
     double product0[] = new double[1];
     int eindex, hindex;
     double enow;
-    double bvirt;
-    double avirt, bround, around;
-    double c;
-    double abig;
-    double ahi, alo;
     double bhi[] = new double[1];
     double blo[] = new double[1];
-    double err1, err2, err3;
 
     split(b[0], bhi, blo);
     twoProductPresplit(e[0][0], b[0], bhi[0], blo[0], Q, hh);
@@ -1993,9 +1975,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 if (bas.getRefCount() == 0) {
                     basisSList.deleteNode(bas);
                 }
-                else {
+                /*else {
                     bas = null;
-                }
+                }*/
             } // if (bas != null)
             ns.getNeigh(i).setVert(p);
             ns.getNeigh(i).setVertIndex(vertIndex);
@@ -2212,7 +2194,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
 
         if (b == null) {
             b = new basisS();
-            basisSList.insertAtBack(b);
+            //basisSList.insertAtBack(b);
         }
         else {
             b.setLScale(0);
@@ -2232,9 +2214,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                     if (bas.getRefCount() == 0) {
                         basisSList.deleteNode(bas);
                     }
-                    else {
+                    /*else {
                         bas = null;
-                    }
+                    }*/
                 } // if (bas != null)
             } // for (i = 0; i < cDim; i++)
         } // if (s.getNormal() == null)
@@ -2393,7 +2375,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         } // for (i = 1; i < cDim; i++)
         if (bCheckPerps == null) {
             bCheckPerps = new basisS();
-            basisSList.insertAtBack(bCheckPerps);
+            //basisSList.insertAtBack(bCheckPerps);
         }
         else {
             bCheckPerps.setLScale(0);
@@ -2539,24 +2521,35 @@ private int scaleExpansionZeroElim(int elen, double e[][],
 
         if (s.getVisit() == pNum) {
             if (s.getPeak().getVert() != null) {
-                return s.getNeigh(ocDim).getSimp();
+                if (ocDim >= 0) {
+                    return s.getNeigh(ocDim).getSimp();
+                }
+                else {
+                    return s.getPeak().getSimp();
+                }
             }
             else {
                 return s;
             }
         } // if (s.getVisit() == pNum)
         s.setVisit(pNum);
-        s.getNeigh(ocDim).setVert(p);
-        s.getNeigh(ocDim).setVertIndex(vertIndex);
+        if (ocDim >= 0) {
+            s.getNeigh(ocDim).setVert(p);
+            s.getNeigh(ocDim).setVertIndex(vertIndex);
+        }
+        else {
+            s.getPeak().setVert(p);
+            s.getPeak().setVertIndex(vertIndex);
+        }
         bas = s.getNormal();
         if (bas != null) {
             bas.decRefCount();
             if (bas.getRefCount() == 0) {
                 basisSList.deleteNode(bas);
             }
-            else {
+            /*else {
                 bas = null;
-            }
+            }*/
         } // if (bas != null)
         bas = s.getNeigh(0).getBasisS();
         if (bas != null) {
@@ -2564,12 +2557,17 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             if (bas.getRefCount() == 0) {
                 basisSList.deleteNode(bas);
             }
-            else {
+            /*else {
                 bas = null;
-            }
+            }*/
         } // if (bas != null)
         if (s.getPeak().getVert() == null) {
-            s.getNeigh(ocDim).setSimp(extendSimplices(s.getPeak().getSimp()));
+            if (ocDim >= 0) {
+                s.getNeigh(ocDim).setSimp(extendSimplices(s.getPeak().getSimp()));
+            }
+            else {
+                s.getPeak().setSimp(extendSimplices(s.getPeak().getSimp()));
+            }
             return s;
         } // if (s.getPeak().getVert() == null)
         else {
@@ -2588,11 +2586,21 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                     bas.incRefCount();
                 }
             } // for (i = 0; i < cDim; i++)
-            s.getNeigh(ocDim).setSimp(ns);
+            if (ocDim >= 0) {
+                s.getNeigh(ocDim).setSimp(ns);
+            }
+            else {
+                s.getPeak().setSimp(ns);
+            }
             ns.getPeak().setVert(null);
             ns.getPeak().setVertIndex(Integer.MIN_VALUE);
             ns.getPeak().setSimp(s);
-            ns.setNeigh(ocDim, s.getPeak());
+            if (ocDim >= 0) {
+                ns.setNeigh(ocDim, s.getPeak());
+            }
+            else {
+                ns.setPeak(s.getPeak());
+            }
             if (s.getPeak().getBasisS() != null) {
                 s.getPeak().getBasisS().incRefCount();
             }
@@ -2613,7 +2621,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         bas = pNeigh.getBasisS();
         if (bas == null) {
             bas = new basisS();
-            basisSList.insertAtBack(bas);
+            //basisSList.insertAtBack(bas);
             pNeigh.setBasisS(bas);
         }
         pNeigh.setVert(p);
@@ -2624,20 +2632,25 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             vert = neigh.getVert();
             vertIndex2 = neigh.getVertIndex();
         } // if (neigh != null)
-        neigh2 = root.getNeigh(cDim-1);
+        if (cDim >= 1) {
+            neigh2 = root.getNeigh(cDim-1);
+        }
+        else {
+            neigh2 = root.getPeak();
+        }
         if (neigh2 != null) {
             neigh2.setVert(vert);
             neigh2.setVertIndex(vertIndex2);
-        } // if ((vert != null) && (neigh2 != null))
+        } // if (neigh2 != null)
         if (neigh2 != null) {
             bas = neigh2.getBasisS();
             if (bas != null) {
                 bas.decRefCount();
                 if (bas.getRefCount() == 0) {
                     basisSList.deleteNode(bas);
-                } else {
+                } /*else {
                     bas = null;
-                }
+                }*/
             } // if (bas != null)
         } // if (neigh2 != null)
         
@@ -2676,9 +2689,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 if (bas.getRefCount() == 0) {
                     basisSList.deleteNode(bas);
                 }
-                else {
+                /*else {
                     bas = null;
-                }
+                }*/
             } // if (bas != null)
             sn0.setBasisS(ttBasis);
             ttBasis.incRefCount();
@@ -2702,9 +2715,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                     if (bas.getRefCount() == 0) {
                         basisSList.deleteNode(bas);
                     }
-                    else {
+                    /*else {
                         bas = null;
-                    }
+                    }*/
                } // if (bas != null)
                reduce(sn.getBasisS(), sn.getVert(), s, k);
            } // if (sn != null)
@@ -2731,8 +2744,6 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         }
         if (vdCh || powerDiagram) {
             if (Double.isInfinite(p[0])) {
-                v = new basisS();
-                basisSList.insertAtBack(v);
                 v.setRefCount(infinityBasis.getRefCount());
                 v.setLScale(infinityBasis.getLScale());
                 v.setVecsCopy(infinityBasis.getVecs());
@@ -2984,7 +2995,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
     } // private double[] getAnotherSite()
 
     private int siteNumm(double p[], int currentNumSites) {
-        int i,j;
+        int i;
         int currentNumBlocks = currentNumSites / BLOCKSIZE;
 
         if (p == null) {
