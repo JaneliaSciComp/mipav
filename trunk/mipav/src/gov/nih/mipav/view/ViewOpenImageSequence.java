@@ -132,10 +132,6 @@ public class ViewOpenImageSequence extends JFrame implements
         {
 
         }
-        finally
-        {
-            return;
-        }
     }
 
     protected void buildUserInterface()
@@ -876,12 +872,12 @@ public class ViewOpenImageSequence extends JFrame implements
 
             if (srsPath.exists() == false || srsPath.canRead() == false)
             {
-                srsPath = new File(System.getProperty("user.dir"));
+                srsPath = new File(System.getProperty("user.home"));
             }
         }
         else
         {
-            srsPath = new File(System.getProperty("user.dir"));
+            srsPath = new File(System.getProperty("user.home"));
         }
 
         return srsPath;
@@ -1108,7 +1104,7 @@ public class ViewOpenImageSequence extends JFrame implements
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(brightnessSlider, gbc);
 
@@ -1116,19 +1112,19 @@ public class ViewOpenImageSequence extends JFrame implements
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
         gbc.weighty = 1;
 
@@ -1169,7 +1165,7 @@ public class ViewOpenImageSequence extends JFrame implements
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel2.add(contrastSlider, gbc);
 
@@ -1177,19 +1173,19 @@ public class ViewOpenImageSequence extends JFrame implements
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel2.add(minimum2, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel2.add(current2, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
         gbc.weighty = 1;
 
@@ -1203,7 +1199,7 @@ public class ViewOpenImageSequence extends JFrame implements
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        gbc2.fill = gbc.BOTH;
+        gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 1;
         gbc2.gridheight = 2;
         centerPanel.add(sliderPanel2, gbc2);
