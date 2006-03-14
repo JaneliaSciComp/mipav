@@ -2915,7 +2915,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         else if (command.equals("MaskToVOI"))
         {
             new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
-            
+
             // add the conversion to the script, if one is being recorded
             if (userInterface.isScriptRecording()) {
                 //check to see if the match image is already in the ImgTable
@@ -2933,7 +2933,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         else if (command.equals("MaskToPaint"))
         {
             handleMaskToPaint();
-            
+
             // add the conversion to the script, if one is being recorded
             if (userInterface.isScriptRecording()) {
                 //check to see if the match image is already in the ImgTable
@@ -2986,7 +2986,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             algoPaintToVOI.setActiveImage(false);
             algoPaintToVOI.run();
-            
+
             // add the conversion to the script, if one is being recorded
             if (userInterface.isScriptRecording()) {
                 //check to see if the match image is already in the ImgTable
@@ -3000,13 +3000,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 userInterface.getScriptDialog().append(line);
             }
-            
+
             updateImages();
         }
         else if (command.equals("PaintToShortMask"))
         {
             String maskImageName = componentImage.commitPaintToMask();
-            
+
             // add the conversion to the script, if one is being recorded
             if (userInterface.isScriptRecording() && maskImageName != null) {
                 //check to see if the match image is already in the ImgTable
@@ -3130,7 +3130,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         else if (command.equals("Save all VOIs"))
         {
             saveAllVOIs();
-            
+
             if (userInterface.isScriptRecording()) {
                 //check to see if the match image is already in the ImgTable
                 if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
@@ -3173,7 +3173,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 voiDir = new String(directory + fileName + File.separator);
                 saveAllVOIsTo(voiDir);
-                
+
                 if (userInterface.isScriptRecording()) {
                     //check to see if the match image is already in the ImgTable
                     if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
@@ -3181,7 +3181,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                             userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
                         }
                     }
-    
+
                     String line = "SaveAllVOIsTo " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
                     line += voiDir + "\n";
                     userInterface.getScriptDialog().append(line);
@@ -5653,24 +5653,37 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 incSlice();
                 return;
             case KeyEvent.VK_1:
-                componentImage.setPaintBrushSize(ViewJComponentEditImage.thinPaint);
-                componentImage.repaint();
-                return;
+                if (!e.isControlDown()) {
+                    componentImage.setPaintBrushSize(ViewJComponentEditImage.
+                            thinPaint);
+                    componentImage.repaint();
+                    return;
+                }
+                break;
 
             case KeyEvent.VK_2:
-                componentImage.setPaintBrushSize(ViewJComponentEditImage.medPaint);
-                componentImage.repaint();
-                return;
-
+                if (!e.isControlDown()) {
+                    componentImage.setPaintBrushSize(ViewJComponentEditImage.medPaint);
+                    componentImage.repaint();
+                    return;
+                }
+                break;
             case KeyEvent.VK_3:
-                componentImage.setPaintBrushSize(ViewJComponentEditImage.thickPaint);
-                componentImage.repaint();
-                return;
-
+                if (!e.isControlDown()) {
+                    componentImage.setPaintBrushSize(ViewJComponentEditImage.
+                            thickPaint);
+                    componentImage.repaint();
+                    return;
+                }
+                break;
             case KeyEvent.VK_4:
-                componentImage.setPaintBrushSize(ViewJComponentEditImage.thickestPaint);
-                componentImage.repaint();
-                return;
+                if (!e.isControlDown()) {
+                    componentImage.setPaintBrushSize(ViewJComponentEditImage.
+                            thickestPaint);
+                    componentImage.repaint();
+                    return;
+                }
+                break;
             case KeyEvent.VK_UP:
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_LEFT:
