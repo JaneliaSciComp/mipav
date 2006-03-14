@@ -14,7 +14,9 @@ import java.text.DecimalFormat;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
-import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.*;
+import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.algorithms.*;
 
 /**
  *   This program works with 3D and 4D images.
@@ -2952,6 +2954,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            {
                windowClosing(null);
            }
+           else if (command.equals("leastSquares"))
+           {
+        	   handleLeastSquares();
+        	   return;
+           }
+           else if (command.equals("tpSpline"))
+           {
+        	   handleTPSpline();
+        	   return;
+           }
            else if (command.equals(OLD_LAYOUT))
            {
                oldLayout = !oldLayout;
@@ -3760,6 +3772,234 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            this.requestFocusInWindow();
        }
 
+       protected void handleTPSpline()
+       {
+    	   final SwingWorker worker = new SwingWorker() 
+    	   {
+    		   public Object construct()
+    		   {
+    			   if (imageB == null)
+				   {
+					   MipavUtil.displayError("Image B must be present to use the least squares algorithm.");
+					   return null;
+				   }
+				   
+				   ViewVOIVector imageAVOIs = (ViewVOIVector) imageA.getVOIs();
+				   ViewVOIVector imageBVOIs = (ViewVOIVector) imageB.getVOIs();
+				   
+				   if (imageAVOIs != null && imageBVOIs != null && 
+					   imageAVOIs.size() != imageBVOIs.size())
+				   {
+					   MipavUtil.displayError("Number of VOI points must be identical in each image.");
+					   return null;
+				   }
+				   
+				   if (imageAVOIs.size() < 3)
+				   {
+					   MipavUtil.displayError("At least three points must be in place for each image.");
+					   return null;
+				   }
+				   
+				   double [] xSourceA = new double[imageAVOIs.size()];
+			       double [] ySourceA = new double[imageAVOIs.size()];
+			       double [] zSourceA = new double[imageAVOIs.size()];
+			       double [] xTargetB = new double[imageBVOIs.size()];
+			       double [] yTargetB = new double[imageBVOIs.size()];
+			       double [] zTargetB = new double[imageBVOIs.size()];
+				   
+				   // extract point VOIs for image A
+				   Vector pointVOIVector = new Vector();		   
+				   int nVOI = imageAVOIs.size();
+				   for (int i = nVOI - 1; i >= 0; i--)
+				   {
+					   if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT)
+				       {
+						   for (int k = 0; k < imageA.getExtents()[2]; k++)
+				           {
+				               Point3Df[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
+				               
+				               for (int j = 0; j < voiPoints.length; j++)
+				               {
+				            	   pointVOIVector.add(voiPoints);
+				               }
+				           }
+				       }
+				   }
+				   
+				   for (int i = 0; i < pointVOIVector.size(); i++)
+				   {
+					   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
+					   xSourceA[i] = point3df[0].x;
+					   ySourceA[i] = point3df[0].y;
+					   zSourceA[i] = point3df[0].z;
+				   }
+				   
+				   // extract point VOIs for image B
+				   pointVOIVector = new Vector();
+				   nVOI = imageBVOIs.size();
+				   for (int i = nVOI - 1; i >= 0; i--)
+				   {
+					   if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT)
+				       {
+						   for (int k = 0; k < imageA.getExtents()[2]; k++)
+				           {
+				               Point3Df[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
+				               
+				               for (int j = 0; j < voiPoints.length; j++)
+				               {
+				            	   pointVOIVector.add(voiPoints);
+				               }
+				           }
+				       }
+				   }
+				
+				   for (int i = 0; i < pointVOIVector.size(); i++)
+				   {
+					   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
+					   xTargetB[i] = point3df[0].x;
+					   yTargetB[i] = point3df[0].y;
+					   zTargetB[i] = point3df[0].z;
+				   }
+				   
+				   AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB, zTargetB, 0.0f, imageA, (ModelImage) imageA.clone());
+				   algoTPSpline.setupTPSpline2D(xSourceA, ySourceA, xTargetB, yTargetB, 0.0f);
+				   algoTPSpline.runAlgorithm();
+				   
+				   setImageA(algoTPSpline.getResultImage());
+				   
+    			   return null;
+    		   }
+	   	   };
+	   	   
+	   	   worker.start();
+	    	   
+    	   return;
+       }
+       
+	/**
+	 * Method handles transformations for least squares algorithm in the tri-planar frame.
+	 */
+	protected void handleLeastSquares() 
+	{
+		final SwingWorker worker = new SwingWorker() 
+		{
+			public Object construct() 
+			{
+				ViewJProgressBar progressBar = null;
+				
+				try
+				{
+				   if (imageB == null)
+				   {
+					   MipavUtil.displayError("Image B must be present to use the least squares algorithm.");
+					   return null;
+				   }
+				   
+				   ViewVOIVector imageAVOIs = (ViewVOIVector) imageA.getVOIs();
+				   ViewVOIVector imageBVOIs = (ViewVOIVector) imageB.getVOIs();
+				   
+				   if (imageAVOIs != null && imageBVOIs != null && 
+					   imageAVOIs.size() != imageBVOIs.size())
+				   {
+					   MipavUtil.displayError("Number of VOI points must be identical in each image.");
+					   return null;
+				   }
+				   
+				   if (imageAVOIs.size() < 3)
+				   {
+					   MipavUtil.displayError("At least three points must be in place for each image.");
+					   return null;
+				   }
+				   
+				   // extract point VOIs for image A
+				   Vector pointVOIVector = new Vector();		   
+				   int nVOI = imageAVOIs.size();
+				   for (int i = nVOI - 1; i >= 0; i--)
+				   {
+					   if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT)
+				       {
+						   for (int k = 0; k < imageA.getExtents()[2]; k++)
+				           {
+				               Point3Df[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
+				               
+				               for (int j = 0; j < voiPoints.length; j++)
+				               {
+				            	   pointVOIVector.add(voiPoints);
+				               }
+				           }
+				       }
+				   }
+				   
+				   double [][] coordsA = new double[pointVOIVector.size()][3];
+				   for (int i = 0; i < pointVOIVector.size(); i++)
+				   {
+					   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
+					   coordsA[i][0] = point3df[0].x;
+					   coordsA[i][1] = point3df[0].y;
+					   coordsA[i][2] = point3df[0].z;
+				   }
+				   
+				   // extract point VOIs for image B
+				   pointVOIVector = new Vector();
+				   nVOI = imageBVOIs.size();
+				   for (int i = nVOI - 1; i >= 0; i--)
+				   {
+					   if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT)
+				       {
+						   for (int k = 0; k < imageA.getExtents()[2]; k++)
+				           {
+				               Point3Df[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
+				               
+				               for (int j = 0; j < voiPoints.length; j++)
+				               {
+				            	   pointVOIVector.add(voiPoints);
+				               }
+				           }
+				       }
+				   }
+				
+				   double [][] coordsB = new double[pointVOIVector.size()][3];
+				   for (int i = 0; i < pointVOIVector.size(); i++)
+				   {
+					   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
+					   coordsB[i][0] = point3df[0].x;
+					   coordsB[i][1] = point3df[0].y;
+					   coordsB[i][2] = point3df[0].z;
+				   }
+		     	   
+				   // now that we have the point coords, we can build the least squares algorithm
+				   AlgorithmRegLeastSquares algoLeastSquares = new AlgorithmRegLeastSquares(coordsA, coordsB, 3);
+				   algoLeastSquares.runAlgorithm();
+				   TransMatrix transMatrix = algoLeastSquares.getTransformBtoA();
+				           	   
+				   progressBar = new ViewJProgressBar("Applying transformation", 
+						      "Transforming", 0, 100,
+				              false, null, null);
+				   progressBar.setVisible(true);
+				   progressBar.setSeparateThread(true);
+				   
+				   ModelImage resultImage = (ModelImage) imageA.clone();
+				   
+				   AlgorithmTransform.transformTrilinear(imageA, resultImage, transMatrix, progressBar);
+				   		   
+				   setImageA(resultImage);
+				   
+				   updateImages();
+				   return null;
+				}
+				finally
+				{
+					if (progressBar != null)
+					{
+						progressBar.dispose();
+					}
+				}
+			}
+		};
+		
+		worker.start();
+	}
+
        /**
         * Builds the volume position panel, which is the panel that sits in the plug-in area
         * of the 2x2 tri-planar layout
@@ -4220,10 +4460,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         imageToolBar.add(toolbarBuilder.buildToggleButton("boundingBox", "Show/hide crop volume", "boundingcube",
             oneButtonToggleGroup));
 
-        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-
         imageToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
             "cropVolume"));
+        
+        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
+        
+        JButton leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
+        leastSquaresButton.addActionListener(this);
+        leastSquaresButton.setToolTipText("Apply least squares alignment");
+        leastSquaresButton.setActionCommand("leastSquares");
+        leastSquaresButton.setBorderPainted(false);
+        leastSquaresButton.setRolloverIcon(MipavUtil.getIcon("reglsqroll.gif"));
+        leastSquaresButton.setFocusPainted(false);
+        imageToolBar.add(leastSquaresButton);
+        
+        JButton tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
+        tpSplineButton.addActionListener(this);
+        tpSplineButton.setToolTipText("Apply thin plate spline alignment");
+        tpSplineButton.setActionCommand("tpSpline");
+        tpSplineButton.setBorderPainted(false);
+        tpSplineButton.setRolloverIcon(MipavUtil.getIcon("regtsproll.gif"));
+        tpSplineButton.setFocusPainted(false);
+        imageToolBar.add(tpSplineButton);
 
         panelToolbar.add(imageToolBar, gbc);
 
