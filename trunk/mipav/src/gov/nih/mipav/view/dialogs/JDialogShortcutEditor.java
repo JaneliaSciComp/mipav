@@ -403,8 +403,8 @@ public class JDialogShortcutEditor
             if (e.getSource().equals(functionBox)) {
                 if (functionBox.getSelectedIndex() == 0) {
                     ctrlBox.setEnabled(true);
-                    altBox.setEnabled(true);
                     shiftBox.setEnabled(true);
+                    altBox.setEnabled(ctrlBox.isSelected() || altBox.isSelected());
                     charField.setEnabled(true);
                     charLabel.setEnabled(true);
 
@@ -415,6 +415,13 @@ public class JDialogShortcutEditor
                    charField.setEnabled(false);
                    charLabel.setEnabled(false);
                 }
+            } else if (e.getSource().equals(ctrlBox) ||
+                       e.getSource().equals(shiftBox)) {
+                altBox.setEnabled(ctrlBox.isSelected() ||
+                                  shiftBox.isSelected());
+                if (!altBox.isEnabled()) {
+                    altBox.setSelected(false);
+                }
             }
         }
 
@@ -424,9 +431,13 @@ public class JDialogShortcutEditor
 
             altBox = new JCheckBox("Alt");
             altBox.setFont(serif12B);
+            altBox.setEnabled(false);
 
             shiftBox = new JCheckBox("Shift");
             shiftBox.setFont(serif12B);
+
+            ctrlBox.addItemListener(this);
+            shiftBox.addItemListener(this);
 
             charField = new JTextField(2);
             charField.setFont(serif12B);
