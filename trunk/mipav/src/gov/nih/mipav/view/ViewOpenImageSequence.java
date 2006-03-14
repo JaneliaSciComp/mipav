@@ -143,9 +143,6 @@ public class ViewOpenImageSequence extends JFrame implements
             Preferences.debug(
                 "Exception ocurred while getting <" + error.getMessage()
                 + ">.  Check that this file is available.\n");
-            System.err.println(
-                "Exception ocurred while getting <" + error.getMessage()
-                + ">.  Check that this file is available.\n");
         }
 
         GridBagLayout gbLayout = new GridBagLayout();
@@ -872,12 +869,17 @@ public class ViewOpenImageSequence extends JFrame implements
 
             if (srsPath.exists() == false || srsPath.canRead() == false)
             {
-                srsPath = new File(System.getProperty("user.home"));
+                srsPath = new File(Preferences.getProperty("user.home"));
             }
         }
         else
         {
-            srsPath = new File(System.getProperty("user.home"));
+            srsPath = new File(Preferences.getProperty("ImageDirectory"));
+            
+            if (srsPath.exists() == false || srsPath.canRead() == false)
+            {
+                srsPath = new File(Preferences.getProperty("user.home"));
+            }
         }
 
         return srsPath;
