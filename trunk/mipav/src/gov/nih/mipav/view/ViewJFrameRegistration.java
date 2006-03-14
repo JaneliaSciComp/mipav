@@ -90,26 +90,19 @@ public class ViewJFrameRegistration
     MouseMotionListener,
     MouseListener {
 
-    private int borderSize = 3;
-
     /* The 3 types of markers - rotation center, reference slice, and adjusted slice */
     public static final int ROTATIONCENTER = 0;
     public static final int REFMARK = 1;
     public static final int ADJMARK = 2;
 
-    private String defaultDirectory = null;
     private ViewUserInterface userInterface;
     private ModelImage image;
 
     private ModelImage secondImage;
 
     private JPanel controlPanel;
-
-    private JPanel menuPanel;
     private JMenuBar openingMenuBar;
 
-    //private JMenuItem itemSaveAs;
-    private JMenuItem itemSaveICGAs;
     private JMenuItem itemClose;
     private JMenuItem itemHelp;
 
@@ -119,11 +112,9 @@ public class ViewJFrameRegistration
     private JButton[] buttonArray = new JButton[16];
 
     private Font font12 = MipavUtil.font12;
-    private Font font12B = MipavUtil.font12B;
 
     private Border pressedBorder = BorderFactory.createLoweredBevelBorder();
     private Border etchedBorder = BorderFactory.createEtchedBorder();
-    private int tSlice;
     private int zSlice, zSlice2, zLastSlice, zLastSlice2;
     private int xScreen, yScreen;
     private float zoom = 1;
@@ -137,9 +128,7 @@ public class ViewJFrameRegistration
     private ViewJComponentRegistration componentImage;
     private int nImage;
     private JScrollPane scrollPane;
-    private JMenuBar menuBar;
     private ViewControlsImage controls;
-    private ViewMenuBuilder menuObj;
 
     private JLabel labelReferenceSlice, labelAdjustedSlice;
 
@@ -148,7 +137,6 @@ public class ViewJFrameRegistration
     private Hashtable labelTable, labelTable2;
     private GridBagLayout cpGBL; // control panel grid bag layout
     private GridBagConstraints cpGBC; // control panel grid bag constraints
-    private GridBagLayout gbl; // content pane grid bag layout
     private GridBagConstraints gbc; // content pane grid bag constraints
     protected Font serif12;
     private int i, j; // Not sure these should be class variables
@@ -159,7 +147,6 @@ public class ViewJFrameRegistration
     private int minimumToolBarWidth;
     private JMenu fileMenu;
     private JMenu helpMenu;
-    private ViewJProgressBar progressBar;
     private int newAlphaBlend = 50;
     private JSlider alphaSlider;
     private int bufferFactor;
@@ -172,7 +159,6 @@ public class ViewJFrameRegistration
     private JButton ccwButton;
     private JButton pixelIncrementButton;
     private JButton degreeIncrementButton;
-    private JButton resetButton;
     private JToggleButton dragButton;
     private JToggleButton translateButton;
     private JToggleButton refMarkButton; //add reference marker
@@ -190,7 +176,6 @@ public class ViewJFrameRegistration
     private TransMatrix xfrmH;
     private int xDim;
     private int yDim;
-    private float frm[][] = null;
     private double xfrmD[][] = null;
     private double xfrmR[][] = null;
     private float xfrmA[][] = null;
@@ -208,14 +193,10 @@ public class ViewJFrameRegistration
     private Point3Df VOIPoints[];
     private VOI voi = null;
     private boolean haveVOIPoints = false;
-    private boolean doDeleteRef;
-    private boolean doDeleteAdj;
     private int n;
     private int nVOI;
     private int refMark;
     private int adjMark;
-    private float x[], y[], z[];
-    private short id = 7777;
     private int curRefMark;
     private int curAdjMark;
     private float xRes;
@@ -243,7 +224,6 @@ public class ViewJFrameRegistration
         LUTa = _LUT;
         image = _image;
 
-        tSlice = 0;
         zSlice = 0;
         if (image.getExtents()[2] == 2) {
             zSlice2 = (image.getExtents()[2]) / 2;
@@ -443,7 +423,6 @@ public class ViewJFrameRegistration
 
         xfrm = new TransMatrix(3);
         xfrmH = new TransMatrix(3);
-        frm = new float[3][3];
         xfrmD = new double[3][3];
         xfrmR = new double[3][3];
         xOrg = new int[40];
@@ -452,9 +431,6 @@ public class ViewJFrameRegistration
         yPres = new int[40];
         markerType = new int[40];
         xfrmA = new float[3][3];
-        x = new float[1];
-        y = new float[1];
-        z = new float[1];
 
         // builds image panel and puts it into a scrollpane
         buildScrollPane(userInterface);
@@ -1284,7 +1260,6 @@ public class ViewJFrameRegistration
         pixBufferB = null;
         extents = null;
         newExtents = null;
-        frm = null;
         xfrmD = null;
         xfrmR = null;
         xfrmA = null;
@@ -1301,18 +1276,12 @@ public class ViewJFrameRegistration
         xfrmBA = null;
         VOIPoints = null;
         voi = null;
-        x = null;
-        y = null;
-        z = null;
 
         pixBuffer = null;
         paintBuffer = null;
         scrollPane = null;
         toolBar = null;
         controlPanel = null;
-
-        menuBar = null;
-        menuObj = null;
         controls = null;
 
         if (imageA != null)
@@ -1333,10 +1302,9 @@ public class ViewJFrameRegistration
         *  Calls various methods depending on the action
         *  @param event      event that triggered function
         */
-       public void actionPerformed(ActionEvent event) {
-
-           String command;
-           command = event.getActionCommand();
+       public void actionPerformed(ActionEvent event) 
+       {
+           String command = event.getActionCommand();
 
            if (command.equals("drag")) {
                if (dragButton.isSelected() == true)
@@ -1713,7 +1681,7 @@ public class ViewJFrameRegistration
         float j1, j2;
         int nVOI;
         int n;
-        float frm00, frm01, frm02, frm10, frm11, frm12, frm20, frm21, frm22;
+        float frm00, frm01, frm02, frm10, frm11, frm12;
 
         xfrmD = (xfrm.inverse()).getArray();
 
@@ -1723,9 +1691,6 @@ public class ViewJFrameRegistration
         frm10 = (float) xfrmD[1][0];
         frm11 = (float) xfrmD[1][1];
         frm12 = (float) xfrmD[1][2];
-        frm20 = (float) xfrmD[2][0];
-        frm21 = (float) xfrmD[2][1];
-        frm22 = (float) xfrmD[2][2];
 
         int position;
         float dx, dy, dx1, dy1;
@@ -1841,7 +1806,7 @@ public class ViewJFrameRegistration
         int index;
         int nVOI;
         int n;
-        float frm00, frm01, frm02, frm10, frm11, frm12, frm20, frm21, frm22;
+        float frm00, frm01, frm02, frm10, frm11, frm12;
 
         xfrmD = (xfrm.inverse()).getArray();
         frm00 = (float) xfrmD[0][0];
@@ -1850,9 +1815,6 @@ public class ViewJFrameRegistration
         frm10 = (float) xfrmD[1][0];
         frm11 = (float) xfrmD[1][1];
         frm12 = (float) xfrmD[1][2];
-        frm20 = (float) xfrmD[2][0];
-        frm21 = (float) xfrmD[2][1];
-        frm22 = (float) xfrmD[2][2];
 
         int iXdim1 = xDim - 1;
         int iYdim1 = yDim - 1;
@@ -2133,7 +2095,7 @@ public class ViewJFrameRegistration
      *   Calculates the Euclidean distance
      *   @param ptA  point  A
      *   @param ptB  point  B
-     *   @return the euclidean distatnce between points
+     *   @return the euclidean distance between points
      */
     public double euclideanDistance(double ptA[], double ptB[]) {
         double dist = 0;
