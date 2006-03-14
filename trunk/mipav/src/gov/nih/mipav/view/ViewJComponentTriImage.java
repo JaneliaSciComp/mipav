@@ -4508,15 +4508,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public CubeBounds getBoundedVolume()
     {
         // no translation needed since the low and high vars are already in volume space (always x,y,z)
-
         Point3D [] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
 
         return new CubeBounds(boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].x,
                               boundingBoxPoints[ViewJFrameTriImage.UPPER_LEFT_FRONT].x,
                               boundingBoxPoints[ViewJFrameTriImage.LOWER_RIGHT_FRONT].y,
                               boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].y,
-                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_BACK].z,
-                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].z);
+                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_BACK].z+1, // TODO: the +1 shouldn't be here, it is fudged until we can figure out why it is needed
+                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].z+1);
     }
 
     /**
