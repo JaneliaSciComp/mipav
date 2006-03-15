@@ -6,6 +6,7 @@ import gov.nih.mipav.view.*;
 
 import javax.vecmath.*;
 
+import java.util.Arrays;
 import java.io.*;
 
 /**

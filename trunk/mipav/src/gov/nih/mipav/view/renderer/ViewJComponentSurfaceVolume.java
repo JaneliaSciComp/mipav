@@ -5,7 +5,9 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.*;
 
+import javax.vecmath.*;
 import java.io.*;
+import java.util.*;
 
 /**
  *		Texture mapped image volume displayed in the surface renderer. .
