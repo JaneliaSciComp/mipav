@@ -2,11 +2,6 @@ package gov.nih.mipav.view.renderer.volumeview;
 
 import gov.nih.mipav.model.structures.*;
 
-import java.awt.*;
-import java.awt.Frame.*;
-import java.lang.*;
-
-
 /**
  * A ray tracer for 3D intensity images.
  */

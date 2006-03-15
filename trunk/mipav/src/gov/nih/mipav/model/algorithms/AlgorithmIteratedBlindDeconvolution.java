@@ -1,11 +1,9 @@
 package gov.nih.mipav.model.algorithms;
 
-import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmFFT;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.structures.*;
-import java.lang.Object;
 import java.io.IOException;
 import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.structures.ModelStorageBase;

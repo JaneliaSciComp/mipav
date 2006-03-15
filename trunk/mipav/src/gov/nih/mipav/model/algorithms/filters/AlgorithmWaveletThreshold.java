@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.lang.*;
-
 
 public class AlgorithmWaveletThreshold extends AlgorithmBase {
     // The image is expanded so that all dimensions are powers of 2 and there

@@ -15,7 +15,6 @@ import java.io.*;
 import java.awt.*;
 import java.awt.image.*;
 import java.awt.event.*;
-import java.lang.*;
 import java.util.*;
 import java.text.*;
 

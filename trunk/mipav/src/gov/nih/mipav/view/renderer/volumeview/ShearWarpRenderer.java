@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
-import java.lang.*;
 import java.util.Arrays;
 
 import javax.vecmath.*;

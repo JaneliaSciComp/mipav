@@ -3,7 +3,6 @@ package gov.nih.mipav.view.renderer.volumeview;
 
 import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.renderer.surfaceview.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 
@@ -11,7 +10,6 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 
 import java.io.*;
-import java.lang.*;
 import javax.swing.*;
 
 

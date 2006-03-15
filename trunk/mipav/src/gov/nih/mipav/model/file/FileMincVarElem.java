@@ -1,6 +1,5 @@
 package gov.nih.mipav.model.file;
 
-import java.lang.*;
 import java.util.*;
 import gov.nih.mipav.model.structures.ModelSerialCloneable;
 

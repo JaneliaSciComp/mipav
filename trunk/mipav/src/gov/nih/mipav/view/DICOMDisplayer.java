@@ -1,7 +1,6 @@
 package gov.nih.mipav.view;
 
 import javax.swing.*;
-import javax.swing.table.*;
 
 /**
 *   This class is simply a table that goes in the query GUI and displays

@@ -1,7 +1,5 @@
 package gov.nih.mipav.model.structures;
 
-import javax.vecmath.*;
-
 /**
  * This is an abstract interface for a curve in 3D.  This interface builds
  * upon that of the Curve3 abstract interface by adding support for computing

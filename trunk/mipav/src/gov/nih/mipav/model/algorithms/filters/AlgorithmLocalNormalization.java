@@ -248,7 +248,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase
      *  <p>
      *  calls to doImageDivision(...) for as many slices (and selected
      *  colour channels) as necessary to finish off the image.
-     *  @see doImageDivision(float[], float[])
+     *  @see #doImageDivision(float[], float[])
      */
     private void normalize() {
 

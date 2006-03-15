@@ -5,7 +5,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-import java.lang.*;
 
 /**
  *      Algorithm that adds, subtracts, multiplies, or divides an image by

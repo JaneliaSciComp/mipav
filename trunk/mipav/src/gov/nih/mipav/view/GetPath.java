@@ -1,6 +1,5 @@
 package gov.nih.mipav.view;
 
-import java.lang.*;
 import java.io.*;
 
 /**

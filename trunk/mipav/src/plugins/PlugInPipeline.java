@@ -3,7 +3,6 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
-import javax.swing.*;
 
 /**
 *   PlugIn to take the absolute value of the image

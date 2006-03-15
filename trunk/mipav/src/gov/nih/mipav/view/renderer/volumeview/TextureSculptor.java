@@ -10,7 +10,6 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 
 import java.io.*;
-import java.lang.*;
 import javax.swing.*;
 
 

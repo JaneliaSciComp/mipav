@@ -1,9 +1,6 @@
 package gov.nih.mipav.model.structures;
 
-import java.util.*;
-
 import javax.vecmath.*;
-import javax.media.j3d.*;
 
 /**
  * Storage representation for a triangle mesh.  Each vertex stores the

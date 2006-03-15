@@ -7,7 +7,6 @@ import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.net.*;
 import java.io.*;
 import java.util.Enumeration;
 import java.util.StringTokenizer;
@@ -18,10 +17,8 @@ import javax.swing.JComponent;
 import java.awt.Graphics;
 
 // JAXP packages
-import javax.xml.parsers.*;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
-import org.apache.xerces.jaxp.SAXParserImpl;
 
 
 /**

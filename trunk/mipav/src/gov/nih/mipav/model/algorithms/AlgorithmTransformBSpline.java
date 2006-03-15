@@ -6,7 +6,6 @@ import gov.nih.mipav.view.*;
 import javax.vecmath.*;
 
 import java.io.*;
-import java.lang.*;
 
 /**
  *   TransformBSpline algorithm

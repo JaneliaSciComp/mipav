@@ -1,12 +1,10 @@
 package gov.nih.mipav.view.renderer.surfaceview.rfaview;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.*;
-import javax.swing.border.*;
 
 public class JDialogBurnParameter extends JDialogBase {
 

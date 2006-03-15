@@ -8,7 +8,6 @@ import gov.nih.mipav.model.algorithms.registration.*;
 import java.awt.event.*;
 import java.awt.*;
 import java.util.*;
-import java.lang.*;
 
 import javax.swing.*;
 

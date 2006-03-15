@@ -12,7 +12,6 @@ import java.util.*;
 import java.io.File;
 
 import javax.swing.*;
-import javax.swing.event.*;
 
 /**
  *   Dialog to get user input, then call AlgorithmRegOAR35D.

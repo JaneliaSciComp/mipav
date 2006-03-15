@@ -1,10 +1,8 @@
 package gov.nih.mipav.view;
 
 import java.awt.*;
-import java.awt.Frame.*;
 import java.awt.event.*;
 import java.io.FileNotFoundException;
-import java.lang.*;
 import javax.swing.*;
 
 

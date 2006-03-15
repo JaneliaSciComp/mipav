@@ -2,20 +2,13 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.*;
 
 import java.awt.event.*;
 import java.awt.*;
-import java.util.*;
 import javax.swing.*;
 
 /**
- *
- * <p>Title: JDialogGridOptions</p>
- * <p>Description: Sets options for overlaying a grid on the image</p>
- * <p>Copyright: Copyright (c) 2004</p>
- * <p>Company: </p>
+ * Sets options for overlaying a grid on the image.
  * @author ben
  * @version 1.0
  */

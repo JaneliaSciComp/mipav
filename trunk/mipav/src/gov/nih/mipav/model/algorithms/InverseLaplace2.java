@@ -1,9 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
-import java.io.*;
-import java.lang.*;
+
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.Preferences;
 
 /** This is a port of the numerical inverse Laplace transform found as the
  *  FORTRAN implementation of Algorithm 619 from the collected algorithms
