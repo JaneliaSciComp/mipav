@@ -480,6 +480,9 @@ public class ViewUserInterface
             setDefaultDirectory(System.getProperties().getProperty("user.dir"));
         }
 
+        if (!Preferences.isPreferenceSet(Preferences.PREF_LAX_CHECK)) {
+            Preferences.setProperty(Preferences.PREF_LAX_CHECK, "true");
+        }
         if (Preferences.is(Preferences.PREF_LAX_CHECK)) {
             checkLaxAgainstPreferences();
         }
