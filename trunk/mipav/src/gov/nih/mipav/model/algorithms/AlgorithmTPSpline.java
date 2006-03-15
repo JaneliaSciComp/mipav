@@ -221,21 +221,24 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         try {
             buildProgressBar( matchImage.getImageName(), "Calculating spline coefficients ...", 0, 100 );
             initProgressBar();
+            
+            if ( z == null ) {
+                setupTPSpline2D();
+                tpSpline2D();
+            } else {
+                setupTPSpline3D();
+                tpSpline3D();
+            }
         } catch ( OutOfMemoryError error ) {
-            disposeProgressBar();
             System.gc();
             MipavUtil.displayError( "JDialogRegistrationTPSpline: Out of memory on progressBar" + error );
             finalize();
             setCompleted( false );
             return;
         }
-
-        if ( z == null ) {
-            setupTPSpline2D();
-            tpSpline2D();
-        } else {
-            setupTPSpline3D();
-            tpSpline3D();
+        finally
+        {
+        	disposeProgressBar();
         }
     }
 
