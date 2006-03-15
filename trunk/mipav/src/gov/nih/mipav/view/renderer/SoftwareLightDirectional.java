@@ -61,11 +61,75 @@ public class SoftwareLightDirectional
     public final Color3f colorOf(SoftwareMaterial kMaterial,
                            SoftwareVertexProperty kVertexProperty,
                            Point3f kEye) {
-        initView(kEye, kVertexProperty);
 
         // no ambient light
         m_kColor.set(0.0f, 0.0f, 0.0f);
 
+        Vector3f R = new Vector3f();
+        Vector3f L = new Vector3f();
+        Vector3f V = new Vector3f();
+        Vector3f N = new Vector3f();
+        float cos_theta, cos_alpha;
+        Color3f diffuseColor = new Color3f();
+        Color3f specularColor = new Color3f();
+        Color3f ambientColor = new Color3f();
+        Color3f result = new Color3f();
+        Color3f vertexDiffuse;
+        Color3f vertexSpecular;
+
+        V.sub(kEye, kVertexProperty.getPosition());
+        V.normalize();
+
+        N = kVertexProperty.getNormal();
+        N.normalize();
+
+        L.set(getDirection());
+        L.negate();
+        L.normalize();
+
+        R.set(N.x, N.y, N.z);
+        R.scale(2 * L.dot(N));
+        R.sub(L);
+        R.normalize();
+
+        cos_theta = L.dot(N);
+        cos_alpha = R.dot(V);
+
+        vertexDiffuse = kVertexProperty.getDiffuse();
+        vertexSpecular = kVertexProperty.getSpecular();
+
+        if (cos_theta > 0) {
+          diffuseColor.x = diffuse.x * vertexDiffuse.x;
+          diffuseColor.y = diffuse.y * vertexDiffuse.y;
+          diffuseColor.z = diffuse.z * vertexDiffuse.z;
+
+          diffuseColor.scale(1.0f * cos_theta); // 1.0f for diffuse reflection factor
+          result.add(diffuseColor);
+        }
+
+        if (cos_alpha > 0) {
+          specularColor.set(specular);
+          specularColor.scale(0.6f * (float) Math.pow(cos_alpha, kMaterial.shininess)); // 0.6f for specular reflection factor
+          result.add(specularColor);
+        }
+
+        ambientColor.set(0.1f, 0.1f, 0.1f);
+        ambientColor.scale(0.5f); // 0.5f for ambient reflection factor
+        result.add(ambientColor);
+
+        m_kColor.set(result);
+
+        m_kColor.scale(intensity);
+
+        // saturate at 1
+        m_kColor.x = (m_kColor.x > 1) ? 1 : m_kColor.x;
+        m_kColor.y = (m_kColor.y > 1) ? 1 : m_kColor.y;
+        m_kColor.z = (m_kColor.z > 1) ? 1 : m_kColor.z;
+
+        return m_kColor;
+        /*
+        initView(kEye, kVertexProperty);
+        m_kColor.set(0.0f, 0.0f, 0.0f);
         float fDdN = addDiffuse(kMaterial, kVertexProperty, direction);
         if (fDdN < 0.0f && kMaterial.hasSpecular()) {
             addSpecular(kMaterial, kVertexProperty, direction, fDdN);
@@ -73,6 +137,7 @@ public class SoftwareLightDirectional
 
         m_kColor.scale(intensity);
         return m_kColor;
+        */
     }
 
     /**

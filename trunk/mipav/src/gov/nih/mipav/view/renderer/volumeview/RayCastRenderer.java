@@ -720,7 +720,7 @@ public abstract class RayCastRenderer extends Renderer {
     private int[] tempImage;
 
     /** Blur the final image to reduce voxel contrast. */
-    private boolean bluring = true;
+    private boolean bluring = false;
 
     /** Vertex material diffuse color. */
     protected Color3f vertexDiffuse = new Color3f( Color.white );

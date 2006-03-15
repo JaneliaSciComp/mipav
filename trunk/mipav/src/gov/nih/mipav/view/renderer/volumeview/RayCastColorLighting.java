@@ -196,10 +196,37 @@ public class RayCastColorLighting
                     fS110*kNormal110.z +
                     fS111*kNormal111.z;
                 kVertexProperty.setNormal(fNx, fNy, fNz);
-
+                // Interpolate material RGB colors.
+                float fR =
+                    fS000 * (m_acImageR[i000] & 0x0ff) +
+                    fS001 * (m_acImageR[i001] & 0x0ff) +
+                    fS010 * (m_acImageR[i010] & 0x0ff) +
+                    fS011 * (m_acImageR[i011] & 0x0ff) +
+                    fS100 * (m_acImageR[i100] & 0x0ff) +
+                    fS101 * (m_acImageR[i101] & 0x0ff) +
+                    fS110 * (m_acImageR[i110] & 0x0ff) +
+                    fS111 * (m_acImageR[i111] & 0x0ff);
+                float fG =
+                    fS000 * (m_acImageG[i000] & 0x0ff) +
+                    fS001 * (m_acImageG[i001] & 0x0ff) +
+                    fS010 * (m_acImageG[i010] & 0x0ff) +
+                    fS011 * (m_acImageG[i011] & 0x0ff) +
+                    fS100 * (m_acImageG[i100] & 0x0ff) +
+                    fS101 * (m_acImageG[i101] & 0x0ff) +
+                    fS110 * (m_acImageG[i110] & 0x0ff) +
+                    fS111 * (m_acImageG[i111] & 0x0ff);
+                float fB =
+                    fS000 * (m_acImageB[i000] & 0x0ff) +
+                    fS001 * (m_acImageB[i001] & 0x0ff) +
+                    fS010 * (m_acImageB[i010] & 0x0ff) +
+                    fS011 * (m_acImageB[i011] & 0x0ff) +
+                    fS100 * (m_acImageB[i100] & 0x0ff) +
+                    fS101 * (m_acImageB[i101] & 0x0ff) +
+                    fS110 * (m_acImageB[i110] & 0x0ff) +
+                    fS111 * (m_acImageB[i111] & 0x0ff);
                 // 1/255 =  * 0.003922f
-                kVertexProperty.setDiffuse(vertexDiffuse);
-                kVertexProperty.setSpecular(vertexSpecular);
+                    kVertexProperty.setDiffuse(fR * 0.003922f, fG * 0.003922f, fB * 0.003922f);
+                // kVertexProperty.setSpecular(vertexSpecular);
 
                 // Interpolate alpha
                  float fSrcA =

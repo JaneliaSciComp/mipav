@@ -144,6 +144,7 @@ public class RendererImageData {
                 if (kRayTracer.usesNormals()) {
                     if (bUpdatedTimeSlice || !kRayTracer.hasNormals()) {
                         kRayTracer.setNormals(RenderViewBase.getNormals());
+                        // kRayTracer.setNormals(createImageNormals(m_afData));
                     }
                 }
             }
@@ -236,16 +237,17 @@ public class RendererImageData {
             // Compute normals from gradient of intensity.
             if (kRayTracer.usesNormals()) {
                 if (bUpdatedTimeSlice || !kRayTracer.hasNormals()) {
-                    /*
+
                     float[] afIntensity = new float[m_iNumVoxels];
                     for (int i = 0; i < m_iNumVoxels; i++) {
                         afIntensity[i] = kMapColorToIntensity.mapValue(
                             m_afData[4 * i + 1],
                             m_afData[4 * i + 2],
                             m_afData[4 * i + 3]);
-                    } */
+                    }
                     kRayTracer.setNormals(RenderViewBase.getNormals());
-                    // afIntensity = null;
+                    // kRayTracer.setNormals(createImageNormals(afIntensity));
+                    afIntensity = null;
                 }
             }
 
@@ -298,6 +300,120 @@ public class RendererImageData {
         }
 
         return true;
+    }
+
+    /**
+     * Create array of normal vectors corresponding to the voxels in
+     * the volume.  The normal vector is computed based on the
+     * gradient of the volume intensity values.
+     * @param afData float[] Input array of voxel values.
+     * @param Vector3f[] Array of normal vectors corresponding to the
+     * input voxel intensity values.
+     */
+    private Vector3f[] createImageNormals(float[] afData) {
+
+        Vector3f[] akNormal = new Vector3f[afData.length];
+        Arrays.fill(akNormal, m_kZeroVector);
+
+        int iXBound = m_iSizeX;
+        int iYBound = m_iSizeY;
+        int iZBound = m_iSizeZ;
+        int iXYBound = iXBound * iYBound;
+
+        // normals from gradient which are computed using central finite
+        // differences everywhere except forward/backward finite differences
+        // are used at the edges
+
+        float fDX = 0;
+        float fDY = 0;
+        float fDZ = 0;
+        float flength = 0;
+
+        int iOffX = 1;
+        int iOffY = iXBound;
+        int iOffZ = iXBound * iYBound;
+        int iX, iY, iZ;
+        for (iZ = 1; iZ < iZBound-1; iZ++) {
+            boolean bMinZ = 0 == iZ;
+            boolean bMaxZ = (iZBound - 1) == iZ;
+            for (iY = 1; iY < iYBound-1; iY++) {
+                boolean bMinY = 0 == iY;
+                boolean bMaxY = (iYBound - 1) == iY;
+                int offset = iXBound * (iY + iYBound * iZ);
+                for (iX = 0; iX < iXBound; iX++) {
+                    boolean bMinX = 0 == iX;
+                    boolean bMaxX = (iXBound - 1) == iX;
+
+                    int i = iX + offset;
+
+                    fDX =
+                            ((bMinX ? afData[i] : afData[i - iOffX - iXBound]) -
+                            (bMaxX ? afData[i] : afData[i + iOffX - iXBound]) ) * 0.71f  +
+
+                            (bMinX ? afData[i] : afData[i - iOffX]) -
+                            (bMaxX ? afData[i] : afData[i + iOffX]) +
+
+                            ((bMinX ? afData[i] : afData[i - iOffX + iXBound]) -
+                            (bMaxX ? afData[i] : afData[i + iOffX + iXBound])) * 0.71f;
+
+                        fDY =
+                            ((bMinY ? afData[i] : afData[i - iOffY - iYBound]) -
+                            (bMaxY ? afData[i] : afData[i + iOffY - iYBound])) * 0.71f +
+
+                            (bMinY ? afData[i] : afData[i - iOffY]) -
+                            (bMaxY ? afData[i] : afData[i + iOffY]) +
+
+                            ((bMinY ? afData[i] : afData[i - iOffY + iYBound]) -
+                            (bMaxY ? afData[i] : afData[i + iOffY  + iYBound])) * 0.71f;
+
+                        fDZ =
+                            ((bMinZ ? afData[i] : afData[i - iOffZ - iZBound]) -
+                            (bMaxZ ? afData[i] : afData[i + iOffZ - iZBound]) ) * 0.71f +
+
+                            (bMinZ ? afData[i] : afData[i - iOffZ]) -
+                            (bMaxZ ? afData[i] : afData[i + iOffZ]) +
+
+                            ((bMinZ ? afData[i] : afData[i - iOffZ + iZBound]) -
+                            (bMaxZ ? afData[i] : afData[i + iOffZ + iZBound])) * 0.71f;
+                       /*
+                      flength = 1.0f / (float)Math.sqrt(fDX * fDX + fDY * fDY + fDZ * fDZ);
+                      fDX *= flength;
+                      fDY *= flength;
+                      fDZ *= flength;
+                       */
+                    if (fDX != 0.0f || fDY != 0.0f || fDZ != 0.0f) {
+                        akNormal[i] = new Vector3f(fDX, fDY, fDZ);
+                        akNormal[i].normalize();
+                    }
+                }
+            }
+        }
+
+        // Catch any zero-vector normals and replace them by an average of
+        // neighboring normals.
+
+        for (iZ = 1; iZ < iZBound - 1; iZ++) {
+            for (iY = 1; iY < iYBound - 1; iY++) {
+                int offset = iXBound * (iY + iYBound * iZ);
+                for (iX = 1; iX < iXBound - 1; iX++) {
+
+                    int i = iX + offset;
+
+                    if (afData[i] != 0.0f) {
+                        akNormal[i] = new Vector3f(0.0f, 0.0f, 0.0f);
+                        akNormal[i].add(akNormal[i - 1]);
+                        akNormal[i].add(akNormal[i + 1]);
+                        akNormal[i].add(akNormal[i - iXBound]);
+                        akNormal[i].add(akNormal[i + iXBound]);
+                        akNormal[i].add(akNormal[i - iXYBound]);
+                        akNormal[i].add(akNormal[i + iXYBound]);
+                        akNormal[i].normalize();
+                    }
+                }
+            }
+        }
+
+        return akNormal;
     }
 
     /**

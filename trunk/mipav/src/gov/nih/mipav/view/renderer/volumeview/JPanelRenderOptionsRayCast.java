@@ -235,7 +235,7 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         JPanel blurPanel = new JPanel();
         blurPanel.setBorder(buildTitledBorder("Smooth Surface"));
         blurBox = new JCheckBox();
-        blurBox.setSelected( true );
+        blurBox.setSelected( false );
         blurBox.addActionListener( this );
         blurBox.setActionCommand( "Blur" );
         blurBox.setText( "Smooth" );
