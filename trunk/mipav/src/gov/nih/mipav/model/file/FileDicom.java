@@ -7,7 +7,7 @@ import gov.nih.mipav.*;
 import java.awt.image.*;
 import java.io.*;
 import java.util.*;
-import com.sun.image.codec.jpeg.*;
+import javax.imageio.*;
 
 /**
  *   This class reads and writes DICOM files.  The DICOM file format consists
@@ -3280,15 +3280,7 @@ public class FileDicom extends FileDicomBase {
             int w=0, h=0;
 
             ByteArrayInputStream stream = new ByteArrayInputStream(imageFrag);
-            BufferedImage img;
-            JPEGImageDecoder decoder = JPEGCodec.createJPEGDecoder(stream);
-            try {
-                img = decoder.decodeAsBufferedImage();
-            }
-            catch (Exception error) {
-                Preferences.debug("Error in reading encapsulated JPEG:\n" + error + "\n");
-                return new int[0];
-            }
+            BufferedImage img = ImageIO.read(stream);
 
             w = img.getWidth(null);
             h = img.getHeight(null);
