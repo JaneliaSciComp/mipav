@@ -1308,7 +1308,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             int[] dimExtentsLUT = new int[2];
             dimExtentsLUT[0] = 4;
             dimExtentsLUT[1] = 256;
-            LUTb = new ModelLUT(ModelLUT.HOTMETAL, 256, dimExtentsLUT);
+            if (LUTb == null)
+            {
+            	LUTb = new ModelLUT(ModelLUT.HOTMETAL, 256, dimExtentsLUT);
+            }
             float min, max;
             if (imageB.getType() == ModelStorageBase.UBYTE)
             {
@@ -3861,11 +3864,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 					   zTargetB[i] = point3df[0].z;
 				   }
 				   
-				   AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB, zTargetB, 0.0f, imageA, (ModelImage) imageA.clone());
+				   AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB, zTargetB, 0.0f, imageB, (ModelImage) imageB.clone());
 				   algoTPSpline.setupTPSpline2D(xSourceA, ySourceA, xTargetB, yTargetB, 0.0f);
 				   algoTPSpline.runAlgorithm();
 				   
-				   setImageA(algoTPSpline.getResultImage());
+				   imageB.disposeLocal();
+				   
+				   setImageB(algoTPSpline.getResultImage());
 				   
     			   return null;
     		   }
@@ -3907,7 +3912,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 				   
 				   if (imageAVOIs.size() < 3)
 				   {
-					   MipavUtil.displayError("At least three points must be in place for each image.");
+					   MipavUtil.displayError("At least three VOI points must be in place for each image.");
 					   return null;
 				   }
 				   
@@ -3978,11 +3983,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 				   progressBar.setVisible(true);
 				   progressBar.setSeparateThread(true);
 				   
-				   ModelImage resultImage = (ModelImage) imageA.clone();
+				   ModelImage resultImage = (ModelImage) imageB.clone();
 				   
-				   AlgorithmTransform.transformTrilinear(imageA, resultImage, transMatrix, progressBar);
-				   		   
-				   setImageA(resultImage);
+				   AlgorithmTransform.transformTrilinear(imageB, resultImage, transMatrix, progressBar);
+				   
+				   imageB.disposeLocal();
+				   
+				   setImageB(resultImage);
 				   
 				   updateImages();
 				   return null;
@@ -4452,6 +4459,32 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         imageToolBar.add(addPointToggleButton);
         //imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
         imageToolBar.add(toolbarBuilder.buildButton("deleteVOI", "Delete point VOI", "delete"));
+        
+        JButton leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
+        leastSquaresButton.addActionListener(this);
+        leastSquaresButton.setToolTipText("Apply least squares alignment");
+        leastSquaresButton.setActionCommand("leastSquares");
+        leastSquaresButton.setBorderPainted(false);
+        leastSquaresButton.setRolloverIcon(MipavUtil.getIcon("reglsqroll.gif"));
+        leastSquaresButton.setFocusPainted(false);
+        if (imageB == null)
+        {
+        	leastSquaresButton.setEnabled(false);
+        }
+        imageToolBar.add(leastSquaresButton);
+        
+        JButton tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
+        tpSplineButton.addActionListener(this);
+        tpSplineButton.setToolTipText("Apply thin plate spline alignment");
+        tpSplineButton.setActionCommand("tpSpline");
+        tpSplineButton.setBorderPainted(false);
+        tpSplineButton.setRolloverIcon(MipavUtil.getIcon("regtsproll.gif"));
+        tpSplineButton.setFocusPainted(false);
+        if (imageB == null)
+        {
+        	tpSplineButton.setEnabled(false);
+        }
+        imageToolBar.add(tpSplineButton);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
@@ -4462,27 +4495,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         imageToolBar.add(toolbarBuilder.buildTextButton("Crop", "Crops image delineated by the bounding cube",
             "cropVolume"));
-        
-        imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-        
-        JButton leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
-        leastSquaresButton.addActionListener(this);
-        leastSquaresButton.setToolTipText("Apply least squares alignment");
-        leastSquaresButton.setActionCommand("leastSquares");
-        leastSquaresButton.setBorderPainted(false);
-        leastSquaresButton.setRolloverIcon(MipavUtil.getIcon("reglsqroll.gif"));
-        leastSquaresButton.setFocusPainted(false);
-        imageToolBar.add(leastSquaresButton);
-        
-        JButton tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
-        tpSplineButton.addActionListener(this);
-        tpSplineButton.setToolTipText("Apply thin plate spline alignment");
-        tpSplineButton.setActionCommand("tpSpline");
-        tpSplineButton.setBorderPainted(false);
-        tpSplineButton.setRolloverIcon(MipavUtil.getIcon("regtsproll.gif"));
-        tpSplineButton.setFocusPainted(false);
-        imageToolBar.add(tpSplineButton);
-
+           
         panelToolbar.add(imageToolBar, gbc);
 
         // Paint toolbar
@@ -4582,7 +4595,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
             tDim = extents[3];
             tImageSlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
-            //tImageSlider.setMajorTickSpacing(100/tDim);
             tImageSlider.setMinorTickSpacing(Math.round(100.0f / (tDim - 1)));
             tImageSlider.setSnapToTicks(true);
             tImageSlider.setPaintTicks(true);
@@ -4613,7 +4625,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      */
     private void setSpinnerValues(int type)
     {
-
         spinnerDefaultValue = 1.0;
         if (type == ModelStorageBase.BOOLEAN)
         {
