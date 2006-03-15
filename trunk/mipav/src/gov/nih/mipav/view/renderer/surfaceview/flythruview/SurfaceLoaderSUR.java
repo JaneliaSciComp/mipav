@@ -8,7 +8,6 @@ import java.io.*;
 import javax.swing.JProgressBar;
 
 import javax.vecmath.*;
-import javax.media.j3d.*;
 
 
 /**

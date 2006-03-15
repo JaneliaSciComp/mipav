@@ -1185,7 +1185,7 @@ abstract public class ViewJFrameMultiple extends ViewJFrameImage {
         /**
          * Set up the wizard labels list.
          */
-        public void StateList() {}
+        public StateList() {}
 
         /**
          * Get the ith step's information.

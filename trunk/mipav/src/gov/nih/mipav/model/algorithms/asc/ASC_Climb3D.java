@@ -1,12 +1,6 @@
 package gov.nih.mipav.model.algorithms.asc;
 
-import java.io.*;
 import java.util.*;
-import javax.vecmath.*;
-import java.awt.*;
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
 
 /**
  * A class for extracting multiresolution level surfaces from 3D images.  The

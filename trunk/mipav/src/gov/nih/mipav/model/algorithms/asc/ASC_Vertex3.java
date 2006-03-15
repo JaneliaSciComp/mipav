@@ -1,13 +1,10 @@
 package gov.nih.mipav.model.algorithms.asc;
 
-    import java.util.*;
-
 /**
  * A small class for storing the vertices of the vertex-triangle mesh that
  * represents isosurfaces.  The main support is for hash tables of vertices
  * that are used to eliminate duplicate vertices from a mesh.
  */
-
 public class ASC_Vertex3 extends Object implements Comparable
 {
     /**

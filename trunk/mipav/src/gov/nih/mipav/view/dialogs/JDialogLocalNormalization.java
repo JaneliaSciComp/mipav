@@ -1063,8 +1063,8 @@ public class JDialogLocalNormalization extends JDialogBase
     /** verify that the numeric value of the text of the submitted
      *   JTextField is between a and b.
      *   <p>
-     *   @throws a NullPointerException if jtf is empty.
-     *   @throws an IllegalArgumentException when the String is either
+     *   @throws NullPointerException if jtf is empty.
+     *   @throws IllegalArgumentException when the String is either
      *           not translatable to a float (ie., when
      *           <code>Float.parseFloat(jtf.getText())</code> throws a
      *           ClassCastException), or when the number is
@@ -1072,7 +1072,7 @@ public class JDialogLocalNormalization extends JDialogBase
      *           implementing <code>makeNumericsOnly(JTextField)</code>
      *           should <i>always</i> translate into a float in the
      *           example above.
-     *   @see makeNumericsOnly(JTextField)
+     *   @see MipavUtil#makeNumericsOnly(JTextField, boolean)
      *   @see NullPointerException
      *   @see IllegalArgumentException
      */

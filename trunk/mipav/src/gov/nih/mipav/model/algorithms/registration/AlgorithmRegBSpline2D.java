@@ -1,13 +1,11 @@
 package gov.nih.mipav.model.algorithms.registration;
 
-import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 
 import javax.vecmath.*;
 
 import java.io.*;
-import java.lang.*;
 import java.text.*;
 
 /**

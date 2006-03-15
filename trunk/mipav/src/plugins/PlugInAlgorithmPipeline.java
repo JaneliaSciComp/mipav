@@ -1,29 +1,12 @@
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.view.*;
-
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmCrop;
 import gov.nih.mipav.model.file.*;
-import java.io.*;
 import gov.nih.mipav.view.ViewUserInterface;
 
-import gov.nih.mipav.model.algorithms.AlgorithmFuzzyCMeans;
-
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmCrop;
-
 import java.io.*;
-import gov.nih.mipav.model.file.FileInfoBase;
-
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
- * <p>Copyright: Copyright (c) 2004</p>
- * <p>Company: </p>
- * @author not attributable
- * @version 1.0
- *
  * The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored
  * by the National Institutes of Health, that will help us better understand how
  * to prevent and treat knee osteoarthritis, one of the most common causes of
@@ -32,16 +15,14 @@ import gov.nih.mipav.model.file.FileInfoBase;
  * Osteoarthritis causes more health problems and medical expenses than any other
  * form of arthritis. Symptoms of osteoarthritis can range from stiffness and mild
  * pain to severe joint pain and even disability.
- The OAI cohort will be 5000 participants with clinically significant knee OA or at
- high risk for developing incident OA and obtain the appropriate images and
- bio-specimens needed for investigation and validation of OA biomarkers.  The large
- number of images that results from the OAI is a major obstacle to overcome.  Manual
- image segmentation is laborious and subject to inter and intra-observer variability
- when performing volumetric analysis.  Therefore, BIRSS has started a multistage segmentation
- and quantification technique to automatically or semi-automatically process the entire cohort.
+ * The OAI cohort will be 5000 participants with clinically significant knee OA or at
+ * high risk for developing incident OA and obtain the appropriate images and
+ * bio-specimens needed for investigation and validation of OA biomarkers.  The large
+ * number of images that results from the OAI is a major obstacle to overcome.  Manual
+ * image segmentation is laborious and subject to inter and intra-observer variability
+ * when performing volumetric analysis.  Therefore, BIRSS has started a multistage segmentation
+ * and quantification technique to automatically or semi-automatically process the entire cohort.
  */
-
-
 /*
  PROJECT ‘AUTOMATIC THIGH SEGMENTATION’ – DOCUMENTATION
 2/9/06

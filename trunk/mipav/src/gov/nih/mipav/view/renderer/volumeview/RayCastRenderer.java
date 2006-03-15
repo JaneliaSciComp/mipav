@@ -9,9 +9,6 @@ import javax.vecmath.*;
 import javax.media.j3d.*;
 
 import java.awt.*;
-import java.awt.Frame.*;
-import java.lang.*;
-
 
 /**
  * A ray tracer for 3D images.  Either a parallel or perspective camera

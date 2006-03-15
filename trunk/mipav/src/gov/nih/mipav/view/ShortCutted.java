@@ -2,8 +2,6 @@ package gov.nih.mipav.view;
 
 
 import java.awt.*;
-import java.lang.*;
-
 
 
 public class ShortCutted {

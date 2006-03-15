@@ -2,10 +2,8 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmMask;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.awt.*;

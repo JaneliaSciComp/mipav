@@ -5,8 +5,6 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import javax.swing.JTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JButton;
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.Color;
 import java.awt.BorderLayout;

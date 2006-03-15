@@ -5,10 +5,8 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.*;
 import java.awt.image.*;
 import java.lang.System;
-import java.util.*;
 import java.io.*;
 import javax.imageio.*;
-import java.awt.image.*;
 
 public class ViewJComponentAnimateClip extends ViewJComponentBase {
 

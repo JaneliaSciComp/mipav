@@ -4,12 +4,10 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.algorithms.*;
 import javax.swing.border.*;
 
 import java.io.*;
 import java.awt.event.*;
-import java.util.*;
 import java.awt.*;
 import javax.swing.*;
 import java.awt.image.*;

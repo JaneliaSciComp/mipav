@@ -5,8 +5,6 @@ import gov.nih.mipav.model.file.*;
 
 import java.awt.event.*;
 import java.awt.*;
-import java.awt.Dialog.*;
-import java.lang.Math.*;
 
 import javax.swing.*;
 

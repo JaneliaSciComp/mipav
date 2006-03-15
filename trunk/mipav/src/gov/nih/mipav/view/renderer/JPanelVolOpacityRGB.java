@@ -9,7 +9,6 @@ import javax.swing.border.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.lang.*;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.filters.*;
 

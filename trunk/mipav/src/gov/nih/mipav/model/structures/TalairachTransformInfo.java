@@ -1,11 +1,8 @@
 package gov.nih.mipav.model.structures;
 
-import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.model.file.FileInfoBase;
 
 import java.io.*;
-import java.lang.*;
 
 /**
  *

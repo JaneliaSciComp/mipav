@@ -3,16 +3,13 @@ package gov.nih.mipav.model.algorithms.registration;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.model.structures.jama.*;
-import gov.nih.mipav.model.algorithms.registration.*;
 
 import java.util.*;
-import gov.nih.mipav.view.dialogs.JDialogRegistrationOAR3D;
 
 
 /**

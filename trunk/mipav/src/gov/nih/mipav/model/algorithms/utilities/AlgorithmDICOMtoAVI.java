@@ -9,17 +9,14 @@ import gov.nih.mipav.view.*;
 import java.util.Vector;
 import java.io.File;
 import java.awt.Toolkit;
-import java.util.*;
 
 
 /**
- * <p>Title: AlgorithmDICOMtoAVI </p>
- * <p>Description: Recursively traverses a directory and its subfolders,
- *    converting all 3D DICOM files to AVI with MP42 Compression </p>
+ * Recursively traverses a directory and its subfolders,
+ * converting all 3D DICOM files to AVI with MP42 Compression.
  * @author Ben Link
  * @version 1.0
  */
-
 public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
     /**

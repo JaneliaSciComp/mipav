@@ -2,7 +2,6 @@ package gov.nih.mipav.view.renderer;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.renderer.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.renderer.surfaceview.rfaview.mouse.*;
@@ -11,13 +10,10 @@ import com.sun.j3d.utils.universe.*;
 import com.sun.j3d.utils.geometry.*;
 
 import javax.media.j3d.*;
-import javax.media.j3d.Text3D.*;
-import javax.media.j3d.Font3D.*;
 import javax.vecmath.*;
 
 import java.awt.image.*;
 import java.awt.event.*;
-import java.awt.Font.*;
 import java.awt.*;
 import java.util.*;
 import java.io.*;

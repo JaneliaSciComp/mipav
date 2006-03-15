@@ -5,7 +5,6 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.event.*;
 import javax.swing.border.*;
-import javax.swing.table.*;
 import javax.swing.tree.*;
 import java.net.*;
 import java.security.*;
@@ -22,8 +21,6 @@ import java.text.*;
 
 //bouncy castle imports
 import org.bouncycastle.jce.*;
-import org.bouncycastle.asn1.x509.*;
-import org.bouncycastle.asn1.*;
 import org.bouncycastle.jce.provider.*;
 
 public class JChatFrame

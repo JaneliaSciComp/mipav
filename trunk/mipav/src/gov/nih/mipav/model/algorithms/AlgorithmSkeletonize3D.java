@@ -7,8 +7,6 @@ import  gov.nih.mipav.model.file.*;
 
 import java.awt.*;
 import java.io.*;
-import java.util.*;
-
 
 /**
  This is a port of the C++ code for pfSkel: Potential Field Based 3D Skeleton Extraction written by

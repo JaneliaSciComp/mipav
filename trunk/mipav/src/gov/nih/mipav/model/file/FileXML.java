@@ -1,21 +1,10 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
 import java.net.*;
 import java.io.*;
-import java.util.Enumeration;
-import java.util.StringTokenizer;
-import java.util.Vector;
-import java.awt.Image;
-import java.awt.image.*;
-import javax.swing.JComponent;
-import java.awt.Graphics;
 
 // JAXP packages
 import javax.xml.parsers.*;

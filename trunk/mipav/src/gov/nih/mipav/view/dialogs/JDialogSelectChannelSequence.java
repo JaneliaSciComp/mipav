@@ -5,22 +5,11 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.border.*;
 
 /**
- *
- * <p>Title: JDialogSelectChannelSequence</p>
- *
- * <p>Description: The purpose of this dialog is to allow the user to rearrange the channel order
+ * The purpose of this dialog is to allow the user to rearrange the channel order
  * of an image before it is loaded. It is meant to be used exclusively with the ViewOpenImageSequence
- * class. </p>
- *
- * <p>Copyright: Copyright (c) 2005</p>
- *
- * <p>Company: </p>
- *
- * @author not attributable
- * @version 1.0
+ * class.
  */
 public class JDialogSelectChannelSequence extends JDialogBase
 {

@@ -4,11 +4,6 @@ import gov.nih.mipav.model.structures.*;
 
 import javax.vecmath.*;
 
-import java.awt.*;
-import java.awt.Frame.*;
-import java.lang.*;
-
-
 /**
  * A ray tracer for 3D color images.
  */

@@ -3,8 +3,6 @@ package gov.nih.mipav.model.algorithms.registration;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
-import java.lang.*;
-
 /**
  * This is a common base class which provides common methods and data
  * members for all BSpline based registration.

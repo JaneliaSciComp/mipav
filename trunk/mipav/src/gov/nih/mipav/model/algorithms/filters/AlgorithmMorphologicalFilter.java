@@ -3,10 +3,8 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import  gov.nih.mipav.model.structures.*;
-import  gov.nih.mipav.model.file.*;
 
 import  java.io.*;
-import  java.util.*;
 
 
 /**
