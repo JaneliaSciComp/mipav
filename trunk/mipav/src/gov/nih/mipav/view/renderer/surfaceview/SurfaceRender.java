@@ -337,9 +337,6 @@ public class SurfaceRender extends RenderViewBase {
     public static final int Y = 1;
     public static final int Z = 2;
 
-    /** normal vector array. */
-    public Vector3f[] akNormalsImageA;
-
     /**
      *   Makes a frame and puts the three image planes into it.  Creates the scene graph
      *	which dictates the behavior of the image planes and surfaces.  Initializes the surface
@@ -381,11 +378,6 @@ public class SurfaceRender extends RenderViewBase {
         resols[0] = Math.abs( imageA.getFileInfo()[0].getResolutions()[0] );
         resols[1] = Math.abs( imageA.getFileInfo()[0].getResolutions()[1] );
         resols[2] = Math.abs( imageA.getFileInfo()[0].getResolutions()[2] );
-
-
-        // Retrieve the normal vectors for the voxels in image A.
-        akNormalsImageA = RenderViewBase.getNormals();
-
 
         // if the slice spacing value is greater than the z-res, use the slice spacing instead
         if ( resols[2] < imageA.getFileInfo( 0 ).getSliceSpacing() ) {
@@ -796,6 +788,11 @@ public class SurfaceRender extends RenderViewBase {
             // Retrieve the composite image values from the 3D texture.
             int[] aiCompositeImageA = componentVolImage.getCompositeImageA();
 
+            // Retrieve the normal vectors for the voxels in image A.
+            // Vector3f[] akNormalsImageA = componentVolImage.getNormalsImageA();
+            Vector3f[] akNormalsImageA = RenderViewBase.getNormals();
+
+
             // Create a vertex property for software lighting.
             SoftwareVertexProperty kVertexProp = new SoftwareVertexProperty();
 
@@ -854,6 +851,7 @@ public class SurfaceRender extends RenderViewBase {
                         float fB = ( ( iARGB ) & 0x0ff ) / 255.0f;
 
                         kVertexProp.setDiffuse( fR, fG, fB );
+                        // kVertexProp.setDiffuse( 1.0f, 1.0f, 1.0f );
 
                         // Apply the lighting to determine the color
                         Color3f kColor = m_kSoftwareLightSet.getCellColor( m_kSoftwareMaterial, kVertexProp, kModelEye );

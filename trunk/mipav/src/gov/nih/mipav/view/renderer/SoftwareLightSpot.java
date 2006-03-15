@@ -64,6 +64,87 @@ public class SoftwareLightSpot
     public final Color3f colorOf(SoftwareMaterial kMaterial,
                            SoftwareVertexProperty kVertexProperty,
                            Point3f kEye) {
+       /*
+      initView(kEye, kVertexProperty);
+
+      m_kColor.set(0.0f, 0.0f, 0.0f);
+
+      Vector3f R = new Vector3f();
+      Vector3f L = new Vector3f();
+      Vector3f V = new Vector3f();
+      Vector3f N = new Vector3f();
+      Vector3f D = new Vector3f();
+      float cos_theta, cos_alpha;
+      Color3f diffuseColor = new Color3f();
+      Color3f specularColor = new Color3f();
+      Color3f ambientColor = new Color3f();
+      Color3f result = new Color3f();
+      Color3f vertexDiffuse;
+      float fov_factor;
+
+      V.sub(kVertexProperty.getPosition(), position);
+      V.normalize();
+      D = getDirection();
+      D.negate();
+
+      fov_factor = V.dot(D);
+
+      if ( fov_factor <= 0.0 || fov_factor < m_fCosAngle ) {
+        V.negate();
+        fov_factor = 0.0f;
+      } else {
+        fov_factor = ((float)Math.cos((1.0 - fov_factor) * Math.PI / (1.0 - m_fCosAngle))  * 0.5f + 0.5f);
+        V.negate();
+        // fov_factor = 1.0f;
+      }
+
+      N = kVertexProperty.getNormal();
+      N.normalize();
+
+      L.sub(position, kVertexProperty.getPosition());
+      L.normalize();
+
+      R.set(N.x, N.y, N.z);
+      R.scale(2 * L.dot(N));
+      R.sub(L);
+      R.normalize();
+
+      cos_theta = L.dot(N);
+      cos_alpha = R.dot(V);
+
+      vertexDiffuse = kVertexProperty.getDiffuse();
+
+      if (cos_theta > 0) {
+        diffuseColor.x = diffuse.x * vertexDiffuse.x;
+        diffuseColor.y = diffuse.y * vertexDiffuse.y;
+        diffuseColor.z = diffuse.z * vertexDiffuse.z;
+
+        diffuseColor.scale(fov_factor * cos_theta); // 1.0f for diffuse reflection factor
+        result.add(diffuseColor);
+      }
+
+      if (cos_alpha > 0) {
+        specularColor.set(specular);
+        specularColor.scale(fov_factor * (float) Math.pow(cos_alpha, kMaterial.shininess)); // 0.6f for specular reflection factor
+        result.add(specularColor);
+      }
+
+      ambientColor.set(0.1f, 0.1f, 0.1f);
+      ambientColor.scale(0.5f); // 0.5f for ambient reflection factor
+      result.add(ambientColor);
+
+      m_kColor.set(result);
+
+      m_kColor.scale(intensity);
+
+      // saturate at 1
+      m_kColor.x = (m_kColor.x > 1) ? 1 : m_kColor.x;
+      m_kColor.y = (m_kColor.y > 1) ? 1 : m_kColor.y;
+      m_kColor.z = (m_kColor.z > 1) ? 1 : m_kColor.z;
+
+      return m_kColor;
+      */
+
         initView(kEye, kVertexProperty);
 
         // no ambient light
@@ -92,6 +173,7 @@ public class SoftwareLightSpot
 
         m_kColor.scale(intensity);
         return m_kColor;
+
     }
 
     /**
