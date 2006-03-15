@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.*;
+
 import java.util.*;
 import java.awt.*;
 import javax.swing.*;
@@ -571,7 +572,11 @@ public class JDialogMipavOptions
         gbl.setConstraints(performLaxCheck, gbc);
         otherPanel.add(performLaxCheck);
         // preset the choices.
-        performLaxCheck.setSelected(Preferences.is(Preferences.PREF_LAX_CHECK));
+        if (!Preferences.isPreferenceSet(Preferences.PREF_LAX_CHECK)) {
+            Preferences.setProperty(Preferences.PREF_LAX_CHECK, "true");
+        }
+        boolean flag = Preferences.is(Preferences.PREF_LAX_CHECK);
+        performLaxCheck.setSelected(flag);
     }
 
     /**
