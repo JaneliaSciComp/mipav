@@ -364,7 +364,7 @@ public class JDialogRegistrationLeastSquares
                 Preferences.debug(ptBmm[i].x + ", " + ptBmm[i].y + ", " + ptBmm[i].z + "\n");
             }
 
-            LSMatch = new AlgorithmRegLeastSquares(ptAmm, ptBmm, DIM, baseImage.getUserInterface());
+            LSMatch = new AlgorithmRegLeastSquares(ptAmm, ptBmm, DIM);
 
         }
         catch (OutOfMemoryError x) {
