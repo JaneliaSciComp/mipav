@@ -83,7 +83,7 @@ public class SoftwareLightDirectional
         N = kVertexProperty.getNormal();
         N.normalize();
 
-        L.set(getDirection());
+        L.set(direction);
         L.negate();
         L.normalize();
 
@@ -144,7 +144,7 @@ public class SoftwareLightDirectional
      * Set the light direction
      * @param v   light direction
      */
-    public void setDirection(Vector3f v) {
+    public final void setDirection(Vector3f v) {
         direction.set(v);
         normalize(direction);
     }
@@ -155,7 +155,7 @@ public class SoftwareLightDirectional
      * @param fY float Y coordinate of the light direction vector.
      * @param fZ float Z coordinate of the light direction vector.
      */
-    public void setDirection(float fX, float fY, float fZ) {
+    public final void setDirection(float fX, float fY, float fZ) {
         direction.set(fX, fY, fZ);
         normalize(direction);
     }
@@ -164,10 +164,10 @@ public class SoftwareLightDirectional
      * Get the light direction
      * @return direction   light direction
      */
-    public Vector3f getDirection() {
+    public final Vector3f getDirection() {
         return direction;
     }
 
     // the light's direction in the world
-    protected Vector3f direction;
+    protected  final Vector3f direction;
 }
