@@ -43,13 +43,26 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
     private ViewUserInterface UI;
 
     /**
+     *   @deprecated
      *   AlgorithmRegLeastSquares - Constructor
      *   @param coordsA - double[dim][n] 3D or 2D point set
      *	@param coordsB - double[dim][n] 3D or 2D point set
      *	@param dim2or3 - indicates whether data set is 2D or 3D
      *   @param userInterface - the user interface object
      */
-    public AlgorithmRegLeastSquares( double[][] coordsA, double[][] coordsB, int dim2or3 ) {
+    public AlgorithmRegLeastSquares( double[][] coordsA, double[][] coordsB, int dim2or3,
+            ViewUserInterface userInterface ) {
+        this(coordsA, coordsB, dim2or3);
+    }
+    
+    /**
+     *   AlgorithmRegLeastSquares - Constructor
+     *   @param coordsA - double[dim][n] 3D or 2D point set
+     *	@param coordsB - double[dim][n] 3D or 2D point set
+     *	@param dim2or3 - indicates whether data set is 2D or 3D
+     *   @param userInterface - the user interface object
+     */
+    public AlgorithmRegLeastSquares( double[][] coordsA, double[][] coordsB, int dim2or3) {
         dim = dim2or3;
         numCoords = -1;
         UI = ViewUserInterface.getReference();
@@ -57,7 +70,6 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
         pointSetB = null;
         xfrmBA = null;
         setup( coordsA, coordsB );
-
     }
 
     /**
