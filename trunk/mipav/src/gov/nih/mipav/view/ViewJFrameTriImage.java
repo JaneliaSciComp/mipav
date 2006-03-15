@@ -1293,7 +1293,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         } // Dispose of the memory of the old image
         imageB = _imageB;
         imageB.setImageOrder(ModelImage.IMAGE_B);
-
+        
         // tri image objects must be rebuilt with the new image B
         triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.AXIAL);
         triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.SAGITTAL);
@@ -1333,7 +1333,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             LUTb.resetTransferLine(min, imgMin, max, imgMax);
             setLUTb(LUTb);
         }
-
+        
         setImageSelectorPanelVisible(true);
 
         // Get all frames
@@ -1349,13 +1349,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 ( (ViewJFrameBase) frameList.elementAt(i)).setImageB(imageB);
             }
         }
-
+        
         if (imageB.getHistoLUTFrame() != null)
         {
             updateHistoLUTFrame(ViewJComponentBase.IMAGE_B);
         }
         setActiveImage(ViewJComponentBase.IMAGE_B);
-
+        
         zoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
         for (int i = 0; i < MAX_TRI_IMAGES; i++)
         {
@@ -1364,7 +1364,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 triImage[i].setZoom(zoom, zoom);
             }
         }
-
+        
         updateLayout();
     }
 
@@ -3777,107 +3777,114 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
        protected void handleTPSpline()
        {
-    	   final SwingWorker worker = new SwingWorker() 
-    	   {
-    		   public Object construct()
-    		   {
-    			   if (imageB == null)
-				   {
-					   MipavUtil.displayError("Image B must be present to use the least squares algorithm.");
-					   return null;
-				   }
+		   if (imageB == null)
+		   {
+			   MipavUtil.displayError("Image B must be present to use the least squares algorithm.");
+	
+			   return;
+		   }
+		   
+		   ViewVOIVector imageAVOIs = (ViewVOIVector) imageA.getVOIs();
+		   ViewVOIVector imageBVOIs = (ViewVOIVector) imageB.getVOIs();
+		   
+		   if (imageAVOIs != null && imageBVOIs != null && 
+			   imageAVOIs.size() != imageBVOIs.size())
+		   {
+			   MipavUtil.displayError("Number of VOI points must be identical in each image.");
+			   return;
+		   }
+		   
+		   if (imageAVOIs.size() < 3)
+		   {
+			   MipavUtil.displayError("At least three points must be in place for each image.");
+			   return;
+		   }
+		   
+		   double [] xSourceA = new double[imageAVOIs.size()];
+	       double [] ySourceA = new double[imageAVOIs.size()];
+	       double [] zSourceA = new double[imageAVOIs.size()];
+	       double [] xTargetB = new double[imageBVOIs.size()];
+	       double [] yTargetB = new double[imageBVOIs.size()];
+	       double [] zTargetB = new double[imageBVOIs.size()];
+		   
+		   // extract point VOIs for image A
+		   Vector pointVOIVector = new Vector();		   
+		   int nVOI = imageAVOIs.size();
+		   for (int i = nVOI - 1; i >= 0; i--)
+		   {
+			   if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT)
+		       {
+				   for (int k = 0; k < imageA.getExtents()[2]; k++)
+		           {
+		               Point3Df[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
+		               
+		               for (int j = 0; j < voiPoints.length; j++)
+		               {
+		            	   pointVOIVector.add(voiPoints);
+		               }
+		           }
+		       }
+		   }
+		   
+		   for (int i = 0; i < pointVOIVector.size(); i++)
+		   {
+			   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
+			   xSourceA[i] = point3df[0].x;
+			   ySourceA[i] = point3df[0].y;
+			   zSourceA[i] = point3df[0].z;
+		   }
+		   
+		   // extract point VOIs for image B
+		   pointVOIVector = new Vector();
+		   nVOI = imageBVOIs.size();
+		   for (int i = nVOI - 1; i >= 0; i--)
+		   {
+			   if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT)
+		       {
+				   for (int k = 0; k < imageA.getExtents()[2]; k++)
+		           {
+		               Point3Df[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
+		               
+		               for (int j = 0; j < voiPoints.length; j++)
+		               {
+		            	   pointVOIVector.add(voiPoints);
+		               }
+		           }
+		       }
+		   }
+		
+		   for (int i = 0; i < pointVOIVector.size(); i++)
+		   {
+			   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
+			   xTargetB[i] = point3df[0].x;
+			   yTargetB[i] = point3df[0].y;
+			   zTargetB[i] = point3df[0].z;
+		   }
+		   		   
+		   parentFrame.setActiveImage(ViewJComponentBase.IMAGE_A);
+		   ModelImage clonedImage = (ModelImage) imageB.clone();
+		   
+		   AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB, zTargetB, 0.0f, imageB, clonedImage);
+		   algoTPSpline.setActiveImage(false);
+		   algoTPSpline.setupTPSpline2D(xSourceA, ySourceA, xTargetB, yTargetB, 0.0f);
+		   algoTPSpline.runAlgorithm();
+		   
+		   if (imageB != null)
+		   {
+			   imageB.disposeLocal();
+			   imageB = null;
+		   }
+		   
+		   if (clonedImage != null)
+		   {
+			   clonedImage.disposeLocal();
+			   clonedImage = null;
+		   }
+		   
+		   ModelImage newImageB = algoTPSpline.getResultImage();
+		   
+		   parentFrame.setImageB(newImageB);
 				   
-				   ViewVOIVector imageAVOIs = (ViewVOIVector) imageA.getVOIs();
-				   ViewVOIVector imageBVOIs = (ViewVOIVector) imageB.getVOIs();
-				   
-				   if (imageAVOIs != null && imageBVOIs != null && 
-					   imageAVOIs.size() != imageBVOIs.size())
-				   {
-					   MipavUtil.displayError("Number of VOI points must be identical in each image.");
-					   return null;
-				   }
-				   
-				   if (imageAVOIs.size() < 3)
-				   {
-					   MipavUtil.displayError("At least three points must be in place for each image.");
-					   return null;
-				   }
-				   
-				   double [] xSourceA = new double[imageAVOIs.size()];
-			       double [] ySourceA = new double[imageAVOIs.size()];
-			       double [] zSourceA = new double[imageAVOIs.size()];
-			       double [] xTargetB = new double[imageBVOIs.size()];
-			       double [] yTargetB = new double[imageBVOIs.size()];
-			       double [] zTargetB = new double[imageBVOIs.size()];
-				   
-				   // extract point VOIs for image A
-				   Vector pointVOIVector = new Vector();		   
-				   int nVOI = imageAVOIs.size();
-				   for (int i = nVOI - 1; i >= 0; i--)
-				   {
-					   if (imageAVOIs.VOIAt(i).getCurveType() == VOI.POINT)
-				       {
-						   for (int k = 0; k < imageA.getExtents()[2]; k++)
-				           {
-				               Point3Df[] voiPoints = imageAVOIs.VOIAt(i).exportPoints(k);
-				               
-				               for (int j = 0; j < voiPoints.length; j++)
-				               {
-				            	   pointVOIVector.add(voiPoints);
-				               }
-				           }
-				       }
-				   }
-				   
-				   for (int i = 0; i < pointVOIVector.size(); i++)
-				   {
-					   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
-					   xSourceA[i] = point3df[0].x;
-					   ySourceA[i] = point3df[0].y;
-					   zSourceA[i] = point3df[0].z;
-				   }
-				   
-				   // extract point VOIs for image B
-				   pointVOIVector = new Vector();
-				   nVOI = imageBVOIs.size();
-				   for (int i = nVOI - 1; i >= 0; i--)
-				   {
-					   if (imageBVOIs.VOIAt(i).getCurveType() == VOI.POINT)
-				       {
-						   for (int k = 0; k < imageA.getExtents()[2]; k++)
-				           {
-				               Point3Df[] voiPoints = imageBVOIs.VOIAt(i).exportPoints(k);
-				               
-				               for (int j = 0; j < voiPoints.length; j++)
-				               {
-				            	   pointVOIVector.add(voiPoints);
-				               }
-				           }
-				       }
-				   }
-				
-				   for (int i = 0; i < pointVOIVector.size(); i++)
-				   {
-					   Point3Df [] point3df = (Point3Df[]) pointVOIVector.elementAt(i);
-					   xTargetB[i] = point3df[0].x;
-					   yTargetB[i] = point3df[0].y;
-					   zTargetB[i] = point3df[0].z;
-				   }
-				   
-				   AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB, zTargetB, 0.0f, imageB, (ModelImage) imageB.clone());
-				   algoTPSpline.setupTPSpline2D(xSourceA, ySourceA, xTargetB, yTargetB, 0.0f);
-				   algoTPSpline.runAlgorithm();
-				   
-				   imageB.disposeLocal();
-				   
-				   setImageB(algoTPSpline.getResultImage());
-				   
-    			   return null;
-    		   }
-	   	   };
-	   	   
-	   	   worker.start();
-	    	   
     	   return;
        }
        
@@ -3989,7 +3996,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 				   
 				   imageB.disposeLocal();
 				   
-				   setImageB(resultImage);
+				   parentFrame.setImageB(resultImage);
+				   parentFrame.setActiveImage(ViewJComponentBase.IMAGE_A);
 				   
 				   updateImages();
 				   return null;
