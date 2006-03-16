@@ -116,6 +116,7 @@ public class JDialogVolViewResample extends JDialogBase {
     private int m_iFilter = 0;
 
     /**
+     *   @deprecated use JDialogVolViewResample(ModelImage, ModelImage)
      *   Creates the dialog, using the input parameters to place
      *   it on the screen.
      *   @param _imageA         Model image A.
@@ -123,8 +124,18 @@ public class JDialogVolViewResample extends JDialogBase {
      *   @param _userInterface    Parent ui.
      */
     public JDialogVolViewResample( ModelImage _imageA, ModelImage _imageB, ViewUserInterface _userInterface ) {
+    	this(_imageA, _imageB);
+    }
+    
+    /**
+     *   Creates the dialog, using the input parameters to place
+     *   it on the screen.
+     *   @param _imageA         Model image A.
+     *   @param _imageB         Model image B.
+     */
+    public JDialogVolViewResample( ModelImage _imageA, ModelImage _imageB ) {
 
-        super( _userInterface.getMainFrame(), false );
+        super( ViewUserInterface.getReference().getMainFrame(), false );
         imageAOriginal = _imageA;
         imageA = (ModelImage) ( _imageA.clone() );
 
