@@ -87,8 +87,8 @@ public class GeneralLight {
      * General properties which can be shared by all lights types.
      */
     private boolean m_bEnabled = false;
-    private float m_fIntensity = 1.0f;
-    private float m_fShininess = 1.0f;
+    private float m_fIntensity = 0.5f;
+    private float m_fShininess = 5f;
     private Color m_kLightColor = new Color(1.0f,1.0f,1.0f);
     private String m_kDescription = new String("");
 
@@ -130,7 +130,7 @@ public class GeneralLight {
      * @param fSizeZ float Z coordinate scale factor for real positions.
      * after normalizations.
      */
-    public GeneralLight(int iTypeMask, float fSizeX, float fSizeY, float fSizeZ) {
+    public  GeneralLight(int iTypeMask, float fSizeX, float fSizeY, float fSizeZ) {
 
         // Remember these dimensions as these will be used when creating
         // SoftwareLight and (Java3D) Light instances.  Note that the
@@ -165,7 +165,7 @@ public class GeneralLight {
      * Set description associated with this light.
      * @param description String Text description for light.
      */
-    public void setDescription(String description) {
+    public final void setDescription(String description) {
         m_kDescription = description;
     }
 
@@ -173,7 +173,7 @@ public class GeneralLight {
      * Get description associated with this light.
      * @return String Text description for light.
      */
-    public String getDescription() {
+    public final String getDescription() {
         return m_kDescription;
     }
 
@@ -181,7 +181,7 @@ public class GeneralLight {
      * Return a string which describes the type of light.
      * @return String
      */
-    public String getTypeString() {
+    public final String getTypeString() {
         return sakTypeName[m_iType];
     }
 
@@ -189,7 +189,7 @@ public class GeneralLight {
      * Query if light can be set to the ambient type.
      * @return boolean True if light type can be set to ambient.
      */
-    public boolean canSetTypeAmbient() {
+    public final boolean canSetTypeAmbient() {
         return 0 != (m_iTypeMask & MASK_AMBIENT);
     }
 
@@ -197,7 +197,7 @@ public class GeneralLight {
      * Query if light can be set to any non-ambient type.
      * @return boolean True if light type can be set to any non-ambient type.
      */
-    public boolean canSetTypeNonAmbient() {
+    public final boolean canSetTypeNonAmbient() {
         return 0 != (m_iTypeMask & ~MASK_AMBIENT);
     }
 
@@ -205,7 +205,7 @@ public class GeneralLight {
      * Query if light can be set to the spot type.
      * @return boolean True if light type can be set to spot.
      */
-    public boolean canSetTypeSpot() {
+    public final boolean canSetTypeSpot() {
         return 0 != (m_iTypeMask & MASK_SPOT);
     }
 
@@ -213,7 +213,7 @@ public class GeneralLight {
      * Query if light can be set to the directional type.
      * @return boolean True if light type can be set to directional.
      */
-    public boolean canSetTypeDirectional() {
+    public final boolean canSetTypeDirectional() {
         return 0 != (m_iTypeMask & MASK_DIRECTIONAL);
     }
 
@@ -221,14 +221,14 @@ public class GeneralLight {
      * Query if light can be set to the point type.
      * @return boolean True if light type can be set to point.
      */
-    public boolean canSetTypePoint() {
+    public final boolean canSetTypePoint() {
         return 0 != (m_iTypeMask & MASK_POINT);
     }
 
     /**
      * Set the current light type to ambient.
      */
-    public void setTypeAmbient() {
+    public final void setTypeAmbient() {
         if (canSetTypeAmbient()) {
             m_iType = TYPE_AMBIENT;
         }
@@ -237,7 +237,7 @@ public class GeneralLight {
     /**
      * Set the current light type to spot.
      */
-    public void setTypeSpot() {
+    public final void setTypeSpot() {
         if (canSetTypeSpot()) {
             m_iType = TYPE_SPOT;
         }
@@ -246,7 +246,7 @@ public class GeneralLight {
     /**
      * Set the current light type to directional.
      */
-    public void setTypeDirectional() {
+    public final void setTypeDirectional() {
         if (canSetTypeDirectional()) {
             m_iType = TYPE_DIRECTIONAL;
         }
@@ -255,7 +255,7 @@ public class GeneralLight {
     /**
      * Set the current light type to point.
      */
-    public void setTypePoint() {
+    public final void setTypePoint() {
         if (canSetTypePoint()) {
             m_iType = TYPE_POINT;
         }
@@ -273,7 +273,7 @@ public class GeneralLight {
      * Query if current light type is spot.
      * @return boolean True if current light type is spot.
      */
-    public boolean isTypeSpot() {
+    public final boolean isTypeSpot() {
         return TYPE_SPOT == m_iType;
     }
 
@@ -281,7 +281,7 @@ public class GeneralLight {
      * Query if current light type is directional.
      * @return boolean True if current light type is directional.
      */
-    public boolean isTypeDirectional() {
+    public final boolean isTypeDirectional() {
         return TYPE_DIRECTIONAL == m_iType;
     }
 
@@ -289,7 +289,7 @@ public class GeneralLight {
      * Query if current light type is point.
      * @return boolean True if current light type is point.
      */
-    public boolean isTypePoint() {
+    public final boolean isTypePoint() {
         return TYPE_POINT == m_iType;
     }
 
@@ -297,7 +297,7 @@ public class GeneralLight {
      * Query if light is currently enabled.
      * @return boolean True if light is currently enabled.
      */
-    public boolean isEnabled() {
+    public final boolean isEnabled() {
         return m_bEnabled;
     }
 
@@ -305,7 +305,7 @@ public class GeneralLight {
      * Set whether light is enabled.
      * @param bEnable boolean True if light is to be enabled.
      */
-    public void enable(boolean bEnable) {
+    public final void enable(boolean bEnable) {
         m_bEnabled = bEnable;
     }
 
@@ -315,7 +315,7 @@ public class GeneralLight {
      * "world" relative to objects being rendered.
      * @return SoftwareLight Software light instance based on current type.
      */
-    public SoftwareLight createSoftwareLightWorld() {
+    public final SoftwareLight createSoftwareLightWorld() {
 
         // Note that X, Y, Z need to be negated.
 
@@ -339,7 +339,7 @@ public class GeneralLight {
      * the "model" space of the objects being rendered.
      * @return SoftwareLight Software light instance based on current type.
      */
-    public SoftwareLight createSoftwareLightModel() {
+    public final SoftwareLight createSoftwareLightModel() {
 
         // Note that Y, Z (and not X) need to be negated.
 
@@ -463,7 +463,7 @@ public class GeneralLight {
      * for the position of the (Java3D) Light.
      * @return Point3f New instance created with the position.
      */
-    public Point3f createJava3dLightPosition() {
+    public final Point3f createJava3dLightPosition() {
         Point3f kPosition = new Point3f(m_kPosition);
         kPosition.x *= (m_fSizeX / m_fSizeMax);
         kPosition.y *= (m_fSizeY / m_fSizeMax);
@@ -476,7 +476,7 @@ public class GeneralLight {
      * the direction vector of the (Java3D) Light.
      * @return Vector3f New instance created with direction vector.
      */
-    public Vector3f createJava3dLightDirection() {
+    public final Vector3f createJava3dLightDirection() {
         Vector3f kDirection = new Vector3f(m_kDirection);
         kDirection.x *= (m_fSizeX / m_fSizeMax);
         kDirection.y *= (m_fSizeY / m_fSizeMax);
@@ -489,7 +489,7 @@ public class GeneralLight {
      * Query the current light intensity.
      * @return float Light color scale factor in range [0,1].
      */
-    public float getIntensity() {
+    public final float getIntensity() {
         return m_fIntensity;
     }
 
@@ -498,7 +498,7 @@ public class GeneralLight {
      * light to this factor times the base color of the light.
      * @param fIntensity float Normalized light color scale factor in range [0,1].
      */
-    public void setIntensity(float fIntensity) {
+    public final void setIntensity(float fIntensity) {
         m_fIntensity = fIntensity;
     }
 
@@ -506,7 +506,7 @@ public class GeneralLight {
      * Query the current based color of the light.
      * @return Color Base color of the light.
      */
-    public Color getColor() {
+    public final Color getColor() {
         return m_kLightColor;
     }
 
@@ -515,11 +515,11 @@ public class GeneralLight {
      * base color multiplied by the light intensity.
      * @param kColor Color Base color for the light.
      */
-    public void setColor(Color kColor) {
+    public final void setColor(Color kColor) {
         m_kLightColor = kColor;
     }
 
-    public Color3f getIntensifiedColor() {
+    public final Color3f getIntensifiedColor() {
         Color3f kColor = new Color3f(m_kLightColor);
         kColor.scale(m_fIntensity);
         return kColor;
@@ -530,7 +530,7 @@ public class GeneralLight {
      * @return Point3f Position of the light where the coordinates
      * are normalized to the [-1,+1] range.
      */
-    public Point3f getPosition() {
+    public final Point3f getPosition() {
         return m_kPosition;
     }
 
@@ -539,7 +539,7 @@ public class GeneralLight {
      * @param kPosition Point3f Position of light where the coordinates are
      * normalized to the [-1,+1] range.
      */
-    public void setPosition(Point3f kPosition) {
+    public final void setPosition(Point3f kPosition) {
         setPosition(kPosition.x, kPosition.y, kPosition.z);
     }
 
@@ -549,7 +549,7 @@ public class GeneralLight {
      * @param fY float Y coordinate position of light in [-1,+1] range.
      * @param fZ float Z coordinate position of light in [-1,+1] range.
      */
-    public void setPosition(float fX, float fY, float fZ) {
+    public final void setPosition(float fX, float fY, float fZ) {
         m_kPosition.set(fX, fY, fZ);
         if (m_bFixTarget) {
             updateDirection(m_kTarget.x-m_kPosition.x,
@@ -568,7 +568,7 @@ public class GeneralLight {
      * the target fixed.
      * @return boolean True if the target is to remain fixed.
      */
-    public boolean isTargetFixed() {
+    public final boolean isTargetFixed() {
         return m_bFixTarget;
     }
 
@@ -577,7 +577,7 @@ public class GeneralLight {
      * the direction fixed.
      * @return boolean True if the direction is to remain fixed.
      */
-    public boolean isDirectionFixed() {
+    public final boolean isDirectionFixed() {
         return !m_bFixTarget;
     }
 
@@ -586,7 +586,7 @@ public class GeneralLight {
      * @return Point3f Target position of the light where the coordinates
      * are normalized to the [-1,+1] range.
      */
-    public Point3f getTarget() {
+    public final Point3f getTarget() {
         return m_kTarget;
     }
 
@@ -595,7 +595,7 @@ public class GeneralLight {
      * @param kPosition Point3f Target position of light where the coordinates are
      * normalized to the [-1,+1] range.
      */
-    public void setTarget(Point3f kPosition) {
+    public final void setTarget(Point3f kPosition) {
         setTarget(kPosition.x, kPosition.y, kPosition.z);
     }
 
@@ -605,7 +605,7 @@ public class GeneralLight {
      * @param fY float Y coordinate target position of light in [-1,+1] range.
      * @param fZ float Z coordinate target position of light in [-1,+1] range.
      */
-    public void setTarget(float fX, float fY, float fZ) {
+    public final void setTarget(float fX, float fY, float fZ) {
         updateTarget(fX, fY, fZ);
         m_bFixTarget = true;
         setPosition(m_kPosition);
@@ -617,7 +617,7 @@ public class GeneralLight {
      * @param fY float Y coordinate target position of light in [-1,+1] range.
      * @param fZ float Z coordinate target position of light in [-1,+1] range.
      */
-    private void updateTarget(float fX, float fY, float fZ) {
+    private final void updateTarget(float fX, float fY, float fZ) {
         m_kTarget.set(fX, fY, fZ);
     }
 
@@ -625,7 +625,7 @@ public class GeneralLight {
      * Query the current direction of the light.
      * @return Vector3f Normalized direction vector for the light.
      */
-    public Vector3f getDirection() {
+    public final Vector3f getDirection() {
         return m_kDirection;
     }
 
@@ -633,7 +633,7 @@ public class GeneralLight {
      * Set the current direction of the light.
      * @param kDir Vector3f Normalized direction vector for the light.
      */
-    public void setDirection(Vector3f kDir) {
+    public final void setDirection(Vector3f kDir) {
         setDirection(kDir.x, kDir.y, kDir.z);
     }
 
@@ -643,7 +643,7 @@ public class GeneralLight {
      * @param fY float Y coordinate of light direction vector.
      * @param fZ float Z coordinate of light direction vector.
      */
-    public void setDirection(float fX, float fY, float fZ) {
+    public final void setDirection(float fX, float fY, float fZ) {
 
         updateDirection( fX, fY, fZ );
         m_bFixTarget = false;
@@ -656,7 +656,7 @@ public class GeneralLight {
      * @param fY float Y coordinate of light direction vector.
      * @param fZ float Z coordinate of light direction vector.
      */
-    private void updateDirection(float fX, float fY, float fZ) {
+    private final void updateDirection(float fX, float fY, float fZ) {
 
         m_kDirection.set(fX,fY,fZ);
         normalize(m_kDirection);
@@ -670,7 +670,7 @@ public class GeneralLight {
      * @param kV the vector to be normalized
      * @return the length of the input vector
      */
-    private float normalize(Vector3f kV) {
+    private final float normalize(Vector3f kV) {
         float fLengthSquared = kV.x * kV.x + kV.y * kV.y + kV.z * kV.z;
         if (0.0f < fLengthSquared) {
             float fLength = (float)Math.sqrt(fLengthSquared);

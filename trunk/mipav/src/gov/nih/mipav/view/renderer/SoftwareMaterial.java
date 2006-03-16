@@ -24,7 +24,7 @@ public class SoftwareMaterial {
     /**
      * Disable specular lighting effects.
      */
-    public float shininess = 0.0f;
+    public float shininess = 5.0f;
 
     /**
      * Default constructor.  Sets the colors to defaults and disables

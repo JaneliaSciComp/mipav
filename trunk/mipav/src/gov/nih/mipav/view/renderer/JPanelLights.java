@@ -218,7 +218,7 @@ public class JPanelLights
         kLight.setDescription("Static Light");
         kLight.setTypeDirectional();
         kLight.enable(true);
-        kLight.setPosition(0.03f, 0.03f, 3.0f);
+        kLight.setPosition(0.00f, 0.00f, 3.0f);
         kLight.setTarget(0.0f, 0.0f, 0.0f);
         m_akLights[LIGHT_INDEX_STATIC] = kLight;
         m_aiLightScale[LIGHT_INDEX_STATIC] = 3;
@@ -364,7 +364,7 @@ public class JPanelLights
         labelShininess.setForeground(Color.black);
         labelShininess.setFont(MipavUtil.font12);
 
-        shininessSlider = new JSlider(0, 100, 0);
+        shininessSlider = new JSlider(0, 100, 5);
         shininessSlider.setFont(MipavUtil.font12);
         shininessSlider.setMinorTickSpacing(100 / 10);
         shininessSlider.setPaintTicks(true);
@@ -388,7 +388,7 @@ public class JPanelLights
         shininessSlider.setLabelTable(labelTableShininess);
         shininessSlider.setPaintLabels(true);
 
-        textShininess = new JTextField(String.valueOf(0), 4);
+        textShininess = new JTextField(String.valueOf(5), 4);
         textShininess.setFont(MipavUtil.font12);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -449,7 +449,7 @@ public class JPanelLights
         labelIntensity.setForeground( Color.black );
         labelIntensity.setFont( MipavUtil.font12 );
 
-        intensitySlider = new JSlider( 0, 100, 100 );
+        intensitySlider = new JSlider( 0, 100, 50 );
         intensitySlider.setFont( MipavUtil.font12 );
         intensitySlider.setMinorTickSpacing( 100 / 10 );
         intensitySlider.setPaintTicks( true );

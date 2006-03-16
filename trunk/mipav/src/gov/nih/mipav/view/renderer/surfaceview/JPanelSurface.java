@@ -1494,7 +1494,6 @@ public class JPanelSurface extends JPanelRendererBase
 
             // illuminate everything in voxel space
             lightArray[i].setInfluencingBounds( parentScene.bounds );
-
             lightArrayBG[i] = new BranchGroup();
             lightArrayBG[i].setCapability( BranchGroup.ALLOW_DETACH );
             lightArrayBG[i].addChild( lightArray[i] );
