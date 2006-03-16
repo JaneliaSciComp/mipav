@@ -1923,11 +1923,16 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             } while (sf.getPeak().getVert() != null);
 
             sn.setSimp(sf);
-            opVert(sf, xf, fIndex).setSimp(s);
+            Preferences.debug("Doing neigh = opVert(sf, xf, fIndex) in connect\n");
+            neigh = opVert(sf, xf, fIndex);
             if (errorStatus == -1) {
                 return;
             }
+            if (neigh != null) {
+                neigh.setSimp(s);
+            }
 
+            Preferences.debug("Calling connect(sf) in connect\n");
             connect(sf);
             if (errorStatus == -1) {
                 return;
@@ -1968,6 +1973,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             if (pNum != n.getVisit()) {
                 n.setVisit(pNum);
                 if (sees(p, vertIndex, n)) {
+                    Preferences.debug("Calling makeFacets(n) in makeFacets\n");
                     makeFacets(n);
                 }
                 if (errorStatus == -1) {
@@ -2009,6 +2015,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             } // if (bas != null)
             ns.getNeigh(i).setVert(p);
             ns.getNeigh(i).setVertIndex(vertIndex);
+            Preferences.debug("Doing neigh = opSimp(n,seen) in makeFacets\n");
             neigh = opSimp(n, seen);
             if (errorStatus == -1) {
                 return null;
@@ -2031,7 +2038,19 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         if (i < cDim) {
             return x;
         } else {
-            MipavUtil.displayError("Adjacency failure in opSimp\n");
+            Preferences.debug("Adjacency failure in opSimp\n");
+            MipavUtil.displayError("Adjacency failure in opSimp");
+            if (b == null) {
+                Preferences.debug("b is null in opSimp\n");
+            }
+            for (i = 0; i < cDim; i++) {
+                if (a.getNeigh(i) == null) {
+                    Preferences.debug("a.getNeigh(" + i + ") == null in opSimp\n");
+                }
+                else if (a.getNeigh(i).getSimp() == null) {
+                    Preferences.debug("a.getNeigh(" + i + ").getSimp() == null in opSimp\n");
+                }
+            } // for (i = 0; i < cDim; i++)
             printSimplexF(a);
             printSimplexF(b);
             visitTriangGen(a);
@@ -2051,8 +2070,16 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         if (i < cDim) {
             return x;
         } else {
-            MipavUtil.displayError("Adjacency failure in opVert\n");
-            printSimplexF(a);
+            Preferences.debug("Adjacency failure in opVert\n");
+            MipavUtil.displayError("Adjacency failure in opVert");
+            for (i = 0; i < cDim; i++) {
+                if (a.getNeigh(i) == null) {
+                    Preferences.debug("a.getNeigh(" + i + ") == null in opVert\n");
+                }
+                else if (a.getNeigh(i).getVert() == null) {
+                    Preferences.debug("a.getNeigh(" + i + ").getVert() == null in opVert\n");
+                }
+            } // for (i = 0; i < cDim; i++)
             if (b == null) {
                 Preferences.debug("b is null in opVert\n");
             }
@@ -2061,6 +2088,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                     Preferences.debug("b[" + j + "] = " + b[j] + "\n");
                 }
             }
+            printSimplexF(a);
             visitTriangGen(a);
             errorStatus = -1;
             return null;
@@ -2076,9 +2104,11 @@ private int scaleExpansionZeroElim(int elen, double e[][],
         neighbor sn;
         vNum--;
         if (stTri == null) {
-            stTri = new simplex[ss + MAXDIM + 1];
+            stTri = new simplex[ssTri + MAXDIM + 1];
         }
-        stTri[tms++] = s;
+        if (s != null) {
+            stTri[tms++] = s;
+        }
         while (tms > 0) {
             if (tms > ssTri) {
                 Preferences.debug("In visitTriangGen tms = " + tms + "\n");
@@ -2086,7 +2116,7 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 for (i = 0; i < stTri.length; i++) {
                     stTemp[i] = stTri[i];
                 }
-                stTri = new simplex[(ss += ss) + MAXDIM + 1];
+                stTri = new simplex[(ssTri += ssTri) + MAXDIM + 1];
                 for (i = 0; i < stTemp.length; i++) {
                     stTri[i] = stTemp[i];
                 }
@@ -3502,6 +3532,9 @@ private int scaleExpansionZeroElim(int elen, double e[][],
             //normal.setVecsCopy(sim.getNormal().getVecs());
             //peak = new neighbor();
             if (sim.getPeak() != null) {
+                if (peak == null) {
+                    peak = new neighbor();
+                }
                 peak.setVertCopy(sim.getPeak().getVert());
                 peak.setVertIndex(sim.getPeak().getVertIndex());
                 peak.setBasisS(sim.getPeak().getBasisS());
@@ -3514,20 +3547,30 @@ private int scaleExpansionZeroElim(int elen, double e[][],
                 }*/
                 peak.setSimp(sim.getPeak().getSimp());
             } // if (sim.getPeak() != null)
-            for (i = 0; i < 4; i++) {
-                //neigh[i] = new neighbor();
-                neigh[i].setVertCopy(sim.getNeigh()[i].getVert());
-                neigh[i].setVertIndex(sim.getNeigh()[i].getVertIndex());
-                neigh[i].setBasisS(sim.getNeigh()[i].getBasisS());
-                /*if (sim.getNeigh()[i].getBasisS() != null) {
-                    neigh[i].getBasisS().setRefCount(sim.getNeigh()[i].getBasisS().getRefCount());
-                    neigh[i].getBasisS().setLScale(sim.getNeigh()[i].getBasisS().getLScale());
-                    neigh[i].getBasisS().setSqa(sim.getNeigh()[i].getBasisS().getSqa());
-                    neigh[i].getBasisS().setSqb(sim.getNeigh()[i].getBasisS().getSqb());
-                    neigh[i].getBasisS().setVecsCopy(sim.getNeigh()[i].getBasisS().getVecs());
-                }*/
-                neigh[i].setSimp(sim.getNeigh()[i].getSimp());
+            else {
+                peak = null;
             }
+            for (i = 0; i < 4; i++) {
+                if (sim.getNeigh()[i] != null) {
+                    if (neigh[i] == null) {
+                        neigh[i] = new neighbor();
+                    }
+                    neigh[i].setVertCopy(sim.getNeigh()[i].getVert());
+                    neigh[i].setVertIndex(sim.getNeigh()[i].getVertIndex());
+                    neigh[i].setBasisS(sim.getNeigh()[i].getBasisS());
+                    /*if (sim.getNeigh()[i].getBasisS() != null) {
+                        neigh[i].getBasisS().setRefCount(sim.getNeigh()[i].getBasisS().getRefCount());
+                        neigh[i].getBasisS().setLScale(sim.getNeigh()[i].getBasisS().getLScale());
+                        neigh[i].getBasisS().setSqa(sim.getNeigh()[i].getBasisS().getSqa());
+                        neigh[i].getBasisS().setSqb(sim.getNeigh()[i].getBasisS().getSqb());
+                        neigh[i].getBasisS().setVecsCopy(sim.getNeigh()[i].getBasisS().getVecs());
+                    }*/
+                    neigh[i].setSimp(sim.getNeigh()[i].getSimp());
+                } // if (sim.getNeigh[i] != null)
+                else {
+                    neigh[i] = null;
+                }
+            } // for (i = 0; i < 4; i++)
         }
 
     } // private class simplex
