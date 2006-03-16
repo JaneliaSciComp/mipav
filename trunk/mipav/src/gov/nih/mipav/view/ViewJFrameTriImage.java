@@ -3983,6 +3983,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 				   AlgorithmRegLeastSquares algoLeastSquares = new AlgorithmRegLeastSquares(coordsA, coordsB, 3);
 				   algoLeastSquares.runAlgorithm();
 				   TransMatrix transMatrix = algoLeastSquares.getTransformBtoA();
+				   
+				   if (algoLeastSquares.isCompleted() == false)
+				   {
+					   // algorithm failed
+					   return null;
+				   }
 				           	   
 				   progressBar = new ViewJProgressBar("Applying transformation", 
 						      "Transforming", 0, 100,
@@ -3998,6 +4004,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 				   
 				   parentFrame.setImageB(resultImage);
 				   parentFrame.setActiveImage(ViewJComponentBase.IMAGE_A);
+				   
+				   JDialogImageInfo infoDialogB = parentFrame.getImageInfoDialogB();
+				   infoDialogB.setMatrix(transMatrix.getMatrix());
 				   
 				   updateImages();
 				   return null;
