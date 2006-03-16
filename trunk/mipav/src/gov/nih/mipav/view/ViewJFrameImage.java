@@ -122,7 +122,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     private boolean doOrients = true;
 
     /** reference to the JDialogImageInfo for updating slice/resolutions */
-    private JDialogImageInfo infoDialog = null;
+    private JDialogImageInfo infoDialogA = null;
+    private JDialogImageInfo infoDialogB = null;
 
     /** tells whether or not to XOR when creating binary masks (allowing holes) */
     private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
@@ -800,7 +801,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void setActiveImage(int active)
     {
-
         if (componentImage != null)
         {
             componentImage.setActiveImage(active);
@@ -974,7 +974,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void setImageB(ModelImage _imageB)
     {
-
         Vector frameList = imageA.getImageFrameVector();
         float min, max;
 
@@ -982,6 +981,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         {
             return;
         }
+        
         for (int i = 0; i < frameList.size(); i++)
         {
             if ( (frameList.elementAt(i) instanceof ViewJFrameBase)
@@ -1064,7 +1064,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (getLUTb() != null)
         {
             getLUTb().zeroToOneLUTAdjust();
-        }
+        }       
     }
 
     /**
@@ -1353,7 +1353,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void setTimeSlice(int slice)
     {
-
         if (imageA.getNDims() == 4)
         {
             if (tSlice < imageA.getExtents()[3])
@@ -1368,9 +1367,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 {
                     linkFrame.setTimeSlice(tSlice);
                 }
-                if (infoDialog != null)
+                
+                if (infoDialogA != null)
                 {
-                    infoDialog.setSlice(zSlice, tSlice);
+                    infoDialogA.setSlice(zSlice, tSlice);
+                }
+            
+            	if (infoDialogB != null)
+                {
+                    infoDialogB.setSlice(zSlice, tSlice);
                 }
             }
         } // if (imageA.getNDims() <= 3)
@@ -1389,10 +1394,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 {
                     linkFrame.setTimeSlice(tSlice);
                 }
-                if (infoDialog != null)
-                {
-                    infoDialog.setSlice(zSlice, tSlice);
-                }
+                
+	            if (infoDialogA != null)
+	            {
+	                infoDialogA.setSlice(zSlice, tSlice);
+	            }
+	        
+	        	if (infoDialogB != null)
+	            {
+	                infoDialogB.setSlice(zSlice, tSlice);
+	            }
             }
         } // else if ((imageB != null) && (imageB.getNDims() == 4))
         else
@@ -1407,7 +1418,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void setSlice(int slice)
     {
-
         if (imageA.getNDims() <= 2)
         {
             return;
@@ -1426,9 +1436,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 linkFrame.setSlice(slice);
             }
-            if (infoDialog != null)
+            if (infoDialogA != null)
             {
-                infoDialog.setSlice(zSlice, tSlice);
+                infoDialogA.setSlice(zSlice, tSlice);
+            }
+            if (infoDialogB != null)
+            {
+                infoDialogB.setSlice(zSlice, tSlice);
             }
         }
     }
@@ -1460,9 +1474,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 linkFrame.incSlice();
             }
-            if (infoDialog != null)
+            if (infoDialogA != null)
             {
-                infoDialog.setSlice(zSlice, tSlice);
+                infoDialogA.setSlice(zSlice, tSlice);
+            }
+            if (infoDialogB != null)
+            {
+                infoDialogB.setSlice(zSlice, tSlice);
             }
 
             updateImages(true);
@@ -1498,9 +1516,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 // linkFrame.setSlice(zSlice);
                 linkFrame.decSlice();
             }
-            if (infoDialog != null)
+            if (infoDialogA != null)
             {
-                infoDialog.setSlice(zSlice, tSlice);
+                infoDialogA.setSlice(zSlice, tSlice);
+            }
+            if (infoDialogB != null)
+            {
+                infoDialogB.setSlice(zSlice, tSlice);
             }
 
             updateImages(true);
@@ -1888,7 +1910,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     {
         Object source = event.getSource();
         final String command = event.getActionCommand();
-
+System.out.println(command);
         if (command != null &&
             userInterface.isShorcutRecording())
         {
@@ -4151,7 +4173,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
             if (getActiveImage().getRegistrationFrame() == null)
             {
-
                 if (getActiveImage().getNDims() == 2)
                 {
                     // new JDialog to either load from frame or load from file
@@ -4161,7 +4182,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     if (image2load != null)
                     {
-
                         AlgorithmMatchForReference algoRef = new AlgorithmMatchForReference(getActiveImage(),
                             image2load);
 
@@ -4497,36 +4517,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     if (reply == JOptionPane.YES_OPTION)
                     {
-                        if (infoDialog == null)
-                        {
-                            infoDialog = new JDialogImageInfo(this, getActiveImage(), zSlice, tSlice);
-                            infoDialog.setResolutionTag();
-                        }
-                        else
-                        {
-                            try
-                            {
-                                infoDialog.populateTalairachTab();
-                            }
-                            catch (Exception e)
-                            {
-                                e.printStackTrace();
-                            }
-                            infoDialog.setResolutionTag();
-                            infoDialog.setVisible(true);
-                            infoDialog.toFront();
-                        }
+                    	JDialogImageInfo imageInfoDialog = getActiveImageInfoDialog();
+                    	if (imageInfoDialog != null)
+                    	{
+                	    	imageInfoDialog.setResolutionTag();
+                	    	imageInfoDialog.populateTalairachTab();
+                	    	imageInfoDialog.setVisible(true);
+                	    	imageInfoDialog.toFront();
+                    	}
                     }
                     else
                     {
-                        JDialogVolViewResample volViewResample = new JDialogVolViewResample(imageA, imageB,
-                            userInterface);
+                        new JDialogVolViewResample(imageA, imageB);
                     }
-
                 }
                 else
                 {
-                    JDialogVolViewResample volViewResample = new JDialogVolViewResample(imageA, imageB, userInterface);
+                    new JDialogVolViewResample(imageA, imageB);
                 }
             }
             catch (OutOfMemoryError error)
@@ -4535,35 +4542,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         }
-        /*else if (command.equals("DualTriplanar"))
-        {
-            // 3 space representation makes no sense on a 2d image!
-            if (componentImage.getImageA().getNDims() == 2)
-            {
-                MipavUtil.displayError("This tool cannot be used on 2D images!");
-                return;
-            }
-            try
-            {
-                ViewJFrameDualTriImage triIm = new ViewJFrameDualTriImage(componentImage, componentImage.getImageA(),
-                    componentImage.getLUTa(), componentImage.getImageB(), componentImage.getLUTb(), userInterface,
-                    controls);
-
-                if (imageA.isColorImage())
-                {
-                    triIm.setRGBTA(componentImage.getRGBTA());
-                    if (imageB != null)
-                    {
-                        triIm.setRGBTB(componentImage.getRGBTB());
-                    }
-                }
-            }
-            catch (OutOfMemoryError error)
-            {
-                MipavUtil.displayError("Out of memory: unable to open DualTriplanar frame.");
-            }
-
-        }*/
         else if (command.equals("MagSettings"))
         {
             JDialogMagnificationControls magSettings = new
@@ -5706,23 +5684,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     public void showEditImageInfo()
     {
-        if (infoDialog == null)
-        {
-            infoDialog = new JDialogImageInfo(this, getActiveImage(), zSlice, tSlice);
-        }
-        else
-        {
-            try
-            {
-                infoDialog.populateTalairachTab();
-            }
-            catch (Exception ex)
-            {
-                ex.printStackTrace();
-            }
-            infoDialog.setVisible(true);
-            infoDialog.toFront();
-        }
+    	JDialogImageInfo imageInfoDialog = getActiveImageInfoDialog();
+    	if (imageInfoDialog != null)
+    	{
+	    	imageInfoDialog.setResolutionTag();
+	    	imageInfoDialog.populateTalairachTab();
+	    	imageInfoDialog.setVisible(true);
+	    	imageInfoDialog.toFront();
+    	}
     }
 
     public void keyReleased(KeyEvent e)
@@ -5914,7 +5883,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     protected int dimPowerOfTwo(int dim)
     {
-
         // 128^3 x 4 is 8MB
         // 256^3 x 4 is 64MB
         if (dim <= 16)
@@ -6101,5 +6069,34 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         popupMenu.show(component, event.getX(), event.getY());
     }
 
-
+    /**
+     * Returns a reference to the image info dialog for the active image.
+     * Image A and image B have references to their individual dialogs.
+     * @return a reference to the image info dialog for the active image 
+     */
+    private JDialogImageInfo getActiveImageInfoDialog()
+    {
+    	if (getActiveImage() == imageA)
+    	{
+    		if (infoDialogA == null)
+    		{
+    			infoDialogA = new JDialogImageInfo(this, imageA, zSlice, tSlice);
+    		}
+    		
+    		return infoDialogA;
+    	}
+    	else if (imageB == null) // should never happen, but just in case...
+    	{
+    		return null;
+    	}
+    	else // image B is active
+    	{
+    		if (infoDialogB == null)
+    		{
+    			infoDialogB = new JDialogImageInfo(this, imageB, zSlice, tSlice);
+    		}
+    		
+    		return infoDialogB;
+    	}
+    }
 }
