@@ -65,103 +65,105 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
                              SoftwareVertexProperty kVertexProperty,
                              Point3f kEye) {
 
-  Color3f ambientColor = new Color3f();
-  Color3f result = new Color3f();
-  Color3f vertexDiffuse;
-  Color3f vertexSpecular;
-  Vector3f V = new Vector3f();
-  Vector3f N = new Vector3f();
-  Vector3f L = new Vector3f();
-  float cos_theta, cos_alpha;
-
-  Color3f diffsum = new Color3f();
-  Color3f specsum = new Color3f();
-  Vector3f viewDirection = new Vector3f();
-  Vector3f lightDirection = new Vector3f();
-  Vector3f specularVector = new Vector3f();
-  Vector3f Lneg = new Vector3f();
-  Vector3f nScale = new Vector3f();
-
-  float fov_factor;
-  float spec_factor;
-
-  initView(kEye, kVertexProperty);
-
-  m_kColor.set(0.0f, 0.0f, 0.0f);
-
-  lightDirection.sub(kVertexProperty.getPosition(), position);
-  lightDirection.normalize();
-
-  viewDirection = getDirection();
-
-  N = kVertexProperty.getNormal();
-  // N.set(m_kNormal);
-
-  fov_factor = lightDirection.dot(viewDirection);
-
-  vertexDiffuse = kVertexProperty.getDiffuse();
-  vertexSpecular = kVertexProperty.getSpecular();
-
-  if (fov_factor <= 0.0 || fov_factor < m_fCosAngle) {
-    V.negate();
-    fov_factor = 0.0f;
-  }
-  else {
-    fov_factor = ( (float) Math.cos( (1.0 - fov_factor) * Math.PI /
-                                     (1.0 - m_fCosAngle)) * 0.5f + 0.5f);
-    V.negate();
-// fov_factor = 1.0f;
-  }
-
-  vertexDiffuse = kVertexProperty.getDiffuse();
-
-  if (fov_factor > 0.0001f) {
-    cos_theta = lightDirection.dot(N);
-    if (cos_theta > 0) {
-      diffsum.x = diffuse.x * cos_theta * fov_factor;
-      diffsum.y = diffuse.y * cos_theta * fov_factor;
-      diffsum.z = diffuse.z * cos_theta * fov_factor;
-    }
-
-    // cos_theta *= 1.1f;
-    Lneg.negate(L);
-    nScale.scale(cos_theta, N);
-    specularVector.add(Lneg, nScale);
-    cos_alpha = specularVector.dot(viewDirection);
-
-    if (cos_alpha > 0) {
-      spec_factor = fov_factor *
-          (float) Math.exp( Math.log(cos_alpha));
-      specsum.x = diffuse.x * spec_factor;
-      specsum.y = diffuse.y * spec_factor;
-      specsum.z = diffuse.z * spec_factor;
-    }
-  }
-
-  diffsum.x = (diffsum.x > 1) ? 1 : diffsum.x;
-  diffsum.y = (diffsum.y > 1) ? 1 : diffsum.y;
-  diffsum.z = (diffsum.z > 1) ? 1 : diffsum.z;
-  specsum.x = (specsum.x > 1) ? 1 : specsum.x;
-  specsum.y = (specsum.y > 1) ? 1 : specsum.y;
-  specsum.z = (specsum.z > 1) ? 1 : specsum.z;
-
-  ambientColor.set(0.1f, 0.1f, 0.1f);
-  ambientColor.scale(0.5f); // 0.5f for ambient reflection factor
-
-  result.x = vertexDiffuse.x * (ambientColor.x + vertexDiffuse.x * diffsum.x) +
-      vertexSpecular.x * specsum.x;
-  result.y = vertexDiffuse.y * (ambientColor.y + vertexDiffuse.y * diffsum.y) +
-      vertexSpecular.y * specsum.y;
-  result.z = vertexDiffuse.z * (ambientColor.z + vertexDiffuse.z * diffsum.z) +
-      vertexSpecular.z * specsum.z;
-
-  // saturate at 1
-  result.x = (result.x > 1) ? 1 : result.x;
-  result.y = (result.y > 1) ? 1 : result.y;
-  result.z = (result.z > 1) ? 1 : result.z;
-
-  m_kColor.set(result);
-  return m_kColor;
+      Color3f ambientColor = new Color3f();
+      Color3f result = new Color3f();
+      Color3f vertexDiffuse;
+      Color3f vertexSpecular;
+      Vector3f V = new Vector3f();
+      Vector3f N = new Vector3f();
+      Vector3f L = new Vector3f();
+      float cos_theta, cos_alpha;
+    
+      Color3f diffsum = new Color3f();
+      Color3f specsum = new Color3f();
+      Vector3f viewDirection = new Vector3f();
+      Vector3f lightDirection = new Vector3f();
+      Vector3f specularVector = new Vector3f();
+      Vector3f Lneg = new Vector3f();
+      Vector3f nScale = new Vector3f();
+    
+      float fov_factor;
+      float spec_factor;
+    
+      initView(kEye, kVertexProperty);
+    
+      m_kColor.set(0.0f, 0.0f, 0.0f);
+    
+      // lightDirection.sub(kVertexProperty.getPosition(), position);
+      // lightDirection.normalize();
+      lightDirection = getDirection();
+    
+      viewDirection.set(m_kView);
+      // viewDirection = getDirection();
+    
+      N = kVertexProperty.getNormal();
+      // N.set(m_kNormal);
+    
+      fov_factor = lightDirection.dot(viewDirection);
+    
+      vertexDiffuse = kVertexProperty.getDiffuse();
+      vertexSpecular = kVertexProperty.getSpecular();
+    
+      if (fov_factor <= 0.0 || fov_factor < m_fCosAngle) {
+        V.negate();
+        fov_factor = 0.0f;
+      }
+      else {
+        fov_factor = ( (float) Math.cos( (1.0 - fov_factor) * Math.PI /
+                                         (1.0 - m_fCosAngle)) * 0.5f + 0.5f);
+        V.negate();
+    // fov_factor = 1.0f;
+      }
+    
+      vertexDiffuse = kVertexProperty.getDiffuse();
+    
+      if (fov_factor > 0.0001f) {
+        cos_theta = lightDirection.dot(N);
+        if (cos_theta > 0) {
+          diffsum.x = diffuse.x * cos_theta * fov_factor;
+          diffsum.y = diffuse.y * cos_theta * fov_factor;
+          diffsum.z = diffuse.z * cos_theta * fov_factor;
+        }
+    
+        // cos_theta *= 1.1f;
+        Lneg.negate(L);
+        nScale.scale(cos_theta, N);
+        specularVector.add(Lneg, nScale);
+        cos_alpha = specularVector.dot(viewDirection);
+    
+        if (cos_alpha > 0) {
+          spec_factor = fov_factor *
+              (float) Math.exp( Math.log(cos_alpha));
+          specsum.x = diffuse.x * spec_factor;
+          specsum.y = diffuse.y * spec_factor;
+          specsum.z = diffuse.z * spec_factor;
+        }
+      }
+    
+      diffsum.x = (diffsum.x > 1) ? 1 : diffsum.x;
+      diffsum.y = (diffsum.y > 1) ? 1 : diffsum.y;
+      diffsum.z = (diffsum.z > 1) ? 1 : diffsum.z;
+      specsum.x = (specsum.x > 1) ? 1 : specsum.x;
+      specsum.y = (specsum.y > 1) ? 1 : specsum.y;
+      specsum.z = (specsum.z > 1) ? 1 : specsum.z;
+    
+      ambientColor.set(0.1f, 0.1f, 0.1f);
+      ambientColor.scale(0.5f); // 0.5f for ambient reflection factor
+    
+      result.x = vertexDiffuse.x * (ambientColor.x + vertexDiffuse.x * diffsum.x) +
+          vertexSpecular.x * specsum.x;
+      result.y = vertexDiffuse.y * (ambientColor.y + vertexDiffuse.y * diffsum.y) +
+          vertexSpecular.y * specsum.y;
+      result.z = vertexDiffuse.z * (ambientColor.z + vertexDiffuse.z * diffsum.z) +
+          vertexSpecular.z * specsum.z;
+    
+      // saturate at 1
+      result.x = (result.x > 1) ? 1 : result.x;
+      result.y = (result.y > 1) ? 1 : result.y;
+      result.z = (result.z > 1) ? 1 : result.z;
+    
+      m_kColor.set(result);
+      return m_kColor;
 
   /*
            initView(kEye, kVertexProperty);
