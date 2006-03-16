@@ -108,7 +108,7 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
   }
   else {
     fov_factor = ( (float) Math.cos( (1.0 - fov_factor) * Math.PI /
-                                    (1.0 - m_fCosAngle)) * 0.5f + 0.5f);
+                                     (1.0 - m_fCosAngle)) * 0.5f + 0.5f);
     V.negate();
 // fov_factor = 1.0f;
   }
@@ -154,7 +154,8 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
       vertexSpecular.y * specsum.y;
   result.z = vertexDiffuse.z * (ambientColor.z + vertexDiffuse.z * diffsum.z) +
       vertexSpecular.z * specsum.z;
-// saturate at 1
+
+  // saturate at 1
   result.x = (result.x > 1) ? 1 : result.x;
   result.y = (result.y > 1) ? 1 : result.y;
   result.z = (result.z > 1) ? 1 : result.z;

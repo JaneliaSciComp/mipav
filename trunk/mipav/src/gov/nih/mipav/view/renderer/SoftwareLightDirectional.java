@@ -64,18 +64,10 @@ public class SoftwareLightDirectional
 
         // no ambient light
         m_kColor.set(0.0f, 0.0f, 0.0f);
-
-        Vector3f R = new Vector3f();
-        Vector3f L = new Vector3f();
-        Vector3f V = new Vector3f();
-        Vector3f N = new Vector3f();
-        float cos_theta, cos_alpha;
-        Color3f diffuseColor = new Color3f();
-        Color3f specularColor = new Color3f();
-        Color3f ambientColor = new Color3f();
-        Color3f result = new Color3f();
+        result.set(0.0f, 0.0f, 0.0f);
+       
+        float cos_theta, cos_alpha;;
         Color3f vertexDiffuse;
-        Color3f vertexSpecular;
 
         V.sub(kEye, kVertexProperty.getPosition());
         V.normalize();
@@ -96,7 +88,6 @@ public class SoftwareLightDirectional
         cos_alpha = R.dot(V);
 
         vertexDiffuse = kVertexProperty.getDiffuse();
-        vertexSpecular = kVertexProperty.getSpecular();
 
         if (cos_theta > 0) {
           diffuseColor.x = diffuse.x * vertexDiffuse.x;
@@ -170,4 +161,14 @@ public class SoftwareLightDirectional
 
     // the light's direction in the world
     protected  final Vector3f direction;
+    
+    Vector3f R = new Vector3f();
+    Vector3f L = new Vector3f();
+    Vector3f V = new Vector3f();
+    Vector3f N = new Vector3f();
+    
+    Color3f diffuseColor = new Color3f();
+    Color3f specularColor = new Color3f();
+    Color3f ambientColor = new Color3f();
+    Color3f result = new Color3f();
 }
