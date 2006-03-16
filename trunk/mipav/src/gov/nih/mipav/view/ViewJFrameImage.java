@@ -122,8 +122,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     private boolean doOrients = true;
 
     /** reference to the JDialogImageInfo for updating slice/resolutions */
-    private JDialogImageInfo infoDialogA = null;
-    private JDialogImageInfo infoDialogB = null;
+    protected JDialogImageInfo infoDialogA = null;
+    protected JDialogImageInfo infoDialogB = null;
 
     /** tells whether or not to XOR when creating binary masks (allowing holes) */
     private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
@@ -5687,7 +5687,6 @@ System.out.println(command);
     	JDialogImageInfo imageInfoDialog = getActiveImageInfoDialog();
     	if (imageInfoDialog != null)
     	{
-	    	imageInfoDialog.setResolutionTag();
 	    	imageInfoDialog.populateTalairachTab();
 	    	imageInfoDialog.setVisible(true);
 	    	imageInfoDialog.toFront();
@@ -6074,7 +6073,7 @@ System.out.println(command);
      * Image A and image B have references to their individual dialogs.
      * @return a reference to the image info dialog for the active image 
      */
-    private JDialogImageInfo getActiveImageInfoDialog()
+    protected JDialogImageInfo getActiveImageInfoDialog()
     {
     	if (getActiveImage() == imageA)
     	{
@@ -6097,6 +6096,27 @@ System.out.println(command);
     		}
     		
     		return infoDialogB;
+    	}
+    }
+    
+    /**
+     * Returns the image info dialog for image B
+     * @return the image info dialog for image B
+     */
+    protected JDialogImageInfo getImageInfoDialogB()
+    {
+    	if (imageB != null)
+    	{
+	    	if (infoDialogB == null)
+			{
+				infoDialogB = new JDialogImageInfo(this, imageB, zSlice, tSlice);
+			}
+			
+			return infoDialogB;
+    	}
+    	else
+    	{
+    		return null;
     	}
     }
 }
