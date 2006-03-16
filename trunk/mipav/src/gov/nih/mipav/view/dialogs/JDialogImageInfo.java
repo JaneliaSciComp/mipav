@@ -125,7 +125,6 @@ public class JDialogImageInfo
             DIM = 2;
 
         init(addTitle);
-        setVisible(true);
     }
 
     /**
@@ -2751,6 +2750,33 @@ public class JDialogImageInfo
      * Set the resolution tag in front view.
      */
     public void setResolutionTag() {
-      tabbedPane.setSelectedIndex(1);
+    	tabbedPane.setSelectedIndex(1);
+    }
+    
+    public void setMatrix(double [][] newMatrix)
+    {
+    	try
+    	{
+	    	if (matrix != null && newMatrix != null && textMatrix != null)
+	    	{
+		    	for (int i = 0; i < matrix.length; i++)
+		    	{
+		    		for (int j = 0; j < matrix[i].length; j++)
+		    		{
+		    			matrix[i][j] = newMatrix[i][j];
+		    			textMatrix[i][j].setText(String.valueOf(newMatrix[i][j]));
+		    		}
+		    	}
+	    	}
+	    	else
+	    	{
+	    		Preferences.debug("Failed to set new matrix in JDialogImageInfo.setMatrix()");
+	    	}
+    	}
+    	catch (Exception e)
+    	{
+    		Preferences.debug("Failed to set new matrix in JDialogImageInfo.setMatrix()");
+    		e.printStackTrace();
+    	}
     }
 }
