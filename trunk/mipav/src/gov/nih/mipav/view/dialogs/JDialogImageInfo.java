@@ -28,7 +28,7 @@ public class JDialogImageInfo
 
     private ModelImage image;
     private JTextField textRes1, textRes2, textRes3, textRes4, textRes5;
-    private JTextField textSt1, textSt2, textSt3, textSt4; //, textSt5;
+    private JTextField textSt1, textSt2, textSt3, textSt4, textSliceSpacing;
     private JCheckBox resolutionBox; // checkbox for "apply to all slices" for resolution changes
     private JTextField nameText;
     private JButton applyButton;
@@ -53,6 +53,7 @@ public class JDialogImageInfo
     private JComboBox modalityBox;
     private String[] modalityStr;
     private int modality;
+    private float sliceSpacing = 0;
 
     private JTextField linkedImageField;
     private JButton linkedImageButton;
@@ -94,7 +95,7 @@ public class JDialogImageInfo
      *   Builds the image attribute input dialog, with three tabbled panes allowing the
      *   user to edit image name, orientation, resolutions, and transformation matrix.
      *   @param theParentFrame   Parent frame of dialog.
-     *   @param im               Image whose attribute's the user is editing.
+     *   @param im               Image whose attributes the user is editing.
      */
     public JDialogImageInfo(Frame theParentFrame, ModelImage im, int zSlice, int tSlice) {
         super(theParentFrame, false);
@@ -428,31 +429,37 @@ public class JDialogImageInfo
         JPanel resolPanel = new JPanel(new GridBagLayout());
         resolPanel.setBorder(buildTitledBorder(""));
 
-        JLabel dim1 = new JLabel("1st dim.");
+        JLabel dim1 = new JLabel("1st dimension:");
         dim1.setFont(serif12);
         dim1.setForeground(Color.black);
 
-        JLabel dim2 = new JLabel("2nd dim.");
+        JLabel dim2 = new JLabel("2nd dimension:");
         dim2.setFont(serif12);
         dim2.setForeground(Color.black);
 
-        JLabel dim3 = new JLabel("3rd dim.");
+        JLabel dim3 = new JLabel("3rd dimension:");
         dim3.setFont(serif12);
         dim3.setForeground(Color.black);
         if (nDims < 3)
             dim3.setEnabled(false);
 
-        JLabel dim4 = new JLabel("4th dim.");
+        JLabel dim4 = new JLabel("4th dimension:");
         dim4.setFont(serif12);
         dim4.setForeground(Color.black);
         if (nDims < 4)
             dim4.setEnabled(false);
 
-        JLabel dim5 = new JLabel("5th dim.");
+        JLabel dim5 = new JLabel("5th dimension:");
         dim5.setFont(serif12);
         dim5.setForeground(Color.black);
         if (nDims < 5)
             dim5.setEnabled(false);
+        
+        JLabel sliceSpacingLabel = new JLabel("Slice spacing:");
+        sliceSpacingLabel.setFont(serif12);
+        sliceSpacingLabel.setForeground(Color.black);
+        if (nDims < 3)
+        	sliceSpacingLabel.setEnabled(false);
 
         textRes1 = new JTextField(5);
         textRes1.setText(String.valueOf(image.getFileInfo()[resIndex].getResolutions()[0]));
@@ -496,6 +503,19 @@ public class JDialogImageInfo
         else {
             textRes5.setText(String.valueOf(image.getFileInfo()[resIndex].getResolutions()[4]));
         }
+        
+        textSliceSpacing = new JTextField(5);
+        textSliceSpacing.setText("0");
+        textSliceSpacing.setFont(serif12);
+        if (nDims < 3)
+        {
+        	textSliceSpacing.setEnabled(false);
+        }
+        else
+        {
+        	sliceSpacing = image.getFileInfo()[resIndex].getSliceSpacing();
+        	textSliceSpacing.setText(String.valueOf(sliceSpacing));
+        }
 
         resolutionBox = new JCheckBox("Apply resolution changes to all slices and/or times");
         resolutionBox.setFont(serif12);
@@ -520,6 +540,8 @@ public class JDialogImageInfo
         gbc.gridy = 4;
         labelPanel.add(dim5, gbc);
         gbc.gridy = 5;
+        labelPanel.add(sliceSpacingLabel, gbc);
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(5, 0, 5, 5);
         labelPanel.add(resolutionBox, gbc);
@@ -539,6 +561,8 @@ public class JDialogImageInfo
         labelPanel.add(textRes4, gbc);
         gbc.gridy = 4;
         labelPanel.add(textRes5, gbc);
+        gbc.gridy = 5;
+        labelPanel.add(textSliceSpacing, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1558,6 +1582,18 @@ public class JDialogImageInfo
                 textRes5.selectAll();
                 return false;
             }
+            
+            if (nDims > 2)
+            {
+            	try
+            	{
+            		sliceSpacing = Float.parseFloat(textSliceSpacing.getText());
+            	}
+            	catch (Exception e)
+            	{
+            		Preferences.debug("Failed to save slice spacing information.");
+            	}
+            }
         }
         catch (OutOfMemoryError error) {
             System.gc();
@@ -2182,6 +2218,7 @@ public class JDialogImageInfo
         }
         else if (image.getNDims() == 3) {
             fileInfo = image.getFileInfo();
+            
 
             for (int i = 0; i < image.getExtents()[2]; i++) {
                 if (resolutionBox.isSelected()) {
@@ -2190,6 +2227,7 @@ public class JDialogImageInfo
                 fileInfo[i].setUnitsOfMeasure(measure1, 0);
                 fileInfo[i].setUnitsOfMeasure(measure1, 1);
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
+                fileInfo[i].setSliceSpacing(sliceSpacing);
                 if (fileInfo[i].getFileFormat() == FileBase.DICOM) {
                     if ( ( (FileInfoDicom) (fileInfo[i])).getValue("0018,0088") != null)
                         ( (FileInfoDicom) (fileInfo[i])).setValue("0018,0088",
@@ -2216,6 +2254,7 @@ public class JDialogImageInfo
                 fileInfo[i].setUnitsOfMeasure(measure1, 1);
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setUnitsOfMeasure(measure4, 3);
+                fileInfo[i].setSliceSpacing(sliceSpacing);
                 if (resolutionBox.isSelected()) {
                     fileInfo[i].setResolutions(resolutions);
                 }
@@ -2232,6 +2271,7 @@ public class JDialogImageInfo
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setUnitsOfMeasure(measure4, 3);
                 fileInfo[i].setUnitsOfMeasure(measure5, 4);
+                fileInfo[i].setSliceSpacing(sliceSpacing);
                 if (resolutionBox.isSelected()) {
                     fileInfo[i].setResolutions(resolutions);
                 }
@@ -2318,7 +2358,6 @@ public class JDialogImageInfo
      * updates the talairach transform info
      */
     private void updateTalairachInfo() {
-        //   System.err.println("updating info");
         TalairachTransformInfo tInfo = image.getTalairachTransformInfo();
 
         if (tInfo == null) {
@@ -2384,7 +2423,6 @@ public class JDialogImageInfo
         }
         catch (Exception ex) {
             ex.printStackTrace();
-            System.err.println("exception");
         }
 
     }
