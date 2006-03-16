@@ -73,25 +73,17 @@ public class SoftwareLightPoint
 
       m_kColor.set(0.0f, 0.0f, 0.0f);
 
-      Vector3f R = new Vector3f();
-      Vector3f L = new Vector3f();
-      Vector3f V = new Vector3f();
-      Vector3f N = new Vector3f();
-      float cos_theta, cos_alpha;
-      Color3f diffuseColor = new Color3f();
-      Color3f specularColor = new Color3f();
-      Color3f ambientColor = new Color3f();
-      Color3f result = new Color3f();
-      Color3f vertexDiffuse;
-      Color3f vertexSpecular;
-
-      V.sub(kEye, kVertexProperty.getPosition());
+      initView(kEye, kVertexProperty);
+      result.set(0.0f, 0.0f, 0.0f);
+      V.set(m_kView);
+      V.negate();
       V.normalize();
 
       N = kVertexProperty.getNormal();
       N.normalize();
 
       L.sub(position, kVertexProperty.getPosition());
+      // L = getDirection();
       L.normalize();
 
       R.set(N.x, N.y, N.z);
@@ -103,7 +95,6 @@ public class SoftwareLightPoint
       cos_alpha = R.dot(V);
 
       vertexDiffuse = kVertexProperty.getDiffuse();
-      vertexSpecular = kVertexProperty.getSpecular();
 
       if (cos_theta > 0) {
         diffuseColor.x = diffuse.x * vertexDiffuse.x;
@@ -254,4 +245,15 @@ public class SoftwareLightPoint
     // To avoid memory allocations.  The vector is used to store the
     // difference between a vertex to be lit and the light's position.
     protected final Vector3f m_kDirection = new Vector3f();
+
+    Vector3f R = new Vector3f();
+    Vector3f L = new Vector3f();
+    Vector3f V = new Vector3f();
+    Vector3f N = new Vector3f();
+    float cos_theta, cos_alpha;
+    Color3f diffuseColor = new Color3f();
+    Color3f specularColor = new Color3f();
+    Color3f ambientColor = new Color3f();
+    Color3f result = new Color3f();
+      Color3f vertexDiffuse;
 }
