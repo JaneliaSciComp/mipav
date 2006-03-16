@@ -116,7 +116,7 @@ public class GeneralLight {
      */
     private boolean m_bFixTarget = false;
     private Vector3f m_kDirection = new Vector3f(0.0f,0.0f,1.0f);
-    private Point3f m_kTarget = new Point3f(0.0f,0.0f,1.0f);
+    private Point3f m_kTarget = new Point3f(0.0f, 0.0f, 0.0f);
 
     /**
      * Constructor.
@@ -551,6 +551,7 @@ public class GeneralLight {
      */
     public final void setPosition(float fX, float fY, float fZ) {
         m_kPosition.set(fX, fY, fZ);
+        
         if (m_bFixTarget) {
             updateDirection(m_kTarget.x-m_kPosition.x,
                             m_kTarget.y-m_kPosition.y,
@@ -561,6 +562,7 @@ public class GeneralLight {
                          m_kPosition.y+m_kDirection.y,
                          m_kPosition.z+m_kDirection.z);
         }
+        
     }
 
     /**
