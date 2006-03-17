@@ -65,17 +65,7 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
                              SoftwareVertexProperty kVertexProperty,
                              Point3f kEye) {
 
-
       float cos_theta, cos_alpha;
-
-      Color3f diffsum = new Color3f();
-      Color3f specsum = new Color3f();
-      Vector3f viewDirection = new Vector3f();
-      Vector3f lightDirection = new Vector3f();
-      Vector3f specularVector = new Vector3f();
-      Vector3f Lneg = new Vector3f();
-      Vector3f nScale = new Vector3f();
-
       float fov_factor;
       float spec_factor;
 
@@ -83,16 +73,14 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
 
       m_kColor.set(0.0f, 0.0f, 0.0f);
       result.set(0.0f, 0.0f, 0.0f);
+      specsum.set(0.0f, 0.0f, 0.0f);
+      diffsum.set(0.0f, 0.0f, 0.0f);
 
-      // lightDirection.sub(kVertexProperty.getPosition(), position);
-      // lightDirection.normalize();
       lightDirection = getDirection();
 
       viewDirection.set(m_kView);
-      // viewDirection = getDirection();
 
       N = kVertexProperty.getNormal();
-      // N.set(m_kNormal);
 
       fov_factor = lightDirection.dot(viewDirection);
 
@@ -107,7 +95,6 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
         fov_factor = ( (float) Math.cos( (1.0 - fov_factor) * Math.PI /
                                          (1.0 - m_fCosAngle)) * 0.5f + 0.5f);
         V.negate();
-    // fov_factor = 1.0f;
       }
 
       vertexDiffuse = kVertexProperty.getDiffuse();
@@ -120,7 +107,7 @@ public final Color3f colorOf(SoftwareMaterial kMaterial,
           diffsum.z = diffuse.z * cos_theta * fov_factor;
         }
 
-        // cos_theta *= 1.1f;
+        cos_theta *= 1.3f;
         Lneg.negate(L);
         nScale.scale(cos_theta, N);
         specularVector.add(Lneg, nScale);
@@ -291,4 +278,11 @@ Color3f vertexSpecular;
 Vector3f V = new Vector3f();
 Vector3f N = new Vector3f();
 Vector3f L = new Vector3f();
+Vector3f viewDirection = new Vector3f();
+Vector3f lightDirection = new Vector3f();
+Vector3f specularVector = new Vector3f();
+Vector3f Lneg = new Vector3f();
+Vector3f nScale = new Vector3f();
+Color3f diffsum = new Color3f();
+Color3f specsum = new Color3f();
 }
