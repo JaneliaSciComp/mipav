@@ -340,6 +340,12 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
         background = null;
         objBoxFrameBG = null;
         boxFrame = null;
+        if ( akNormal != null) {
+            for (int i = 0; i < akNormal.length; i++) {
+                akNormal[i] = null;
+            }
+        }
+        akNormal = null;
 
         if (viewPanel != null) {
             viewPanel.disposeLocal(true);
@@ -1148,7 +1154,7 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
 
                         fDZ =
                             ((bMinZ ? afData[i] : afData[i - iOffZ - 1]) -
-                            (bMaxZ ? afData[i] : afData[i + iOffZ  - 1]) ) * 0.71f +
+                              (bMaxZ ? afData[i] : afData[i + iOffZ  - 1]) ) * 0.71f +
 
                             (bMinZ ? afData[i] : afData[i - iOffZ]) -
                             (bMaxZ ? afData[i] : afData[i + iOffZ]) +
@@ -1159,7 +1165,6 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
 
                     if (fDX != 0.0f || fDY != 0.0f || fDZ != 0.0f) {
                         akNormalTmp[i] = new Vector3f(fDX, fDY, fDZ);
-                        akNormalTmp[i].normalize();
                     }
                 }
             }
@@ -1183,6 +1188,9 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
                     akNormal[i].normalize();
                 }
             }
+        }
+        for (int i =0; i < akNormalTmp.length; i++) {
+            akNormalTmp[i] = null;
         }
         akNormalTmp = null;
         System.gc();
