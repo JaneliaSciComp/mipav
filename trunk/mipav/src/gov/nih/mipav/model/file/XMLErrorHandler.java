@@ -8,15 +8,13 @@ import org.xml.sax.SAXParseException;
 
 /**
  * Error handler to report errors and warnings from the XML parser.
+ * Implements standard SAX ErrorHandler methods, see SAX docs for more info.
  * @see FileOME
  * @see FileProject
  * @see FileVOI
  * @see FileXML
  */
 class XMLErrorHandler implements ErrorHandler {
-    // The following methods are standard SAX ErrorHandler methods.
-    // See SAX documentation for more info.
-
     /**
      * Returns a string describing parse exception details
      * @param spe  the parse exception
@@ -42,12 +40,22 @@ class XMLErrorHandler implements ErrorHandler {
         Preferences.debug("Warning: " + getParseExceptionInfo(spe), Preferences.DEBUG_FILEIO);
     }
 
+    /**
+     * Handles parse exception errors by passing the parse exception up as a SAXException.
+     * @param spe the parse exception
+     * @throws SAXException passed up with the parse exception info
+     */
     public void error(SAXParseException spe) throws SAXException {
         String message = "Error: " + getParseExceptionInfo(spe);
 
         throw new SAXException(message);
     }
 
+    /**
+     * Handles parse exception fatal errors by passing the parse exception up as a SAXException.
+     * @param spe the parse exception
+     * @throws SAXException passed up with the parse exception info
+     */
     public void fatalError(SAXParseException spe) throws SAXException {
         String message = "Fatal Error: " + getParseExceptionInfo(spe);
 
