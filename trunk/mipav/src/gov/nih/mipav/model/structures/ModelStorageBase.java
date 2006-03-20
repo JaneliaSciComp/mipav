@@ -126,6 +126,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private int filterType = 2;
     private float freq1 = 0.4f;
     private float freq2 = 0.7f;
+    // 5 variables used in Gabor transform
+    private float freqU;
+    private float freqV;
+    private float sigmaU;
+    private float sigmaV;
+    private float theta;
 
     /** total buffer length */
     private int dataSize;
@@ -1167,6 +1173,46 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public void setFreq2( float _freq2 ) {
         freq2 = _freq2;
     }
+    
+    /**
+    *
+    * @param _freqU float
+    */
+   public void setFreqU( float _freqU ) {
+       freqU = _freqU;
+   }
+
+   /**
+    *
+    * @param _freqV float
+    */
+   public void setFreqV( float _freqV ) {
+       freqV = _freqV;
+   }
+   
+   /**
+   *
+   * @param _sigmaU float
+   */
+  public void setSigmaU( float _sigmaU ) {
+      sigmaU = _sigmaU;
+  }
+
+  /**
+   *
+   * @param _sigmaV float
+   */
+  public void setSigmaV( float _sigmaV ) {
+      sigmaV = _sigmaV;
+  }
+  
+  /**
+  *
+  * @param _theta float
+  */
+ public void setTheta( float _theta ) {
+     theta = _theta;
+ }
 
     /**
      *
