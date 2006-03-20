@@ -285,7 +285,7 @@ public abstract class VOIBase extends Vector {
         int xC, yC, zC;
         float dist;
         boolean inPlane;
-        // System.err.println("near point in plane");
+
         nearPoint = NOT_A_POINT;
         for (i = 0; i < size(); i++ ) {
             inPlane = false;
@@ -293,34 +293,40 @@ public abstract class VOIBase extends Vector {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
-                if (zC == plane) {
+                
+                if (Math.abs(zC - plane) < 5)
+                {
                     inPlane = true;
                 }
             } else if (orientation == XZ) {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
-                if (zC == plane) {
+                
+               	if (Math.abs(zC - plane) < 5) {
                     inPlane = true;
                 }
             } else if (orientation == ZY) {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
-                if (zC == plane) {
+                
+                if (Math.abs(zC - plane) < 5) {
                     inPlane = true;
                 }
             } else {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
-                if (zC == plane) {
+                
+                if (Math.abs(zC - plane) < 5) {
                     inPlane = true;
                 }
             }
+            
             if (inPlane) {
                 dist = (float) MipavMath.distance(x, xC, y, yC);
-                if (dist < 3) {
+                if (dist < 5) {
                     nearPoint = i;
                     lastPoint = nearPoint;
                 }
