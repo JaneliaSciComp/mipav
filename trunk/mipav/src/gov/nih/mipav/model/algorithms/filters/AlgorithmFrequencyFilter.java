@@ -114,6 +114,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     public final static int WINDOW = 1;
     public final static int GAUSSIAN = 2;
     public final static int BUTTERWORTH = 3;
+    public final static int GABOR = 4;
 
     private int     kDim;                   // kernel diameter
     private int     halfKDim;               // (kernel diameter - 1)/2
@@ -160,6 +161,13 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private float   highGain; // HOMOMORPHIC variable > 1 for multiplication of high frequencies
     private float   lowTruncated; // HOMOMORPHIC variable for part of low histogram end trucated
     private float   highTruncated; // HOMOMORPHIC variable for part of high histogram end truncated
+    
+    // Variables used in Gabor filter
+    private float freqU; // Frequency along U axis before rotation by theta range 0 to 1
+    private float freqV; // Frequency along V axis before rotation by theta range 0 to 1
+    private float sigmaU; // Standard deviation along U axis
+    private float sigmaV; // Standard deviation along V axis
+    private float theta; // Rotation in radians;
 
     /**
 	 *
@@ -299,6 +307,63 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.constructionMethod = WINDOW;
         this.kDim           = 65; // Use the value of the biggest kernel in the set
     }
+    
+    /**
+     * Constructor used for Gabor transform
+     * @param srcImg Source image model
+     * @param freqU  Frequency along U axis before rotation by theta range 0 to 1
+     * @param freqV  Frequency along V axis before rotation by theta range 0 to 1
+     * @param sigmaU Standard deviation along U axis
+     * @param sigmaV Standard deviation along V axis
+     * @param theta  Rotation in radians
+     */
+    public AlgorithmFrequencyFilter(ModelImage srcImg, float freqU, float freqV, 
+                                    float sigmaU, float sigmaV, float theta) {
+        super(null, srcImg);
+        
+        this.freqU = freqU;
+        this.freqV = freqV;
+        this.sigmaU = sigmaU;
+        this.sigmaV = sigmaV;
+        this.theta = theta;
+        this.constructionMethod = GABOR;
+        this.imageCrop = false;
+        if (srcImg.getNDims() > 2) {
+            this.image25D = true;
+        }
+        else {
+            this.image25D = false;
+        }
+    }
+    
+    /**
+     * Constructor used for Gabor transform
+     * @param destImg Destination image model
+     * @param srcImg Source image model
+     * @param freqU  Frequency along U axis before rotation by theta range 0 to 1
+     * @param freqV  Frequency along V axis before rotation by theta range 0 to 1
+     * @param sigmaU Standard deviation along U axis
+     * @param sigmaV Standard deviation along V axis
+     * @param theta  Rotation in radians
+     */
+    public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, float freqU,
+                                    float freqV, float sigmaU, float sigmaV, float theta) {
+        super(destImg, srcImg);
+        
+        this.freqU = freqU;
+        this.freqV = freqV;
+        this.sigmaU = sigmaU;
+        this.sigmaV = sigmaV;
+        this.theta = theta;
+        this.constructionMethod = GABOR;
+        this.imageCrop = false;
+        if (srcImg.getNDims() > 2) {
+            this.image25D = true;
+        }
+        else {
+            this.image25D = false;
+        }
+    }
 
     /**
     *   Prepares this class for destruction
@@ -324,7 +389,17 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     */
     private void constructLog() {
 
-        if (filterType != HOMOMORPHIC) {
+        if (constructionMethod == GABOR) {
+            historyString = new String("FrequencyFilter(" +
+                                       String.valueOf(image25D) + ", " +
+                                       String.valueOf(constructionMethod) + ", " +
+                                       String.valueOf(freqU) + ", " +
+                                       String.valueOf(freqV) + ", " +
+                                       String.valueOf(sigmaU) + ", " +
+                                       String.valueOf(sigmaV) + ", " +
+                                       String.valueOf(theta) + ")" + "\n");
+        }
+        else if (filterType != HOMOMORPHIC) {
           historyString = new String("FrequencyFilter(" +
                                      String.valueOf(image25D) + ", " +
                                      String.valueOf(imageCrop) + ", " +
@@ -1100,6 +1175,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (constructionMethod == GAUSSIAN) {
             makeGaussianFilter(f1);
         } // end of if (constructionMethod == GAUSSIAN)
+        
+        if (constructionMethod == GABOR) {
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+        }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
             makeButterworthFilter(f1,f2);
@@ -1257,6 +1336,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (constructionMethod == GAUSSIAN) {
             makeGaussianFilter(f1);
         } // end of if (constructionMethod == GAUSSIAN)
+        
+        if (constructionMethod == GABOR) {
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+        }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
             makeButterworthFilter(f1,f2);
@@ -1572,6 +1655,46 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
       } // end of else if (ndim == 3)
     }
 
+    private void makeGaborFilter(float freqU, float freqV, float sigmaU,
+            float sigmaV, float theta) {
+        int x,y,z,pos;
+        int upperZ;
+        float xcenter, ycenter;
+        float xScale, yScale;
+        float u, v;
+        float cosTheta;
+        float sinTheta;
+        double xDenom, yDenom;
+        float coeff;
+        
+        xcenter = (newDimLengths[0] - 1.0f)/2.0f;
+        ycenter = (newDimLengths[1] - 1.0f)/2.0f;
+        cosTheta = (float)Math.cos((double)theta);
+        sinTheta = (float)Math.sin((double)theta);
+        xDenom = 2.0 * sigmaU * sigmaU;
+        yDenom = 2.0 * sigmaV * sigmaV;
+        if (image25D) {
+            upperZ = newDimLengths[2] - 1;
+        }
+        else {
+            upperZ = 0;
+        }
+        for (z = 0; z <= upperZ; z++)
+            for (y = 0; y <= newDimLengths[1] - 1; y++) {
+                yScale = (y - ycenter)/ycenter;  
+                for (x = 0; x <= newDimLengths[0] - 1; x++) {
+                    xScale = (x - xcenter)/xcenter;
+                    pos = z*newSliceSize + y*newDimLengths[0] + x;
+                    u = (xScale - freqU)*cosTheta + (yScale - freqV)*sinTheta;
+                    v = (yScale - freqV)*cosTheta - (xScale - freqU)*sinTheta;
+                    coeff = (float)Math.exp(-(u*u/xDenom + v*v/yDenom));
+                    imagData[pos] *= coeff;
+                    imagData[pos] *= coeff;
+                }
+            }
+        } // private void makeGaborFilter
+    
+    
     private void makeButterworthFilter(float fr1, float fr2) {
       int x,y,z,pos;
       float distsq,width,centersq,coeff,num,xnorm,ynorm,znorm,xcenter,ycenter,zcenter;
@@ -2283,7 +2406,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         if ((transformDir == FORWARD) &&
-            ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH))) {
+            ((constructionMethod == GAUSSIAN) || (constructionMethod == BUTTERWORTH) ||
+             (constructionMethod == GABOR))) {
           if (!image25D) {
               progressBar.setMessage("Centering data after FFT algorithm...");
           }
