@@ -116,6 +116,7 @@ public class AlgorithmFFT
     public final static int WINDOW = 1;
     public final static int GAUSSIAN = 2;
     public final static int BUTTERWORTH = 3;
+    public final static int GABOR = 4;
 
     /** Kernel diameter */
     private int kDim;
@@ -228,6 +229,13 @@ public class AlgorithmFFT
 
     /**  */
     private float minimum, maximum;
+    
+//  Variables used in Gabor filter
+    private float freqU; // Frequency along U axis before rotation by theta range 0 to 1
+    private float freqV; // Frequency along V axis before rotation by theta range 0 to 1
+    private float sigmaU; // Standard deviation along U axis
+    private float sigmaV; // Standard deviation along V axis
+    private float theta; // Rotation in radians;
 
     /**
      *	@param destImg          image model where result image is to be stored
@@ -329,10 +337,86 @@ public class AlgorithmFFT
             }
         } // if (transformDir == FILTER)
     }
+    
+    /**
+     * Used for GABOR filters
+     *  @param destImg          image model where result image is to be stored
+     *  @param srcImg           source image model
+     *  @param transformDir     indicates transform direction; 1 = forward FFT, 0 = frequency filter,
+     *                                                         -1 = inverse filter
+     *  @param logMagDisplay    if true display log10 of 1 + magnitude
+     *  @param unequalDim       if true allow unequal FFT dimensions
+     *  @param freqU  Frequency along U axis before rotation by theta range 0 to 1
+     *  @param freqV  Frequency along V axis before rotation by theta range 0 to 1
+     *  @param sigmaU Standard deviation along U axis
+     *  @param sigmaV Standard deviation along V axis
+     *  @param theta  Rotation in radians
+     */
+    public AlgorithmFFT(ModelImage destImg, ModelImage srcImg, int transformDir,
+                        boolean logMagDisplay, boolean unequalDim,
+                        float freqU, float freqV, float sigmaU,
+                        float sigmaV, float theta) {
+        super(destImg, srcImg);
+
+        this.transformDir = transformDir;
+        this.logMagDisplay = logMagDisplay;
+        destImage.setLogMagDisplay(logMagDisplay);
+        if (transformDir == FORWARD) {
+            this.unequalDim = unequalDim;
+            destImage.setUnequalDim(unequalDim);
+        }
+        else if (transformDir == FILTER) {
+            this.unequalDim = srcImage.getUnequalDim();
+            destImage.setUnequalDim(unequalDim);
+        }
+        else if (transformDir == INVERSE) {
+            this.unequalDim = srcImage.getUnequalDim();
+        }
+        if (transformDir == FORWARD) {
+            if (srcImg.getNDims() > 2) {
+                this.image25D = true;
+            }
+            else {
+                this.image25D = false;
+            }
+            destImage.setImage25D(image25D);
+        }
+        else if (transformDir == FILTER) {
+            this.image25D = srcImage.getImage25D();
+            destImage.setImage25D(image25D);
+        }
+        else if (transformDir == INVERSE) {
+            this.image25D = srcImage.getImage25D();
+        }
+        this.imageCrop = false;
+        this.freqU = freqU;
+        this.freqV = freqV;
+        this.sigmaU = sigmaU;
+        this.sigmaV = sigmaV;
+        this.theta = theta;
+        if (transformDir == FORWARD) {
+            this.constructionMethod = GABOR;
+            destImage.setOriginalFilterConstruction(constructionMethod);
+        }
+        else if (transformDir == FILTER) {
+            this.constructionMethod = srcImage.getOriginalFilterConstruction();
+            destImage.setOriginalFilterConstruction(this.constructionMethod);
+        }
+        else if (transformDir == INVERSE) {
+            this.constructionMethod = srcImage.getOriginalFilterConstruction();
+        }
+        if (transformDir == FILTER) {
+            destImage.setFreqU(freqU);
+            destImage.setFreqV(freqV);
+            destImage.setSigmaU(sigmaU);
+            destImage.setSigmaV(sigmaV);
+            destImage.setTheta(theta);
+        } // if (transformDir == FILTER)
+    }
 
     /**
      *  @param srcImg           source image model
-     *  @param transformDir	    indicates transform direction; 1 = forward FFT, 0 = frequency filter
+     *  @param transformDir     indicates transform direction; 1 = forward FFT, 0 = frequency filter
      *                                                         -1 = inverse FFT
      *  @param logMagDisplay    if true display log10 of 1 + magnitude
      *  @param unequalDim       if true allow unequal FFT dimensions
@@ -424,6 +508,80 @@ public class AlgorithmFFT
             }
         } // if (transformDir == FILTER)
     }
+    
+    /**
+     *  Used for GABOR filters
+     *  @param srcImg           source image model
+     *  @param transformDir     indicates transform direction; 1 = forward FFT, 0 = frequency filter
+     *                                                       -1 = inverse FFT
+     *  @param logMagDisplay    if true display log10 of 1 + magnitude
+     *  @param unequalDim       if true allow unequal FFT dimensions
+     *  @param destImg Destination image model
+     *  @param srcImg Source image model
+     *  @param freqU  Frequency along U axis before rotation by theta range 0 to 1
+     *  @param freqV  Frequency along V axis before rotation by theta range 0 to 1
+     *  @param sigmaU Standard deviation along U axis
+     *  @param sigmaV Standard deviation along V axis
+     *  @param theta  Rotation in radians
+     */
+    public AlgorithmFFT(ModelImage srcImg, int transformDir, boolean logMagDisplay,
+                        boolean unequalDim, float freqU, float freqV, float simgaU,
+                        float sigmaV, float theta) {
+
+        super(null, srcImg);
+
+        this.transformDir = transformDir;
+        this.logMagDisplay = logMagDisplay;
+        srcImage.setLogMagDisplay(logMagDisplay);
+        if (transformDir == FORWARD) {
+            this.unequalDim = unequalDim;
+            srcImage.setUnequalDim(unequalDim);
+        }
+        else if (transformDir == FILTER) {
+            this.unequalDim = srcImage.getUnequalDim();
+        }
+        else if (transformDir == INVERSE) {
+            this.unequalDim = srcImage.getUnequalDim();
+        }
+        if (transformDir == FORWARD) {
+            if (srcImage.getNDims() > 2) {
+                this.image25D = true;
+            }
+            else {
+                this.image25D = false;
+            }
+            srcImage.setImage25D(image25D);
+        }
+        else if (transformDir == FILTER) {
+            this.image25D = srcImage.getImage25D();
+        }
+        else if (transformDir == INVERSE) {
+            this.image25D = srcImage.getImage25D();
+        }
+        this.imageCrop = false;
+        this.freqU = freqU;
+        this.freqV = freqV;
+        this.sigmaU = sigmaU;
+        this.sigmaV = sigmaV;
+        this.theta = theta;
+        if (transformDir == FORWARD) {
+            this.constructionMethod = GABOR;
+            srcImage.setOriginalFilterConstruction(GABOR);
+        }
+        else if (transformDir == FILTER) {
+            this.constructionMethod = srcImage.getOriginalFilterConstruction();
+        }
+        else if (transformDir == INVERSE) {
+            this.constructionMethod = srcImage.getOriginalFilterConstruction();
+        }
+        if (transformDir == FILTER) {
+            srcImage.setFreqU(freqU);
+            srcImage.setFreqV(freqV);
+            srcImage.setSigmaU(sigmaU);
+            srcImage.setSigmaV(sigmaV);
+            srcImage.setTheta(theta);
+        } // if (transformDir == FILTER)
+    }
 
     /**
      *   Prepare this class for destruction
@@ -441,7 +599,22 @@ public class AlgorithmFFT
      */
     private void constructLog() {
 
-        historyString = new String("FFT(" +
+        if (constructionMethod == GABOR) {
+            historyString = new String("FFT(" +
+                    String.valueOf(transformDir) + ", " +
+                    String.valueOf(logMagDisplay) + ", " +
+                    String.valueOf(unequalDim) + ", " +
+                    String.valueOf(image25D) + ", " +
+                    String.valueOf(imageCrop) + ", " +
+                    String.valueOf(constructionMethod) + "," +
+                    String.valueOf(freqU) + ", " +
+                    String.valueOf(freqV) + ", " +
+                    String.valueOf(sigmaU) + "," +
+                    String.valueOf(sigmaV) + "," +
+                    String.valueOf(theta) + ")" + "\n");
+        }
+        else {
+            historyString = new String("FFT(" +
                                    String.valueOf(transformDir) + ", " +
                                    String.valueOf(logMagDisplay) + ", " +
                                    String.valueOf(unequalDim) + ", " +
@@ -453,6 +626,7 @@ public class AlgorithmFFT
                                    String.valueOf(f2) + "," +
                                    String.valueOf(constructionMethod) + "," +
                                    String.valueOf(butterworthOrder) + ")" + "\n");
+        }
 
     }
 
@@ -1152,6 +1326,10 @@ public class AlgorithmFFT
         if ( (transformDir == FILTER) && (constructionMethod == GAUSSIAN)) {
             makeGaussianFilter(f1);
         } // end of if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN))
+        
+        if ( (transformDir == FILTER) && (constructionMethod == GABOR)) {
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+        }
 
         if ( (transformDir == FILTER) && (constructionMethod == BUTTERWORTH)) {
             makeButterworthFilter(f1, f2);
@@ -1370,6 +1548,10 @@ public class AlgorithmFFT
         if ( (transformDir == FILTER) && (constructionMethod == GAUSSIAN)) {
             makeGaussianFilter(f1);
         } // end of if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN))
+        
+        if ((transformDir == FILTER)  && (constructionMethod == GABOR)) {
+            makeGaborFilter(freqU,freqV, sigmaU, sigmaV, theta);
+        }
 
         if ( (transformDir == FILTER) && (constructionMethod == BUTTERWORTH)) {
             makeButterworthFilter(f1, f2);
@@ -1690,6 +1872,45 @@ public class AlgorithmFFT
             } // end of if (filterType == HIGHPASS)
         } // end of else if (ndim == 3)
     }
+    
+    private void makeGaborFilter(float freqU, float freqV, float sigmaU,
+            float sigmaV, float theta) {
+        int x,y,z,pos;
+        int upperZ;
+        float xcenter, ycenter;
+        float xScale, yScale;
+        float u, v;
+        float cosTheta;
+        float sinTheta;
+        double xDenom, yDenom;
+        float coeff;
+        
+        xcenter = (newDimLengths[0] - 1.0f)/2.0f;
+        ycenter = (newDimLengths[1] - 1.0f)/2.0f;
+        cosTheta = (float)Math.cos((double)theta);
+        sinTheta = (float)Math.sin((double)theta);
+        xDenom = 2.0 * sigmaU * sigmaU;
+        yDenom = 2.0 * sigmaV * sigmaV;
+        if (image25D) {
+            upperZ = newDimLengths[2] - 1;
+        }
+        else {
+            upperZ = 0;
+        }
+        for (z = 0; z <= upperZ; z++)
+            for (y = 0; y <= newDimLengths[1] - 1; y++) {
+                yScale = (y - ycenter)/ycenter;  
+                for (x = 0; x <= newDimLengths[0] - 1; x++) {
+                    xScale = (x - xcenter)/xcenter;
+                    pos = z*newSliceSize + y*newDimLengths[0] + x;
+                    u = (xScale - freqU)*cosTheta + (yScale - freqV)*sinTheta;
+                    v = (yScale - freqV)*cosTheta - (xScale - freqU)*sinTheta;
+                    coeff = (float)Math.exp(-(u*u/xDenom + v*v/yDenom));
+                    imagData[pos] *= coeff;
+                    imagData[pos] *= coeff;
+                }
+            }
+        } // private void makeGaborFilter
 
     /**
      *   Builds a Butterworth filter
