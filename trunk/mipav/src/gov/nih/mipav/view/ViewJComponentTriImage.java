@@ -2672,7 +2672,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void handleVOIProcessing(MouseEvent mouseEvent)
     {
         int j;
-        int k;
         Point3Df pt;
 
         ViewVOIVector VOIs = imageActive.getVOIs();
@@ -2693,9 +2692,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         for (int i = 0; i < nVOI; i++)
         {
-            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
-            { // curve type is Point
-                //Point3D mousePt = getVolumePosition(xSOrg, ySOrg, slice);
+            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) // curve type is a VOI point
+            { 
                 Point3D mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
                 int xOrg = mousePt.x;
                 int yOrg = mousePt.y;
@@ -2705,64 +2703,60 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 Point3Df[] voiPoints;
                 if (originalOrientation == AXIAL || originalOrientation == NA)
                 {
-                    voiPoints = VOIs.VOIAt(i).exportPoints(zOrg);
-                    for (j = 0; j < voiPoints.length; j++)
-                    {
-                        if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[zOrg].elementAt(j))).nearPointInPlane(xOrg,
-                            yOrg, zOrg, AXIAL))
-                        {
-                            VOIs.VOIAt(i).setActive(true);
-                            ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[zOrg].elementAt(j))).setActive(true);
-                            voiID = VOIs.VOIAt(i).getID();
-
-                            pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[zOrg].elementAt(j))).exportPoint();
-                        }
-                    }
+                	for (int p = zOrg-1; p < zOrg+2; p++)
+                	{
+	                	voiPoints = VOIs.VOIAt(i).exportPoints(p);
+	                    for (j = 0; j < voiPoints.length && pt == null; j++)
+	                    {
+	                        if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).nearPointInPlane(xOrg, yOrg, p, AXIAL))
+	                        {
+	                            VOIs.VOIAt(i).setActive(true);
+	                            ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
+	                            voiID = VOIs.VOIAt(i).getID();
+	                            pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
+	                        }
+	                    }
+                	}
                 } // if (originalOrientation == AXIAL || originalOrientation == NA)
                 else if (originalOrientation == CORONAL)
                 {
-                    for (k = 0; k < imageActive.getExtents()[2]; k++)
-                    {
-                        voiPoints = VOIs.VOIAt(i).exportPoints(k);
-                        for (j = 0; j < voiPoints.length; j++)
+                	for (int p = zOrg-1; p < zOrg+2; p++)
+                	{
+                		voiPoints = VOIs.VOIAt(i).exportPoints(p);
+                        for (j = 0; j < voiPoints.length && pt == null; j++)
                         {
-                            if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).nearPointInPlane(xOrg,
-                                zOrg, yOrg, CORONAL))
+                            if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).nearPointInPlane(xOrg,
+                                p, yOrg, CORONAL))
                             {
                                 VOIs.VOIAt(i).setActive(true);
-                                ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).setActive(true);
+                                ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
                                 voiID = VOIs.VOIAt(i).getID();
-                                pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).exportPoint();
+                                pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
                             }
                         }
-                    }
+                	}
                 } // else if (originalOrientation == CORONAL)
                 else if (originalOrientation == SAGITTAL)
                 {
-                    for (k = 0; k < imageActive.getExtents()[2]; k++)
-                    {
-                        voiPoints = VOIs.VOIAt(i).exportPoints(k);
-                        for (j = 0; j < voiPoints.length; j++)
+                	for (int p = zOrg-1; p < zOrg+2; p++)
+                	{
+                		voiPoints = VOIs.VOIAt(i).exportPoints(p);
+                        for (j = 0; j < voiPoints.length && pt == null; j++)
                         {
-                            if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).nearPointInPlane(zOrg,
+                            if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).nearPointInPlane(p,
                                 yOrg, xOrg, SAGITTAL))
                             {
                                 VOIs.VOIAt(i).setActive(true);
-                                ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).setActive(true);
+                                ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
                                 voiID = VOIs.VOIAt(i).getID();
-                                pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).exportPoint();
+                                pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
                             }
                         }
-                    }
-                } // else if (originalOrientation == SAGITTAL)
-
+                	}
+                }
 
                 if (pt != null)
                 {
-                    Point3D volumePt = getVolumePosition( (int) pt.x, (int) pt.y, (int) pt.z);
-
-                    anchorPt.setLocation(volumePt.x, volumePt.y);
-
                     lastZOrg = zOrg;
                     setMode(MOVE_VOIPOINT);
                     imageActive.notifyImageDisplayListeners();
@@ -3198,8 +3192,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 setCursor(blankCursor);
             }
+            
             updateFrameLabels(frame, xS, yS);
-
+            
             float zoomer = 1;
             if (resolutionY == resolutionX) {
                 zoomer = Math.max(res[2], res[0]) / Math.min(res[2], res[0]);
@@ -3207,27 +3202,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             float flipper = slice;
             // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-            if (hasOrientation && (triComponentOrientation == AXIAL))
-            {
-                flipper = (imageActive.getExtents()[axisOrder[2]]-1) - flipper;
+            if (hasOrientation && (triComponentOrientation == AXIAL)) {
+                flipper = (imageActive.getExtents()[axisOrder[2]] - 1) - flipper;
             }
 
             flipper = flipper * zoomer * getZoomY();
             triImageFrame.setCrosshairs(mouseEvent.getX(), mouseEvent.getY(),
-                                       (int) ( flipper + (0.5f * zoomer) ), triComponentOrientation);
+                                        (int) ( flipper + (0.5f * zoomer) ),
+                                        triComponentOrientation);
 
             // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-            if (hasOrientation && (triComponentOrientation == SAGITTAL || triComponentOrientation == CORONAL))
+            if (hasOrientation && (triComponentOrientation == SAGITTAL ||
+                                   triComponentOrientation == CORONAL))
             {
                 yS = imageActive.getExtents()[axisOrder[1]] - yS - 1;
             }
-            triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
 
-            if (triImageFrame.linkTriFrame != null)
-            {
-                triImageFrame.linkTriFrame.setSlices(xS, yS, slice);
-                triImageFrame.linkTriFrame.updateImages(true);
-            }
+            triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
         } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)
 
         else if (mode == MOVE)
@@ -3266,13 +3257,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 {
                     if (VOIs.VOIAt(i).getCurveType() == VOI.POINT)
                     {
-                        Point3D mousePt = getVolumePosition(xS, yS, slice);
+                    	Point3D mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
 
                         found = true;
 
                         // the reason for this k = lastZOrg-1 loop is because the VOI point lies right on
                         // the slice edge. if this loop was not present, the user could only grab the
-                        // point from side, which is confusing since the point is drawn on the
+                        // point from one side, which is confusing since the point is drawn on the
                         // edge of the slice. the loop tests both sides of the VOI point (both
                         // surrounding slices) and thus makes it more easier to grab the point
                         for (int k = lastZOrg-1; k <= lastZOrg; k++)
@@ -3295,13 +3286,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                         y[0] = mousePt.y;
                                         z[0] = mousePt.z;
                                         VOIBase pt = new VOIPoint();
-
-                                        // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-                                        if (hasOrientation && (triComponentOrientation == SAGITTAL ||
-                                                               triComponentOrientation == CORONAL))
-                                        {
-                                            y[0] = imageActive.getExtents()[axisOrder[1]] - y[0] - 1;
-                                        }
 
                                         pt.importArrays(x, y, z, x.length);
                                         VOIs.VOIAt(i).getCurves()[mousePt.z].addElement(pt);
@@ -4333,12 +4317,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public final int getOriginalOrientation()
     {
-        int originalOrientation = NA;
-
         if (!hasOrientation)
         {
             return NA;
         }
+        
+        if (axisOrder[2] == 2)
+        {
+        	return orientation;
+        }
+        
+        int originalOrientation = NA;
 
         if (orientation == CORONAL)
         {
@@ -4351,45 +4340,33 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 case 1:
                     originalOrientation = AXIAL;
                     break;
-
-                case 2:
-                    originalOrientation = CORONAL;
-                    break;
             }
         }
 
         if (orientation == SAGITTAL)
         {
-            switch (axisOrder[2])
+            switch (axisOrder[0])
             {
-                case 0:
-                    originalOrientation = CORONAL;
-                    break;
-
                 case 1:
-                    originalOrientation = AXIAL;
+                	originalOrientation = AXIAL;
                     break;
 
                 case 2:
-                    originalOrientation = SAGITTAL;
+                    originalOrientation = CORONAL;
                     break;
             }
         }
 
         if (orientation == AXIAL)
         {
-            switch (axisOrder[2])
+            switch (axisOrder[0])
             {
                 case 0:
-                    originalOrientation = SAGITTAL;
-                    break;
-
-                case 1:
                     originalOrientation = CORONAL;
                     break;
 
-                case 2:
-                    originalOrientation = AXIAL;
+                case 1:
+                    originalOrientation = SAGITTAL;
                     break;
             }
         }
