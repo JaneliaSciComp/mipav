@@ -372,6 +372,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     private JToggleButton addPointToggleButton;
     private JToggleButton dropperPaintToggleButton;
     private JToggleButton paintCanToggleButton;
+    private JButton leastSquaresButton;
+    private JButton tpSplineButton;
 
     /**
      *   @deprecated use ViewJFrameTriImage(ModelImage, ModelLUT, ModelImage, ModelLUT, ViewControlsImage, ViewJFrameImage)
@@ -1335,6 +1337,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
         
         setImageSelectorPanelVisible(true);
+        
+        leastSquaresButton.setEnabled(true);
+        tpSplineButton.setEnabled(true);
 
         // Get all frames
         Vector frameList = imageB.getImageFrameVector();
@@ -2950,7 +2955,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
        {
            String command = event.getActionCommand();
            Object source = event.getSource();
-System.out.println(command);
+
            Preferences.debug(command, Preferences.DEBUG_MINOR);
 
            if (command.equals("CloseFrame"))
@@ -4502,7 +4507,7 @@ System.out.println(command);
         //imageToolBar.add(toolbarBuilder.buildToggleButton("NewVOI", "Initiate new VOI", "newvoi", VOIGroup));
         imageToolBar.add(toolbarBuilder.buildButton("deleteVOI", "Delete point VOI", "delete"));
         
-        JButton leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
+        leastSquaresButton = new JButton(MipavUtil.getIcon("reglsq.gif"));
         leastSquaresButton.addActionListener(this);
         leastSquaresButton.setToolTipText("Apply least squares alignment");
         leastSquaresButton.setActionCommand("leastSquares");
@@ -4515,7 +4520,7 @@ System.out.println(command);
         }
         imageToolBar.add(leastSquaresButton);
         
-        JButton tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
+        tpSplineButton = new JButton(MipavUtil.getIcon("regtsp.gif"));
         tpSplineButton.addActionListener(this);
         tpSplineButton.setToolTipText("Apply thin plate spline alignment");
         tpSplineButton.setActionCommand("tpSpline");
@@ -5095,6 +5100,9 @@ System.out.println(command);
             triImage[AXIAL_A].setZoom(optimalZoom, optimalZoom);
             triImage[SAGITTAL_A].setZoom(optimalZoom, optimalZoom);
             triImage[CORONAL_A].setZoom(optimalZoom, optimalZoom);
+            
+            leastSquaresButton.setEnabled(false);
+            tpSplineButton.setEnabled(false);
 
             updateLayout();
 
