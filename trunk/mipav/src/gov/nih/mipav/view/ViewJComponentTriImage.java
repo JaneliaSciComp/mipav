@@ -3685,8 +3685,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         {
             if (growDialog != null)
             {
-                // the "+ 1" is there to make the displayed coordinates 1-based instead of 0-based
-                Point3D point = getVolumePosition(xS + 1, yS + 1, slice + 1);
+            	Point3D point = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+            	// the "++" here is to make the display 1-based, like the crosshairs, instead of 0-based 
+            	point.x++;
+            	point.y++;
+            	point.z++; 
 
                 if (triComponentOrientation == AXIAL || !hasOrientation)
                 {
