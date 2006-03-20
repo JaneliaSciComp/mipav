@@ -2877,8 +2877,10 @@ public class ModelImage extends ModelStorageBase {
         }
         else
         {
-            iRed = (int) ( 127 * ( this.getFloat( iIndex ) - this.getMin() ) /
-                           ( this.getMax() - this.getMin() ) );
+            Number kGray =
+                new Double( 255 * ( this.getFloat( iIndex ) - this.getMin() ) /
+                            ( this.getMax() - this.getMin() ) );
+            iRed = kGray.byteValue();
             iGreen = iRed;
             iBlue = iRed;
         }
