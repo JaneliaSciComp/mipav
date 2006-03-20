@@ -50,7 +50,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /**
      * The x and y coordinate of the cursor position in screen space of this component.
      */
-    private Point screenPt = new Point(0, 0);
+    private Point crosshairPt = new Point(0, 0);
 
     /**
      * Reordered resolutions according to orientation.  These are the resolutions of the component image being displayed.
@@ -362,8 +362,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void updateCrosshairPosition(int x, int y)
     {
-        screenPt.x = x;
-        screenPt.y = y;
+        crosshairPt.x = x;
+        crosshairPt.y = y;
     }
 
     /**
@@ -575,7 +575,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
                 
-                Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+                Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
                 computeTalairachVoxelPosition(pt.x, pt.y);
             }
 
@@ -596,7 +596,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
 
-                Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+                Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
                 computeTalairachVoxelPosition(pt.x, pt.y);
             }
 
@@ -617,7 +617,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
 
-                Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+                Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
                 computeTalairachVoxelPosition(pt.x, pt.y);
             } // if (showTalairach)
         } // end of else if (triComponentOrientation == SAGITTAL)
@@ -736,7 +736,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCrosshairLines(Graphics2D offscreenGraphics2d) {
 
         //This snaps the crosshair to the voxel boundary
-        Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+        Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
 
         offscreenGraphics2d.setColor(xColor);
         offscreenGraphics2d.drawLine(pt.x, 0, pt.x, pt.y - 10);
@@ -754,7 +754,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCrosshairStubs(Graphics2D offscreenGraphics2d)
     {
         //This snaps the crosshair to the voxel boundary
-        Point pt = getScreenCoordinates(getTriImagePosition(screenPt.x, screenPt.y));
+        Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
 
         // border
         offscreenGraphics2d.setColor(zColor);
@@ -2854,10 +2854,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             setMode(DEFAULT);
             imageActive.notifyImageDisplayListeners(null, true);
         }
-        else if (mode == CUBE_BOUNDS)
-        {
-            setCursor(crosshairCursor);
-        } // else if (mode == CUBE_BOUNDS)
         else if (mode == PAINT_CAN)
         {
             Point3D volumePt = getVolumePosition(xS + 1, yS + 1, slice + 1);
@@ -4105,7 +4101,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Get the color for the screenPt.x crosshair.
+     * Get the color for the crosshairPt.x crosshair.
      * @return  the x crosshair color
      */
     public Color getXSliceHairColor()
@@ -4530,7 +4526,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             slice = imageActive.getExtents()[axisOrder[2]] - 1;
         }
 
-        Point3D newLabel = getTriImagePosition(screenPt.x, screenPt.y);
+        Point3D newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
         triImageFrame.setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
 
         if (orientation == AXIAL)
@@ -4548,13 +4544,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (resolutionX == resolutionY)
         {
-            triImageFrame.setCrosshairs(screenPt.x, screenPt.y,
+            triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
                                         (int) (slice * (res[2] / res[1]) * getZoomY()),
                                         triComponentOrientation);
         }
         else
         {
-            triImageFrame.setCrosshairs(screenPt.x, screenPt.y,
+            triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
                                         (int) (slice * getZoomY()),
                                         triComponentOrientation);
         }
@@ -4707,6 +4703,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         triImageFrame.updatePaint(paintBitmap);
     }
 
+    public Point getCrosshairPoint()
+    {
+    	return crosshairPt;
+    }
+    
     /**
      * Gets the current out-of-component slice the component is displaying in volume space (ie, post reversal, if needed).
      * @return  the currently displayed slice in this component

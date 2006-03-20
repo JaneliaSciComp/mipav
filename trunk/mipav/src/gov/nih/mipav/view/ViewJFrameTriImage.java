@@ -2950,7 +2950,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
        {
            String command = event.getActionCommand();
            Object source = event.getSource();
-
+System.out.println(command);
            Preferences.debug(command, Preferences.DEBUG_MINOR);
 
            if (command.equals("CloseFrame"))
@@ -3448,6 +3448,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            }
            else if (command.equals("UnMagImage"))
            {
+        	   float oldZoom = zoom;
+        	   
                if (zoomMode == ViewJComponentEditImage.LINEAR && triImage[AXIAL_A].getZoomX() > 1.0f)
                {
                    // linear zoom is prevented if getZoomX() <= 1.0
@@ -3461,7 +3463,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                {
                    if (triImage[i] != null)
                    {
-                       triImage[i].setZoom(zoom, zoom);
+                	   triImage[i].setZoom(zoom, zoom);
+                       
+                       Point oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                       
+                       if (oldCrosshairPoint != null)
+                       {
+                    	   int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
+                    	   int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
+                    	   
+                    	   triImage[i].updateCrosshairPosition(newX, newY);
+                       }
                    }
                }
                validate();
@@ -3470,6 +3482,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
            }
            else if (command.equals("MagImage"))
            {
+        	   float oldZoom = zoom;
+        	   
                if (zoomMode == ViewJComponentEditImage.LINEAR && triImage[AXIAL_A] != null)
                {
                    zoom = triImage[AXIAL_A].getZoomX() + 1.0f;
@@ -3478,11 +3492,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                {
                    zoom = 2.0f * triImage[AXIAL_A].getZoomX();
                }
+               
                for (int i = 0; i < MAX_TRI_IMAGES; i++)
                {
                    if (triImage[i] != null)
                    {
                        triImage[i].setZoom(zoom, zoom);
+                       
+                       Point oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                       
+                       if (oldCrosshairPoint != null)
+                       {
+                    	   int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
+                    	   int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
+                    	   
+                    	   triImage[i].updateCrosshairPosition(newX, newY);
+                       }
                    }
                }
                validate();
