@@ -129,8 +129,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
     // 5 variables used in Gabor transform
     private float freqU = 0.0f; // frequency along horizontal axis before rotation from -1 to 1
     private float freqV = 0.0f; // frequency along vertical axis before rotation from -1 to 1
-    private float sigmaU = 1.0f; // standard deviation along horizontal axis before rotation
-    private float sigmaV = 1.0f; // standard deviation along vertical axis before rotation
+    private float sigmaU = 0.1f; // standard deviation along horizontal axis before rotation
+    private float sigmaV = 0.1f; // standard deviation along vertical axis before rotation
     private float theta = 0.0f; // angle or rotation in radians
 
     /** total buffer length */
