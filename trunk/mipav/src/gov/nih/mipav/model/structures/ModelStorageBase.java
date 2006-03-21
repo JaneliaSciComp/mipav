@@ -127,11 +127,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
     private float freq1 = 0.4f;
     private float freq2 = 0.7f;
     // 5 variables used in Gabor transform
-    private float freqU;
-    private float freqV;
-    private float sigmaU;
-    private float sigmaV;
-    private float theta;
+    private float freqU = 0.0f; // frequency along horizontal axis before rotation from -1 to 1
+    private float freqV = 0.0f; // frequency along vertical axis before rotation from -1 to 1
+    private float sigmaU = 1.0f; // standard deviation along horizontal axis before rotation
+    private float sigmaV = 1.0f; // standard deviation along vertical axis before rotation
+    private float theta = 0.0f; // angle or rotation in radians
 
     /** total buffer length */
     private int dataSize;
@@ -784,6 +784,46 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public final float getFreq2() {
         return freq2;
+    }
+    
+    /**
+     * returns frequency U of filter
+     * @return freqU
+     */
+    public final float getFreqU() {
+        return freqU;
+    }
+
+    /**
+     * returns frequency V of filter
+     * @return freqV
+     */
+    public final float getFreqV() {
+        return freqV;
+    }
+    
+    /**
+     * returns standard deviation U of filter
+     * @return sigmaU
+     */
+    public final float getSigmaU() {
+        return sigmaU;
+    }
+
+    /**
+     * returns standard deviation V of filter
+     * @return sigmaV
+     */
+    public final float getSigmaV() {
+        return sigmaV;
+    }
+    
+    /**
+     * returns roation angle theta in radians of filter
+     * @return theta
+     */
+    public final float getTheta() {
+        return theta;
     }
 
     /**
