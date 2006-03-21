@@ -24,6 +24,11 @@ import java.util.Arrays;
  *  This software module performs all 3 steps of this process, but only performs one step
  *  after a dialog OK.  The AlgorithmFrequencyFilter module performs all 3 steps after
  *  a dialog OK.
+ *  
+ *  The module also creates a Gabor filter, which is essentially a tilted Gaussian
+ *  with 2 unequal axes at an offset (freqU, freqV) from the origin.  A Gabor filter
+ *  only responds to a texture having both a particular frequency and a particular
+ *  orientation.
  *
  *  The core algorithm of this module, the fast fourier transform algorithm found in exec(), requires that
  *  all the dimensions of an N-dimensional dataset be powers of 2.  To be able to use
@@ -231,10 +236,10 @@ public class AlgorithmFFT
     private float minimum, maximum;
     
 //  Variables used in Gabor filter
-    private float freqU; // Frequency along U axis before rotation by theta range 0 to 1
-    private float freqV; // Frequency along V axis before rotation by theta range 0 to 1
-    private float sigmaU; // Standard deviation along U axis
-    private float sigmaV; // Standard deviation along V axis
+    private float freqU; // Frequency along U axis before rotation by theta range -1 to 1
+    private float freqV; // Frequency along V axis before rotation by theta range -1 to 1
+    private float sigmaU; // Standard deviation along prerotated U axis
+    private float sigmaV; // Standard deviation along prerotated V axis
     private float theta; // Rotation in radians;
 
     /**
@@ -346,10 +351,10 @@ public class AlgorithmFFT
      *                                                         -1 = inverse filter
      *  @param logMagDisplay    if true display log10 of 1 + magnitude
      *  @param unequalDim       if true allow unequal FFT dimensions
-     *  @param freqU  Frequency along U axis before rotation by theta range 0 to 1
-     *  @param freqV  Frequency along V axis before rotation by theta range 0 to 1
-     *  @param sigmaU Standard deviation along U axis
-     *  @param sigmaV Standard deviation along V axis
+     *  @param freqU  Frequency along U axis before rotation by theta range -1 to 1
+     *  @param freqV  Frequency along V axis before rotation by theta range -1 to 1
+     *  @param sigmaU Standard deviation along prerotated U axis
+     *  @param sigmaV Standard deviation along prerotated V axis
      *  @param theta  Rotation in radians
      */
     public AlgorithmFFT(ModelImage destImg, ModelImage srcImg, int transformDir,
@@ -518,10 +523,10 @@ public class AlgorithmFFT
      *  @param unequalDim       if true allow unequal FFT dimensions
      *  @param destImg Destination image model
      *  @param srcImg Source image model
-     *  @param freqU  Frequency along U axis before rotation by theta range 0 to 1
-     *  @param freqV  Frequency along V axis before rotation by theta range 0 to 1
-     *  @param sigmaU Standard deviation along U axis
-     *  @param sigmaV Standard deviation along V axis
+     *  @param freqU  Frequency along U axis before rotation by theta range -1 to 1
+     *  @param freqV  Frequency along V axis before rotation by theta range -1 to 1
+     *  @param sigmaU Standard deviation along prerotated U axis
+     *  @param sigmaV Standard deviation along prerotated V axis
      *  @param theta  Rotation in radians
      */
     public AlgorithmFFT(ModelImage srcImg, int transformDir, boolean logMagDisplay,
@@ -1550,7 +1555,7 @@ public class AlgorithmFFT
         } // end of if ((transformDir == FILTER) && (constructionMethod == GAUSSIAN))
         
         if ((transformDir == FILTER)  && (constructionMethod == GABOR)) {
-            makeGaborFilter(freqU,freqV, sigmaU, sigmaV, theta);
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
         }
 
         if ( (transformDir == FILTER) && (constructionMethod == BUTTERWORTH)) {
@@ -1906,7 +1911,7 @@ public class AlgorithmFFT
                     u = (xScale - freqU)*cosTheta + (yScale - freqV)*sinTheta;
                     v = (yScale - freqV)*cosTheta - (xScale - freqU)*sinTheta;
                     coeff = (float)Math.exp(-(u*u/xDenom + v*v/yDenom));
-                    imagData[pos] *= coeff;
+                    realData[pos] *= coeff;
                     imagData[pos] *= coeff;
                 }
             }
