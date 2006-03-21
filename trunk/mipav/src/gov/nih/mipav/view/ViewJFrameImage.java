@@ -3758,6 +3758,10 @@ System.out.println(command);
         {
             new JDialogFrequencyFilter(this, getActiveImage());
         }
+        else if (command.equals("gFilter"))
+        {
+            new JDialogGaborFilter(this, getActiveImage());
+        }
         else if (command.equals("hFilter"))
         {
             new JDialogHomomorphicFilter(this, getActiveImage());
