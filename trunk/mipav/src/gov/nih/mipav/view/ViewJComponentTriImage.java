@@ -4532,29 +4532,34 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         slice = newSlice;
         
         Point3D newLabel = null;
+        
+        int coronalSlice = triImageFrame.getCoronalComponentSlice(); 
+        int sagittalSlice = triImageFrame.getSagittalComponentSlice();
+        int axialSlice = triImageFrame.getAxialComponentSlice();
 
         if (orientation == CORONAL)
         {
         	triImageFrame.setCoronalComponentSlice(newSlice); 
-        	newLabel = getTriImagePosition(triImageFrame.getAxialComponentSlice(), triImageFrame.getSagittalComponentSlice());
+        	//newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
             
-        	triImageFrame.fireCoordinateChange(triImageFrame.getSagittalComponentSlice(), newSlice, triImageFrame.getAxialComponentSlice());
+        	triImageFrame.fireCoordinateChange(sagittalSlice, newSlice, axialSlice);
         }
         else if (orientation == SAGITTAL)
         {
         	triImageFrame.setSagittalComponentSlice(newSlice);
-        	newLabel = getTriImagePosition(triImageFrame.getAxialComponentSlice(), triImageFrame.getCoronalComponentSlice());
+        	//newLabel = getTriImagePosition(axialSlice, coronalSlice);
             
-        	triImageFrame.fireCoordinateChange(newSlice, triImageFrame.getCoronalComponentSlice(), triImageFrame.getAxialComponentSlice());
+        	triImageFrame.fireCoordinateChange(newSlice, coronalSlice, axialSlice);
         }
         else
         {
         	triImageFrame.setAxialComponentSlice(newSlice);
-        	newLabel = getTriImagePosition(triImageFrame.getCoronalComponentSlice(), triImageFrame.getSagittalComponentSlice());
+        	//newLabel = getTriImagePosition(coronalSlice, sagittalSlice);
             
-        	triImageFrame.fireCoordinateChange(triImageFrame.getSagittalComponentSlice(), triImageFrame.getCoronalComponentSlice(), newSlice);
+        	triImageFrame.fireCoordinateChange(sagittalSlice, coronalSlice, newSlice);
         }
         
+        newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
         triImageFrame.setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
         
         // for the crosshairs display, we must make the 'newSlice' value 1-based
