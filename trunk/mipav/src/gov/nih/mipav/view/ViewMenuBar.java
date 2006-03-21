@@ -294,6 +294,7 @@ public class ViewMenuBar {
                                     menuBuilder.buildMenuItem("Extract surface (marching cubes)", "extractSurfaceCubes", 0, null, false),
                                     menuBuilder.buildMenuItem("FFT", null, 0, null, false),
                                     menuBuilder.buildMenuItem("Filters (frequency)", null, 0, null, false),
+                                    menuBuilder.buildMenuItem("Filters (Gabor)", "gFilter", 0, null, false),
                                     menuBuilder.buildMenuItem("Filters (homomorphic)", "hFilter", 0, null, false),
                                     menuBuilder.makeMenu("Filters (spatial)", false, new JMenuItem[] {
             menuBuilder.buildMenuItem("Adaptive noise reduction", "ANR", 0, null, false),
@@ -695,6 +696,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Extract brain", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
             menuBuilder.setMenuItemEnabled("Filters (frequency)", false);
+            menuBuilder.setMenuItemEnabled("Filters (Gabor)", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Grays -> RGB", false);
