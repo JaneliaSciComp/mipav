@@ -146,9 +146,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
     /** Flythru toolbar */
     private JToolBar flyThruToolbar;
 
-    /** Surface render button in the surface toolbar.  The button is enabled by the resample dialog. */
-    private JButton volButton;
-
     /** Screen width, screen height */
     private int screenWidth, screenHeight;
 
@@ -574,6 +571,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
             insertSurfaceTab( "Clip", clipPanel );
             insertRaycastTab( "Clip", clipPanel );
             insertShearwarpTab( "Clip", clipPanel );
+        } else if ( command.equals( "OpacityHistogram" )) {
+            insertTab( "Opacity", opacityPanel );
+            insertSurfaceTab( "Opacity", opacityPanel );
+            insertRaycastTab( "Opacity", opacityPanel );
+            insertShearwarpTab( "Opacity", opacityPanel );
         } else if ( command.equals( "Opacity" ) ) {
             clipBox.setVisible( true );
             clipButton.setEnabled( true );
@@ -1829,6 +1831,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         viewToolBar.add(toolbarBuilder.buildButton( "ResetZ" , "Reset Z Axis", "zalign") );
         viewToolBar.add( ViewToolBarBuilder.makeSeparator() );
         viewToolBar.add(toolbarBuilder.buildButton( "HistoLUT" , "Histogram Lookup Table", "histolut") );
+        viewToolBar.add(toolbarBuilder.buildButton( "OpacityHistogram" , "Opacity histogram", "histogram") );
         viewToolBar.add( ViewToolBarBuilder.makeSeparator() );
         viewToolBar.add(toolbarBuilder.buildButton( "Slices" , "Slice render", "triplanar") );
         viewToolBar.add(toolbarBuilder.buildButton( "Opacity" , "Surface volume renderer", "renderer") );
@@ -3137,7 +3140,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
 
         clipBox = null;
         volToolBar = null;
-        volButton = null;
 
         if ( paintGrowDialog != null ) {
             paintGrowDialog.dispose();
