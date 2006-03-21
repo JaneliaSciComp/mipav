@@ -48,7 +48,7 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     public void dispose()
     {
-        closeAllImages();
+        closeAllImages(true);
 
         if ( m_akBackupTG != null )
         {
@@ -227,7 +227,7 @@ public class JFrameRegistrationMosaic extends JFrame
         else if ( command.equals( "UndoMosaic" ) )
         {
             /* Undoes the last registration: */
-            closeAllImages();
+            closeAllImages(false);
             undoMosaic();
             m_kOpenReferenceButton.setEnabled( false );
             m_kOpenTileButton.setEnabled( false );
@@ -246,7 +246,7 @@ public class JFrameRegistrationMosaic extends JFrame
         else if ( command.equals( "CloseAll" ) )
         {
             /* close all images: */
-            closeAllImages();
+            closeAllImages(true);
             m_kOpenReferenceButton.setEnabled( true );
             m_kOpenTileButton.setEnabled( false );
             m_kToggleSelectedButton.setEnabled( false );
@@ -1211,7 +1211,7 @@ public class JFrameRegistrationMosaic extends JFrame
                     }
                     */
                     /* replace two working images with the new mosaic: */
-                    closeAllImages();
+                    closeAllImages(false);
                     storeImage( kMosaic );
                     m_bFileLoaded = true;
                     m_bResetAlpha = false;
@@ -1381,8 +1381,10 @@ public class JFrameRegistrationMosaic extends JFrame
     /**
      * closeAllImages -- clears the scenegraph of all displayed images and
      * deletes references to the images:
+     * @param bResetAlpha, true if all images are closed, false if a new
+     * mosaic is created
      */
-    private void closeAllImages()
+    private void closeAllImages( boolean bResetAlpha)
     {
         /* Delete SceneGraph: */
         while( m_kScene.numChildren() > 2 )
@@ -1429,11 +1431,14 @@ public class JFrameRegistrationMosaic extends JFrame
         }
         m_akImages = null;
         m_aabReference = null;
-        m_kReferenceAlpha = null;
+        if ( bResetAlpha )
+        {
+            m_kReferenceAlpha = null;
+        }
 
         /* Reset initial state: */
         m_bFileLoaded = false;
-        m_bResetAlpha = true;
+        m_bResetAlpha = bResetAlpha;
         initData();
         System.gc();
     }
