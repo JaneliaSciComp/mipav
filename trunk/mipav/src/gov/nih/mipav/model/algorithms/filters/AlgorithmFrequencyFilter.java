@@ -2,7 +2,9 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.*;
 
+import java.awt.Dimension;
 import java.io.*;
 import java.util.*;
 
@@ -174,6 +176,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private float sigmaU; // Standard deviation along prerotation U axis
     private float sigmaV; // Standard deviation along prerotation V axis
     private float theta; // Rotation in radians;
+    private boolean createGabor = true;
 
     /**
 	 *
@@ -322,9 +325,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param sigmaU Standard deviation along prerotated U axis
      * @param sigmaV Standard deviation along prerotated V axis
      * @param theta  Rotation in radians
+     * @param createGabor If true, produce an image of the Gabor filter
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, float freqU, float freqV, 
-                                    float sigmaU, float sigmaV, float theta) {
+                                    float sigmaU, float sigmaV, float theta,
+                                    boolean createGabor) {
         super(null, srcImg);
         
         this.freqU = freqU;
@@ -332,6 +337,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.sigmaU = sigmaU;
         this.sigmaV = sigmaV;
         this.theta = theta;
+        this.createGabor = createGabor;
         this.constructionMethod = GABOR;
         this.imageCrop = false;
         if (srcImg.getNDims() > 2) {
@@ -351,9 +357,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param sigmaU Standard deviation along prerotated U axis
      * @param sigmaV Standard deviation along prerotated V axis
      * @param theta  Rotation in radians
+     * @param createGabor If true, produce an image of the Gabor filter
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, float freqU,
-                                    float freqV, float sigmaU, float sigmaV, float theta) {
+                                    float freqV, float sigmaU, float sigmaV, float theta,
+                                    boolean createGabor) {
         super(destImg, srcImg);
         
         this.freqU = freqU;
@@ -361,6 +369,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         this.sigmaU = sigmaU;
         this.sigmaV = sigmaV;
         this.theta = theta;
+        this.createGabor = createGabor;
         this.constructionMethod = GABOR;
         this.imageCrop = false;
         if (srcImg.getNDims() > 2) {
@@ -403,7 +412,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                                        String.valueOf(freqV) + ", " +
                                        String.valueOf(sigmaU) + ", " +
                                        String.valueOf(sigmaV) + ", " +
-                                       String.valueOf(theta) + ")" + "\n");
+                                       String.valueOf(theta) +  ", " +
+                                       String.valueOf(createGabor) + ")" + "\n");
         }
         else if (filterType != HOMOMORPHIC) {
           historyString = new String("FrequencyFilter(" +
@@ -1183,7 +1193,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         } // end of if (constructionMethod == GAUSSIAN)
         
         if (constructionMethod == GABOR) {
-            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta, createGabor);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -1344,7 +1354,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         } // end of if (constructionMethod == GAUSSIAN)
         
         if (constructionMethod == GABOR) {
-            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta);
+            makeGaborFilter(freqU, freqV, sigmaU, sigmaV, theta, createGabor);
         }
 
         if ((filterType != HOMOMORPHIC) && (constructionMethod == BUTTERWORTH)) {
@@ -1662,7 +1672,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     }
 
     private void makeGaborFilter(float freqU, float freqV, float sigmaU,
-            float sigmaV, float theta) {
+            float sigmaV, float theta, boolean createGabor) {
         int x,y,z,pos;
         int upperZ;
         float xcenter, ycenter;
@@ -1672,6 +1682,13 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         float sinTheta;
         double xDenom, yDenom;
         float coeff;
+        float realData2[] = null;
+        ModelImage gaborImage;
+        int gaborExtents[];
+        
+        if (createGabor) {
+           realData2 = new float[newDimLengths[0]* newDimLengths[1]];
+        }
         
         xcenter = (newDimLengths[0] - 1.0f)/2.0f;
         ycenter = (newDimLengths[1] - 1.0f)/2.0f;
@@ -1696,7 +1713,25 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     coeff = (float)Math.exp(-(u*u/xDenom + v*v/yDenom));
                     realData[pos] *= coeff;
                     imagData[pos] *= coeff;
+                    if (createGabor) {
+                        realData2[pos] = coeff;
+                    }
                 }
+            }
+        
+            if (createGabor) {
+                gaborExtents = new int[2];
+                gaborExtents[0] = newDimLengths[0];
+                gaborExtents[1] = newDimLengths[1];
+                gaborImage = new ModelImage(ModelStorageBase.FLOAT, gaborExtents, "gaborFilter",
+                        srcImage.getUserInterface()); 
+                try {
+                    gaborImage.importData(0, realData2, true);
+                }
+                catch (IOException e) {
+                    displayError("Error on gaborImage.importData");
+                }
+                new ViewJFrameImage(gaborImage, null, new Dimension(610, 220) );
             }
         } // private void makeGaborFilter
     
