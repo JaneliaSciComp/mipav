@@ -587,7 +587,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase
 
         ViewJComponentEditImage componentImage = new ViewJComponentEditImage( this,
                 (ModelImage) ( modelImageVector.elementAt( currentIndex ) ), LUTa, imageBufferA, imageB, LUTb,
-                null, pixBuffer, magnification / 100, extents, false, ViewJComponentEditImage.NA, false,
+                null, null, magnification / 100, extents, false, ViewJComponentEditImage.NA, false,
                 imageA.getFileInfo()[0].getAxisOrientation() );
 
         componentImage.setLocation( borderSize + selectedBorderSize, borderSize + selectedBorderSize );
