@@ -23,9 +23,14 @@ import java.util.*;
  *      domain back into the spatial domain.
  *  This software module performs all 3 steps in one combined process.  AlgorithmFFT is used
  *  to perform the steps one at a time and examine the Frequency space images.
+ *  
+ *  The module also creates a Gabor filter, which is essentially a tilted Gaussian
+ *  with 2 unequal axes at an offset (freqU, freqV) from the origin.  A Gabor filter
+ *  only responds to a texture having both a particular frequency and a particular
+ *  orientation.
  *
  *  This module also performs homomorphic fitering in which if any data is zero or
- *  negative a positve constant is added to all pixels to give a minimum value of 1.
+ *  negative a positive constant is added to all pixels to give a minimum value of 1.
  *  Then the log of the data is taken, the fast fourier transform is performed,
  *  the high frequencies are multiplied by a gain greater than 1 while the low
  *  frequencies are multiplied by a gain less than 1, the inverse fast fourier
@@ -59,8 +64,9 @@ import java.util.*;
  *      number that equals or exceeds the original dimension size.
  *      The data is padded with zeros at the end of each dimension.
  *  4.) exec() is invoked to run the fast fourier transform algorithm.
- *  5.) If Butterworth or Gaussian filters are used, the center algorithm is invoked to reorder the data so that
- *      frequencies with the lowest magnitudes are at the center.
+ *  5.) If Butterworth or Gaussian or Gabor filters are used, the center algorithm
+ *      is invoked to reorder the data so that frequencies with the lowest magnitudes
+ *      are at the center.
  *  If finite impulse response filters with windows are used:
  *  6a.) An ideal filter kernel is constructed in the spatial domain.
  *  7a.) A Hamming window kernel is constructed in the spatial domain.
@@ -163,10 +169,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     private float   highTruncated; // HOMOMORPHIC variable for part of high histogram end truncated
     
     // Variables used in Gabor filter
-    private float freqU; // Frequency along U axis before rotation by theta range 0 to 1
-    private float freqV; // Frequency along V axis before rotation by theta range 0 to 1
-    private float sigmaU; // Standard deviation along U axis
-    private float sigmaV; // Standard deviation along V axis
+    private float freqU; // Frequency along U axis before rotation by theta range -1 to 1
+    private float freqV; // Frequency along V axis before rotation by theta range -1 to 1
+    private float sigmaU; // Standard deviation along prerotation U axis
+    private float sigmaV; // Standard deviation along prerotation V axis
     private float theta; // Rotation in radians;
 
     /**
@@ -311,10 +317,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
     /**
      * Constructor used for Gabor transform
      * @param srcImg Source image model
-     * @param freqU  Frequency along U axis before rotation by theta range 0 to 1
-     * @param freqV  Frequency along V axis before rotation by theta range 0 to 1
-     * @param sigmaU Standard deviation along U axis
-     * @param sigmaV Standard deviation along V axis
+     * @param freqU  Frequency along U axis before rotation by theta range -1 to 1
+     * @param freqV  Frequency along V axis before rotation by theta range -1 to 1
+     * @param sigmaU Standard deviation along prerotated U axis
+     * @param sigmaV Standard deviation along prerotated V axis
      * @param theta  Rotation in radians
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, float freqU, float freqV, 
@@ -340,10 +346,10 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * Constructor used for Gabor transform
      * @param destImg Destination image model
      * @param srcImg Source image model
-     * @param freqU  Frequency along U axis before rotation by theta range 0 to 1
-     * @param freqV  Frequency along V axis before rotation by theta range 0 to 1
-     * @param sigmaU Standard deviation along U axis
-     * @param sigmaV Standard deviation along V axis
+     * @param freqU  Frequency along U axis before rotation by theta range -1 to 1
+     * @param freqV  Frequency along V axis before rotation by theta range -1 to 1
+     * @param sigmaU Standard deviation along prerotated U axis
+     * @param sigmaV Standard deviation along prerotated V axis
      * @param theta  Rotation in radians
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, float freqU,
@@ -1688,7 +1694,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     u = (xScale - freqU)*cosTheta + (yScale - freqV)*sinTheta;
                     v = (yScale - freqV)*cosTheta - (xScale - freqU)*sinTheta;
                     coeff = (float)Math.exp(-(u*u/xDenom + v*v/yDenom));
-                    imagData[pos] *= coeff;
+                    realData[pos] *= coeff;
                     imagData[pos] *= coeff;
                 }
             }
@@ -2325,7 +2331,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         if ((transformDir == INVERSE) && ((constructionMethod == GAUSSIAN) ||
-            (constructionMethod == BUTTERWORTH))) {
+            (constructionMethod == BUTTERWORTH) || (constructionMethod == GABOR))) {
           if (!image25D) {
               progressBar.setMessage("Centering data before inverse FFT...");
           }
