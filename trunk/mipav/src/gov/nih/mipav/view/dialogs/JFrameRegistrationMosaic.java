@@ -49,6 +49,57 @@ public class JFrameRegistrationMosaic extends JFrame
     public void dispose()
     {
         closeAllImages();
+
+        if ( m_akBackupTG != null )
+        {
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_akBackupTG[i] = null;
+            }
+        }
+        m_akBackupTG = null;
+
+        if ( m_akBackupBorders != null )
+        {
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_akBackupBorders[i] = null;
+            }
+        }
+        m_akBackupBorders = null;
+
+        if ( m_akBackupPolygons != null )
+        {
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_akBackupPolygons[i] = null;
+            }
+        }
+        m_akBackupPolygons = null;
+
+        if ( m_akBackupImages != null )
+        {
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_akBackupImages[i] = null;
+            }
+        }
+        m_akBackupImages = null;
+
+
+        m_kUniverse.cleanup();
+        m_kUniverse = null;
+        m_kCanvas = null;
+        m_kScene = null;
+        m_kMouseEvent = null;
+        m_kCurrentTransform = null;
+        m_kOldTransform = null;
+        m_aabReference = null;
+        m_aabReferenceBackup = null;
+        m_kReferenceAlpha = null;
+        m_kReferenceAlphaBackup = null;
+        m_kTileAlpha = null;
+
         super.dispose();
     }
 
@@ -396,6 +447,8 @@ public class JFrameRegistrationMosaic extends JFrame
         int iWidth = kImage.getExtents()[ 0 ];
         int iHeight = kImage.getExtents()[ 1 ];
 
+        kImage.calcMinMax();
+
         /* Determine the next-largest size that is a power of two, to create
          * the texture: */
         double dLog2Width = Math.log((double)iWidth)/Math.log(2.0);
@@ -420,6 +473,22 @@ public class JFrameRegistrationMosaic extends JFrame
         /* Create the textured polygon and store the data in the scene
          * graph: */
         Transform3D kTransform = new Transform3D();
+        /* Scale large images: */
+        int iWidthLimit = m_kCanvas.getWidth();
+        int iHeightLimit = m_kCanvas.getHeight();
+        if ( (iWidth > iWidthLimit) ||
+             (iHeight > iHeightLimit) ||
+             m_bSetScale )
+        {
+            if ( m_bSetScale == false )
+            {
+                m_fScale = (float)Math.min( (iWidthLimit / (float)iWidth),
+                                            (iHeightLimit / (float)iHeight) );
+            }
+            kTransform.setScale( m_fScale );
+            m_bSetScale = true;
+        }
+
         TransformGroup kTransformGroup = new TransformGroup( kTransform );
         kTransformGroup.setCapability( TransformGroup.ALLOW_TRANSFORM_WRITE );
         kTransformGroup.setCapability( TransformGroup.ALLOW_TRANSFORM_READ );
@@ -444,7 +513,7 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     private boolean createMosaicOpenDialog( boolean bSave )
     {
-        ModelImage image = null;
+        ModelImage kImage = null;
         FileIO fileIO = new FileIO();
         String fileName = null;
         String extension = null;
@@ -497,10 +566,10 @@ public class JFrameRegistrationMosaic extends JFrame
             }
             if ( bSave == false )
             {
-                image = fileIO.readImage(fileName, directory, false, null);
-                if ( image != null )
+                kImage = fileIO.readImage(fileName, directory, false, null);
+                if ( kImage != null )
                 {
-                    storeImage( image );
+                    storeImage( kImage );
                     m_bFileLoaded = true;
                 }
             }
@@ -557,6 +626,9 @@ public class JFrameRegistrationMosaic extends JFrame
          * operation: */
         backupMosaic();
 
+        m_akImages[ m_iReference ].calcMinMax();
+        m_akImages[ m_iTile ].calcMinMax();
+
         /* Get the reference image transform and invert it, so the reference
          * image is at the origin, axis-aligned: */
         Transform3D kReferenceT = new Transform3D();
@@ -606,7 +678,6 @@ public class JFrameRegistrationMosaic extends JFrame
         for ( int i = 0; i < 4; i++ )
         {
             kFinalTransform.transform( akCorners[i] );
-            //System.err.println( akCorners[i] );
             akCorners[i].x *= ((double)m_kCanvas.getWidth()/2.0);
             akCorners[i].y *= ((double)m_kCanvas.getWidth()/2.0);
 
@@ -628,7 +699,6 @@ public class JFrameRegistrationMosaic extends JFrame
                 dMaxY = akCorners[i].y;
             }
         }
-        //System.err.println( dMinX + " " + dMinY + " " + dMaxX + " " + dMaxY );
 
         /* Image size, X/YRange and pixel offset to pad images: */
         int iXRange = (int)(dMaxX - dMinX);
@@ -642,33 +712,53 @@ public class JFrameRegistrationMosaic extends JFrame
         ModelImage kReference =
             new ModelImage( m_akImages[m_iReference].getType(),
                             aiExtents, "reference" );;
+        ModelImage kReferenceReg =
+            new ModelImage( ModelStorageBase.FLOAT,
+                            aiExtents, "ReferenceReg" );;
         /* reference mask, where the reference and tile images overlap: */
         ModelImage kReferenceMask =
             new ModelImage( ModelStorageBase.BYTE,
                             aiExtents, "reference_mask" );;
+        /* reference alpha: */
+        m_kReferenceAlpha =
+            new ModelImage( ModelStorageBase.FLOAT,
+                            aiExtents, "reference_alpha" );;
+
         /* transformed tile image: */
         ModelImage kTile =
-            new ModelImage( m_akImages[m_iReference].getType(),
+            new ModelImage( m_akImages[m_iTile].getType(),
                             aiExtents, "tile" );;
+        ModelImage kTileReg =
+            new ModelImage( ModelStorageBase.FLOAT,
+                            aiExtents, "TileReg" );;
         /* tile mask (same as reference mask): */
         ModelImage kTileMask =
             new ModelImage( ModelStorageBase.BYTE,
                             aiExtents, "tile_mask" );;
-
-        /* For testing, combined tile/reference image (user-positioning only): */
-        ModelImage kMosaic =
-            new ModelImage( m_akImages[m_iReference].getType(),
-                            aiExtents, "Mosaic" );;
+        /* tile alpha: */
+        m_kTileAlpha =
+            new ModelImage( ModelStorageBase.FLOAT,
+                            aiExtents, "tile_alpha" );;
 
         /* For masking, set to true if the reference image is written into the
          * same location: */
-        boolean[][] bReference = new boolean[iXRange][iYRange];
+        m_aabReference = new boolean[iXRange][iYRange];
 
-        int iReferenceOffsetLeft = 
+        int iReferenceOffsetLeft =
             (int)(-(double)iReferenceWidth/2 - dMinX);
-        int iReferenceOffsetTop = 
+        int iReferenceOffsetTop =
             (int)(-(double)iReferenceHeight/2 - dMinY);
 
+        int iReferenceBuffFactor = 1;
+        if ( m_akImages[m_iReference].isColorImage() )
+        {
+            iReferenceBuffFactor = 4;
+        }
+        int iTileBuffFactor = 1;
+        if ( m_akImages[m_iTile].isColorImage() )
+        {
+            iTileBuffFactor = 4;
+        }
         /* Loop over the new image pixels.
          *
          *  (1) Write the new reference image, positioning the reference data
@@ -684,46 +774,99 @@ public class JFrameRegistrationMosaic extends JFrame
          * (4) Write the reference and tile mask images where ever both
                reference and tile images overlap.
          */
+        int iX, iY;
+        float fXDistance, fYDistance;
+        float fRefMinDimension =
+            (float)Math.min( iReferenceWidth/2.0, iReferenceHeight/2.0 );
+        float fTileMinDimension =
+            (float)Math.min( iTileWidth/2.0, iTileHeight/2.0 );
+
         Transform3D kInverse = new Transform3D( kTileT );
         kInverse.invert();
-
         for ( int i = 0; i < iXRange; i++ )
         {
             for ( int j = 0; j < iYRange; j++ )
             {
-                for ( int c = 0; c < 4; c++ )
+                float fGrayScale = 0;
+                iX = i-iReferenceOffsetLeft;
+                iY = j-iReferenceOffsetTop;
+                /* (1) Write new reference image: */
+                for ( int c = 0; c < iReferenceBuffFactor; c++ )
                 {
-                    /* (1) Write new reference image: */
-                    if ( ((i-iReferenceOffsetLeft) >= 0) &&
-                         ((j-iReferenceOffsetTop) >= 0) &&
-                         ((i-iReferenceOffsetLeft) < iReferenceWidth) &&
-                         ((j-iReferenceOffsetTop) < iReferenceHeight)    )
+                    if ( (iX >= 0) && (iX < iReferenceWidth) &&
+                         (iY >= 0) && (iY < iReferenceHeight)   )
                     {
-                        kReference.setC( i, j, c,
-                                     m_akImages[m_iReference].
-                                         getFloatC( i - iReferenceOffsetLeft,
-                                                    j - iReferenceOffsetTop, c ) );
-                        kMosaic.setC( i, j, c,
-                                      m_akImages[m_iReference].
-                                      getFloatC( i - iReferenceOffsetLeft,
-                                                 j - iReferenceOffsetTop, c ) );
-                        if ( m_akImages[m_iReference].
-                             getFloatC( i - iReferenceOffsetLeft,
-                                        j - iReferenceOffsetTop, 0 )  != 0 )
+                        if ( iReferenceBuffFactor == 4 )
                         {
-                            bReference[i][j] = true;
+                            kReference.setC( i, j, c,
+                                             m_akImages[m_iReference].
+                                             getFloatC( iX, iY, c ) );
+                        }
+                        else
+                        {
+                            kReference.set( i, j,
+                                            m_akImages[m_iReference].
+                                            getFloat( iX, iY ) );
+                        }
+                        if ( m_bResetAlpha )
+                        {
+                            fXDistance = Math.min( iX, iReferenceWidth - iX );
+                            fYDistance = Math.min( iY, iReferenceHeight - iY );
+                            if ( fXDistance < fYDistance )
+                            {
+                                fXDistance /= fRefMinDimension;
+                                m_kReferenceAlpha.set( i, j, fXDistance );
+                            }
+                            else
+                            {
+                                fYDistance /= fRefMinDimension;
+                                m_kReferenceAlpha.set( i, j, fYDistance );
+                            }
+                        }
+                        else
+                        {
+                            m_kReferenceAlpha.set( i, j, m_kReferenceAlphaBackup.getFloat( iX, iY ) );
+                        }
+                        m_aabReference[i][j] =
+                            m_aabReferenceBackup[iX][iY];
+
+                        if ( iReferenceBuffFactor == 1 )
+                        {
+                            fGrayScale += m_akImages[m_iReference].
+                                getFloat( iX, iY );
+                        }
+                        else if ( c > 0 )
+                        {
+                            fGrayScale += m_akImages[m_iReference].
+                                getFloatC( iX, iY, c );
                         }
                     }
                     else
                     {
-                        kReference.setC( i, j, c, 0.0f );
-                        bReference[i][j] = false;
+                        if ( iReferenceBuffFactor == 4 )
+                        {
+                            kReference.setC( i, j, c, 0.0f );
+                        }
+                        else
+                        {
+                            kReference.set( i, j, 0.0f );
+                        }
+                        m_aabReference[i][j] = false;
                     }
                 }
-
+                if ( (m_aabReference[i][j] == false) && m_bResetAlpha )
+                {
+                    m_kReferenceAlpha.set( i, j, 0.0f );
+                }
+                if ( iReferenceBuffFactor == 4 )
+                {
+                    fGrayScale /= 3.0f;
+                }
                 /* (2) Initialize the reference and tile masks */
                 kReferenceMask.set( i, j, 0 );
                 kTileMask.set( i, j, 0 );
+                kReferenceReg.set( i, j, fGrayScale );
+                fGrayScale = 0;
 
                 /* (3) apply the inverse transformation to the tile image
                  * pixels to determine where to place the it in the new
@@ -731,7 +874,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 Vector4d kPoint =
                     new Vector4d( (i - Math.abs(dMinX))/
                                   ((double)m_kCanvas.getWidth()/2.0),
-                                  
+
                                   (j - Math.abs(dMinY))/
                                   ((double)m_kCanvas.getWidth()/2.0),
                                   0,
@@ -741,43 +884,87 @@ public class JFrameRegistrationMosaic extends JFrame
                 kPoint.y *= m_kCanvas.getWidth()/2.0;
                 kPoint.x += iTileWidth/2;
                 kPoint.y += iTileHeight/2;
-                
-                int iX = (int)kPoint.x;
-                int iY = (int)kPoint.y;
-                if ( (iX >= 0) && (iX < (iTileWidth-1)) &&
-                     (iY >= 0) && (iY < (iTileHeight-1))   )
-                {
-                    /* Write the transformed tile image: */
-                    for ( int c = 0; c < 4; c++ )
-                    {
-                        kTile.setC( i, j, c,
-                                      m_akImages[m_iTile].
-                                    getFloatC( iX, iY, c ) );
-                        kMosaic.setC( i, j, c,
-                                      m_akImages[m_iTile].
-                                    getFloatC( iX, iY, c ) );
-                    }
 
-                    /* (4) Write the reference and tile mask images where ever
-                       both reference and tile images overlap. */
-                    if ( bReference[i][j] == true )
+                iX = (int)kPoint.x;
+                iY = (int)kPoint.y;
+                /* Write the transformed tile image: */
+                for ( int c = 0; c < iTileBuffFactor; c++ )
+                {
+                    if ( (iX >= 0) && (iX < (iTileWidth-1)) &&
+                         (iY >= 0) && (iY < (iTileHeight-1))   )
                     {
-                        kReferenceMask.set( i, j, 1 );
-                        kTileMask.set( i, j, 1 );
+                        if ( iTileBuffFactor == 4 )
+                        {
+                            kTile.setC( i, j, c,
+                                        m_akImages[m_iTile].
+                                        getFloatC( iX, iY, c ) );
+                        }
+                        else
+                        {
+                            kTile.set( i, j,
+                                       m_akImages[m_iTile].
+                                       getFloat( iX, iY ) );
+                        }
+                        if ( iTileBuffFactor == 1 )
+                        {
+                            fGrayScale += m_akImages[m_iTile].
+                                getFloat( iX, iY );
+                        }
+                        else if ( c > 0 )
+                        {
+                            fGrayScale += m_akImages[m_iTile].
+                                getFloatC( iX, iY, c );
+                        }
+                        if ( m_aabReference[i][j] == true )
+                        {
+                            kReferenceMask.set( i, j, 1 );
+                            kTileMask.set( i, j, 1 );
+                        }
+
+                        fXDistance = Math.min( iX, iTileWidth - iX );
+                        fYDistance = Math.min( iY, iTileHeight - iY );
+                        if ( fXDistance < fYDistance )
+                        {
+                            fXDistance /= fTileMinDimension;
+                            m_kTileAlpha.set( i, j, fXDistance );
+                        }
+                        else
+                        {
+                            fYDistance /= fTileMinDimension;
+                            m_kTileAlpha.set( i, j, fYDistance );
+                        }
+                    }
+                    else
+                    {
+                        if ( iTileBuffFactor == 4 )
+                        {
+                            kTile.setC( i, j, c, 0.0f );
+                        }
+                        else
+                        {
+                            kTile.set( i, j, 0.0f );
+                        }
+                        m_kTileAlpha.set( i, j, 0.0f );
                     }
                 }
-                else
+                /* (4) Write the reference and tile mask images where ever
+                   both reference and tile images overlap. */
+                if ( iTileBuffFactor == 4 )
                 {
-                    kTile.setC( i, j, 0, 0f );
+                    fGrayScale /= 3.0f;
                 }
-
+                kTileReg.set( i, j, fGrayScale );
             }
         }
 
         kReference.calcMinMax();
         kReferenceMask.calcMinMax();
+        kReferenceReg.calcMinMax();
         kTile.calcMinMax();
         kTileMask.calcMinMax();
+        kTileReg.calcMinMax();
+        m_kReferenceAlpha.calcMinMax();
+        m_kTileAlpha.calcMinMax();
         /*
         try {
             new ViewJFrameImage(kReference, null, new Dimension(610, 200));
@@ -807,9 +994,29 @@ public class JFrameRegistrationMosaic extends JFrame
             MipavUtil.displayError(
                                    "Out of memory: unable to open new frame");
         }
-        kMosaic.calcMinMax();
         try {
-            new ViewJFrameImage(kMosaic, null, new Dimension(610, 200));
+            new ViewJFrameImage(kReferenceReg, null, new Dimension(610, 200));
+        }
+        catch (OutOfMemoryError error) {
+            MipavUtil.displayError(
+                                   "Out of memory: unable to open new frame");
+        }
+        try {
+            new ViewJFrameImage(kTileReg, null, new Dimension(610, 200));
+        }
+        catch (OutOfMemoryError error) {
+            MipavUtil.displayError(
+                                   "Out of memory: unable to open new frame");
+        }
+        try {
+            new ViewJFrameImage((ModelImage)m_kReferenceAlpha.clone(), null, new Dimension(610, 200));
+        }
+        catch (OutOfMemoryError error) {
+            MipavUtil.displayError(
+                                   "Out of memory: unable to open new frame");
+        }
+        try {
+            new ViewJFrameImage(m_kTileAlpha, null, new Dimension(610, 200));
         }
         catch (OutOfMemoryError error) {
             MipavUtil.displayError(
@@ -817,21 +1024,19 @@ public class JFrameRegistrationMosaic extends JFrame
         }
         */
 
-        kMosaic = null;
-
         /* Save the transformed tile and reference image, for when the
          * alignment algorithm is finished: */
         m_akImages[m_iReference] = kReference;
         m_akImages[m_iTile] = kTile;
         /* launch alignment: */
         AlgorithmRegOAR2D kAlgorithmReg =
-            new AlgorithmRegOAR2D( kReference, kTile, kReferenceMask, kTileMask,
-                                   AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT_COLOR,
+            new AlgorithmRegOAR2D( kReferenceReg, kTileReg, kReferenceMask, kTileMask,
+                                   AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT,
                                    6,
                                    AlgorithmTransform.BILINEAR,
-                                   -30, 30, 15, 5,
+                                   -5, 5, 2.0f, 1.0f,
                                    true,
-                                   10, 2, 3 );
+                                   4, 2, 3 );
         kAlgorithmReg.addListener(this);
         kAlgorithmReg.setActiveImage(false);
         kAlgorithmReg.setProgressBarVisible(true);
@@ -846,18 +1051,50 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     public void algorithmPerformed(AlgorithmBase kAlgorithm)
     {
-        ModelImage kResult = null;
+        ModelImage kTransformedTile = null;
+        ModelImage kTransformedTileAlpha = null;
+        ModelImage kMosaic = null;
         AlgorithmTransform kAlgorithmTransform = null;
+
+        int iXDim = m_akImages[m_iReference].getExtents()[0];
+        int iYDim = m_akImages[m_iReference].getExtents()[1];
+        int[] aiExtents = new int[2];
+        aiExtents[0] = iXDim;
+        aiExtents[1] = iYDim;
+
+        int iReferenceBuffFactor = 1;
+        if ( m_akImages[m_iReference].isColorImage() )
+        {
+            iReferenceBuffFactor = 4;
+        }
+        int iTileBuffFactor = 1;
+        if ( m_akImages[m_iTile].isColorImage() )
+        {
+            iTileBuffFactor = 4;
+        }
+        int iMosaicBuffFactor = 1;
+        if ( iReferenceBuffFactor > iTileBuffFactor )
+        {
+            iMosaicBuffFactor = iReferenceBuffFactor;
+            kMosaic = new ModelImage( m_akImages[m_iReference].getType(),
+                                      aiExtents, "Mosaic" );;
+        }
+        else
+        {
+            iMosaicBuffFactor = iTileBuffFactor;
+            kMosaic = new ModelImage( m_akImages[m_iTile].getType(),
+                                      aiExtents, "Mosaic" );;
+        }
+
         if (kAlgorithm instanceof AlgorithmRegOAR2D) {
             if (((AlgorithmRegOAR2D)kAlgorithm).isCompleted()) {
 
-                int iXDim = m_akImages[m_iReference].getExtents()[0];
-                int iYDim = m_akImages[m_iReference].getExtents()[1];
                 String kName =
                     JDialogBase.makeImageName( m_akImages[m_iTile].getImageName(),
                                                "_register" );
 
-                //System.err.println( ((AlgorithmRegOAR2D)kAlgorithm).getTransform() );
+                System.err.println( ((AlgorithmRegOAR2D)kAlgorithm).getTransform() );
+                /* Transform the input tile image: */
                 kAlgorithmTransform =
                     new AlgorithmTransform(m_akImages[m_iTile],
                                            ((AlgorithmRegOAR2D)kAlgorithm).
@@ -870,59 +1107,125 @@ public class JFrameRegistrationMosaic extends JFrame
                 kAlgorithmTransform.setUpdateOriginFlag(true);
                 kAlgorithmTransform.setProgressBarVisible(false);
                 kAlgorithmTransform.run();
-                kResult = kAlgorithmTransform.getTransformedImage();
+                kTransformedTile = kAlgorithmTransform.getTransformedImage();
                 kAlgorithmTransform.finalize();
+                kAlgorithmTransform.disposeLocal();
+                kAlgorithmTransform = null;
+
+                /* Transform the TileAlpha image: */
+                kAlgorithmTransform =
+                    new AlgorithmTransform(m_kTileAlpha,
+                                           ((AlgorithmRegOAR2D)kAlgorithm).
+                                           getTransform(),
+                                           AlgorithmTransform.BILINEAR,
+                                           1.0f, 1.0f, iXDim, iYDim,
+                                           false, false, false);
+
+                kAlgorithmTransform.setActiveImage(true);
+                kAlgorithmTransform.setUpdateOriginFlag(true);
+                kAlgorithmTransform.setProgressBarVisible(false);
+                kAlgorithmTransform.run();
+                kTransformedTileAlpha = kAlgorithmTransform.getTransformedImage();
+                kAlgorithmTransform.finalize();
+                kAlgorithmTransform.disposeLocal();
+                kAlgorithmTransform = null;
 
                 /* Blend result and reference images into final mosaic: */
-                if (kResult != null) {
-                    int iXRange = kResult.getExtents()[0];
-                    int iYRange = kResult.getExtents()[1];
+                if ( (kTransformedTile != null) &&
+                     (kTransformedTileAlpha != null) )
+                {
+                    int iXRange = kTransformedTile.getExtents()[0];
+                    int iYRange = kTransformedTile.getExtents()[1];
                     for ( int i = 0; i < iXRange; i++ )
                     {
                         for ( int j = 0; j < iYRange; j++ )
                         {
-                            float fRefA = m_akImages[m_iReference].getFloatC( i, j, 0 );
-                            float fTileA = kResult.getFloatC( i, j, 0 );
-                            /* Write the reference into the mosaic: */
-                            if ( (fRefA != 0) && (fTileA == 0) )
+                            float fRefAlpha = m_kReferenceAlpha.getFloat( i, j );
+                            float fTTileAlpha = kTransformedTileAlpha.getFloat( i, j );
+                            float fScale = fRefAlpha + fTTileAlpha;
+                            m_kReferenceAlpha.set( i, j, fScale );
+                            if ( fScale != 0 )
                             {
-                                for ( int c = 0; c < 4; c++ )
+                                m_aabReference[i][j] = true;
+                                for ( int c = 0; c < iMosaicBuffFactor; c++ )
                                 {
-                                    kResult.setC( i, j, c, 
-                                                  m_akImages[m_iReference].
-                                                  getFloatC( i, j, c ) );
+                                    float fRefVal = 0;
+                                    float fTTileVal = 0;
+                                    if ( iReferenceBuffFactor == 1 )
+                                    {
+                                        fRefVal = m_akImages[m_iReference].getFloat( i, j );
+                                    }
+                                    else
+                                    {
+                                        fRefVal = m_akImages[m_iReference].getFloatC( i, j, c );
+                                    }
+                                    if ( iTileBuffFactor == 1 )
+                                    {
+                                        fTTileVal = kTransformedTile.getFloat( i, j );
+                                    }
+                                    else
+                                    {
+                                        fTTileVal = kTransformedTile.getFloatC( i, j, c );
+                                    }
+                                    if ( kMosaic.isColorImage() )
+                                    {
+                                        kMosaic.setC( i, j, c,
+                                                      (fRefAlpha * fRefVal +
+                                                       fTTileAlpha * fTTileVal) / fScale );
+                                    }
+                                    else
+                                    {
+                                        kMosaic.set( i, j,
+                                                     (fRefAlpha * fRefVal +
+                                                      fTTileAlpha * fTTileVal) / fScale );
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if ( kMosaic.isColorImage() )
+                                {
+                                    kMosaic.setC( i, j, 0, 255.0f );
+                                    kMosaic.setC( i, j, 1, 255.0f );
+                                    kMosaic.setC( i, j, 2, 255.0f );
+                                    kMosaic.setC( i, j, 3, 255.0f );
+                                }
+                                else
+                                {
+                                    kMosaic.set( i, j, 255.0f );
                                 }
                             }
                         }
                     }
+
                     /* Display mosaic in new window: */
-                    kResult.calcMinMax();
-                    kResult.setImageName( kName );
+                    kMosaic.calcMinMax();
+                    /*
                     try {
-                        new ViewJFrameImage( (ModelImage)kResult.clone( kName ) ,
+                        new ViewJFrameImage( (ModelImage)kMosaic.clone( kName ) ,
                                              null, new Dimension(610, 200) );
                     }
                     catch (OutOfMemoryError error) {
                         MipavUtil.displayError(
                                                "Out of memory: unable to open new frame");
                     }
+                    */
                     /* replace two working images with the new mosaic: */
                     closeAllImages();
-                    storeImage( kResult );
+                    storeImage( kMosaic );
                     m_bFileLoaded = true;
+                    m_bResetAlpha = false;
+                    kTransformedTile = null;
+                    kTransformedTileAlpha = null;
                 }
                 else {
                     MipavUtil.
                         displayError("Registration failed, re-align images and try again");
-                    
+
                     actionPerformed( new ActionEvent( this,
                                                       ActionEvent.ACTION_PERFORMED,
                                                       "UndoMosaic" ) );
                 }
-                if (kAlgorithmTransform != null) {
-                    kAlgorithmTransform.disposeLocal();
-                }
-                kAlgorithmTransform = null;
             }
         }
         if (((AlgorithmRegOAR2D)kAlgorithm) != null) {
@@ -945,6 +1248,7 @@ public class JFrameRegistrationMosaic extends JFrame
         m_akBackupPolygons = new Shape3D[2];
         m_akBackupBorders = new Shape3D[2];
         m_akBackupImages = new ModelImage[2];
+
         /* Backup data: */
         for ( int i = 0; i < 2; i++ )
         {
@@ -963,6 +1267,28 @@ public class JFrameRegistrationMosaic extends JFrame
         m_iOpenSave = m_iOpen;
 
         m_kUniverse.addBranchGraph( m_kScene );
+
+        int iReferenceWidth = m_akImages[ m_iReference ].getExtents()[ 0 ];
+        int iReferenceHeight = m_akImages[ m_iReference ].getExtents()[ 1 ];
+        m_aabReferenceBackup = new boolean[ iReferenceWidth ][ iReferenceHeight];
+        for ( int i = 0; i < iReferenceWidth; i++ )
+        {
+            for ( int j = 0; j < iReferenceHeight; j++ )
+            {
+                if ( m_aabReference != null )
+                {
+                    m_aabReferenceBackup[i][j] = m_aabReference[i][j];
+                }
+                else
+                {
+                    m_aabReferenceBackup[i][j] = true;
+                }
+            }
+        }
+        if ( m_kReferenceAlpha != null )
+        {
+            m_kReferenceAlphaBackup = (ModelImage)m_kReferenceAlpha.clone();
+        }
     }
 
     /**
@@ -1013,6 +1339,30 @@ public class JFrameRegistrationMosaic extends JFrame
         {
             m_iSelected = 1;
         }
+
+
+        int iReferenceWidth = m_akImages[ m_iReference ].getExtents()[ 0 ];
+        int iReferenceHeight = m_akImages[ m_iReference ].getExtents()[ 1 ];
+        m_aabReference = new boolean[ iReferenceWidth ][ iReferenceHeight];
+        for ( int i = 0; i < iReferenceWidth; i++ )
+        {
+            for ( int j = 0; j < iReferenceHeight; j++ )
+            {
+                if ( m_aabReferenceBackup != null )
+                {
+                    m_aabReference[i][j] = m_aabReferenceBackup[i][j];
+                }
+                else
+                {
+                    m_aabReference[i][j] = true;
+                }
+            }
+        }
+        if ( m_kReferenceAlphaBackup != null )
+        {
+            m_kReferenceAlpha = (ModelImage)m_kReferenceAlphaBackup.clone();
+        }
+
     }
 
 
@@ -1034,11 +1384,12 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     private void closeAllImages()
     {
+        /* Delete SceneGraph: */
         while( m_kScene.numChildren() > 2 )
         {
             m_kScene.removeChild( 2 );
         }
-
+        /* Delete transform groups: */
         if ( m_akImageTransforms != null )
         {
             for ( int i = 0; i < 2; i++ )
@@ -1047,6 +1398,8 @@ public class JFrameRegistrationMosaic extends JFrame
             }
         }
         m_akImageTransforms = null;
+
+        /* delete outline shapes: */
         if ( m_akBorderShapes != null )
         {
             for ( int i = 0; i < 2; i++ )
@@ -1056,8 +1409,33 @@ public class JFrameRegistrationMosaic extends JFrame
         }
         m_akBorderShapes = null;
 
+        /* delete textured polygons: */
+        if ( m_akPolygonShapes != null )
+        {
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_akPolygonShapes[i] = null;
+            }
+        }
+        m_akPolygonShapes = null;
+
+        /* delete model images: */
+        if ( m_akImages != null )
+        {
+            for ( int i = 0; i < 2; i++ )
+            {
+                m_akImages[i] = null;
+            }
+        }
+        m_akImages = null;
+        m_aabReference = null;
+        m_kReferenceAlpha = null;
+
+        /* Reset initial state: */
         m_bFileLoaded = false;
+        m_bResetAlpha = true;
         initData();
+        System.gc();
     }
 
     /**
@@ -1070,6 +1448,8 @@ public class JFrameRegistrationMosaic extends JFrame
         m_iOpen = 1;
         m_iReference = 0;
         m_iTile = 1;
+        m_fScale = 1.0f;
+        m_bSetScale = false;
     }
 
 
@@ -1243,11 +1623,11 @@ public class JFrameRegistrationMosaic extends JFrame
 
     /* Display/Transform: */
     /** Drawing canvas: */
-    private Canvas3D m_kCanvas;
+    private Canvas3D m_kCanvas = null;
     /** Scene graph root node: */
-    private BranchGroup m_kScene;
+    private BranchGroup m_kScene = null;
     /** SimpleUniverse: */
-    private SimpleUniverse m_kUniverse;
+    private SimpleUniverse m_kUniverse = null;
     /** Reference and tile image transformations: */
     private TransformGroup[] m_akImageTransforms = null;
     /** Backup Transform for Undo: */
@@ -1286,4 +1666,21 @@ public class JFrameRegistrationMosaic extends JFrame
     private Transform3D m_kCurrentTransform;
     /** Accumulated transformation prior to current mouseDrag: */
     private Transform3D m_kOldTransform;
+    /** Scale factor for large images: */
+    private float m_fScale = 1.0f;
+    /** True when scale factor should be used: */
+    private boolean m_bSetScale = false;
+    /** For masking, set to true if the reference image is written into the
+     * same location: */
+    private boolean[][] m_aabReference = null;
+    /** backup: */
+    private boolean[][] m_aabReferenceBackup = null;
+    /** For blending between refernce and transformed tile images: */
+    private ModelImage m_kReferenceAlpha = null;
+    /** For blending between refernce and transformed tile images: */
+    private ModelImage m_kReferenceAlphaBackup = null;
+    /** For blending between refernce and transformed tile images: */
+    private ModelImage m_kTileAlpha = null;
+    /** To reset m_kReferenceAlpha: */
+    private boolean m_bResetAlpha = true;
 }
