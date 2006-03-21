@@ -1714,7 +1714,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                     realData[pos] *= coeff;
                     imagData[pos] *= coeff;
                     if (createGabor) {
-                        realData2[pos] = coeff;
+                        if (z == 0) {
+                            realData2[pos] = coeff;
+                        }
                     }
                 }
             }
