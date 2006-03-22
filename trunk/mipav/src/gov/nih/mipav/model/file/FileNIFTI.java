@@ -2482,6 +2482,39 @@ public class FileNIFTI
         if (isNIFTI) {
             // Case where originally NIFTI
             matrix = fileInfo.getMatrix();
+            newOrigin = new float[3];
+            if ((axisOrientation[0] == FileInfoBase.ORI_I2S_TYPE) ||
+               (axisOrientation[0] == FileInfoBase.ORI_S2I_TYPE)) {
+               newOrigin[0] = -origin[0];
+               newOrigin[1] = -origin[1];
+               if (origin[2] > 0 ) {
+                    newOrigin[2] = origin[2] - (extents[0] - 1) * resols[0];
+                } else {
+                    newOrigin[2] = origin[2] + (extents[0] - 1) * resols[0];
+                }
+            }
+            else if ((axisOrientation[1] == FileInfoBase.ORI_I2S_TYPE) ||
+                     (axisOrientation[1] == FileInfoBase.ORI_S2I_TYPE)) {
+                newOrigin[0] = -origin[0];
+                newOrigin[1] = -origin[1];
+                if (origin[2] > 0 ) {
+                    newOrigin[2] = origin[2] - (extents[1] - 1) * resols[1];
+                } else {
+                    newOrigin[2] = origin[2] + (extents[1] - 1) * resols[1];
+                }
+            }
+            else {
+                newOrigin[0] = -origin[0];
+                if (origin[1] > 0 ) {
+                    newOrigin[1] = -(origin[1] - (extents[1] - 1) * resols[1]);
+                } else {
+                    newOrigin[1] = -(origin[1] + (extents[1] - 1) * resols[1]);
+                }
+                newOrigin[2] = origin[2];
+            }
+            matrix.set(0, 3, newOrigin[0]);
+            matrix.set(1, 3, newOrigin[1]);
+            matrix.set(2, 3, newOrigin[2]);
         }
 
         if (isDicom) {
@@ -3094,24 +3127,24 @@ public class FileNIFTI
             setBufferFloat(bufferByte, quatern_d, 264, endianess);
 
             //qoffset_x
-            setBufferFloat(bufferByte, -origin[0], 268, endianess);
+            setBufferFloat(bufferByte, newOrigin[0], 268, endianess);
             // qoffset_y
-            setBufferFloat(bufferByte, -origin[1], 272, endianess);
+            setBufferFloat(bufferByte, newOrigin[1], 272, endianess);
             // qoffset_z
-            setBufferFloat(bufferByte, origin[2], 276, endianess);
+            setBufferFloat(bufferByte, newOrigin[2], 276, endianess);
             if (matrix != null) {
                 setBufferFloat(bufferByte, (float) ( -matrix.get(0, 0)), 280, endianess);
                 setBufferFloat(bufferByte, (float) ( -matrix.get(0, 1)), 284, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(0, 2)), 288, endianess);
-                setBufferFloat(bufferByte, (float) ( -matrix.get(0, 3)), 292, endianess);
+                setBufferFloat(bufferByte, newOrigin[0], 292, endianess);
                 setBufferFloat(bufferByte, (float) ( -matrix.get(1, 0)), 296, endianess);
                 setBufferFloat(bufferByte, (float) ( -matrix.get(1, 1)), 300, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, (float) ( -matrix.get(1, 3)), 308, endianess);
+                setBufferFloat(bufferByte, newOrigin[1], 308, endianess);
                 setBufferFloat(bufferByte, (float) ( -matrix.get(2, 0)), 312, endianess);
                 setBufferFloat(bufferByte, (float) ( -matrix.get(2, 1)), 316, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 3)), 324, endianess);
+                setBufferFloat(bufferByte, newOrigin[2], 324, endianess);
             }
             else {
                 setBufferFloat(bufferByte, -1.0f, 280, endianess);
