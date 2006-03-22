@@ -1238,6 +1238,19 @@ public class FileIO {
         }
         return fileType;
     }
+    
+    /**
+     *   Sets the FileBase.(filetype) based on the file extension of the given
+     *   filename.  Also sets file "suffix", if required.
+     *   @param fileName    Filename of the image to read in.
+     *                      Must include the file extension.
+     *   @param fileDir     Directory where fileName exists.
+     *   @return            Filetype from FileBase.
+     *   @see FileBase
+     */
+    public int getFileType( String fileName, String fileDir ) {
+        return getFileType( fileName, fileDir, false );
+    }
 
     /**
      *   Sets the FileBase.(filetype) based on the file extension of the given
