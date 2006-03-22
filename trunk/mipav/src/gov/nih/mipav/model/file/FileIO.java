@@ -744,7 +744,7 @@ public class FileIO {
         {
             if (fileType != FileBase.BRUKER)
             {
-                fileType = getFileType(fileName, fileDir); // set the fileType based on the filename extension
+                fileType = getFileType(fileName, fileDir, false); // set the fileType based on the filename extension
 
                 if (fileType == FileBase.UNDEFINED)
                 {
@@ -997,7 +997,8 @@ public class FileIO {
         }
 
         if ( options.isSaveAs() ) { // if we're doing a save-as op, then try to get the filetype from the name
-            fileType = getFileType( options.getFileName(), options.getFileDirectory() );
+            fileType = getFileType( options.getFileName(), options.getFileDirectory(),
+                                    true);
             options.setDefault( true ); // this would already be set....  hrmm....
         } else { // otherwise, get the file-type from the file-info.
             fileType = image.getFileInfo( 0 ).getFileFormat();
@@ -1244,10 +1245,11 @@ public class FileIO {
      *   @param fileName    Filename of the image to read in.
      *                      Must include the file extension.
      *   @param fileDir     Directory where fileName exists.
+     *   @param doWrite     If true about to write a file
      *   @return            Filetype from FileBase.
      *   @see FileBase
      */
-    public int getFileType( String fileName, String fileDir ) {
+    public int getFileType( String fileName, String fileDir, boolean doWrite ) {
         int fileType;
         int i;
 
@@ -1323,32 +1325,47 @@ public class FileIO {
             fileType = FileBase.RAW;
         } else if ( suffix.equalsIgnoreCase( ".img" ) ) {
             // Both ANALYZE and NIFTI use .img and .hdr
-            fileType = FileBase.ANALYZE;
-            int p = fileName.lastIndexOf( "." );
-            String fileHeaderName = fileName.substring( 0, p + 1 ) + "hdr";
-
-            try {
-                File file = new File( fileDir + fileHeaderName );
-                RandomAccessFile raFile = new RandomAccessFile( file, "r" );
-
-                raFile.seek( 344L );
-                char[] niftiName = new char[4];
-
-                for ( i = 0; i < 4; i++ ) {
-                    niftiName[i] = (char) raFile.readUnsignedByte();
+            if (doWrite) {
+                JDialogAnalyzeNIFTIChoice choice =
+                    new JDialogAnalyzeNIFTIChoice(UI.getMainFrame());
+                if (!choice.okayPressed()) {
+                    fileType = FileBase.ERROR;
                 }
-                raFile.close();
-                if ( ( niftiName[0] == 'n' ) && ( ( niftiName[1] == 'i' ) || ( niftiName[1] == '+' ) )
-                        && ( niftiName[2] == '1' ) && ( niftiName[3] == '\0' ) ) {
+                else if (choice.isAnalyzeFile()) {
+                    fileType = FileBase.ANALYZE;
+                }
+                else {
                     fileType = FileBase.NIFTI;
                 }
-            } catch ( OutOfMemoryError error ) {
-                System.gc();
-            } catch ( FileNotFoundException e ) {
-                System.gc();
-            } catch ( IOException e ) {
-                System.gc();
-            }
+            } // if (doWrite)
+            else { // read
+                fileType = FileBase.ANALYZE;
+                int p = fileName.lastIndexOf( "." );
+                String fileHeaderName = fileName.substring( 0, p + 1 ) + "hdr";
+    
+                try {
+                    File file = new File( fileDir + fileHeaderName );
+                    RandomAccessFile raFile = new RandomAccessFile( file, "r" );
+    
+                    raFile.seek( 344L );
+                    char[] niftiName = new char[4];
+    
+                    for ( i = 0; i < 4; i++ ) {
+                        niftiName[i] = (char) raFile.readUnsignedByte();
+                    }
+                    raFile.close();
+                    if ( ( niftiName[0] == 'n' ) && ( ( niftiName[1] == 'i' ) || ( niftiName[1] == '+' ) )
+                            && ( niftiName[2] == '1' ) && ( niftiName[3] == '\0' ) ) {
+                        fileType = FileBase.NIFTI;
+                    }
+                } catch ( OutOfMemoryError error ) {
+                    System.gc();
+                } catch ( FileNotFoundException e ) {
+                    System.gc();
+                } catch ( IOException e ) {
+                    System.gc();
+                }
+            } // else read
         } else if ( suffix.equalsIgnoreCase( ".nii" ) ) {
             fileType = FileBase.NIFTI;
         } else if ( suffix.equalsIgnoreCase( ".ima" ) ) {
