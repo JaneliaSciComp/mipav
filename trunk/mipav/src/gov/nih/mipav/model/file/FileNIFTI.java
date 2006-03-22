@@ -2111,7 +2111,6 @@ public class FileNIFTI
             isMinc = false;
         }
 
-
         if (oneFile) {
             fileHeaderName = fileName + ".nii";
         }
@@ -2770,7 +2769,7 @@ public class FileNIFTI
                 switch (axisOrientation[0]) {
                     case FileInfoBase.ORI_R2L_TYPE:
                         matrix.set(0, 0, resols[0]);
-                        newOrigin[0] = origin[0] + (extents[0] - 1) * resols[0];
+                        newOrigin[0] = origin[0];
                         break;
                     case FileInfoBase.ORI_L2R_TYPE:
                         matrix.set(0, 0, -resols[0]);
