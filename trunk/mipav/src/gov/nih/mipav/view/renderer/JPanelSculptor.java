@@ -147,16 +147,29 @@ public class JPanelSculptor extends JPanelRendererBase {
         m_kSaveSculptButton.setEnabled( false );
         viewToolBar.add( m_kSaveSculptButton );
 
-        JPanel panel2 = new JPanel();
-        panel2.add(viewToolBar);
+        JPanel panelToolbar = new JPanel();
+        panelToolbar.setLayout( new GridBagLayout() );
+        panelToolbar.setVisible( true );
 
-        Box contentBox = new Box( BoxLayout.Y_AXIS );
+        GridBagConstraints gbc = new GridBagConstraints();
 
-        contentBox.add( panel2 );
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+
+        panelToolbar.add( viewToolBar, gbc );
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
         scrollPanel = new DrawingPanel();
-        scrollPanel.add( contentBox, BorderLayout.NORTH );
+        scrollPanel.setLayout(new BorderLayout());
+        scrollPanel.setVisible( true );
+
+        scrollPanel.add( panelToolbar, BorderLayout.PAGE_START);
 
         scroller = new JScrollPane( scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED );
