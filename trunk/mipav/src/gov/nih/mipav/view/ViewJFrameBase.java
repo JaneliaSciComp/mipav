@@ -2603,7 +2603,7 @@ public abstract class ViewJFrameBase
             FileIO fileIO = new FileIO();
 
             suffix = FileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory);
+            fileType = fileIO.getFileType(fileName, directory, false);
             fileIO = null;
         }
 
@@ -2908,7 +2908,7 @@ public abstract class ViewJFrameBase
 
             fileIO.setQuiet(operateQuiet);
             suffix = FileIO.getSuffixFrom(fileName);
-            fileType = fileIO.getFileType(fileName, directory);
+            fileType = fileIO.getFileType(fileName, directory, false);
             fileIO = null;
         }
 
