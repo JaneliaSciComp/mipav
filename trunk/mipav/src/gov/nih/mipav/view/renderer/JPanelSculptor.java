@@ -62,6 +62,9 @@ public class JPanelSculptor extends JPanelRendererBase {
     int m_iSculptWidth = 0;
     int m_iSculptHeight = 0;
 
+    /** Toolbar builder reference. */
+    private ViewToolBarBuilder toolbarBuilder;
+
     /**
      * Contructor. Called from the surface render to create the sculptor control panel.
      * @param parent  surface render
@@ -116,78 +119,31 @@ public class JPanelSculptor extends JPanelRendererBase {
 
         mainPanel = new JPanel( new BorderLayout() );
 
-        m_kDrawOutlineButton = new JToggleButton( MipavUtil.getIcon( "drawsculptor.gif" ) );
-        m_kDrawOutlineButton.setMargin( new Insets( 0, 0, 0, 0 ) );
-        m_kDrawOutlineButton.addActionListener( this );
-        m_kDrawOutlineButton.setToolTipText( "Draw sculpt outline region" );
-        m_kDrawOutlineButton.setActionCommand( "DrawSculptRegion" );
-        m_kDrawOutlineButton.setBorderPainted( false );
-        m_kDrawOutlineButton.setRolloverEnabled( true );
-        m_kDrawOutlineButton.setRolloverIcon( MipavUtil.getIcon( "drawsculptorroll.gif" ) );
-        m_kDrawOutlineButton.setFocusPainted( false );
-        m_kDrawOutlineButton.setBorder( BorderFactory.createLoweredBevelBorder() );
+        toolbarBuilder = new ViewToolBarBuilder(this);
+
+        ButtonGroup cursorGroup = new ButtonGroup();
+        m_kDrawOutlineButton = toolbarBuilder.buildToggleButton( "DrawSculptRegion" , "Draw sculpt outline region", "drawsculptor", cursorGroup);
         m_kDrawOutlineButton.setEnabled( true );
         viewToolBar.add( m_kDrawOutlineButton );
 
-
-        m_kClearDrawOutlineButton = new JButton( MipavUtil.getIcon( "eraser.gif" ) );
-        m_kClearDrawOutlineButton.addActionListener( this );
-        m_kClearDrawOutlineButton.setActionCommand( "UndoDrawSculptRegion" );
-        m_kClearDrawOutlineButton.setFont( MipavUtil.font12B );
-        m_kClearDrawOutlineButton.setToolTipText( "Clear draw sculpt outline region" );
-        m_kClearDrawOutlineButton.setBorderPainted( false );
-        m_kClearDrawOutlineButton.setRolloverEnabled( true );
-        m_kClearDrawOutlineButton.setRolloverIcon( MipavUtil.getIcon( "eraserroll.gif" ) );
-        m_kClearDrawOutlineButton.setFocusPainted( false );
+        m_kClearDrawOutlineButton = toolbarBuilder.buildButton( "UndoDrawSculptRegion" , "Clear draw sculpt outline region", "eraser");
         m_kClearDrawOutlineButton.setEnabled( false );
         viewToolBar.add( m_kClearDrawOutlineButton );
 
-
-        m_kInvertOutlineButton = new JButton( MipavUtil.getIcon( "inverseregion.gif" ) );
-        m_kInvertOutlineButton.addActionListener( this );
-        m_kInvertOutlineButton.setActionCommand( "InvertSculptRegion" );
-        m_kInvertOutlineButton.setFont( MipavUtil.font12B );
-        m_kInvertOutlineButton.setToolTipText( "Invert draw sculpt outline region" );
-        m_kInvertOutlineButton.setBorderPainted( false );
-        m_kInvertOutlineButton.setRolloverEnabled( true );
-        m_kInvertOutlineButton.setRolloverIcon( MipavUtil.getIcon( "inverseregionroll.gif" ) );
-        m_kInvertOutlineButton.setFocusPainted( false );
+        m_kInvertOutlineButton = toolbarBuilder.buildButton( "InvertSculptRegion" , "Invert draw sculpt outline region", "inverseregion");
         m_kInvertOutlineButton.setEnabled( false );
         viewToolBar.add( m_kInvertOutlineButton );
 
-        m_kApplySculptButton = new JButton( MipavUtil.getIcon( "applysculptor.gif" ) );
-        m_kApplySculptButton.addActionListener( this );
-        m_kApplySculptButton.setActionCommand( "ApplySculptRegion" );
-        m_kApplySculptButton.setFont( MipavUtil.font12B );
-        m_kApplySculptButton.setToolTipText( "Apply sculpt region to volume" );
-        m_kApplySculptButton.setBorderPainted( false );
-        m_kApplySculptButton.setRolloverEnabled( true );
-        m_kApplySculptButton.setRolloverIcon( MipavUtil.getIcon( "applysculptorroll.gif" ) );
-        m_kApplySculptButton.setFocusPainted( false );
+        m_kApplySculptButton = toolbarBuilder.buildButton( "ApplySculptRegion" , "Apply sculpt region to volume", "applysculptor");
         m_kApplySculptButton.setEnabled( false );
         viewToolBar.add( m_kApplySculptButton );
 
-        m_kUndoSculptButton = new JButton( MipavUtil.getIcon( "sculptorundo.gif" ) );
-        m_kUndoSculptButton.addActionListener( this );
-        m_kUndoSculptButton.setActionCommand( "UndoApplySculptRegion" );
-        m_kUndoSculptButton.setFont( MipavUtil.font12B );
-        m_kUndoSculptButton.setToolTipText( "Undo apply sculpt region to volume" );
-        m_kUndoSculptButton.setBorderPainted( false );
-        m_kUndoSculptButton.setRolloverEnabled( true );
-        m_kUndoSculptButton.setRolloverIcon( MipavUtil.getIcon( "sculptorundo.gif" ) );
-        m_kUndoSculptButton.setFocusPainted( false );
+        m_kUndoSculptButton = toolbarBuilder.buildButton( "UndoApplySculptRegion" , "Undo apply sculpt region to volume", "sculptorundo");
         m_kUndoSculptButton.setEnabled( false );
         viewToolBar.add( m_kUndoSculptButton );
 
-        m_kSaveSculptButton = new JButton( MipavUtil.getIcon( "save.gif" ) );
-        m_kSaveSculptButton.addActionListener( this );
-        m_kSaveSculptButton.setActionCommand( "SaveSculptImage" );
-        m_kSaveSculptButton.setFont( MipavUtil.font12B );
-        m_kSaveSculptButton.setToolTipText( "Save the sculpt region to image" );
-        m_kSaveSculptButton.setBorderPainted( false );
-        m_kSaveSculptButton.setRolloverEnabled( true );
-        m_kSaveSculptButton.setRolloverIcon( MipavUtil.getIcon( "saveroll.gif" ) );
-        m_kSaveSculptButton.setFocusPainted( false );
+
+        m_kSaveSculptButton = toolbarBuilder.buildButton( "SaveSculptImage" , "Save the sculpt region to image", "save");
         m_kSaveSculptButton.setEnabled( false );
         viewToolBar.add( m_kSaveSculptButton );
 
