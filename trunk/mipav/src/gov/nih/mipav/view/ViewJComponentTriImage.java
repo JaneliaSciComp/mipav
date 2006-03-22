@@ -3262,6 +3262,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                         // surrounding slices) and thus makes it more easier to grab the point
                         for (int k = lastZOrg-1; k <= lastZOrg; k++)
                         {
+                        	if (k < 0 || mousePt.z < 0)
+                        	{
+                        		continue;
+                        	}
+                        	
                             Point3Df[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
                             for (j = 0; j < voiPoints.length; j++)
                             {
