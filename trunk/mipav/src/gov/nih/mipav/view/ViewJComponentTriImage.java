@@ -4516,20 +4516,45 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void mouseWheelMoved(MouseWheelEvent event)
     {
-    	int newSlice = slice;
-    	
-    	newSlice += ( -event.getWheelRotation());
+    	float zoomer = 1;
+        if (resolutionY == resolutionX) {
+            zoomer = Math.max(res[2], res[0]) / Math.min(res[2], res[0]);
+        }
+        
+        float flipper = slice;
+        int newSlice = (int) flipper;
+        flipper += ( -event.getWheelRotation());
+        newSlice += ( -event.getWheelRotation());
+        
+        // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
+        if (hasOrientation && (triComponentOrientation == AXIAL)) {
+            flipper = (imageActive.getExtents()[axisOrder[2]] - 1) - flipper;
+        }
 
-        if (newSlice <= 0)
+        if (newSlice < 0)
         {
         	newSlice = 0;
         }
         if (newSlice >= imageActive.getExtents()[axisOrder[2]])
         {
         	newSlice = imageActive.getExtents()[axisOrder[2]] - 1;
-        }        
+        }  
         
         slice = newSlice;
+        
+        if (flipper < 0)
+        {
+        	flipper = 0;
+        }
+        if (flipper >= imageActive.getExtents()[axisOrder[2]])
+        {
+        	flipper = imageActive.getExtents()[axisOrder[2]] - 1;
+        }
+
+        flipper = flipper * zoomer * getZoomY();
+        triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
+                (int) ( flipper + (0.5f * zoomer) ),
+                triComponentOrientation);
         
         Point3D newLabel = null;
         
@@ -4537,46 +4562,27 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int sagittalSlice = triImageFrame.getSagittalComponentSlice();
         int axialSlice = triImageFrame.getAxialComponentSlice();
 
-        if (orientation == CORONAL)
+        if (triComponentOrientation == CORONAL)
         {
-        	triImageFrame.setCoronalComponentSlice(newSlice); 
-        	//newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
+        	triImageFrame.setCoronalComponentSlice(newSlice);
             
         	triImageFrame.fireCoordinateChange(sagittalSlice, newSlice, axialSlice);
         }
-        else if (orientation == SAGITTAL)
+        else if (triComponentOrientation == SAGITTAL)
         {
         	triImageFrame.setSagittalComponentSlice(newSlice);
-        	//newLabel = getTriImagePosition(axialSlice, coronalSlice);
             
         	triImageFrame.fireCoordinateChange(newSlice, coronalSlice, axialSlice);
         }
         else
         {
         	triImageFrame.setAxialComponentSlice(newSlice);
-        	//newLabel = getTriImagePosition(coronalSlice, sagittalSlice);
             
         	triImageFrame.fireCoordinateChange(sagittalSlice, coronalSlice, newSlice);
         }
         
         newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
         triImageFrame.setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
-        
-        // for the crosshairs display, we must make the 'newSlice' value 1-based
-        newSlice++;
-
-        if (resolutionX == resolutionY)
-        {
-            triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
-                                        (int) (newSlice * (res[2] / res[1]) * getZoomY()),
-                                        triComponentOrientation);
-        }
-        else
-        {
-            triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
-                                        (int) (newSlice * getZoomY()),
-                                        triComponentOrientation);
-        }
         
         triImageFrame.updateImages();
     }
