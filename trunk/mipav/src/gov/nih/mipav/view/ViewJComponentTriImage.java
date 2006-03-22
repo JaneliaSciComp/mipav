@@ -3181,6 +3181,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         		return;
         	}
         	
+        	// get the volume position of the mouse event
+            Point3D volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                        
+        	if (volumeMousePoint.x < 0 || volumeMousePoint.y < 0 || volumeMousePoint.z < 0 ||
+        		volumeMousePoint.x >= imageA.getExtents()[0] ||
+        		volumeMousePoint.y >= imageA.getExtents()[1] ||
+        		volumeMousePoint.z >= imageA.getExtents()[2])
+            {
+            	return;
+            }
+        	        	
             // Hides the cursor during dragging so it doesn't get in the way.
             if (showCrosshairs == true)
             {
@@ -3312,6 +3323,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             // get the volume position of the mouse event
             Point3D volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+            
+            if (volumeMousePoint.x < 0 || volumeMousePoint.y < 0 || volumeMousePoint.z < 0)
+            {
+            	return;
+            }
 
             // if this is the image's original orientation
             if (axisOrder[2] == 2)
@@ -3329,7 +3345,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             break;
                         }
                     }
-
                 }
 
                 // if a point is being dragged
@@ -3364,7 +3379,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                         // set coplanar dimensions equal, therefore equalizing the point on a common plane
                         if (boundingBoxPoints[dragBBpt].x == commonPoint.x)
                         {
-                            commonPoint.x = volumeMousePoint.x;
+                        	commonPoint.x = volumeMousePoint.x;
                         }
 
                         // set coplanar dimensions equal, therefore equalizing the point on a common plane
@@ -3373,7 +3388,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             commonPoint.y = volumeMousePoint.y;
                         }
                     }
-
+                    
                     // finally, set dragged point to new mouse value
                     boundingBoxPoints[dragBBpt].x = volumeMousePoint.x;
                     boundingBoxPoints[dragBBpt].y = volumeMousePoint.y;
@@ -3437,7 +3452,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                     boundingBoxPoints[dragBBpt].x = volumeMousePoint.x;
                     boundingBoxPoints[dragBBpt].z = volumeMousePoint.z;
-
                 }
             }
 
@@ -3495,10 +3509,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                     boundingBoxPoints[dragBBpt].y = volumeMousePoint.y;
                     boundingBoxPoints[dragBBpt].z = volumeMousePoint.z;
-
                 }
             }
-
 
         }
 
