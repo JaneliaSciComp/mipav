@@ -4,6 +4,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogNIFTIChoice;
 
 import java.io.*;
 
@@ -112,7 +113,7 @@ public class FileNIFTI
     private String intentName;
     private char magic[] = new char[4];
     private float origin[];
-    private float newOrigin[];
+    private float newOrigin[] = new float[3];
     private float vox_offset = 0.0f;
     private float qfac;
     private int axisOrientation[];
@@ -129,6 +130,7 @@ public class FileNIFTI
     private double imageMax;
     private double newMin;
     private double newMax;
+    private boolean oneFile;
 
     /**
      *   Constructs new file object.
@@ -1945,6 +1947,23 @@ public class FileNIFTI
         int index;
         int nImagesSaved;
         int nTimePeriodsSaved;
+        String suffix;
+        
+        suffix = FileIO.getSuffixFrom(fileName);
+        if (suffix.equals(".nii")) {
+            oneFile = true;
+        }
+        else if (suffix.equals(".img")) {
+            oneFile = false;
+        }
+        else {
+            JDialogNIFTIChoice choice =
+                new JDialogNIFTIChoice(image.getUserInterface().getMainFrame());
+            if (!choice.okayPressed()) {
+                throw new IOException("FileNIFTIWrite dialog error");
+            }
+             oneFile = choice.getOneFile();
+        }
 
         int beginSlice = options.getBeginSlice();
         int endSlice = options.getEndSlice();
@@ -1959,15 +1978,28 @@ public class FileNIFTI
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0), true);
             flipTopBottom(image);
-            rawFile.setStartPosition(348L);
-            if (image.getNDims() == 3) {
-                rawFile.writeImage3DTo2D(image, options, ".nii");
-                writeHeader3DTo2D(image, fhName, fileDir, options);
-            }
-            else if (image.getNDims() == 4) {
-                rawFile.writeImage4DTo3D(image, options, ".nii");
-                writeHeader4DTo3D(image, fhName, fileDir, options);
-            }
+            if (oneFile) {
+                rawFile.setStartPosition(348L);
+                if (image.getNDims() == 3) {
+                    rawFile.writeImage3DTo2D(image, options, ".nii");
+                    writeHeader3DTo2D(image, fhName, fileDir, options);
+                }
+                else if (image.getNDims() == 4) {
+                    rawFile.writeImage4DTo3D(image, options, ".nii");
+                    writeHeader4DTo3D(image, fhName, fileDir, options);
+                }
+            } // if (oneFile)
+            else { // 2 files
+                rawFile.setStartPosition(0L);
+                if (image.getNDims() == 3) {
+                    rawFile.writeImage3DTo2D(image, options, ".img");
+                    writeHeader3DTo2D(image, fhName, fileDir, options);
+                }
+                else if (image.getNDims() == 4) {
+                    rawFile.writeImage4DTo3D(image, options, ".img");
+                    writeHeader4DTo3D(image, fhName, fileDir, options);
+                }    
+            } // else 2 files
             flipTopBottom(image);
         }
         else {
@@ -1978,7 +2010,12 @@ public class FileNIFTI
                                       image.getFileInfo(0),
                                       true, FileBase.READ_WRITE);
                 flipTopBottom(image);
-                rawFile.setStartPosition(348L);
+                if (oneFile) {
+                    rawFile.setStartPosition(348L);
+                }
+                else {
+                    rawFile.setStartPosition(0L);
+                }
                 rawFile.writeImage(image, options);
                 nImagesSaved = rawFile.getNImages();
                 nTimePeriodsSaved = rawFile.getNTimePeriods();
@@ -2075,7 +2112,12 @@ public class FileNIFTI
         }
 
 
-        fileHeaderName = fileName + ".nii";
+        if (oneFile) {
+            fileHeaderName = fileName + ".nii";
+        }
+        else {
+            fileHeaderName = fileName + ".hdr";
+        }
         fileHeader = new File(fileDir + fileHeaderName);
         raFile = new RandomAccessFile(fileHeader, "rw");
         // Don't do raFile.setLength(0) because the data is written to this file
@@ -3294,7 +3336,12 @@ public class FileNIFTI
 
         // ni1\0 for data stored in the .img file
         // n+1\0 for data stored in the same .nii file as the header
-        setBufferString(bufferByte, "n+1\0", 344);
+        if (oneFile) {
+            setBufferString(bufferByte, "n+1\0", 344);
+        }
+        else {
+            setBufferString(bufferByte, "ni1\0", 344);
+        }
         qoffset_x = getBufferFloat(bufferByte, 268, endianess);
         qoffset_y = getBufferFloat(bufferByte, 272, endianess);
         qoffset_z = getBufferFloat(bufferByte, 276, endianess);
