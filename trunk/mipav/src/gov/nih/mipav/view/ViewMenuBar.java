@@ -373,8 +373,8 @@ public class ViewMenuBar {
             menuBuilder.buildMenuItem("Constrained optimized automatic registration", "COAR", 0, null, false),
             menuBuilder.buildMenuItem("Display pixel similarity cost functions", "COSTS", 0, null, false),
             menuBuilder.makeMenu("Landmark", false, new JMenuItem[] {
-                                 menuBuilder.buildMenuItem("Least squares", "LeastSquares", 0, null, false),
-                                 menuBuilder.buildMenuItem("Thin plate spline", "TPSpline", 0, null, false), }),
+                                 menuBuilder.buildMenuItem("Least squares", "LeastSquares", 0, "reglsq.gif", false),
+                                 menuBuilder.buildMenuItem("Thin plate spline", "TPSpline", 0, "regtsp.gif", false), }),
             menuBuilder.buildMenuItem("Manual 2D series", "Manual", 0, null, false),
             menuBuilder.buildMenuItem("Mosaic", "Mosaic", 0, null, false),
             menuBuilder.buildMenuItem("Optimized automatic registration", "OAR", 0, null, false),
