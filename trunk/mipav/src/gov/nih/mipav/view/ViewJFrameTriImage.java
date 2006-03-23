@@ -3501,6 +3501,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     	   int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
                     	   
                     	   triImage[i].updateCrosshairPosition(newX, newY);
+                    	   
+                    	   adjustScrollbars(newX, newY, scrollPane[i]);
                        }
                    }
                }
@@ -3535,6 +3537,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     	   int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
                     	   
                     	   triImage[i].updateCrosshairPosition(newX, newY);
+                    	   
+                    	   adjustScrollbars(newX, newY, scrollPane[i]);
                        }
                    }
                }
@@ -3548,7 +3552,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                {
                    if (triImage[i] != null)
                    {
+                	   float oldZoom = zoom;
+                	   
                        triImage[i].setZoom(1, 1);
+                       
+                       Point oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                       
+                       if (oldCrosshairPoint != null)
+                       {
+                    	   int newX = (int) (oldCrosshairPoint.x / oldZoom);
+                    	   int newY = (int) (oldCrosshairPoint.y / oldZoom);
+                    	   
+                    	   triImage[i].updateCrosshairPosition(newX, newY);
+                    	   
+                    	   adjustScrollbars(newX, newY, scrollPane[i]);
+                       }
                    }
                }
                validate();
@@ -5651,5 +5669,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 			}
     		
     	}
+    }
+    
+    private void adjustScrollbars(final int x, final int y, final JScrollPane scrollPane)
+    {
+    	if (scrollPane == null) return;
+    	
+    	JViewport viewport = scrollPane.getViewport();
+    	if (viewport == null) return;
+    	
+    	Dimension extentSize = viewport.getExtentSize();
+    	if (extentSize == null) return;
+    	
+        final int scrollPaneX = extentSize.width / 2;
+        final int scrollPaneY = extentSize.height / 2;
+
+        Runnable adjustScrollbarsAWTEvent = new Runnable()
+        {
+            public void run()
+            {
+                scrollPane.getHorizontalScrollBar().setValue(x - scrollPaneX);
+                scrollPane.getVerticalScrollBar().setValue(y - scrollPaneY);
+            }
+        };
+        SwingUtilities.invokeLater(adjustScrollbarsAWTEvent);
     }
 }
