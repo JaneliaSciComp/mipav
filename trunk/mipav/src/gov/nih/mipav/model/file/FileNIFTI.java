@@ -2053,6 +2053,7 @@ public class FileNIFTI
         boolean isDicom = true;
         boolean isMinc = true;
         boolean isXML = true;
+        boolean isAfni = true;
         String orientationStr;
         boolean endianess;
         String fileHeaderName;
@@ -2062,6 +2063,7 @@ public class FileNIFTI
         FileInfoDicom fileInfoDicom = null;
         FileInfoMinc fileInfoMinc = null;
         FileInfoXML fileInfoXML = null;
+        FileInfoAfni fileInfoAfni = null;
         int niftiExtents[];
         short statCode;
         float intentP1;
@@ -2111,6 +2113,13 @@ public class FileNIFTI
         }
         catch (ClassCastException e) { // If it isn't, catch the exception
             isXML = false;
+        }
+        
+        try { // In this case, the file must be Afni
+            fileInfoAfni = (FileInfoAfni) image.getFileInfo(0);
+        }
+        catch (ClassCastException e) { // If it isn't, catch the exception
+            isAfni = false;
         }
 
         try { // In this case, the file must be Minc
@@ -2525,7 +2534,7 @@ public class FileNIFTI
             matrix.set(2, 3, newOrigin[2]);
         }
 
-        if (isDicom || isXML) {
+        if (isDicom || isXML  || isAfni) {
             axisOrientation = image.getFileInfo(0).getAxisOrientation();
             if ( (axisOrientation != null) && (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                 (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
@@ -2638,7 +2647,7 @@ public class FileNIFTI
                 matrix.set(1, 3, newOrigin[1]);
                 matrix.set(2, 3, newOrigin[2]);
             }
-        } // if (isDicom || isXML)
+        } // if (isDicom || isXML || isAfni)
         else if (isMinc) {
             axisOrientation = image.getFileInfo(0).getAxisOrientation();
             if ( (axisOrientation != null) && (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
