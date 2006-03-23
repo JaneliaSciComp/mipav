@@ -183,8 +183,10 @@ public class FileInfoMinc extends FileInfoBase {
             dialog.append(dimArray[j].toString());
         }
         dialog.append("\nGlobal Attribute information:\n");
-        for (int j = 0; j < gattArray.length; j++ ) {
-            dialog.append(gattArray[j].toString());
+        if (gattArray != null) {
+            for (int j = 0; j < gattArray.length; j++ ) {
+                dialog.append(gattArray[j].toString());
+            }
         }
         dialog.append("\n\nVariable information:\n");
         for (int j = 0; j < varArray.length; j++ ) {
