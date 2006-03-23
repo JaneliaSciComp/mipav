@@ -3156,7 +3156,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 flipper = flipper * zoomer * getZoomY();
                 triImageFrame.setCrosshairs(mouseEvent.getX(), mouseEvent.getY(),
                                             (int) ( flipper + (0.5f * zoomer) ),
-                                            triComponentOrientation);
+                                            this);
 
                 // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
                 if (hasOrientation && (triComponentOrientation == SAGITTAL ||
@@ -3214,7 +3214,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             flipper = flipper * zoomer * getZoomY();
             triImageFrame.setCrosshairs(mouseEvent.getX(), mouseEvent.getY(),
                                         (int) ( flipper + (0.5f * zoomer) ),
-                                        triComponentOrientation);
+                                        this);
 
             // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
             if (hasOrientation && (triComponentOrientation == SAGITTAL ||
@@ -4571,7 +4571,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         flipper = flipper * zoomer * getZoomY();
         triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
                 (int) ( flipper + (0.5f * zoomer) ),
-                triComponentOrientation);
+                this);
         
         Point3D newLabel = null;
         
@@ -6527,5 +6527,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public boolean isIntensityLineVisible()
     {
         return intensityLineVisible;
+    }
+    
+    public int getTriComponentOrientation()
+    {
+    	return triComponentOrientation;
     }
 }
