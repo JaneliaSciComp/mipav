@@ -2052,6 +2052,7 @@ public class FileNIFTI
         boolean isNIFTI = true;
         boolean isDicom = true;
         boolean isMinc = true;
+        boolean isXML = true;
         String orientationStr;
         boolean endianess;
         String fileHeaderName;
@@ -2060,6 +2061,7 @@ public class FileNIFTI
         FileInfoBase myFileInfo;
         FileInfoDicom fileInfoDicom = null;
         FileInfoMinc fileInfoMinc = null;
+        FileInfoXML fileInfoXML = null;
         int niftiExtents[];
         short statCode;
         float intentP1;
@@ -2102,6 +2104,13 @@ public class FileNIFTI
         }
         catch (ClassCastException e) { // If it isn't, catch the exception
             isDicom = false;
+        }
+        
+        try { // In this case, the file must be XML
+            fileInfoXML = (FileInfoXML) image.getFileInfo(0);
+        }
+        catch (ClassCastException e) { // If it isn't, catch the exception
+            isXML = false;
         }
 
         try { // In this case, the file must be Minc
@@ -2516,7 +2525,7 @@ public class FileNIFTI
             matrix.set(2, 3, newOrigin[2]);
         }
 
-        if (isDicom) {
+        if (isDicom || isXML) {
             axisOrientation = image.getFileInfo(0).getAxisOrientation();
             if ( (axisOrientation != null) && (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                 (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
@@ -2629,7 +2638,7 @@ public class FileNIFTI
                 matrix.set(1, 3, newOrigin[1]);
                 matrix.set(2, 3, newOrigin[2]);
             }
-        } // if (isDicom)
+        } // if (isDicom || isXML)
         else if (isMinc) {
             axisOrientation = image.getFileInfo(0).getAxisOrientation();
             if ( (axisOrientation != null) && (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
@@ -2769,7 +2778,7 @@ public class FileNIFTI
                 switch (axisOrientation[0]) {
                     case FileInfoBase.ORI_R2L_TYPE:
                         matrix.set(0, 0, resols[0]);
-                        newOrigin[0] = origin[0];
+                        newOrigin[0] = origin[0] + (extents[0] - 1) * resols[0];
                         break;
                     case FileInfoBase.ORI_L2R_TYPE:
                         matrix.set(0, 0, -resols[0]);
@@ -3070,8 +3079,13 @@ public class FileNIFTI
             }
 
             // If data is in the same .nii file as the header, use an offset = 348
-            // If the data is in a separate .img file, use a 0 offswet
-            setBufferFloat(bufferByte, 348.0f, 108, endianess);
+            // If the data is in a separate .img file, use a 0 offset
+            if (oneFile) {
+                setBufferFloat(bufferByte, 348.0f, 108, endianess);
+            }
+            else {
+                setBufferFloat(bufferByte, 0.0f, 108, endianess);
+            }
 
             // scl_slope
             setBufferFloat(bufferByte, 1.0f, 112, endianess);
@@ -3271,7 +3285,12 @@ public class FileNIFTI
 
             // vox_offset = 348 for data in same .nii file as header
             // vox_offset = 0 for data in separate .img file
-            setBufferFloat(bufferByte, 348.0f, 108, endianess);
+            if (oneFile) {
+                setBufferFloat(bufferByte, 348.0f, 108, endianess);
+            }
+            else {
+                setBufferFloat(bufferByte, 0.0f, 108, endianess);
+            }
             // scl_slope
             setBufferFloat(bufferByte, 1.0f, 112, endianess);
             // scl_inter
