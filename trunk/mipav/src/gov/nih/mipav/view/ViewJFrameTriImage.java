@@ -3697,7 +3697,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                }
                
                imageA.notifyImageDisplayListeners();
-               imageB.notifyImageDisplayListeners();
+               if (imageB != null) imageB.notifyImageDisplayListeners();
            }
            else if (command.equals("boundingBox"))
            {
