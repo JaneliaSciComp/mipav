@@ -1102,12 +1102,30 @@ public class ModelLUT
         set(1, 0, 0);
         set(2, 0, 0);
         set(3, 0, 0);
-        for (i = 1; i < height; i++) {
-            color = Color.getHSBColor( ( (i * 36) % 360) / 360.0f, 1.0f, 1.0f);
-            set(0, i, 1);
-            set(1, i, color.getRed());
-            set(2, i, color.getGreen());
-            set(3, i, color.getBlue());
+        float sat = 1.0f;
+        float bri = 1.0f;
+        int m = 53;
+        for (i = 0; i < height-1; i++) {
+            color = Color.getHSBColor( ( (i * m) % 360) / 360.0f, sat, bri);
+            set(0, i+1, 1);
+            set(1, i+1, color.getRed());
+            set(2, i+1, color.getGreen());
+            set(3, i+1, color.getBlue());
+            
+            if (i != 0)
+            if (i % (360/m) == 0)
+            {
+            	if (sat > 0.5f && bri > 0.5f)
+            	{
+	            	sat = sat - 0.25f;
+	            	bri = bri - 0.25f;
+            	}
+            	else
+            	{
+            		sat = 1.0f;
+            		bri = 1.0f;
+            	}
+            }
         }
 
         type = STRIPED;
