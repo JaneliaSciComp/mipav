@@ -4980,7 +4980,7 @@ System.out.println(command);
                 }
                 else
                 {
-                    ( (PlugInFile) thePlugIn).run(userInterface);
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an Algorithm PlugIn, but does not implement PlugInAlgorithm.");
                 }
             }
             catch (ClassNotFoundException e)
@@ -4997,7 +4997,7 @@ System.out.println(command);
                 MipavUtil.displayError("Unable to load plugin (Access)");
             }
         }
-        else if (command.equals("PlugInFile"))
+        else if (command.equals("PlugInFileRead"))
         {
 
             Object thePlugIn = null;
@@ -5008,11 +5008,49 @@ System.out.println(command);
                 thePlugIn = Class.forName(plugInName).newInstance();
                 if (thePlugIn instanceof PlugInFile)
                 {
-                    ( (PlugInFile) thePlugIn).run(userInterface);
+                    if (((PlugInFile)thePlugIn).canReadImages()) {
+                        ((PlugInFile)thePlugIn).readImage();
+                    } else {
+                        MipavUtil.displayInfo(plugInName + " does not support the reading of images.");
+                    }
                 }
                 else
                 {
-                    ( (PlugInFile) thePlugIn).run(userInterface);
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
+                }
+            }
+            catch (ClassNotFoundException e)
+            {
+                MipavUtil.displayError("PlugIn not found: " + plugInName);
+            }
+            catch (InstantiationException e)
+            {
+                MipavUtil.displayError("Unable to load plugin (ins)");
+            }
+            catch (IllegalAccessException e)
+            {
+                MipavUtil.displayError("Unable to load plugin (acc)");
+            }
+        }
+        else if (command.equals("PlugInFileWrite"))
+        {
+            Object thePlugIn = null;
+            String plugInName = ( (JMenuItem) (event.getSource())).getComponent().getName();
+
+            try
+            {
+                thePlugIn = Class.forName(plugInName).newInstance();
+                if (thePlugIn instanceof PlugInFile)
+                {
+                    if (((PlugInFile)thePlugIn).canWriteImages()) {
+                        ( (PlugInFile) thePlugIn).writeImage(getActiveImage());
+                    } else {
+                        MipavUtil.displayInfo(plugInName + " does not support the writing of images.");
+                    }
+                }
+                else
+                {
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
                 }
             }
             catch (ClassNotFoundException e)
@@ -5043,7 +5081,7 @@ System.out.println(command);
                 }
                 else
                 {
-                    ( (PlugInView) thePlugIn).run(userInterface, this, getActiveImage());
+                    MipavUtil.displayError("PlugIn " + plugInName + " claims to be an View PlugIn, but does not implement PlugInView.");
                 }
             }
             catch (ClassNotFoundException e)
