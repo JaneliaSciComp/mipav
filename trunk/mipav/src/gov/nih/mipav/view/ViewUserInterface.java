@@ -1497,6 +1497,62 @@ public class ViewUserInterface
             }
         }
     }
+    
+    /**
+     * Open an image and put it into a new frame, given the image file name.
+     * @param imageFileName the file name, without the path
+     * @param imageFileDir the directory where the file is
+     */
+    public void openImageFrame(String imageFileName, String imageFileDir) {
+        ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
+        String imageFile = imageFileDir + File.separator + imageFileName;
+        String imageName;
+        
+        // TODO: multifiles?
+        
+        imageName = openFile.open(imageFile, false, null);
+
+        // if open failed, then imageNames will be null
+        if (imageName == null) {
+            return;
+        }
+        else {
+            //here we will add this to the recently opened image list
+            // because we now know if this was a multifile as well as the dimensionality
+            int numDim = openFile.getImage().getExtents().length;
+        }
+
+        boolean sizeChanged = false;
+
+        // if the SaveAllOnSave preference flag is set, then
+        // load all the files associated with this image (VOIs, LUTs, etc.)
+        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+            try {
+                ModelImage img = getRegisteredImageByName(imageName);
+
+                // get frame for image
+                ViewJFrameImage imgFrame = img.getParentFrame();
+
+                // if the image size was changed to FLOAT, then don't
+                // load any luts (chances are they won't work)
+                if (!sizeChanged) {
+                    // load any luts
+                    imgFrame.loadLUT(true, true);
+                }
+
+                // load any vois
+                imgFrame.loadAllVOIs(true);
+            }
+            catch (IllegalArgumentException iae) {
+                //MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                Preferences.debug(
+                    "Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
+                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n",
+                    1);
+                Preferences.debug("Bad argument.");
+            }
+        }
+    }
 
     /**
      * Register image model by adding it to the image hashtable.
@@ -2374,7 +2430,7 @@ public class ViewUserInterface
            else if (command.equalsIgnoreCase("anonymizeDirectory")) {
                buildAnonDirectoryDialog();
            }
-           else if (command.equals("PlugInFile")) {
+           else if (command.equals("PlugInFileRead")) {
 
                Object thePlugIn = null;
                String plugInName = ( (JMenuItem) (event.getSource())).getComponent().getName();
@@ -2382,7 +2438,13 @@ public class ViewUserInterface
                try {
                    thePlugIn = Class.forName(plugInName).newInstance();
                    if (thePlugIn instanceof PlugInFile) {
-                       ( (PlugInFile) thePlugIn).run(this);
+                       if (((PlugInFile)thePlugIn).canReadImages()) {
+                           ((PlugInFile)thePlugIn).readImage();
+                       } else {
+                           MipavUtil.displayInfo(plugInName + " does not support the reading of images.");
+                       }
+                   } else {
+                       MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
                    }
                }
                catch (ClassNotFoundException e) {
@@ -2835,8 +2897,7 @@ public class ViewUserInterface
      * @return    the new plugin menu
      */
     public JMenu buildPlugInsMenu(ActionListener al) {
-        String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins"
-            + File.separator;
+        String userPlugins = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "plugins" + File.separator;
 
         JMenu menu = ViewMenuBuilder.buildMenu("Plugins", 'P', false);
 
@@ -2871,8 +2932,7 @@ public class ViewUserInterface
                     Object plugIn = Class.forName(name).newInstance();
                     if (plugIn instanceof PlugInAlgorithm && ! (al instanceof ViewUserInterface)) {
                         //  System.err.println("adding " + name + " as PlugInAlgorithm");
-                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()),
-                            "PlugInAlgorithm", 0, this, null, false);
+                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()), "PlugInAlgorithm", 0, al, null, false);
 
                         menuItem.addActionListener(al);
                         menuItem.setActionCommand("PlugInAlgorithm");
@@ -2880,17 +2940,24 @@ public class ViewUserInterface
                         menuItem.setName(name);
                     }
                     else if (plugIn instanceof PlugInFile) {
+                        if (((PlugInFile)plugIn).canReadImages()) {
+                            menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - read image", "PlugInFileRead", 0, al, null, false);
+                            fileMenu.add(menuItem);
+                            menuItem.setName(name);
+                        }
+                        
+                        if (!(al instanceof ViewUserInterface) && ((PlugInFile)plugIn).canWriteImages()) {
+                            // some sort of image has been loaded and could be writen out by a plugin
+                            menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - write image", "PlugInFileWrite", 0, al, null, false);
+                            fileMenu.add(menuItem);
+                            menuItem.setName(name);
+                        }
                         //  System.err.println("adding " + name + " as PlugInFile");
-                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()),
-                            "PlugInFile", 0, this, null, false);
-                        fileMenu.add(menuItem);
-                        menuItem.setName(name);
-
                     }
                     else if (plugIn instanceof PlugInView && ! (al instanceof ViewUserInterface)) {
                         //  System.err.println("adding " + name + " as PlugInView");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()),
-                            "PlugInView", 0, this, null, false);
+                            "PlugInView", 0, al, null, false);
 
                         viewMenu.add(menuItem);
                         menuItem.setName(name);
@@ -2920,8 +2987,7 @@ public class ViewUserInterface
             menu.addSeparator();
         }
 
-        menu.add(ViewMenuBuilder.buildMenuItem("Install plugin", "InstallPlugin",
-                                               0, this, null, false));
+        menu.add(ViewMenuBuilder.buildMenuItem("Install plugin", "InstallPlugin", 0, al, null, false));
 
         return menu;
     }
