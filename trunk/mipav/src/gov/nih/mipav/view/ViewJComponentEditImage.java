@@ -545,6 +545,27 @@ public class ViewJComponentEditImage
 
         setZoom(zoom, zoom);
 
+        /**
+         * Create Popup Dialogs for VOIs and VOI points
+         */
+        popup = new ViewJPopupVOI(this);
+        if (imageA.getNDims() < 3) {
+            popup.setEnabledPropagate(false);
+        }
+        popupPt = new ViewJPopupPt(this);
+        if (imageA.getNDims() < 3) {
+            popupPt.setEnabledGraph(false);
+            popupPt.setEnabledProp(false);
+        }
+        addMouseMotionListener(this);
+        addMouseListener(this);
+        setVisible(true);
+        addMouseListener(popup);
+        addMouseListener(popupPt);
+        addKeyListener(this);
+        addMouseWheelListener(this);
+
+
         if (frame != null) {
             voiDialog = new JDialogVOIStats( (Frame) frame, imageA, null);
             addVOIUpdateListener(voiDialog);
@@ -589,22 +610,7 @@ public class ViewJComponentEditImage
             probeCursor = crosshairCursor;
         }
 
-        popup = new ViewJPopupVOI(this);
-        if (imageA.getNDims() < 3) {
-            popup.setEnabledPropagate(false);
-        }
-        popupPt = new ViewJPopupPt(this);
-        if (imageA.getNDims() < 3) {
-            popupPt.setEnabledGraph(false);
-            popupPt.setEnabledProp(false);
-        }
-        addMouseMotionListener(this);
-        addMouseListener(this);
-        setVisible(true);
-        addMouseListener(popup);
-        addMouseListener(popupPt);
-        addKeyListener(this);
-        addMouseWheelListener(this);
+
 
         if ( (orientation == NA) || (orientation == AXIAL)) {
             res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
@@ -3749,9 +3755,16 @@ public class ViewJComponentEditImage
 
             this.updateVOIColor(id, lastUID);
             voiID = -1;
+            this.fireVOISelectionChange(null);
+        } else {
+            VOIs.VOIAt(i).setAllActive(false);
+            this.fireVOISelectionChange(null);
         }
 
+
+
         imageActive.notifyImageDisplayListeners(null, true);
+
     }
 
     /**
@@ -4046,6 +4059,8 @@ public class ViewJComponentEditImage
             VOIs.removeElementAt(i);
         }
 
+        fireVOISelectionChange(null);
+
         voiID = -1;
     }
 
@@ -4072,6 +4087,7 @@ public class ViewJComponentEditImage
             return; // No VOI to delete
         }
         VOIs.removeElementAt(i);
+        fireVOISelectionChange(null);
         imageActive.notifyImageDisplayListeners(null, true);
     }
 
@@ -5303,6 +5319,7 @@ public class ViewJComponentEditImage
 
         if (mouseEvent.getClickCount() == 1 && mode == DEFAULT) {
             deactivateAllVOI();
+            fireVOISelectionChange(null);
             lastPointVOI = -1; // next mouseClick will deactivate point VOI unless reselected
 
             imageActive.notifyImageDisplayListeners();
@@ -5593,6 +5610,7 @@ public class ViewJComponentEditImage
 
 
                                     imageActive.notifyImageDisplayListeners();
+                                    fireVOISelectionChange(VOIs.VOIAt(i));
                                     return;
                                 }
                             }
@@ -5634,6 +5652,7 @@ public class ViewJComponentEditImage
                         }
                     }
 
+                    fireVOISelectionChange(VOIs.VOIAt(index));
                     imageActive.notifyImageDisplayListeners();
                     return;
                 }
@@ -6223,8 +6242,7 @@ public class ViewJComponentEditImage
                  == ELLIPSE) {}
         else if (mode == LINE) {}
         else if (mode == PROTRACTOR) {}
-        else if (mode
-                 == NEW_POINT) { // impossible for LINE
+        else if (mode == NEW_POINT) { // impossible for LINE
             if (mouseEvent.getModifiers() == MouseEvent.BUTTON1_MASK) {
                 nVOI = VOIs.size();
                 for (i = 0; i < nVOI; i++) {
@@ -6575,6 +6593,8 @@ public class ViewJComponentEditImage
                     }
                     else if (!mouseEvent.isControlDown() && !mouseEvent.isPopupTrigger()) { // selected curve was not selected, so set false.
                         selectedCurve.setActive(false);
+                        fireVOISelectionChange(VOIs.VOIAt(i));
+                        //System.err.println("set something to inactive...fired a changed?");
                     }
                 } // end of curves in this VOI
             } // end checking all VOIs in the active image
@@ -9613,7 +9633,7 @@ public class ViewJComponentEditImage
             }
             return null;
         }
-        
+
         if (imageACopy != null) {
             return imageACopy.getImageName();
         } else {
