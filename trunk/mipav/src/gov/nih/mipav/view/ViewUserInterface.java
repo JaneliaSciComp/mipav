@@ -1497,7 +1497,7 @@ public class ViewUserInterface
             }
         }
     }
-    
+
     /**
      * Open an image and put it into a new frame, given the image file name.
      * @param imageFileName the file name, without the path
@@ -1507,9 +1507,9 @@ public class ViewUserInterface
         ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
         String imageFile = imageFileDir + File.separator + imageFileName;
         String imageName;
-        
+
         // TODO: multifiles?
-        
+
         imageName = openFile.open(imageFile, false, null);
 
         // if open failed, then imageNames will be null
@@ -2202,7 +2202,7 @@ public class ViewUserInterface
         //this can be triggered by trying to "close the output window frame also"
         messageFrame.setVisible(doShow);
         Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, Boolean.toString(doShow));
-        
+
         itemOutput.setSelected(doShow);
 
         Enumeration e = this.getRegisteredImages();
@@ -2933,9 +2933,6 @@ public class ViewUserInterface
                     if (plugIn instanceof PlugInAlgorithm && ! (al instanceof ViewUserInterface)) {
                         //  System.err.println("adding " + name + " as PlugInAlgorithm");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()), "PlugInAlgorithm", 0, al, null, false);
-
-                        menuItem.addActionListener(al);
-                        menuItem.setActionCommand("PlugInAlgorithm");
                         algorithmMenu.add(menuItem);
                         menuItem.setName(name);
                     }
@@ -2945,7 +2942,7 @@ public class ViewUserInterface
                             fileMenu.add(menuItem);
                             menuItem.setName(name);
                         }
-                        
+
                         if (!(al instanceof ViewUserInterface) && ((PlugInFile)plugIn).canWriteImages()) {
                             // some sort of image has been loaded and could be writen out by a plugin
                             menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - write image", "PlugInFileWrite", 0, al, null, false);
