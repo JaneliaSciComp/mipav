@@ -48,6 +48,7 @@ public class PlugInDialogPipeline
         super(theParentFrame, false);
         imageA = imA;
         userInterface = ( (ViewJFrameBase) (parentFrame)).getUserInterface();
+        System.err.println("in constructor of dialog pipe");
         callAlgorithm( true );
     }
 
@@ -89,8 +90,8 @@ public class PlugInDialogPipeline
     public void callAlgorithm( boolean doStageOne) {
 
     if (doStageOne) {
-
-
+    	
+    	System.err.println("doing stage one");
             try {
                 // Make algorithm
                 PipelineAlgo = new PlugInAlgorithmPipeline(resultImageA, resultImageB,
