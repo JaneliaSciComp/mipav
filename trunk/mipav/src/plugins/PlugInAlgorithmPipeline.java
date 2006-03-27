@@ -149,15 +149,10 @@ public class PlugInAlgorithmPipeline
 
 
             try {
-
-//                    patientID = (String) ( (FileDicomTag) ( (FileInfoDicom) dicomImage.getFileInfo( 0 ) ).getEntry( "0010,0020" ) ).getValue(
-                patientID = (String) ( (FileDicomTag) ( (FileInfoDicom) srcImage.getFileInfo( 0 ) ).getEntry( "0010,0020" ) ).getValue(
+            	patientID = (String) ( (FileDicomTag) ( (FileInfoDicom) srcImage.getFileInfo( 0 ) ).getEntry( "0010,0020" ) ).getValue(
                         false );
-
                 System.err.println("patient id is: " + patientID);
-
             } catch ( Exception ex ) {//do nothing
-
             }
 
 
@@ -212,7 +207,6 @@ public class PlugInAlgorithmPipeline
         centroid_array = new float[nClasses];
         for (i = 0; i < nClasses; i++) {
             centroid_array[i] = (float) (min + (max - min) * (i + 1) / (nClasses + 1));
-            System.out.println(centroid_array[i]);
         }
 
         firstFuzz = null;

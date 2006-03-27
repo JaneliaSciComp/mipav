@@ -31,6 +31,8 @@ public class PlugInPipeline implements PlugInAlgorithm {
     */
     public void run(ViewUserInterface UI, Frame parentFrame, ModelImage image) {
 
+    		System.err.println("doing run() of pluginpipeline");
+    	
         if (parentFrame instanceof ViewJFrameImage)
             new PlugInDialogPipeline (parentFrame, image);
 
