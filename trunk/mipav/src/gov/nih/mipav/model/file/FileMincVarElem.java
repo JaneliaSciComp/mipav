@@ -32,7 +32,7 @@ public class FileMincVarElem extends ModelSerialCloneable{
     public String   comments;
     public double   start;
     public double   trueStart;
-    public float[]  cosines;
+    public double[]  cosines;
 
     /**
     *   Constructor for the MINC variable element.
@@ -99,10 +99,12 @@ public class FileMincVarElem extends ModelSerialCloneable{
                 comments = s.trim();
             }
             else if (elem.name.equals("direction_cosines")) {
-                cosines = new float[3];
-                if (elem.values[0] != null) cosines[0] = (float)(((Double)elem.values[0]).doubleValue());
-                if (elem.values[1] != null) cosines[1] = (float)(((Double)elem.values[1]).doubleValue());
-                if (elem.values[2] != null) cosines[2] = (float)(((Double)elem.values[2]).doubleValue());
+                elem.setValue(value,index);
+                cosines = new double[3];
+                if (elem.values[0] != null) cosines[0] = (((Double)elem.values[0]).doubleValue());
+                if (elem.values[1] != null) cosines[1] = (((Double)elem.values[1]).doubleValue());
+                if (elem.values[2] != null) cosines[2] = (((Double)elem.values[2]).doubleValue());
+                return;
             }
         }
         else if (this.name.equals("image")) {
