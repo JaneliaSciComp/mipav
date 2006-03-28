@@ -2477,6 +2477,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             handleIntensityLineBtn3(mouseEvent);
             return;
         } // if (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)
+        
+        if (mode == DEFAULT)
+        {
+        	return;
+        }
+        
         else if (mode == LINE && intensityLine == null)
         {
             anchorPt.setLocation(xS, yS);
@@ -2928,7 +2934,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                 newPointVOI.setActive(true);
                 ( (VOIPoint) (newPointVOI.getCurves()[ (int) z[0]].elementAt(0))).setActive(true);
-                frame.updateImages();
+                
+                /* Used to be frame.updateImages() but it was changed to updateImageSubset() because 
+                 * we don't want all the images to be updated. The reason is to facilitate the 
+                 * placement of VOIs during image registration.
+                 */
+                triImageFrame.updateImageSubset(this);
                 triImageFrame.updatevoiID(voiID);
                 
                 if (mouseEvent.isShiftDown() != true)
@@ -3224,6 +3235,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
 
             triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
+            
+            if (mode == DEFAULT)
+            {
+            	triImageFrame.updateImageSubset(this);
+            	return;
+            }
         } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)
 
         else if (mode == MOVE)

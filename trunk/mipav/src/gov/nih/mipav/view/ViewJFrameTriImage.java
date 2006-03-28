@@ -1768,6 +1768,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
 
         return true;
     }
+    
+    public void updateImageSubset(ViewJComponentTriImage triImage)
+    {
+    	if (triImage == this.triImage[AXIAL_A] || triImage == this.triImage[CORONAL_A] || triImage == this.triImage[SAGITTAL_A])
+    	{
+    		this.triImage[AXIAL_A].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1);
+    		this.triImage[CORONAL_A].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1);
+    		this.triImage[SAGITTAL_A].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1);
+    		return;
+    	}
+    	
+    	if (triImage == this.triImage[AXIAL_B] || triImage == this.triImage[CORONAL_B] || triImage == this.triImage[SAGITTAL_B])
+    	{
+    		this.triImage[AXIAL_B].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1);
+    		this.triImage[CORONAL_B].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1);
+    		this.triImage[SAGITTAL_B].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1);
+    		return;
+    	}
+    	
+    	if (triImage == this.triImage[AXIAL_AB] || triImage == this.triImage[CORONAL_AB] || triImage == this.triImage[SAGITTAL_AB])
+    	{
+    		updateImages();
+    	}
+    }
 
     /**
      *   This methods calls the componentImage's update method to redraw the screen.
@@ -1831,7 +1855,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             {
                 return false;
             }
-        } // if (hasOrientation)
+        } // if not COMPLEX
         else
         {
             if (triImage[AXIAL_AB] != null && triImage[AXIAL_AB].show(tSlice, axialComponentSlice, null, null, true, -1) == false)
@@ -1882,7 +1906,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             {
                 return false;
             }
-        } // else not hasOrientation
+        } // else COMPLEX
 
         return true;
     }
@@ -2941,7 +2965,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             setSpinnerValues(imageA.getType());
         }
 
-        updateImages(false);
+        /** updateImages(false) was commented to facilitate placement of VOI points during
+         * image registration. This allows the user to control the crosshairs and image slice
+         * independently of other images.
+         */
+        //updateImages(false);
     }
 
     /**
@@ -3813,7 +3841,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setStepSize(new Double(spinnerStep));
                ( (SpinnerNumberModel) (intensitySpinner.getModel())).setValue(new Double(spinnerDefaultValue));
 
-               updateImages();
+               /** updateImages(false) was commented to facilitate placement of VOI points during
+                * image registration. This allows the user to control the crosshairs and image slice
+                * independently of other images.
+                */
+               //updateImages();
+               return;
            }
            else if (command.equals("PositionFrame"))
            {
