@@ -354,8 +354,16 @@ public class JFrameRegistrationMosaic extends JFrame
         kImageAppearance.setTexture( kTexture );
 
         /* Partially transparent so multiple images can overlap: */
-        TransparencyAttributes kTransparency =
-            new TransparencyAttributes( TransparencyAttributes.BLENDED, 0.15f );
+        TransparencyAttributes kTransparency = new TransparencyAttributes();
+        if ( m_bFirst == true )
+        {
+            m_bFirst = false;
+            kTransparency.setTransparencyMode( TransparencyAttributes.NONE );
+        }
+        else
+        {
+            kTransparency.setTransparencyMode( TransparencyAttributes.BLENDED );
+        }
         kImageAppearance.setTransparencyAttributes( kTransparency );
 
         /* The texture-mapped polygon geometry: */
@@ -407,8 +415,8 @@ public class JFrameRegistrationMosaic extends JFrame
         kBorderAppearance.setPolygonAttributes( kPolygonAttributes );
         /* Create the Shape3D object to contain the border: */
         Shape3D kBorderShape = new Shape3D( kBorderGeometry, kBorderAppearance );
-        kBorderShape.setCapability( Shape3D.ALLOW_GEOMETRY_READ );
         kBorderShape.setCapability( Shape3D.ALLOW_GEOMETRY_WRITE );
+        kBorderShape.setCapability( Shape3D.ALLOW_GEOMETRY_READ );
         kTransformGroup.addChild( kBorderShape );
 
         /* Store the images for toggle selected and mouse manipulations: */
@@ -1093,7 +1101,6 @@ public class JFrameRegistrationMosaic extends JFrame
                     JDialogBase.makeImageName( m_akImages[m_iTile].getImageName(),
                                                "_register" );
 
-                System.err.println( ((AlgorithmRegOAR2D)kAlgorithm).getTransform() );
                 /* Transform the input tile image: */
                 kAlgorithmTransform =
                     new AlgorithmTransform(m_akImages[m_iTile],
@@ -1185,7 +1192,7 @@ public class JFrameRegistrationMosaic extends JFrame
                             {
                                 if ( kMosaic.isColorImage() )
                                 {
-                                    kMosaic.setC( i, j, 0, 255.0f );
+                                    kMosaic.setC( i, j, 0, 0.0f );
                                     kMosaic.setC( i, j, 1, 255.0f );
                                     kMosaic.setC( i, j, 2, 255.0f );
                                     kMosaic.setC( i, j, 3, 255.0f );
@@ -1455,6 +1462,7 @@ public class JFrameRegistrationMosaic extends JFrame
         m_iTile = 1;
         m_fScale = 1.0f;
         m_bSetScale = false;
+        m_bFirst = true;
     }
 
 
@@ -1622,6 +1630,7 @@ public class JFrameRegistrationMosaic extends JFrame
     private JButton m_kSaveButton;
     /** Close all images and remove them from the scene: */
     private JButton m_kCloseAllButton;
+
     /** Boolean to check that a file is loaded before mouse operations are
      * allowed to occur */
     private boolean m_bFileLoaded = false;
@@ -1688,4 +1697,7 @@ public class JFrameRegistrationMosaic extends JFrame
     private ModelImage m_kTileAlpha = null;
     /** To reset m_kReferenceAlpha: */
     private boolean m_bResetAlpha = true;
+    /** For blending the reference and tile images, reference image is not
+     * blended with background, reset when initData() is called. */
+    private boolean m_bFirst = true;
 }
