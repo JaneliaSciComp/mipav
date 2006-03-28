@@ -927,8 +927,8 @@ public class SurfaceRender extends RenderViewBase {
         // for Y and Z mapping to t and r, respectively.
         m_kCoordMapX = new Vector4f( ( maxBox / xBox ) / 2.0f, 0.0f, 0.0f, 0.5f );
         m_kCoordMapY = new Vector4f( 0.0f, ( maxBox / yBox ) / 2.0f, 0.0f, 0.5f );
-        m_kCoordMapZ = new Vector4f( 0.0f, 0.0f, -( xBox / zBox ) / 2.0f, 0.5f );
-        m_kCoordMapZNeg = new Vector4f( 0.0f, 0.0f, ( xBox / zBox ) / 2.0f, 0.5f );
+        m_kCoordMapZ = new Vector4f( 0.0f, 0.0f, -( maxBox / zBox ) / 2.0f, 0.5f );
+        m_kCoordMapZNeg = new Vector4f( 0.0f, 0.0f, ( maxBox / zBox ) / 2.0f, 0.5f );
 
         // Normalize the size
         // xBox range between 0 - 1.
