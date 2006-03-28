@@ -707,7 +707,7 @@ public class FileInfoMinc extends FileInfoBase {
         beginy = beginy + resy * (length - 1);
         if ( !spacex.equals("zspace"))
             varArray[indexx].start = -beginx;
-        if ( !spacey.equals("zspace") && flipped == true)
+        if ( !spacey.equals("zspace"))
             varArray[indexy].start = -beginy;
         else
             varArray[indexy].start = beginy;
@@ -848,6 +848,7 @@ public class FileInfoMinc extends FileInfoBase {
                 // if (axisOrientation[0] == ORI_UNKNOWN_TYPE) {
                 axisOrientation[0] = setOrientType(spacex, (varArray[i].resolution > 0));
                 // }
+              
                 if (varArray[i].cosines != null) {
                     for (int j = 0; j < 3; j++ ) {
                         if (varArray[i].cosines[j] < 0) {
@@ -930,12 +931,9 @@ public class FileInfoMinc extends FileInfoBase {
                 }
             }
         }
-        if ( (axisOrientation[1] == ORI_A2P_TYPE) || (axisOrientation[1] == ORI_S2I_TYPE)) {
-            flipped = false;
-        } else {
-            flipped = true;
-            axisOrientation[1] = oppositeOrient(axisOrientation[1]);
-        }
+        
+        flipped = true;
+        axisOrientation[1] = oppositeOrient(axisOrientation[1]);
         switch (axisOrientation[1]) {
             case ORI_UNKNOWN_TYPE:
                 Preferences.debug("axisOrientation[1] = ORI_UNKNOWN_TYPE\n");
