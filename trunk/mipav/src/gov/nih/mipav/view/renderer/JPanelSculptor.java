@@ -8,6 +8,8 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.*;
 import gov.nih.mipav.model.file.*;
+import javax.swing.border.*;
+
 
 /**
  * <p>Title: JPanelSculptor </p>
@@ -117,12 +119,28 @@ public class JPanelSculptor extends JPanelRendererBase {
         viewToolBar.setLayout(new GridBagLayout());
         viewToolBar.setFloatable(false);
 
+        ButtonGroup group;
+
         mainPanel = new JPanel( new BorderLayout() );
 
         toolbarBuilder = new ViewToolBarBuilder(this);
 
         ButtonGroup cursorGroup = new ButtonGroup();
+        Border pressedBorder = BorderFactory.createLoweredBevelBorder();
+        // m_kDrawOutlineButton = new JToggleButton( MipavUtil.getIcon( "drawsculptor.gif" ), false );
         m_kDrawOutlineButton = toolbarBuilder.buildToggleButton( "DrawSculptRegion" , "Draw sculpt outline region", "drawsculptor", cursorGroup);
+        m_kDrawOutlineButton = new JToggleButton(MipavUtil.getIcon("drawsculptor.gif"), false);
+         m_kDrawOutlineButton.addActionListener(this);
+         m_kDrawOutlineButton.setMargin(new Insets(0, 0, 0, 0));
+         m_kDrawOutlineButton.setToolTipText("Draw sculpt outline region");
+         m_kDrawOutlineButton.setActionCommand("DrawSculptRegion");
+         m_kDrawOutlineButton.setBorderPainted(false);
+         m_kDrawOutlineButton.setRolloverEnabled(true);
+         m_kDrawOutlineButton.setRolloverIcon(MipavUtil.getIcon("drawsculptor.gif"));
+        m_kDrawOutlineButton.setBorder(pressedBorder);
+         m_kDrawOutlineButton.setFocusPainted(false);
+        cursorGroup.add(m_kDrawOutlineButton);
+
         m_kDrawOutlineButton.setEnabled( true );
         viewToolBar.add( m_kDrawOutlineButton );
 
@@ -262,6 +280,7 @@ public class JPanelSculptor extends JPanelRendererBase {
         }
 
         /* enable the clear and apply sculpt buttons */
+        m_kDrawOutlineButton.setBorderPainted( true );
         m_kClearDrawOutlineButton.setEnabled( true );
         m_kInvertOutlineButton.setEnabled( true );
         m_kApplySculptButton.setEnabled( true );
@@ -314,6 +333,7 @@ public class JPanelSculptor extends JPanelRendererBase {
         /* the m_kDrawOutlineButton is a toggle button, once apply is pressed,
          * un-toggle the draw button. */
         m_kDrawOutlineButton.setSelected( false );
+        m_kDrawOutlineButton.setBorderPainted(false);
         m_kClearDrawOutlineButton.setEnabled( false );
         m_kInvertOutlineButton.setEnabled( false );
         m_kApplySculptButton.setEnabled( false );
@@ -348,6 +368,8 @@ public class JPanelSculptor extends JPanelRendererBase {
         /* the m_kDrawOutlineButton is a toggle button, once undo is pressed,
          * un-toggle the draw button. */
         m_kDrawOutlineButton.setSelected( false );
+        m_kDrawOutlineButton.setBorderPainted(false);
+        m_kDrawOutlineButton.setFocusable( false );
         m_kClearDrawOutlineButton.setEnabled( false );
         m_kInvertOutlineButton.setEnabled( false );
         m_kApplySculptButton.setEnabled( false );
