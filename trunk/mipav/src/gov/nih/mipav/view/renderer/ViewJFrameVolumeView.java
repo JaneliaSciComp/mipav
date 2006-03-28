@@ -1944,7 +1944,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         radioSurrenderCOMPOSITE.setFont( serif12 );
         group1.add( radioSurrenderCOMPOSITE );
 
-        radioSurrenderLIGHT = new JRadioButton( "Surface", false );
+        radioSurrenderLIGHT = new JRadioButton( "Composite Surface", false );
         radioSurrenderLIGHT.setFont( serif12 );
         group1.add( radioSurrenderLIGHT );
 
@@ -1984,12 +1984,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         radioCOMPOSITE = new JRadioButton( "Composite", false );
         radioCOMPOSITE.setFont( serif12 );
         group1.add( radioCOMPOSITE );
-        radioSURFACE = new JRadioButton( "Surface", false );
-        radioSURFACE.setFont( serif12 );
-        group1.add( radioSURFACE );
-        radioSURFACEFAST = new JRadioButton( "Fast", false );
+        radioSURFACEFAST = new JRadioButton( "Surface", false );
         radioSURFACEFAST.setFont( serif12 );
         group1.add( radioSURFACEFAST );
+        radioSURFACE = new JRadioButton( "Composite Surface", false );
+        radioSURFACE.setFont( serif12 );
+        group1.add( radioSURFACE );
 
         int rayCastMode = raycastRender.getRenderMode();
 
@@ -2014,8 +2014,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         rayCastToolBar.add( radioMIP );
         rayCastToolBar.add( radioXRAY );
         rayCastToolBar.add( radioCOMPOSITE );
-        rayCastToolBar.add( radioSURFACE );
         rayCastToolBar.add( radioSURFACEFAST );
+        rayCastToolBar.add( radioSURFACE );
         rayCastToolBar.add( ViewToolBarBuilder.makeSeparator() );
         rayCastToolBar.add(toolbarBuilder.buildButton("AutoCapture" ,  "Auto snapshot screen", "camera") );
 
