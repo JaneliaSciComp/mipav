@@ -237,7 +237,11 @@ public class ViewJFrameGraph extends JFrame
 
         try {
             if ( openFileGUI == true ) {
-                open();
+                if (!open())
+                {
+                	dispose();
+                	return;
+                }
             }
         } catch ( IOException e ) {
             MipavUtil.displayError( "Error: " + e );
@@ -3307,7 +3311,7 @@ public class ViewJFrameGraph extends JFrame
      *  Opens Excel data (tab-delimited fields) into this
      *  graph.  The graphs could also have been saved using MIPAV
      */
-    public void open()
+    public boolean open()
         throws IOException {
         FileReader instream;
         BufferedReader dataStream;
@@ -3338,10 +3342,10 @@ public class ViewJFrameGraph extends JFrame
                     directory = chooser.getCurrentDirectory() + "" + File.separatorChar;
                 } catch ( NullPointerException e ) {
                     Preferences.debug( "Returning." );
-                    return;
+                    return false;
                 }
             } else {
-                return;
+                return false;
             }
 
             instream = new FileReader( directory + fileName );
@@ -3350,7 +3354,7 @@ public class ViewJFrameGraph extends JFrame
 
         } catch ( OutOfMemoryError error ) {
             MipavUtil.displayError( "Out of memory: ViewJFrameGraph.open" );
-            return;
+            return false;
         }
 
         s = dataStream.readLine();
@@ -3364,7 +3368,7 @@ public class ViewJFrameGraph extends JFrame
             fitFunctions = new ViewJComponentFunct[fields.length / 2]; //creates the required number of functions
         } catch ( OutOfMemoryError error ) {
             MipavUtil.displayError( "Out of memory: ViewJFrameGraph.open" );
-            return;
+            return false;
         }
 
         int j = 0;
@@ -3376,7 +3380,7 @@ public class ViewJFrameGraph extends JFrame
                 functions[i].Y = new float[ViewJComponentFunct.MAX_NUM_COORDS];
             } catch ( OutOfMemoryError error ) {
                 MipavUtil.displayError( "Out of memory: ViewJFrameGraph.open" );
-                return;
+                return false;
             }
             functions[i].X[0] = fields[j];
             j++;
@@ -3415,7 +3419,7 @@ public class ViewJFrameGraph extends JFrame
                 Y2 = new float[j];
             } catch ( OutOfMemoryError error ) {
                 MipavUtil.displayError( "Out of memory: ViewJFrameGraph.open" );
-                return;
+                return false;
             }
 
             for ( j = 0; j < X2.length; j++ ) {
@@ -3436,7 +3440,7 @@ public class ViewJFrameGraph extends JFrame
                 fitFunctions[i].Y = new float[Y2.length];
             } catch ( OutOfMemoryError error ) {
                 MipavUtil.displayError( "Out of memory: ViewJFrameGraph.open" );
-                return;
+                return false;
             }
             fitFunctions[i].setColor( i );
         }
@@ -3452,6 +3456,7 @@ public class ViewJFrameGraph extends JFrame
         graph.calculateDefaultRangeDomain();
         graph.setDefaultRangeDomain();
         update( getGraphics() );
+        return true;
     }
 
     /**
