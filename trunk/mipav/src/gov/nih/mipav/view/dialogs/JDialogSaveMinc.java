@@ -162,45 +162,77 @@ public class JDialogSaveMinc extends JDialogBase {
     *   Initializes the text fields for the dialog. MORE!
     */
     private void setSpace(int orient) {
+        int i;
     	float x = 0, y = 0, z = 0, xRes = 1, yRes = 1, zRes = 1;
+        float start[] = new float[3];
         int[] ori = fileInfo.getAxisOrientation();
-        for (int i=0; i<ori.length; i++) {
+        
+        for (i = 0; i < 3; i++) {
+            if (ori[i] != FileInfoBase.ORI_I2S_TYPE && ori[i] != FileInfoBase.ORI_S2I_TYPE) {
+                start[i] = -fileInfo.getOrigin(i);
+            }
+            else {
+                start[i] = fileInfo.getOrigin(i);
+            }    
+        }
+        
+        ori[1] = FileInfoMinc.oppositeOrient(ori[1]);
+        if (ori[1] == FileInfoBase.ORI_R2L_TYPE || ori[1] == FileInfoBase.ORI_A2P_TYPE ||
+            ori[1] == FileInfoBase.ORI_S2I_TYPE) {
+            start[1] = start[1] + fileInfo.getResolutions()[1] *
+                              (fileInfo.getExtents()[1] - 1);
+        }
+        else {
+            start[1] = start[1] - fileInfo.getResolutions()[1] *
+            (fileInfo.getExtents()[1] - 1);    
+        }
+        
+        for (i=0; i<ori.length; i++) {
         	switch (ori[i]) {
-        		case FileInfoBase.ORI_R2L_TYPE:
-        		    right.setSelected(true);
-        		    x     = -fileInfo.getOrigin(i);
-        		    xRes  = -fileInfo.getResolutions()[i];
-        		    break;
-        		case FileInfoBase.ORI_L2R_TYPE:
-        		    left.setSelected(true);
-        		    x     = -fileInfo.getOrigin(i);
-        		    xRes  = fileInfo.getResolutions()[i];
-        		    break;
-        		case FileInfoBase.ORI_P2A_TYPE:
-        		    posterior.setSelected(true);
-        		    y     = -fileInfo.getOrigin(i);
-        		    yRes  = fileInfo.getResolutions()[i];
-        		    break;
-        		case FileInfoBase.ORI_A2P_TYPE:
-        		    anterior.setSelected(true);
-        		    y     = -fileInfo.getOrigin(i);
-        		    yRes  = -fileInfo.getResolutions()[i];
-        		    break;
-        		case FileInfoBase.ORI_I2S_TYPE:
-        		    inferior.setSelected(true);
-        		    z     = fileInfo.getOrigin(i);
-        		    zRes  = fileInfo.getResolutions()[i];
-        		    break;
-        		case FileInfoBase.ORI_S2I_TYPE:
-        		    superior.setSelected(true);
-        		    z     = fileInfo.getOrigin(i);
-        		    zRes  = -fileInfo.getResolutions()[i];
-        		    break;
+                case FileInfoBase.ORI_R2L_TYPE:
+                    right.setSelected(true);
+                    x = start[i];
+                    xRes = - fileInfo.getResolutions()[i];
+                    break;
+                case FileInfoBase.ORI_L2R_TYPE:
+                    left.setSelected(true);
+                    x = start[i];
+                    xRes = fileInfo.getResolutions()[i];
+                    break;
+                case FileInfoBase.ORI_P2A_TYPE:
+                    posterior.setSelected(true);
+                    y = start[i];
+                    yRes = fileInfo.getResolutions()[i];
+                    break;
+                case FileInfoBase.ORI_A2P_TYPE:
+                    anterior.setSelected(true);
+                    y = start[i];
+                    yRes = -fileInfo.getResolutions()[i];
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                    inferior.setSelected(true);
+                    z = start[i];
+                    zRes = fileInfo.getResolutions()[i];
+                    break;
+                case FileInfoBase.ORI_S2I_TYPE:
+                    superior.setSelected(true);
+                    z = start[i];
+                    zRes = -fileInfo.getResolutions()[i];
+                    break;
         	}
+            
         }
         if (fileInfo.getExtents().length == 2) {
             zStart.setEnabled(false);
             zSpace.setEnabled(false);
+        }
+        
+        if (fileInfo.getFileFormat() == FileBase.MINC) {
+            Preferences.debug("Is MINC format\n");
+        }
+        
+        if (((FileInfoMinc)fileInfo).resetStartLocationsOrientations()) {
+            Preferences.debug("Reset start locations\n");
         }
 
     	if (fileInfo.getFileFormat() == FileBase.MINC && !((FileInfoMinc)fileInfo).resetStartLocationsOrientations()) {
@@ -208,10 +240,15 @@ public class JDialogSaveMinc extends JDialogBase {
     		xRes = steps[0];
     		yRes = steps[1];
     		if (steps.length > 2)	zRes = steps[2];
+            Preferences.debug("xRes = " + xRes + " yRes = " + yRes + " zRes = " + zRes + "\n");
     		float[] values = ((FileInfoMinc)fileInfo).getStartMinc();
     		x = values[0];
     		y = values[1];
     		if (values.length > 2)	z = values[2] + zRes*options.getBeginSlice();
+            Preferences.debug("x = " + x + " y = " + y + "\n");
+            Preferences.debug("values[2] = " + values[2] + "\n");
+            Preferences.debug("options.getBeginSlice() = " + 
+                               options.getBeginSlice() + "\n");
             switch (ori[1]) {
         	    // opposite because we flip the MINC image before saving it.  the origin for MINC
         	    // is in the lower left hand corner, whereas our origin is in the upper left hand corner.
@@ -233,31 +270,7 @@ public class JDialogSaveMinc extends JDialogBase {
             }
     	}
     	else {
-            switch (ori[1]) {
-        	    // opposite because we flip the MINC image before saving it.  the origin for MINC
-        	    // is in the lower left hand corner, whereas our origin is in the upper left hand corner.
-        	    case FileInfoBase.ORI_R2L_TYPE:
-        	    case FileInfoBase.ORI_L2R_TYPE:
-        	        if (left.isSelected()) right.setSelected(true);
-        	        else left.setSelected(true);
-                    x += xRes*(fileInfo.getExtents()[1]-1);
-                    xRes = -xRes;
-        		    break;
-        	    case FileInfoBase.ORI_P2A_TYPE:
-        	    case FileInfoBase.ORI_A2P_TYPE:
-        	        if (anterior.isSelected()) posterior.setSelected(true);
-        	        else anterior.setSelected(true);
-                    y += yRes*(fileInfo.getExtents()[1]-1);
-                    yRes = -yRes;
-        		    break;
-        	    case FileInfoBase.ORI_I2S_TYPE:
-        	    case FileInfoBase.ORI_S2I_TYPE:
-        	        if (superior.isSelected()) inferior.setSelected(true);
-        	        else superior.setSelected(true);
-                    z += zRes*(fileInfo.getExtents()[1]-1);
-                    zRes = -zRes;
-        		    break;
-            }
+            
             switch (ori[2]) {
         	    case FileInfoBase.ORI_R2L_TYPE:
         	    case FileInfoBase.ORI_L2R_TYPE:
@@ -273,6 +286,7 @@ public class JDialogSaveMinc extends JDialogBase {
         		    break;
             }
         }
+        
         xStart.setText("" + x);
         yStart.setText("" + y);
         if (zStart.isEnabled()) zStart.setText("" + z);
