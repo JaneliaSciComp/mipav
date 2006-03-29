@@ -125,8 +125,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private JButton buttonImportFromMask;
 
     private JButton buttonRevert;
+    private JButton buttonShowAdvancedPaintControls;
 
     private JPanel botPanel;
+    private JDialogMultiPaint multiPaintDialog;
 
     /**
      *  Creates dialog for plugin.
@@ -366,6 +368,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonRevert.addActionListener(this);
         buttonRevert.setActionCommand("Revert");
         buttonRevert.setFont(serif12);
+        
+        buttonShowAdvancedPaintControls = new JButton("Show advanced paint controls");
+        buttonShowAdvancedPaintControls.addActionListener(this);
+        buttonShowAdvancedPaintControls.setActionCommand("show advanced");
+        buttonShowAdvancedPaintControls.setFont(serif12);
 
         objectPanel = new JPanel(new GridBagLayout());
         objectPanel.setBorder(buildTitledBorder("Object Processing"));
@@ -525,26 +532,6 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         movePanel = new JPanel(new GridBagLayout());
         movePanel.setBorder(buildTitledBorder("Misc."));
 
-        /*
-              gbc.insets = new Insets(0, 0, 0, 0);
-           gbc.gridx = 0;
-              gbc.gridy = 0;
-              gbc.gridwidth = 1;
-              gbc.weightx = 1;
-           gbc.anchor = gbc.CENTER;
-              gbc.fill = gbc.HORIZONTAL;
-              movePanel.add(buttonDown, gbc);
-              gbc.gridx = 1;
-              movePanel.add(buttonUpDown, gbc);
-           gbc.gridx = 2;
-              movePanel.add(buttonUp, gbc);
-           gbc.gridx = 0;
-              gbc.gridy = 1;
-              gbc.gridwidth = 3;
-              gbc.weightx = 3;
-              gbc.fill = gbc.HORIZONTAL;
-              movePanel.add(checkWheel, gbc);
-         */
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -589,12 +576,16 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 1;
         mainPanel.add(morphoPanel, gbc);
         gbc.gridy = 2;
-        mainPanel.add(movePanel, gbc);
-        gbc.gridy = 3;
-        mainPanel.add(exportPanel, gbc);
-        gbc.insets = new Insets(2, 5, 2, 5);
-        gbc.gridy = 4;
+        gbc.insets = new Insets(2, 2, 2, 2);
         mainPanel.add(buttonRevert, gbc);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridy = 3;
+        mainPanel.add(movePanel, gbc);
+        gbc.gridy = 4;
+        mainPanel.add(exportPanel, gbc);
+        gbc.gridy = 5;
+        gbc.insets = new Insets(2, 2, 2, 2);
+        mainPanel.add(buttonShowAdvancedPaintControls, gbc);
 
         botPanel = new JPanel();
         botPanel.add(buildCloseButton());
@@ -798,6 +789,18 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                    save = null;
                    saver = null;
                }
+           }
+           else if (command.equals("show advanced"))
+           {
+        	   if (multiPaintDialog == null)
+        	   {
+        		   multiPaintDialog = new JDialogMultiPaint(new JFrame(), image);
+        	   }
+        	   else
+        	   {
+        		   MipavUtil.centerOnScreen(multiPaintDialog);
+        		   multiPaintDialog.setVisible(true);
+        	   }
            }
        }
 
@@ -2449,7 +2452,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("error: paint mask not found");
             return;
         }
         // no previous image
