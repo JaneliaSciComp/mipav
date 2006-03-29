@@ -1928,7 +1928,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         volToolBar.setFloatable( false );
         volToolBar.add(toolbarBuilder.buildButton("Repaint" , "Repaints images", "paintinside") );
         volToolBar.add( ViewToolBarBuilder.makeSeparator() );
-        volToolBar.add(toolbarBuilder.buildButton("SurfaceDialog" , "Add surface to viewer", "surfacesmall") );
+        volToolBar.add(toolbarBuilder.buildButton("SurfaceDialog" , "Add surface to viewer", "isosurface") );
         volToolBar.add(toolbarBuilder.buildButton("Geodesic" , "Draw geodesic curves on the surface", "geodesic") );
         volToolBar.add( ViewToolBarBuilder.makeSeparator() );
         volToolBar.add(toolbarBuilder.buildButton("Mouse" , "Record mouse changes", "camcorder") );
