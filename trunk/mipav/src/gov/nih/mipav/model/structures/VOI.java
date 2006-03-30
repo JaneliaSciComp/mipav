@@ -51,6 +51,9 @@ public class VOI extends ModelSerialCloneable {
     /** Indicates that the VOI is of type CARDIOLOGY, special VOI for specific tasks needed in cardiology */
     public static final int CARDIOLOGY = 6; // cardiology VOI
 
+    /** Indicates that the VOI is of type POLYLINE that will go through more than one frame*/
+    public static final int INTER_FRAME_POLYLINE = 7;
+
     /**         */
     public static final float NOT_A_LEVELSET = Float.MIN_VALUE;
 
@@ -868,7 +871,7 @@ public class VOI extends ModelSerialCloneable {
     public boolean isEmpty() {
         int i;
         for (i = 0; i < zDim; i++ ) {
-            if (curves[i].size() != 0) {
+            if (!curves[i].isEmpty()) {
                 return false;
             }
         }
@@ -2606,6 +2609,11 @@ public class VOI extends ModelSerialCloneable {
      * @return result of test
      */
     public boolean nearPoint(int x, int y, int slice, float zoom, float resolutionX, float resolutionY) {
+
+        if (isEmpty()) {
+            return false;
+        }
+
         int i;
         // System.err.println("doing nearPoint");
         for (i = 0; i < curves[slice].size(); i++ ) {
@@ -2669,6 +2677,10 @@ public class VOI extends ModelSerialCloneable {
      * @return result of test
      */
     public boolean nearPoint(int x, int y, int slice, int element, float zoom, float resolutionX, float resolutionY) {
+        if (isEmpty()) {
+            return false;
+        }
+
         if (curveType == LINE) {
             if ( ((VOILine) (curves[slice].elementAt(element))).isActive()
                     && ((VOILine) (curves[slice].elementAt(element))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
@@ -2755,6 +2767,10 @@ public class VOI extends ModelSerialCloneable {
      * @return result of test
      */
     public boolean nearOuterPoint(int x, int y, int slice, int element, float zoom, float resolutionX, float resolutionY) {
+        if (isEmpty()) {
+            return false;
+        }
+
         if (curveType == PROTRACTOR && curves[slice].size() > 0) {
             if ( ((VOIProtractor) (curves[slice].elementAt(element))).isActive()
                     && ((VOIProtractor) (curves[slice].elementAt(element))).nearOuterPoint(x, y, zoom, resolutionX,
@@ -2780,6 +2796,10 @@ public class VOI extends ModelSerialCloneable {
      * @return result of test
      */
     public boolean nearLinePoint(int x, int y, int slice, int element, float zoom, float resolutionX, float resolutionY) {
+        if (isEmpty()) {
+            return false;
+        }
+
         if (curveType == LINE && curves[slice].size() > 0) {
             if ( ((VOILine) (curves[slice].elementAt(element))).isActive()
                     && ((VOILine) (curves[slice].elementAt(element))).nearLinePoint(x, y, zoom, resolutionX,
@@ -2801,6 +2821,10 @@ public class VOI extends ModelSerialCloneable {
      * @return result of test
      */
     public boolean nearLine(int x, int y, int slice) {
+        if (isEmpty()) {
+            return false;
+        }
+
         int i;
         if (curveType == CONTOUR) {
             for (i = 0; i < curves[slice].size(); i++ ) {

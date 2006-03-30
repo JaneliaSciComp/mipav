@@ -981,7 +981,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         {
             return;
         }
-        
+
         for (int i = 0; i < frameList.size(); i++)
         {
             if ( (frameList.elementAt(i) instanceof ViewJFrameBase)
@@ -1064,7 +1064,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (getLUTb() != null)
         {
             getLUTb().zeroToOneLUTAdjust();
-        }       
+        }
     }
 
     /**
@@ -1367,12 +1367,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 {
                     linkFrame.setTimeSlice(tSlice);
                 }
-                
+
                 if (infoDialogA != null)
                 {
                     infoDialogA.setSlice(zSlice, tSlice);
                 }
-            
+
             	if (infoDialogB != null)
                 {
                     infoDialogB.setSlice(zSlice, tSlice);
@@ -1394,12 +1394,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 {
                     linkFrame.setTimeSlice(tSlice);
                 }
-                
+
 	            if (infoDialogA != null)
 	            {
 	                infoDialogA.setSlice(zSlice, tSlice);
 	            }
-	        
+
 	        	if (infoDialogB != null)
 	            {
 	                infoDialogB.setSlice(zSlice, tSlice);
@@ -2755,7 +2755,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     if (VOIs.VOIAt(i).isActive() == true
                         && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
                             || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE
-                            || VOIs.VOIAt(i).getCurveType() == VOI.POINT))
+                            || VOIs.VOIAt(i).getCurveType() == VOI.POINT
+                            || VOIs.VOIAt(i).getCurveType() == VOI.LINE
+                            || VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR
+                        ))
                     {
                         break;
                     }
@@ -2811,6 +2814,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 imageB.groupVOIs();
             }
+            componentImage.fireVOISelectionChange(null);
         }
         else if (command.equals("UngroupVOIs"))
         {
@@ -2822,6 +2826,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             {
                 imageB.ungroupVOIs();
             }
+            componentImage.fireVOISelectionChange(null);
         }
         else if (command.equals("Cardio"))
         {
@@ -5116,10 +5121,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.getMainFrame().setJMenuBar(menuBar);
             userInterface.getMainFrame().pack();
 
-        } // else if ( command.equals( "RemovePlugin" ) ) {
-        // JDialogRemovePlugin remPlugin = new JDialogRemovePlugin( this, userInterface );
-        // remPlugin.setVisible( true );
-        // }
+        }
         else if (command.equals("CaptureTiff"))
         {
             JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(this, userInterface);
@@ -5762,6 +5764,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     componentImage.deleteVOIActivePt();
                 } else {
                     componentImage.deleteSelectedContours();
+
                 }
                 return;
             case KeyEvent.VK_1:
@@ -6118,7 +6121,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * Returns a reference to the image info dialog for the active image.
      * Image A and image B have references to their individual dialogs.
-     * @return a reference to the image info dialog for the active image 
+     * @return a reference to the image info dialog for the active image
      */
     protected JDialogImageInfo getActiveImageInfoDialog()
     {
@@ -6128,7 +6131,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     		{
     			infoDialogA = new JDialogImageInfo(this, imageA, zSlice, tSlice);
     		}
-    		
+
     		return infoDialogA;
     	}
     	else if (imageB == null) // should never happen, but just in case...
@@ -6141,11 +6144,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     		{
     			infoDialogB = new JDialogImageInfo(this, imageB, zSlice, tSlice);
     		}
-    		
+
     		return infoDialogB;
     	}
     }
-    
+
     /**
      * Returns the image info dialog for image B
      * @return the image info dialog for image B
@@ -6158,7 +6161,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 			{
 				infoDialogB = new JDialogImageInfo(this, imageB, zSlice, tSlice);
 			}
-			
+
 			return infoDialogB;
     	}
     	else

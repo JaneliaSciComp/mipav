@@ -293,7 +293,7 @@ public abstract class VOIBase extends Vector {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
-                
+
                 if (Math.abs(zC - plane) < 5)
                 {
                     inPlane = true;
@@ -302,7 +302,7 @@ public abstract class VOIBase extends Vector {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
-                
+
                	if (Math.abs(zC - plane) < 5) {
                     inPlane = true;
                 }
@@ -310,7 +310,7 @@ public abstract class VOIBase extends Vector {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
-                
+
                 if (Math.abs(zC - plane) < 5) {
                     inPlane = true;
                 }
@@ -318,12 +318,12 @@ public abstract class VOIBase extends Vector {
                 xC = MipavMath.round( ((Point3Df) (elementAt(i))).x);
                 yC = MipavMath.round( ((Point3Df) (elementAt(i))).y);
                 zC = MipavMath.round( ((Point3Df) (elementAt(i))).z);
-                
+
                 if (Math.abs(zC - plane) < 5) {
                     inPlane = true;
                 }
             }
-            
+
             if (inPlane) {
                 dist = (float) MipavMath.distance(x, xC, y, yC);
                 if (dist < 5) {
@@ -395,7 +395,8 @@ public abstract class VOIBase extends Vector {
      * @param tol tolerance indicating the capture range to the line the point.
      * @return returns boolean result of test
      */
-    public boolean nearLine(int x, int y, int tol) {
+    public synchronized boolean nearLine(int x, int y, int tol) {
+
         int i;
         int x1, y1, x2, y2;
         // System.err.println("near line");
@@ -427,7 +428,7 @@ public abstract class VOIBase extends Vector {
      * @param y y coordinate of point
      * @return returns boolean result of test
      */
-    public boolean nearLine(int x, int y) {
+    public synchronized boolean nearLine(int x, int y) {
         int i;
         int x1, y1, x2, y2;
         // System.err.println("near line 2");
@@ -465,7 +466,7 @@ public abstract class VOIBase extends Vector {
      * @param tol distance to test against
      * @return true if the distance is shorter than tol.
      */
-    protected boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
+    protected synchronized boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
         // double hVx, hVy, aVx, aVy;
         double lenH, lenH2, lenA, lenO;
         lenH = MipavMath.distance(x1, x, y1, y);

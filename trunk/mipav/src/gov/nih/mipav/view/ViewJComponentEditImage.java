@@ -6626,9 +6626,11 @@ public class ViewJComponentEditImage
                     for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
                         if ( ( (VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
 
-                            Point3Df pt = ( (VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).getActivePt();
-                            setPixelInformationAtLocation((int)pt.x, (int)pt.y);
-
+                            if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
+                                Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).
+                                              getActivePt();
+                                setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                            }
                             if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
                                 ( (VOIProtractor) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).setShowLength(
                                     true);
@@ -8351,7 +8353,7 @@ public class ViewJComponentEditImage
                             }
                         }
                     }
-                    else if ( ( (VOI) (VOIs.elementAt(i))).nearLine(xS, yS, slice)
+                    else if ( (VOIs.VOIAt(i)).nearLine(xS, yS, slice)
                              && mouseEvent.isAltDown() == false) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
@@ -9416,7 +9418,7 @@ public class ViewJComponentEditImage
      * @param zSlice      Index to slice in the Z-plane.
      * @return            An array of strings that represent patient position.
      */
-    protected String[] setScannerPosition(FileInfoBase fileInfo, int x, int y, int zSlice) {
+    public String[] setScannerPosition(FileInfoBase fileInfo, int x, int y, int zSlice) {
 
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         float[] tCoord = new float[3];

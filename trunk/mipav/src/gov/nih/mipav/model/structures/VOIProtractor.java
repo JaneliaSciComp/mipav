@@ -12,7 +12,7 @@ import gov.nih.mipav.view.MipavUtil;
  * 3D and are floats (see Point3Df). It extends VOIBase and therefore it extends Vector. Point 0 is the common vertex of
  * the 2 intersecting lines, point 1 is the outer point of the initially shorter line, and point 2 is the outer point of
  * the intially longer line. This kind of VOI is used to measure angles.
- * 
+ *
  * @see VOIBase
  * @see VOILine
  * @see VOI
@@ -220,7 +220,7 @@ public class VOIProtractor extends VOIBase {
             /*
              * for (int j =0; j < 3; j++){ // only 3 points g.setColor(Color.white); g.fillRect((int)(x[j]-1.5),
              * (int)(y[j]-1.5), 3, 3);
-             * 
+             *
              * if(nearPoint == j ) { // Highlight Active point g.setColor(Color.black); g.fillRect((int)(x[j]-1.5),
              * (int)(y[j]-1.5), 4, 4); g.setColor(Color.white); g.drawRect((int)(x[j]-1.5), (int)(y[j]-1.5), 3, 3); }
              * else { g.setColor(Color.black); g.drawRect((int)(x[j]-1.5), (int)(y[j]-1.5), 3, 3); } }
@@ -562,7 +562,7 @@ public class VOIProtractor extends VOIBase {
 
     /**
      * Determines if the supplied point can be found within the points that define the contour.
-     * 
+     *
      * @param _x x-coordinate of the point in question
      * @param _y y-coordinate of the point in question
      * @param forceReload if true export points from VOI structure
@@ -607,7 +607,7 @@ public class VOIProtractor extends VOIBase {
     /**
      * Calculates twice the area (cross product of two vectors) of a triangle given three points. This is a private
      * function only called by the function "contains".
-     * 
+     *
      * @param ptAx x-coordinate of the first point of the triangle
      * @param ptAy y-coordinate of the first point of the triangle
      * @param ptBx x-coordinate of the second point of the triangle
