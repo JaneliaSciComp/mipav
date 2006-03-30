@@ -864,7 +864,7 @@ public class JPanelSlices extends JPanelRendererBase
         colorButtonZ.setPreferredSize( new Dimension( 25, 25 ) );
         colorButtonZ.setToolTipText( "Change z frame color" );
         colorButtonZ.addActionListener( this );
-        colorButtonZ.setBackground( Color.blue );
+        colorButtonZ.setBackground( Color.red );
         colorButtonZ.setEnabled( true );
 
         boundingBoxPanel = new JPanel( new GridBagLayout() );

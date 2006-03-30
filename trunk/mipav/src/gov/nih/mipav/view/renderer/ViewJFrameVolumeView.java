@@ -1837,7 +1837,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase
         viewToolBar.add(toolbarBuilder.buildButton( "Opacity" , "Surface volume renderer", "renderer") );
         viewToolBar.add(toolbarBuilder.buildButton( "Stereo" , "Stereo volume renderer", "stereo") );
         viewToolBar.add( ViewToolBarBuilder.makeSeparator() );
-        viewToolBar.add(toolbarBuilder.buildButton( "Sculpt" , "Sculpt and Remove Volume Region", "sculptor") );
+        viewToolBar.add(toolbarBuilder.buildButton( "Sculpt" , "Sculpt and Remove Volume Region", "sculpt") );
         viewToolBar.add( ViewToolBarBuilder.makeSeparator() );
         clipPlaneButton = toolbarBuilder.buildButton( "Clipping" , "Clipping Plane", "clip");
         clipPlaneButton.setEnabled( false );

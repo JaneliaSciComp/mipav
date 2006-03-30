@@ -788,7 +788,7 @@ public class JPanelClip extends JPanelRendererBase
         colorButtonZ.setPreferredSize( new Dimension( 25, 25 ) );
         colorButtonZ.setToolTipText( "Change +z clipping plane frame color" );
         colorButtonZ.addActionListener( this );
-        colorButtonZ.setBackground( Color.blue );
+        colorButtonZ.setBackground( Color.red );
         colorButtonZ.setEnabled( false );
         addControlPanel( panelZ, colorButtonZ, cpGBC, 1, 2, 2, 1 );
         tabbedPane.addTab( "Z", null, panelZ );
@@ -874,7 +874,7 @@ public class JPanelClip extends JPanelRendererBase
         colorButtonZInv.setPreferredSize( new Dimension( 25, 25 ) );
         colorButtonZInv.setToolTipText( "Change -z clipping plane frame color" );
         colorButtonZInv.addActionListener( this );
-        colorButtonZInv.setBackground( Color.blue );
+        colorButtonZInv.setBackground( Color.red );
         colorButtonZInv.setEnabled( false );
         addControlPanel( panelZInv, colorButtonZInv, cpGBC, 1, 2, 2, 1 );
         tabbedPane.addTab( "-Z", null, panelZInv );

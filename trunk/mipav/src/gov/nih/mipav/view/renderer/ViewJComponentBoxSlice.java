@@ -78,7 +78,7 @@ public class ViewJComponentBoxSlice
     else if (mode == Z_SLICE) {
       // Blue
       for (int i = 0; i < 4; i++) {
-        colors[i] = new Color3f(0.0f, 0.0f, 1.0f);
+        colors[i] = new Color3f(1.0f, 0.0f, 0.0f);
       }
     }
     else if (mode == X_CLIPSLICE) {
@@ -96,7 +96,7 @@ public class ViewJComponentBoxSlice
     else if (mode == Z_CLIPSLICE) {
       // Blue
       for (int i = 0; i < 4; i++) {
-        colors[i] = new Color3f(0.0f, 0.0f, 1.0f);
+        colors[i] = new Color3f(1.0f, 0.0f, 0.0f);
       }
     }
     else if (mode == X_CLIPSLICE_NEG) {
@@ -114,7 +114,7 @@ public class ViewJComponentBoxSlice
     else if (mode == Z_CLIPSLICE_NEG) {
       // Blue
       for (int i = 0; i < 4; i++) {
-        colors[i] = new Color3f(0.0f, 0.0f, 1.0f);
+        colors[i] = new Color3f(1.0f, 0.0f, 0.0f);
       }
     }
     else if (mode == A_CLIPSLICE) {
