@@ -21,19 +21,16 @@ public class JDialogSaveMinc extends JDialogBase {
 
     // Variables for the actual GUI; not all need to be global, but just as easy.
     // The text fields and radio buttons do need to be global.
-    private     JComboBox    combo;
+    private     JLabel       orientLabel;
+    private     JComboBox    comboX;
+    private     JComboBox    comboY;
+    private     JComboBox    comboZ;
     private     JTextField   xStart;
     private     JTextField   xSpace;
     private     JTextField   yStart;
     private     JTextField   ySpace;
     private     JTextField   zStart;
     private     JTextField   zSpace;
-    private     JRadioButton left;
-    private     JRadioButton right;
-    private     JRadioButton anterior;
-    private     JRadioButton posterior;
-    private     JRadioButton superior;
-    private     JRadioButton inferior;
 
     // Variables for holding and storing file information.
     private     FileInfoBase fileInfo;
@@ -48,11 +45,11 @@ public class JDialogSaveMinc extends JDialogBase {
 	private		float		 defaultXSpace;
 	private		float		 defaultYSpace;
 	private		float		 defaultZSpace;
-	private		int			 defaultOrient;
-	private		boolean		 defaultLR;
-	private		boolean		 defaultPA;
-	private		boolean 	 defaultIS;
+    private     int          defaultAxisOrient[];
 	private		boolean		 defaultSet = false;
+    // Axes orientations
+    private     int[] ori;
+    private     int orient;
 
 
     /**
@@ -73,6 +70,8 @@ public class JDialogSaveMinc extends JDialogBase {
 	*	Initializes the GUI components and puts them in the dialog, attaching necessary actions.
 	*/
 	private void init() {
+        ori = fileInfo.getAxisOrientation();
+        ori[1] = FileInfoMinc.oppositeOrient(ori[1]);
 		setTitle("Attributes to save");
 		setResizable(false);
         cancelFlag = false;
@@ -88,63 +87,82 @@ public class JDialogSaveMinc extends JDialogBase {
 		panel.setLayout(layout);
 		panel.setForeground(Color.black);
         panel.setBorder(buildTitledBorder("MINC Attributes to Save"));
+        
+        switch(ori[2]) {
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                orient = FileInfoBase.AXIAL;
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                orient = FileInfoBase.CORONAL;
+                break;
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                orient = FileInfoBase.SAGITTAL;
+                break;
+            default:
+                orient = FileInfoBase.AXIAL;
+        }
 
         createLabel("Image orientation:", layout, setGBC(gbc, 0, 0, 2, 1), panel);
-        createComboBox(layout, setGBC(gbc, 2, 0, gbc.REMAINDER, 1), panel);
+        if (orient == FileInfoBase.AXIAL) {
+            orientLabel = createLabel("AXIAL", layout, setGBC(gbc, 2, 0, 1, 1), panel);
+        }
+        else if (orient == FileInfoBase.CORONAL) {
+            orientLabel = createLabel("CORONAL", layout, setGBC(gbc, 2, 0, 1, 1), panel);
+        }
+        else {
+            orientLabel = createLabel("SAGITTAL", layout, setGBC(gbc, 2, 0, 1, 1), panel);
+        }
+        
+        createLabel("X axis orientation:", layout, setGBC(gbc,0, 1, 2, 1), panel);
+        createComboBoxX(layout, setGBC(gbc, 2, 1, gbc.REMAINDER, 1), panel);
+        
+        createLabel("Y axis orientation:", layout, setGBC(gbc,0, 2, 2, 1), panel);
+        createComboBoxY(layout, setGBC(gbc, 2, 2, gbc.REMAINDER, 1), panel);
+        
+        createLabel("Z axis orientation:", layout, setGBC(gbc,0, 3, 2, 1), panel);
+        createComboBoxZ(layout, setGBC(gbc, 2, 3, gbc.REMAINDER, 1), panel);
 
-        createLabel(" ", layout, setGBC(gbc, 0, 1, gbc.REMAINDER, 1), panel);
+        createLabel(" ", layout, setGBC(gbc, 0, 4, gbc.REMAINDER, 1), panel);
 
-        createLabel("X Start:", layout, setGBC(gbc, 0, 2, 1, 1), panel);
-        xStart = setTextField("", layout, setGBC(gbc, 1, 2, 1, 1), panel);
-        createLabel("  X Space:", layout, setGBC(gbc, 2, 2, 1, 1), panel);
-        xSpace = setTextField("", layout, setGBC(gbc, 3, 2, 1, 1), panel);
+        createLabel("X Start:", layout, setGBC(gbc, 0, 5, 1, 1), panel);
+        xStart = setTextField("", layout, setGBC(gbc, 1, 5, 1, 1), panel);
+        createLabel("  X Space:", layout, setGBC(gbc, 2, 5, 1, 1), panel);
+        xSpace = setTextField("", layout, setGBC(gbc, 3, 5, 1, 1), panel);
 
-        createLabel("Y Start:", layout, setGBC(gbc, 0, 3, 1, 1), panel);
-        yStart = setTextField("", layout, setGBC(gbc, 1, 3, 1, 1), panel);
-        createLabel("  Y Space:", layout, setGBC(gbc, 2, 3, 1, 1), panel);
-        ySpace = setTextField("", layout, setGBC(gbc, 3, 3, 1, 1), panel);
+        createLabel("Y Start:", layout, setGBC(gbc, 0, 6, 1, 1), panel);
+        yStart = setTextField("", layout, setGBC(gbc, 1, 6, 1, 1), panel);
+        createLabel("  Y Space:", layout, setGBC(gbc, 2, 6, 1, 1), panel);
+        ySpace = setTextField("", layout, setGBC(gbc, 3, 6, 1, 1), panel);
 
-        createLabel("Z Start:", layout, setGBC(gbc, 0, 4, 1, 1), panel);
-        zStart = setTextField("", layout, setGBC(gbc, 1, 4, 1, 1), panel);
-        createLabel("  Z Space:", layout, setGBC(gbc, 2, 4, 1, 1), panel);
-        zSpace = setTextField("", layout, setGBC(gbc, 3, 4, 1, 1), panel);
+        createLabel("Z Start:", layout, setGBC(gbc, 0, 7, 1, 1), panel);
+        zStart = setTextField("", layout, setGBC(gbc, 1, 7, 1, 1), panel);
+        createLabel("  Z Space:", layout, setGBC(gbc, 2, 7, 1, 1), panel);
+        zSpace = setTextField("", layout, setGBC(gbc, 3, 7, 1, 1), panel);
 
-        createLabel(" ", layout, setGBC(gbc, 0, 5, gbc.REMAINDER, 1), panel);
+        createLabel(" ", layout, setGBC(gbc, 0, 8, gbc.REMAINDER, 1), panel);
 
-        JLabel l = createLabel("In the current image:", layout, setGBC(gbc, 0, 6, gbc.REMAINDER, 1), panel);
+        JLabel l = createLabel("In the current image:", layout, setGBC(gbc, 0, 9, gbc.REMAINDER, 1), panel);
 	    l.setFont(serif12B);
 	    JLabel l2 = createLabel(" The (0,0) pixel is in the lower left hand corner of the image for MINC files. ",
 	                            layout,
-	                            setGBC(gbc, 0, 7, gbc.REMAINDER, 1),
+	                            setGBC(gbc, 0, 10, gbc.REMAINDER, 1),
 	                            panel);
 	    l2.setFont(MipavUtil.font12I);
 	    JLabel l3 = createLabel(" Therefore, the positive directions are left to right, bottom to top,",
 	                            layout,
-	                            setGBC(gbc, 0, 8, gbc.REMAINDER, 1),
+	                            setGBC(gbc, 0, 11, gbc.REMAINDER, 1),
 	                            panel);
 	    l3.setFont(MipavUtil.font12I);
 	    JLabel l4 = createLabel(" and lower slice number to higher slice number.",
 	                            layout,
-	                            setGBC(gbc, 0, 9, gbc.REMAINDER, 1),
+	                            setGBC(gbc, 0, 12, gbc.REMAINDER, 1),
 	                            panel);
 	    l4.setFont(MipavUtil.font12I);
 
-	    createLabel("   X increases from patient", layout, setGBC(gbc, 0, 10, 2, 1), panel);
-        ButtonGroup xGroup = new ButtonGroup();
-        left  = setRadio("left to right", layout, setGBC(gbc, 2, 10, 2, 1), panel, xGroup);
-        right = setRadio("right to left", layout, setGBC(gbc, 2, 11, 2, 1), panel, xGroup);
-
-        createLabel("   Y increases from patient", layout, setGBC(gbc, 0, 12, 2, 1), panel);
-        ButtonGroup yGroup = new ButtonGroup();
-        posterior = setRadio("posterior to anterior", layout, setGBC(gbc, 2, 12, 2, 1), panel, yGroup);
-        anterior  = setRadio("anterior to posterior", layout, setGBC(gbc, 2, 13, 2, 1), panel, yGroup);
-
-        createLabel("   Z increases from patient", layout, setGBC(gbc, 0, 14, 2, 1), panel);
-        ButtonGroup zGroup = new ButtonGroup();
-        inferior = setRadio("inferior to superior", layout, setGBC(gbc, 2, 14, 2, 1), panel, zGroup);
-        superior = setRadio("superior to inferior", layout, setGBC(gbc, 2, 15, 2, 1), panel, zGroup);
-
-        createLabel(" ", layout, setGBC(gbc, 0, 16, gbc.REMAINDER, 1), panel);
+        createLabel(" ", layout, setGBC(gbc, 0, 13, gbc.REMAINDER, 1), panel);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -152,7 +170,7 @@ public class JDialogSaveMinc extends JDialogBase {
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
-        setSpace(fileInfo.getImageOrientation());
+        setSpace();
         getContentPane().add(panel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
@@ -161,11 +179,30 @@ public class JDialogSaveMinc extends JDialogBase {
     /**
     *   Initializes the text fields for the dialog. MORE!
     */
-    private void setSpace(int orient) {
+    private void setSpace() {
         int i;
     	float x = 0, y = 0, z = 0, xRes = 1, yRes = 1, zRes = 1;
         float start[] = new float[3];
-        int[] ori = fileInfo.getAxisOrientation();
+        switch(ori[2]) {
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                orient = FileInfoBase.AXIAL;
+                orientLabel.setText("AXIAL");
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                orient = FileInfoBase.CORONAL;
+                orientLabel.setText("CORONAL");
+                break;
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                orient = FileInfoBase.SAGITTAL;
+                orientLabel.setText("SAGITTAL");
+                break;
+            default:
+                orient = FileInfoBase.AXIAL;
+                orientLabel.setText("AXIAL");
+        }
         
         for (i = 0; i < 3; i++) {
             if (ori[i] != FileInfoBase.ORI_I2S_TYPE && ori[i] != FileInfoBase.ORI_S2I_TYPE) {
@@ -176,7 +213,6 @@ public class JDialogSaveMinc extends JDialogBase {
             }    
         }
         
-        ori[1] = FileInfoMinc.oppositeOrient(ori[1]);
         if (ori[1] == FileInfoBase.ORI_R2L_TYPE || ori[1] == FileInfoBase.ORI_A2P_TYPE ||
             ori[1] == FileInfoBase.ORI_S2I_TYPE) {
             start[1] = start[1] + fileInfo.getResolutions()[1] *
@@ -190,32 +226,26 @@ public class JDialogSaveMinc extends JDialogBase {
         for (i=0; i<ori.length; i++) {
         	switch (ori[i]) {
                 case FileInfoBase.ORI_R2L_TYPE:
-                    right.setSelected(true);
                     x = start[i];
                     xRes = - fileInfo.getResolutions()[i];
                     break;
                 case FileInfoBase.ORI_L2R_TYPE:
-                    left.setSelected(true);
                     x = start[i];
                     xRes = fileInfo.getResolutions()[i];
                     break;
                 case FileInfoBase.ORI_P2A_TYPE:
-                    posterior.setSelected(true);
                     y = start[i];
                     yRes = fileInfo.getResolutions()[i];
                     break;
                 case FileInfoBase.ORI_A2P_TYPE:
-                    anterior.setSelected(true);
                     y = start[i];
                     yRes = -fileInfo.getResolutions()[i];
                     break;
                 case FileInfoBase.ORI_I2S_TYPE:
-                    inferior.setSelected(true);
                     z = start[i];
                     zRes = fileInfo.getResolutions()[i];
                     break;
                 case FileInfoBase.ORI_S2I_TYPE:
-                    superior.setSelected(true);
                     z = start[i];
                     zRes = -fileInfo.getResolutions()[i];
                     break;
@@ -249,25 +279,6 @@ public class JDialogSaveMinc extends JDialogBase {
             Preferences.debug("values[2] = " + values[2] + "\n");
             Preferences.debug("options.getBeginSlice() = " + 
                                options.getBeginSlice() + "\n");
-            switch (ori[1]) {
-        	    // opposite because we flip the MINC image before saving it.  the origin for MINC
-        	    // is in the lower left hand corner, whereas our origin is in the upper left hand corner.
-        	    case FileInfoBase.ORI_R2L_TYPE:
-        	    case FileInfoBase.ORI_L2R_TYPE:
-        	        if (left.isSelected()) right.setSelected(true);
-        	        else left.setSelected(true);
-        		    break;
-        	    case FileInfoBase.ORI_P2A_TYPE:
-        	    case FileInfoBase.ORI_A2P_TYPE:
-        	        if (anterior.isSelected()) posterior.setSelected(true);
-        	        else anterior.setSelected(true);
-        		    break;
-        	    case FileInfoBase.ORI_I2S_TYPE:
-        	    case FileInfoBase.ORI_S2I_TYPE:
-        	        if (superior.isSelected()) inferior.setSelected(true);
-        	        else superior.setSelected(true);
-        		    break;
-            }
     	}
     	else {
             
@@ -300,11 +311,8 @@ public class JDialogSaveMinc extends JDialogBase {
         	defaultXSpace = xRes;
         	defaultYSpace = yRes;
         	if (zSpace.isEnabled())	defaultZSpace = zRes;
-        	defaultOrient = orient;
+        	defaultAxisOrient = ori;
         	defaultSet = true;
-        	defaultLR = left.isSelected();
-        	defaultPA = posterior.isSelected();
-        	defaultIS = inferior.isSelected();
         }
     }
 
@@ -335,8 +343,11 @@ public class JDialogSaveMinc extends JDialogBase {
                 MipavUtil.displayError("The values in X Space, Y Space, and Z Space must be numbers.");
             }
         }
-        else if (event.getActionCommand().equals("OrientationChanged")) {
-            setSpace(combo.getSelectedIndex());
+        else if (event.getActionCommand().equals("AxisChanged")) {
+            ori[0] = comboX.getSelectedIndex();
+            ori[1] = comboY.getSelectedIndex();
+            ori[2] = comboZ.getSelectedIndex();
+            setSpace();
         }
         else if (event.getActionCommand().equals("Cancel")) {
             cancelFlag = true;
@@ -354,22 +365,21 @@ public class JDialogSaveMinc extends JDialogBase {
     	options.setXSpace(Float.valueOf(xSpace.getText()).floatValue());
     	options.setYSpace(Float.valueOf(ySpace.getText()).floatValue());
     	if (zSpace.isEnabled()) options.setZSpace(Float.valueOf(zSpace.getText()).floatValue());
-    	options.setLeftToRight(left.isSelected());
-    	options.setPosToAnt(posterior.isSelected());
-    	options.setInfToSup(inferior.isSelected());
-    	options.setOrientation(combo.getSelectedIndex());
+    	options.setAxisOrientation(ori);
     	if (zStart.isEnabled()) {
     		if (!(	options.getXStart() == defaultXStart && options.getYStart() == defaultYStart && options.getZStart() == defaultZStart &&
     				options.getXSpace() == defaultXSpace && options.getYSpace() == defaultYSpace && options.getZSpace() == defaultZSpace &&
-    				options.getOrientation() == defaultOrient && defaultLR == options.isLeftToRight() && defaultPA == options.isPosToAnt() &&
-    				defaultIS == options.isInfToSup())) {
+    				options.getAxisOrientation()[0] == defaultAxisOrient[0] &&
+                    options.getAxisOrientation()[1] == defaultAxisOrient[1] &&
+                    options.getAxisOrientation()[1] == defaultAxisOrient[2])) {
     			options.setDefault(false);
 			}
 		}
 		else {
     		if (!(	options.getXStart() == defaultXStart && options.getYStart() == defaultYStart && options.getXSpace() == defaultXSpace &&
-    				options.getYSpace() == defaultYSpace && options.getOrientation() == defaultOrient && defaultLR == options.isLeftToRight()
-    				&& defaultPA == options.isPosToAnt() && defaultIS == options.isInfToSup())) {
+    				options.getYSpace() == defaultYSpace && options.getAxisOrientation()[0] == defaultAxisOrient[0] &&
+                    options.getAxisOrientation()[1] == defaultAxisOrient[1] &&
+                    options.getAxisOrientation()[1] == defaultAxisOrient[2])) {
     			options.setDefault(false);
     		}
 
@@ -387,10 +397,7 @@ public class JDialogSaveMinc extends JDialogBase {
     	options.setXSpace(defaultXSpace);
     	options.setYSpace(defaultYSpace);
     	if (zSpace.isEnabled()) options.setZSpace(defaultZSpace);
-    	options.setLeftToRight(defaultLR);
-    	options.setPosToAnt(defaultPA);
-    	options.setInfToSup(defaultIS);
-    	options.setOrientation(defaultOrient);
+    	options.setAxisOrientation(defaultAxisOrient);
     	return options;
     }
 
@@ -463,30 +470,108 @@ public class JDialogSaveMinc extends JDialogBase {
 	    group.add(radio);
 	    return radio;
 	}
-
-	/**
-	*   Creates a combo box and adds it to the panel.
+    
+    /**
+    *   Creates a combo box and adds it to the panel.
     *   @param layout The layout to add the constraints to.
     *   @param gbc    The constraints for this combo box.
     *   @param panel  The panel to add the combo box to.
-	*/
-	private void createComboBox(GridBagLayout layout, GridBagConstraints gbc, JPanel panel){
-	    Object[] vector = {"Axial", "Coronal", "Sagittal"};
-	    combo = new JComboBox(vector);
-	    combo.setFont(serif12);
-	    combo.setForeground(Color.black);
-	    combo.setBackground(Color.white);
-	    layout.setConstraints(combo, gbc);
-        switch (fileInfo.getImageOrientation()) {
-            case FileInfoBase.AXIAL:    combo.setSelectedItem("Axial");    break;
-            case FileInfoBase.SAGITTAL: combo.setSelectedItem("Sagittal"); break;
-            case FileInfoBase.CORONAL:  combo.setSelectedItem("Coronal");  break;
-            default:                    combo.setSelectedItem("Axial");
+    */
+    private void createComboBoxX(GridBagLayout layout, GridBagConstraints gbc, JPanel panel){
+        Object[] vector = {"Unknown", "Right to left", "Left to right", 
+                           "Posterior to anterior", "Anterior to posterior",
+                           "Inferior to superior", "Superior to inferior"};
+        comboX = new JComboBox(vector);
+        comboX.setFont(serif12);
+        comboX.setForeground(Color.black);
+        comboX.setBackground(Color.white);
+        layout.setConstraints(comboX, gbc);
+        switch (ori[0]) {
+            case FileInfoBase.ORI_UNKNOWN_TYPE: comboX.setSelectedItem("Unknown");    break;
+            case FileInfoBase.ORI_R2L_TYPE: comboX.setSelectedItem("Right to left"); break;
+            case FileInfoBase.ORI_L2R_TYPE: comboX.setSelectedItem("Left to right");  break;
+            case FileInfoBase.ORI_P2A_TYPE: comboX.setSelectedItem("Posterior to anterior");
+                                            break;
+            case FileInfoBase.ORI_A2P_TYPE: comboX.setSelectedItem("Anterior to posterior");
+                                            break;
+            case FileInfoBase.ORI_I2S_TYPE: comboX.setSelectedItem("Inferior to superior");
+                                            break;
+            case FileInfoBase.ORI_S2I_TYPE: comboX.setSelectedItem("Superior to inferior");
+                                            break;
+            default:                    comboX.setSelectedItem("Unknown");
         }
-        combo.setActionCommand("OrientationChanged");
-        combo.addActionListener(this);
-	    panel.add(combo);
-	}
+        comboX.setActionCommand("AxisChanged");
+        comboX.addActionListener(this);
+        panel.add(comboX);
+    }
+    
+    /**
+     *   Creates a combo box and adds it to the panel.
+     *   @param layout The layout to add the constraints to.
+     *   @param gbc    The constraints for this combo box.
+     *   @param panel  The panel to add the combo box to.
+     */
+     private void createComboBoxY(GridBagLayout layout, GridBagConstraints gbc, JPanel panel){
+         Object[] vector = {"Unknown", "Right to left", "Left to right", 
+                            "Posterior to anterior", "Anterior to posterior",
+                            "Inferior to superior", "Superior to inferior"};
+         comboY = new JComboBox(vector);
+         comboY.setFont(serif12);
+         comboY.setForeground(Color.black);
+         comboY.setBackground(Color.white);
+         layout.setConstraints(comboY, gbc);
+         switch (ori[1]) {
+             case FileInfoBase.ORI_UNKNOWN_TYPE: comboY.setSelectedItem("Unknown");    break;
+             case FileInfoBase.ORI_R2L_TYPE: comboY.setSelectedItem("Right to left"); break;
+             case FileInfoBase.ORI_L2R_TYPE: comboY.setSelectedItem("Left to right");  break;
+             case FileInfoBase.ORI_P2A_TYPE: comboY.setSelectedItem("Posterior to anterior");
+                                             break;
+             case FileInfoBase.ORI_A2P_TYPE: comboY.setSelectedItem("Anterior to posterior");
+                                             break;
+             case FileInfoBase.ORI_I2S_TYPE: comboY.setSelectedItem("Inferior to superior");
+                                             break;
+             case FileInfoBase.ORI_S2I_TYPE: comboY.setSelectedItem("Superior to inferior");
+                                             break;
+             default:                    comboY.setSelectedItem("Unknown");
+         }
+         comboY.setActionCommand("AxisChanged");
+         comboY.addActionListener(this);
+         panel.add(comboY);
+     }
+     
+     /**
+      *   Creates a combo box and adds it to the panel.
+      *   @param layout The layout to add the constraints to.
+      *   @param gbc    The constraints for this combo box.
+      *   @param panel  The panel to add the combo box to.
+      */
+      private void createComboBoxZ(GridBagLayout layout, GridBagConstraints gbc, JPanel panel){
+          Object[] vector = {"Unknown", "Right to left", "Left to right", 
+                             "Posterior to anterior", "Anterior to posterior",
+                             "Inferior to superior", "Superior to inferior"};
+          comboZ = new JComboBox(vector);
+          comboZ.setFont(serif12);
+          comboZ.setForeground(Color.black);
+          comboZ.setBackground(Color.white);
+          layout.setConstraints(comboZ, gbc);
+          switch (ori[2]) {
+              case FileInfoBase.ORI_UNKNOWN_TYPE: comboZ.setSelectedItem("Unknown");    break;
+              case FileInfoBase.ORI_R2L_TYPE: comboZ.setSelectedItem("Right to left"); break;
+              case FileInfoBase.ORI_L2R_TYPE: comboZ.setSelectedItem("Left to right");  break;
+              case FileInfoBase.ORI_P2A_TYPE: comboZ.setSelectedItem("Posterior to anterior");
+                                              break;
+              case FileInfoBase.ORI_A2P_TYPE: comboZ.setSelectedItem("Anterior to posterior");
+                                              break;
+              case FileInfoBase.ORI_I2S_TYPE: comboZ.setSelectedItem("Inferior to superior");
+                                              break;
+              case FileInfoBase.ORI_S2I_TYPE: comboZ.setSelectedItem("Superior to inferior");
+                                              break;
+              default:                    comboZ.setSelectedItem("Unknown");
+          }
+          comboZ.setActionCommand("AxisChanged");
+          comboZ.addActionListener(this);
+          panel.add(comboZ);
+      }
 
 }
 
