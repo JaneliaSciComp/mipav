@@ -73,7 +73,7 @@ AlgorithmInterface {
 	private		JPanel		 listPanel;
 	private		JCheckBox[]	 preserveBox;
 	private		JTextField[] labelField;
-	private		JToggleButton[]	listButton;
+	private		BorderedButton[]	listButton;
 	
 	private		JToggleButton	displayModeButton;
 	private		JToggleButton	displayPaintButton;
@@ -146,7 +146,7 @@ AlgorithmInterface {
 		label = new String[nbx*nby+1];
 		labelField = new JTextField[nbx*nby+1];
 		multiButton = new BorderedButton[nbx*nby+1];
-		listButton = new JToggleButton[nbx*nby+1];
+		listButton = new BorderedButton[nbx*nby+1];
 		preserved = new boolean[nbx*nby+1];
 		preserveBox = new JCheckBox[nbx*nby+1];
 		color = new Color[nbx*nby+1];
@@ -167,7 +167,7 @@ AlgorithmInterface {
 			multiButton[n].setPreferredSize(new Dimension(48,20));		
 			multiButton[n].setToolTipText(label[n]);
 						
-			listButton[n] = new JToggleButton(String.valueOf(n));
+			listButton[n] = new BorderedButton(String.valueOf(n));
 			listButton[n].addActionListener(this);
 			listButton[n].setActionCommand("PaintMask "+n);
 			listButton[n].setFont(MipavUtil.font10);
@@ -374,7 +374,7 @@ AlgorithmInterface {
 		
         bottomPanel = new JPanel();
 		bottomPanel.add(buildCloseButton());
-        bottomPanel.add(buildHelpButton());
+        //bottomPanel.add(buildHelpButton());
 		
         getContentPane().add(mainPanel);
         getContentPane().add(bottomPanel, BorderLayout.SOUTH);
@@ -842,7 +842,7 @@ AlgorithmInterface {
 		String[] newlabel = new String[Nbx*Nby+1];
 		JTextField[] newlabelField = new JTextField[Nbx*Nby+1];
 		BorderedButton[] newmultiButton = new BorderedButton[Nbx*Nby+1];
-		JToggleButton[] newlistButton = new JToggleButton[Nbx*Nby+1];
+		BorderedButton[] newlistButton = new BorderedButton[Nbx*Nby+1];
 		boolean[] newpreserved = new boolean[Nbx*Nby+1];
 		Color[]	newcolor = new Color[Nbx*Nby+1];
 		JCheckBox[] newpreserveBox = new JCheckBox[Nbx*Nby+1];
@@ -872,7 +872,7 @@ AlgorithmInterface {
 				newmultiButton[n].setPreferredSize(new Dimension(48,20));		
 				newmultiButton[n].setToolTipText(newlabel[n]);
 							
-				newlistButton[n] = new JToggleButton(String.valueOf(n));
+				newlistButton[n] = new BorderedButton(String.valueOf(n));
 				newlistButton[n].addActionListener(this);
 				newlistButton[n].setActionCommand("PaintMask "+n);
 				newlistButton[n].setFont(MipavUtil.font10);
@@ -981,7 +981,7 @@ AlgorithmInterface {
 	private void refreshLabelDisplay() {
 		
 		multiButton = new BorderedButton[nbx*nby+1];
-		listButton 	= new JToggleButton[nbx*nby+1];
+		listButton 	= new BorderedButton[nbx*nby+1];
 		preserveBox = new JCheckBox[nbx*nby+1];
 		labelField = new JTextField[nbx*nby+1];
 		for (int n = 1; n<nbx*nby+1;n++) {
@@ -1001,7 +1001,7 @@ AlgorithmInterface {
 			multiButton[n].setToolTipText(label[n]);
 			multiButton[n].setBackground(color[n]);
 							
-			listButton[n] = new JToggleButton(String.valueOf(n));
+			listButton[n] = new BorderedButton(String.valueOf(n));
 			listButton[n].addActionListener(this);
 			listButton[n].setActionCommand("PaintMask "+n);
 			listButton[n].setFont(MipavUtil.font10);
