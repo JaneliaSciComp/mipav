@@ -97,6 +97,19 @@ AlgorithmInterface {
 		userInterface = ViewUserInterface.getReference();	    
     	image = im;
 		init();
+		
+		if (theParentFrame instanceof ViewJFrameImage)
+		{
+			ViewJFrameImage vjfi = (ViewJFrameImage) theParentFrame;
+			
+			if (vjfi != null && vjfi.getLUTb() != null)
+			{
+				if (vjfi.getLUTb().getLUTType() != ModelLUT.STRIPED)
+				{
+					MipavUtil.displayInfo("This tool works best when image B has a striped LUT.");
+				}
+			}
+		}
 	}
     
     /**
