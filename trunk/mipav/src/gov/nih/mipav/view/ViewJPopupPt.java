@@ -16,9 +16,10 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     private     JPopupMenu              ptPopup;
     private     JMenuItem               itemShowGraph;
     private     JMenuItem               itemShowPAAIDialog;
+    private     JMenuItem               itemBuildPolyline;
+    private     JMenuItem               itemProps;
     private     JCheckBoxMenuItem       itemShowVOIName;
     private     JMenu                   propSubMenu;
-    private     JMenuItem               itemSub;
     private     ViewJComponentEditImage component;
 
     public ViewJPopupPt(ViewJComponentEditImage comp){
@@ -28,8 +29,10 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             propSubMenu          = ViewMenuBuilder.buildMenu("Propagate", 0, false);
             itemShowGraph        = ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0, this, null, false);
             itemShowPAAIDialog   = ViewMenuBuilder.buildMenuItem("Point area average intensities", "ShowPAIIDialog", 0, this, null, false);
+            itemBuildPolyline    = ViewMenuBuilder.buildMenuItem("Build inter-frame poly-line", "BuildPoly", 0, this, null, false);
             itemShowVOIName      = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
                 Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
+        itemProps = ViewMenuBuilder.buildMenuItem("Properties","Properties",0,this,null, true);
             component            = comp;
         }
         catch (OutOfMemoryError error) {
@@ -49,7 +52,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
         ptPopup.add(itemShowPAAIDialog);
         ptPopup.addSeparator();
         ptPopup.add(itemShowVOIName);
-
+        ptPopup.add(itemBuildPolyline);
 
     }
 
@@ -80,6 +83,10 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
                Preferences.setProperty(Preferences.PREF_SHOW_VOI_NAME, Boolean.toString(itemShowVOIName.isSelected()));
                component.getFrame().updateImages();
             }
+            else if (event.getActionCommand().equals("Properties")) {
+                component.showVOIProperties(false);
+            }
+
         }
         catch (OutOfMemoryError error) {
             System.gc();

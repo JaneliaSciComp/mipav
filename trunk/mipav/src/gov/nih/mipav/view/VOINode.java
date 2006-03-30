@@ -49,7 +49,7 @@ public class VOINode extends DefaultMutableTreeNode {
     */
     public String getName() {
         try {
-            return ((VOIBase)getUserObject()).getLabel();
+            return " " + ((VOIBase)getUserObject()).getLabel();
         }
         catch (NullPointerException npe) {
             return null;

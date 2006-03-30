@@ -53,6 +53,7 @@ public class VOILine extends VOIBase {
     public VOILine(String name) {
         super();
         this.name = name;
+        label = "line";
     }
 
     /**

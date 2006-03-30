@@ -1,9 +1,8 @@
 package gov.nih.mipav.view;
 
-import javax.swing.tree.*;
 import java.util.*;
+import javax.swing.tree.*;
 import gov.nih.mipav.model.structures.*;
-
 
 /**
  *   This class is used to represent a ... in
@@ -15,21 +14,21 @@ import gov.nih.mipav.model.structures.*;
  *   <p>
  *
  *   @author David Parsons
- */
-public class VOIGroupNode extends DefaultMutableTreeNode {
+*/
+public class VOIFrameNode extends DefaultMutableTreeNode {
+
+    private int frameNumber;
 
     /**
-    *   Loads a File into the tree-leaf.
-    *   @param node File for tree leaf.
+    *   @param node     File for tree leaf.
+    *   @param fsRoot   Flag indicating if this is a root.
     */
-    public VOIGroupNode (VOI node) {
+    public VOIFrameNode (Vector node, int fNumber) {
         setUserObject(node);
+        // unless we drop in information about the VOIbase here...
         setAllowsChildren(true);
+        frameNumber = fNumber;
         explore();
-    }
-
-    public VOIGroupNode(Object node) {
-        super(node);
     }
 
 
@@ -38,22 +37,26 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
     *   returns     the name of the VOI if it exists, or
     *       <code>null</code> if it doesn't.
     *   @return     Name of the file.
-    *   @see javax.swing.tree.DefaultMutableTreeNode#toString()
+    *   @return     The File's name.
     */
     public String toString() {
         return getName();
     }
 
-    /** the string returned is the name of the VOI
+    public int getFrameNumber(){
+        return this.frameNumber;
+    }
+
+    /**
+    *   the string returned is the name of the VOI
     *   returns     the name of the VOI if the VOI exists, or
     *       <code>null</code> if it doesn't.
-    *   <p>
-    *   Explicitly calls DefaultMutableTreeNode.toString()
     *   @return     Name of the file.
-    *   @see javax.swing.tree.DefaultMutableTreeNode#toString()
+    *   @return     The File's name.
     */
     public String getName() {
-        return super.toString();
+
+        return " " + Integer.toString(frameNumber + 1);
     }
 
     /**
@@ -69,13 +72,9 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
     *   Implementation of this is different from the Sun Books' code.
     */
     public void explore() {
-        // load all contours into the Tree as children of the VOI node.
-        Vector curveList[] = ((VOI)getUserObject()).getCurves();
-        for (int i=0; i < curveList.length; i++) {
-
-            if (curveList[i].size() > 0) {
-                add(new VOIFrameNode(curveList[i], i));
-            }
+        Vector curves = (Vector)getUserObject();
+        for (int i = 0; i < curves.size(); i++) {
+            add(new VOINode((VOIBase)curves.elementAt(i)));
         }
     }
 
@@ -87,7 +86,7 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
     *    <code>getUserObject</code> in javax.swing.tree.DefaultMutableTree#getUserObject()
     *   @see gov.nih.mipav.structures.VOI
     */
-    public VOI getVOIgroup() {return (VOI)super.getUserObject();}
+    public VOIBase getVOI() {return (VOIBase)super.getUserObject();}
 
 
 }

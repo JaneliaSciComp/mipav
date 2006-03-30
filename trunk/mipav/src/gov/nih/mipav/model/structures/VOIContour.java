@@ -2263,7 +2263,13 @@ public class VOIContour extends VOIBase {
         }
         cMassPt.x = MipavMath.round(sumX / nPts);
         cMassPt.y = MipavMath.round(sumY / nPts);
-        cMassPt.z = ((Point3Df) (elementAt(0))).z;
+        if (this.size() > 0) {
+            cMassPt.z = ((Point3Df) (elementAt(0))).z;
+        } else {
+            System.err.println("Why is size == 0? weird");
+            System.err.println("Here's the name: " + name + ", and label: " + label);
+            System.err.println(this.toString());
+        }
         return cMassPt;
     }
 
