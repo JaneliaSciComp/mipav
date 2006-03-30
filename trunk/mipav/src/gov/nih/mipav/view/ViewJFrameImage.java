@@ -1910,7 +1910,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     {
         Object source = event.getSource();
         final String command = event.getActionCommand();
-System.out.println(command);
+
         if (command != null &&
             userInterface.isShorcutRecording())
         {
@@ -2146,6 +2146,11 @@ System.out.println(command);
         else if (command.equals("LoadB") || command.equals("OpenMask"))
         {
             File fil = pickImageFile();
+            
+            if (fil == null)
+            {
+            	return;
+            }
 
             if (loadImage(fil, componentImage, userInterface.getLastStackFlag(), doOrigins, doOrients))
             {
