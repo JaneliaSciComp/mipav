@@ -990,33 +990,56 @@ public class FileMinc extends FileBase {
         writeInt(fileInfo.getExtents().length, endianess); //number of dimensions
 
             // orientation of the image.
-        switch(options.getOrientation()) {
-            case FileInfoBase.SAGITTAL:
+        switch(options.getAxisOrientation()[2]) {
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
                 writeName("xspace", 0, endianess);
-                writeInt(nImages, endianess);
-                writeName("zspace", 0, endianess);
-                writeInt(fileInfo.getExtents()[1], endianess);
-                writeName("yspace", 0, endianess);
-                writeInt(fileInfo.getExtents()[0], endianess);
                 break;
-            case FileInfoBase.CORONAL:
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
                 writeName("yspace", 0, endianess);
-                writeInt(nImages, endianess);
-                writeName("zspace", 0, endianess);
-                writeInt(fileInfo.getExtents()[1], endianess);
-                writeName("xspace", 0, endianess);
-                writeInt(fileInfo.getExtents()[0], endianess);
                 break;
-            case FileInfoBase.AXIAL:
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
             default:
                 writeName("zspace", 0, endianess);
-                writeInt(nImages, endianess);
-                writeName("yspace", 0, endianess);
-                writeInt(fileInfo.getExtents()[1], endianess);
-                writeName("xspace", 0, endianess);
-                writeInt(fileInfo.getExtents()[0], endianess);
-                break;
         }
+        writeInt(nImages, endianess);
+        switch(options.getAxisOrientation()[1]) {
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                writeName("xspace", 0, endianess);
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                writeName("yspace", 0, endianess);
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                writeName("zspace", 0, endianess);
+                break;
+            default:
+                writeName("yspace", 0, endianess);
+        }
+        writeInt(fileInfo.getExtents()[1], endianess);
+        switch(options.getAxisOrientation()[0]) {
+            case FileInfoBase.ORI_L2R_TYPE:
+            case FileInfoBase.ORI_R2L_TYPE:
+                writeName("xspace", 0, endianess);
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                writeName("yspace", 0, endianess);
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                writeName("zspace", 0, endianess);
+                break;
+            default:
+                writeName("xspace", 0, endianess);
+        }
+        writeInt(fileInfo.getExtents()[0], endianess);
+        
 
         writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess); //global attribute array
         writeInt(1, endianess); //one attribute: history
@@ -1066,51 +1089,81 @@ public class FileMinc extends FileBase {
         double ySpace=options.getYSpace(), zSpace=1;
         if (fileInfo.getExtents().length == 3) zSpace = options.getZSpace();
         if (fileInfo.getExtents().length == 3) {
-            switch(fileInfo.getImageOrientation()) {
-                case FileInfoBase.SAGITTAL:
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, options.isLeftToRight());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+4, endianess);
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, options.isInfToSup());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+12, endianess);
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, options.isPosToAnt());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+20, endianess);
+            switch(options.getAxisOrientation()[2]) {
+                case FileInfoBase.ORI_L2R_TYPE:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
                     break;
-                case FileInfoBase.CORONAL:
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, options.isPosToAnt());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+4, endianess);
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, options.isInfToSup());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+12, endianess);
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, options.isLeftToRight());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+20, endianess);
+                case FileInfoBase.ORI_R2L_TYPE:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
                     break;
-                case FileInfoBase.AXIAL:
+                case FileInfoBase.ORI_A2P_TYPE:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
+                    break;
+                case FileInfoBase.ORI_P2A_TYPE:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_S2I_TYPE:
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
+                    break;
                 default:
-                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, options.isInfToSup());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+4, endianess);
-                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, options.isPosToAnt());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+12, endianess);
-                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, options.isLeftToRight());
-                    writeInt(FileInfoMinc.NC_DOUBLE, endianess);
-                    writeInt(8, endianess);
-                    writeInt(START3D+20, endianess);
-                    break;
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
             }
+            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+            writeInt(8, endianess);
+            writeInt(START3D+4, endianess);
+            switch(options.getAxisOrientation()[1]) {
+                case FileInfoBase.ORI_L2R_TYPE:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_R2L_TYPE:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
+                    break;
+                case FileInfoBase.ORI_A2P_TYPE:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
+                    break;
+                case FileInfoBase.ORI_P2A_TYPE:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_S2I_TYPE:
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
+                    break;
+                default:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
+            }
+            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+            writeInt(8, endianess);
+            writeInt(START3D+12, endianess);
+            switch(options.getAxisOrientation()[0]) {
+                case FileInfoBase.ORI_L2R_TYPE:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_R2L_TYPE:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, false);
+                    break;
+                case FileInfoBase.ORI_A2P_TYPE:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, false);
+                    break;
+                case FileInfoBase.ORI_P2A_TYPE:
+                    writeSpace(ySpace, options.getYStart(), "yspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, true);
+                    break;
+                case FileInfoBase.ORI_S2I_TYPE:
+                    writeSpace(zSpace, options.getZStart(), "zspace", endianess, false);
+                    break;
+                default:
+                    writeSpace(xSpace, options.getXStart(), "xspace", endianess, true);
+            }
+            writeInt(FileInfoMinc.NC_DOUBLE, endianess);
+            writeInt(8, endianess);
+            writeInt(START3D+20, endianess);
         }
         writeName("image", 0, endianess);
         writeInt(fileInfo.getExtents().length, endianess);
