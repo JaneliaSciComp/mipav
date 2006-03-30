@@ -498,13 +498,7 @@ AlgorithmInterface {
 		} else if (command.equals("LoadMask")) {
 			deselectMask();
 			image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "OpenMask"));
-			
-			//if (image.getParentFrame().getImageB() != null)
-			//{
-				selectedMaskToPaint(1);
-			//	System.out.println("imageB is not null");
-			//}
-			//else System.out.println("imageB is null");
+			selectedMaskToPaint(1);
 		} 
     }
 
@@ -737,36 +731,13 @@ AlgorithmInterface {
 		// select the ID: if not new, update the mask
 		if (image.getParentFrame().getImageB()==null) {
 			// create the mask image
-			//Runnable newMaskThread = new Runnable() {
-			//	public void run() {
-			//System.out.println("creating newmask");
-					image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "NewMask"));
-			//	}
-			//};
-			
-			//try
-			//{
-			//	SwingUtilities.invokeAndWait(newMaskThread);
-			//}
-			//catch (Exception e)
-			//{
-			//	return;
-			//}
-			
-		}
-		else
-		{
-			//System.out.println("not creating newmask");
+			image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "NewMask"));
 		}
 		
 		// record selected image; set to image B
 		ModelImage active = image.getParentFrame().getActiveImage();
 		
-		System.out.println("1. imageB == " + (image.getParentFrame().getImageB() == null ? "null" : "not null"));
-		
 		image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
-		
-		System.out.println("2. imageB == " + (image.getParentFrame().getImageB() == null ? "null" : "not null"));
 		
 		// create new color
 		color[num] = image.getParentFrame().getLUTb().getColor(num);
