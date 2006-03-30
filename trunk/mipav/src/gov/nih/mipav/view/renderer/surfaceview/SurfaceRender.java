@@ -1355,7 +1355,7 @@ public class SurfaceRender extends RenderViewBase {
             boxSliceZ = new ViewJComponentBoxSlice( xBox, yBox, 0, ViewJComponentBoxSlice.Z_SLICE );
             break;
         }
-        boxSliceZ.setColor( Color.blue );
+        boxSliceZ.setColor( Color.red );
 
         /* Determine which boxSlice is the X_Slice, Y_Slice and Z_Slice, set
          * the m_kObjBoxVerts appropriately: */

@@ -2353,9 +2353,9 @@ public class PlaneRender extends VolumeCanvas3D
     /* Set of colors used to draw the X and Y Bars and the Z box: */
     private Color3f[] m_akXColors = { new Color3f( 1, 1, 0 ), new Color3f( 0, 1, 0 ), new Color3f( 1, 1, 0 ) };
 
-    private Color3f[] m_akYColors = { new Color3f( 0, 1, 0 ), new Color3f( 0, 0, 1 ), new Color3f( 0, 0, 1 ) };
+    private Color3f[] m_akYColors = { new Color3f( 0, 1, 0 ), new Color3f( 1, 0, 0 ), new Color3f( 1, 0, 0 ) };
 
-    private Color3f[] m_akZColors = { new Color3f( 0, 0, 1 ), new Color3f( 1, 1, 0 ), new Color3f( 0, 1, 0 ) };
+    private Color3f[] m_akZColors = { new Color3f( 1, 0, 0 ), new Color3f( 1, 1, 0 ), new Color3f( 0, 1, 0 ) };
 
     /* Mapping of colors to actual x,y,z */
     private Color3f m_kXSliceHairColor;

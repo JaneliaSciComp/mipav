@@ -129,14 +129,14 @@ public class JPanelSculptor extends JPanelRendererBase {
         Border pressedBorder = BorderFactory.createLoweredBevelBorder();
         // m_kDrawOutlineButton = new JToggleButton( MipavUtil.getIcon( "drawsculptor.gif" ), false );
         m_kDrawOutlineButton = toolbarBuilder.buildToggleButton( "DrawSculptRegion" , "Draw sculpt outline region", "drawsculptor", cursorGroup);
-        m_kDrawOutlineButton = new JToggleButton(MipavUtil.getIcon("drawsculptor.gif"), false);
+        m_kDrawOutlineButton = new JToggleButton(MipavUtil.getIcon("sculptdraw.gif"), false);
          m_kDrawOutlineButton.addActionListener(this);
          m_kDrawOutlineButton.setMargin(new Insets(0, 0, 0, 0));
          m_kDrawOutlineButton.setToolTipText("Draw sculpt outline region");
          m_kDrawOutlineButton.setActionCommand("DrawSculptRegion");
          m_kDrawOutlineButton.setBorderPainted(false);
          m_kDrawOutlineButton.setRolloverEnabled(true);
-         m_kDrawOutlineButton.setRolloverIcon(MipavUtil.getIcon("drawsculptor.gif"));
+         m_kDrawOutlineButton.setRolloverIcon(MipavUtil.getIcon("sculptdrawroll.gif"));
         m_kDrawOutlineButton.setBorder(pressedBorder);
          m_kDrawOutlineButton.setFocusPainted(false);
         cursorGroup.add(m_kDrawOutlineButton);
@@ -148,11 +148,11 @@ public class JPanelSculptor extends JPanelRendererBase {
         m_kClearDrawOutlineButton.setEnabled( false );
         viewToolBar.add( m_kClearDrawOutlineButton );
 
-        m_kInvertOutlineButton = toolbarBuilder.buildButton( "InvertSculptRegion" , "Invert draw sculpt outline region", "inverseregion");
+        m_kInvertOutlineButton = toolbarBuilder.buildButton( "InvertSculptRegion" , "Invert draw sculpt outline region", "sculptinverse");
         m_kInvertOutlineButton.setEnabled( false );
         viewToolBar.add( m_kInvertOutlineButton );
 
-        m_kApplySculptButton = toolbarBuilder.buildButton( "ApplySculptRegion" , "Apply sculpt region to volume", "applysculptor");
+        m_kApplySculptButton = toolbarBuilder.buildButton( "ApplySculptRegion" , "Apply sculpt region to volume", "sculptapply");
         m_kApplySculptButton.setEnabled( false );
         viewToolBar.add( m_kApplySculptButton );
 
