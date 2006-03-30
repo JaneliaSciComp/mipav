@@ -54,6 +54,7 @@ public class FileWriteOptions {
 	private float	ySpace;
 	private float	zSpace;
 	private int		orientation;
+    private int[]   axisOrientation;
 
 	// XML option
 	private String  xmlLinkedFilename;
@@ -333,6 +334,12 @@ public class FileWriteOptions {
     *   @return         Integer representing the orientation.
     */
     public int getOrientation() 	{return orientation;}
+    
+    /**
+     * Returns the orientations of the 3 axes
+     * @return
+     */
+    public int[] getAxisOrientation() {return axisOrientation;}
 
     /**
     *   Gets the filename for the linked file for the XML header
@@ -534,6 +541,12 @@ public class FileWriteOptions {
      *	@see	gov.nih.mipav.view.dialogs.JDialogSaveMinc
      */
     public void setOrientation(int value)		{orientation = value;}
+    
+    /**
+     * Accessor that sets the orientations of the 3 axes
+     * @param ori
+     */
+    public void setAxisOrientation (int ori[]) {axisOrientation = ori;}
 
     /**
      *  Accessor that sets the xml linked filename (for XML files)
