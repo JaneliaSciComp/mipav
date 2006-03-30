@@ -1455,6 +1455,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void setSagittalComponentSlice(int _sagittalComponentSlice)
     {
         sagittalComponentSlice = _sagittalComponentSlice;
+        
+        if (linkTriFrame != null)
+        {
+        	linkTriFrame.setSagittalComponentSlice(_sagittalComponentSlice);
+        }
     }
 
     /**
@@ -1464,6 +1469,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void setCoronalComponentSlice(int _coronalComponentSlice)
     {
         coronalComponentSlice = _coronalComponentSlice;
+        
+        if (linkTriFrame != null)
+        {
+        	linkTriFrame.setCoronalComponentSlice(_coronalComponentSlice);
+        }
     }
 
     /**
@@ -1473,6 +1483,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public void setAxialComponentSlice(int _axialComponentSlice)
     {
         axialComponentSlice = _axialComponentSlice;
+        
+        if (linkTriFrame != null)
+        {
+        	linkTriFrame.setAxialComponentSlice(_axialComponentSlice);
+        }
     }
 
     /**
@@ -1775,7 +1790,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     		this.triImage[AXIAL_A].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1);
     		this.triImage[CORONAL_A].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1);
     		this.triImage[SAGITTAL_A].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1);
-    		return;
     	}
     	
     	if (triImage == this.triImage[AXIAL_B] || triImage == this.triImage[CORONAL_B] || triImage == this.triImage[SAGITTAL_B])
@@ -1783,13 +1797,22 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     		this.triImage[AXIAL_B].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1);
     		this.triImage[CORONAL_B].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1);
     		this.triImage[SAGITTAL_B].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1);
-    		return;
     	}
     	
     	if (triImage == this.triImage[AXIAL_AB] || triImage == this.triImage[CORONAL_AB] || triImage == this.triImage[SAGITTAL_AB])
     	{
     		updateImages();
     	}
+    	
+    	if (linkTriFrame != null)
+    	{
+    		for (int i = 0; i < MAX_TRI_IMAGES; i++)
+    		{
+    			if (triImage == this.triImage[i]) linkTriFrame.updateImageSubset(linkTriFrame.getTriImage(i));
+    		}
+    	}
+    	
+    	return;
     }
 
     /**
@@ -2353,16 +2376,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         {
         	ViewJComponentTriImage linkTriImage = null;
         	
-        	if (sourceImage == triImage[AXIAL_A]) linkTriImage = linkTriFrame.getTriImage(AXIAL_A);
-        	if (sourceImage == triImage[SAGITTAL_A]) linkTriImage = linkTriFrame.getTriImage(SAGITTAL_A);
-        	if (sourceImage == triImage[CORONAL_A]) linkTriImage = linkTriFrame.getTriImage(CORONAL_A);
-        	if (sourceImage == triImage[AXIAL_B]) linkTriImage = linkTriFrame.getTriImage(AXIAL_B);
-        	if (sourceImage == triImage[SAGITTAL_B]) linkTriImage = linkTriFrame.getTriImage(SAGITTAL_B);
-        	if (sourceImage == triImage[CORONAL_B]) linkTriImage = linkTriFrame.getTriImage(CORONAL_B);
-        	if (sourceImage == triImage[AXIAL_AB]) linkTriImage = linkTriFrame.getTriImage(AXIAL_AB);
-        	if (sourceImage == triImage[SAGITTAL_AB]) linkTriImage = linkTriFrame.getTriImage(SAGITTAL_AB);
-        	if (sourceImage == triImage[CORONAL_AB]) linkTriImage = linkTriFrame.getTriImage(CORONAL_AB);
-        		
+        	for (int i = 0; i < MAX_TRI_IMAGES; i++)
+    		{
+        		if (sourceImage == triImage[i]) linkTriImage = linkTriFrame.getTriImage(i);
+    		}
+        	        		
         	if (linkTriImage != null)
         	{
 	        	linkTriFrame.setCrosshairs(x, y, z, linkTriImage);
@@ -2432,6 +2450,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         }
 
         currentAbsolutePositionLabels = new Point3D(x, y, z);
+        
+        if (linkTriFrame != null)
+        {
+        	linkTriFrame.setPositionLabels(x, y, z);
+        }
     }
 
     /**
