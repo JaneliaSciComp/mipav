@@ -138,6 +138,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     public JDialogPowerPaint(Frame theParentFrame, ModelImage im)
     {
         super(theParentFrame, false);
+        
         image = im;
         init();
     }
@@ -794,7 +795,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
            {
         	   if (multiPaintDialog == null)
         	   {
-        		   multiPaintDialog = new JDialogMultiPaint(new JFrame(), image);
+        		   multiPaintDialog = new JDialogMultiPaint(parentFrame, image);
         	   }
         	   else
         	   {
