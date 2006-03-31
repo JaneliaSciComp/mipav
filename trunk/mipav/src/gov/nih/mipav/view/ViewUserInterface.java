@@ -2176,11 +2176,34 @@ public class ViewUserInterface
     public void buildTreeDialog() {
         JDialogFilterChoice dialog = new JDialogFilterChoice(this.getMainFrame());
         if (!dialog.isCancelled()) {
-            // get the selected directory
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser(this, dialog);
-            String dir = chooser.getImageDirectory();
+        	// get the selected directory
+            ViewDirectoryChooser chooser = new ViewDirectoryChooser(dialog);
+            String dir = null;
+            
+        	String initialDirectory = Preferences.getProperty(Preferences.PREF_DEFAULT_IMAGE_BROWSER_DIR);
+        	
+        	if (initialDirectory == null)
+        	{
+        		dir = chooser.getImageDirectory();
+        	}
+        	else
+        	{
+        		// the File object is built to test whether the initialDirectory actually exists
+        		File directory = new File(initialDirectory);
+        		
+        		if (directory == null || !directory.exists() || !directory.canRead())
+        		{
+        			dir = chooser.getImageDirectory();
+        		}
+        		else
+        		{
+        			dir = chooser.chooseDirectory(initialDirectory);
+        		}
+        	}
+        	
             if (dir != null) {
-                new ViewImageDirectory(this, dir, dialog.getFilter());
+            	Preferences.setProperty(Preferences.PREF_DEFAULT_IMAGE_BROWSER_DIR, dir);
+                new ViewImageDirectory(dir, dialog.getFilter());
             }
         }
     }
