@@ -306,6 +306,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         JPanel treePanel = new JPanel(new BorderLayout());
         treePanel.setBorder(buildTitledBorder("VOI Tree"));
+        treePanel.setPreferredSize(new Dimension(215,600));
+        treePanel.setMinimumSize(new Dimension(150, 150));
 
         JPanel treeOptionPanel = new JPanel(new BorderLayout());
         treeOptionPanel.setBorder(buildTitledBorder("Tree Options"));
@@ -325,7 +327,11 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         treePanel.add(comboTreePanel, BorderLayout.SOUTH);
 
-        treePanel.add(voiTreePane, BorderLayout.CENTER);
+        JPanel tScrollPanel = new JPanel(new BorderLayout());
+        tScrollPanel.add(voiTreePane);
+        tScrollPanel.setPreferredSize(new Dimension(220,300));
+        tScrollPanel.setMinimumSize(new Dimension(160,160));
+        treePanel.add(tScrollPanel, BorderLayout.NORTH);
 
 
         JPanel leftButton = new JPanel();
@@ -334,7 +340,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         JPanel leftWholePanel = new JPanel(new BorderLayout());
         leftWholePanel.add(panelVOIProps, BorderLayout.NORTH);
-        leftWholePanel.add(treePanel, BorderLayout.SOUTH);
+        leftWholePanel.add(treePanel, BorderLayout.CENTER);
 
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.add(leftWholePanel);
@@ -397,12 +403,17 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         //voiTree.setBackground(Color.gray);
         voiTree.setFont(MipavUtil.font12);
         voiTree.addTreeSelectionListener(this);
+       // voiTree.setPreferredSize(new Dimension(200,300));
+       // voiTree.setMinimumSize(new Dimension(100,100));
 
-        voiTreePane = new JScrollPane(voiTree);
-        voiTreePane.validate();
-        voiTreePane.setPreferredSize(new Dimension(212,483));
-        voiTreePane.setMaximumSize(new Dimension(212,483));
 
+        voiTreePane = new JScrollPane(voiTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+        //voiTreePane.validate();
+        voiTreePane.setPreferredSize(new Dimension(212,312));
+        //voiTreePane.setMaximumSize(new Dimension(212,483));
+        voiTreePane.setMinimumSize(new Dimension(112,112));
     }
 
     private void updateContourPane(VOIBase leadBase) {
@@ -600,7 +611,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             } else {
                 voiTree.setSelectionPath(new TreePath(root));
             }
-
+            voiTreePane.validate();
         }
 
     }
