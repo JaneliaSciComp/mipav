@@ -313,9 +313,7 @@ public abstract class AlgorithmBase
     protected void initProgressBar() {
         if (pBarVisible == true && progressBar != null) {
             if (progressBarLocation == null) {
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = 100; //Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
+                MipavUtil.centerOnScreen(progressBar);
             }
             else {
                 progressBar.setLocation(progressBarLocation);
