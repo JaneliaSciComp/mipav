@@ -74,8 +74,9 @@ public class ViewImageDirectory
 
   private JPanel placeHolder = null;
   private JPanel sliderPanel = null;
-
+  
   /**
+   *   @deprecated - use ViewImageDirectory(String, ViewImageFileFilter) instead
    *   Creates new tree of images and sets up file filter.
    *   Calls initialization method.
    *   @param ui           User interface.
@@ -84,8 +85,19 @@ public class ViewImageDirectory
    */
   public ViewImageDirectory(ViewUserInterface ui, String dir,
                             ViewImageFileFilter filter) {
+	  this(dir, filter);	  
+  }
+
+  /**
+   *   Creates new tree of images and sets up file filter.
+   *   Calls initialization method.
+   *   @param dir
+   *   @param filter    Directory to make tree under.
+   */
+  public ViewImageDirectory(String dir,
+                            ViewImageFileFilter filter) {
     super();
-    userInterface = ui;
+    userInterface = ViewUserInterface.getReference();
     directory = dir;
     this.showXMLThumbnail = Preferences.is(Preferences.PREF_SAVE_XML_THUMBNAIL);
     if (directory.endsWith(":\\")) {
@@ -134,7 +146,7 @@ public class ViewImageDirectory
    *   Initializes the GUI components and adds them to the main frame.
    */
   protected void init() {
-    setTitle("Tree of Images in Directory");
+    setTitle("Tree of images in selected directory");
 
     buildMenu();
     buildSourceTreeListing(false);
@@ -486,10 +498,7 @@ public class ViewImageDirectory
       int i, j;
       String fileName;
       String newName;
-      String directory;
-      int matchNumber = 0;
-      int result = 0;
-      String matchedTemp;
+      String directory = ".";
       ModelImage newImage;
       int bufferLength;
       double[] buffer;
@@ -547,6 +556,7 @@ public class ViewImageDirectory
         io.setPBar(null);
         int progress = 0;
         int add = 100 / selected.length;
+       
         progressPanel.setValueImmed(progress);
         /**
          * Add images from FileIO into hashtable
@@ -569,8 +579,6 @@ public class ViewImageDirectory
         progressPanel.getProgressBar().setForeground(this.getBackground());
 
         ModelImage secondImage = null;
-        String firstKey = null;
-        String secondKey = null;
 
         String[] imageNames = new String[selected.length];
 
@@ -582,55 +590,59 @@ public class ViewImageDirectory
          * If the open command is told to openSeparate (separately), dimensions will be
          * ignored and each image will be placed into a separate frame
          */
-        while (!table.isEmpty()) {
+        if (!table.isEmpty()) {
           Enumeration en = table.keys();
 
           int index = 0;
           while (en.hasMoreElements()) {
-            imageNames[index] = new String( (String) en.nextElement());
-            index++;
+        	  String nextElement = (String) en.nextElement();
+
+        	  if (nextElement != null)
+        	  {
+        		  imageNames[index] = nextElement;
+                  index++;
+        	  }
           }
 
-          //Arrays.sort(imageNames, new ImageNameComparator());
-          imageNames = FilenameSorter.subSetsToArray(FilenameSorter.secondarySort(FilenameSorter.extractSubSets(imageNames)));
-
+          Vector extractSubsetsVector = FilenameSorter.extractSubSets(imageNames);
+          Vector secondarySortVector = FilenameSorter.secondarySort(extractSubsetsVector);
+          imageNames = FilenameSorter.subSetsToArray(secondarySortVector);
+          
           newImage = (ModelImage) table.get(imageNames[0]);
           if (newImage != null) {
 
-            //add the integer key of the first image (image you are checking against)
-            matchingImageNames.add(imageNames[0]);
+	            //add the integer key of the first image (image you are checking against)
+	            matchingImageNames.add(imageNames[0]);
 
-            if (!openSeparate) {
-              //go through the rest of the keys in the table
-              for (j = 1; j < imageNames.length && imageNames[j] != null; j++) {
-                secondImage = (ModelImage) table.get(imageNames[j]);
-                if (secondImage != null) {
-                  if (newImage.getType() == secondImage.getType() &&
-                      newImage.getExtents().length ==
-                      secondImage.getExtents().length) {
-                    boolean matches = true;
-
-                    for (i = 0; i < newImage.getExtents().length; i++) {
-
-                      if ( (newImage.getExtents()[i] !=
-                            secondImage.getExtents()[i]) ||
-                          (newImage.getFileInfo()[0].getResolutions()[i] !=
-                           secondImage.getFileInfo()[0].getResolutions()[i]) ||
-                          newImage.getExtents().length > 3) {
-                        matches = false;
-                        break;
-                      }
-                    }
-
-                    if (matches) {
-                      matchingImageNames.add(imageNames[j]);
-                    }
-
-                  }
-                }
-                secondImage = null; //dont need to clean up since we have this in table
-              }
-            }
+	          //go through the rest of the keys in the table
+	          for (j = 1; j < imageNames.length && imageNames[j] != null; j++) {
+	            secondImage = (ModelImage) table.get(imageNames[j]);
+	            if (secondImage != null) {
+	              if (newImage.getType() == secondImage.getType() &&
+	                  newImage.getExtents().length ==
+	                  secondImage.getExtents().length) {
+	                boolean matches = true;
+	
+	                for (i = 0; i < newImage.getExtents().length; i++) {
+	
+	                  if ( (newImage.getExtents()[i] !=
+	                        secondImage.getExtents()[i]) ||
+	                      (newImage.getFileInfo()[0].getResolutions()[i] !=
+	                       secondImage.getFileInfo()[0].getResolutions()[i]) ||
+	                      newImage.getExtents().length > 3) {
+	                    matches = false;
+	                    break;
+	                  }
+	                }
+	
+	                if (matches) {
+	                  matchingImageNames.add(imageNames[j]);
+	                }
+	
+	              }
+	            }
+	            secondImage = null; //dont need to clean up since we have this in table
+	          }
 
             /**
              * Find the number of matching images (of like dimensions, resolutions)
@@ -643,8 +655,16 @@ public class ViewImageDirectory
               new ViewJFrameImage(newImage);
               matchingImageNames.removeAllElements();
             }
-            //otherwise concatenate images into a single image (2D->3D, 3D->4D)
-            else {
+            else if (openSeparate == true) // open to separate frames
+            {
+            	for (i = 0; i < matchingImageNames.size(); i++)
+            	{
+            		ModelImage image = (ModelImage) table.remove(matchingImageNames.elementAt(i));
+            		
+            		new ViewJFrameImage(image);
+            	}
+            }            
+            else { //otherwise concatenate images into a single image (2D->3D, 3D->4D)
               int[] newExtents = new int[newImage.getExtents().length + 1];
               for (i = 0; i < newExtents.length - 1; i++) {
                 newExtents[i] = newImage.getExtents()[i];
@@ -682,7 +702,9 @@ public class ViewImageDirectory
                   newImage.exportData(0, bufferLength, buffer);
                 }
                 catch (IOException error) {
-                  MipavUtil.displayError("ERROR!");
+                  error.printStackTrace();
+                  MipavUtil.displayError("Error: unable to open image " + i);
+                  Preferences.debug("Error on exportData in ViewImageDirectory");
                   return;
                 }
 
@@ -691,8 +713,8 @@ public class ViewImageDirectory
                 }
                 catch (IOException error) {
                   error.printStackTrace();
-                  MipavUtil.displayError(
-                      "IO error on import into concat images");
+                  MipavUtil.displayError("IO error on import into concat images");
+                  Preferences.debug("Error on importData in ViewImageDirectory");
                   return;
                 }
 
