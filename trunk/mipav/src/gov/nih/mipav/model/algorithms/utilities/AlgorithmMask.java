@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.io.*;
@@ -1004,6 +1005,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             initProgressBar();
+            MipavUtil.centerOnScreen(progressBar);
 
             if ( srcImage.getNDims() == 4 ) {
                 end = srcImage.getExtents()[2];
