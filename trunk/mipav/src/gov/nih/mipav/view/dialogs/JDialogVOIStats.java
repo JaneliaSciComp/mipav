@@ -71,12 +71,12 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
     private boolean treeSelectionChange = false;
 
-    private static Icon ICON_POLYGON = MipavUtil.getIcon("polygon_inverse.gif");
-    private static Icon ICON_POLYLINE = MipavUtil.getIcon("polyline_inverse.gif");
-    private static Icon ICON_POINT = MipavUtil.getIcon("pointROI_inverse.gif");
-    private static Icon ICON_LINE = MipavUtil.getIcon("linear_inverse.gif");
+    private static Icon ICON_POLYGON = MipavUtil.getIcon("polygon.gif");
+    private static Icon ICON_POLYLINE = MipavUtil.getIcon("polyline.gif");
+    private static Icon ICON_POINT = MipavUtil.getIcon("pointROI.gif");
+    private static Icon ICON_LINE = MipavUtil.getIcon("linear.gif");
     private static Icon ICON_MEDICAL_FRAME = MipavUtil.getIcon("med_frame.gif");
-    private static Icon ICON_PROTRACTOR = MipavUtil.getIcon("protractor_inverse.gif");
+    private static Icon ICON_PROTRACTOR = MipavUtil.getIcon("protractor.gif");
 
     private boolean frameFollowsSelection = true;
     private JCheckBox followVOISelectionBox = null;
@@ -84,7 +84,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
     private VOITreePopup popup = null;
 
-    private static Color background = new Color(64,71,77);
+    private static Color background = new Color(100,100,100);
 
     /** Constructor for the JDialogVOIStats.
      *   <p>
@@ -393,7 +393,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         voiTree = new JTree(voiModel);
         voiTree.setCellRenderer(new VOITreeRenderer());
-        voiTree.setBackground(background);
+        //voiTree.setBackground(background);
+        //voiTree.setBackground(Color.gray);
         voiTree.setFont(MipavUtil.font12);
         voiTree.addTreeSelectionListener(this);
 
@@ -1608,10 +1609,11 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 // setForeground(((VOIGroupNode) ((TreeNode) value).getParent()).
                 //               getVOIgroup().getColor());
 
-                setForeground(Color.LIGHT_GRAY);
+                setForeground(Color.BLACK);
 
-                setBackgroundNonSelectionColor(background);
-                setBackgroundSelectionColor(Color.black);
+                setTextSelectionColor(Color.WHITE);
+                setBackgroundNonSelectionColor(Color.lightGray);
+                setBackgroundSelectionColor(Color.gray);
                 setBorder(frameBorder);
                 setFont(MipavUtil.font10);
                 setIcon(null);
@@ -1623,14 +1625,18 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                               getVOIgroup().getColor());
 
                 setBackgroundNonSelectionColor(background);
-                setBackgroundSelectionColor(Color.black);
+                setBackgroundSelectionColor(Color.BLACK);
                 setIcon(null);
                 setBorder(null);
                 setFont(MipavUtil.font12);
             } else {
-                setForeground(Color.white);
-                setBackgroundNonSelectionColor(background);
-                setBackgroundSelectionColor(background);
+                //setForeground(Color.white);
+
+
+                this.setTextNonSelectionColor(Color.BLACK);
+                this.setTextSelectionColor(Color.white);
+                setBackgroundNonSelectionColor(voiTree.getBackground());
+                setBackgroundSelectionColor(Color.BLACK);
 
                 setIcon(ICON_MEDICAL_FRAME);
                 setFont(MipavUtil.font12);
