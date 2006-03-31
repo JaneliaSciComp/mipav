@@ -5830,7 +5830,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (imageB != null)
             {
-                ViewJProgressBar progressBar = initMaskToPaintProgressBar();
+            	ViewJProgressBar progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true,
+                        this, this);
+                MipavUtil.centerOnScreen(progressBar);
+                progressBar.setVisible(true);
 
                 try
                 {
@@ -5882,23 +5885,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // should never get to this point. big trouble.
             MipavUtil.displayError("Cannot complete the operation due to an internal error.");
         }
-    }
-
-    private ViewJProgressBar initMaskToPaintProgressBar()
-    {
-        ViewJProgressBar progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, false,
-            this, this);
-
-        Toolkit toolkit = Toolkit.getDefaultToolkit();
-        Dimension screenSize = toolkit.getScreenSize();
-        Dimension progressBarSize = progressBar.getSize();
-
-        progressBar.setLocation(screenSize.width / 2 - progressBarSize.width / 2,
-                                screenSize.height / 2 - progressBarSize.height / 2);
-
-        progressBar.setVisible(true);
-
-        return progressBar;
     }
 
     public void keyTyped(KeyEvent e)
