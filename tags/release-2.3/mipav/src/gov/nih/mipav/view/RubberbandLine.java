@@ -1,0 +1,184 @@
+ package gov.nih.mipav.view;
+
+ import gov.nih.mipav.model.structures.*;
+
+ import java.awt.Component;
+ import java.awt.Graphics;
+ import java.awt.event.*;
+
+/**
+ * A Rubberband that does lines.
+ */
+ public class RubberbandLine extends Rubberband {
+
+	private int x[] = new int[2];
+    private int y[] = new int[2];
+    private int z[] = new int[2];
+
+	/**
+	*  Constructs a rubberbanded line and dds mouse listeners
+	*  @param component   component to add to
+	*/
+    public RubberbandLine(Component component) {
+        super(component);
+        component.addMouseMotionListener(this);
+        component.addMouseListener(this);
+    }
+
+    /**
+    *  Draws a line based on the rubberband's last bounds
+    *  @param graphics  graphics to draw in
+    */
+    public void drawLast(Graphics graphics) {
+        graphics.drawLine(anchorPt.x, anchorPt.y,
+		                  lastPt.x,   lastPt.y);
+    }
+
+    /**
+    *  Draws a line based on the rubberband's present bounds
+    *  @param graphics   graphics to draw in
+    */
+    public void drawNext(Graphics graphics) {
+        graphics.drawLine(anchorPt.x,    anchorPt.y,
+                          stretchedPt.x, stretchedPt.y);
+    }
+
+    /**
+    *  Makes a line VOI upon mouse release
+    *  @param mouseEvent  event that triggered function
+    */
+    public void mouseReleased(MouseEvent mouseEvent) {
+        VOI newVOI;
+        int beginx, endx, beginy, endy;
+        int slice;
+        float zoomX, zoomY;
+        float resolutionX, resolutionY;
+        int   index;
+        int   colorID;
+        int i;
+        ViewVOIVector   VOIs;
+        int nVOI;
+        String name;
+
+        zoomX = ((ViewJComponentEditImage)(component)).getZoomX();
+        zoomY = ((ViewJComponentEditImage)(component)).getZoomY();
+        resolutionX = ((ViewJComponentEditImage)(component)).getResolutionX();
+        resolutionY = ((ViewJComponentEditImage)(component)).getResolutionY();
+
+        if ( isActive() ) {
+            ModelImage image = ((ViewJComponentEditImage)(component)).getActiveImage();
+
+            // get the points for the line
+            beginx = (int)(getAnchor().x/(zoomX * resolutionX));
+            beginy = (int)(getAnchor().y/(zoomY * resolutionY));
+            endx   = (int)(getLast().x  /(zoomX * resolutionX));
+            endy   = (int)(getLast().y  /(zoomY * resolutionY));
+
+            slice = ((ViewJComponentEditImage)(component)).getSlice();
+            if (beginx <= endx) {
+                x[0] = beginx;  y[0] = beginy;  z[0] = slice;
+                x[1] = endx;    y[1] = endy;    z[1] = slice;
+            }
+            else {
+                x[0] = endx;    y[0] = endy;    z[0] = slice;
+                x[1] = beginx;  y[1] = beginy;  z[1] = slice;
+            }
+
+            // check to see if this is a *new* VOI
+            if ( ((ViewJComponentEditImage)(component)).isNewVoiNeeded(VOI.LINE)) {
+
+                try {
+                    VOIs = image.getVOIs();
+                    index = VOIs.size();
+                    colorID = 0;
+                    if (image.getVOIs().size() > 0) {
+                        colorID = ((VOI)(image.getVOIs().lastElement())).getID() + 1;
+                    }
+
+                    nVOI = VOIs.size();
+                    name = "line" + (index+1);
+                    int test;
+
+
+                    do{
+                        test =0;
+                        for(i=0; i <nVOI; i++) {
+                                if (name.equals(VOIs.VOIAt(i).getName())) {
+                                    index++;
+                                    name = "line" + (index + 1);
+                                    test=1;
+                                }
+                        }
+                    }
+                    while(test==1);
+                    /*
+                    do{
+                            test =0;
+                            for(i=0; i <nVOI; i++) {
+                                    if (colorID ==((int)VOIs.VOIAt(i).getID())) {
+                                        colorID++;
+                                        test=1;
+                                    }
+                            }
+                    }
+                    while(test==1);
+                    */
+                    if ( image.getNDims() > 2 ) {
+                        newVOI = new VOI((short)colorID, name,
+                                        image.getExtents()[2],
+                                        VOI.LINE, presetHue);
+                    }
+                    else {
+                        newVOI = new VOI((short)colorID, name,
+                                            1,
+                                            VOI.LINE, presetHue);
+                    }
+                }
+                catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to form new line VOI.");
+	                ((ViewJComponentEditImage)(component)).setMode(((ViewJComponentEditImage)(component)).DEFAULT);
+                    return;
+                }
+
+                if ( Math.abs(x[1]-x[0]) > 1 ||  Math.abs(y[1]-y[0]) > 1) {
+                    newVOI.importCurve(x, y, z, slice);
+                    image.registerVOI(newVOI);
+                }
+
+                image.notifyImageDisplayListeners();
+                if ( mouseEvent.isShiftDown() != true) {
+                    ((ViewJComponentEditImage)(component)).setMode(((ViewJComponentEditImage)(component)).DEFAULT);
+                }
+                ((ViewJComponentEditImage)(component)).setVOI_IDs(newVOI.getID(), newVOI.getUID());
+
+            } // end if this is a *new* VOI
+
+            else { // this is not a *new* VOI ... add to existing VOI
+
+	            // get selected line
+	            VOIs = image.getVOIs();
+	            nVOI = VOIs.size();
+	            for (i = 0 ; i < nVOI; i++) {
+	                if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage)(component)).getVOI_ID() ) {
+	                    if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
+	                        VOIs.VOIAt(i).importCurve(x,y,z,slice);
+	                    }
+	                    else {
+	                        MipavUtil.displayError("Can't add Line VOI to other VOI structure.");
+	                    }
+	                }
+	            }
+
+                image.notifyImageDisplayListeners();
+                if ( mouseEvent.isShiftDown() != true) {
+                    ((ViewJComponentEditImage)(component)).setMode(ViewJComponentEditImage.DEFAULT);
+                }
+
+	            return;
+
+            } // end if not a *new* VOI
+
+        }
+    }
+}
