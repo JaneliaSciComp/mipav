@@ -108,6 +108,12 @@ public class Preferences {
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
     public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
+    
+    /**
+     * Constant that indicates the initial directory in which to open the file chooser
+     * of the image browser.
+     */
+    public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
     /** Operating system constant for Windows. */
     public static final int OS_WINDOWS = 2;
