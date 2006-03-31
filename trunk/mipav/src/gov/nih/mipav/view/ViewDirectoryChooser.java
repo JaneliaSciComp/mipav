@@ -20,22 +20,41 @@ public class ViewDirectoryChooser {
     private Component           parentFrame;
 
     /**
+     * @deprecated
     *   Creates a dialog for choosing a directory.
     *   @param ui   Main user interface.
     */
     public ViewDirectoryChooser (ViewUserInterface ui){
-        UI          = ui;
+        this();
+    }
+    
+    /**
+    *   Creates a dialog for choosing a directory.
+    */
+    public ViewDirectoryChooser()
+    {
+    	UI          = ViewUserInterface.getReference();
         parentFrame = UI.getMainFrame();
     }
 
     /**
+     * @deprecated
     *   Creates a dialog for choosing a directory with
     *   a parent frame.
     *   @param ui       Main user interface.
     *   @param parent   Parent frame.
     */
     public ViewDirectoryChooser(ViewUserInterface ui, Component parent) {
-        UI          = ui;
+        this(parent);
+    }
+    
+    /**
+    *   Creates a dialog for choosing a directory with
+    *   a parent frame.
+    *   @param parent   Parent frame.
+    */
+    public ViewDirectoryChooser(Component parent) {
+        UI          = ViewUserInterface.getReference();
         parentFrame = parent;
     }
 
@@ -63,13 +82,12 @@ public class ViewDirectoryChooser {
     *   @param initialDirectory Initial directory.
     *   @return                 Directory chosen by user.
     */
-    private String chooseDirectory(String initialDirectory) {
+    public String chooseDirectory(String initialDirectory) {
         JFileChooser        chooser = null;
         String              fileName;
         String              dir;
         File                file;
         File                tmpFile;
-
 
         directory = null;
 
