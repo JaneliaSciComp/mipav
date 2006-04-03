@@ -474,6 +474,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                               }
 	                               if(xmin<xmax){
 		                               for(cc=xmin;cc<xmax;cc++){
+		                            	   System.out.println("xmin: "+xmin+"     xmax: "+xmax);
 		                               	imgBuffer[i+cc]=BONE_MARROW;
 		                               	System.out.println("this pixel "+i+"+"+cc+" gets changed to bone marrow");
 		                               }
@@ -843,7 +844,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
 			    }
 			}
-		
         }
     
 	    
