@@ -991,9 +991,7 @@ public class MipavUtil extends JComponent {
      * @throws MalformedURLException if there is a problem converting the file name
      */
     public static final String convertToFileURL(String filename) throws MalformedURLException {
-        // On JDK 1.2 and later, simplify this to:
-        // "path = file.toURL().toString()".
-        String path = new File(filename).toURL().toString();
+        String path = new File(filename).toURI().toURL().toString();
         return path;
     }
 }

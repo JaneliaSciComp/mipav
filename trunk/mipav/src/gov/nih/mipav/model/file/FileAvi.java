@@ -826,7 +826,7 @@ public class FileAvi
                 wasCompressed = true;
                 String newFileName = fileName.substring(0, fileName.length() - 4) + "_RGB.avi";
 
-                AlgorithmTranscode at = new AlgorithmTranscode(new File(fileDir + fileName).toURL(),
+                AlgorithmTranscode at = new AlgorithmTranscode(new File(fileDir + fileName).toURI().toURL(),
                     fileDir + newFileName, AlgorithmTranscode.TRANSCODE_RGB);
 
                 at.setProgressBarVisible(false);
@@ -3102,7 +3102,7 @@ public class FileAvi
         }
         else {
             Preferences.debug("About to transcode to: " + fileDir + fileName + "\n");
-            AlgorithmTranscode at = new AlgorithmTranscode(file.toURL(), fileDir + fileName, newCompressionType);
+            AlgorithmTranscode at = new AlgorithmTranscode(file.toURI().toURL(), fileDir + fileName, newCompressionType);
 
             at.setActiveImage(false);
             at.setProgressBarVisible(isProgressBarVisible());

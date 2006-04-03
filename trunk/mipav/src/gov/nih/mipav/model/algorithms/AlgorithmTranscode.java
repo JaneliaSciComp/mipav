@@ -86,7 +86,7 @@ public class AlgorithmTranscode extends AlgorithmBase
         outputFile = new File( outputName );
         // System.err.println("output file after creation: " + outputFile.getPath());
         try {
-            oml = new MediaLocator( outputFile.toURL() );
+            oml = new MediaLocator( outputFile.toURI().toURL() );
         } catch ( MalformedURLException ex ) {//
         }
 
