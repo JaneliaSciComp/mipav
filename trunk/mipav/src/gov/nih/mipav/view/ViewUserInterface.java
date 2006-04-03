@@ -2984,7 +2984,7 @@ public class ViewUserInterface
                     }
                 }
                 catch (Exception ex) { //System.err.println(ex.toString());
-                    Preferences.debug("Unable to find plugin: " + name + "\n", Preferences.DEBUG_MINOR);
+                    Preferences.debug("Unable to find plugin: " + name + " -- " + ex.getMessage() + "\n", Preferences.DEBUG_MINOR);
                 }
             }
 
