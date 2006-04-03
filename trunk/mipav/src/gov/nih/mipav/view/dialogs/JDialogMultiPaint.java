@@ -1,9 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.algorithms.*;
 
 
@@ -13,13 +11,11 @@ import java.util.*;
 import java.io.*;
 
 import javax.swing.*;
-import javax.swing.event.*;
-import javax.swing.border.*;
-import javax.vecmath.Point3i;
 
 /** 
 *   
-*   Dialog box for the paint power tools: morphology operations, object delete, etc.
+*   Dialog box for the advanced paint power tools: morphology operations, object delete, etc.
+*   Bring up this dialog from the normal power paint dialog.
 *
 *
 *	@version    May 2005
@@ -29,25 +25,24 @@ import javax.vecmath.Point3i;
 *
 *
 */  
-public class JDialogMultiPaint extends JDialogBase implements 
-AlgorithmInterface {
+public class JDialogMultiPaint extends JDialogBase {
     
     private     ModelImage              image;					// source image
-	private     ModelImage              resultImage = null;		// result image
-    private     int                     destExtents[];
+	              
+    //private     int                     destExtents[];
     private 	ViewUserInterface       userInterface;
-    private     String                  title;
-	private		boolean					useTriplanar=false;
+    //private     String                  title;
+	//private		boolean					useTriplanar=false;
 	private		BitSet					currentMask;	
 	private		int						alphaBlend = 50;
 	
 	private		int			selected = 1;				// id for the selected paint mask
-	private		int			nbx = 4, nby = 6;			// number of paint masks
+	private		int			nbx = 4, nby = 6;			// number of paint masks -x and -y
 	private		String[]	label;						// labels for the painted objects
 	private		boolean[]	preserved;					// check whether the mask can be affected by new paint or not 	
 	private		Color[]		color;						// colors to use for the labels 	
-	private		boolean		displayMask,displayPaint;	// check whether the mask and paint are displayed	
-	private		boolean		editable;					// wether or not you can edit the object names
+	//private		boolean		displayMask,displayPaint;	// check whether the mask and paint are displayed	
+	//private		boolean		editable;					// wether or not you can edit the object names
 	private		Color		nullColor = Color.gray;
 	
     // dialog elements
@@ -79,7 +74,6 @@ AlgorithmInterface {
 	private		JToggleButton	displayPaintButton;
 	private		JToggleButton	displayMasksButton;
 	private 	JPanel			displayPanel;
-	private 	JPanel			displayedPanel;
 	
 	private 	JPanel		bottomPanel;
 
@@ -136,7 +130,8 @@ AlgorithmInterface {
     }
     
     /**
-    *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+    *	Initializes the GUI (panels, buttons, etc) and displays 
+    *   it on the screen.
     */
 	private void init() {
         setForeground(Color.black);
@@ -260,7 +255,7 @@ AlgorithmInterface {
 		GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
 
         multiPanel = new JPanel(new GridBagLayout());
@@ -272,7 +267,7 @@ AlgorithmInterface {
 			gbc.gridy = j;
 			gbc.gridwidth = 1;
 			gbc.weightx = 1;
-			gbc.fill = gbc.HORIZONTAL;
+			gbc.fill = GridBagConstraints.HORIZONTAL;
 			multiPanel.add(multiButton[i+nbx*j+1], gbc);
 		}
 		
@@ -283,15 +278,15 @@ AlgorithmInterface {
 			gbc.gridwidth = 1;
 			gbc.gridx = 0;
 			gbc.weightx = 0;
-			gbc.fill = gbc.NONE;
+			gbc.fill = GridBagConstraints.NONE;
 			listPanel.add(listButton[i+nbx*j+1], gbc);
 			gbc.gridx = 1;
 			gbc.weightx = 1;
-			gbc.fill = gbc.HORIZONTAL;
+			gbc.fill = GridBagConstraints.HORIZONTAL;
 			listPanel.add(labelField[i+nbx*j+1], gbc);
 			gbc.gridx = 2;
 			gbc.weightx = 0;
-			gbc.fill = gbc.NONE;
+			gbc.fill = GridBagConstraints.NONE;
 			listPanel.add(preserveBox[i+nbx*j+1], gbc);		
 		}
 		listPanel.setVisible(false);
@@ -304,10 +299,10 @@ AlgorithmInterface {
 		gbc.gridwidth = 1;
 		gbc.gridx = 0;
 		gbc.weightx = 1;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		numberPanel.add(numberLabel, gbc);
 		gbc.weightx = 0;
-		gbc.fill = gbc.NONE;
+		gbc.fill = GridBagConstraints.NONE;
 		gbc.gridx = 1;
 		numberPanel.add(numberXField, gbc);
 		gbc.gridx = 2;
@@ -318,27 +313,27 @@ AlgorithmInterface {
 		filePanel = new JPanel(new GridBagLayout());
 		gbc.gridx = 0;
 		gbc.weightx = 1;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		filePanel.add(loadLabelsButton, gbc);
 		gbc.gridx = 1;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		filePanel.add(saveLabelsButton, gbc);
 		gbc.gridx = 2;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		//filePanel.add(editBox, gbc);
 		
 		maskPanel = new JPanel(new GridBagLayout());
 		gbc.gridx = 0;
 		gbc.weightx = 1;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		maskPanel.add(loadMaskButton, gbc);
 		gbc.gridx = 1;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		maskPanel.add(saveMaskButton, gbc);
 		
 		displayPanel = new JPanel(new GridBagLayout());
 		gbc.gridx = 0;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		displayPanel.add(displayModeButton, gbc);
 		gbc.gridx = 1;
 		displayPanel.add(displayPaintButton, gbc);
@@ -354,16 +349,14 @@ AlgorithmInterface {
 		optionPanel.add(maskPanel, gbc);
 		gbc.gridy = 3;
 		optionPanel.add(displayPanel, gbc);
-		
-		displayedPanel = multiPanel;
-		
+				
 		mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
         
         gbc.gridx = 0;
         gbc.gridwidth = 1;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
 		mainPanel.add(multiPanel, gbc);
@@ -387,6 +380,11 @@ AlgorithmInterface {
     	System.gc();		
 	} // end init()
 	
+	/**
+	 * Instantiates and shows the "Load label file" dialog, which is
+	 * used to load a text file containing the names of the 
+	 * colored labels.
+	 */
 	private void buildLoadDialog() {
         loadDialog = new javax.swing.JFileChooser();
         loadDialog.setDialogTitle("Load label file");
@@ -400,6 +398,12 @@ AlgorithmInterface {
         loadDialog.setFileSelectionMode(JFileChooser.FILES_ONLY);
         loadDialog.showOpenDialog(this);
 	}
+	
+	/**
+	 * Instantiates and shows the "Save label file" dialog, which is
+	 * used to save a text file containing the names of the 
+	 * colored labels.
+	 */
 	private void buildSaveDialog() {
         saveDialog = new javax.swing.JFileChooser();
         saveDialog.setDialogTitle("Save label file");
@@ -414,24 +418,18 @@ AlgorithmInterface {
         saveDialog.showSaveDialog(this);
 	}
 	
-    /**
-    *	Accessor that sets the parameters
-    */
-    public void setParameters() {
-    }
 	
     //************************************************************************
     //************************** Event Processing ****************************
     //************************************************************************
 
 	/**
-	*  Closes dialog box when the OK button is pressed and calls the algorithm.
-	*  @param event       Event that triggers function.
+	*  Processes the events from this dialog's buttons.
+	*  @param event       Event that triggers the action.
 	*/
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 		
-			
 		if (command.equals("Close")) {
  			dispose();
 		}  else if (command.equals("Help")) {
@@ -515,7 +513,13 @@ AlgorithmInterface {
 		} 
     }
 
-	public void loadFileActionPerformed(ActionEvent evt) {
+	/**
+	 * Handles the action event generated by the "Load label file"
+	 * dialog. Calls readLabelsFromFile(String) to read the label
+	 * file selected by the user.
+	 * @param evt the ActionEvent generated by this dialog
+	 */
+	private void loadFileActionPerformed(ActionEvent evt) {
 		if ( JFileChooser.APPROVE_SELECTION.equals(evt.getActionCommand()) ) {
 			String filename = loadDialog.getSelectedFile().getAbsolutePath();
 			userInterface.setGlobalDataText("data file: "+filename+"\n");
@@ -525,7 +529,13 @@ AlgorithmInterface {
 		//loadDialog.setVisible(false);
 	}
 
- 	public void saveFileActionPerformed(ActionEvent evt) {
+	/**
+	 * Handles the action event generated by the "Save label file"
+	 * dialog. Calls readLabelsFromFile(String) to save the labels
+	 * to the file selected by the user.
+	 * @param evt the ActionEvent generated by this dialog
+	 */
+ 	private void saveFileActionPerformed(ActionEvent evt) {
 		if ( JFileChooser.APPROVE_SELECTION.equals(evt.getActionCommand()) ) {
 			String filename = saveDialog.getSelectedFile().getAbsolutePath();
 			writeLabelsToFile(filename);
@@ -535,9 +545,9 @@ AlgorithmInterface {
 	}
 	
     /**
-     *	read/write to a text file
+     *	Writes the 'labels' file to disk.
      */
-    public void writeLabelsToFile(String filename) {
+    private void writeLabelsToFile(String filename) {
         try {
             // open the file for writing
             File f = new File(filename);
@@ -556,17 +566,14 @@ AlgorithmInterface {
             // close the file
             fw.close();
         }
-        catch (FileNotFoundException e) {
-            Preferences.debug(e.getMessage());
-        }
-        catch (IOException e) {
-            Preferences.debug(e.getMessage());
+        catch (IOException ioe) {
+            Preferences.debug(ioe.getMessage());
         }
 
     }
 
     /**
-     *	read/write to a text file
+     *	Reads the 'labels' file from disk.
      */
 	public void readLabelsFromFile(String filename) {
 		try {
@@ -609,38 +616,36 @@ AlgorithmInterface {
 				refreshLabelDisplay();
             }
             br.close();
-            fr.close();
-			// fire a size change information
-			
+            fr.close();			
         }
-        catch (FileNotFoundException e) {
-            Preferences.debug(e.getMessage());
+        catch (IOException ioe) {
+            Preferences.debug(ioe.getMessage());
         }
-        catch (IOException e) {
-            Preferences.debug(e.getMessage());
-        }
-        return ;
     }
 
     //************************************************************************
     //************************** Algorithm Events ****************************
     //************************************************************************
     
-	/** switch Mask and Paint */
+	/**
+	 * Converts paint to a mask, then mask to paint. Reason: unknown.
+	 * @param from
+	 * @param to
+	 */
 	private void switchPaintAndMask(int from, int to) {
 		multiButton[from].setSelected(false);
 		listButton[from].setSelected(false);
 			
 		if (image==null) {
 			System.gc();
-			MipavUtil.displayError("image not found");
+			MipavUtil.displayError("Error: image not found");
 			return;
 		}
 		
 		// retrieve the mask
 		BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
 		if (obj==null) {
-			MipavUtil.displayError("paint mask not found");
+			MipavUtil.displayError("Error: paint mask not found");
 			return;
 		}
 		
@@ -681,18 +686,21 @@ AlgorithmInterface {
 		refreshImagePaint(image, obj);	
 	}
 	
-	/** init Paint Mask */
+	/** Initializes a new blank paint mask to the color indexed by the
+	 *  parameter 'num'
+	 *  @param num the index into the color array
+	 */
 	private void initBlankPaint(int num) {
 		if (image==null) {
 			System.gc();
-			MipavUtil.displayError("image not found");
+			MipavUtil.displayError("Error: image not found");
 			return;
 		}
 		
 		// retrieve the mask
 		BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
 		if (obj==null) {
-			MipavUtil.displayError("paint mask not found");
+			MipavUtil.displayError("Error: paint mask not found");
 			return;
 		}
 		
@@ -726,7 +734,11 @@ AlgorithmInterface {
 		refreshImagePaint(image, obj);	
 	}
 	
-	/** init Paint Mask */
+	/**
+	 * Converts the selected mask to paint.
+	 * @param num the index into the color array, which indicates the
+	 * color of the paint
+	 */
 	private void selectedMaskToPaint(int num) {
 		if (image==null) {
 			System.gc();
@@ -773,21 +785,26 @@ AlgorithmInterface {
 		refreshImagePaint(image, obj);	
 	}
 	
-	/** set Paint as Mask */
+	/**
+	 * Converts the paint to a mask. Creates a new mask image if
+	 * one does not already exist.
+	 * @param num the index into the color array, which indicates the
+	 * color of the paint
+	 */
 	private void commitPaintToMask(int num) {
 		multiButton[num].setSelected(false);
 		listButton[num].setSelected(false);
 			
 		if (image==null) {
 			System.gc();
-			MipavUtil.displayError("image not found");
+			MipavUtil.displayError("Error: image not found");
 			return;
 		}
 		
 		// retrieve the mask
 		BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
 		if (obj==null) {
-			MipavUtil.displayError("paint mask not found");
+			MipavUtil.displayError("Error: paint mask not found");
 			return;
 		}
 		
@@ -798,7 +815,7 @@ AlgorithmInterface {
 		}
 		
 		// record selected image; set to image B
-		ModelImage active = image.getParentFrame().getActiveImage();
+		//ModelImage active = image.getParentFrame().getActiveImage();
 		image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 		
 		// create new color
@@ -815,7 +832,9 @@ AlgorithmInterface {
 		refreshImagePaint(image, obj);	
 	}
 	
-	/** reset Paint as Mask */
+	/** Sets buttons to deselected, then calls refreshImagePaint 
+	 * to reset paint as mask 
+	 */
 	private void deselectMask() {
 		multiButton[selected].setSelected(false);
 		listButton[selected].setSelected(false);	
@@ -823,7 +842,8 @@ AlgorithmInterface {
 		refreshImagePaint(image, new BitSet());
 	}
 	
-	/** refresh the displayed mask */
+	/** Refreshes the displayed paint mask 
+	 */
 	private void refreshImagePaint(ModelImage img, BitSet obj) {
 		// replace it by previous
 		img.getParentFrame().getComponentImage().setPaintMask(obj);
@@ -838,6 +858,12 @@ AlgorithmInterface {
 		}
 	}
 	
+	/**
+	 * Used to reset the button labels to their default setting.
+	 * Currently not used.
+	 * @param Nbx number of labels in the x-direction
+	 * @param Nby number of labels in the y-direction
+	 */
 	private void resetLabelList(int Nbx, int Nby) {
 		String[] newlabel = new String[Nbx*Nby+1];
 		JTextField[] newlabelField = new JTextField[Nbx*Nby+1];
@@ -906,8 +932,8 @@ AlgorithmInterface {
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.gridwidth = 1;
 		gbc.gridheight = 1;
-		gbc.anchor = gbc.WEST;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.insets = new Insets(0, 0, 0, 0);
 		for (int i=0;i<nbx;i++) for (int j=0;j<nby;j++) {
 			gbc.gridx = i;
@@ -924,22 +950,22 @@ AlgorithmInterface {
 			gbc.gridwidth = 1;
 			gbc.gridx = 0;
 			gbc.weightx = 0;
-			gbc.fill = gbc.NONE;
+			gbc.fill = GridBagConstraints.NONE;
 			listPanel.add(listButton[i+nbx*j+1], gbc);
 			gbc.gridx = 1;
 			gbc.weightx = 1;
-			gbc.fill = gbc.HORIZONTAL;
+			gbc.fill = GridBagConstraints.HORIZONTAL;
 			listPanel.add(labelField[i+nbx*j+1], gbc);
 			gbc.gridx = 2;
 			gbc.weightx = 0;
-			gbc.fill = gbc.NONE;
+			gbc.fill = GridBagConstraints.NONE;
 			listPanel.add(preserveBox[i+nbx*j+1], gbc);		
 		}
 	
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
 		gbc.gridy = 0;
-		gbc.fill = gbc.BOTH;
+		gbc.fill = GridBagConstraints.BOTH;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
 		mainPanel.add(multiPanel, gbc);
@@ -957,6 +983,11 @@ AlgorithmInterface {
 		repaint();
 	}
 	
+	/**
+	 * Purpose: unknown
+	 * @param Nbx number of labels in the x-direction
+	 * @param Nby number of labels in the y-direction
+	 */
 	private void newLabelList(int Nbx, int Nby) {
 		String[] newlabel = new String[Nbx*Nby+1];
 		boolean[] newpreserved = new boolean[Nbx*Nby+1];
@@ -978,6 +1009,9 @@ AlgorithmInterface {
 		color = newcolor;
 	}
 	
+	/**
+	 * Reinstantiates the labels for redisplay. Purpose: unknown
+	 */
 	private void refreshLabelDisplay() {
 		
 		multiButton = new BorderedButton[nbx*nby+1];
@@ -1024,8 +1058,8 @@ AlgorithmInterface {
 		gbc.gridwidth = 1;
 		gbc.gridheight = 1;
 		gbc.weightx = 1;
-		gbc.anchor = gbc.CENTER;
-		gbc.fill = gbc.HORIZONTAL;
+		gbc.anchor = GridBagConstraints.CENTER;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.insets = new Insets(0, 0, 0, 0);
 		for (int i=0;i<nbx;i++) for (int j=0;j<nby;j++) {
 			gbc.gridx = i;
@@ -1042,22 +1076,22 @@ AlgorithmInterface {
 			gbc.gridwidth = 1;
 			gbc.gridx = 0;
 			gbc.weightx = 0;
-			gbc.fill = gbc.NONE;
+			gbc.fill = GridBagConstraints.NONE;
 			listPanel.add(listButton[i+nbx*j+1], gbc);
 			gbc.gridx = 1;
 			gbc.weightx = 1;
-			gbc.fill = gbc.HORIZONTAL;
+			gbc.fill = GridBagConstraints.HORIZONTAL;
 			listPanel.add(labelField[i+nbx*j+1], gbc);
 			gbc.gridx = 2;
 			gbc.weightx = 0;
-			gbc.fill = gbc.NONE;
+			gbc.fill = GridBagConstraints.NONE;
 			listPanel.add(preserveBox[i+nbx*j+1], gbc);		
 		}
 	
 		gbc.gridx = 0;
 		gbc.gridwidth = 1;
 		gbc.gridy = 0;
-		gbc.fill = gbc.BOTH;
+		gbc.fill = GridBagConstraints.BOTH;
 		gbc.weightx = 1;
 		gbc.weighty = 1;
 		mainPanel.add(multiPanel, gbc);
@@ -1081,37 +1115,5 @@ AlgorithmInterface {
 		pack();
 		repaint();
 	}
-	
-    /** 
-    *	This method is required if the AlgorithmPerformed interface is implemented. 
-    *   It is called by the algorithm when it has completed or failed to to complete, 
-    *   so that the dialog can be display the result image and/or clean up.
-    *   @param algorithm   Algorithm that caused the event.
-    */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
-    }  // end AlgorithmPerformed()
-    
-  
-    /**
-    *	Use the GUI results to set up the variables needed to run the algorithm.
-    *	@return		<code>true</code> if parameters set successfully, <code>false</code> otherwise.
-    */
-    /**
-    *	Use the GUI results to set up the variables needed to run the algorithm.
-    *	@return		<code>true</code> if parameters set successfully, <code>false</code> otherwise.
-    */
-    private boolean setVariables() {
-    	return true;  	
-    }   // end setVariables()
-    
-    /**
-    *	Once all the necessary variables are set, call the Gaussian Blur
-    *	algorithm based on what type of image this is and whether or not there
-    *	is a separate destination image.
-    */
-    private void callAlgorithm() {
-    } // end callAlgorithm()
-    
-	
 }
 
