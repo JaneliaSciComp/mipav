@@ -70,7 +70,7 @@ public class MovieMaker
     private MovieMaker( File outputFile, ImageDataSource ids )
         throws Exception {
         this.processor = createProcessor( outputFile, ids );
-        this.outML = new MediaLocator( outputFile.toURL() );
+        this.outML = new MediaLocator( outputFile.toURI().toURL() );
     }
 
     /**

@@ -1720,7 +1720,7 @@ public class JPanelMousePlotter extends JPanelRendererBase
                 AlgorithmTranscode at = null;
 
                 try {
-                    at = new AlgorithmTranscode(file2delete.toURL(),
+                    at = new AlgorithmTranscode(file2delete.toURI().toURL(),
                             fileDir
                             + fileName.substring(0, fileName.length() - 4)
                             + fileExt,
