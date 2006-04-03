@@ -139,6 +139,8 @@ public abstract class Sculptor
     protected int m_iPreviousY;
     protected int m_iFirstX;
     protected int m_iFirstY;
+    protected int m_iLastX;
+    protected int m_iLastY;
     /*
      * The min and max x,y mouse values:
      */
@@ -166,6 +168,10 @@ public abstract class Sculptor
     protected double dBMinGreen = Float.MAX_VALUE;
     protected double dBMinBlue  = Float.MAX_VALUE;
 
+    public static int LINES = 0;
+    public static int RECTANGLE = 1;
+    /** Shape of the drawing rectangle. */
+    private int drawShape = LINES;
 
     /*
      * Initialize the Mouse events, store the progress bar, and get the
@@ -273,34 +279,116 @@ public abstract class Sculptor
             int iX = kEvent.getX();
             int iY = kEvent.getY();
 
-            /* If the mouse position isn't the same as the last mouse
-             * position, then add it to the point list, draw a line from the
-             * last point to this point, and update min,max. */
+            if ( drawShape == RECTANGLE ) {
+              m_iLastX = iX;
+              m_iLastY = iY;
 
-                if ( (iX != m_iPreviousX) || (iY != m_iPreviousY) )
-            {
+              if (m_iFirstX < iX) {
+                m_iXMin = m_iFirstX;
+              }
+              else {
+                m_iXMin = iX;
+              }
+              if (m_iFirstX > iX) {
+                m_iXMax = m_iFirstX;
+              }
+              else {
+                m_iXMax = iX;
+              }
+              if (m_iFirstY < iY) {
+                m_iYMin = m_iFirstY;
+              }
+              else {
+                m_iYMin = iY;
+              }
+              if (m_iFirstY > iY) {
+                m_iYMax = m_iFirstY;
+              }
+              else {
+                m_iYMax = iY;
+              }
+               drawRectangleArea();
+            }  else if ( drawShape == LINES ) {
+              /* If the mouse position isn't the same as the last mouse
+               * position, then add it to the point list, draw a line from the
+               * last point to this point, and update min,max. */
+
+              if ( (iX != m_iPreviousX) || (iY != m_iPreviousY)) {
                 m_aiXPoints[m_iNumberPoints] = iX;
                 m_aiYPoints[m_iNumberPoints] = iY;
                 m_iNumberPoints++;
-                line( iX, iY, m_iPreviousX, m_iPreviousY );
+                line(iX, iY, m_iPreviousX, m_iPreviousY);
 
-                if ( iX < m_iXMin ) {
-                    m_iXMin = iX;
+                if (iX < m_iXMin) {
+                  m_iXMin = iX;
                 }
-                if ( iX > m_iXMax ) {
-                    m_iXMax = iX;
+                if (iX > m_iXMax) {
+                  m_iXMax = iX;
                 }
-                if ( iY < m_iYMin ) {
-                    m_iYMin = iY;
+                if (iY < m_iYMin) {
+                  m_iYMin = iY;
                 }
-                if ( iY > m_iYMax ) {
-                    m_iYMax = iY;
+                if (iY > m_iYMax) {
+                  m_iYMax = iY;
                 }
+              }
             }
+
             // Fill the sculpt outline:
             processMouseReleased( iX, iY );
 
         }
+    }
+
+    /**
+     * Draw rectangle shape object.
+     */
+    protected void drawRectangleArea() {
+      // /*
+      if (! (m_iLastX < m_iFirstX )) {
+        line(m_iXMin, m_iYMax, m_iXMax, m_iYMax);
+        m_aiXPoints[m_iNumberPoints] = m_iXMin;
+        m_aiYPoints[m_iNumberPoints] = m_iYMax;
+        m_iNumberPoints++;
+        m_aiXPoints[m_iNumberPoints] = m_iXMax;
+        m_aiYPoints[m_iNumberPoints] = m_iYMax;
+        m_iNumberPoints++;
+      }
+
+      line(m_iXMax, m_iYMax, m_iXMax, m_iYMin);
+      m_aiXPoints[m_iNumberPoints] = m_iXMax;
+      m_aiYPoints[m_iNumberPoints] = m_iYMax;
+      m_iNumberPoints++;
+      m_aiXPoints[m_iNumberPoints] = m_iXMax;
+      m_aiYPoints[m_iNumberPoints] = m_iYMin;
+      m_iNumberPoints++;
+
+      line(m_iXMax, m_iYMin, m_iXMin, m_iYMin);
+      m_aiXPoints[m_iNumberPoints] = m_iXMax;
+      m_aiYPoints[m_iNumberPoints] = m_iYMin;
+      m_iNumberPoints++;
+      m_aiXPoints[m_iNumberPoints] = m_iXMin;
+      m_aiYPoints[m_iNumberPoints] = m_iYMin;
+      m_iNumberPoints++;
+
+      line(m_iXMin, m_iYMin, m_iXMin, m_iYMax);
+      m_aiXPoints[m_iNumberPoints] = m_iXMin;
+      m_aiYPoints[m_iNumberPoints] = m_iYMin;
+      m_iNumberPoints++;
+      m_aiXPoints[m_iNumberPoints] = m_iXMin;
+      m_aiYPoints[m_iNumberPoints] = m_iYMax;
+      m_iNumberPoints++;
+
+      if ( (m_iLastX < m_iFirstX )) {
+        line(m_iXMin, m_iYMax, m_iXMax, m_iYMax);
+        m_aiXPoints[m_iNumberPoints] = m_iXMin;
+        m_aiYPoints[m_iNumberPoints] = m_iYMax;
+        m_iNumberPoints++;
+        m_aiXPoints[m_iNumberPoints] = m_iXMax;
+        m_aiYPoints[m_iNumberPoints] = m_iYMax;
+        m_iNumberPoints++;
+      }
+
     }
 
     /*
@@ -322,13 +410,14 @@ public abstract class Sculptor
         /* Close the sculpt outline by connecting the last point input: iX,iY
          * to the first recorded point: m_iFirstX,m_iFirstY.
          */
-        line( iX, iY, m_iFirstX, m_iFirstY );
+        if ( drawShape == LINES ) {
+          line( iX, iY, m_iFirstX, m_iFirstY );
 
-        /* Store the first point redundantly in the point array: */
-        m_aiXPoints[ m_iNumberPoints ] = m_iFirstX;
-        m_aiYPoints[ m_iNumberPoints ] = m_iFirstY;
-        m_iNumberPoints++;
-
+          /* Store the first point redundantly in the point array: */
+          m_aiXPoints[ m_iNumberPoints ] = m_iFirstX;
+          m_aiYPoints[ m_iNumberPoints ] = m_iFirstY;
+          m_iNumberPoints++;
+        }
 
         int aaiCrossingPoints[][] = new int[ m_iXMax - m_iXMin + 1 ][];
         int aiNumCrossings[] = new int[ m_iXMax - m_iXMin + 1 ];
@@ -347,11 +436,11 @@ public abstract class Sculptor
         Graphics kGraphics = m_kCanvas3D.getGraphics();
 
         // m_kCanvas3D.addNotify();
-        for ( int m = 0; m < 20; m++ ) {
-        kGraphics.drawImage(m_kSculptImage,
-                            0, 0, m_iSculptImageWidth, m_iSculptImageHeight,
-                            0, 0, iCanvasWidth, iCanvasHeight,
-                            new Color(0, 0, 0, 0), m_kCanvas3D);
+        for ( int m = 0; m < 1 /* 20 */; m++ ) {
+          kGraphics.drawImage(m_kSculptImage,
+                              0, 0, m_iSculptImageWidth, m_iSculptImageHeight,
+                              0, 0, iCanvasWidth, iCanvasHeight,
+                              new Color(0, 0, 0, 0), m_kCanvas3D);
         }
 
         aaiCrossingPoints = null;
@@ -416,43 +505,83 @@ public abstract class Sculptor
             if ( ( iX >= 0 ) && ( iX < m_iSculptImageWidth  ) &&
                  ( iY >= 0 ) && ( iY < m_iSculptImageHeight )    )
             {
-                /* If the mouse position isn't the same as the last mouse
-                 * position, then add it to the point list, draw a line from
-                 * the last point to this point, and update min,max. */
-                if ( ( iX != m_iPreviousX ) || ( iY != m_iPreviousY ) )
-                {
+                if ( drawShape == LINES ) {
+                  /* If the mouse position isn't the same as the last mouse
+                   * position, then add it to the point list, draw a line from
+                   * the last point to this point, and update min,max. */
+                  if ( (iX != m_iPreviousX) || (iY != m_iPreviousY)) {
                     m_aiXPoints[m_iNumberPoints] = iX;
                     m_aiYPoints[m_iNumberPoints] = iY;
                     m_iNumberPoints++;
-                    line( iX, iY, m_iPreviousX, m_iPreviousY );
-                }
+                    line(iX, iY, m_iPreviousX, m_iPreviousY);
+                  }
 
-                m_iPreviousX = iX;
-                m_iPreviousY = iY;
+                  m_iPreviousX = iX;
+                  m_iPreviousY = iY;
 
-                if ( iX < m_iXMin ) {
+                  if (iX < m_iXMin) {
+
                     m_iXMin = iX;
-                }
-                if ( iX > m_iXMax ) {
+                  }
+                  if (iX > m_iXMax) {
+
                     m_iXMax = iX;
-                }
-                if ( iY < m_iYMin ) {
+                  }
+                  if (iY < m_iYMin) {
+
                     m_iYMin = iY;
-                }
-                if ( iY > m_iYMax ) {
+                  }
+                  if (iY > m_iYMax) {
+
                     m_iYMax = iY;
+                  }
+
                 }
 
                 /* Draw update image: */
                 int iCanvasHeight = m_kCanvas3D.getHeight();
                 int iCanvasWidth = m_kCanvas3D.getWidth();
                 Graphics kGraphics = m_kCanvas3D.getGraphics();
+
                 kGraphics.drawImage( m_kSculptImage,
                                      0, 0,
                                      m_iSculptImageWidth, m_iSculptImageHeight,
                                      0, 0, iCanvasWidth, iCanvasHeight,
                                      new Color(0,0,0,0), m_kCanvas3D );
-            }
+
+                if ( drawShape == RECTANGLE ) {
+                  if (m_iFirstX < iX) {
+                    m_iXMin = m_iFirstX;
+                  }
+                  else {
+                    m_iXMin = iX;
+                  }
+                  if (m_iFirstX > iX) {
+                    m_iXMax = m_iFirstX;
+                  }
+                  else {
+                    m_iXMax = iX;
+                  }
+                  if (m_iFirstY < iY) {
+                    m_iYMin = m_iFirstY;
+                  }
+                  else {
+                    m_iYMin = iY;
+                  }
+                  if (m_iFirstY > iY) {
+                    m_iYMax = m_iFirstY;
+                  }
+                  else {
+                    m_iYMax = iY;
+                  }
+
+                  kGraphics.setColor(Color.cyan);
+                  kGraphics.drawLine(m_iXMin, m_iYMax, m_iXMax, m_iYMax);
+                  kGraphics.drawLine(m_iXMax, m_iYMax, m_iXMax, m_iYMin);
+                  kGraphics.drawLine(m_iXMax, m_iYMin, m_iXMin, m_iYMin);
+                  kGraphics.drawLine(m_iXMin, m_iYMin, m_iXMin, m_iYMax);
+                }
+          }
         }
     }
 
@@ -1382,6 +1511,13 @@ public abstract class Sculptor
         m_aiImageB_backup = null;
     }
 
+    /**
+     * Set the shape of the drawing sculptor.
+     * @param shape  0 for LINES, 1 for RECTANGLE
+     */
+    public void setDrawingShape(int shape) {
+       drawShape = shape;
+    }
 
     /*
      * applySculpt: abstract function, implementation depends on whether the

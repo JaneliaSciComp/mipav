@@ -45,6 +45,12 @@ public class JPanelSculptor extends JPanelRendererBase {
      * outline */
     private JToggleButton m_kDrawOutlineButton;
 
+    /** Line shape button. */
+    private JToggleButton lineButton;
+
+    /** Rectangle shape button. */
+    private JToggleButton rectButton;
+
     /** Button for clearing the sculpt region */
     private JButton m_kClearDrawOutlineButton;
 
@@ -128,17 +134,18 @@ public class JPanelSculptor extends JPanelRendererBase {
         ButtonGroup cursorGroup = new ButtonGroup();
         Border pressedBorder = BorderFactory.createLoweredBevelBorder();
         // m_kDrawOutlineButton = new JToggleButton( MipavUtil.getIcon( "drawsculptor.gif" ), false );
-        m_kDrawOutlineButton = toolbarBuilder.buildToggleButton( "DrawSculptRegion" , "Draw sculpt outline region", "drawsculptor", cursorGroup);
+        m_kDrawOutlineButton = toolbarBuilder.buildToggleButton("DrawSculptRegion",
+            "Draw sculpt outline region", "drawsculptor", cursorGroup);
         m_kDrawOutlineButton = new JToggleButton(MipavUtil.getIcon("sculptdraw.gif"), false);
-         m_kDrawOutlineButton.addActionListener(this);
-         m_kDrawOutlineButton.setMargin(new Insets(0, 0, 0, 0));
-         m_kDrawOutlineButton.setToolTipText("Draw sculpt outline region");
-         m_kDrawOutlineButton.setActionCommand("DrawSculptRegion");
-         m_kDrawOutlineButton.setBorderPainted(false);
-         m_kDrawOutlineButton.setRolloverEnabled(true);
-         m_kDrawOutlineButton.setRolloverIcon(MipavUtil.getIcon("sculptdrawroll.gif"));
+        m_kDrawOutlineButton.addActionListener(this);
+        m_kDrawOutlineButton.setMargin(new Insets(0, 0, 0, 0));
+        m_kDrawOutlineButton.setToolTipText("Draw sculpt outline region");
+        m_kDrawOutlineButton.setActionCommand("DrawSculptRegion");
+        m_kDrawOutlineButton.setBorderPainted(false);
+        m_kDrawOutlineButton.setRolloverEnabled(true);
+        m_kDrawOutlineButton.setRolloverIcon(MipavUtil.getIcon("sculptdrawroll.gif"));
         m_kDrawOutlineButton.setBorder(pressedBorder);
-         m_kDrawOutlineButton.setFocusPainted(false);
+        m_kDrawOutlineButton.setFocusPainted(false);
         cursorGroup.add(m_kDrawOutlineButton);
 
         m_kDrawOutlineButton.setEnabled( true );
@@ -160,10 +167,44 @@ public class JPanelSculptor extends JPanelRendererBase {
         m_kUndoSculptButton.setEnabled( false );
         viewToolBar.add( m_kUndoSculptButton );
 
-
         m_kSaveSculptButton = toolbarBuilder.buildButton( "SaveSculptImage" , "Save the sculpt region to image", "save");
         m_kSaveSculptButton.setEnabled( false );
         viewToolBar.add( m_kSaveSculptButton );
+
+        viewToolBar.add(toolbarBuilder.makeSeparator());
+
+        JLabel shapeLabel = new JLabel("Shape: ");
+        shapeLabel.setFont( serif12B );
+        shapeLabel.setForeground(Color.red);
+        viewToolBar.add( shapeLabel );
+
+        ButtonGroup shapeGroup = new ButtonGroup();
+        lineButton = toolbarBuilder.buildToggleButton("lineShape",
+                                                       "Outline shape",
+                                                       "lineshape", shapeGroup);
+        lineButton.addActionListener(this);
+        lineButton.setMargin(new Insets(0, 0, 0, 0));
+        lineButton.setBorderPainted(false);
+        lineButton.setRolloverEnabled(true);
+        lineButton.setBorder(pressedBorder);
+        lineButton.setFocusPainted(false);
+        lineButton.setSelected( true );
+        shapeGroup.add(lineButton);
+        viewToolBar.add( lineButton );
+
+        rectButton = toolbarBuilder.buildToggleButton("rectShape",
+                                                       "Rectangle shape",
+                                                       "rectshape", shapeGroup);
+        rectButton.addActionListener(this);
+        rectButton.setMargin(new Insets(0, 0, 0, 0));
+        rectButton.setBorderPainted(false);
+        rectButton.setRolloverEnabled(true);
+        rectButton.setBorder(pressedBorder);
+        rectButton.setFocusPainted(false);
+        rectButton.setSelected(false);
+        shapeGroup.add( rectButton );
+        viewToolBar.add( rectButton );
+
 
         JPanel panelToolbar = new JPanel();
         panelToolbar.setLayout( new GridBagLayout() );
@@ -201,8 +242,19 @@ public class JPanelSculptor extends JPanelRendererBase {
      */
     public void actionPerformed( ActionEvent e ) {
         String command = e.getActionCommand();
-
-        if ( command.equals( "DrawSculptRegion" ) ) {
+        if ( command.equals("lineShape") ) {
+          lineButton.setSelected( true );
+          lineButton.setBorderPainted( true );
+          rectButton.setSelected( false );
+          rectButton.setBorderPainted( false );
+          setSculptShape( Sculptor.LINES );
+        } else if ( command.equals("rectShape") ) {
+          lineButton.setSelected( false );
+          lineButton.setBorderPainted( false );
+          rectButton.setSelected( true );
+          rectButton.setBorderPainted( true );
+          setSculptShape( Sculptor.RECTANGLE );
+        } else if ( command.equals( "DrawSculptRegion" ) ) {
             drawSculptRegion();
         } else if ( command.equals( "UndoDrawSculptRegion" ) ) {
             clearSculptRegion();
@@ -259,6 +311,20 @@ public class JPanelSculptor extends JPanelRendererBase {
     }
 
     /**
+     * Set the sculpt shape, either lines or rectangle.
+     * @param shape  shape number, 0 for lines, 1 for rectangle.
+     */
+    public void setSculptShape( int shape ) {
+        if ( m_kTextureSculptor != null ) {
+            m_kTextureSculptor.setDrawingShape( shape );
+        }
+        if ( m_kVolumeSculptor != null ) {
+            m_kVolumeSculptor.setDrawingShape( shape );
+        }
+    }
+
+
+    /**
      * Get the main control panel.
      * @return mainPanel  main control panel
      */
@@ -294,6 +360,7 @@ public class JPanelSculptor extends JPanelRendererBase {
         /* the m_kDrawOutlineButton is a toggle button, once clear is pressed,
          * un-toggle the draw button. */
         m_kDrawOutlineButton.setSelected( false );
+        m_kDrawOutlineButton.setBorderPainted(false);
 
         /* disable clear and apply sculpt buttons */
         m_kClearDrawOutlineButton.setEnabled( false );
