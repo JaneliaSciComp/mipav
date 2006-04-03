@@ -48,6 +48,7 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     public void dispose()
     {
+        System.err.println( "JFrameRegistrationMosaic: dispose" );
         closeAllImages(true);
 
         if ( m_akBackupTG != null )
@@ -160,6 +161,12 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kCloseAllButton.setEnabled( false );
         kToolBar.add( m_kCloseAllButton );
 
+        m_kAdvancedOptionsButton = new JButton( "Advanced Options" );
+        m_kAdvancedOptionsButton.setActionCommand( "AdvancedOptions" );
+        m_kAdvancedOptionsButton.addActionListener( this );
+        m_kAdvancedOptionsButton.setEnabled( false );
+        kToolBar.add( m_kAdvancedOptionsButton );
+
         /* Add the toolbar to the display: */
         kToolBar.validate();
         kToolBar.setVisible( true );
@@ -205,6 +212,7 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kToggleSelectedButton.setEnabled( true );
             m_kRegisterButton.setEnabled( true );
             m_kUndoButton.setEnabled( false );
+            m_kAdvancedOptionsButton.setEnabled( true );
 
             m_iTile = m_iSelected;
         }
@@ -223,6 +231,7 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kRegisterButton.setEnabled( false );
             m_kUndoButton.setEnabled( true );
             m_kSaveButton.setEnabled( true );
+            m_kAdvancedOptionsButton.setEnabled( false );
         }
         else if ( command.equals( "UndoMosaic" ) )
         {
@@ -236,12 +245,14 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kUndoButton.setEnabled( false );
             m_kSaveButton.setEnabled( false );
             m_kCloseAllButton.setEnabled( true );
+            m_kAdvancedOptionsButton.setEnabled( true );
         }
         else if ( command.equals( "SaveMosaic" ) )
         {
             /* Save the new mosaic image */
             saveMosaic();
             m_kUndoButton.setEnabled( false );
+            m_kAdvancedOptionsButton.setEnabled( false );
         }
         else if ( command.equals( "CloseAll" ) )
         {
@@ -254,6 +265,31 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kUndoButton.setEnabled( false );
             m_kSaveButton.setEnabled( false );
             m_kCloseAllButton.setEnabled( false );
+            m_kAdvancedOptionsButton.setEnabled( false );
+        }
+        else if ( command.equals( "AdvancedOptions" ) )
+        {
+            new JDialogRegistrationOAR2D( this,
+                                          m_akImages[ m_iReference ],
+                                          m_akImages[ m_iTile ],
+                                          m_iCost,
+                                          m_iDOF,
+                                          m_iInterp,
+                                          m_fRotateBegin,
+                                          m_fRotateEnd,
+                                          m_fCoarseRate,
+                                          m_fFineRate,
+                                          m_bDoSubsample,
+                                          m_iBracketBound,
+                                          m_iMaxIterations,
+                                          m_iNumMinima,
+                                          m_iInterp2,
+                                          m_bDisplayTransform,
+                                          m_fRotationRange,
+                                          m_fXScaleRange,
+                                          m_fYScaleRange,
+                                          m_iScaleSteps,
+                                          m_iTranslationRange );
         }
     }
 
@@ -539,7 +575,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 } else {
                     chooser.setCurrentDirectory( new File( System.getProperties().getProperty( "user.dir" ) ) );
                 }
-                chooser.addChoosableFileFilter( new ViewImageFileFilter( ViewImageFileFilter.GEN ) );
+
                 int returnVal = -1;
                 if ( bSave == true )
                 {
@@ -547,6 +583,8 @@ public class JFrameRegistrationMosaic extends JFrame
                 }
                 else
                 {
+                    chooser.
+                        addChoosableFileFilter( new ViewImageFileFilter( ViewImageFileFilter.GEN ) );
                     returnVal = chooser.showOpenDialog( this );
                 }
                 if ( returnVal == JFileChooser.APPROVE_OPTION ) {
@@ -586,7 +624,7 @@ public class JFrameRegistrationMosaic extends JFrame
                 if ( m_akImages[ m_iReference ] != null )
                 {
                     FileWriteOptions kOptions = new FileWriteOptions( true );
-                    kOptions.setFileName( fileName );
+                    kOptions.setFileName( fileName + ".tif" );
                     kOptions.setFileDirectory( directory );
 
                     fileIO.writeImage( m_akImages[ m_iReference ], kOptions );
@@ -1037,17 +1075,35 @@ public class JFrameRegistrationMosaic extends JFrame
         m_akImages[m_iReference] = kReference;
         m_akImages[m_iTile] = kTile;
         /* launch alignment: */
+        if ( m_iCost == AlgorithmCostFunctions2D.LEAST_SQUARES_SMOOTHED_WGT_COLOR )
+        {
+            kReferenceReg.disposeLocal();
+            kReferenceReg = (ModelImage)kReference.clone();
+            kTileReg.disposeLocal();
+            kTileReg = (ModelImage)kTile.clone();
+        }
+
         AlgorithmRegOAR2D kAlgorithmReg =
             new AlgorithmRegOAR2D( kReferenceReg, kTileReg, kReferenceMask, kTileMask,
-                                   AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT,
-                                   6,
-                                   AlgorithmTransform.BILINEAR,
-                                   -5, 5, 2.0f, 1.0f,
-                                   true,
-                                   4, 2, 3 );
+                                   m_iCost, m_iDOF, m_iInterp,
+                                   m_fRotateBegin, m_fRotateEnd,
+                                   m_fCoarseRate, m_fFineRate,
+                                   m_bDoSubsample,
+                                   m_iBracketBound, m_iMaxIterations, m_iNumMinima );
         kAlgorithmReg.addListener(this);
         kAlgorithmReg.setActiveImage(false);
         kAlgorithmReg.setProgressBarVisible(true);
+        if ( m_bBruteForce == true )
+        {
+            /* Setup the brute force registration, and initialize brute force
+             * parameters: */
+            kAlgorithmReg.setBruteForce( true, 
+                                         m_fRotationRange,
+                                         m_fXScaleRange,
+                                         m_fYScaleRange,
+                                         m_iScaleSteps,
+                                         m_iTranslationRange );
+        }
         kAlgorithmReg.run();
     }
 
@@ -1100,13 +1156,14 @@ public class JFrameRegistrationMosaic extends JFrame
                 String kName =
                     JDialogBase.makeImageName( m_akImages[m_iTile].getImageName(),
                                                "_register" );
-
+                System.err.println( ((AlgorithmRegOAR2D)kAlgorithm).
+                                           getTransform() );
                 /* Transform the input tile image: */
                 kAlgorithmTransform =
                     new AlgorithmTransform(m_akImages[m_iTile],
                                            ((AlgorithmRegOAR2D)kAlgorithm).
                                            getTransform(),
-                                           AlgorithmTransform.BILINEAR,
+                                           m_iInterp2,
                                            1.0f, 1.0f, iXDim, iYDim,
                                            false, false, false);
 
@@ -1207,16 +1264,18 @@ public class JFrameRegistrationMosaic extends JFrame
 
                     /* Display mosaic in new window: */
                     kMosaic.calcMinMax();
-                    /*
-                    try {
-                        new ViewJFrameImage( (ModelImage)kMosaic.clone( kName ) ,
-                                             null, new Dimension(610, 200) );
+                    if ( m_bDisplayTransform )
+                    {
+                        try {
+                            new ViewJFrameImage( (ModelImage)kMosaic.clone( kName ) ,
+                                                 null, new Dimension(610, 200) );
+                        }
+                        catch (OutOfMemoryError error) {
+                            MipavUtil.displayError(
+                                                   "Out of memory: unable to open new frame");
+                        }
                     }
-                    catch (OutOfMemoryError error) {
-                        MipavUtil.displayError(
-                                               "Out of memory: unable to open new frame");
-                    }
-                    */
+
                     /* replace two working images with the new mosaic: */
                     closeAllImages(false);
                     storeImage( kMosaic );
@@ -1614,6 +1673,52 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     public void mouseReleased(MouseEvent e) {}
 
+    /**
+     * Called from inside the JDialogRegistrationOAR2D class when the user has
+     * set the parameters and closes the dialog. 
+     * @param kOptionsDialog, the JDialogRegistrationOAR2D object containing
+     * the updated registration parameters
+     * @param bCallAlgorithm, boolean when true this function activates the
+     * registration algorithm, when false, the user must then press the
+     * "register images" button to register.
+     */
+    public void getVariablesFromDialog( JDialogRegistrationOAR2D kOptionsDialog,
+                                        boolean bCallAlgorithm  )
+    {
+        /* Get the registration parameters from the dialog:  */
+        m_iCost = kOptionsDialog.getCostChoice();
+        m_iDOF = kOptionsDialog.getDOF();
+        m_iInterp = kOptionsDialog.getInterp();
+        m_fRotateBegin = kOptionsDialog.getCoarseBegin();
+        m_fRotateEnd = kOptionsDialog.getCoarseEnd();
+        m_fCoarseRate = kOptionsDialog.getCoarseRate();
+        m_fFineRate =  kOptionsDialog.getFineRate();
+        m_bDoSubsample = kOptionsDialog.getSubsample();
+        m_iBracketBound = kOptionsDialog.getBracketBound();
+        m_iMaxIterations = kOptionsDialog.getMaxIterations();
+        m_iNumMinima =  kOptionsDialog.getNumMinima();
+
+        m_iInterp2 = kOptionsDialog.getInterp2();
+        m_bDisplayTransform = kOptionsDialog.getDisplayTransform();
+
+        m_bBruteForce = kOptionsDialog.getBruteForce();
+
+        m_fRotationRange = kOptionsDialog.getRotationBruteForce();
+        m_fXScaleRange = kOptionsDialog.getXScaleBruteForce();
+        m_fYScaleRange = kOptionsDialog.getYScaleBruteForce();
+        m_iScaleSteps = kOptionsDialog.getScaleStepsBruteForce();
+        m_iTranslationRange = kOptionsDialog.getTranslationBruteForce();
+
+        /* Call registration if so directed by the user: */
+        if ( bCallAlgorithm )
+        {
+            actionPerformed( new ActionEvent( this,
+                                              ActionEvent.ACTION_PERFORMED,
+                                              "Register" ) );
+        }
+    }
+
+
     /* GUI buttons: */
     /** Open reference image: */
     private JButton m_kOpenReferenceButton;
@@ -1630,6 +1735,9 @@ public class JFrameRegistrationMosaic extends JFrame
     private JButton m_kSaveButton;
     /** Close all images and remove them from the scene: */
     private JButton m_kCloseAllButton;
+    /** Launches the JDialogRegistrationOAR2D dialog to set registration
+     * options: */
+    private JButton m_kAdvancedOptionsButton;
 
     /** Boolean to check that a file is loaded before mouse operations are
      * allowed to occur */
@@ -1700,4 +1808,47 @@ public class JFrameRegistrationMosaic extends JFrame
     /** For blending the reference and tile images, reference image is not
      * blended with background, reset when initData() is called. */
     private boolean m_bFirst = true;
+
+    /** Registration parameters, with defaults set: */
+    /** Default cost function, set to correlation ratio (smoothed, weighted): */
+    private int m_iCost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT;
+    /** Default degrees of freedom: */
+    private int m_iDOF = 6;
+    /** Default image interpolation, set to be bilinear interpolation: */
+    private int m_iInterp = AlgorithmTransform.BILINEAR;
+    /** Default rotation start, set to negative 5 degrees: */
+    private float m_fRotateBegin = -5f;
+    /** Default rotation end, set to postive 5 degrees: */
+    private float m_fRotateEnd = 5f;
+    /** Default rotation coarse rate, set to 2 degrees: */
+    private float m_fCoarseRate = 2f;
+    /** Default rotation fine rate, set to 1 degree: */
+    private float m_fFineRate = 1f;
+    /** Default subsample set to true: */
+    private boolean m_bDoSubsample = true;
+    /** Default bound for bracketing during optimization set to 10 units: */
+    private int m_iBracketBound = 10;
+    /** Default number of iteration set to 2: */
+    private int m_iMaxIterations = 2;
+    /** Default number of minima to test from level 8 at level 4 (set to 3): */
+    private int m_iNumMinima = 3;
+
+    /** Display parameters: */
+    /** Default interpolation for the transform algorithm: */
+    private int m_iInterp2 = AlgorithmTransform.BILINEAR;
+    /** Display transfromed image in separate window: set to false (no display)*/
+    private boolean m_bDisplayTransform = false;
+    /** Brute force optimization parameters: */
+    /** Brute force default is off: */
+    private boolean m_bBruteForce = false;
+    /** default rotation range (0) */
+    private float m_fRotationRange = 0f;
+    /** default x scale range (0) */
+    private float m_fXScaleRange = 0f;
+    /** default y scale range (0) */
+    private float m_fYScaleRange = 0f;
+    /** default number of divisions for scale optimazation: */
+    private int m_iScaleSteps = 0;
+    /** default x,y translation range (0) */
+    private int m_iTranslationRange = 0;
 }
