@@ -230,6 +230,26 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     private int maxDim = 256;
 
     /**
+     * setBruteForce. Tells the algorithm to do a brute-force optimization,
+     * where it will iterate of the the input rotation, xscale, yscale, and
+     * translation ranges calculating the cost function at each point and
+     * returing the minimum. No optimization with the brute-force approach.
+     */
+    /** If true, calculate the brute-force solution: */
+    private boolean m_bBruteForce = false;
+    /** The range of rotations to try in brute-force mode: */
+    private float m_fRotationRange = 0f;
+    /** The range of scales in x to try in brute-force mode: */
+    private float m_fXScaleRange = 0f;
+    /** The range of scales in y to try in brute-force mode: */
+    private float m_fYScaleRange = 0f;
+    /** The number of steps to divide scale ranges: */
+    private int m_iScaleSteps;
+    /** The range of x,y translations to try in brute-force mode: */
+    private int m_iTranslationRange = 0;
+
+
+    /**
      *	Creates new automatic linear registration algorithm and sets necessary variables.
      *	@param _imageA		Reference image (register input image to reference image).
      *	@param _imageB		Input image (register input image to reference image).
@@ -946,6 +966,13 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         buildProgressBar( "Registering images", "Beginning registration", 0, 100 );
         initProgressBar();
         long time = System.currentTimeMillis();
+        /* If the algorithm is to run in "Brute Force" mode, do so now: */
+        if ( m_bBruteForce == true )
+        {
+            algorithmBruteForce();
+            return;
+        }
+
         if ( DOF >= 3 ) {
             Preferences.debug( " Starting level 8 ************************************************\n" );
 
@@ -1003,6 +1030,213 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         finalize();
         completed = true;
     }
+
+    /**
+     * Compute the brute-force solution. Iterates over a range of angles,
+     * scales and translations, calculating the cost function for each new
+     * position, returning the one with minimum cost:
+     */
+    private void algorithmBruteForce()
+    {
+        /* Sets the cost function: */
+        AlgorithmCostFunctions2D cost =
+            new AlgorithmCostFunctions2D( simpleRef, simpleInput, costChoice, 32, 1 );
+        /* Currently, brute force is activated from the Mosaic window, so the
+         * registration is always a weighted registration: */
+        cost.setRefWgtImage( simpleWeightRef );
+        cost.setInputWgtImage( simpleWeightInput );
+
+        /* Set the center of gravity to be the center of the input image: */
+        Point2Dd cog = new Point2Dd( simpleInput.xDim/2, simpleInput.yDim/2 );
+        /* Initialize the transform to the identity: */
+        double[] initial = new double[7];
+        initial[0] = 0; // initial rotation
+        initial[1] = 0; // initial translations
+        initial[2] = 0;
+        initial[3] = initial[4] = 1; // initial scaling
+        initial[5] = initial[6] = 0; // initial skewing
+
+        AlgorithmPowellOpt2D powell;
+        maxIter = baseNumIter;
+        powell =
+            new AlgorithmPowellOpt2D( this, cog, 7,
+                                      cost, initial, getTolerance( 7 ),
+                                      maxIter, false, bracketBound );
+
+        Vector minima = new Vector();
+        /* Count the number of times the cost function is called: */
+        int iBruteCount = 1;
+        int iTotal = (int)((m_iTranslationRange * 2 + 1) *
+                           (m_iTranslationRange * 2 + 1) *
+                           (m_fRotationRange * 2 + 1) );
+        if ( m_fXScaleRange != 0)
+        {
+            iTotal *= (m_iScaleSteps + 1);
+        }
+        if ( m_fYScaleRange != 0)
+        {
+            iTotal *= (m_iScaleSteps + 1);
+        }
+
+        if ( iTotal > iBruteCount )
+        {
+            System.err.println( "Computing " + iTotal + " cost functions..." );
+        }
+
+        /* The scale increment for x and y: */
+        float fXScaleIncrement = (m_fXScaleRange * 2)/(m_iScaleSteps);
+        float fYScaleIncrement = (m_fYScaleRange * 2)/(m_iScaleSteps);
+        /* initial angle: */
+        float angle = -m_fRotationRange;
+        /* Initial scales: */
+        float xScale = -m_fXScaleRange;
+        float yScale = -m_fYScaleRange;
+        /* Initial translations: */
+        int dx = -m_iTranslationRange;
+        int dy = -m_iTranslationRange;
+        boolean bIncrementNext = false;
+        boolean bDone = false;
+        /* Test to see if any parameters are set, if all zero, return the
+         * identity transform: */
+        if ( (m_fRotationRange == 0) &&
+             (m_iTranslationRange == 0) &&
+             ( ((m_fXScaleRange == 0) &&
+                (m_fYScaleRange == 0)) ||
+               (m_iScaleSteps == 0) ) )
+        {
+            bDone = true;
+            /* initial must already be set to identity: */
+            powell.setInitialPoint( initial );
+            powell.measureCost();
+            minima.add( new MatrixListItem( powell.getCost(),
+                                            powell.getMatrix(),
+                                            powell.getFinal() ) );
+        }
+
+        /* Otherwise loop until all the permutations of rotations, scales, and
+         * translations have been tested: */
+        /* Note, this could have been several nested loops, however since any
+         * of the loops may be executed 0 times (and therefor the inner loops
+         * never executed) the nested loops are flattened into one. The
+         * progression is as follows: first angle is incremented, when angle
+         * reaches the max value, then the translation in x is incremented by
+         * one and angle is reset to the initial value. Angle is incremented
+         * again until it reaches max and then translation in x is incremented
+         * a second time. This repeats until the translation in x is at max,
+         * when this occurs dx is reset and dy is incremented. And so on until
+         * all ranges (rotation, x,y translation, x,y scale have been
+         * maxed... */
+        while ( bDone == false )
+        {
+            if ( isProgressBarVisible() ) {
+                progressBar.updateValue( (int)(100 * (float)iBruteCount/(float)iTotal),
+                                         activeImage );
+            }
+            System.err.println( "... testing cost " + iBruteCount );
+            bIncrementNext = true;
+            /* Increment angle, if we are optimizing over angles: */
+            if ( m_fRotationRange != 0 )
+            {
+                bIncrementNext = false;
+                bDone = false;
+                angle += 1;
+                if ( angle > m_fRotationRange )
+                {
+                    angle = -m_fRotationRange;
+                    bIncrementNext = true;
+                    bDone = true;
+                }
+            }
+            /* If we are optimizing over dx and angle is at max, increment dx
+             * by one: */
+            if ( (m_iTranslationRange != 0) && bIncrementNext )
+            {
+                bIncrementNext = false;
+                bDone = false;
+                dx += 1;
+                if ( dx > m_iTranslationRange )
+                {
+                    dx = -m_iTranslationRange;
+                    bIncrementNext = true;
+                    bDone = true;
+                }
+            }
+            /* If we are optimizing over dy and angle and dx are at max,
+             * increment dy by one: */
+            if ( (m_iTranslationRange != 0) && bIncrementNext )
+            {
+                bIncrementNext = false;
+                bDone = false;
+                dy += 1;
+                if ( dy > m_iTranslationRange )
+                {
+                    dy = -m_iTranslationRange;
+                    bIncrementNext = true;
+                    bDone = true;
+                }
+            }
+            /* If we are optimizing over scale x and angle, dx, dy are at max,
+             * increment scale x by xscale increment: */
+            if ( (m_iScaleSteps != 0) && (m_fXScaleRange != 0) && bIncrementNext )
+            {
+                bIncrementNext = false;
+                bDone = false;
+                xScale += fXScaleIncrement;
+                if ( xScale > m_fXScaleRange )
+                {
+                    xScale = -m_fXScaleRange;
+                    bIncrementNext = true;
+                    bDone = true;
+                }
+            }
+            /* If we are optimizing over scale y and angle, dx, dy, and scale
+             * x are at max, increment scale y by yscale increment: */
+            if ( (m_iScaleSteps != 0) && (m_fYScaleRange != 0) && bIncrementNext )
+            {
+                bIncrementNext = false;
+                bDone = false;
+                yScale += fYScaleIncrement;
+                if ( yScale > m_fYScaleRange )
+                {
+                    yScale = -m_fYScaleRange;
+                    bIncrementNext = true;
+                    bDone = true;
+                }
+            }
+            /* If not all permutation have been tested, test the current
+             * purmutation and add it to the list: */
+            if ( !bDone )
+            {
+                initial[0] = angle;
+                initial[1] = dx;
+                initial[2] = dy;
+                initial[3] = 1/(1.0 + (xScale/100f));
+                initial[4] = 1/(1.0 + (yScale/100f));
+
+                powell.setInitialPoint( initial );
+                powell.measureCost();
+                minima.add( new MatrixListItem( powell.getCost(),
+                                                powell.getMatrix(),
+                                                powell.getFinal() ) );
+                iBruteCount++;
+            }
+        }
+        if ( iTotal < iBruteCount )
+        {
+            System.err.println( "... done testing costs" );
+        }
+
+        /* Sort the list of costs, take the minimum and return: */
+        Collections.sort( minima );
+        answer = (MatrixListItem)minima.firstElement();
+        answer.matrix.invert();
+
+        powell.disposeLocal();
+        disposeLocal();
+        finalize();
+        completed = true;
+    }
+
 
     /**
      *	Dispose of local variables that may be taking up lots of room.
@@ -1263,6 +1497,27 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     }
 
     /**
+     * setBruteForce. Tells the algorithm to do a brute-force optimization,
+     * where it will iterate of the the input rotation, xscale, yscale, and
+     * translation ranges calculating the cost function at each point and
+     * returing the minimum. No optimization with the brute-force approach.
+     */
+    public void setBruteForce( boolean bOn,
+                               float fRotationRange,
+                               float fXScaleRange,
+                               float fYScaleRange,
+                               int iScaleSteps,
+                               int iTranslationRange )
+    {
+        m_bBruteForce = bOn;
+        m_fRotationRange = fRotationRange;
+        m_fXScaleRange = fXScaleRange;
+        m_fYScaleRange = fYScaleRange;
+        m_iTranslationRange = iTranslationRange;
+        m_iScaleSteps = iScaleSteps;
+    }
+
+    /**
      *	Takes two images that have been subsampled by a factor of eight.
      *   Sets up the cost function with the images and the weighted images,
      *   if necessary.
@@ -1286,7 +1541,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      *	@param input	Subsampled by 8 input image.
      *	@return			List of preoptimized and optimized points.
      */
-    private Vector[] levelEight( ModelSimpleImage ref, ModelSimpleImage input ) {
+    private Vector[] levelEight( ModelSimpleImage ref, ModelSimpleImage input )
+    {
         double factor;
         AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D( ref, input, costChoice, 32, 1 );
         if ( weighted ) {
