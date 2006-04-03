@@ -195,26 +195,29 @@ public class JFrameRegistrationMosaic extends JFrame
         if ( command.equals( "OpenReference" ) )
         {
             /* Open and store the reference image: */
-            createMosaicOpenDialog( false );
-
-            m_kOpenReferenceButton.setEnabled( false );
-            m_kOpenTileButton.setEnabled( true );
-            m_kUndoButton.setEnabled( false );
-            m_kCloseAllButton.setEnabled( true );
-
-            m_iReference = m_iSelected;
+            if ( createMosaicOpenDialog( false ) )
+            {
+                m_kOpenReferenceButton.setEnabled( false );
+                m_kOpenTileButton.setEnabled( true );
+                m_kUndoButton.setEnabled( false );
+                m_kCloseAllButton.setEnabled( true );
+                
+                m_iReference = m_iSelected;
+            }
         }
         else if ( command.equals( "OpenTile" ) )
         {
             /* Open and store the tile image: */
-            createMosaicOpenDialog( false );
-            m_kOpenTileButton.setEnabled( false );
-            m_kToggleSelectedButton.setEnabled( true );
-            m_kRegisterButton.setEnabled( true );
-            m_kUndoButton.setEnabled( false );
-            m_kAdvancedOptionsButton.setEnabled( true );
-
-            m_iTile = m_iSelected;
+            if ( createMosaicOpenDialog( false ) )
+            {
+                m_kOpenTileButton.setEnabled( false );
+                m_kToggleSelectedButton.setEnabled( true );
+                m_kRegisterButton.setEnabled( true );
+                m_kUndoButton.setEnabled( false );
+                m_kAdvancedOptionsButton.setEnabled( true );
+                
+                m_iTile = m_iSelected;
+            }
         }
         else if ( command.equals( "ToggleSelected" ) )
         {
@@ -225,13 +228,15 @@ public class JFrameRegistrationMosaic extends JFrame
         else if ( command.equals( "Register" ) )
         {
             /* Call the registration algorithm */
-            registerImages();
-            m_kOpenTileButton.setEnabled( true );
-            m_kToggleSelectedButton.setEnabled( false );
-            m_kRegisterButton.setEnabled( false );
-            m_kUndoButton.setEnabled( true );
-            m_kSaveButton.setEnabled( true );
-            m_kAdvancedOptionsButton.setEnabled( false );
+            if ( registerImages() )
+            {
+                m_kOpenTileButton.setEnabled( true );
+                m_kToggleSelectedButton.setEnabled( false );
+                m_kRegisterButton.setEnabled( false );
+                m_kUndoButton.setEnabled( true );
+                m_kSaveButton.setEnabled( true );
+                m_kAdvancedOptionsButton.setEnabled( false );
+            }
         }
         else if ( command.equals( "UndoMosaic" ) )
         {
@@ -250,9 +255,11 @@ public class JFrameRegistrationMosaic extends JFrame
         else if ( command.equals( "SaveMosaic" ) )
         {
             /* Save the new mosaic image */
-            saveMosaic();
-            m_kUndoButton.setEnabled( false );
-            m_kAdvancedOptionsButton.setEnabled( false );
+            if ( saveMosaic() )
+            {
+                m_kUndoButton.setEnabled( false );
+                m_kAdvancedOptionsButton.setEnabled( false );
+            }
         }
         else if ( command.equals( "CloseAll" ) )
         {
@@ -666,7 +673,7 @@ public class JFrameRegistrationMosaic extends JFrame
      * better refine the registration. Upon completion of the registration
      * algorithm, a new mosaic image is created.
      */
-    private void registerImages()
+    private boolean registerImages()
     {
         /* Backup images and transforms in case the user chooses to undo this
          * operation: */
@@ -1105,6 +1112,7 @@ public class JFrameRegistrationMosaic extends JFrame
                                          m_iTranslationRange );
         }
         kAlgorithmReg.run();
+        return true;
     }
 
     /**
@@ -1436,12 +1444,13 @@ public class JFrameRegistrationMosaic extends JFrame
      * saveMosaic -- Opens a save dialog and saves the mosaic image in the
      * selected file format.
      */
-    private void saveMosaic()
+    private boolean saveMosaic()
     {
         if ( m_akImages != null )
         {
-            createMosaicOpenDialog( true );
+            return createMosaicOpenDialog( true );
         }
+        return false;
     }
 
     /**
