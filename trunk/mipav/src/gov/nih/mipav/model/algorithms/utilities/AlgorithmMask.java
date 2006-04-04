@@ -201,7 +201,7 @@ public class AlgorithmMask extends AlgorithmBase {
         int i;
         int length;
         float[] buffer;
-
+System.out.println("calcInPlace2D");
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
@@ -975,7 +975,6 @@ public class AlgorithmMask extends AlgorithmBase {
 
     }
 
-
     /**
      *   Fills VOI of the source image with fill value
      *   @param mask
@@ -983,6 +982,18 @@ public class AlgorithmMask extends AlgorithmBase {
      *   @param tSlice    indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25D( BitSet mask, float fillValue, int tSlice ) {
+    	calcInPlace25D(mask, fillValue, tSlice, null);
+    }
+
+    /**
+     *   Fills VOI of the source image with fill value
+     *   @param mask
+     *   @param fillValue value to be placed in the image where the mask is true
+     *   @param tSlice    indicates which volume should be painted (tSlice = 4th dimension)
+     *   @param intensityLockVector Vector containing Integer objects that represent the intensity
+     *   values that are not mutable
+     */
+    public void calcInPlace25D( BitSet mask, float fillValue, int tSlice, Vector intensityLockVector ) {
 
         int i, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -990,6 +1001,30 @@ public class AlgorithmMask extends AlgorithmBase {
         float[] bufferI;
         boolean logMagDisplay;
         float mag, norm;
+        
+        int lockedIntensities[] = null;
+
+        if (intensityLockVector != null)
+        {
+        	lockedIntensities = new int[intensityLockVector.size()];
+        	
+        	for (i = 0; i < intensityLockVector.size(); i++)
+        	{
+        		try
+        		{
+	        		Integer integerObj = (Integer) intensityLockVector.elementAt(i);
+	        		
+	        		if (integerObj != null)
+	        		{
+	        			lockedIntensities[i] = integerObj.intValue();
+	        		}
+        		}
+        		catch (Exception e)
+        		{
+        			continue;
+        		}
+        	}
+        }
 
         if ( srcImage.getType() != ModelStorageBase.COMPLEX ) {
             try {
@@ -1040,10 +1075,25 @@ public class AlgorithmMask extends AlgorithmBase {
                     if ( srcImage.getNDims() == 2 && ( i % mod == 0 ) && isProgressBarVisible() ) {
                         progressBar.updateValue( Math.round( (float) i / ( imgLength - 1 ) ) * 100, activeImage );
                     }
-                    if ( mask.get( offset + i ) == true && polarity == true ) {
-                        buffer[i] = fillValue;
-                    } else if ( mask.get( offset + i ) == false && polarity == false ) {
-                        buffer[i] = fillValue;
+                    if ( (mask.get( offset + i ) == true && polarity == true) ||
+                    	 (mask.get( offset + i ) == false && polarity == false) ) {
+                    	
+                    	boolean locked = false;
+                    	if (lockedIntensities != null)
+                    	{
+                    		for (int j = 0; j < lockedIntensities.length; j++)
+                    		{
+                    			if (buffer[i] == lockedIntensities[j])
+                    			{
+                    				locked = true;
+                    			}
+                    		}
+                    	}
+                    	
+                    	if (locked == false)
+                    	{
+                    		buffer[i] = fillValue;
+                    	}
                     }
                 }
 
@@ -1146,7 +1196,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
         setCompleted( true );
     }
-
+    
     /**
      *   Fills VOI of the source image with fill value
      *   @param mask
@@ -1154,6 +1204,17 @@ public class AlgorithmMask extends AlgorithmBase {
      *   @param tSlice    indicates which volume should be painted (tSlice = 4th dimension)
      */
     public void calcInPlace25DShortMask( BitSet mask, float fillValue, int tSlice ) {
+    	calcInPlace25DShortMask(mask, fillValue, tSlice, null);
+    }
+
+
+    /**
+     *   Fills VOI of the source image with fill value
+     *   @param mask
+     *   @param fillValue value to be placed in the image where the mask is true
+     *   @param tSlice    indicates which volume should be painted (tSlice = 4th dimension)
+     */
+    public void calcInPlace25DShortMask( BitSet mask, float fillValue, int tSlice, Vector intensityLockVector ) {
 
         int i, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -1161,6 +1222,30 @@ public class AlgorithmMask extends AlgorithmBase {
         float[] bufferI;
         boolean logMagDisplay;
         float mag, norm;
+        
+        int lockedIntensities[] = null;
+
+        if (intensityLockVector != null)
+        {
+        	lockedIntensities = new int[intensityLockVector.size()];
+        	
+        	for (i = 0; i < intensityLockVector.size(); i++)
+        	{
+        		try
+        		{
+	        		Integer integerObj = (Integer) intensityLockVector.elementAt(i);
+	        		
+	        		if (integerObj != null)
+	        		{
+	        			lockedIntensities[i] = integerObj.intValue();
+	        		}
+        		}
+        		catch (Exception e)
+        		{
+        			continue;
+        		}
+        	}
+        }
 
         if ( srcImage.getType() != ModelStorageBase.COMPLEX ) {
             try {
@@ -1210,12 +1295,27 @@ public class AlgorithmMask extends AlgorithmBase {
                     if ( srcImage.getNDims() == 2 && ( i % mod == 0 ) && isProgressBarVisible() ) {
                         progressBar.updateValue( Math.round( (float) i / ( imgLength - 1 ) ) * 100, activeImage );
                     }
-                    if ( mask.get( offset + i ) == true && polarity == true ) {
-                        buffer[i] = fillValue;
+                    if ( (mask.get( offset + i ) == true && polarity == true) ||
+                    	 (mask.get( offset + i ) == false && polarity == false) ) {
+                    	
+                    	boolean locked = false;
+                    	if (lockedIntensities != null)
+                    	{
+                    		for (int j = 0; j < lockedIntensities.length; j++)
+                    		{
+                    			if (buffer[i] == lockedIntensities[j])
+                    			{
+                    				locked = true;
+                    			}
+                    		}
+                    	}
+                    	
+                    	if (locked == false)
+                    	{
+                    		buffer[i] = fillValue;
+                    	}
                     } else if ( mask.get( offset + i ) == false && polarity == true ) {
                         buffer[i] = 0;
-                    } else if ( mask.get( offset + i ) == false && polarity == false ) {
-                        buffer[i] = fillValue;
                     }
                 }
 
@@ -1318,6 +1418,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
         setCompleted( true );
     }
+    
 
     /**
      *   Fills VOI of the color source image with fill color
@@ -1325,7 +1426,7 @@ public class AlgorithmMask extends AlgorithmBase {
      *   @param fillColor color to be placed in the image where the mask is true
      *   @param tSlice    indicates which volume should be painted (tSlice = 4th dimension)
      */
-    public void calcInPlace25DC( BitSet mask, Color fillColor, int tSlice ) {
+    public void calcInPlace25DC( BitSet mask, Color fillColor, int tSlice) {
 
         int i, j, z, end = 1;
         int imgLength, volLength = 0, offset;
@@ -1337,7 +1438,7 @@ public class AlgorithmMask extends AlgorithmBase {
         red = (byte) Math.round( fillColor.getRed() );
         green = (byte) Math.round( fillColor.getGreen() );
         blue = (byte) Math.round( fillColor.getBlue() );
-
+        
         try {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
@@ -1381,13 +1482,9 @@ public class AlgorithmMask extends AlgorithmBase {
                 if ( srcImage.getNDims() == 2 && ( i % mod == 0 ) && isProgressBarVisible() ) {
                     progressBar.updateValue( Math.round( (float) i / ( imgLength - 1 ) ) * 100, activeImage );
                 }
-                if ( mask.get( offset + j ) == true && polarity == true ) {
-                    buffer[i] = (byte) 255;
-                    buffer[i + 1] = red;
-                    buffer[i + 2] = green;
-                    buffer[i + 3] = blue;
-                } else if ( mask.get( offset + j ) == false && polarity == false ) {
-                    buffer[i] = (byte) 255;
+                if ( (mask.get( offset + j ) == true && polarity == true) ||
+                	 (mask.get( offset + j ) == false && polarity == false) ) {
+            		buffer[i] = (byte) 255;
                     buffer[i + 1] = red;
                     buffer[i + 2] = green;
                     buffer[i + 3] = blue;
