@@ -127,6 +127,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** tells whether or not to XOR when creating binary masks (allowing holes) */
     private boolean useXOR = Preferences.is(Preferences.PREF_USE_VOI_XOR);
+    
+    private Vector intensityLockVector = new Vector();
 
     /**
      * Makes a frame and puts an image into it. Image will be centered on screen.
@@ -3275,11 +3277,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         {
             if (getActiveImage() == imageA)
             {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, true);
+            	componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, true, intensityLockVector);
             }
             else
             {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, true);
+                componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, true, intensityLockVector);
             }
             getActiveImage().notifyImageDisplayListeners(null, true);
         }
@@ -3287,11 +3289,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         {
             if (getActiveImage() == imageA)
             {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, false);
+                componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, false, intensityLockVector);
             }
             else
             {
-                componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, false);
+                componentImage.commitMask(ViewJComponentBase.IMAGE_B, true, false, intensityLockVector);
             }
 
             getActiveImage().notifyImageDisplayListeners(null, true);
@@ -6153,6 +6155,73 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     	else
     	{
     		return null;
+    	}
+    }
+    
+    /**
+     * Adds an Integer object to the intensityLockVector. The Integer object represents an 
+     * intensity value which is locked - that is, cannot be overwritten by a "Paint to mask"
+     * operation. 
+     * @param intensity the intensity value to lock
+     */
+    public void addIntensityLock(int intensity)
+    {
+    	if (intensityLockVector == null)
+    	{
+    		intensityLockVector = new Vector();
+    	}
+    	
+    	// is this intensity value already in the 'intensityLockVector' Vector?
+    	for (int i = 0; i < intensityLockVector.size(); i++)
+    	{
+    		try
+    		{
+    			Integer lockedIntensity = (Integer) intensityLockVector.elementAt(i);
+    		
+	    		if (lockedIntensity != null && lockedIntensity.intValue() == intensity)
+	    		{
+	    			// prevent locking an intensity that is already locked
+	    			return;
+	    		}
+    		}
+    		catch (Exception e)
+    		{
+    			continue;
+    		}
+    	}
+    	
+    	Integer intensityLockInteger = new Integer(intensity);
+
+    	intensityLockVector.add(intensityLockInteger);
+    }
+    
+    /**
+     * Removes an intensity value from the intensityLockVector.
+     * @param intensity the intensity value to remove
+     */
+    public void removeIntensityLock(int intensity)
+    {
+    	if (intensityLockVector == null)
+    	{
+    		return;
+    	}
+    	
+    	for (int i = 0; i < intensityLockVector.size(); i++)
+    	{
+    		try
+    		{
+    			Integer lockedIntensity = (Integer) intensityLockVector.elementAt(i);
+    		
+	    		if (lockedIntensity != null && lockedIntensity.intValue() == intensity)
+	    		{
+	    			intensityLockVector.removeElementAt(i);
+	    			return;
+	    		}
+    		}
+    		catch (Exception e)
+    		{
+    			continue;
+    		}
     	}
     }
 }
