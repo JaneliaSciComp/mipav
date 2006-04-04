@@ -221,6 +221,14 @@ public class AlgorithmMatchImages
      *   This has to be done regardless of which other options the user chose.
      */
     double fovA[], fovB[], fovA_LPS[], fovB_LPS[];
+    TransMatrix trans;
+    TransMatrix trans2D;
+    Matrix img2;
+    double rotX, rotY, rotZ;
+    boolean success;
+    double tempA;
+    double tempB;
+    int i, j;
 
     try {
       LPS2img_A = new Matrix(nDims+1, nDims+1);
@@ -248,10 +256,101 @@ public class AlgorithmMatchImages
     Preferences.debug("\n PRELIMINARY DATA: \n");
 
     // Find transformation matrix to reorient Image B.
-    img2LPS_A = (Matrix) sourceImgA.getMatrix();
+    if (sourceImgA.getNDims() > 2) {
+        trans = sourceImgA.getMatrix();
+    }
+    else {
+        trans2D = sourceImgA.getMatrix();
+        trans = new TransMatrix(4);
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                trans.set(i, j, trans2D.get(i, j));
+            }
+        }
+    }
+    success = trans.decomposeMatrix(trans);
+    if (!success) {
+        MipavUtil.displayError("Failure on decompose imageA matrix");
+        stopped = true;
+        setCompleted(false);
+        return;  
+    }
+    rotZ = trans.getRotateZ() * Math.PI/180.0;
+    img2LPS_A.set(0, 0, Math.cos(rotZ));
+    img2LPS_A.set(0, 1, -Math.sin(rotZ));
+    img2LPS_A.set(1, 0, Math.sin(rotZ));
+    img2LPS_A.set(1, 1, Math.cos(rotZ));
+    img2LPS_A.set(2, 2, 1.0);
+    if (sourceImgA.getNDims() > 2) {
+        img2LPS_A.set(3, 3, 1.0);
+        rotX = trans.getRotateX() * Math.PI/180.0;
+        rotY = trans.getRotateY() * Math.PI/180.0;
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, 1.0);
+        img2.set(1, 1, Math.cos(rotX));
+        img2.set(1, 2, -Math.sin(rotX));
+        img2.set(2, 1, Math.sin(rotX));
+        img2.set(2, 2, Math.cos(rotX));
+        img2.set(3, 3, 1.0);
+        img2LPS_A.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotY));
+        img2.set(0, 2, Math.sin(rotY));
+        img2.set(1, 1, 1.0);
+        img2.set(2, 0, -Math.sin(rotY));
+        img2.set(2, 2, Math.cos(rotY));
+        img2.set(3, 3, 1.0);
+        img2LPS_A.timesEquals(img2);
+    }
     img2LPS_A = img2LPS_A.getMatrix(0, nDims, 0, nDims);
     LPS2img_A = img2LPS_A.inverse();
-    img2LPS_B = (Matrix) sourceImgB.getMatrix();
+    
+    if (sourceImgB.getNDims() > 2) {
+        trans = sourceImgB.getMatrix();
+    }
+    else {
+        trans2D = sourceImgB.getMatrix();
+        trans = new TransMatrix(4);
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                trans.set(i, j, trans2D.get(i, j));
+            }
+        }
+    }
+    success = trans.decomposeMatrix(trans);
+    if (!success) {
+        MipavUtil.displayError("Failure on decompose imageB matrix");
+        stopped = true;
+        setCompleted(false);
+        return;  
+    }
+    rotZ = trans.getRotateZ() * Math.PI/180.0;
+    img2LPS_B.set(0, 0, Math.cos(rotZ));
+    img2LPS_B.set(0, 1, -Math.sin(rotZ));
+    img2LPS_B.set(1, 0, Math.sin(rotZ));
+    img2LPS_B.set(1, 1, Math.cos(rotZ));
+    img2LPS_B.set(2, 2, 1.0);
+    if (sourceImgB.getNDims() > 2) {
+        img2LPS_B.set(3, 3, 1.0);
+        rotX = trans.getRotateX() * Math.PI/180.0;
+        rotY = trans.getRotateY() * Math.PI/180.0;
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, 1.0);
+        img2.set(1, 1, Math.cos(rotX));
+        img2.set(1, 2, -Math.sin(rotX));
+        img2.set(2, 1, Math.sin(rotX));
+        img2.set(2, 2, Math.cos(rotX));
+        img2.set(3, 3, 1.0);
+        img2LPS_B.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotY));
+        img2.set(0, 2, Math.sin(rotY));
+        img2.set(1, 1, 1.0);
+        img2.set(2, 0, -Math.sin(rotY));
+        img2.set(2, 2, Math.cos(rotY));
+        img2.set(3, 3, 1.0);
+        img2LPS_B.timesEquals(img2);
+    }
     img2LPS_B = img2LPS_B.getMatrix(0, nDims, 0, nDims);
     LPS2img_B = img2LPS_B.inverse();
 
@@ -270,15 +369,29 @@ public class AlgorithmMatchImages
                    +alignImgB2ImgA.toString());
 
     // Create index arrays that store the reordering of image data.
-    for (int i = 0; i < nDims; i++) { // i's are the rows
-      for (int j = 0; j < nDims; j++) { // j's are the columns
+    for (i = 0; i < nDims; i++) { // i's are the rows
+      tempA = 0.0;
+      tempB = 0.0;  
+      for (j = 0; j < nDims; j++) { // j's are the columns
         if (Math.abs(alignImgB2ImgA.get(i, j)) > Math.cos(Math.PI / 4.0)) {
           reorderB2A[i] = j;
         }
-        sign2LPS_A[i] = sign2LPS_A[i] + (int) LPS2img_A.get(i, j);
-        sign2LPS_B[i] = sign2LPS_B[i] + (int) LPS2img_B.get(i, j);
+        tempA = tempA + LPS2img_A.get(i, j);
+        tempB = tempB + LPS2img_B.get(i, j);
         switchEnd2Orig[j] = switchEnd2Orig[j] + alignImgB2ImgA.get(i, j);
         // note: adding all rows for a single column
+      }
+      if (tempA > 0.0) {
+          sign2LPS_A[i] = 1;
+      }
+      else {
+          sign2LPS_A[i] = -1;
+      }
+      if (tempB > 0.0) {
+          sign2LPS_B[i] = 1;
+      }
+      else {
+          sign2LPS_B[i] = -1;
       }
     }
 
@@ -299,7 +412,7 @@ public class AlgorithmMatchImages
                           sign2LPS_B[1] + "\n");
     } // else nDims == 2
     // Get image origin before transformation.
-    for (int i = 0; i < nDims; i++) {
+    for (i = 0; i < nDims; i++) {
       origLPS_A[i] = (double) sourceImgA.getFileInfo(0).getOrigin(i);
       origLPS_B[i] = (double) sourceImgB.getFileInfo(0).getOrigin(i);
     }
@@ -338,7 +451,7 @@ public class AlgorithmMatchImages
 
     } // else nDims == 2
     // Get image end locations
-    for (int i = 0; i < nDims; i++) {
+    for (i = 0; i < nDims; i++) {
       fovA[i] = resA[i] * (dimA[i] - 1); // field of view in this dimension
       fovB[i] = resB[i] * (dimB[i] - 1);
     }
@@ -349,8 +462,8 @@ public class AlgorithmMatchImages
     //   "ImageB field-of-view image order: " + fovB[0] + ", " + fovB[1] + ", " +
     //    fovB[2] + "\n");
 
-    for (int i = 0; i < nDims; i++) { // i's are the rows
-      for (int j = 0; j < nDims; j++) { // j's are the columns
+    for (i = 0; i < nDims; i++) { // i's are the rows
+      for (j = 0; j < nDims; j++) { // j's are the columns
         fovA_LPS[i] = fovA_LPS[i] + (float) img2LPS_A.get(i, j) * fovA[j];
         fovB_LPS[i] = fovB_LPS[i] + (float) img2LPS_B.get(i, j) * fovB[j];
       }
@@ -362,7 +475,7 @@ public class AlgorithmMatchImages
     //    "ImageB field-of-view in LPS order: " + fovB_LPS[0] + ", " + fovB_LPS[1] +
     //    ", " + fovB_LPS[2] + "\n");
 
-    for (int i = 0; i < nDims; i++) {
+    for (i = 0; i < nDims; i++) {
       endLPS_A[i] = origLPS_A[i] + fovA_LPS[i];
       endLPS_B[i] = origLPS_B[i] + fovB_LPS[i];
     }
@@ -1211,10 +1324,62 @@ public class AlgorithmMatchImages
   private double[] originImg2LPS(double[] origImg, ModelImage img) {
     double[] origLPS = new double[nDims];
     Matrix img2LPS = new Matrix(nDims+1, nDims+1);
+    TransMatrix trans;
+    TransMatrix trans2D;
+    boolean success;
+    double rotX, rotY, rotZ;
+    Matrix img2;
+    int i, j;
 
-    img2LPS = (Matrix) img.getMatrix();
-    for (int i = 0; i < nDims; i++) { // i's are the rows
-      for (int j = 0; j < nDims; j++) { // j's are the columns
+    if (img.getNDims() > 2) {
+        trans = img.getMatrix();
+    }
+    else {
+        trans2D = img.getMatrix();
+        trans = new TransMatrix(4);
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                trans.set(i, j, trans2D.get(i, j));
+            }
+        }
+    }
+    trans = img.getMatrix();
+    success = trans.decomposeMatrix(trans);
+    if (!success) {
+        MipavUtil.displayError("Failure on decompose matrix in originImg2LPS");
+        stopped = true;
+        setCompleted(false);
+        return null;  
+    }
+    rotZ = trans.getRotateZ() * Math.PI/180.0;
+    img2LPS.set(0, 0, Math.cos(rotZ));
+    img2LPS.set(0, 1, -Math.sin(rotZ));
+    img2LPS.set(1, 0, Math.sin(rotZ));
+    img2LPS.set(1, 1, Math.cos(rotZ));
+    img2LPS.set(2, 2, 1.0);
+    if (img.getNDims() > 2) {
+        img2LPS.set(3, 3, 1.0);
+        rotX = trans.getRotateX() * Math.PI/180.0;
+        rotY = trans.getRotateY() * Math.PI/180.0;
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, 1.0);
+        img2.set(1, 1, Math.cos(rotX));
+        img2.set(1, 2, -Math.sin(rotX));
+        img2.set(2, 1, Math.sin(rotX));
+        img2.set(2, 2, Math.cos(rotX));
+        img2.set(3, 3, 1.0);
+        img2LPS.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotY));
+        img2.set(0, 2, Math.sin(rotY));
+        img2.set(1, 1, 1.0);
+        img2.set(2, 0, -Math.sin(rotY));
+        img2.set(2, 2, Math.cos(rotY));
+        img2.set(3, 3, 1.0);
+        img2LPS.timesEquals(img2);
+    }
+    for (i = 0; i < nDims; i++) { // i's are the rows
+      for (j = 0; j < nDims; j++) { // j's are the columns
         if (Math.abs(img2LPS.get(i, j)) > Math.cos(Math.PI / 4.0))
         // plane is within 45 degrees of that direction
         {
@@ -1231,11 +1396,63 @@ public class AlgorithmMatchImages
   private double[] originLPS2Img(double[] origLPS, ModelImage img) {
     double[] origImg = new double[nDims];
     Matrix LPS2img = new Matrix(nDims+1, nDims+1);
+    TransMatrix trans;
+    TransMatrix trans2D;
+    boolean success;
+    double rotX, rotY, rotZ;
+    Matrix img2;
+    int i,j;
 
-    LPS2img = (Matrix) img.getMatrix();
+    if (img.getNDims() > 2) {
+        trans = img.getMatrix();
+    }
+    else {
+        trans2D = img.getMatrix();
+        trans = new TransMatrix(4);
+        for (i = 0; i < 3; i++) {
+            for (j = 0; j < 3; j++) {
+                trans.set(i, j, trans2D.get(i, j));
+            }
+        }
+    }
+    success = trans.decomposeMatrix(trans);
+    if (!success) {
+        MipavUtil.displayError("Failure on decompose matrix in originLPS2Img");
+        stopped = true;
+        setCompleted(false);
+        return null;  
+    }
+    rotZ = trans.getRotateZ() * Math.PI/180.0;
+    LPS2img.set(0, 0, Math.cos(rotZ));
+    LPS2img.set(0, 1, -Math.sin(rotZ));
+    LPS2img.set(1, 0, Math.sin(rotZ));
+    LPS2img.set(1, 1, Math.cos(rotZ));
+    LPS2img.set(2, 2, 1.0);
+    if (img.getNDims() > 2) {
+        LPS2img.set(3, 3, 1.0);
+        rotX = trans.getRotateX() * Math.PI/180.0;
+        rotY = trans.getRotateY() * Math.PI/180.0;
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, 1.0);
+        img2.set(1, 1, Math.cos(rotX));
+        img2.set(1, 2, -Math.sin(rotX));
+        img2.set(2, 1, Math.sin(rotX));
+        img2.set(2, 2, Math.cos(rotX));
+        img2.set(3, 3, 1.0);
+        LPS2img.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotY));
+        img2.set(0, 2, Math.sin(rotY));
+        img2.set(1, 1, 1.0);
+        img2.set(2, 0, -Math.sin(rotY));
+        img2.set(2, 2, Math.cos(rotY));
+        img2.set(3, 3, 1.0);
+        LPS2img.timesEquals(img2);
+    }
+    
     LPS2img = LPS2img.getMatrix(0, nDims, 0, nDims).inverse();
-    for (int i = 0; i < nDims; i++) { // i's are the rows
-      for (int j = 0; j < nDims; j++) { // j's are the columns
+    for (i = 0; i < nDims; i++) { // i's are the rows
+      for (j = 0; j < nDims; j++) { // j's are the columns
         if (Math.abs(LPS2img.get(i, j)) > Math.cos(Math.PI / 4.0))
         // plane is within 45 degrees of that direction
         {
