@@ -9453,13 +9453,17 @@ public class ViewJComponentEditImage
         return strs;
     }
 
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity) {
+    	commitMask(imagesDone, clearPaintMask, polarity, null);
+    }
+    
     /** Replace intensities in the image using painted mask.
      *  @param imagesDone  IMAGE_A, IMAGE_B, or BseedVOTH
      *  @param clearPaintMask if true clear paint mask
      *  @param polarity
      *
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity) {
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, Vector intensityLockVector) {
 
         float min, max;
         Color fillColor = new Color(128, 0, 0);
@@ -9489,7 +9493,7 @@ public class ViewJComponentEditImage
             else {
                 maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                 maskAlgo.setActiveImage(false);
-                maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice);
+                maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
 
                 if (imageA.getType() == ModelStorageBase.UBYTE) {
                     min = 0;
@@ -9525,7 +9529,7 @@ public class ViewJComponentEditImage
             else {
                 maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                 maskAlgo.setActiveImage(false);
-                maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice);
+                maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
 
                 if (imageB.getType() == ModelStorageBase.UBYTE) {
                     min = 0;
