@@ -1158,6 +1158,8 @@ public class JDialogRegistrationOAR2D
     sampleCheckBox.setEnabled(true);
 
     bruteForceCheckBox = new JCheckBox("Brute Force Registration");
+    bruteForceCheckBox.setActionCommand("BruteForceCheck");
+    bruteForceCheckBox.addActionListener(this);
     bruteForceCheckBox.setFont(serif12);
     bruteForceCheckBox.setForeground(Color.black);
     bruteForceCheckBox.setSelected( false );
@@ -1490,6 +1492,25 @@ public class JDialogRegistrationOAR2D
             comboBoxCostFunct.addItem("Normalized mutual information");
         }
         comboBoxCostFunct.setSelectedIndex(0);
+    }
+    else if (command.equals("BruteForceCheck") )
+    {
+        if ( bruteForceCheckBox.isSelected() )
+        {
+            comboBoxDOF.setEnabled( false );
+            rotateBeginText.setEnabled( false );
+            rotateEndText.setEnabled( false );
+            coarseRateText.setEnabled( false );
+            fineRateText.setEnabled( false );
+        }
+        else
+        {
+            comboBoxDOF.setEnabled( true );
+            rotateBeginText.setEnabled( true );
+            rotateEndText.setEnabled( true );
+            coarseRateText.setEnabled( true );
+            fineRateText.setEnabled( true );
+        }
     }
     /* Sets the parameters in the JFrameRegistrationMosaic object: */
     else if (command.equals("setParams")) {
