@@ -1080,7 +1080,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         if ( iTotal > iBruteCount )
         {
-            System.err.println( "Computing " + iTotal + " cost functions..." );
+            Preferences.debug( "Computing " + iTotal + " cost functions...\n",
+                               Preferences.DEBUG_ALGORITHM );
         }
 
         /* The scale increment for x and y: */
@@ -1098,6 +1099,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         boolean bDone = false;
         /* Test to see if any parameters are set, if all zero, return the
          * identity transform: */
+        double dMinCost = Float.MAX_VALUE;
+        double dCost = 0;
         if ( (m_fRotationRange == 0) &&
              (m_iTranslationRange == 0) &&
              ( ((m_fXScaleRange == 0) &&
@@ -1111,6 +1114,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             minima.add( new MatrixListItem( powell.getCost(),
                                             powell.getMatrix(),
                                             powell.getFinal() ) );
+            dCost = powell.getCost();
+            dMinCost = dCost;
         }
 
         /* Otherwise loop until all the permutations of rotations, scales, and
@@ -1128,11 +1133,41 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
          * maxed... */
         while ( bDone == false )
         {
+            /* Set progress bar: */
             if ( isProgressBarVisible() ) {
                 progressBar.updateValue( (int)(100 * (float)iBruteCount/(float)iTotal),
                                          activeImage );
             }
-            System.err.println( "... testing cost " + iBruteCount );
+            /* test current permutation and store results: */
+            initial[0] = angle;
+            initial[1] = dx;
+            initial[2] = dy;
+            initial[3] = 1/(1.0 + (xScale/100f));
+            initial[4] = 1/(1.0 + (yScale/100f));
+            
+            powell.setInitialPoint( initial );
+            powell.measureCost();
+            minima.add( new MatrixListItem( powell.getCost(),
+                                            powell.getMatrix(),
+                                            powell.getFinal() ) );
+            
+            dCost = powell.getCost();
+            if ( dCost < dMinCost )
+            {
+                dMinCost = dCost;
+            }
+            Preferences.debug( "... testing cost " + iBruteCount +
+                               " angle = " + angle +
+                               " dx = " + dx +
+                               " dy = " + dy +
+                               " scale x = " + xScale +
+                               " scale y = " + yScale +
+                               " ... cost = " + dCost + 
+                               " ... min cost sor far = " + dMinCost + "\n",
+                               Preferences.DEBUG_ALGORITHM );
+            iBruteCount++;
+
+            /* increment transform values: */
             bIncrementNext = true;
             /* Increment angle, if we are optimizing over angles: */
             if ( m_fRotationRange != 0 )
@@ -1203,34 +1238,23 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                     bDone = true;
                 }
             }
-            /* If not all permutation have been tested, test the current
-             * purmutation and add it to the list: */
-            if ( !bDone )
-            {
-                initial[0] = angle;
-                initial[1] = dx;
-                initial[2] = dy;
-                initial[3] = 1/(1.0 + (xScale/100f));
-                initial[4] = 1/(1.0 + (yScale/100f));
-
-                powell.setInitialPoint( initial );
-                powell.measureCost();
-                minima.add( new MatrixListItem( powell.getCost(),
-                                                powell.getMatrix(),
-                                                powell.getFinal() ) );
-                iBruteCount++;
-            }
         }
         if ( iTotal < iBruteCount )
         {
-            System.err.println( "... done testing costs" );
+            Preferences.debug( "... done testing costs \n",
+                               Preferences.DEBUG_ALGORITHM );
         }
 
         /* Sort the list of costs, take the minimum and return: */
         Collections.sort( minima );
         answer = (MatrixListItem)minima.firstElement();
         answer.matrix.invert();
+        Preferences.debug( "Min transform:\n" + answer.matrix +
+                           " cost = " + answer.cost +
+                           " min cost = " + dMinCost + "\n",
+                           Preferences.DEBUG_ALGORITHM );
 
+        cost.disposeLocal();
         powell.disposeLocal();
         disposeLocal();
         finalize();

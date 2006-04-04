@@ -672,6 +672,7 @@ public class JFrameRegistrationMosaic extends JFrame
      * AlgorithmRegOAR2D is then called on the two new registered images, to
      * better refine the registration. Upon completion of the registration
      * algorithm, a new mosaic image is created.
+     * @return boolean, sucess/failure of registeration
      */
     private boolean registerImages()
     {
@@ -1164,8 +1165,6 @@ public class JFrameRegistrationMosaic extends JFrame
                 String kName =
                     JDialogBase.makeImageName( m_akImages[m_iTile].getImageName(),
                                                "_register" );
-                System.err.println( ((AlgorithmRegOAR2D)kAlgorithm).
-                                           getTransform() );
                 /* Transform the input tile image: */
                 kAlgorithmTransform =
                     new AlgorithmTransform(m_akImages[m_iTile],
@@ -1443,6 +1442,7 @@ public class JFrameRegistrationMosaic extends JFrame
     /**
      * saveMosaic -- Opens a save dialog and saves the mosaic image in the
      * selected file format.
+     * @return boolean, sucess/failure of file save
      */
     private boolean saveMosaic()
     {
