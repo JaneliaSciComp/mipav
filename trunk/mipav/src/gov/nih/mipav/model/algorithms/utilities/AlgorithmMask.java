@@ -201,7 +201,7 @@ public class AlgorithmMask extends AlgorithmBase {
         int i;
         int length;
         float[] buffer;
-System.out.println("calcInPlace2D");
+
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
