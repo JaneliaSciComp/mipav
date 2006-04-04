@@ -276,23 +276,15 @@ public class AlgorithmMatchImages
         return;  
     }
     rotZ = trans.getRotateZ() * Math.PI/180.0;
-    img2LPS_A.set(0, 0, Math.cos(rotZ));
-    img2LPS_A.set(0, 1, -Math.sin(rotZ));
-    img2LPS_A.set(1, 0, Math.sin(rotZ));
-    img2LPS_A.set(1, 1, Math.cos(rotZ));
-    img2LPS_A.set(2, 2, 1.0);
     if (sourceImgA.getNDims() > 2) {
-        img2LPS_A.set(3, 3, 1.0);
         rotX = trans.getRotateX() * Math.PI/180.0;
         rotY = trans.getRotateY() * Math.PI/180.0;
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, 1.0);
-        img2.set(1, 1, Math.cos(rotX));
-        img2.set(1, 2, -Math.sin(rotX));
-        img2.set(2, 1, Math.sin(rotX));
-        img2.set(2, 2, Math.cos(rotX));
-        img2.set(3, 3, 1.0);
-        img2LPS_A.timesEquals(img2);
+        img2LPS_A.set(0, 0, 1.0);
+        img2LPS_A.set(1, 1, Math.cos(rotX));
+        img2LPS_A.set(1, 2, -Math.sin(rotX));
+        img2LPS_A.set(2, 1, Math.sin(rotX));
+        img2LPS_A.set(2, 2, Math.cos(rotX));
+        img2LPS_A.set(3, 3, 1.0);
         img2 = new Matrix(nDims+1, nDims+1);
         img2.set(0, 0, Math.cos(rotY));
         img2.set(0, 2, Math.sin(rotY));
@@ -301,6 +293,21 @@ public class AlgorithmMatchImages
         img2.set(2, 2, Math.cos(rotY));
         img2.set(3, 3, 1.0);
         img2LPS_A.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotZ));
+        img2.set(0, 1, -Math.sin(rotZ));
+        img2.set(1, 0, Math.sin(rotZ));
+        img2.set(1, 1, Math.cos(rotZ));
+        img2.set(2, 2, 1.0);
+        img2.set(3, 3, 1.0);
+        img2LPS_A.timesEquals(img2);
+    }
+    else {
+        img2LPS_A.set(0, 0, Math.cos(rotZ));
+        img2LPS_A.set(0, 1, -Math.sin(rotZ));
+        img2LPS_A.set(1, 0, Math.sin(rotZ));
+        img2LPS_A.set(1, 1, Math.cos(rotZ));
+        img2LPS_A.set(2, 2, 1.0);
     }
     img2LPS_A = img2LPS_A.getMatrix(0, nDims, 0, nDims);
     LPS2img_A = img2LPS_A.inverse();
@@ -325,23 +332,15 @@ public class AlgorithmMatchImages
         return;  
     }
     rotZ = trans.getRotateZ() * Math.PI/180.0;
-    img2LPS_B.set(0, 0, Math.cos(rotZ));
-    img2LPS_B.set(0, 1, -Math.sin(rotZ));
-    img2LPS_B.set(1, 0, Math.sin(rotZ));
-    img2LPS_B.set(1, 1, Math.cos(rotZ));
-    img2LPS_B.set(2, 2, 1.0);
     if (sourceImgB.getNDims() > 2) {
-        img2LPS_B.set(3, 3, 1.0);
         rotX = trans.getRotateX() * Math.PI/180.0;
         rotY = trans.getRotateY() * Math.PI/180.0;
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, 1.0);
-        img2.set(1, 1, Math.cos(rotX));
-        img2.set(1, 2, -Math.sin(rotX));
-        img2.set(2, 1, Math.sin(rotX));
-        img2.set(2, 2, Math.cos(rotX));
-        img2.set(3, 3, 1.0);
-        img2LPS_B.timesEquals(img2);
+        img2LPS_B.set(0, 0, 1.0);
+        img2LPS_B.set(1, 1, Math.cos(rotX));
+        img2LPS_B.set(1, 2, -Math.sin(rotX));
+        img2LPS_B.set(2, 1, Math.sin(rotX));
+        img2LPS_B.set(2, 2, Math.cos(rotX));
+        img2LPS_B.set(3, 3, 1.0);
         img2 = new Matrix(nDims+1, nDims+1);
         img2.set(0, 0, Math.cos(rotY));
         img2.set(0, 2, Math.sin(rotY));
@@ -350,6 +349,21 @@ public class AlgorithmMatchImages
         img2.set(2, 2, Math.cos(rotY));
         img2.set(3, 3, 1.0);
         img2LPS_B.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotZ));
+        img2.set(0, 1, -Math.sin(rotZ));
+        img2.set(1, 0, Math.sin(rotZ));
+        img2.set(1, 1, Math.cos(rotZ));
+        img2.set(2, 2, 1.0);
+        img2.set(3, 3, 1.0);
+        img2LPS_B.timesEquals(img2);
+    }
+    else {
+        img2LPS_B.set(0, 0, Math.cos(rotZ));
+        img2LPS_B.set(0, 1, -Math.sin(rotZ));
+        img2LPS_B.set(1, 0, Math.sin(rotZ));
+        img2LPS_B.set(1, 1, Math.cos(rotZ));
+        img2LPS_B.set(2, 2, 1.0);
     }
     img2LPS_B = img2LPS_B.getMatrix(0, nDims, 0, nDims);
     LPS2img_B = img2LPS_B.inverse();
@@ -1352,23 +1366,15 @@ public class AlgorithmMatchImages
         return null;  
     }
     rotZ = trans.getRotateZ() * Math.PI/180.0;
-    img2LPS.set(0, 0, Math.cos(rotZ));
-    img2LPS.set(0, 1, -Math.sin(rotZ));
-    img2LPS.set(1, 0, Math.sin(rotZ));
-    img2LPS.set(1, 1, Math.cos(rotZ));
-    img2LPS.set(2, 2, 1.0);
     if (img.getNDims() > 2) {
-        img2LPS.set(3, 3, 1.0);
         rotX = trans.getRotateX() * Math.PI/180.0;
         rotY = trans.getRotateY() * Math.PI/180.0;
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, 1.0);
-        img2.set(1, 1, Math.cos(rotX));
-        img2.set(1, 2, -Math.sin(rotX));
-        img2.set(2, 1, Math.sin(rotX));
-        img2.set(2, 2, Math.cos(rotX));
-        img2.set(3, 3, 1.0);
-        img2LPS.timesEquals(img2);
+        img2LPS.set(0, 0, 1.0);
+        img2LPS.set(1, 1, Math.cos(rotX));
+        img2LPS.set(1, 2, -Math.sin(rotX));
+        img2LPS.set(2, 1, Math.sin(rotX));
+        img2LPS.set(2, 2, Math.cos(rotX));
+        img2LPS.set(3, 3, 1.0);
         img2 = new Matrix(nDims+1, nDims+1);
         img2.set(0, 0, Math.cos(rotY));
         img2.set(0, 2, Math.sin(rotY));
@@ -1377,7 +1383,23 @@ public class AlgorithmMatchImages
         img2.set(2, 2, Math.cos(rotY));
         img2.set(3, 3, 1.0);
         img2LPS.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotZ));
+        img2.set(0, 1, -Math.sin(rotZ));
+        img2.set(1, 0, Math.sin(rotZ));
+        img2.set(1, 1, Math.cos(rotZ));
+        img2.set(2, 2, 1.0);
+        img2.set(3, 3, 1.0);
+        img2LPS.timesEquals(img2);
     }
+    else {
+        img2LPS.set(0, 0, Math.cos(rotZ));
+        img2LPS.set(0, 1, -Math.sin(rotZ));
+        img2LPS.set(1, 0, Math.sin(rotZ));
+        img2LPS.set(1, 1, Math.cos(rotZ));
+        img2LPS.set(2, 2, 1.0);
+    }
+    
     for (i = 0; i < nDims; i++) { // i's are the rows
       for (j = 0; j < nDims; j++) { // j's are the columns
         if (Math.abs(img2LPS.get(i, j)) > Math.cos(Math.PI / 4.0))
@@ -1423,23 +1445,15 @@ public class AlgorithmMatchImages
         return null;  
     }
     rotZ = trans.getRotateZ() * Math.PI/180.0;
-    LPS2img.set(0, 0, Math.cos(rotZ));
-    LPS2img.set(0, 1, -Math.sin(rotZ));
-    LPS2img.set(1, 0, Math.sin(rotZ));
-    LPS2img.set(1, 1, Math.cos(rotZ));
-    LPS2img.set(2, 2, 1.0);
     if (img.getNDims() > 2) {
-        LPS2img.set(3, 3, 1.0);
         rotX = trans.getRotateX() * Math.PI/180.0;
         rotY = trans.getRotateY() * Math.PI/180.0;
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, 1.0);
-        img2.set(1, 1, Math.cos(rotX));
-        img2.set(1, 2, -Math.sin(rotX));
-        img2.set(2, 1, Math.sin(rotX));
-        img2.set(2, 2, Math.cos(rotX));
-        img2.set(3, 3, 1.0);
-        LPS2img.timesEquals(img2);
+        LPS2img.set(0, 0, 1.0);
+        LPS2img.set(1, 1, Math.cos(rotX));
+        LPS2img.set(1, 2, -Math.sin(rotX));
+        LPS2img.set(2, 1, Math.sin(rotX));
+        LPS2img.set(2, 2, Math.cos(rotX));
+        LPS2img.set(3, 3, 1.0);
         img2 = new Matrix(nDims+1, nDims+1);
         img2.set(0, 0, Math.cos(rotY));
         img2.set(0, 2, Math.sin(rotY));
@@ -1448,6 +1462,21 @@ public class AlgorithmMatchImages
         img2.set(2, 2, Math.cos(rotY));
         img2.set(3, 3, 1.0);
         LPS2img.timesEquals(img2);
+        img2 = new Matrix(nDims+1, nDims+1);
+        img2.set(0, 0, Math.cos(rotZ));
+        img2.set(0, 1, -Math.sin(rotZ));
+        img2.set(1, 0, Math.sin(rotZ));
+        img2.set(1, 1, Math.cos(rotZ));
+        img2.set(2, 2, 1.0);
+        img2.set(3, 3, 1.0);
+        LPS2img.timesEquals(img2);
+    }
+    else {
+        LPS2img.set(0, 0, Math.cos(rotZ));
+        LPS2img.set(0, 1, -Math.sin(rotZ));
+        LPS2img.set(1, 0, Math.sin(rotZ));
+        LPS2img.set(1, 1, Math.cos(rotZ));
+        LPS2img.set(2, 2, 1.0);
     }
     
     LPS2img = LPS2img.getMatrix(0, nDims, 0, nDims).inverse();
