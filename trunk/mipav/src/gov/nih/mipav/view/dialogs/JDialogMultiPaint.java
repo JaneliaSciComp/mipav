@@ -234,7 +234,7 @@ public class JDialogMultiPaint extends JDialogBase {
 		resizeButton.setToolTipText("Resize the palette to the appropriate dimensions");       
 		
 		// display options
-		displayModeButton = new JToggleButton("Switch Mode");
+		displayModeButton = new JToggleButton("Show label text");
         displayModeButton.addActionListener(this);
         displayModeButton.setActionCommand("SwitchMode");
 		displayModeButton.setFont(serif12);
@@ -443,8 +443,18 @@ public class JDialogMultiPaint extends JDialogBase {
 		} else if (command.startsWith("Preserve")) {
 			int num = Integer.valueOf(command.substring( command.indexOf(" ")+1 ) ).intValue();
 			//System.out.println("preserve "+num);
-			if (preserveBox[num].isSelected()) preserved[num] = true;
-			else preserved[num] = false;
+			if (preserveBox[num].isSelected()) {
+				preserved[num] = true;
+				if (parentFrame != null && parentFrame instanceof ViewJFrameImage) {
+					((ViewJFrameImage) parentFrame).addIntensityLock(num);
+				}
+			}
+			else {
+				preserved[num] = false;
+				if (parentFrame != null && parentFrame instanceof ViewJFrameImage) {
+					((ViewJFrameImage) parentFrame).removeIntensityLock(num);
+				}
+			}
 		} else if (command.startsWith("Label")) {
 			int num = Integer.valueOf(command.substring( command.indexOf(" ")+1 ) ).intValue();
 			//System.out.println("label "+num);

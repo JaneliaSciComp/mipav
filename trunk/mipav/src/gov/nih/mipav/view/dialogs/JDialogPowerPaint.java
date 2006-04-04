@@ -374,6 +374,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonShowAdvancedPaintControls.addActionListener(this);
         buttonShowAdvancedPaintControls.setActionCommand("show advanced");
         buttonShowAdvancedPaintControls.setFont(serif12);
+        buttonShowAdvancedPaintControls.setEnabled(!image.isColorImage());
 
         objectPanel = new JPanel(new GridBagLayout());
         objectPanel.setBorder(buildTitledBorder("Object Processing"));
@@ -381,104 +382,104 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
 
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(labelO2D, gbc);
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(labelO3D, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         objectPanel.add(buttonGrowRegion, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioGrowRegion2D, gbc);
         gbc.gridx = 2;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioGrowRegion3D, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         objectPanel.add(buttonFillBackground, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioBackground2D, gbc);
         gbc.gridx = 2;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioBackground3D, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         objectPanel.add(buttonFillBackgrounds, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioBackgrounds2D, gbc);
         gbc.gridx = 2;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioBackgrounds3D, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         objectPanel.add(buttonRmObject, gbc);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioObject2D, gbc);
         gbc.gridx = 2;
         gbc.gridy = 4;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioObject3D, gbc);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         objectPanel.add(buttonRmObjects, gbc);
         gbc.gridx = 1;
         gbc.gridy = 5;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioObjects2D, gbc);
         gbc.gridx = 2;
         gbc.gridy = 5;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(radioObjects3D, gbc);
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         objectPanel.add(labelConnectType, gbc);
         gbc.gridx = 1;
         gbc.gridy = 6;
         gbc.weightx = 0;
         gbc.gridwidth = 2;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         objectPanel.add(comboConnectType, gbc);
 
         morphoPanel = new JPanel(new GridBagLayout());
@@ -488,46 +489,46 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         morphoPanel.add(buttonErode, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         morphoPanel.add(comboErodeDimType, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         morphoPanel.add(buttonDilate, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         morphoPanel.add(comboDilateDimType, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         morphoPanel.add(labelStructureType, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         morphoPanel.add(comboStructureType, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         morphoPanel.add(labelStructuring, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         morphoPanel.add(textStructuring, gbc);
 
         movePanel = new JPanel(new GridBagLayout());
@@ -538,7 +539,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         movePanel.add(checkSave, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -552,7 +553,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         exportPanel.add(buttonExportToVOI, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -570,7 +571,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridx = 0;
         gbc.gridwidth = 1;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
         mainPanel.add(objectPanel, gbc);
@@ -2003,7 +2004,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             int yS = image.getTriImageFrame().getCoronalComponentSlice();
             BitSet img = new BitSet(nx * nz);
             int nxny = nx * ny;
-            int x, y, z;
+            int x, z;
             for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
             {
                 if (yS == (index % nxny) / nx)
@@ -2035,7 +2036,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             int xS = image.getTriImageFrame().getSagittalComponentSlice();
             BitSet img = new BitSet(nx * ny);
             int nxny = nx * ny;
-            int x, y, z;
+            int y, z;
             for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
             {
                 if (xS == ( (index % nxny) % nx))
@@ -2181,7 +2182,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             int yS = image.getTriImageFrame().getCoronalComponentSlice();
             BitSet img = new BitSet(nx * nz);
             int nxny = nx * ny;
-            int x, y, z;
+            int x, z;
             for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
             {
                 if (yS == (index % nxny) / nx)
@@ -2207,7 +2208,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             int xS = image.getTriImageFrame().getSagittalComponentSlice();
             BitSet img = new BitSet(nx * ny);
             int nxny = nx * ny;
-            int x, y, z;
+            int y, z;
             for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
             {
                 if (xS == ( (index % nxny) % nx))
@@ -3031,7 +3032,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         int[][][] label = new int[nx][ny][nz];
         int[] lb = new int[MaxObject];
         int lbMin;
-        int x, y, z, i, j, k, l, c, n;
+        int x, y, z, i, j, k, l, c;
         int Nlb;
         int[] connect = new int[6];
         int Nconnect;
@@ -3158,7 +3159,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         int[][][] label = new int[nx][ny][nz];
         int[] lb = new int[MaxObject];
         int lbMin;
-        int x, y, z, i, j, k, l, c, n;
+        int x, y, z, i, j, k, l, c;
         int Nlb;
         int[] connect = new int[18];
         int Nconnect;
@@ -3285,7 +3286,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         int[][][] label = new int[nx][ny][nz];
         int[] lb = new int[MaxObject];
         int lbMin;
-        int x, y, z, i, j, k, l, c, n;
+        int x, y, z, i, j, k, l, c;
         int Nlb;
         int[] connect = new int[26];
         int Nconnect;
