@@ -312,6 +312,7 @@ public class Preferences {
         shortcutTable = new Hashtable();
 
         String str = getProperty("Shortcuts");
+        //System.err.println(str);
         String keyStr = null;
         String shortcutStr = null;
         StringTokenizer tok = null;
@@ -328,6 +329,7 @@ public class Preferences {
                 while (tok.hasMoreTokens()) {
                     token = tok.nextToken();
 
+                   // System.err.println("token is: " + token);
                     shortcutStr = token.substring(0, token.indexOf(","));
                     keyStr = token.substring(token.indexOf(",") + 1, token.length()).trim();
                     modifiers = 0;
@@ -339,7 +341,9 @@ public class Preferences {
                         modifiers += Event.ALT_MASK;
                     }
                     if (keyStr.indexOf("SHIFT") != -1) {
+                     //   System.err.println("KEYSTRING: " + keyStr);
                         modifiers += Event.SHIFT_MASK;
+                   //     System.err.println("found shift: " + keyStr.charAt(keyStr.length()-1));
                     }
                     int fIndex = 0;
                     if (keyStr.length() == 2 ||
@@ -348,6 +352,7 @@ public class Preferences {
                         shortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex], 0, false));
                     } else {
                         if (modifiers != 0) {
+
                             shortcutTable.put(shortcutStr,
                                               KeyStroke.getKeyStroke(keyStr.charAt(keyStr.length() - 1), modifiers, false));
                         } else {
@@ -1124,7 +1129,7 @@ public class Preferences {
         // initialze the properties to the default properties
         mipavProps = new Properties(defaultProps);
 
-        buildShortcutTable();
+
 
         if ( !new File(preferencesFile).exists() ) {
             // nothing user-specific to override the defaults, so just save what there is.
@@ -1148,6 +1153,8 @@ public class Preferences {
                 }
             } catch (IOException ioe) {}
         }
+
+        buildShortcutTable();
 
         return true;
     }
