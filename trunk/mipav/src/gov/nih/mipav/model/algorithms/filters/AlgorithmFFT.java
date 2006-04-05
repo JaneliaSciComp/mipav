@@ -28,7 +28,8 @@ import java.util.Arrays;
  *  The module also creates a Gabor filter, which is essentially a tilted Gaussian
  *  with 2 unequal axes at an offset (freqU, freqV) from the origin.  A Gabor filter
  *  only responds to a texture having both a particular frequency and a particular
- *  orientation.
+ *  orientation.  Note that a filter and its mirror image reflected across the u and v 
+ *  frequency axes produce identical frequency responses.
  *
  *  The core algorithm of this module, the fast fourier transform algorithm found in exec(), requires that
  *  all the dimensions of an N-dimensional dataset be powers of 2.  To be able to use
