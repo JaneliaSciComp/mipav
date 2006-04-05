@@ -38,7 +38,6 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
     private JCheckBox checkboxAdditiveOrSubtractive;
     private JCheckBox checkboxIncludeForProcessing;
     private JCheckBox checkboxBoundary;
-    private JScrollPane sPane;
     private JPanel statsPanel;
 
     private JCheckBox checkboxExclude;
@@ -109,29 +108,50 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 createRaisedBevelBorder(),
                 BorderFactory.createLoweredBevelBorder());
 
-        JLabel labelName = new JLabel("Name of VOI");
+        JLabel labelName = new JLabel("Name of VOI:");
         labelName.setFont(serif12);
         labelName.setForeground(Color.black);
+
+        JLabel labelColor = new JLabel("Color of VOI:");
+        labelColor.setFont(serif12);
+        labelColor.setForeground(Color.black);
 
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
         colorButton.setToolTipText("Change VOI color");
         colorButton.addActionListener(this);
 
-        VOIName = new JTextField(10);
+        VOIName = new JTextField(15);
         VOIName.setFont(serif12);
 
         JPanel namePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5,5,5,5);
         gbc.anchor = gbc.WEST;
-        gbc.weightx = 1;
-
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = gbc.NONE;
         namePanel.add(labelName, gbc);
+
+        gbc.weightx = 1;
+        gbc.weighty = 1;
         gbc.gridx = 1;
+        gbc.fill = gbc.HORIZONTAL;
+        namePanel.add(VOIName, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.fill = gbc.NONE;
+        namePanel.add(labelColor, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
         namePanel.add(colorButton, gbc);
-        gbc.gridx = 2;
-        gbc.weightx = 1; //gbc.fill = gbc.HORIZONTAL;
-        namePanel.add(VOIName);
+
+        gbc.insets = new Insets(0,0,0,0);
 
         checkboxBoundingBox = new JCheckBox("Show contour bounding box");
         checkboxBoundingBox.setFont(serif12);
@@ -304,35 +324,39 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         buildVOITree();
         buildVOIContourPane();
 
-        JPanel treePanel = new JPanel(new BorderLayout());
-        treePanel.setBorder(buildTitledBorder("VOI Tree"));
-        treePanel.setPreferredSize(new Dimension(215,600));
-        treePanel.setMinimumSize(new Dimension(150, 150));
+        GridBagConstraints gb = new GridBagConstraints();
+
+        JPanel mainTreePanel = new JPanel(new GridBagLayout());
+        mainTreePanel.setBorder(buildTitledBorder("VOI Tree"));
+
+        gb.anchor = gb.CENTER;
+        gb.gridx = 0; gbc.gridy = 0;
+        gb.weightx = 1.0;
+        gb.weighty = 1.0;
+        gb.fill = gbc.BOTH;
+
+        mainTreePanel.add(voiTreePane, gb);
 
         JPanel treeOptionPanel = new JPanel(new BorderLayout());
         treeOptionPanel.setBorder(buildTitledBorder("Tree Options"));
         followVOISelectionBox = new JCheckBox("Frame follows VOI selection", true);
         followVOISelectionBox.setFont(MipavUtil.font12);
         followVOISelectionBox.addActionListener(this);
+        followVOISelectionBox.setEnabled(image.getNDims() > 2);
         treeOptionPanel.add(followVOISelectionBox, BorderLayout.CENTER);
 
 
-        JPanel comboTreePanel = new JPanel(new BorderLayout());
-        comboTreePanel.add(treeOptionPanel, BorderLayout.NORTH);
+        gb.gridy = 1;
+        gb.weightx = 1;
+        gb.weighty = 0;
+        gb.fill = gbc.HORIZONTAL;
+        mainTreePanel.add(treeOptionPanel, gb);
 
-        JPanel contourPanel = new JPanel(new BorderLayout());
-        contourPanel.add(voiContourPane, BorderLayout.CENTER);
-        comboTreePanel.add(contourPanel, BorderLayout.SOUTH);
-
-
-        treePanel.add(comboTreePanel, BorderLayout.SOUTH);
-
-        JPanel tScrollPanel = new JPanel(new BorderLayout());
-        tScrollPanel.add(voiTreePane);
-        tScrollPanel.setPreferredSize(new Dimension(220,300));
-        tScrollPanel.setMinimumSize(new Dimension(160,160));
-        treePanel.add(tScrollPanel, BorderLayout.NORTH);
-
+        gb.gridy = 2;
+        gb.weightx = .5;
+        gb.weighty = .5;
+        gb.fill = gb.BOTH;
+        mainTreePanel.add(voiContourPane, gb);
 
         JPanel leftButton = new JPanel();
         leftButton.add(applyButton);
@@ -340,7 +364,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         JPanel leftWholePanel = new JPanel(new BorderLayout());
         leftWholePanel.add(panelVOIProps, BorderLayout.NORTH);
-        leftWholePanel.add(treePanel, BorderLayout.CENTER);
+        leftWholePanel.add(mainTreePanel, BorderLayout.CENTER);
 
         JPanel leftPanel = new JPanel(new BorderLayout());
         leftPanel.add(leftWholePanel);
@@ -358,9 +382,21 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         rightPanel.add(calcPanel);
         rightPanel.add(rightButton, BorderLayout.SOUTH);
 
-        mainDialogPanel.setLayout(new BorderLayout());
-        mainDialogPanel.add(leftPanel, BorderLayout.WEST);
-        mainDialogPanel.add(rightPanel);
+        mainDialogPanel.setLayout(new GridBagLayout());
+        gb.gridx = 0;
+        gb.gridy = 0;
+        gb.weightx = 1;
+        gb.weighty = 1;
+        gb.fill = gb.BOTH;
+        mainDialogPanel.add(leftPanel, gb);
+
+        gb.gridx = 1;
+        mainDialogPanel.add(rightPanel, gb);
+
+
+     //   mainDialogPanel.setLayout(new BorderLayout());
+     //   mainDialogPanel.add(leftPanel, BorderLayout.WEST);
+     //   mainDialogPanel.add(rightPanel);
         mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         getContentPane().add(mainDialogPanel);
         pack();
@@ -372,11 +408,9 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         contourTextArea.setFont(MipavUtil.font10);
         contourTextArea.setEditable(false);
 
-        voiContourPane = new JScrollPane(contourTextArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        voiContourPane = new JScrollPane(contourTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-        voiContourPane.setPreferredSize(new Dimension(200, 100));
-        voiContourPane.setMaximumSize(new Dimension(200, 100));
     }
 
     private void buildVOITree() {
@@ -399,29 +433,17 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         voiTree = new JTree(voiModel);
         voiTree.setCellRenderer(new VOITreeRenderer());
-        //voiTree.setBackground(background);
-        //voiTree.setBackground(Color.gray);
+
         voiTree.setFont(MipavUtil.font12);
         voiTree.addTreeSelectionListener(this);
-       // voiTree.setPreferredSize(new Dimension(200,300));
-       // voiTree.setMinimumSize(new Dimension(100,100));
 
 
         voiTreePane = new JScrollPane(voiTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                                          JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 
-        //voiTreePane.validate();
-        voiTreePane.setPreferredSize(new Dimension(212,312));
-        //voiTreePane.setMaximumSize(new Dimension(212,483));
-        voiTreePane.setMinimumSize(new Dimension(112,112));
     }
 
     private void updateContourPane(VOIBase leadBase) {
-
-    //    if (leadBase.size() > 0) {
-    //        System.err.println(voiContourPane.getSize());
-    //        return;
-    //    }
 
         int i = 0;
         int size = leadBase.size();
@@ -494,9 +516,9 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         }
 
 
-        for (i = 0; i < leadBase.size(); i++) {
-            contourTextArea.append("\t");
-        }
+    //    for (i = 0; i < leadBase.size(); i++) {
+      //      contourTextArea.append("\t");
+    //    }
 
         contourTextArea.setCaretPosition(0);
 
