@@ -2745,7 +2745,10 @@ public class ModelImage extends ModelStorageBase {
      */
     public void getScannerCoordLPS( int x, int y, int z, float[] scannerCoord ) {
 
-        if ( getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL ) {
+        if (( getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL )&&
+            ( getFileInfo()[0].getFileFormat() != FileBase.XML) &&
+            ( getFileInfo()[0].getFileFormat() != FileBase.MINC) /*&&
+            ( getFileInfo()[0].getFileFormat() != FileBase.NIFTI)*/) {
             return;
         }
         int nDims = getNDims();
