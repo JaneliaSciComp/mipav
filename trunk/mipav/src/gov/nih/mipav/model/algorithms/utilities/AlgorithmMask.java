@@ -115,7 +115,6 @@ public class AlgorithmMask extends AlgorithmBase {
 
 
     /**
-     *
      *   @param srcImg   source image model
      *   @param _fillColor     color used to fill a region
      *   @param polarity flag indicating fill location, true = fill inside; false fill outside
@@ -220,6 +219,10 @@ public class AlgorithmMask extends AlgorithmBase {
         int mod = length / 100; //mod is 1 percent of length
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( i = 0; i < length && !threadStopped; i++ ) {
             if ( i % mod == 0 && isProgressBarVisible() ) {
@@ -271,6 +274,10 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( z = 0; z < srcImage.getExtents()[2]; z++ ) {
 
@@ -349,6 +356,10 @@ public class AlgorithmMask extends AlgorithmBase {
         int mod = length / 100; //mod is 1 percent of length
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( i = 0; i < length && !threadStopped; i++ ) {
             if ( i % mod == 0 && isProgressBarVisible() ) {
@@ -405,6 +416,10 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( z = 0; z < srcImage.getExtents()[2] && !threadStopped; z++ ) {
             try {
@@ -470,6 +485,10 @@ public class AlgorithmMask extends AlgorithmBase {
         int mod = length / 100; //mod is 1 percent of length
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( i = 0; i < length && !threadStopped; i++ ) {
             if ( i % mod == 0 && isProgressBarVisible() ) {
@@ -597,6 +616,10 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( z = 0; z < srcImage.getExtents()[2]; z++ ) {
 
@@ -738,6 +761,10 @@ public class AlgorithmMask extends AlgorithmBase {
         int mod = length / 100; //mod is 1 percent of length
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( i = 0; i < length && !threadStopped; i++ ) {
             if ( i % mod == 0 && isProgressBarVisible() ) {
@@ -864,6 +891,10 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         for ( z = 0; z < srcImage.getExtents()[2]; z++ ) {
 
@@ -1040,7 +1071,10 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             initProgressBar();
-            MipavUtil.centerOnScreen(progressBar);
+            if (progressBar != null)
+            {
+            	MipavUtil.centerOnScreen(progressBar);
+            }
 
             if ( srcImage.getNDims() == 4 ) {
                 end = srcImage.getExtents()[2];
@@ -1126,6 +1160,10 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             initProgressBar();
+            if (progressBar != null)
+            {
+            	MipavUtil.centerOnScreen(progressBar);
+            }
 
             if ( srcImage.getNDims() == 4 ) {
                 end = srcImage.getExtents()[2];
@@ -1158,21 +1196,31 @@ public class AlgorithmMask extends AlgorithmBase {
                     if ( srcImage.getNDims() == 2 && ( i % mod == 0 ) && isProgressBarVisible() ) {
                         progressBar.updateValue( Math.round( (float) i / ( imgLength - 1 ) ) * 100, activeImage );
                     }
-                    if ( mask.get( offset + i ) == true && polarity == true ) {
+                    if ( (mask.get( offset + i ) == true && polarity == true) ||
+                    	 (mask.get( offset + i ) == false && polarity == false) ) {
                         // Must preserve phase information so make values 1000 times the
                         // minimum float instead of zero
                         mag = (float) ( Math.sqrt( buffer[i] * buffer[i] + bufferI[i] * bufferI[i] ) );
                         if ( mag > 1000.0f ) {
-                            norm = 1000.0f * Float.MIN_VALUE / mag;
-                            buffer[i] = buffer[i] * norm;
-                            bufferI[i] = bufferI[i] * norm;
-                        }
-                    } else if ( mask.get( offset + i ) == false && polarity == false ) {
-                        mag = (float) ( Math.sqrt( buffer[i] * buffer[i] + bufferI[i] * bufferI[i] ) );
-                        if ( mag > 1000.0f ) {
-                            norm = 1000.0f * Float.MIN_VALUE / mag;
-                            buffer[i] = buffer[i] * norm;
-                            bufferI[i] = bufferI[i] * norm;
+                        	
+                        	boolean locked = false;
+                        	if (lockedIntensities != null)
+                        	{
+                        		for (int j = 0; j < lockedIntensities.length; j++)
+                        		{
+                        			if (buffer[i] == lockedIntensities[j])
+                        			{
+                        				locked = true;
+                        			}
+                        		}
+                        	}
+                        	
+                        	if (locked == false)
+                        	{
+                        		norm = 1000.0f * Float.MIN_VALUE / mag;
+                                buffer[i] = buffer[i] * norm;
+                                bufferI[i] = bufferI[i] * norm;
+                        	}
                         }
                     }
                 }
@@ -1261,6 +1309,10 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             initProgressBar();
+            if (progressBar != null)
+            {
+            	MipavUtil.centerOnScreen(progressBar);
+            }
 
             if ( srcImage.getNDims() == 4 ) {
                 end = srcImage.getExtents()[2];
@@ -1348,6 +1400,10 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             initProgressBar();
+            if (progressBar != null)
+            {
+            	MipavUtil.centerOnScreen(progressBar);
+            }
 
             if ( srcImage.getNDims() == 4 ) {
                 end = srcImage.getExtents()[2];
@@ -1380,21 +1436,31 @@ public class AlgorithmMask extends AlgorithmBase {
                     if ( srcImage.getNDims() == 2 && ( i % mod == 0 ) && isProgressBarVisible() ) {
                         progressBar.updateValue( Math.round( (float) i / ( imgLength - 1 ) ) * 100, activeImage );
                     }
-                    if ( mask.get( offset + i ) == true && polarity == true ) {
+                    if ( (mask.get( offset + i ) == true && polarity == true) ||
+                    	 (mask.get( offset + i ) == false && polarity == false) ) {
                         // Must preserve phase information so make values 1000 times the
                         // minimum float instead of zero
                         mag = (float) ( Math.sqrt( buffer[i] * buffer[i] + bufferI[i] * bufferI[i] ) );
                         if ( mag > 1000.0f ) {
-                            norm = 1000.0f * Float.MIN_VALUE / mag;
-                            buffer[i] = buffer[i] * norm;
-                            bufferI[i] = bufferI[i] * norm;
-                        }
-                    } else if ( mask.get( offset + i ) == false && polarity == false ) {
-                        mag = (float) ( Math.sqrt( buffer[i] * buffer[i] + bufferI[i] * bufferI[i] ) );
-                        if ( mag > 1000.0f ) {
-                            norm = 1000.0f * Float.MIN_VALUE / mag;
-                            buffer[i] = buffer[i] * norm;
-                            bufferI[i] = bufferI[i] * norm;
+                        	
+                        	boolean locked = false;
+                        	if (lockedIntensities != null)
+                        	{
+                        		for (int j = 0; j < lockedIntensities.length; j++)
+                        		{
+                        			if (buffer[i] == lockedIntensities[j])
+                        			{
+                        				locked = true;
+                        			}
+                        		}
+                        	}
+                        	
+                        	if (locked == false)
+                        	{
+                        		norm = 1000.0f * Float.MIN_VALUE / mag;
+                                buffer[i] = buffer[i] * norm;
+                                bufferI[i] = bufferI[i] * norm;
+                        	}
                         }
                     }
                 }
@@ -1451,6 +1517,10 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         if ( srcImage.getNDims() == 4 ) {
             end = srcImage.getExtents()[2];
@@ -1541,6 +1611,10 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         initProgressBar();
+        if (progressBar != null)
+        {
+        	MipavUtil.centerOnScreen(progressBar);
+        }
 
         if ( srcImage.getNDims() == 4 ) {
             end = srcImage.getExtents()[2];
