@@ -2966,7 +2966,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("MaskToPaint"))
         {
-            handleMaskToPaint();
+            handleMaskToPaint(true);
 
             // add the conversion to the script, if one is being recorded
             if (userInterface.isScriptRecording()) {
@@ -5823,7 +5823,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * This method is provided for the user to convert a masked area back to a painted area.
      * It only affects those areas that were masked with the intensity value that is currently active.
      */
-    private void handleMaskToPaint()
+    public void handleMaskToPaint(boolean showProgressBar)
     {
         if (componentImage != null)
         {
@@ -5835,7 +5835,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             	ViewJProgressBar progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true,
                         this, this);
                 MipavUtil.centerOnScreen(progressBar);
-                progressBar.setVisible(true);
+                progressBar.setVisible(showProgressBar);
 
                 try
                 {
