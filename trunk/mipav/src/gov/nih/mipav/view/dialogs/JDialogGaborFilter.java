@@ -16,6 +16,8 @@ import javax.swing.*;
  *   option to generate a new image or replace the source image.
  *   It should be noted that the algorithms are executed in their own
  *   threads.
+ *   Note that a filter and its mirror image reflected across the u and v 
+ *   frequency axes produce identical frequency responses.
  *
  *		@version     March 21, 2006
  *       @see        AlgorithmFrequencyFilter
