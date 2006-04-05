@@ -260,10 +260,6 @@ public class JDialogSaveMinc extends JDialogBase {
         if (fileInfo.getFileFormat() == FileBase.MINC) {
             Preferences.debug("Is MINC format\n");
         }
-        
-        if (((FileInfoMinc)fileInfo).resetStartLocationsOrientations()) {
-            Preferences.debug("Reset start locations\n");
-        }
 
     	if (fileInfo.getFileFormat() == FileBase.MINC && !((FileInfoMinc)fileInfo).resetStartLocationsOrientations()) {
     		float[] steps = ((FileInfoMinc)fileInfo).getStepMinc();
