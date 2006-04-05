@@ -789,8 +789,8 @@ public class SurfaceRender extends RenderViewBase {
             int[] aiCompositeImageA = componentVolImage.getCompositeImageA();
 
             // Retrieve the normal vectors for the voxels in image A.
-            Vector3f[] akNormalsImageA = componentVolImage.getNormalsImageA();
-            // Vector3f[] akNormalsImageA = RenderViewBase.getNormals();
+            // Vector3f[] akNormalsImageA = componentVolImage.getNormalsImageA();
+            Vector3f[] akNormalsImageA = RenderViewBase.getNormals();
 
 
             // Create a vertex property for software lighting.

@@ -143,8 +143,8 @@ public class RendererImageData {
                 // Compute normals from gradient of intensity.
                 if (kRayTracer.usesNormals()) {
                     if (bUpdatedTimeSlice || !kRayTracer.hasNormals()) {
-                        // kRayTracer.setNormals(RenderViewBase.getNormals());
-                        kRayTracer.setNormals(createImageNormals(m_afData));
+                        kRayTracer.setNormals(RenderViewBase.getNormals());
+                        // kRayTracer.setNormals(createImageNormals(m_afData));
                     }
                 }
             }
@@ -328,8 +328,8 @@ public class RendererImageData {
                             m_afData[4 * i + 2],
                             m_afData[4 * i + 3]);
                     }
-                    // kRayTracer.setNormals(RenderViewBase.getNormals());
-                    kRayTracer.setNormals(createImageNormals(afIntensity));
+                    kRayTracer.setNormals(RenderViewBase.getNormals());
+                    // kRayTracer.setNormals(createImageNormals(afIntensity));
                     afIntensity = null;
                 }
             }

@@ -1086,21 +1086,32 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
      * input voxel intensity values.
      */
     public Vector3f[] calcImageNormals() {
+
+        ModelSimpleImage kValueImageA;
+        float[] afData;
+
         // Extract image slice.
         ModelSimpleImage kSimpleImageA = new ModelSimpleImage(imageA, 0);
 
         // Convert to intensity valued image.
-        ModelSimpleImage kValueImageA = kSimpleImageA.createIntensityImage();
-        kSimpleImageA = null;
+        if ( imageA.isColorImage() ) {
+          kValueImageA = kSimpleImageA.createIntensityImage();
+          afData = kValueImageA.data;
+        } else {
+          afData = kSimpleImageA.data;
+
+        }
 
         // Access intensity values as a linear array.
         // Initially allocate all normal vectors as the zero vector.
-        float[] afData = kValueImageA.data;
         akNormal = new Vector3f[afData.length];
-        Arrays.fill(akNormal, m_kZeroVector);
-        
+
         Vector3f[] akNormalTmp = new Vector3f[afData.length];
-        Arrays.fill(akNormalTmp, m_kZeroVector);
+
+        for ( int i = 0; i < akNormalTmp.length; i++ ) {
+          akNormal[i] = new Vector3f(0, 0, 0);
+          akNormalTmp[i] = new Vector3f(0, 0, 0);
+        }
 
         int iXBound = m_iSizeX;
         int iYBound = m_iSizeY;
@@ -1176,9 +1187,8 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
             for (iY = 1; iY < iYBound - 1; iY++) {
                 int offset = iXBound * (iY + iYBound * iZ);
                 for (iX = 1; iX < iXBound - 1; iX++) {
-
                     int i = iX + offset;
-                    akNormal[i] = akNormalTmp[i];
+                    akNormal[i].add(akNormalTmp[i]);
                     akNormal[i].add(akNormalTmp[i - 1]);
                     akNormal[i].add(akNormalTmp[i + 1]);
                     akNormal[i].add(akNormalTmp[i - iXBound]);
@@ -1193,6 +1203,7 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
             akNormalTmp[i] = null;
         }
         akNormalTmp = null;
+        kSimpleImageA = null;
         System.gc();
         return akNormal;
     }
