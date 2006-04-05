@@ -143,8 +143,8 @@ public class RendererImageData {
                 // Compute normals from gradient of intensity.
                 if (kRayTracer.usesNormals()) {
                     if (bUpdatedTimeSlice || !kRayTracer.hasNormals()) {
-                        kRayTracer.setNormals(RenderViewBase.getNormals());
-                        // kRayTracer.setNormals(createImageNormals(m_afData));
+                        // kRayTracer.setNormals(RenderViewBase.getNormals());
+                        kRayTracer.setNormals(createImageNormals(m_afData));
                     }
                 }
             }
@@ -182,6 +182,89 @@ public class RendererImageData {
 
         return true;
     }
+
+    /**
+     * Create array of normal vectors corresponding to the voxels in
+     * the volume.  The normal vector is computed based on the
+     * gradient of the volume intensity values.
+     * @param afData float[] Input array of voxel values.
+     * @param Vector3f[] Array of normal vectors corresponding to the
+     * input voxel intensity values.
+     */
+    private Vector3f[] createImageNormals(float[] afData) {
+
+        Vector3f[] akNormal = new Vector3f[afData.length];
+        Arrays.fill(akNormal, m_kZeroVector);
+
+        int iXBound = m_iSizeX;
+        int iYBound = m_iSizeY;
+        int iZBound = m_iSizeZ;
+        int iXYBound = iXBound * iYBound;
+
+        // normals from gradient which are computed using central finite
+        // differences everywhere except forward/backward finite differences
+        // are used at the edges
+        int iOffX = 1;
+        int iOffY = iXBound;
+        int iOffZ = iXBound * iYBound;
+        int iX, iY, iZ;
+        for (iZ = 0; iZ < iZBound; iZ++) {
+            boolean bMinZ = 0 == iZ;
+            boolean bMaxZ = (iZBound - 1) == iZ;
+            for (iY = 0; iY < iYBound; iY++) {
+                boolean bMinY = 0 == iY;
+                boolean bMaxY = (iYBound - 1) == iY;
+                int offset = iXBound * (iY + iYBound * iZ);
+                for (iX = 0; iX < iXBound; iX++) {
+                    boolean bMinX = 0 == iX;
+                    boolean bMaxX = (iXBound - 1) == iX;
+
+                    int i = iX + offset;
+
+                    float fDX =
+                        (bMinX ? afData[i] : afData[i - iOffX]) -
+                        (bMaxX ? afData[i] : afData[i + iOffX]);
+                    float fDY =
+                        (bMinY ? afData[i] : afData[i - iOffY]) -
+                        (bMaxY ? afData[i] : afData[i + iOffY]);
+                    float fDZ =
+                        (bMinZ ? afData[i] : afData[i - iOffZ]) -
+                        (bMaxZ ? afData[i] : afData[i + iOffZ]);
+
+                    if (fDX != 0.0f || fDY != 0.0f || fDZ != 0.0f) {
+                        akNormal[i] = new Vector3f(fDX, fDY, fDZ);
+                        akNormal[i].normalize();
+                    }
+                }
+            }
+        }
+
+        // Catch any zero-vector normals and replace them by an average of
+        // neighboring normals.
+        for (iZ = 1; iZ < iZBound - 1; iZ++) {
+            for (iY = 1; iY < iYBound - 1; iY++) {
+                int offset = iXBound * (iY + iYBound * iZ);
+                for (iX = 1; iX < iXBound - 1; iX++) {
+
+                    int i = iX + offset;
+
+                    if (afData[i] != 0.0f && akNormal[i] == m_kZeroVector) {
+                        akNormal[i] = new Vector3f(0.0f, 0.0f, 0.0f);
+                        akNormal[i].add(akNormal[i - 1]);
+                        akNormal[i].add(akNormal[i + 1]);
+                        akNormal[i].add(akNormal[i - iXBound]);
+                        akNormal[i].add(akNormal[i + iXBound]);
+                        akNormal[i].add(akNormal[i - iXYBound]);
+                        akNormal[i].add(akNormal[i + iXYBound]);
+                        akNormal[i].normalize();
+                    }
+                }
+            }
+        }
+
+        return akNormal;
+    }
+
 
     /**
      * Update the data for the ARGB color image.
@@ -245,8 +328,8 @@ public class RendererImageData {
                             m_afData[4 * i + 2],
                             m_afData[4 * i + 3]);
                     }
-                    kRayTracer.setNormals(RenderViewBase.getNormals());
-                    // kRayTracer.setNormals(createImageNormals(afIntensity));
+                    // kRayTracer.setNormals(RenderViewBase.getNormals());
+                    kRayTracer.setNormals(createImageNormals(afIntensity));
                     afIntensity = null;
                 }
             }
