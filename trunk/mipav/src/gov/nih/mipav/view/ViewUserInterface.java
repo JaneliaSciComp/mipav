@@ -1504,8 +1504,16 @@ public class ViewUserInterface
      * @param imageFileDir the directory where the file is
      */
     public void openImageFrame(String imageFileName, String imageFileDir) {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
         String imageFile = imageFileDir + File.separator + imageFileName;
+        openImageFrame(imageFile);
+    }
+    
+    /**
+     * Open an image and put it into a new frame, given the image file name.
+     * @param imageFile the image file name with the path.
+     */
+    public void openImageFrame(String imageFile){
+        ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
         String imageName;
 
         // TODO: multifiles?
