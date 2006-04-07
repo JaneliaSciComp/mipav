@@ -4,6 +4,7 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.jama.Matrix;
 
 import java.io.*;
 import java.awt.*;
@@ -2747,8 +2748,9 @@ public class ModelImage extends ModelStorageBase {
 
         if (( getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL )&&
             ( getFileInfo()[0].getFileFormat() != FileBase.XML) &&
-            ( getFileInfo()[0].getFileFormat() != FileBase.MINC) /*&&
-            ( getFileInfo()[0].getFileFormat() != FileBase.NIFTI)*/) {
+            ( getFileInfo()[0].getFileFormat() != FileBase.MINC) &&
+            ( getFileInfo()[0].getFileFormat() != FileBase.NIFTI) &&
+            ( getFileInfo()[0].getFileFormat() != FileBase.AFNI)) {
             return;
         }
         int nDims = getNDims();
@@ -2777,6 +2779,7 @@ public class ModelImage extends ModelStorageBase {
         res[0] = getFileInfo( 0 ).getResolutions()[0];
         res[1] = getFileInfo( 0 ).getResolutions()[1];
         res[2] = getFileInfo( 0 ).getResolutions()[2];
+        // System.out.println("res " + res[0] + ", " + res[1] + ", " + res[2]);
 
         // Change voxel coordinate into millimeter space
         coord[0] = coord[0] * res[0];
@@ -2784,7 +2787,43 @@ public class ModelImage extends ModelStorageBase {
         coord[2] = coord[2] * res[2];
 
         // Get the DICOM transform that discribes the transformation from axial to this image orientation
-        TransMatrix dicomMatrix = (TransMatrix) ( getMatrix().clone() );
+        TransMatrix dicomMatrix = (TransMatrix) ( getMatrix().clone() );  
+        //System.out.println("dicomMatrix = " + dicomMatrix.toString());
+        if (( getFileInfo()[0].getFileFormat() == FileBase.MINC) ||
+            ( getFileInfo()[0].getFileFormat() == FileBase.AFNI) ||
+            ( getFileInfo()[0].getFileFormat() == FileBase.NIFTI) ||
+            ( getFileInfo()[0].getFileFormat() == FileBase.XML)) {
+            for (int r = 0; r < 4; r++) {
+                for (int c = 0; c < 4; c++) {
+                    dicomMatrix.setMatrix(0.0, r, c);
+                }
+            }
+            dicomMatrix.setMatrix(1.0, 3, 3);
+            for (int j = 0; j < 3; j++) {
+                switch(getFileInfo(0).getAxisOrientation()[j]) {
+                    case FileInfoBase.ORI_L2R_TYPE:
+                        dicomMatrix.setMatrix(-1.0, 0, j);
+                        break;
+                    case FileInfoBase.ORI_R2L_TYPE:
+                        dicomMatrix.setMatrix(1.0, 0, j);
+                        break;
+                    case FileInfoBase.ORI_P2A_TYPE:
+                        dicomMatrix.setMatrix(-1.0, 1, j);
+                        break;
+                    case FileInfoBase.ORI_A2P_TYPE:
+                        dicomMatrix.setMatrix(1.0, 1, j);
+                        break;
+                    case FileInfoBase.ORI_S2I_TYPE:
+                        dicomMatrix.setMatrix(-1.0, 2, j);
+                        break;
+                    case FileInfoBase.ORI_I2S_TYPE:
+                        dicomMatrix.setMatrix(1.0, 2, j);
+                        break;
+                }
+            }
+        } // if ( getFileInfo()[0].getFileFormat() == FileBase.MINC)
+        
+        //System.out.println("dicomMatrix = " + dicomMatrix.toString());
 
         // Finally convert the point to axial millimeter DICOM space.
         dicomMatrix.transform( coord, tCoord );
