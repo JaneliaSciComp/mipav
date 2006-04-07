@@ -1525,16 +1525,16 @@ public class FileNIFTI
             }
 
             if (xj > 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
-            }
-            else if (xj < 0.0) {
                 axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
             }
+            else if (xj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+            }
             else if (yj > 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
             }
             else if (yj < 0.0) {
-                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
             }
             else if (zj > 0.0) {
                 axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
@@ -1544,16 +1544,16 @@ public class FileNIFTI
             }
 
             if (xk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
-            }
-            else if (xk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
             }
+            else if (xk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+            }
             else if (yk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
             }
             else if (yk < 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
             }
             else if (zk > 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
@@ -1741,65 +1741,65 @@ public class FileNIFTI
         // the i axis.  The same also applies for the j and k axes.
 
         switch (ibest * pbest) {
-            case 1:
+            case -1:
                 axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
                 break;
-            case -1:
+            case 1:
                 axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
                 break;
-            case 2:
+            case -2:
                 axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
                 break;
-            case -2:
+            case 2:
                 axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
-                break;
-            case 3:
-                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
                 break;
             case -3:
                 axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
                 break;
+            case 3:
+                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+                break;
         }
 
         switch (jbest * qbest) {
-            case 1:
+            case -1:
                 axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
                 break;
-            case -1:
+            case 1:
                 axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
                 break;
-            case 2:
+            case -2:
                 axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
                 break;
-            case -2:
+            case 2:
                 axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
-                break;
-            case 3:
-                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
                 break;
             case -3:
                 axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
                 break;
+            case 3:
+                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+                break;
         }
 
         switch (kbest * rbest) {
-            case 1:
+            case -1:
                 axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
                 break;
-            case -1:
+            case 1:
                 axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
                 break;
-            case 2:
+            case -2:
                 axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
                 break;
-            case -2:
+            case 2:
                 axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
-                break;
-            case 3:
-                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
                 break;
             case -3:
                 axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+                break;
+            case 3:
+                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
                 break;
         }
         return axisOrientation;
@@ -2536,6 +2536,8 @@ public class FileNIFTI
 
         if (isDicom || isXML  || isAfni) {
             axisOrientation = image.getFileInfo(0).getAxisOrientation();
+            //System.out.println("axisOrientation = " + axisOrientation[0] + ", " +
+                    //axisOrientation[1] + ", " + axisOrientation[2]);
             if ( (axisOrientation != null) && (axisOrientation[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                 (axisOrientation[1] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                 (axisOrientation[2] != FileInfoBase.ORI_UNKNOWN_TYPE)) {
@@ -2573,16 +2575,16 @@ public class FileNIFTI
 
                 switch (axisOrientation[1]) {
                     case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 1, -resols[1]);
-                        break;
-                    case FileInfoBase.ORI_L2R_TYPE:
                         matrix.set(0, 1, resols[1]);
                         break;
+                    case FileInfoBase.ORI_L2R_TYPE:
+                        matrix.set(0, 1, -resols[1]);
+                        break;
                     case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 1, -resols[1]);
+                        matrix.set(1, 1, resols[1]);
                         break;
                     case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 1, resols[1]);
+                        matrix.set(1, 1, -resols[1]);
                         break;
                     case FileInfoBase.ORI_I2S_TYPE:
                         matrix.set(2, 1, resols[1]);
@@ -2594,16 +2596,16 @@ public class FileNIFTI
 
                 switch (axisOrientation[2]) {
                     case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 2, -resols[2]);
-                        break;
-                    case FileInfoBase.ORI_L2R_TYPE:
                         matrix.set(0, 2, resols[2]);
                         break;
+                    case FileInfoBase.ORI_L2R_TYPE:
+                        matrix.set(0, 2, -resols[2]);
+                        break;
                     case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 2, -resols[2]);
+                        matrix.set(1, 2, resols[2]);
                         break;
                     case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 2, resols[2]);
+                        matrix.set(1, 2, -resols[2]);
                         break;
                     case FileInfoBase.ORI_I2S_TYPE:
                         matrix.set(2, 2, resols[2]);
@@ -3361,6 +3363,7 @@ public class FileNIFTI
             setBufferFloat(bufferByte, newOrigin[2], 276, endianess);
 
             if (matrix != null) {
+                //System.out.println("matrix = " + matrix.toString());
                 setBufferFloat(bufferByte, (float) ( -matrix.get(0, 0)), 280, endianess);
                 setBufferFloat(bufferByte, (float) ( -matrix.get(0, 1)), 284, endianess);
                 setBufferFloat(bufferByte, (float) (matrix.get(0, 2)), 288, endianess);
