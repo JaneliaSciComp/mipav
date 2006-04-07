@@ -2488,6 +2488,33 @@ public class ViewUserInterface
                    MipavUtil.displayError("Unable to load plugin (acc)");
                }
            }
+           else if (command.equals("PlugInFileWrite")) {
+
+               Object thePlugIn = null;
+               String plugInName = ( (JMenuItem) (event.getSource())).getComponent().getName();
+
+               try {
+                   thePlugIn = Class.forName(plugInName).newInstance();
+                   if (thePlugIn instanceof PlugInFile) {
+                       if (((PlugInFile)thePlugIn).canWriteImages()) {
+                           ((PlugInFile)thePlugIn).writeImage((ModelImage)null);
+                       } else {
+                           MipavUtil.displayInfo(plugInName + " does not support the writing of images.");
+                       }
+                   } else {
+                       MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File PlugIn, but does not implement PlugInFile.");
+                   }
+               }
+               catch (ClassNotFoundException e) {
+                   MipavUtil.displayError("PlugIn not found: " + plugInName);
+               }
+               catch (InstantiationException e) {
+                   MipavUtil.displayError("Unable to load plugin (ins)");
+               }
+               catch (IllegalAccessException e) {
+                   MipavUtil.displayError("Unable to load plugin (acc)");
+               }
+           }
            else if (command.equals("InstallPlugin")) {
                JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame, this);
                instPlugin.setVisible(true);
@@ -2974,7 +3001,8 @@ public class ViewUserInterface
                             menuItem.setName(name);
                         }
 
-                        if (!(al instanceof ViewUserInterface) && ((PlugInFile)plugIn).canWriteImages()) {
+                        //if (!(al instanceof ViewUserInterface) && ((PlugInFile)plugIn).canWriteImages()) {
+                        if (((PlugInFile)plugIn).canWriteImages()) {
                             // some sort of image has been loaded and could be writen out by a plugin
                             menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - write image", "PlugInFileWrite", 0, al, null, false);
                             fileMenu.add(menuItem);
