@@ -2,9 +2,9 @@ import gov.nih.mipav.plugins.PlugInFile;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
+import gov.nih.mipav.view.srb.*;
 
 import edu.sdsc.grid.io.*;
-import edu.sdsc.grid.gui.*;
 import edu.sdsc.grid.io.local.*;
 import edu.sdsc.grid.io.srb.*;
 
