@@ -7,6 +7,8 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.model.file.*;
 
+import java.io.*;
+
 /**
  *      Algorithm that can match:
  *			the orientation (based on the images saved Transform Matrix),
@@ -44,12 +46,8 @@ public class AlgorithmMatchImages
   private double origImg_A[], origImg_B[];
   private double endImg_A[], endImg_B[];
   private double endLPS_A[], endLPS_B[];
-  private double switchEnd2Orig[];
 
   // Orientation matrices and ordering indices
-  private Matrix LPS2img_A, LPS2img_B;
-  private Matrix img2LPS_A, img2LPS_B;
-  private TransMatrix alignImgB2ImgA;
   private AlgorithmTransform algoTransform;
   private int reorderB2A[];
   private int sign2LPS_A[], sign2LPS_B[];
@@ -63,6 +61,10 @@ public class AlgorithmMatchImages
 
   private boolean doOrients = true;
   private double padValue = 0.0;
+  private int axisOrientA[];
+  private int axisOrientB[];
+  private boolean sameOrient;
+  private boolean reverse[];
 
   /**
    *   Creates new algorithm.
@@ -104,6 +106,7 @@ public class AlgorithmMatchImages
       endLPS_B = new double[nDims];
       endImg_A = new double[nDims];
       endImg_B = new double[nDims];
+      reverse = new boolean[nDims];
     }
     catch (OutOfMemoryError e) {
       System.gc();
@@ -145,7 +148,7 @@ public class AlgorithmMatchImages
       // The only way this can be false is if it's explicity set to be.  JDialogMatchImages
       // do not given an option not to match orientations.
       // Match orientations.
-      if (!alignImgB2ImgA.isIdentity()) {
+      if (!sameOrient) {
         Preferences.debug("\n Matching orientations...\n");
         matchOrients();
       }
@@ -220,30 +223,15 @@ public class AlgorithmMatchImages
      *   Get origin, transformation data, and field of view.
      *   This has to be done regardless of which other options the user chose.
      */
-    double fovA[], fovB[], fovA_LPS[], fovB_LPS[];
-    TransMatrix trans;
-    TransMatrix trans2D;
-    Matrix img2;
-    double rotX, rotY, rotZ;
-    boolean success;
-    double tempA;
-    double tempB;
+    double fovA[], fovB[];
     int i, j;
 
     try {
-      LPS2img_A = new Matrix(nDims+1, nDims+1);
-      LPS2img_B = new Matrix(nDims+1, nDims+1);
-      img2LPS_A = new Matrix(nDims+1, nDims+1);
-      img2LPS_B = new Matrix(nDims+1, nDims+1);
-      alignImgB2ImgA = new TransMatrix(nDims+1);
       reorderB2A = new int[nDims];
       sign2LPS_A = new int[nDims];
       sign2LPS_B = new int[nDims];
-      switchEnd2Orig = new double[nDims];
       fovA = new double[nDims];
       fovB = new double[nDims];
-      fovA_LPS = new double[nDims];
-      fovB_LPS = new double[nDims];
     }
     catch (OutOfMemoryError e) {
       System.gc();
@@ -255,159 +243,86 @@ public class AlgorithmMatchImages
 
     Preferences.debug("\n PRELIMINARY DATA: \n");
 
-    // Find transformation matrix to reorient Image B.
     if (sourceImgA.getNDims() > 2) {
-        trans = sourceImgA.getMatrix();
+        axisOrientA = getAxisOrientation(sourceImgA.getMatrix());
+        Preferences.debug("axisOrientA = " + axisOrientA[0] + ", " +
+                axisOrientA[1] + ", " + axisOrientA[2] + "\n");
     }
     else {
-        trans2D = sourceImgA.getMatrix();
-        trans = new TransMatrix(4);
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-                trans.set(i, j, trans2D.get(i, j));
-            }
-        }
+        axisOrientA = getAxisOrientation2D(sourceImgA.getMatrix());
+        Preferences.debug("axisOrientA = " + axisOrientA[0] + ", " +
+                axisOrientA[1] + "\n");
     }
-    success = trans.decomposeMatrix(trans);
-    if (!success) {
-        MipavUtil.displayError("Failure on decompose imageA matrix");
-        stopped = true;
-        setCompleted(false);
-        return;  
-    }
-    rotZ = trans.getRotateZ() * Math.PI/180.0;
-    if (sourceImgA.getNDims() > 2) {
-        rotX = trans.getRotateX() * Math.PI/180.0;
-        rotY = trans.getRotateY() * Math.PI/180.0;
-        img2LPS_A.set(0, 0, 1.0);
-        img2LPS_A.set(1, 1, Math.cos(rotX));
-        img2LPS_A.set(1, 2, -Math.sin(rotX));
-        img2LPS_A.set(2, 1, Math.sin(rotX));
-        img2LPS_A.set(2, 2, Math.cos(rotX));
-        img2LPS_A.set(3, 3, 1.0);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotY));
-        img2.set(0, 2, Math.sin(rotY));
-        img2.set(1, 1, 1.0);
-        img2.set(2, 0, -Math.sin(rotY));
-        img2.set(2, 2, Math.cos(rotY));
-        img2.set(3, 3, 1.0);
-        img2LPS_A.timesEquals(img2);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotZ));
-        img2.set(0, 1, -Math.sin(rotZ));
-        img2.set(1, 0, Math.sin(rotZ));
-        img2.set(1, 1, Math.cos(rotZ));
-        img2.set(2, 2, 1.0);
-        img2.set(3, 3, 1.0);
-        img2LPS_A.timesEquals(img2);
-    }
-    else {
-        img2LPS_A.set(0, 0, Math.cos(rotZ));
-        img2LPS_A.set(0, 1, -Math.sin(rotZ));
-        img2LPS_A.set(1, 0, Math.sin(rotZ));
-        img2LPS_A.set(1, 1, Math.cos(rotZ));
-        img2LPS_A.set(2, 2, 1.0);
-    }
-    img2LPS_A = img2LPS_A.getMatrix(0, nDims, 0, nDims);
-    LPS2img_A = img2LPS_A.inverse();
     
     if (sourceImgB.getNDims() > 2) {
-        trans = sourceImgB.getMatrix();
+        axisOrientB = getAxisOrientation(sourceImgB.getMatrix());
+        Preferences.debug("axisOrientB = " + axisOrientB[0] + ", " +
+                axisOrientB[1] + ", " + axisOrientB[2] + "\n");
     }
     else {
-        trans2D = sourceImgB.getMatrix();
-        trans = new TransMatrix(4);
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-                trans.set(i, j, trans2D.get(i, j));
+        axisOrientB = getAxisOrientation2D(sourceImgB.getMatrix());
+        Preferences.debug("axisOrientB = " + axisOrientB[0] + ", " +
+                axisOrientB[1] + "\n");
+    }
+    
+    sameOrient = true;
+    for (i = 0; i < nDims; i++) {
+        if (axisOrientA[i] != axisOrientB[i]) {
+            sameOrient = false;
+        }
+    }
+    
+    for (i = 0; i < nDims; i++) {
+        if ((axisOrientB[i] == FileInfoBase.ORI_R2L_TYPE) ||
+            (axisOrientB[i] == FileInfoBase.ORI_L2R_TYPE)) {
+            for (j = 0; j < nDims; j++) {
+                if ((axisOrientA[j] == FileInfoBase.ORI_R2L_TYPE) ||
+                    (axisOrientA[j] == FileInfoBase.ORI_L2R_TYPE)) {
+                    reorderB2A[i] = j;   
+                }
             }
         }
-    }
-    success = trans.decomposeMatrix(trans);
-    if (!success) {
-        MipavUtil.displayError("Failure on decompose imageB matrix");
-        stopped = true;
-        setCompleted(false);
-        return;  
-    }
-    rotZ = trans.getRotateZ() * Math.PI/180.0;
-    if (sourceImgB.getNDims() > 2) {
-        rotX = trans.getRotateX() * Math.PI/180.0;
-        rotY = trans.getRotateY() * Math.PI/180.0;
-        img2LPS_B.set(0, 0, 1.0);
-        img2LPS_B.set(1, 1, Math.cos(rotX));
-        img2LPS_B.set(1, 2, -Math.sin(rotX));
-        img2LPS_B.set(2, 1, Math.sin(rotX));
-        img2LPS_B.set(2, 2, Math.cos(rotX));
-        img2LPS_B.set(3, 3, 1.0);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotY));
-        img2.set(0, 2, Math.sin(rotY));
-        img2.set(1, 1, 1.0);
-        img2.set(2, 0, -Math.sin(rotY));
-        img2.set(2, 2, Math.cos(rotY));
-        img2.set(3, 3, 1.0);
-        img2LPS_B.timesEquals(img2);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotZ));
-        img2.set(0, 1, -Math.sin(rotZ));
-        img2.set(1, 0, Math.sin(rotZ));
-        img2.set(1, 1, Math.cos(rotZ));
-        img2.set(2, 2, 1.0);
-        img2.set(3, 3, 1.0);
-        img2LPS_B.timesEquals(img2);
-    }
-    else {
-        img2LPS_B.set(0, 0, Math.cos(rotZ));
-        img2LPS_B.set(0, 1, -Math.sin(rotZ));
-        img2LPS_B.set(1, 0, Math.sin(rotZ));
-        img2LPS_B.set(1, 1, Math.cos(rotZ));
-        img2LPS_B.set(2, 2, 1.0);
-    }
-    img2LPS_B = img2LPS_B.getMatrix(0, nDims, 0, nDims);
-    LPS2img_B = img2LPS_B.inverse();
-
-    alignImgB2ImgA.identity();
-
-    boolean matricesAreEqual = true;
-    if (!img2LPS_A.equals(img2LPS_B)) {matricesAreEqual = false;}
-
-    if (!matricesAreEqual) {
-      alignImgB2ImgA.timesEquals(LPS2img_B);
-      alignImgB2ImgA.timesEquals(img2LPS_A);
-    }
-    Preferences.debug("Transformation matrix to align img B to img A = \n"
-                   +alignImgB2ImgA.toString());
-    UI.setDataText("Transformation matrix to align img B to img A = \n"
-                   +alignImgB2ImgA.toString());
-
-    // Create index arrays that store the reordering of image data.
-    for (i = 0; i < nDims; i++) { // i's are the rows
-      tempA = 0.0;
-      tempB = 0.0;  
-      for (j = 0; j < nDims; j++) { // j's are the columns
-        if (Math.abs(alignImgB2ImgA.get(i, j)) > Math.cos(Math.PI / 4.0)) {
-          reorderB2A[i] = j;
+        else if ((axisOrientB[i] == FileInfoBase.ORI_A2P_TYPE) ||
+            (axisOrientB[i] == FileInfoBase.ORI_P2A_TYPE)) {
+            for (j = 0; j < nDims; j++) {
+                if ((axisOrientA[j] == FileInfoBase.ORI_A2P_TYPE) ||
+                    (axisOrientA[j] == FileInfoBase.ORI_P2A_TYPE)) {
+                    reorderB2A[i] = j;   
+                }
+            }
         }
-        tempA = tempA + LPS2img_A.get(i, j);
-        tempB = tempB + LPS2img_B.get(i, j);
-        switchEnd2Orig[j] = switchEnd2Orig[j] + alignImgB2ImgA.get(i, j);
-        // note: adding all rows for a single column
-      }
-      if (tempA > 0.0) {
-          sign2LPS_A[i] = 1;
-      }
-      else {
-          sign2LPS_A[i] = -1;
-      }
-      if (tempB > 0.0) {
-          sign2LPS_B[i] = 1;
-      }
-      else {
-          sign2LPS_B[i] = -1;
-      }
-    }
+        else if ((axisOrientB[i] == FileInfoBase.ORI_I2S_TYPE) ||
+            (axisOrientB[i] == FileInfoBase.ORI_S2I_TYPE)) {
+            for (j = 0; j < nDims; j++) {
+                if ((axisOrientA[j] == FileInfoBase.ORI_I2S_TYPE) ||
+                    (axisOrientA[j] == FileInfoBase.ORI_S2I_TYPE)) {
+                    reorderB2A[i] = j;   
+                }
+            }
+        }
+        if ((axisOrientA[i] == FileInfoBase.ORI_R2L_TYPE) ||
+            (axisOrientA[i] == FileInfoBase.ORI_A2P_TYPE) ||
+            (axisOrientA[i] == FileInfoBase.ORI_I2S_TYPE)) {
+            sign2LPS_A[i] = 1;
+        }
+        else {
+            sign2LPS_A[i] = -1;
+        }
+        if ((axisOrientB[i] == FileInfoBase.ORI_R2L_TYPE) ||
+            (axisOrientB[i] == FileInfoBase.ORI_A2P_TYPE) ||
+            (axisOrientB[i] == FileInfoBase.ORI_I2S_TYPE)) {
+            sign2LPS_B[i] = 1;
+        }
+        else {
+            sign2LPS_B[i] = -1;
+        }
+        if (sign2LPS_A[i] != sign2LPS_B[i]) {
+            reverse[i] = true;
+        }
+        else {
+            reverse[i] = false;
+        }
+    } // for (i = 0; i < nDims; i++)
 
     if (nDims == 3) {
         Preferences.debug("Indices to reorder ImgB to ImgA: " + reorderB2A[0] + ", " +
@@ -443,8 +358,36 @@ public class AlgorithmMatchImages
         Preferences.debug("Original ImageB startLocation: " + (float) origLPS_B[0] + ", "
                           + (float) origLPS_B[1] + "\n");
     } // else nDims == 2
-    origImg_A = originLPS2Img(origLPS_A, sourceImgA);
-    origImg_B = originLPS2Img(origLPS_B, sourceImgB);
+    for (i = 0; i < nDims; i++) {
+        switch(axisOrientA[i]) {
+            case FileInfoBase.ORI_R2L_TYPE:
+            case FileInfoBase.ORI_L2R_TYPE:
+                origImg_A[0] = origLPS_A[i];
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                origImg_A[1] = origLPS_A[i];
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                origImg_A[2] = origLPS_A[i];
+                break;
+        } // switch(axisOrientA[i])
+        switch(axisOrientB[i]) {
+            case FileInfoBase.ORI_R2L_TYPE:
+            case FileInfoBase.ORI_L2R_TYPE:
+                origImg_B[0] = origLPS_B[i];
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                origImg_B[1] = origLPS_B[i];
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                origImg_B[2] = origLPS_B[i];
+                break;
+        } // switch(axisOrientB[i])
+    } // for (i = 0; i < nDims; i++)
 
     if (nDims == 3) {
         Preferences.debug("ImageA origins in image order: " + (float) origImg_A[0] + ", "
@@ -476,22 +419,9 @@ public class AlgorithmMatchImages
     //   "ImageB field-of-view image order: " + fovB[0] + ", " + fovB[1] + ", " +
     //    fovB[2] + "\n");
 
-    for (i = 0; i < nDims; i++) { // i's are the rows
-      for (j = 0; j < nDims; j++) { // j's are the columns
-        fovA_LPS[i] = fovA_LPS[i] + (float) img2LPS_A.get(i, j) * fovA[j];
-        fovB_LPS[i] = fovB_LPS[i] + (float) img2LPS_B.get(i, j) * fovB[j];
-      }
-    }
-    //Preferences.debug(
-    //    "ImageA field-of-view in LPS order: " + fovA_LPS[0] + ", " + fovA_LPS[1] +
-    //    ", " + fovA_LPS[2] + "\n");
-    //Preferences.debug(
-    //    "ImageB field-of-view in LPS order: " + fovB_LPS[0] + ", " + fovB_LPS[1] +
-    //    ", " + fovB_LPS[2] + "\n");
-
     for (i = 0; i < nDims; i++) {
-      endLPS_A[i] = origLPS_A[i] + fovA_LPS[i];
-      endLPS_B[i] = origLPS_B[i] + fovB_LPS[i];
+      endLPS_A[i] = origLPS_A[i] + fovA[i];
+      endLPS_B[i] = origLPS_B[i] + fovB[i];
     }
 
     //Preferences.debug
@@ -501,8 +431,37 @@ public class AlgorithmMatchImages
     //    ("ImageB end locations in LPS order: " + (float) endLPS_B[0] + ", " +
     //     (float) endLPS_B[1] + ", " + (float) endLPS_B[2] + "\n");
 
-    endImg_A = originLPS2Img(endLPS_A, sourceImgA);
-    endImg_B = originLPS2Img(endLPS_B, sourceImgB);
+    for (i = 0; i < nDims; i++) {
+        switch(axisOrientA[i]) {
+            case FileInfoBase.ORI_R2L_TYPE:
+            case FileInfoBase.ORI_L2R_TYPE:
+                endImg_A[0] = endLPS_A[i];
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                endImg_A[1] = endLPS_A[i];
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                endImg_A[2] = endLPS_A[i];
+                break;
+        } // switch(axisOrientA[i])
+        switch(axisOrientB[i]) {
+            case FileInfoBase.ORI_R2L_TYPE:
+            case FileInfoBase.ORI_L2R_TYPE:
+                endImg_B[0] = endLPS_B[i];
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                endImg_B[1] = endLPS_B[i];
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                endImg_B[2] = endLPS_B[i];
+                break;
+        } // switch(axisOrientB[i])
+    } // for (i = 0; i < nDims; i++)
+  
     if (nDims == 3) {
         Preferences.debug
                 ("ImageA end locations in image order: " + (float) endImg_A[0] + ", " +
@@ -510,9 +469,6 @@ public class AlgorithmMatchImages
         Preferences.debug
                 ("ImageB end locations in image order: " + (float) endImg_B[0] + ", " +
                  (float) endImg_B[1] + ", " + (float) endImg_B[2] + "\n");
-
-        // Get image orientation
-        sign2LPS_A = AlgorithmTransform.getImageOrient(sourceImgA);
     } // if (nDims == 3)
     else { // nDims == 2
         Preferences.debug
@@ -521,11 +477,6 @@ public class AlgorithmMatchImages
         Preferences.debug
             ("ImageB end locations in image order: " + (float) endImg_B[0] + ", " +
              (float) endImg_B[1] + "\n");
-        // Get image orientation
-        int direct[] = new int[3];
-        direct = AlgorithmTransform.getImageOrient(sourceImgA);
-        sign2LPS_A[0] = direct[0];
-        sign2LPS_A[1] = direct[1];
     } // else nDims == 2
   }
 
@@ -594,63 +545,165 @@ public class AlgorithmMatchImages
      */
     int tID;
     int[] oldDims = new int[nDims];
-    AlgorithmCrop algoCrop;
 
-    //Call AlgorithmTransform with padding.
-    resultImgB = (ModelImage) sourceImgB.clone();
-    newB = true;
-    resultImgB.setImageName("tempB");
-    oldDims = resultImgB.getExtents();
-
+    if (!newB) {
+        resultImgB = (ModelImage) sourceImgB.clone();
+        newB = true;
+    }
+    oldDims = sourceImgB.getExtents();
+    int sliceSize = oldDims[0] * oldDims[1];
+    int x, y, z;
+    int newXY[];
+    int newXYZ[];
+    int newDimB[];
+    int newSlice;
+    float buffer[];
+    float buffer2[];
+    int length;
+    int i;
+    int c;
+    int cDim = 1;
+    int resultType;
+    FileInfoBase fileInfo[];
+    int units[];
+    float res[];
+    double tempRes[];
+    
+    length = oldDims[0];
+    for (i = 1; i < nDims; i++) {
+        length *= oldDims[i];
+    }
+    if (resultImgB.isColorImage()) {
+        length *= 4;
+        cDim = 4;
+    }
+    
+    buffer = new float[length];
+    buffer2 = new float[length];
+    try {
+        resultImgB.exportData(0, length, buffer);
+    }
+    catch (IOException error) {
+        MipavUtil.displayError("IOException on resultImgB.exportData");
+        setCompleted(false);
+        stopped = true;
+        return;
+    }
+    resultType = resultImgB.getType();
     if (nDims == 3) {
-        algoTransform = new AlgorithmTransform(resultImgB, alignImgB2ImgA,
-                                               AlgorithmTransform.TRILINEAR,
-                                               (float) resB[reorderB2A[0]],
-                                               (float) resB[reorderB2A[1]],
-                                               (float) resB[reorderB2A[2]],
-                                               dimB[reorderB2A[0]],
-                                               dimB[reorderB2A[1]],
-                                               dimB[reorderB2A[2]], false, false, true);
+        newXYZ = new int[3];
+        newDimB = new int[3];
+        newDimB[0] = dimB[reorderB2A[0]];
+        newDimB[1] = dimB[reorderB2A[1]];
+        newDimB[2] = dimB[reorderB2A[2]];
+        newSlice = newDimB[0] * newDimB[1];
+        for (z = 0; z < oldDims[2]; z++) {
+            if (reverse[2]) {
+                newXYZ[reorderB2A[2]] = oldDims[2] - 1 - z;
+            }
+            else {
+                newXYZ[reorderB2A[2]] = z;
+            }
+            for (y = 0; y < oldDims[1]; y++) {
+                if (reverse[1]) {
+                    newXYZ[reorderB2A[1]] = oldDims[1] - 1 - y;
+                }
+                else {
+                    newXYZ[reorderB2A[1]] = y;
+                }
+                for (x = 0; x < oldDims[0]; x++) {
+                    if (reverse[0]) {
+                        newXYZ[reorderB2A[0]] = (oldDims[0] - 1 - x);    
+                    }
+                    else {
+                        newXYZ[reorderB2A[0]] = x;
+                    }
+                    for (c = 0; c < cDim; c++) {
+                        buffer2[c + cDim*(newXYZ[0] + newXYZ[1] * newDimB[0] + newXYZ[2] * newSlice)] =
+                        buffer[c + cDim*(x + y * oldDims[0] + z * sliceSize)];
+                    }
+                }
+            }
+        }
     } // if (nDims == 3)
     else { // nDims == 2
-        algoTransform = new AlgorithmTransform(resultImgB, alignImgB2ImgA,
-                                               AlgorithmTransform.BILINEAR,
-                                               (float) resB[reorderB2A[0]],
-                                               (float) resB[reorderB2A[1]],
-                                               dimB[reorderB2A[0]],
-                                               dimB[reorderB2A[1]],
-                                               false, false, true);
+        newXY = new int[2];
+        newDimB = new int[2];
+        newDimB[0] = dimB[reorderB2A[0]];
+        newDimB[1] = dimB[reorderB2A[1]];
+        
+        for (y = 0; y < oldDims[1]; y++) {
+            if (reverse[1]) {
+                newXY[reorderB2A[1]] = oldDims[1] - 1 - y;
+            }
+            else {
+                newXY[reorderB2A[1]] = y;
+            }
+            for (x = 0; x < oldDims[0]; x++) {
+                if (reverse[0]) {
+                    newXY[reorderB2A[0]] = oldDims[0] - 1 - x;    
+                }
+                else {
+                    newXY[reorderB2A[0]] = x;
+                }
+                for (c = 0; c < cDim; c++) {
+                    buffer2[c + cDim*(newXY[0] + newXY[1] * newDimB[0])] =
+                    buffer[c + cDim*(x + y * oldDims[0])];
+                }
+            }
+        }
     } // else nDims == 2
-    algoTransform.setActiveImage(activeImage);
-    algoTransform.setPadValue((int)padValue);
-
-    algoTransform.run();
-    if (algoTransform.isCompleted() == false) {
-      Preferences.debug("algoTransform in matchOrients failed.\n");
-      algoTransform.finalize();
-      algoTransform = null;
-      stopped = true;
-      setCompleted(false);
-      return;
-    }
+    
     resultImgB.disposeLocal();
-    resultImgB = algoTransform.getTransformedImage();
-    resultImgB.setImageName(nameB);
+    resultImgB = new ModelImage(resultType, newDimB, nameB, sourceImgB.getUserInterface());
+    try {
+        resultImgB.importData(0, buffer2, true);
+    }
+    catch (IOException error) {
+        MipavUtil.displayError("IOException on resultImgB.importData");
+        setCompleted(false);
+        stopped = true;
+        return;
+    }
     resultImgB.setMatrix(sourceImgA.getMatrix());
 
-    algoTransform.finalize();
-    algoTransform = null;
-
     // Get updated resolutions and dimensions.
-    double[] tempRes = new double[nDims];
-    for (int i = 0; i < nDims; i++) {
-      tempRes[i] = resB[reorderB2A[i]];
+    res = new float[nDims];
+    tempRes = new double[nDims];
+    units = new int[nDims];
+    
+    for (i = 0; i < nDims; i++) {
+        tempRes[i] = resB[reorderB2A[i]];
     }
-    for (int i = 0; i < nDims; i++) {
+    
+    for (i = 0; i < nDims; i++) {
       resB[i] = tempRes[i];
+      res[i] = (float)resB[i]; 
       dimB[i] = resultImgB.getExtents()[i];
+      units[i] = sourceImgB.getFileInfo()[0].getUnitsOfMeasure()[reorderB2A[i]];
+      axisOrientB[i] = axisOrientA[i];
     }
-
+   
+    if ( nDims == 2 ) {
+        fileInfo = new FileInfoBase[1];
+        fileInfo[0] = new FileInfoImageXML( null, null, FileBase.XML );
+        fileInfo[0].setExtents( dimB);
+        fileInfo[0].setResolutions( res );
+        fileInfo[0].setUnitsOfMeasure( units );
+        fileInfo[0].setDataType( resultType );
+    } 
+    else {
+        fileInfo = new FileInfoBase[dimB[2]];
+        for ( i = 0; i < dimB[2]; i++ ) {
+            fileInfo[i] = new FileInfoImageXML( null, null, FileBase.XML );
+            fileInfo[i].setExtents( dimB );
+            fileInfo[i].setResolutions( res );
+            fileInfo[i].setUnitsOfMeasure( units );
+            fileInfo[i].setDataType( resultType );
+            fileInfo[i].setAxisOrientation(axisOrientB);
+        }
+    } 
+    resultImgB.setFileInfo(fileInfo);
     if (nDims == 3) {
         Preferences.debug("ImageB resolution in matchOrients after transform: " +
                           (float) resB[0] + ", " + (float) resB[1] + ", "
@@ -668,8 +721,8 @@ public class AlgorithmMatchImages
     // This version assumes that origin is stored in coord in the LPS order
     double[] temp = new double[nDims];
 
-    for (int i = 0; i < nDims; i++) {
-      if (switchEnd2Orig[i] < 0) {
+    for (i = 0; i < nDims; i++) {
+      if (reverse[i]) {
         Preferences.debug("Shifting origin for direction " + i +
                           " to other side of image (i.e. adding fov)\n");
         temp[i] = origImg_B[i];
@@ -679,10 +732,10 @@ public class AlgorithmMatchImages
     }
 
     // Reorder image B origins, to image A order.
-    for (int i = 0; i < nDims; i++) {
+    for (i = 0; i < nDims; i++) {
       temp[i] = origImg_B[i];
     }
-    for (int i = 0; i < nDims; i++) {
+    for (i = 0; i < nDims; i++) {
       origImg_B[i] = temp[reorderB2A[i]];
     }
 
@@ -700,87 +753,24 @@ public class AlgorithmMatchImages
         UI.setDataText("New Image B origins (in image order): "
                + (float) origImg_B[0] + ", " + (float) origImg_B[1] + "\n");
     } // else nDims == 2
-    // Crop image on side opposite padding
-    int[] cropAmt = new int[nDims];
-    int[] boundX = new int[2];
-    int[] boundY = new int[2];
-    int[] boundZ = new int[2];
-    int[] newDims = new int[nDims];
-
-    for (int i = 0; i < nDims; i++) {
-      if (dimB[i] > oldDims[reorderB2A[i]]) {
-        cropAmt[i] = dimB[i] - oldDims[reorderB2A[i]];
-      }
-      newDims[i] = oldDims[reorderB2A[i]];
-    }
-    boundX[0] = 0;
-    boundX[1] = dimB[0] - cropAmt[0] - 1;
-    boundY[0] = 0;
-    boundY[1] = dimB[1] - cropAmt[1] - 1;
-    boundZ[0] = 0;
-    if (nDims == 3) {
-        boundZ[1] = dimB[2] - cropAmt[2] - 1;
-
-        Preferences.debug("Original image dimensions: " + oldDims[reorderB2A[0]] +
-                          " " + oldDims[reorderB2A[1]]
-                          + " " + oldDims[reorderB2A[2]] + ".\n");
-        Preferences.debug("OrientedB dimensions: " + dimB[0] + " " + dimB[1] + " " +
-                          dimB[2] + ".\n");
-        Preferences.debug("Amount to crop " + cropAmt[0] + ", " + cropAmt[1] +
-                          ", and " + cropAmt[2] + " pixels.\n");
-        Preferences.debug("New dimensions for reoriented Img B: " + newDims[0] +
-                          " " + newDims[1] + " " + newDims[2] + ".\n");
-        UI.setDataText("New dimension for reoriented Img B: " + newDims[0] +
-                       " " + newDims[1] + " " + newDims[2] + ".\n");
-    } // if (nDims == 3)
-    else { // nDims == 2
-        boundZ[1] = 0;
-        Preferences.debug("Original image dimensions: " + oldDims[reorderB2A[0]] +
-                          " " + oldDims[reorderB2A[1]] + ".\n");
-        Preferences.debug("OrientedB dimensions: " + dimB[0] + " " + dimB[1] + ".\n");
-        Preferences.debug("Amount to crop " + cropAmt[0] + " and " + cropAmt[1] + " pixels.\n");
-        Preferences.debug("New dimensions for reoriented Img B: " + newDims[0] +
-                          " " + newDims[1] + ".\n");
-        UI.setDataText("New dimension for reoriented Img B: " + newDims[0] +
-                       " " + newDims[1] + ".\n");
-    } // else nDims == 2
-
-    resultImgB.setImageName("tempB");
-    algoCrop = new AlgorithmCrop(resultImgB, 0, boundX, boundY, boundZ);
-    algoCrop.setActiveImage(activeImage);
-    algoCrop.run();
-    if (algoCrop.isCompleted() == false) {
-      Preferences.debug("algoCrop in matchOrients failed.");
-      algoCrop.finalize();
-      algoCrop = null;
-      setCompleted(false);
-      stopped = true;
-      return;
-    }
-    resultImgB.disposeLocal();
-    resultImgB = algoCrop.getSrcImage();
-    resultImgB.setImageName(nameB);
-
-    algoCrop.finalize();
-    algoCrop = null;
-
-   // This should be changed so that it happens within updateFileInfo.  Write a method
-   // that takes the transMatrix and updates the imageOrientation and axisOrientation.
-   FileInfoBase fileInfoB = resultImgB.getFileInfo(0);
-   fileInfoB.setAxisOrientation(sourceImgA.getFileInfo(0).getAxisOrientation());
-   resultImgB.setFileInfo(fileInfoB, 0);
-
-   for (int i = 0; i < nDims; i++) {
-     dimB[i] = resultImgB.getExtents()[i];
-   }
-   if (nDims == 3) {
-       Preferences.debug("After crop, dimB = " + dimB[0] + ", " + dimB[1] + ", " +
-                         dimB[2] + "\n");
-   }
-   else { // nDims == 2
-       Preferences.debug("After crop, dimB = " + dimB[0] + ", " + dimB[1] + "\n");
-   } // else nDims == 2
-   origLPS_B = originImg2LPS(origImg_B, resultImgB);
+    
+   
+    for (i = 0; i < nDims; i++) {
+        switch(axisOrientB[i]) {
+            case FileInfoBase.ORI_R2L_TYPE:
+            case FileInfoBase.ORI_L2R_TYPE:
+                origLPS_B[i] = origImg_B[0];
+                break;
+            case FileInfoBase.ORI_A2P_TYPE:
+            case FileInfoBase.ORI_P2A_TYPE:
+                origLPS_B[i] = origImg_B[1];
+                break;
+            case FileInfoBase.ORI_I2S_TYPE:
+            case FileInfoBase.ORI_S2I_TYPE:
+                origLPS_B[i] = origImg_B[2];
+                break;
+        } // switch(axisOrientB[i])
+    } // for (i = 0; i < nDims; i++)
    if (nDims == 3) {
        Preferences.debug("Final ImageB origins in LPS order: " + (float) origLPS_B[0] + ", "
                + (float) origLPS_B[1] + ", " + (float) origLPS_B[2] + "\n");
@@ -812,8 +802,9 @@ public class AlgorithmMatchImages
    int tIDA, tIDB;
    boolean newResA = false;
    boolean newResB = false;
+   int i;
 
-   for (int i = 0; i < nDims; i++) {
+   for (i = 0; i < nDims; i++) {
      fovA = resA[i] * dimA[i]; // field of view in this dimension
      fovB = resB[i] * dimB[i];
      if (resA[i] != resB[i]) {
@@ -881,7 +872,7 @@ public class AlgorithmMatchImages
       // Update file info for result images.
       resultImgA.setImageName(nameA);
       resultImgA.setMatrix(sourceImgA.getMatrix());
-      for (int i = 0; i < nDims; i++) {
+      for (i = 0; i < nDims; i++) {
         origLPS_A[i] = (double) resultImgA.getFileInfo(0).getOrigin(i);
       }
       tIDA = sourceImgA.getFileInfo(0).getTransformID();
@@ -943,7 +934,7 @@ public class AlgorithmMatchImages
       // Update file info for result images.
       resultImgB.setImageName(nameB);
       resultImgB.setMatrix(tMatBkp);
-      for (int i = 0; i < nDims; i++) {
+      for (i = 0; i < nDims; i++) {
         origLPS_B[i] = (double) resultImgB.getFileInfo(0).getOrigin(i);
       }
       updateFileInfo(resultImgB, dimB, resB, origLPS_B, tIDB);
@@ -965,6 +956,7 @@ public class AlgorithmMatchImages
     AlgorithmAddMargins algoMarginsA, algoMarginsB;
     boolean newOriginA = false;
     boolean newOriginB = false;
+    int i;
 
     try {
       addA = new int[nDims];
@@ -997,7 +989,7 @@ public class AlgorithmMatchImages
       doOrigins = false;
 
       // Find differences in image coordinate system and add appropriately.
-      for (int i = 0; i < nDims; i++) {
+      for (i = 0; i < nDims; i++) {
         oDiffD[i] = sign2LPS_A[i] * (origImg_B[i] - origImg_A[i]);
         eps[i] = resA[i];
         if (Math.abs(oDiffD[i]) > eps[i]) {
@@ -1042,7 +1034,7 @@ public class AlgorithmMatchImages
                     "Adding margins to imageA: " + addA[0] + ", " + addA[1] + "\n");
         } // else nDims == 2
         // update resolution and dimension variables
-        for (int i = 0; i < nDims; i++) {
+        for (i = 0; i < nDims; i++) {
           dimA[i] = dimA[i] + addA[i];
         }
         if (nDims == 3) {
@@ -1083,7 +1075,22 @@ public class AlgorithmMatchImages
         algoMarginsA = null;
 
         resultImgA.setMatrix(tMatBkp);
-        origLPS_A = originImg2LPS(origImg_A, resultImgA);
+        for (i = 0; i < nDims; i++) {
+            switch(axisOrientA[i]) {
+                case FileInfoBase.ORI_R2L_TYPE:
+                case FileInfoBase.ORI_L2R_TYPE:
+                    origLPS_A[i] = origImg_A[0];
+                    break;
+                case FileInfoBase.ORI_A2P_TYPE:
+                case FileInfoBase.ORI_P2A_TYPE:
+                    origLPS_A[i] = origImg_A[1];
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                case FileInfoBase.ORI_S2I_TYPE:
+                    origLPS_A[i] = origImg_A[2];
+                    break;
+            } // switch(axisOrientA[i])
+        }
         updateFileInfo(resultImgA, dimA, resA, origLPS_A, tID);
       }
 
@@ -1097,7 +1104,7 @@ public class AlgorithmMatchImages
                               + addB[1] + "\n");
         } // else nDims == 2
         // update resolution and dimension variables
-        for (int i = 0; i < nDims; i++) {
+        for (i = 0; i < nDims; i++) {
           dimB[i] = dimB[i] + addB[i];
         }
         if (nDims == 3) {
@@ -1137,7 +1144,22 @@ public class AlgorithmMatchImages
         algoMarginsB = null;
 
         resultImgB.setMatrix(tMatBkp);
-        origLPS_B = originImg2LPS(origImg_B, resultImgB);
+        for (i = 0; i < nDims; i++) {
+            switch(axisOrientB[i]) {
+                case FileInfoBase.ORI_R2L_TYPE:
+                case FileInfoBase.ORI_L2R_TYPE:
+                    origLPS_B[i] = origImg_B[0];
+                    break;
+                case FileInfoBase.ORI_A2P_TYPE:
+                case FileInfoBase.ORI_P2A_TYPE:
+                    origLPS_B[i] = origImg_B[1];
+                    break;
+                case FileInfoBase.ORI_I2S_TYPE:
+                case FileInfoBase.ORI_S2I_TYPE:
+                    origLPS_B[i] = origImg_B[2];
+                    break;
+            } // switch(axisOrientB[i])
+        }
         updateFileInfo(resultImgB, dimB, resB, origLPS_B, tID);
       }
     }
@@ -1288,11 +1310,6 @@ public class AlgorithmMatchImages
     /**
      *   Get rid of space hogs.
      */
-    LPS2img_A = null;
-    img2LPS_A = null;
-    img2LPS_B = null;
-    LPS2img_B = null;
-    alignImgB2ImgA = null;
     sourceImgA = null;
     sourceImgB = null;
   }
@@ -1330,166 +1347,6 @@ public class AlgorithmMatchImages
    */
   public boolean isNewB() {
     return this.newB;
-  }
-
-  /**
-   *   Switch origin order from image order to LPS order.
-   */
-  private double[] originImg2LPS(double[] origImg, ModelImage img) {
-    double[] origLPS = new double[nDims];
-    Matrix img2LPS = new Matrix(nDims+1, nDims+1);
-    TransMatrix trans;
-    TransMatrix trans2D;
-    boolean success;
-    double rotX, rotY, rotZ;
-    Matrix img2;
-    int i, j;
-
-    if (img.getNDims() > 2) {
-        trans = img.getMatrix();
-    }
-    else {
-        trans2D = img.getMatrix();
-        trans = new TransMatrix(4);
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-                trans.set(i, j, trans2D.get(i, j));
-            }
-        }
-    }
-    trans = img.getMatrix();
-    success = trans.decomposeMatrix(trans);
-    if (!success) {
-        MipavUtil.displayError("Failure on decompose matrix in originImg2LPS");
-        stopped = true;
-        setCompleted(false);
-        return null;  
-    }
-    rotZ = trans.getRotateZ() * Math.PI/180.0;
-    if (img.getNDims() > 2) {
-        rotX = trans.getRotateX() * Math.PI/180.0;
-        rotY = trans.getRotateY() * Math.PI/180.0;
-        img2LPS.set(0, 0, 1.0);
-        img2LPS.set(1, 1, Math.cos(rotX));
-        img2LPS.set(1, 2, -Math.sin(rotX));
-        img2LPS.set(2, 1, Math.sin(rotX));
-        img2LPS.set(2, 2, Math.cos(rotX));
-        img2LPS.set(3, 3, 1.0);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotY));
-        img2.set(0, 2, Math.sin(rotY));
-        img2.set(1, 1, 1.0);
-        img2.set(2, 0, -Math.sin(rotY));
-        img2.set(2, 2, Math.cos(rotY));
-        img2.set(3, 3, 1.0);
-        img2LPS.timesEquals(img2);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotZ));
-        img2.set(0, 1, -Math.sin(rotZ));
-        img2.set(1, 0, Math.sin(rotZ));
-        img2.set(1, 1, Math.cos(rotZ));
-        img2.set(2, 2, 1.0);
-        img2.set(3, 3, 1.0);
-        img2LPS.timesEquals(img2);
-    }
-    else {
-        img2LPS.set(0, 0, Math.cos(rotZ));
-        img2LPS.set(0, 1, -Math.sin(rotZ));
-        img2LPS.set(1, 0, Math.sin(rotZ));
-        img2LPS.set(1, 1, Math.cos(rotZ));
-        img2LPS.set(2, 2, 1.0);
-    }
-    
-    for (i = 0; i < nDims; i++) { // i's are the rows
-      for (j = 0; j < nDims; j++) { // j's are the columns
-        if (Math.abs(img2LPS.get(i, j)) > Math.cos(Math.PI / 4.0))
-        // plane is within 45 degrees of that direction
-        {
-          origLPS[i] = origImg[j];
-        }
-      }
-    }
-    return origLPS;
-  }
-
-  /***
-   *   Switch origin order from LPS order to Img order.
-   */
-  private double[] originLPS2Img(double[] origLPS, ModelImage img) {
-    double[] origImg = new double[nDims];
-    Matrix LPS2img = new Matrix(nDims+1, nDims+1);
-    TransMatrix trans;
-    TransMatrix trans2D;
-    boolean success;
-    double rotX, rotY, rotZ;
-    Matrix img2;
-    int i,j;
-
-    if (img.getNDims() > 2) {
-        trans = img.getMatrix();
-    }
-    else {
-        trans2D = img.getMatrix();
-        trans = new TransMatrix(4);
-        for (i = 0; i < 3; i++) {
-            for (j = 0; j < 3; j++) {
-                trans.set(i, j, trans2D.get(i, j));
-            }
-        }
-    }
-    success = trans.decomposeMatrix(trans);
-    if (!success) {
-        MipavUtil.displayError("Failure on decompose matrix in originLPS2Img");
-        stopped = true;
-        setCompleted(false);
-        return null;  
-    }
-    rotZ = trans.getRotateZ() * Math.PI/180.0;
-    if (img.getNDims() > 2) {
-        rotX = trans.getRotateX() * Math.PI/180.0;
-        rotY = trans.getRotateY() * Math.PI/180.0;
-        LPS2img.set(0, 0, 1.0);
-        LPS2img.set(1, 1, Math.cos(rotX));
-        LPS2img.set(1, 2, -Math.sin(rotX));
-        LPS2img.set(2, 1, Math.sin(rotX));
-        LPS2img.set(2, 2, Math.cos(rotX));
-        LPS2img.set(3, 3, 1.0);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotY));
-        img2.set(0, 2, Math.sin(rotY));
-        img2.set(1, 1, 1.0);
-        img2.set(2, 0, -Math.sin(rotY));
-        img2.set(2, 2, Math.cos(rotY));
-        img2.set(3, 3, 1.0);
-        LPS2img.timesEquals(img2);
-        img2 = new Matrix(nDims+1, nDims+1);
-        img2.set(0, 0, Math.cos(rotZ));
-        img2.set(0, 1, -Math.sin(rotZ));
-        img2.set(1, 0, Math.sin(rotZ));
-        img2.set(1, 1, Math.cos(rotZ));
-        img2.set(2, 2, 1.0);
-        img2.set(3, 3, 1.0);
-        LPS2img.timesEquals(img2);
-    }
-    else {
-        LPS2img.set(0, 0, Math.cos(rotZ));
-        LPS2img.set(0, 1, -Math.sin(rotZ));
-        LPS2img.set(1, 0, Math.sin(rotZ));
-        LPS2img.set(1, 1, Math.cos(rotZ));
-        LPS2img.set(2, 2, 1.0);
-    }
-    
-    LPS2img = LPS2img.getMatrix(0, nDims, 0, nDims).inverse();
-    for (i = 0; i < nDims; i++) { // i's are the rows
-      for (j = 0; j < nDims; j++) { // j's are the columns
-        if (Math.abs(LPS2img.get(i, j)) > Math.cos(Math.PI / 4.0))
-        // plane is within 45 degrees of that direction
-        {
-          origImg[i] = origLPS[j];
-        }
-      }
-    }
-    return origImg;
   }
 
   /**
@@ -1999,6 +1856,740 @@ public class AlgorithmMatchImages
         sourceImgB.setFileInfo(fileInfo, i);
       } // for (int i = 0; i < lastSlice; i++)
     } // if (changeUnits)
+  }
+  
+  /**
+   *  Return the 3 axis orientation codes that correspond to the closest standard
+   *  anatomical orientation of the (i,j,k) axes
+   *  @param mat 4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates
+   *  where +x = Left, +y = Posterior, +z = Superior
+   *  Only the upper-left 3x3 corner of the matrix is used
+   *  This routine finds the permutation of (x,y,z) which has the smallest angle to the
+   *  (i,j,k) axes directions, which are columns of the input matrix
+   *  Errors: The codes returned will be zero.
+   */
+  private int[] getAxisOrientation(TransMatrix mat) {
+      int axisOrientation[] = new int[3];
+      double[][] array;
+      double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
+      Matrix Q;
+      double detQ;
+      double vbest;
+      int ibest, jbest, kbest, pbest, qbest, rbest;
+      int i, j, k, p, q, r;
+      Matrix P;
+      double detP;
+      Matrix M;
+
+      array = mat.getMatrix(0, 2, 0, 2).getArray();
+      
+      xi = array[0][0];
+      xj = array[0][1];
+      xk = array[0][2];
+      yi = array[1][0];
+      yj = array[1][1];
+      yk = array[1][2];
+      zi = array[2][0];
+      zj = array[2][1];
+      zk = array[2][2];
+      int izero = 0;
+      int jzero = 0;
+      int kzero = 0;
+      int xzero = 0;
+      int yzero = 0;
+      int zzero = 0;
+      if (xi == 0.0) {
+          izero++;
+          xzero++;
+      }
+      if (yi == 0.0) {
+          izero++;
+          yzero++;
+      }
+      if (zi == 0.0) {
+          izero++;
+          zzero++;
+      }
+      if (xj == 0.0) {
+          jzero++;
+          xzero++;
+      }
+      if (yj == 0.0) {
+          jzero++;
+          yzero++;
+      }
+      if (zj == 0.0) {
+          jzero++;
+          zzero++;
+      }
+      if (xk == 0.0) {
+          kzero++;
+          xzero++;
+      }
+      if (yk == 0.0) {
+          kzero++;
+          yzero++;
+      }
+      if (zk == 0.0) {
+          kzero++;
+          zzero++;
+      }
+      if ( (izero == 2) && (jzero == 2) && (kzero == 2) && (xzero == 2) && (yzero == 2) && (zzero == 2)) {
+          if (xi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+          }
+          else if (zi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
+          }
+          else if (zi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+          }
+
+          if (xj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+          }
+          else if (zj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+          }
+          else if (zj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+          }
+
+          if (xk < 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xk > 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yk < 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yk > 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+          }
+          else if (zk < 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+          }
+          else if (zk > 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+          }
+
+          return axisOrientation;
+      } // if ((izero == 2) && (jzero == 2) && (kzero == 2) && (xzero == 2) && (yzero == 2) && (zzero == 2))
+
+      // Normalize column vectors to get unit vectors along each ijk-axis
+
+      // Normalize i axis
+      val = Math.sqrt(xi * xi + yi * yi + zi * zi);
+      if (val == 0.0) {
+          MipavUtil.displayError("xi = yi = zi = 0 in getAxisOrientation");
+          return null;
+      }
+      xi /= val;
+      yi /= val;
+      zi /= val;
+
+      // Normalize j axis
+      val = Math.sqrt(xj * xj + yj * yj + zj * zj);
+      if (val == 0.0) {
+          MipavUtil.displayError("xj = yj = zj = 0 in getAxisOrientation");
+          return null;
+      }
+      xj /= val;
+      yj /= val;
+      zj /= val;
+
+      // Orthogonalize j axis to i axis, if needed
+      val = xi * xj + yi * yj + zi * zj; // dot product between i and j
+      if (Math.abs(val) > 1.0e-4) {
+          xj -= val * xi;
+          yj -= val * yi;
+          zj -= val * zi;
+          val = Math.sqrt(xj * xj + yj * yj + zj * zj); // Must renormalize
+          if (val == 0.0) {
+              MipavUtil.displayError("j was parallel to i in getAxisOrientation");
+              return null;
+          }
+          xj /= val;
+          yj /= val;
+          zj /= val;
+      }
+
+      // Normalize k axis; if it is zero, make it the cross product i x j
+      val = Math.sqrt(xk * xk + yk * yk + zk * zk);
+      if (val == 0.0) {
+          xk = yi * zj - zi * yj;
+          yk = zi * xj - zj * xi;
+          zk = xi * yj - yi * xj;
+      }
+      else {
+          xk /= val;
+          yk /= val;
+          zk /= val;
+      }
+
+      // Orthogonalize k to i
+      val = xi * xk + yi * yk + zi * zk; // dot product between i and k
+      if (Math.abs(val) > 1.0e-4) {
+          xk -= val * xi;
+          yk -= val * yi;
+          zk -= val * zi;
+          val = Math.sqrt(xk * xk + yk * yk + zk * zk);
+          if (val == 0.0) {
+              MipavUtil.displayError("val == 0 when orthogonalizing k to i");
+              return null;
+          }
+          xk /= val;
+          yk /= val;
+          zk /= val;
+      }
+
+      // Orthogonalize k to j
+      val = xj * xk + yj * yk + zj * zk; // dot product between j and k
+      if (Math.abs(val) > 1.0e-4) {
+          xk -= val * xj;
+          yk -= val * yj;
+          zk -= val * zj;
+          val = Math.sqrt(xk * xk + yk * yk + zk * zk);
+          if (val == 0.0) {
+              MipavUtil.displayError("val == 0 when orthogonalizing k to j");
+              return null;
+          }
+          xk /= val;
+          yk /= val;
+          zk /= val;
+      }
+      
+      if ((Math.abs(xi) > 0.9 || Math.abs(yi) > 0.9  || Math.abs(zi) > 0.9) &&
+          (Math.abs(xj) > 0.9 || Math.abs(yj) > 0.9  || Math.abs(zj) > 0.9) &&
+          (Math.abs(xk) > 0.9 || Math.abs(yk) > 0.9  || Math.abs(zk) > 0.9)) {
+          if (Math.abs(xi) < 0.9) {
+              xi = 0;
+          }
+          if (Math.abs(yi) < 0.9) {
+              yi = 0;
+          }
+          if (Math.abs(zi) < 0.9) {
+              zi = 0;
+          }
+          if (Math.abs(xj) < 0.9) {
+              xj = 0;
+          }
+          if (Math.abs(yj) < 0.9) {
+              yj = 0;
+          }
+          if (Math.abs(zj) < 0.9) {
+              zj = 0;
+          }
+          if (Math.abs(xk) < 0.9) {
+              xk = 0;
+          }
+          if (Math.abs(yk) < 0.9) {
+              yk = 0;
+          }
+          if (Math.abs(zk) < 0.9) {
+              zk = 0;
+          }
+          
+          if (xi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+          }
+          else if (zi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
+          }
+          else if (zi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+          }
+
+          if (xj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+          }
+          else if (zj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+          }
+          else if (zj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+          }
+
+          if (xk < 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xk > 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yk < 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yk > 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+          }
+          else if (zk < 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+          }
+          else if (zk > 0.0) {
+              axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+          }
+
+          return axisOrientation;
+      }
+      array[0][0] = xi;
+      array[0][1] = xj;
+      array[0][2] = xk;
+      array[1][0] = yi;
+      array[1][1] = yj;
+      array[1][2] = yk;
+      array[2][0] = zi;
+      array[2][1] = zj;
+      array[2][2] = zk;
+      
+      // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
+      Q = new Matrix(array);
+      detQ = Q.det();
+      if (detQ == 0.0) {
+          MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
+          return null;
+      }
+
+      // Build and test all possible +1/-1 coordinate permutation matrices P;
+      // then find the P such that the rotation matrix M=PQ is closest to the
+      // identity, in the sense of M having the smallest total rotation angle
+
+      // Despite the formidable looking 6 nested loops, there are
+      // only 3*3*3*2*2*2 = 216 passes, which will run very quickly
+      vbest = -Double.MAX_VALUE;
+      pbest = 1;
+      qbest = 1;
+      rbest = 1;
+      ibest = 1;
+      jbest = 2;
+      kbest = 3;
+      for (i = 1; i <= 3; i++) { // i = column number to use for row #1
+          for (j = 1; j <= 3; j++) { // j = column number to use for row #2
+              if (i == j)
+                  continue;
+              for (k = 1; k <= 3; k++) { // k = column number to use for row #3
+                  if ( (i == k) || (j == k))
+                      continue;
+                  array[0][0] = 0.0;
+                  array[0][1] = 0.0;
+                  array[0][2] = 0.0;
+                  array[1][0] = 0.0;
+                  array[1][1] = 0.0;
+                  array[1][2] = 0.0;
+                  array[2][0] = 0.0;
+                  array[2][1] = 0.0;
+                  array[2][2] = 0.0;
+                  P = new Matrix(array);
+                  for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
+                      for (q = -1; q <= 1; q += 2) {
+                          for (r = -1; r <= 1; r += 2) {
+                              P.set(0, i - 1, p);
+                              P.set(1, j - 1, q);
+                              P.set(2, k - 1, r);
+                              detP = P.det();
+                              // sign of permutation doesn't match sign of Q
+                              if (detP * detQ <= 0.0)
+                                  continue;
+                              M = P.times(Q);
+
+                              // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
+                              // we want largest trace(M) == smallest angle == M nearest to I
+                              val = M.get(0, 0) + M.get(1, 1) + M.get(2, 2); // trace
+                              if (val > vbest) {
+                                  vbest = val;
+                                  ibest = i;
+                                  jbest = j;
+                                  kbest = k;
+                                  pbest = p;
+                                  qbest = q;
+                                  rbest = r;
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+
+      // At this point ibest is 1 or 2 or 3; pbest is -1 or +1; etc.
+
+      // The matrix P that corresponds is the best permutation approximation
+      // to Q-inverse; that is, P (approximately) takes (x,y,z) coordinates
+      // to the (i,j,k) axes
+
+      // For example, the first row of P (which contains pbest in column ibest)
+      // determines the way the i axis points relative to the anatomical
+      // (x,y,z) axes.  If ibest is 2, then the i axis is along the yaxis,
+      // which is direction P2A (if pbest < 0) or A2P (if pbest > 0).
+
+      // So, using ibest and pbest, we can assign the output code for
+      // the i axis.  The same also applies for the j and k axes.
+
+      switch (ibest * pbest) {
+          case -1:
+              axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+              break;
+          case 1:
+              axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+              break;
+          case -2:
+              axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+              break;
+          case 2:
+              axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+              break;
+          case -3:
+              axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
+              break;
+          case 3:
+              axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+              break;
+      }
+
+      switch (jbest * qbest) {
+          case -1:
+              axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+              break;
+          case 1:
+              axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+              break;
+          case -2:
+              axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+              break;
+          case 2:
+              axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+              break;
+          case -3:
+              axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+              break;
+          case 3:
+              axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+              break;
+      }
+
+      switch (kbest * rbest) {
+          case -1:
+              axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+              break;
+          case 1:
+              axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+              break;
+          case -2:
+              axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+              break;
+          case 2:
+              axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+              break;
+          case -3:
+              axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+              break;
+          case 3:
+              axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+              break;
+      }
+      return axisOrientation;
+  }
+  
+  /**
+   *  Return the 2 axis orientation codes that correspond to the closest standard
+   *  anatomical orientation of the (i,j) axes
+   *  @param mat 3x3 matrix that transforms (i,j) indexes to x,y coordinates
+   *  where +x = Left, +y = Posterior
+   *  Only the upper-left 2x2 corner of the matrix is used
+   *  This routine finds the permutation of (x,y) which has the smallest angle to the
+   *  (i,j) axes directions, which are columns of the input matrix
+   *  Errors: The codes returned will be zero.
+   */
+  private int[] getAxisOrientation2D(TransMatrix mat) {
+      int axisOrientation[] = new int[2];
+      double[][] array;
+      double xi, xj, yi, yj, val;
+      Matrix Q;
+      double detQ;
+      double vbest;
+      int ibest, jbest, pbest, qbest;
+      int i, j, p, q;
+      Matrix P;
+      double detP;
+      Matrix M;
+
+      array = mat.getMatrix(0, 1, 0, 1).getArray();
+      
+      xi = array[0][0];
+      xj = array[0][1];
+      yi = array[1][0];
+      yj = array[1][1];
+      int izero = 0;
+      int jzero = 0;
+      int xzero = 0;
+      int yzero = 0;
+      if (xi == 0.0) {
+          izero++;
+          xzero++;
+      }
+      if (yi == 0.0) {
+          izero++;
+          yzero++;
+      }
+      if (xj == 0.0) {
+          jzero++;
+          xzero++;
+      }
+      if (yj == 0.0) {
+          jzero++;
+          yzero++;
+      }
+      
+      if ( (izero == 2) && (jzero == 2) && (xzero == 2) && (yzero == 2)) {
+          if (xi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+          }
+
+          if (xj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+          }
+
+          return axisOrientation;
+      } // if ((izero == 2) && (jzero == 2) && (xzero == 2) && (yzero == 2))
+
+      // Normalize column vectors to get unit vectors along each ij-axis
+
+      // Normalize i axis
+      val = Math.sqrt(xi * xi + yi * yi);
+      if (val == 0.0) {
+          MipavUtil.displayError("xi = yi = 0 in getAxisOrientation");
+          return null;
+      }
+      xi /= val;
+      yi /= val;
+
+      // Normalize j axis
+      val = Math.sqrt(xj * xj + yj * yj);
+      if (val == 0.0) {
+          MipavUtil.displayError("xj = yj = 0 in getAxisOrientation");
+          return null;
+      }
+      xj /= val;
+      yj /= val;
+
+      // Orthogonalize j axis to i axis, if needed
+      val = xi * xj + yi * yj; // dot product between i and j
+      if (Math.abs(val) > 1.0e-4) {
+          xj -= val * xi;
+          yj -= val * yi;
+          val = Math.sqrt(xj * xj + yj * yj); // Must renormalize
+          if (val == 0.0) {
+              MipavUtil.displayError("j was parallel to i in getAxisOrientation");
+              return null;
+          }
+          xj /= val;
+          yj /= val;
+      }
+
+     
+      
+      if ((Math.abs(xi) > 0.9 || Math.abs(yi) > 0.9) &&
+          (Math.abs(xj) > 0.9 || Math.abs(yj) > 0.9)) {
+          if (Math.abs(xi) < 0.9) {
+              xi = 0;
+          }
+          if (Math.abs(yi) < 0.9) {
+              yi = 0;
+          }
+          if (Math.abs(xj) < 0.9) {
+              xj = 0;
+          }
+          if (Math.abs(yj) < 0.9) {
+              yj = 0;
+          }
+          
+          
+          if (xi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yi < 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yi > 0.0) {
+              axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+          }
+
+          if (xj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+          }
+          else if (xj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+          }
+          else if (yj < 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+          }
+          else if (yj > 0.0) {
+              axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+          }
+
+          return axisOrientation;
+      }
+      array[0][0] = xi;
+      array[0][1] = xj;
+      array[1][0] = yi;
+      array[1][1] = yj;
+      
+      // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
+      Q = new Matrix(array);
+      detQ = Q.det();
+      if (detQ == 0.0) {
+          MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
+          return null;
+      }
+
+      // Build and test all possible +1/-1 coordinate permutation matrices P;
+      // then find the P such that the rotation matrix M=PQ is closest to the
+      // identity, in the sense of M having the smallest total rotation angle
+
+      // Despite the formidable looking 6 nested loops, there are
+      // only 3*3*3*2*2*2 = 216 passes, which will run very quickly
+      vbest = -Double.MAX_VALUE;
+      pbest = 1;
+      qbest = 1;
+      ibest = 1;
+      jbest = 2;
+      for (i = 1; i <= 3; i++) { // i = column number to use for row #1
+          for (j = 1; j <= 3; j++) { // j = column number to use for row #2
+              if (i == j)
+                  continue;
+              
+                  array[0][0] = 0.0;
+                  array[0][1] = 0.0;
+                  array[1][0] = 0.0;
+                  array[1][1] = 0.0;
+                  P = new Matrix(array);
+                  for (p = -1; p <= 1; p += 2) { // p,q are -1 or +1 and go into rows #1,2
+                      for (q = -1; q <= 1; q += 2) {
+                              P.set(0, i - 1, p);
+                              P.set(1, j - 1, q);
+                              detP = P.det();
+                              // sign of permutation doesn't match sign of Q
+                              if (detP * detQ <= 0.0)
+                                  continue;
+                              M = P.times(Q);
+
+                              // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
+                              // we want largest trace(M) == smallest angle == M nearest to I
+                              val = M.get(0, 0) + M.get(1, 1); // trace
+                              if (val > vbest) {
+                                  vbest = val;
+                                  ibest = i;
+                                  jbest = j;
+                                  pbest = p;
+                                  qbest = q;
+                              }
+                      }
+                  }
+          }
+      }
+
+      // At this point ibest is 1 or 2; pbest is -1 or +1; etc.
+
+      // The matrix P that corresponds is the best permutation approximation
+      // to Q-inverse; that is, P (approximately) takes (x,y) coordinates
+      // to the (i,j) axes
+
+      // For example, the first row of P (which contains pbest in column ibest)
+      // determines the way the i axis points relative to the anatomical
+      // (x,y,z) axes.  If ibest is 2, then the i axis is along the yaxis,
+      // which is direction P2A (if pbest < 0) or A2P (if pbest > 0).
+
+      // So, using ibest and pbest, we can assign the output code for
+      // the i axis.  The same also applies for the j and k axes.
+
+      switch (ibest * pbest) {
+          case -1:
+              axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+              break;
+          case 1:
+              axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+              break;
+          case -2:
+              axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+              break;
+          case 2:
+              axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+              break;
+      }
+
+      switch (jbest * qbest) {
+          case -1:
+              axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+              break;
+          case 1:
+              axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+              break;
+          case -2:
+              axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+              break;
+          case 2:
+              axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+              break;
+      }
+
+      return axisOrientation;
   }
 
 }
