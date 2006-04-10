@@ -7387,13 +7387,11 @@ public class FileIO {
                 ModelImage newImage = (ModelImage)image.clone();
                 
                 // in-place conversion is required so that the minc file info is retained
-                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT, newImage.getMin(), newImage.getMax(), 0, 4096, false);
+                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT, newImage.getMin(), newImage.getMax(), newImage.getMin(), newImage.getMax(), false);
                 convertType.setProgressBarVisible(false);
                 convertType.run();
                 
                 image = newImage;
-                
-                new ViewJFrameImage(image);
             }
 
             // Why this stuff
