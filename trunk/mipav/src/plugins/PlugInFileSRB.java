@@ -8,8 +8,7 @@ import edu.sdsc.grid.io.*;
 import edu.sdsc.grid.io.local.*;
 import edu.sdsc.grid.io.srb.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.*;
 import java.util.*;
 import javax.swing.*;
@@ -33,7 +32,21 @@ public class PlugInFileSRB implements PlugInFile {
     
     private GeneralFileSystem sourceFileSystem;
     private GeneralFileSystem destinationFileSystem;
-    
+    public static SRBFileSystem srbFileSystem = null;
+    static{
+        try{
+            srbFileSystem = new SRBFileSystem(new SRBAccount());
+        }catch(FileNotFoundException e){
+            e.printStackTrace();
+            MipavUtil.displayError("SRBAccount initialzation error: " + e.getMessage());
+        }catch(IOException e){
+            e.printStackTrace();
+            MipavUtil.displayError("SRBAccount initialzation error: " + e.getMessage());
+        }
+    }
+    public PlugInFileSRB(){
+        
+    }
     /**
      * @inheritDoc
      */
@@ -288,7 +301,7 @@ public class PlugInFileSRB implements PlugInFile {
             PanelManager manager = new PanelManager("srb:// or file:/ URI");
             manager.getConstraints().insets = new Insets(3,3,3,3);
             manager.add(WidgetFactory.buildLabel("Enter URI "));
-            sourceURIField = WidgetFactory.buildTextField("srb://hwang.nih:NIHBIRN@ncmir-gpop.ucsd.edu:5825/home/hwang.nih");
+            sourceURIField = WidgetFactory.buildTextField("srb://");
             sourceURIField.setColumns(40);
             manager.add(sourceURIField);
             manager.add(WidgetFactory.buildTextButton("Browse", "Browse srb or local filesystem (determined by which is in URI field).", "Browse", this));
@@ -306,6 +319,8 @@ public class PlugInFileSRB implements PlugInFile {
          * @param uri the url to put into the URI text field
          */
         public void setSourceURI(URI uri) {
+            if(uri == null)
+                return;
             String strURI = uri.toString();
             int index = strURI.indexOf("?");
             if(index >= 0)
@@ -406,6 +421,8 @@ public class PlugInFileSRB implements PlugInFile {
          * @param uri the url to put into the URI text field
          */
         public void setSourceURI(URI uri) {
+            if(uri == null)
+                return;
             String strURI = uri.toString();
             int index  = strURI.indexOf("?");
             if(index >= 0)
@@ -414,8 +431,12 @@ public class PlugInFileSRB implements PlugInFile {
         }
         
         public void setDestinationURI(URI uri) {
+            if(uri == null)
+                return;
             String strURI = uri.toString();
-            strURI = strURI.substring(0, strURI.indexOf("?"));
+            int index = strURI.indexOf("?");
+            if(index >= 0)
+                strURI = strURI.substring(0, strURI.indexOf("?"));
             destinationURIField.setText(strURI);
         }
         
@@ -494,7 +515,11 @@ public class PlugInFileSRB implements PlugInFile {
                 } else {
                     chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
                 }
-
+                if(use == SOURCE){
+                    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                } else {
+                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                }
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
@@ -517,9 +542,22 @@ public class PlugInFileSRB implements PlugInFile {
         } else if(uri.startsWith("srb://")) {
             // srb browser
             try {
-                URI uri2 = new URI(uri);
-                JargonFileChooser chooser = new JargonFileChooser(uri2);
-                int returnValue = chooser.showDialog();
+                JargonFileChooser chooser = null;
+                if(uri.equals("srb://")){
+                    chooser = new JargonFileChooser((SRBAccount)srbFileSystem.getAccount(), "/home/hwang.nih");
+                    
+                }else{
+                    URI uri2 = new URI(uri);
+                    chooser = new JargonFileChooser((SRBAccount)srbFileSystem.getAccount(), uri2.getPath());
+                }
+
+                if(use == SOURCE){
+                    chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+                } else {
+                    chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+                }
+
+                int returnValue = chooser.showDialog(ViewUserInterface.getReference().getMainFrame(), null);
                 if(returnValue == JargonFileChooser.APPROVE_OPTION){
                     SRBFile f = chooser.getSelectedFile();
                     if(f != null){
