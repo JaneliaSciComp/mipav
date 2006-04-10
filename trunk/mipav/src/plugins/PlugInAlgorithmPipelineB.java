@@ -355,11 +355,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                         }
                         centroidX[cc-1] = centroidX[cc-1] / n;
                         centroidY[cc-1] = centroidY[cc-1] / n;
-                        System.out.println("centroidX:  "+centroidX[cc-1]);
-                        System.out.println("centroidY:  "+centroidY[cc-1]);
+                        //System.out.println("centroidX:  "+centroidX[cc-1]);
+                        //System.out.println("centroidY:  "+centroidY[cc-1]);
                         
                         distFromCent[cc-1] = Math.abs((centroidX[cc-1] - xDim / 2) ^2 + (centroidY[cc-1] - yDim / 2) ^ 2);
-                        System.out.println("distFromCent:  "+distFromCent[cc-1]);
+                        //System.out.println("distFromCent:  "+distFromCent[cc-1]);
                     }
                     
                     //using centroids to find correct bone object. object correspondent to minimum distFromCent
@@ -367,7 +367,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                     	if(boneObject[bb]>1){
 	                        if (distFromCent[cc] < distFromCent[boneObject[bb]]) {
 	                               boneObject[bb] = cc+1;
-	                               System.out.println("boneObject["+bb+"]: "+ boneObject[bb]);
+	                               //System.out.println("boneObject["+bb+"]: "+ boneObject[bb]);
 	                        }
                     	}
                     }
@@ -433,8 +433,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
 
 	       if (BoneID == tempImageOne) {
-*/	    	   System.out.println("fill hole does not affect bondID. do alternate fill method");
-	           for (bb = 0; bb < zDim; bb++) {
+	    	   System.out.println("fill hole does not affect bondID. do alternate fill method");
+*/	           for (bb = 0; bb < zDim; bb++) {
 	               try {
 	                   destImage3a.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
 	                   BoneID.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
@@ -460,15 +460,15 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                               }
 	                               if(xmin<xmax){
 		                               for(cc=xmin;cc<xmax;cc++){
-		                            	   System.out.println("xmin: "+xmin+"     xmax: "+xmax);
+		                            	   //System.out.println("xmin: "+xmin+"     xmax: "+xmax);
 		                               	imgBuffer[i+cc]=BONE_MARROW;
-		                               	System.out.println("this pixel "+i+"+"+cc+" gets changed to bone marrow");
+		                               	//System.out.println("this pixel "+i+"+"+cc+" gets changed to bone marrow");
 		                               }
 	                               }
 	                           }
 	                           if(imgBuffer2[i]==1 && imgBuffer[i]!=BONE){
 	                        	   imgBuffer[i]=BONE_MARROW;
-	                        	   System.out.println("pixel "+i+" changed to bone marrow");
+	                        	   //System.out.println("pixel "+i+" changed to bone marrow");
 	                           }
 	                       }
 	                   }
@@ -535,9 +535,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             }
             progressBar.updateValue(50 * (aa - 1) + 43, activeImage);
             progressBar.setMessage("Labeling Bone Marrow");
-            
- //          ShowImage(destImage3a, "destImage3a after blotchy marrow cleanup");
-            
+           
             //----------END OF destImage3a CLEANUP--------------
            
            //---------destImage3b CLEANUP--------------
@@ -558,116 +556,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             
             progressBar.updateValue(50 * (aa - 1) + 45, activeImage);
-            
-            /*
-            public static int BACKGROUND_2 = 63;
-            public static int FAT_2_A = 189;
-            public static int FAT_2_B = 252;
-            public static int MUSCLE_2 = 126;
-
-            //intensity transformations (relabeled intensities)
-            public static int BACKGROUND_NEW = 0;
-            public static int BONE = 100;
-            public static int BONE_MARROW = 200;
-            public static int SUB_CUT_FAT = 225;
-            //  public static int FAT = 255;
-            // public static int MUSCLE = 170;
-            */
-                      
-            
-
-            //2. CONVERTING REMAINING BLACK INSIDE CONTOURS TO FAT -------------
-            //ID_OBJECTS REMAINING LARGER BLACK INSIDE CONTOURS (50-5000)
-            //conversion: inner black contours --> fat
-/*            tempImageTwo = (ModelImage) destImage3b.clone();
-            MinMax[0]=50;
-            MinMax[1]=5000;
-            IDObjects(tempImageTwo, MinMax);
-
-            for (bb = 0; bb < zDim; bb++) {
-                try {
-                    destImage3b.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-                    tempImageTwo.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer2[cc] != 0) {
-                            imgBuffer[cc] = FAT;
-                        }
-                    }
-                    destImage3b.importData((bb * imgBuffer.length), imgBuffer, false);
-                } catch (IOException ex) {
-                    System.err.println(
-                            "error exporting data from destImageA in AlgorithmPipeline2-STEP5-blacktofat");
-                }
-            }
-            
-           ShowImage(destImage3b, "large black contours change to fat");
-            
-            
-            //3. Converting White Inside Noise into MUSCLE
-            //Threshold/IDObjects/Convert
-            progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
-  //          cleanUp(destImage3b, FAT_2_B, MUSCLE, 100*zDim/20, zDim);
-            ShowImage(destImage3b, "inside white fat noise changed to muscle");
-            
-            threshCuts[0] = FAT_2_B - 10;
-            threshCuts[1]= FAT_2_B + 10;
-            threshold(tempImageTwo, destImage3b, threshCuts);
-            
-            MinMax[0]=0;
-            MinMax[1]=50;
-            IDObjects(tempImageTwo, MinMax);
-
-            for (bb = 0; bb < zDim; bb++) {
-                try {
-                    destImage3b.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-                    tempImageTwo.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer2[cc] != 0) {
-                            imgBuffer[cc] = MUSCLE;
-                        }
-                    }
-                    destImage3b.importData((bb * imgBuffer.length), imgBuffer, false);
-                } catch (IOException ex) {
-                    System.err.println(
-                            "error exporting data from destImageA in AlgorithmPipeline2-STEP5-converting");
-                }
-            }
-            tempImageTwo.disposeLocal();
-            tempImageTwo = null;
-
-            //- STEP 6: CONVERTING REST OF WHAT'S INSIDE MUSCLE BUNDLE TO FAT --
-            //INPUT: destImage3b, voiMask, obMask -----------OUTPUT: destImage3b
-            
- //           cleanUp(destImage3b, FAT, MUSCLE, 100*zDim/20, zDim);
-            ShowImage(destImage3b, "remaining fat noise all changed to muscle");
- //           cleanUp(destImage3b, MUSCLE, FAT, 100*zDim/20, zDim);
-           ShowImage(destImage3b, "muscle noise all changed to fat");
-            
-            for (bb = 0; bb < zDim; bb++) {
-                try {
-                    destImage3b.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-                    voiMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
-                    obMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer2);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer1[cc] == 1) {
-                            if (imgBuffer[cc] == FAT_2_A ||
-                                imgBuffer[cc] == FAT_2_B) {
-                                imgBuffer[cc] = FAT; //interstitial fat
-                            }
-                        } else {
-                            if (imgBuffer2[cc] == 1) {
-                                imgBuffer[cc] = SUB_CUT_FAT; //subcutaneous fat
-                            }
-                        }
-                    }
-                    destImage3b.importData((bb * imgBuffer.length), imgBuffer, false);
-                } catch (IOException ex) {
-                    System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP6");
-                }
-            }
-            
-            ShowImage(destImage3b, "last modification before bringing both pieces together");
-*/
+ 
             voiMask.disposeLocal();
             voiMask = null;
 
@@ -694,41 +583,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                     System.err.println(
                             "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
                 }
-            }
-            
-//          ShowImage(destImage3b, "together");
+            }            
+            cleanUp(destImage3b, BACKGROUND_NEW, SUB_CUT_FAT, 100*zDim/20, zDim);
+            cleanUp(destImage3b, SUB_CUT_FAT, BACKGROUND_NEW, 100*zDim/20, zDim);
 
             destImage3a.disposeLocal();
             destImage3a = null;
 
             progressBar.updateValue(50 * (aa - 1) + 49, activeImage);
             progressBar.setMessage("Tissue Type Counts/Volumes");
-/*
-            //--------------------STEP8: final cleanup -------------------------
-            //INPUT: destImage3b ----------------------------OUTPUT: destImage3b
-            //what's not bone/bone marrow/interstitial fat/subcutaneous fat/background_2, make interstitial fat
-            for (bb = 0; bb < zDim; bb++) {
-                try {
-                    destImage3b.exportData((bb * imgBuffer.length),
-                                           imgBuffer.length, imgBuffer1);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer1[cc] != BONE &&
-                            imgBuffer1[cc] != BONE_MARROW &&
-                            imgBuffer1[cc] != SUB_CUT_FAT &&
-                            imgBuffer1[cc] != BACKGROUND_NEW &&
-                            imgBuffer1[cc] != MUSCLE) {
-                            imgBuffer1[cc] = FAT;
-                        }
-                    }
-                    destImage3b.importData((bb * imgBuffer.length), imgBuffer1, false);
-                } catch (IOException ex) {
-                    System.err.println(
-                            "error exporting data from destImageA in AlgorithmPipeline2-STEP8");
-                }
-            }
+
             
-            ShowImage(destImage3b, "with final cleanup");
-*/
             //------------------STEP9: counting tissue types -------------------
             for (bb = 0; bb < zDim; bb++) {
                 try {
@@ -801,60 +666,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     }
     
     public ModelImage HardFuzzy(ModelImage[] HardSeg, ModelImage srcImage, int nClasses, int zDim){
-    	
-    	/*  
-    	int bins = 256;
-    	  
-          AlgorithmHistogram algoHist;
-          algoHist = new AlgorithmHistogram(srcImage,bins);
-          algoHist.setProgressBarVisible(false);
-          algoHist.run();       
-
-          int histoBuffer[];
-          histoBuffer = algoHist.getHistoBuffer();
-          algoHist.finalize();
-          algoHist = null;
-        
-          float centroid_array[] = new float[nClasses];
-          int totalCount, i;
-          double percentSoFar;
-
-          totalCount = histoBuffer[0];
-          for (i = 1; i < histoBuffer.length; i++) {
-              totalCount += histoBuffer[i];
-          }
-          double count = 0;
-          int cc = 1;
-
-          for (i = 0; i < histoBuffer.length; i++) {
-              count+= histoBuffer[i];
-              percentSoFar =  count / totalCount;
-              System.out.println("histoBuffer["+i+"]: "+histoBuffer[i]);
-              System.out.println("percentSoFar:  "+percentSoFar);
-              System.out.println("totalCount:  "+totalCount);
-              if ( percentSoFar >= (cc / (nClasses + 1))) {
-              centroid_array[cc - 1] = i;
-              cc++;
-
-              }
-
-          }
-          */
-    	
-    	
-    	
+  
     	//older centroid method
-    	int cc;
     	float centroid_array[] = new float[nClasses];
-    	double min = srcImage.getMin();
-        double max = srcImage.getMax();
-        for(cc=0; cc<nClasses; cc++){
-        	centroid_array[cc] = (float)(min+(max-min)*(cc+1)/(nClasses+1));
-        	System.out.println("OLD centroid_array["+cc+"]: "+centroid_array[cc]);
-        }
-        
-        
-        int i, bb;
+        int i, bb, cc;
         float percentSoFar = 0;
         float count = 0;
         int totalCount = 0;
@@ -878,10 +693,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                        percentSoFar =  count / totalCount;
 	                        if ( percentSoFar >= (float)(cc / (nClasses + 1))) {
 		                        centroid_array[cc - 1] = (float)(i+(bb*imgBuffer.length));
-		                        System.out.println("imgBuffer["+i+"]: "+imgBuffer[i]);
-		                        System.out.println("percentSoFar:  "+percentSoFar);
-		                        System.out.println("totalCount:  "+totalCount);
-		                        System.out.println("NEW centroid_array["+cc+"-1]: "+centroid_array[cc - 1]);
+		                        //System.out.println("imgBuffer["+i+"]: "+imgBuffer[i]);
+		                        //System.out.println("percentSoFar:  "+percentSoFar);
+		                        //System.out.println("totalCount:  "+totalCount);
+		                        //System.out.println("NEW centroid_array["+cc+"-1]: "+centroid_array[cc - 1]);
 		                        cc++;
 	                        }
 	                    }
