@@ -2689,16 +2689,16 @@ public class FileNIFTI
 
                 switch (axisOrientation[1]) {
                     case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 1, -resols[1]);
-                        break;
-                    case FileInfoBase.ORI_L2R_TYPE:
                         matrix.set(0, 1, resols[1]);
                         break;
+                    case FileInfoBase.ORI_L2R_TYPE:
+                        matrix.set(0, 1, -resols[1]);
+                        break;
                     case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 1, -resols[1]);
+                        matrix.set(1, 1, resols[1]);
                         break;
                     case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 1, resols[1]);
+                        matrix.set(1, 1, -resols[1]);
                         break;
                     case FileInfoBase.ORI_I2S_TYPE:
                         matrix.set(2, 1, resols[1]);
@@ -2710,16 +2710,16 @@ public class FileNIFTI
 
                 switch (axisOrientation[2]) {
                     case FileInfoBase.ORI_R2L_TYPE:
-                        matrix.set(0, 2, -resols[2]);
-                        break;
-                    case FileInfoBase.ORI_L2R_TYPE:
                         matrix.set(0, 2, resols[2]);
                         break;
+                    case FileInfoBase.ORI_L2R_TYPE:
+                        matrix.set(0, 2, -resols[2]);
+                        break;
                     case FileInfoBase.ORI_A2P_TYPE:
-                        matrix.set(1, 2, -resols[2]);
+                        matrix.set(1, 2, resols[2]);
                         break;
                     case FileInfoBase.ORI_P2A_TYPE:
-                        matrix.set(1, 2, resols[2]);
+                        matrix.set(1, 2, -resols[2]);
                         break;
                     case FileInfoBase.ORI_I2S_TYPE:
                         matrix.set(2, 2, resols[2]);
