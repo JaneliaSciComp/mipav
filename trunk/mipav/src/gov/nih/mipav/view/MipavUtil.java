@@ -181,7 +181,7 @@ public class MipavUtil extends JComponent {
                     line = line.substring(10);
                     line.trim();
                     version = line.substring(0, line.indexOf(" "));
-                    verString = "v" + version;
+                    verString = version;
                     break;
                 }
 
