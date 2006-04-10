@@ -278,7 +278,13 @@ public class AlgorithmMatchImages
             for (j = 0; j < nDims; j++) {
                 if ((axisOrientA[j] == FileInfoBase.ORI_R2L_TYPE) ||
                     (axisOrientA[j] == FileInfoBase.ORI_L2R_TYPE)) {
-                    reorderB2A[i] = j;   
+                    reorderB2A[i] = j; 
+                    if (axisOrientB[i] != axisOrientA[j]) {
+                        reverse[i] = true;
+                    }
+                    else {
+                        reverse[i] = false;
+                    }
                 }
             }
         }
@@ -287,7 +293,13 @@ public class AlgorithmMatchImages
             for (j = 0; j < nDims; j++) {
                 if ((axisOrientA[j] == FileInfoBase.ORI_A2P_TYPE) ||
                     (axisOrientA[j] == FileInfoBase.ORI_P2A_TYPE)) {
-                    reorderB2A[i] = j;   
+                    reorderB2A[i] = j;
+                    if (axisOrientB[i] != axisOrientA[j]) {
+                        reverse[i] = true;
+                    }
+                    else {
+                        reverse[i] = false;
+                    }
                 }
             }
         }
@@ -296,7 +308,13 @@ public class AlgorithmMatchImages
             for (j = 0; j < nDims; j++) {
                 if ((axisOrientA[j] == FileInfoBase.ORI_I2S_TYPE) ||
                     (axisOrientA[j] == FileInfoBase.ORI_S2I_TYPE)) {
-                    reorderB2A[i] = j;   
+                    reorderB2A[i] = j; 
+                    if (axisOrientB[i] != axisOrientA[j]) {
+                        reverse[i] = true;
+                    }
+                    else {
+                        reverse[i] = false;
+                    }
                 }
             }
         }
@@ -315,12 +333,6 @@ public class AlgorithmMatchImages
         }
         else {
             sign2LPS_B[i] = -1;
-        }
-        if (sign2LPS_A[i] != sign2LPS_B[i]) {
-            reverse[i] = true;
-        }
-        else {
-            reverse[i] = false;
         }
     } // for (i = 0; i < nDims; i++)
 
