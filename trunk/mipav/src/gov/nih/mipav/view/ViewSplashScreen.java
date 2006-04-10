@@ -7,7 +7,7 @@ import javax.swing.*;
 
 /**
  * Shows the MIPAV splash screen until the user clicks the image or a few seconds (4 currently)
- * @see ViewUserInterface#splashGraphics()
+ * @see ViewUserInterface#showSplashGraphics()
  * @author orsinol
  */
 public class ViewSplashScreen extends JFrame implements MouseListener, WindowListener
@@ -126,7 +126,7 @@ public class ViewSplashScreen extends JFrame implements MouseListener, WindowLis
 
         FontMetrics fontMetrics = graphics.getFontMetrics();
 
-        String versionString = MipavUtil.getVersion();
+        String versionString = "v" + MipavUtil.getVersion();
 
         int stringWidth = fontMetrics.stringWidth(versionString);
 
