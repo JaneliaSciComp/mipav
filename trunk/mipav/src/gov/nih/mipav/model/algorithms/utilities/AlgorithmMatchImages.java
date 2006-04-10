@@ -50,6 +50,7 @@ public class AlgorithmMatchImages
   // Orientation matrices and ordering indices
   private AlgorithmTransform algoTransform;
   private int reorderB2A[];
+  private int reorderA2B[];
   private int sign2LPS_A[], sign2LPS_B[];
 
   // boolean variable that determine what matchings are done
@@ -225,9 +226,11 @@ public class AlgorithmMatchImages
      */
     double fovA[], fovB[];
     int i, j;
+    double temp;
 
     try {
       reorderB2A = new int[nDims];
+      reorderA2B = new int[nDims];
       sign2LPS_A = new int[nDims];
       sign2LPS_B = new int[nDims];
       fovA = new double[nDims];
@@ -278,6 +281,7 @@ public class AlgorithmMatchImages
             for (j = 0; j < nDims; j++) {
                 if ((axisOrientA[j] == FileInfoBase.ORI_R2L_TYPE) ||
                     (axisOrientA[j] == FileInfoBase.ORI_L2R_TYPE)) {
+                    reorderA2B[j] = i;
                     reorderB2A[i] = j; 
                     if (axisOrientB[i] != axisOrientA[j]) {
                         reverse[i] = true;
@@ -293,6 +297,7 @@ public class AlgorithmMatchImages
             for (j = 0; j < nDims; j++) {
                 if ((axisOrientA[j] == FileInfoBase.ORI_A2P_TYPE) ||
                     (axisOrientA[j] == FileInfoBase.ORI_P2A_TYPE)) {
+                    reorderA2B[j] = i;
                     reorderB2A[i] = j;
                     if (axisOrientB[i] != axisOrientA[j]) {
                         reverse[i] = true;
@@ -308,6 +313,7 @@ public class AlgorithmMatchImages
             for (j = 0; j < nDims; j++) {
                 if ((axisOrientA[j] == FileInfoBase.ORI_I2S_TYPE) ||
                     (axisOrientA[j] == FileInfoBase.ORI_S2I_TYPE)) {
+                    reorderA2B[j] = i;
                     reorderB2A[i] = j; 
                     if (axisOrientB[i] != axisOrientA[j]) {
                         reverse[i] = true;
@@ -335,7 +341,7 @@ public class AlgorithmMatchImages
             sign2LPS_B[i] = -1;
         }
     } // for (i = 0; i < nDims; i++)
-
+    
     if (nDims == 3) {
         Preferences.debug("Indices to reorder ImgB to ImgA: " + reorderB2A[0] + ", " +
                           reorderB2A[1] + ", " + reorderB2A[2] + "\n");
@@ -352,7 +358,8 @@ public class AlgorithmMatchImages
         Preferences.debug("Original ImageB signs for LPS: " + sign2LPS_B[0] + ", " +
                           sign2LPS_B[1] + "\n");
     } // else nDims == 2
-    // Get image origin before transformation.
+    
+//  Get image origin before transformation.
     for (i = 0; i < nDims; i++) {
       origLPS_A[i] = (double) sourceImgA.getFileInfo(0).getOrigin(i);
       origLPS_B[i] = (double) sourceImgB.getFileInfo(0).getOrigin(i);
@@ -370,6 +377,32 @@ public class AlgorithmMatchImages
         Preferences.debug("Original ImageB startLocation: " + (float) origLPS_B[0] + ", "
                           + (float) origLPS_B[1] + "\n");
     } // else nDims == 2
+    
+      for (i = 0; i < nDims; i++) {
+        fovA[i] = resA[i] * (dimA[i] - 1); // field of view in this dimension
+        fovB[i] = resB[i] * (dimB[i] - 1);
+      }
+    
+    for (i = 0; i < nDims; i++) {
+        if (origLPS_A[i] < 0) {
+            endLPS_A[i] = origLPS_A[i] + fovA[i];
+        }
+        else {
+            endLPS_A[i] = origLPS_A[i] - fovA[i];
+        }
+        if (origLPS_B[i] < 0) {
+            endLPS_B[i] = origLPS_B[i] + fovB[i];
+        }
+        else {
+            endLPS_B[i] = origLPS_B[i] - fovB[i];
+        } 
+        if (reverse[i]) {
+            temp = origLPS_B[i];
+            origLPS_B[i] = endLPS_B[i];
+            endLPS_B[i] = temp;
+        }
+    }
+    
     for (i = 0; i < nDims; i++) {
         switch(axisOrientA[i]) {
             case FileInfoBase.ORI_R2L_TYPE:
@@ -404,92 +437,19 @@ public class AlgorithmMatchImages
     if (nDims == 3) {
         Preferences.debug("ImageA origins in image order: " + (float) origImg_A[0] + ", "
                           + (float) origImg_A[1] + ", " + (float) origImg_A[2] + "\n");
-        Preferences.debug("ImageB origins in image order: " + (float) origImg_B[0] + ", "
-                          + (float) origImg_B[1] + ", " + (float) origImg_B[2] + "\n");
-        Preferences.debug("ImageB origins in ImageA order: " + (float) origLPS_B[reorderB2A[0]] +
-                          ", " + (float) origLPS_B[reorderB2A[1]] + ", " +
-                          (float) origLPS_B[reorderB2A[2]] + "\n");
+        Preferences.debug("ImageB origins in Image order: " + (float) origImg_B[0] +
+                          ", " + (float) origImg_B[1] + ", " +
+                          (float) origImg_B[2] + "\n");
     } // if (nDims == 3
     else { // nDims == 2
         Preferences.debug("ImageA origins in image order: " + (float) origImg_A[0] + ", "
                           + (float) origImg_A[1] + "\n");
-        Preferences.debug("ImageB origins in image order: " + (float) origImg_B[0] + ", "
-                          + (float) origImg_B[1] + "\n");
-        Preferences.debug("ImageB origins in ImageA order: " + (float) origLPS_B[reorderB2A[0]] +
-                          ", " + (float) origLPS_B[reorderB2A[1]] + "\n");
+        Preferences.debug("ImageB origins in ImageA order: " + (float) origImg_B[0] +
+                          ", " + (float) origImg_B[1] + "\n");
 
     } // else nDims == 2
-    // Get image end locations
-    for (i = 0; i < nDims; i++) {
-      fovA[i] = resA[i] * (dimA[i] - 1); // field of view in this dimension
-      fovB[i] = resB[i] * (dimB[i] - 1);
-    }
-    //Preferences.debug(
-    //    "\nImageA field-of-view image order: " + fovA[0] + ", " + fovA[1] +
-    //    ", " + fovA[2] + "\n");
-    //Preferences.debug(
-    //   "ImageB field-of-view image order: " + fovB[0] + ", " + fovB[1] + ", " +
-    //    fovB[2] + "\n");
 
-    for (i = 0; i < nDims; i++) {
-      endLPS_A[i] = origLPS_A[i] + fovA[i];
-      endLPS_B[i] = origLPS_B[i] + fovB[i];
-    }
-
-    //Preferences.debug
-    //    ("ImageA end locations in LPS order: " + (float) endLPS_A[0] + ", " +
-    //     (float) endLPS_A[1] + ", " + (float) endLPS_A[2] + "\n");
-    //Preferences.debug
-    //    ("ImageB end locations in LPS order: " + (float) endLPS_B[0] + ", " +
-    //     (float) endLPS_B[1] + ", " + (float) endLPS_B[2] + "\n");
-
-    for (i = 0; i < nDims; i++) {
-        switch(axisOrientA[i]) {
-            case FileInfoBase.ORI_R2L_TYPE:
-            case FileInfoBase.ORI_L2R_TYPE:
-                endImg_A[0] = endLPS_A[i];
-                break;
-            case FileInfoBase.ORI_A2P_TYPE:
-            case FileInfoBase.ORI_P2A_TYPE:
-                endImg_A[1] = endLPS_A[i];
-                break;
-            case FileInfoBase.ORI_I2S_TYPE:
-            case FileInfoBase.ORI_S2I_TYPE:
-                endImg_A[2] = endLPS_A[i];
-                break;
-        } // switch(axisOrientA[i])
-        switch(axisOrientB[i]) {
-            case FileInfoBase.ORI_R2L_TYPE:
-            case FileInfoBase.ORI_L2R_TYPE:
-                endImg_B[0] = endLPS_B[i];
-                break;
-            case FileInfoBase.ORI_A2P_TYPE:
-            case FileInfoBase.ORI_P2A_TYPE:
-                endImg_B[1] = endLPS_B[i];
-                break;
-            case FileInfoBase.ORI_I2S_TYPE:
-            case FileInfoBase.ORI_S2I_TYPE:
-                endImg_B[2] = endLPS_B[i];
-                break;
-        } // switch(axisOrientB[i])
-    } // for (i = 0; i < nDims; i++)
-  
-    if (nDims == 3) {
-        Preferences.debug
-                ("ImageA end locations in image order: " + (float) endImg_A[0] + ", " +
-                 (float) endImg_A[1] + ", " + (float) endImg_A[2] + "\n");
-        Preferences.debug
-                ("ImageB end locations in image order: " + (float) endImg_B[0] + ", " +
-                 (float) endImg_B[1] + ", " + (float) endImg_B[2] + "\n");
-    } // if (nDims == 3)
-    else { // nDims == 2
-        Preferences.debug
-            ("ImageA end locations in image order: " + (float) endImg_A[0] + ", " +
-             (float) endImg_A[1] + "\n");
-        Preferences.debug
-            ("ImageB end locations in image order: " + (float) endImg_B[0] + ", " +
-             (float) endImg_B[1] + "\n");
-    } // else nDims == 2
+    
   }
 
   private void constructLog() {
@@ -605,10 +565,14 @@ public class AlgorithmMatchImages
     if (nDims == 3) {
         newXYZ = new int[3];
         newDimB = new int[3];
-        newDimB[0] = dimB[reorderB2A[0]];
-        newDimB[1] = dimB[reorderB2A[1]];
-        newDimB[2] = dimB[reorderB2A[2]];
+        newDimB[reorderB2A[0]] = dimB[0];
+        newDimB[reorderB2A[1]] = dimB[1];
+        newDimB[reorderB2A[2]] = dimB[2];
         newSlice = newDimB[0] * newDimB[1];
+        Preferences.debug("oldDims = " + oldDims[0] + ", " + 
+                oldDims[1] + ", " + oldDims[2] + "\n");
+        Preferences.debug("newDimB = " + newDimB[0] + ", " +
+                          newDimB[1] + ", " + newDimB[2] + "\n");
         for (z = 0; z < oldDims[2]; z++) {
             if (reverse[2]) {
                 newXYZ[reorderB2A[2]] = oldDims[2] - 1 - z;
@@ -641,8 +605,8 @@ public class AlgorithmMatchImages
     else { // nDims == 2
         newXY = new int[2];
         newDimB = new int[2];
-        newDimB[0] = dimB[reorderB2A[0]];
-        newDimB[1] = dimB[reorderB2A[1]];
+        newDimB[reorderB2A[0]] = dimB[0];
+        newDimB[reorderB2A[1]] = dimB[1];
         
         for (y = 0; y < oldDims[1]; y++) {
             if (reverse[1]) {
@@ -685,14 +649,14 @@ public class AlgorithmMatchImages
     units = new int[nDims];
     
     for (i = 0; i < nDims; i++) {
-        tempRes[i] = resB[reorderB2A[i]];
+        tempRes[reorderB2A[i]] = resB[i];
     }
     
     for (i = 0; i < nDims; i++) {
       resB[i] = tempRes[i];
       res[i] = (float)resB[i]; 
       dimB[i] = resultImgB.getExtents()[i];
-      units[i] = sourceImgB.getFileInfo()[0].getUnitsOfMeasure()[reorderB2A[i]];
+      units[reorderB2A[i]] = sourceImgB.getFileInfo()[0].getUnitsOfMeasure()[i];
       axisOrientB[i] = axisOrientA[i];
     }
    
@@ -728,42 +692,6 @@ public class AlgorithmMatchImages
                           (float) resB[0] + ", " + (float) resB[1] + "\n");
         Preferences.debug("ImageB dimensions in matchOrient after transform: " +
                           dimB[0] + ", " + dimB[1] + "\n");
-    } // else nDims == 2
-    // When necessary, shift start location to opposite end of image.
-    // This version assumes that origin is stored in coord in the LPS order
-    double[] temp = new double[nDims];
-
-    for (i = 0; i < nDims; i++) {
-      if (reverse[i]) {
-        Preferences.debug("Shifting origin for direction " + i +
-                          " to other side of image (i.e. adding fov)\n");
-        temp[i] = origImg_B[i];
-        origImg_B[i] = endImg_B[i];
-        endImg_B[i] = temp[i];
-      }
-    }
-
-    // Reorder image B origins, to image A order.
-    for (i = 0; i < nDims; i++) {
-      temp[i] = origImg_B[i];
-    }
-    for (i = 0; i < nDims; i++) {
-      origImg_B[i] = temp[reorderB2A[i]];
-    }
-
-    if (nDims == 3) {
-        Preferences.debug("ImageB origins (in image order) after switching to other side: "
-                + (float) origImg_B[0] + ", " + (float) origImg_B[1] + ", "
-                + (float) origImg_B[2] + "\n");
-        UI.setDataText("New Image B origins (in image order): "
-                       + (float) origImg_B[0] + ", " + (float) origImg_B[1] + ", " +
-                       (float) origImg_B[2] + "\n");
-    } // if (nDims == 3)
-    else { // nDims == 2
-        Preferences.debug("ImageB origins (in image order) after switching to other side: "
-            + (float) origImg_B[0] + ", " + (float) origImg_B[1] + "\n");
-        UI.setDataText("New Image B origins (in image order): "
-               + (float) origImg_B[0] + ", " + (float) origImg_B[1] + "\n");
     } // else nDims == 2
     
    
