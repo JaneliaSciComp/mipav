@@ -15,6 +15,7 @@ import java.awt.image.*;
 import java.util.*;
 
 import com.sun.jimi.core.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubsample;
 
 
@@ -7379,6 +7380,20 @@ public class FileIO {
             }
             if ( dialog.isCancelled() ) {
                 return false;
+            }
+            
+            // necessary to save floating point minc files to dicom
+            if (image.getFileInfo(0).getFileFormat() == FileBase.MINC && image.getType() == ModelImage.FLOAT) {
+                ModelImage newImage = (ModelImage)image.clone();
+                
+                // in-place conversion is required so that the minc file info is retained
+                AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT, newImage.getMin(), newImage.getMax(), 0, 4096, false);
+                convertType.setProgressBarVisible(false);
+                convertType.run();
+                
+                image = newImage;
+                
+                new ViewJFrameImage(image);
             }
 
             // Why this stuff
