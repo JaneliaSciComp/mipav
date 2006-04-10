@@ -2802,22 +2802,31 @@ public class ModelImage extends ModelStorageBase {
             for (int j = 0; j < 3; j++) {
                 switch(getFileInfo(0).getAxisOrientation()[j]) {
                     case FileInfoBase.ORI_L2R_TYPE:
-                        dicomMatrix.setMatrix(-1.0, 0, j);
-                        break;
                     case FileInfoBase.ORI_R2L_TYPE:
-                        dicomMatrix.setMatrix(1.0, 0, j);
+                        if (origin[0] > 0.0) {
+                            dicomMatrix.setMatrix(-1.0, 0, j);
+                        }
+                        else {
+                            dicomMatrix.setMatrix(1.0, 0, j);
+                        }
                         break;
                     case FileInfoBase.ORI_P2A_TYPE:
-                        dicomMatrix.setMatrix(-1.0, 1, j);
-                        break;
                     case FileInfoBase.ORI_A2P_TYPE:
-                        dicomMatrix.setMatrix(1.0, 1, j);
+                        if (origin[1] > 0.0) {
+                            dicomMatrix.setMatrix(-1.0, 1, j);
+                        }
+                        else {
+                            dicomMatrix.setMatrix(1.0, 1, j);
+                        }
                         break;
                     case FileInfoBase.ORI_S2I_TYPE:
-                        dicomMatrix.setMatrix(-1.0, 2, j);
-                        break;
                     case FileInfoBase.ORI_I2S_TYPE:
-                        dicomMatrix.setMatrix(1.0, 2, j);
+                        if (origin[2] > 0.0) {
+                            dicomMatrix.setMatrix(-1.0, 2, j);
+                        }
+                        else {
+                            dicomMatrix.setMatrix(1.0, 2, j);
+                        }
                         break;
                 }
             }
