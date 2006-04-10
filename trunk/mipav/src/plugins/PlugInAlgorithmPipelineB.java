@@ -586,6 +586,48 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             }            
             cleanUp(destImage3b, BACKGROUND_NEW, SUB_CUT_FAT, 100*zDim/20, zDim);
             cleanUp(destImage3b, SUB_CUT_FAT, BACKGROUND_NEW, 100*zDim/20, zDim);
+            
+            
+            
+            //--------------last marrow cleanup
+            for (bb = 0; bb < zDim; bb++) {
+                try {
+                    destImage3b.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
+                    for (cc = 0; cc < imgBuffer.length; cc++) {
+                        if (imgBuffer[cc] == BONE_MARROW){ 
+                        	if(imgBuffer[cc-1]==MUSCLE){
+                        		imgBuffer[cc-1]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc+1]==MUSCLE){
+                        		imgBuffer[cc+1]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc+xDim]==MUSCLE){
+                        		imgBuffer[cc+xDim]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc-xDim]==MUSCLE){
+                        		imgBuffer[cc-xDim]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc-1]==FAT){
+                        		imgBuffer[cc-1]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc+1]==FAT){
+                        		imgBuffer[cc+1]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc+xDim]==FAT){
+                        		imgBuffer[cc+xDim]=BONE_MARROW;
+                        	}
+                        	else if(imgBuffer[cc-xDim]==FAT){
+                        		imgBuffer[cc-xDim]=BONE_MARROW;
+                        	}
+                        }
+                    }
+                    destImage3b.importData((bb * imgBuffer.length), imgBuffer1, false);
+                } catch (IOException ex) {
+                    System.err.println(
+                            "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
+                }
+            }    
+            
 
             destImage3a.disposeLocal();
             destImage3a = null;
