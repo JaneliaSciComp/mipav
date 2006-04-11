@@ -54,14 +54,13 @@ public class AlgorithmScriptParser extends AlgorithmBase {
 
     /**
      *	Constructs the parser and initializes the hashtable for holding the variables.
-     *	@param UI		User interface, necessary for knowing about the images and image frames.
      *	@param fileName	File name of the script file.
      *	@param fileDir	Directory of the script file.
      */
-    public AlgorithmScriptParser( String fileName, String fileDir, ViewUserInterface UI ) {
+    public AlgorithmScriptParser( String fileName, String fileDir ) {
         scriptName = fileName;
         scriptDir = fileDir;
-        this.UI = UI;
+        UI = ViewUserInterface.getReference();
         variableTable = new VariableHashtable();
         voiTable = new VariableHashtable();
         activeImagesTable = new VariableHashtable();
@@ -70,11 +69,10 @@ public class AlgorithmScriptParser extends AlgorithmBase {
     /**
      *	Constructs the parser and initializes the hashtable for holding the variables.
      *	@param script	text script to parse
-     *	@param UI		User interface, necessary for knowing about the images and image frames.
      */
-    public AlgorithmScriptParser( String script, ViewUserInterface UI ) {
+    public AlgorithmScriptParser( String script ) {
         scriptStr = script;
-        this.UI = UI;
+        UI = ViewUserInterface.getReference();
         variableTable = new VariableHashtable();
         voiTable = new VariableHashtable();
         activeImagesTable = new VariableHashtable();
