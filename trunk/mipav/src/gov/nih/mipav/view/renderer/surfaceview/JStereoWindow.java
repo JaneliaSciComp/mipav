@@ -281,7 +281,7 @@ public class JStereoWindow extends JFrame
          * window: */
         if ( kCommand.equals( "OK_CLOSE" ) )
         {
-            hide();
+            setVisible(false);
             this.dispose();
         }
         else if ( kCommand.equals( "UpdateStereo" ) )

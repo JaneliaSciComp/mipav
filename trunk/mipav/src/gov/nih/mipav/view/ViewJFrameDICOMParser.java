@@ -77,8 +77,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements
      */
     public ViewJFrameDICOMParser(ViewUserInterface ui, String dir)
     {
-        super(ui, dir, new ViewImageFileFilter(new String[]
-                                               {"dcm", "DCM", "ima", "IMA"}));
+        super(dir, new ViewImageFileFilter(new String[] {"dcm", "DCM", "ima", "IMA"}));
 
         addWindowListener(this);
         buildMenu();
@@ -386,8 +385,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements
         }
         else if (command.equals("New"))
         {
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser(
-                    userInterface, this);
+            ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
             String dir = chooser.getImageDirectory();
 
             if (dir != null)

@@ -457,7 +457,7 @@ public class ViewImageDirectory
     String command = event.getActionCommand();
 
     if (command.equals("New")) {
-      ViewDirectoryChooser chooser = new ViewDirectoryChooser(userInterface, this);
+      ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
       String dir = chooser.getImageDirectory();
 
       if (dir != null) {

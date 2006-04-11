@@ -73,7 +73,7 @@ public class JDialogDCCIEConversion
             dispose();
         }
         else if (command.equals("Browse")) {
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser(userInterface, this);
+            ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
             String dir = chooser.getImageDirectory();
             if (dir != null) {
                 if (e.getSource() == browseButton) {

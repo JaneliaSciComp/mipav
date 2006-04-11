@@ -2171,7 +2171,7 @@ public class ViewUserInterface
      */
     public void buildAnonDirectoryDialog() {
         // get the selected directory
-        ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
+        ViewDirectoryChooser chooser = new ViewDirectoryChooser();
         String dir = chooser.getImageDirectory();
         if (dir != null) { // we may create multiple instances of the same thing
             new JDialogAnonymizeDirectory(this, dir);
@@ -2288,7 +2288,7 @@ public class ViewUserInterface
      */
     public void buildDICOMFrame() {
         // get the selected directory
-        ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
+        ViewDirectoryChooser chooser = new ViewDirectoryChooser();
         String dir = chooser.getImageDirectory();
         if (dir != null) {
             new ViewJFrameDICOMParser(this, dir);
@@ -2558,7 +2558,7 @@ public class ViewUserInterface
                new JDialogDCCIEConversion(this);
            }
            else if (command.equals("convertXML")) {
-               ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
+               ViewDirectoryChooser chooser = new ViewDirectoryChooser();
                String dir = chooser.getImageDirectory();
                if (dir != null) {
                    AlgorithmConvertOldXML algo = new AlgorithmConvertOldXML(this, dir);

@@ -724,7 +724,7 @@ public class SRBFileChooser extends JComponent implements Accessible {
     returnValue = ERROR_OPTION;
     rescanCurrentDirectory();
 
-    dialog.show();
+    dialog.setVisible(true);
     dialog.dispose();
     dialog = null;
     return returnValue;
