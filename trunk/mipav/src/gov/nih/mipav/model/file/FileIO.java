@@ -3387,12 +3387,18 @@ public class FileIO {
             return null;
         }
 
-        // go up 2 parent directories
         ( (FileBRUKER) imageFile ).setFileName( "acqp" );
         directoryFile = new File( fileDir );
-        parentDirectoryName = directoryFile.getParent();
-        directoryFile = new File( parentDirectoryName );
-        ( (FileBRUKER) imageFile ).setFileDir( directoryFile.getParent() + "\\" );
+        File tmpFile = new File(fileDir + "\\" + "acqp");
+        if (!tmpFile.exists()) {
+            // go up 2 parent directories
+            parentDirectoryName = directoryFile.getParent();
+            directoryFile = new File( parentDirectoryName );
+            ( (FileBRUKER) imageFile ).setFileDir( directoryFile.getParent() + "\\" );
+        }
+        else{
+            ( (FileBRUKER) imageFile ).setFileDir( directoryFile + "\\" );
+        }
 
         try {
             imageFile.readacqp();
