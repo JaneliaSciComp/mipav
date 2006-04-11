@@ -1163,7 +1163,7 @@ public class JChatFrame
 
     // displays a new directory in the file transfer tab
     if (command.equals("New")) {
-      ViewDirectoryChooser chooser = new ViewDirectoryChooser(userInterface, this);
+      ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
       String dir = chooser.getImageDirectory();
       if (dir != null) {
           userInterface.setDefaultDirectory(dir);

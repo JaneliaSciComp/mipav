@@ -2072,7 +2072,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.debug("Set the script home directory.\n");
 
             // get the selected directory
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser(userInterface);
+            ViewDirectoryChooser chooser = new ViewDirectoryChooser();
             String dir = chooser.getDirectory();
 
             // set the default script directory
@@ -2426,7 +2426,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("convertXML"))
         {
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser(userInterface);
+            ViewDirectoryChooser chooser = new ViewDirectoryChooser();
             String dir = chooser.getImageDirectory();
 
             if (dir != null)

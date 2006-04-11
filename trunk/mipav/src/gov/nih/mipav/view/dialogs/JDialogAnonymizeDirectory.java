@@ -683,7 +683,7 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         Object source = ae.getSource();
         String command = ae.getActionCommand();
         if ( command.equals( "New" ) ) {
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser( ui );
+            ViewDirectoryChooser chooser = new ViewDirectoryChooser();
             String dir = chooser.getImageDirectory();
             if ( dir != null ) {
                 // display a new directory-tree starting at "dir"
