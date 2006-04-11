@@ -111,7 +111,7 @@ public class ViewControlsScript {
         }
 
         // pre parse to see how many images we need
-        AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory, userInterface);
+        AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory);
         numImages = parse.preParse();
 
         int numActiveImages = parse.preParseActiveImages();
@@ -128,7 +128,7 @@ public class ViewControlsScript {
                 convertedString = convertToActive(scriptFileName, scriptDirectory);
 
                 parse = null;
-                parse = new AlgorithmScriptParser(convertedString, userInterface);
+                parse = new AlgorithmScriptParser(convertedString);
                 numActiveImages = parse.preParseActiveImages();
             } else {
                 MipavUtil.displayError("You have to open " + ((numActiveImages + numImages)- openedImgNum)
@@ -175,7 +175,7 @@ public class ViewControlsScript {
         }
 
         // pre parse to see how many images we need
-        AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptStr, userInterface);
+        AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptStr);
 
         numImages = parse.preParse();
 
@@ -193,7 +193,7 @@ public class ViewControlsScript {
                 convertedString = convertToActive(scriptStr, null);
 
                 parse = null;
-                parse = new AlgorithmScriptParser(convertedString, userInterface);
+                parse = new AlgorithmScriptParser(convertedString);
                 numActiveImages = parse.preParseActiveImages();
             } else {
                 MipavUtil.displayError("You have to open " + ((numActiveImages + numImages)- openedImgNum)
@@ -250,7 +250,7 @@ public class ViewControlsScript {
         }
 
         // pre parse to see how many images we need
-        AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory, userInterface);
+        AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory);
         if (savedImageFileName != null) {
             parse.setSavedImageFileName(savedImageFileName);
         }
@@ -270,7 +270,7 @@ public class ViewControlsScript {
                 convertedString = convertToActive(scriptFileName, scriptDirectory);
 
                 parse = null;
-                parse = new AlgorithmScriptParser(convertedString, userInterface);
+                parse = new AlgorithmScriptParser(convertedString);
                 numActiveImages = parse.preParseActiveImages();
                 if (savedImageFileName != null) {
                     parse.setSavedImageFileName(savedImageFileName);

@@ -397,7 +397,7 @@ public class JDialogMultiple extends JDialogBase
 
                 scriptDirectory = scriptFileName.substring( 0, index + 1 ); // ends with File.separator
                 scriptFileName = scriptFileName.substring( index + 1, scriptFileName.length() );
-                AlgorithmScriptParser parse = new AlgorithmScriptParser( scriptFileName, scriptDirectory, userInterface );
+                AlgorithmScriptParser parse = new AlgorithmScriptParser( scriptFileName, scriptDirectory );
 
                 // System.err.println("setting active image to false");
                 parse.setActiveImage( false );
@@ -412,7 +412,7 @@ public class JDialogMultiple extends JDialogBase
                     parse = null;
                     convertedString = convertFromActive(scriptFileName, scriptDirectory);
 
-                    parse = new AlgorithmScriptParser(convertedString, userInterface);
+                    parse = new AlgorithmScriptParser(convertedString);
                     didConvert = true;
 
                 }
@@ -1114,7 +1114,7 @@ public class JDialogMultiple extends JDialogBase
         int y, z;
 
         for ( j = 0; j < imageSet.length; j++ ) {
-            AlgorithmScriptParser parse = new AlgorithmScriptParser( scriptFileName, scriptDirectory, userInterface );
+            AlgorithmScriptParser parse = new AlgorithmScriptParser( scriptFileName, scriptDirectory );
 
             parse.setActiveImage( false );
             fileNames = new Vector();
@@ -1184,9 +1184,9 @@ public class JDialogMultiple extends JDialogBase
             AlgorithmScriptParser parse = null;
 
             if (didConvert) {
-                parse = new AlgorithmScriptParser(convertedString, userInterface);
+                parse = new AlgorithmScriptParser(convertedString);
             } else {
-                parse = new AlgorithmScriptParser( scriptFileName, scriptDirectory, userInterface );
+                parse = new AlgorithmScriptParser( scriptFileName, scriptDirectory );
             }
 
             parse.setActiveImage( false );
