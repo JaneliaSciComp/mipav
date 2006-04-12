@@ -80,6 +80,7 @@ public class JDialogMultiPaint extends JDialogBase {
 	private	JFileChooser			loadDialog;
 	private	JFileChooser			saveDialog;
 	
+	private JProgressBar indeterminateProgressBar = new JProgressBar();
 	
     /**
     *  Creates dialog for plugin.
@@ -365,8 +366,18 @@ public class JDialogMultiPaint extends JDialogBase {
 		gbc.gridy = 2;
         mainPanel.add(listPanel, gbc);
 		
-        bottomPanel = new JPanel();
-		bottomPanel.add(buildCloseButton());
+        bottomPanel = new JPanel(new GridBagLayout());
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.insets = new Insets(0, 2, 2, 2);
+        bottomPanel.add(indeterminateProgressBar, gbc);
+        gbc.gridy = 1;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1;
+		bottomPanel.add(buildCloseButton(), gbc);
         //bottomPanel.add(buildHelpButton());
 		
         getContentPane().add(mainPanel);
@@ -673,18 +684,44 @@ public class JDialogMultiPaint extends JDialogBase {
 		color[from] = image.getParentFrame().getLUTb().getColor(from);
 		multiButton[from].setBackground(color[from]);
 		listButton[from].setBackground(color[from]);
+	
+		if (indeterminateProgressBar != null)
+		{
+			indeterminateProgressBar.setIndeterminate(true);
+		}
+			
+		// must convert variables to final for use in inner class
+		final int _from = from;
+		final int _to = to;
+		final ModelImage imageB = image.getParentFrame().getImageB();
 		
-		// call the paint to mask program for exiting mask		
-		image.getParentFrame().getComponentImage().setIntensityDropper( (float)from );
-		image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "CommitPaint"));
+		image.getParentFrame().getComponentImage().setModifyFlag(false);
 		
-		// call the mask to paint program for starting mask
-		color[to] = image.getParentFrame().getLUTb().getColor(to);
-		image.getParentFrame().getComponentImage().setIntensityDropper( (float)to );
-		image.getParentFrame().getControls().getTools().setPaintColor(color[to] );
-		image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToPaint"));
-
+		Thread thread = new Thread() {
+			public void run()
+			{
+				// call the paint to mask program for existing mask		
+				image.getParentFrame().getComponentImage().setIntensityDropper( (float)_from );
+				image.getParentFrame().getComponentImage().commitMask(imageB, true, true, null, false);
+		        		        
+				// call the mask to paint program for starting mask
+				color[_to] = image.getParentFrame().getLUTb().getColor(_to);
+				image.getParentFrame().getComponentImage().setIntensityDropper( (float)_to );
+				image.getParentFrame().getControls().getTools().setPaintColor(color[_to] );
+				((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
+				
+				if (indeterminateProgressBar != null)
+				{
+					indeterminateProgressBar.setIndeterminate(false);
+				}
+				image.getParentFrame().getComponentImage().setModifyFlag(true);
+				
+				image.notifyImageDisplayListeners();
+			}
+		};
 		
+		thread.start();
+						
 		// reset the active image and intensity label
 		if (!active.equals(image.getParentFrame().getActiveImage())) 
 			image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
@@ -693,7 +730,7 @@ public class JDialogMultiPaint extends JDialogBase {
 		multiButton[selected].setSelected(true);
 		listButton[selected].setSelected(true);
 
-		refreshImagePaint(image, obj);	
+		refreshImagePaint(image, obj);
 	}
 	
 	/** Initializes a new blank paint mask to the color indexed by the
