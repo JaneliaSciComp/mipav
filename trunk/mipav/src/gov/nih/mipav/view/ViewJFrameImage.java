@@ -2011,9 +2011,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (command.equals("OpenNewGraph"))
         {
-            ViewJFrameGraph functionGraph = new ViewJFrameGraph("Graph", true);
-
-            functionGraph.setVisible(true);
+            new ViewJFrameGraph("Graph", true);
         }
         else if (command.equals("QueryDatabase"))
         {
