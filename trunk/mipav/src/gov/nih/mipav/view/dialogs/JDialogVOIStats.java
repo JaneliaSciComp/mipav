@@ -1244,6 +1244,24 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
      *   @see ViewJFrameBase#getActiveImage
      */
     public void selectionChanged(UpdateVOIEvent newVOIselection) {
+
+        if (newVOIselection == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: new selection null");
+            return;
+        } else if (image == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image is null");
+            return;
+        } else if (image.getParentFrame() == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image parentFrame() is null");
+            return;
+        } else if (image.getParentFrame().getComponentImage() == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage is null");
+            return;
+        } else if (image.getParentFrame().getComponentImage().getActiveImage() == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage().getActiveImage() is null");
+            return;
+        }
+
         updateVOI(newVOIselection.getChangedVolumeOfInterest(),
                   image.getParentFrame().getComponentImage().getActiveImage());
         updateTree();
