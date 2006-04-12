@@ -640,7 +640,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
     public void setVisible(boolean visible) {
 
-        if (popup == null) {
+        if (popup == null && visible) {
             popup = new VOITreePopup();
             voiTree.addMouseListener(popup);
         }
@@ -811,8 +811,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
             voi.setColor(colorVOI);
             if (parentFrame != null && parentFrame instanceof ViewJFrameImage) {
-                ((ViewJFrameImage) parentFrame).getControls().setVOIColor(
-                        colorVOI);
+                ((ViewJFrameImage) parentFrame).getControls().setVOIColor(colorVOI);
             }
             if (j != 0 && location != -1) {
 
