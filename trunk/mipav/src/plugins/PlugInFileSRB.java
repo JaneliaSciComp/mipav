@@ -403,7 +403,7 @@ public class PlugInFileSRB implements PlugInFile {
             manager.add(sourceURIField);
             manager.add(WidgetFactory.buildTextButton("Browse", "Browse srb or local filesystem (determined by which is in URI field).", "sourceBrowse", this));
             manager.addOnNextLine(WidgetFactory.buildLabel("Enter Destination URI "));
-            destinationURIField = WidgetFactory.buildTextField("srb://hwang.nih:NIHBIRN@ncmir-gpop.ucsd.edu:5825/home/hwang.nih");
+            destinationURIField = WidgetFactory.buildTextField("srb://");
             destinationURIField.setColumns(40);
             manager.add(destinationURIField);
             manager.add(WidgetFactory.buildTextButton("Browse", "Browse srb or local filesystem (determined by which is in URI field).", "destinationBrowse", this));

@@ -117,7 +117,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         
         jargonTree = new JargonTree(root.listFiles());
         jargonTree.useDefaultPopupMenu(true);
-        jargonTree.setEditable(true);
+        jargonTree.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(jargonTree);
         
         scrollPane.setPreferredSize(new Dimension(600, 400));
