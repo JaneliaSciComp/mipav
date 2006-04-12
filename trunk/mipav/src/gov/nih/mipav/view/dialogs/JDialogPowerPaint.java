@@ -2446,7 +2446,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2454,7 +2454,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("error: paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
         // no previous image
@@ -2476,7 +2476,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2484,7 +2484,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
         // extract slice
@@ -2514,7 +2514,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2522,7 +2522,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
         // extract slice
@@ -2552,7 +2552,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2560,7 +2560,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
         // extract slice
@@ -2587,7 +2587,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2595,7 +2595,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
 
@@ -2612,7 +2612,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2620,7 +2620,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
 
@@ -2638,7 +2638,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2646,7 +2646,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
 
@@ -2662,7 +2662,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (image == null)
         {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
             return;
         }
 
@@ -2670,7 +2670,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
         if (obj == null)
         {
-            MipavUtil.displayError("paint mask not found");
+            MipavUtil.displayError("Error: paint mask not found");
             return;
         }
 
