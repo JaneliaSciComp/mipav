@@ -200,7 +200,7 @@ public class ViewJFrameGraph extends JFrame
             System.err.println("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n");
         }
 
-        //setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         mainPanel.setLayout( null );
 
