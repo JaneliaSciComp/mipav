@@ -81,6 +81,7 @@ public class JDialogMultiPaint extends JDialogBase {
 	private	JFileChooser			saveDialog;
 	
 	private JProgressBar indeterminateProgressBar = new JProgressBar();
+	private Vector intensityLockVector = new Vector();
 	
     /**
     *  Creates dialog for plugin.
@@ -457,13 +458,13 @@ public class JDialogMultiPaint extends JDialogBase {
 			if (preserveBox[num].isSelected()) {
 				preserved[num] = true;
 				if (parentFrame != null && parentFrame instanceof ViewJFrameImage) {
-					((ViewJFrameImage) parentFrame).addIntensityLock(num);
+					addIntensityLock(num);
 				}
 			}
 			else {
 				preserved[num] = false;
 				if (parentFrame != null && parentFrame instanceof ViewJFrameImage) {
-					((ViewJFrameImage) parentFrame).removeIntensityLock(num);
+					removeIntensityLock(num);
 				}
 			}
 		} else if (command.startsWith("Label")) {
@@ -702,7 +703,7 @@ public class JDialogMultiPaint extends JDialogBase {
 			{
 				// call the paint to mask program for existing mask		
 				image.getParentFrame().getComponentImage().setIntensityDropper( (float)_from );
-				image.getParentFrame().getComponentImage().commitMask(imageB, true, true, null, false);
+				image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
 		        		        
 				// call the mask to paint program for starting mask
 				color[_to] = image.getParentFrame().getLUTb().getColor(_to);
@@ -1162,5 +1163,72 @@ public class JDialogMultiPaint extends JDialogBase {
 		pack();
 		repaint();
 	}
+	
+    /**
+     * Adds an Integer object to the intensityLockVector. The Integer object represents an 
+     * intensity value which is locked - that is, cannot be overwritten by a "Paint to mask"
+     * operation. 
+     * @param intensity the intensity value to lock
+     */
+    public void addIntensityLock(int intensity)
+    {
+    	if (intensityLockVector == null)
+    	{
+    		intensityLockVector = new Vector();
+    	}
+    	
+    	// is this intensity value already in the 'intensityLockVector' Vector?
+    	for (int i = 0; i < intensityLockVector.size(); i++)
+    	{
+    		try
+    		{
+    			Integer lockedIntensity = (Integer) intensityLockVector.elementAt(i);
+    		
+	    		if (lockedIntensity != null && lockedIntensity.intValue() == intensity)
+	    		{
+	    			// prevent locking an intensity that is already locked
+	    			return;
+	    		}
+    		}
+    		catch (Exception e)
+    		{
+    			continue;
+    		}
+    	}
+    	
+    	Integer intensityLockInteger = new Integer(intensity);
+
+    	intensityLockVector.add(intensityLockInteger);
+    }
+    
+    /**
+     * Removes an intensity value from the intensityLockVector.
+     * @param intensity the intensity value to remove
+     */
+    public void removeIntensityLock(int intensity)
+    {
+    	if (intensityLockVector == null)
+    	{
+    		return;
+    	}
+    	
+    	for (int i = 0; i < intensityLockVector.size(); i++)
+    	{
+    		try
+    		{
+    			Integer lockedIntensity = (Integer) intensityLockVector.elementAt(i);
+    		
+	    		if (lockedIntensity != null && lockedIntensity.intValue() == intensity)
+	    		{
+	    			intensityLockVector.removeElementAt(i);
+	    			return;
+	    		}
+    		}
+    		catch (Exception e)
+    		{
+    			continue;
+    		}
+    	}
+    }
 }
 
