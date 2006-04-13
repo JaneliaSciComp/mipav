@@ -1799,7 +1799,7 @@ public class ModelImage extends ModelStorageBase {
         for ( i = nVOIs - 1; i >= 0; i-- ) {
             if ( tempVOIs.VOIAt( i ).getCurveType() == VOI.CONTOUR && tempVOIs.VOIAt( i ).isActive() ) {
                 if ( newVOI == null ) {
-                    newVOI = new VOI( (short) 0, "joinedContour.voi", slices, VOI.CONTOUR, -1.0f );
+                    newVOI = new VOI( (short) 0, "joinedContour", slices, VOI.CONTOUR, -1.0f );
                     newVOI.setAllActive( true );
                 }
                 nSlices = tempVOIs.VOIAt( i ).getCurves().length;

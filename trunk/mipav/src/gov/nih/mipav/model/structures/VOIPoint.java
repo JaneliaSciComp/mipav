@@ -6,6 +6,8 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.Preferences;
 
 import java.awt.*;
+import java.awt.geom.*;
+
 
 
 /**
@@ -24,6 +26,8 @@ public class VOIPoint extends VOIBase {
     /** Label of the point (e.g. 1, or 2 or 3... ) */
     private String str = null;
 
+    private boolean isPolySlice;
+
     /**
      *  Default constructor
      */
@@ -35,7 +39,14 @@ public class VOIPoint extends VOIBase {
      */
     public VOIPoint(String voiName) {
         this.name = voiName;
+        isPolySlice = false;
     }
+
+    public VOIPoint(String voiName, boolean doPoly) {
+        this.name = name;
+        this.isPolySlice = doPoly;
+    }
+
 
     /**
      *  Import points into VOI - Included to extend abstract method
@@ -255,19 +266,22 @@ public class VOIPoint extends VOIBase {
             str = new String( "(" + x + "," + y + ")" );
         }
 
+        int type;
 
-        int type = 0;
-        String typeStr = Preferences.getProperty("VOIPointDrawType");
-        if (typeStr != null) {
-            try {
-                type = Integer.parseInt(typeStr);
-                if (type < 0 || type > 3) {
-                    type = 0;
-                }
+        if (!isPolySlice) {
+            type = 0;
+            String typeStr = Preferences.getProperty("VOIPointDrawType");
+            if (typeStr != null) {
+                try {
+                    type = Integer.parseInt(typeStr);
+                    if (type < 0 || type > 3) {
+                        type = 0;
+                    }
+                } catch (Exception ex) {}
             }
-            catch (Exception ex) { }
+        } else {
+            type = 4;
         }
-
         switch (type) {
             case 0:
                 g.drawLine( xS, yS - 4, xS, yS + 4 );
@@ -289,7 +303,10 @@ public class VOIPoint extends VOIBase {
                 g.drawLine( xS - 4, yS + 4, xS - 1, yS + 1);
                 g.drawLine( xS + 1, yS - 1, xS + 4, yS - 4);
                 break;
+            case 4:
+                ((Graphics2D)g).draw(new Ellipse2D.Float(xS, yS, 2, 2));
 
+                break;
         }
 
         if ( active == false) {
@@ -311,7 +328,6 @@ public class VOIPoint extends VOIBase {
         }
 
         if ( active == true ) {
-
             if (type != 1 && type != 3) {
                 g.setColor(Color.black);
                 g.fillRect( (int) (xS - 1.5), (int) (yS - 1.5), 4, 4);

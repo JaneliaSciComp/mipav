@@ -19,13 +19,13 @@ import gov.nih.mipav.MipavMath;
  * $Logfile: /mipav/src/gov/nih/mipav/model/structures/VOIBase.java $ $Revision: 56 $ $Date: 2/24/06 3:34p $
  */
 public abstract class VOIBase extends Vector {
-    protected static final int XY = 0;
+    public static final int XY = 0;
 
-    protected static final int ZY = 1;
+    public static final int ZY = 1;
 
-    protected static final int XZ = 2;
+    public static final int XZ = 2;
 
-    protected static final int NA = 3;
+    public static final int NA = 3;
 
     /** Used in places which usually remember an index into a point vector. Indicates that the index should not be used. */
     public static final int NOT_A_POINT = -99;
@@ -466,7 +466,7 @@ public abstract class VOIBase extends Vector {
      * @param tol distance to test against
      * @return true if the distance is shorter than tol.
      */
-    protected synchronized boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
+    public synchronized static boolean testDistance(int x, int x1, int x2, int y, int y1, int y2, double tol) {
         // double hVx, hVy, aVx, aVy;
         double lenH, lenH2, lenA, lenO;
         lenH = MipavMath.distance(x1, x, y1, y);

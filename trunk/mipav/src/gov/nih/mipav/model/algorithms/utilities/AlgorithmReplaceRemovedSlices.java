@@ -60,13 +60,14 @@ public class AlgorithmReplaceRemovedSlices
         destExtents[0] = srcImage.getExtents()[0];
         destExtents[1] = srcImage.getExtents()[1];
 
+       // System.err.println("Length of removedSlices array: " + removedSlices.length);
+
         if (!isSplit) {
 
-            for (int i = 0; i < removedSlices.length; i++) {
-                if (removedSlices[i] == true) {
-                    //System.err.println(i + "th slice was removed...will be replaced");
-                }
-            }
+          //  for (int i = 0; i < removedSlices.length; i++) {
+          //      System.err.println(i + "th slice was removed: " + removedSlices[i]);
+
+         //   }
 
             int firstSlice = -1;
             int lastSlice = -1;
@@ -90,13 +91,13 @@ public class AlgorithmReplaceRemovedSlices
                 return;
             }
 
-            //System.err.println("first slice from removedSlices[] " + (firstSlice+1) + " last slice " + (lastSlice+1));
+        //    System.err.println("first slice from removedSlices[] " + (firstSlice+1) + " last slice " + (lastSlice+1));
 
             //determine new # of slices:  only replace slices found after the first good (unremoved)
             //    slice from the original image
             destExtents[2] = (lastSlice - firstSlice) + 1;
 
-            //System.err.println("New extents for " + srcImage.getImageName() + ": " + destExtents[2]);
+        //    System.err.println("New extents for " + srcImage.getImageName() + ": " + destExtents[2]);
 
             resultImage = new ModelImage(srcImage.getType(), destExtents,
                                          srcImage.getImageName() + "_replaced_slices", srcImage.getUserInterface());
@@ -184,7 +185,7 @@ public class AlgorithmReplaceRemovedSlices
 
             extents[2] = removedSlices.length;
 
-            //System.err.println("ExtentsZ: " + extents[2]);
+         //   System.err.println("ExtentsZ: " + extents[2]);
 
             resultImage = new ModelImage(srcImage.getType(), extents,
                                          srcImage.getImageName() + "_replaced_slices", srcImage.getUserInterface());
@@ -291,14 +292,9 @@ public class AlgorithmReplaceRemovedSlices
         //put it back into the srcImage if no result image wanted
         if (!destFlag) {
             //System.err.println("importing result back into srcImage (calcInPlace)");
-            srcImage.setExtents(resultImage.getExtents());
+            srcImage.changeExtents(resultImage.getExtents());
+            System.err.println("new extents: " + resultImage.getExtents());
             srcImage.recomputeDataSize();
-
-            FileInfoBase [] fInfos = new FileInfoBase[destExtents[2]];
-            for (int i = 0; i < destExtents[2]; i++) {
-                fInfos[i] = (FileInfoBase)srcImage.getFileInfo()[0].clone();
-            }
-            srcImage.setFileInfo(fInfos);
 
             // import the result buffer from the resultImage into the srcImage
             // do this a slice at a time to conserve memory

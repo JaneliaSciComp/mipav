@@ -145,6 +145,9 @@ public class ViewJComponentEditImage
     /** New point VOI.                       */
     protected VOI newPtVOI = null;
 
+    /** New polyline slice VOI*/
+    protected VOI newPolySliceVOI = null;
+
     /** New Text VOI (annotation)*/
     // private VOI newTextVOI = null;
 
@@ -271,6 +274,7 @@ public class ViewJComponentEditImage
     protected int[] orient; // Gives the orientation of each of 3 axes
     protected int[] imageExtents;
     protected int lastPointVOI = -1;
+    protected int lastPolysliceVOI = -1;
     protected float[] res = new float[2];
     protected int[] maxExtents = new int[2];
 
@@ -6182,6 +6186,114 @@ public class ViewJComponentEditImage
                 } // end of else for if voiID != -1 add point to existing VOI
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
         } // end of else if (mode == POINT_VOI)
+
+        else if (mode == POLYLINE_SLICE_VOI) {
+            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+                if (isNewVoiNeeded(VOI.POLYLINE_SLICE)) { // create new VOI
+                    try {
+                        float[] x = new float[1];
+                        float[] y = new float[1];
+                        float[] z = new float[1];
+
+                        voiID = imageActive.getVOIs().size();
+                        int colorID = 0;
+
+                        if (imageActive.getVOIs().size() > 0) {
+                            colorID = ( (VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
+                        }
+
+                        if (imageActive.getNDims() > 2) {
+                            newPolySliceVOI = new VOI( (short) colorID, "Polyline_slice", imageActive.getExtents()[2],
+                                                       VOI.POLYLINE_SLICE, -1.0f);
+                        }
+                        else {
+                           MipavUtil.displayError("Inter-frame polyline must be used on 2.5/3D images only");
+                           return;
+                        }
+                        x[0] = xS;
+                        y[0] = yS;
+                        z[0] = slice;
+                        newPolySliceVOI.importCurve(x, y, z, slice);
+                        newPolySliceVOI.setUID(newPolySliceVOI.hashCode());
+
+                    }
+                    catch (OutOfMemoryError error) {
+                        System.gc();
+                        MipavUtil.displayError("Out of memory: ComponentEditImage.mouseReleased");
+                        setMode(DEFAULT);
+                        return;
+                    }
+                    lastPolysliceVOI = voiID;
+                    imageActive.registerVOI(newPolySliceVOI);
+                    newPolySliceVOI.setActive(true);
+                    ((VOIBase)(newPolySliceVOI.getCurves()[slice].elementAt(0))).setActive(true);
+
+                    updateVOIColor(newPolySliceVOI.getColor(), newPolySliceVOI.getUID());
+                   // ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
+
+                    imageActive.notifyImageDisplayListeners();
+
+                    //System.err.println("click count: " + mouseEvent.getClickCount());
+
+                    if (mouseEvent.isShiftDown() != true) {
+                        setMode(DEFAULT);
+                    }
+
+                } // end of if (voiID == -1)
+                else { // voiID != -1 add point to existing VOI
+                    int index;
+
+                    nVOI = VOIs.size();
+
+                    float[] x = new float[1];
+                    float[] y = new float[1];
+                    float[] z = new float[1];
+
+                    x[0] = xS;
+                    y[0] = yS;
+                    z[0] = slice;
+
+                    for (i = 0; i < nVOI; i++) {
+                        if (VOIs.VOIAt(i).getID() == voiID) {
+                            if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                                VOIs.VOIAt(i).importCurve(x, y, z, slice);
+                                break;
+                            }
+                            else {
+                                MipavUtil.displayError("Can't add POLYLINE_SLICE VOI to other VOI structure.");
+                                return;
+                            }
+                        }
+                    }
+
+                    int end;
+
+                    if (imageActive.getNDims() >= 3) {
+                        end = imageActive.getExtents()[2];
+                    }
+                    else {
+                        end = 1;
+                    }
+                    for (j = 0; j < end; j++) {
+                        index = VOIs.VOIAt(i).getCurves()[j].size();
+                        for (k = 0; k < index; k++) {
+                            ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[j].elementAt(k))).setActive(false);
+                        }
+                    }
+
+                    index = VOIs.VOIAt(i).getCurves()[slice].size();
+                    ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))).setActive(true);
+
+                    imageActive.notifyImageDisplayListeners();
+
+                    if (mouseEvent.isShiftDown() != true) {
+                        setMode(DEFAULT);
+                    }
+                    return;
+                } // end of else for if voiID != -1 add point to existing VOI
+            } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
+
+        }
         else if (mode == ANNOTATION) {
             if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
 
@@ -6499,35 +6611,59 @@ public class ViewJComponentEditImage
                     // get the curve referenced by the VOI.  We'll check it.
                     selectedCurve = ( (VOIBase) VOIs.VOIAt(i).getCurves()[slice].elementAt(j));
 
-                    if (selectedCurve instanceof VOIPoint
-                        && ( (VOIPoint) selectedCurve).nearPoint(xR, yR, getZoomX(), resolutionX, resolutionY)) {
-                        // points are not true curves, but we want to check if we
-                        // released mouse over it. we'll at least set the point active.
-                        if (mouseEvent.isShiftDown()) {
-                            allActive = true;
-                            // if true set all points in VOI active - move all points
-                            VOIs.VOIAt(i).setAllActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                            voiID = VOIs.VOIAt(i).getID();
-                            // and we are done with this VOI.
-                            // skip the rest of the curves
-                            j = VOIs.VOIAt(i).getCurves()[slice].size();
+                    if (selectedCurve instanceof VOIPoint) {
+
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                            if (((VOIPoint) selectedCurve).nearPoint(xR, yR, getZoomX(), resolutionX, resolutionY)) {
+                                allActive = false;
+                                VOIs.VOIAt(i).setActive(true);
+                                updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                                ((VOIPoint) (selectedCurve)).setActive(true);
+
+                                Point3Df pt = ((VOIPoint) (selectedCurve)).exportPoint();
+
+                                setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+
+                                voiID = VOIs.VOIAt(i).getID();
+                                fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
+                            } else if (VOIs.VOIAt(i).nearLine(xR, yR, slice)) {
+                                VOIs.VOIAt(i).setAllActive(true);
+
+                                updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                                voiID = VOIs.VOIAt(i).getID();
+                                j = VOIs.VOIAt(i).getCurves()[slice].size();
+                                fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
+                            }
                         }
-                        else {
-                            allActive = false;
-                            VOIs.VOIAt(i).setActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                            ( (VOIPoint) (selectedCurve)).setActive(true);
+                        else if (((VOIPoint) selectedCurve).nearPoint(xR, yR, getZoomX(), resolutionX,
+                                                                 resolutionY)) {
+                            // points are not true curves, but we want to check if we
+                            // released mouse over it. we'll at least set the point active.
+                            if (mouseEvent.isShiftDown()) {
+                                allActive = true;
+                                // if true set all points in VOI active - move all points
+                                VOIs.VOIAt(i).setAllActive(true);
+                                updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                                voiID = VOIs.VOIAt(i).getID();
+                                // and we are done with this VOI.
+                                // skip the rest of the curves
+                                j = VOIs.VOIAt(i).getCurves()[slice].size();
+                            } else {
+                                allActive = false;
+                                VOIs.VOIAt(i).setActive(true);
+                                updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                                ((VOIPoint) (selectedCurve)).setActive(true);
 
-                            Point3Df pt =((VOIPoint) (selectedCurve)).exportPoint();
+                                Point3Df pt = ((VOIPoint) (selectedCurve)).exportPoint();
 
-                            setPixelInformationAtLocation((int)pt.x, (int)pt.y);
+                                setPixelInformationAtLocation((int) pt.x, (int) pt.y);
 
-                            voiID = VOIs.VOIAt(i).getID();
+                                voiID = VOIs.VOIAt(i).getID();
+                            }
+
+                            fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
+
                         }
-
-                        fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
-
                     }
                     else if (selectedCurve instanceof VOIText
                              && ( (VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
@@ -7454,9 +7590,13 @@ public class ViewJComponentEditImage
                     if ( (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
                           || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE
                           || VOIs.VOIAt(i).getCurveType() == VOI.LINE
-                          || VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR)
+                          || VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR
+                          || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE)
                         && mouseEvent.isControlDown() == false
                         && (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
+
+
+                       //System.err.println("ABCDEFG");
                         wasDragging = true;
                         if (imageActive.getNDims() < 3) {
                             end = 1;
@@ -7471,35 +7611,63 @@ public class ViewJComponentEditImage
                         }
                         else {
                             for (int sl = 0; sl < end; sl++) {
-                                for (j = 0; j < VOIs.VOIAt(i).getCurves()[sl].size(); j++) {
-                                    boolean contains = false;
-                                    boolean isActive = false;
 
-                                    if (curveType == VOI.CONTOUR || curveType == VOI.POLYLINE) {
+                                if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                                    if (sl == slice &&
+                                        VOIs.VOIAt(i).nearLine(xS, yS, sl)) {
 
-                                        contains = ( (VOIContour) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).
-                                            contains(
-                                                xS, yS, true);
-
-                                        isActive = ( (VOIContour) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).
-                                            isActive();
-                                    }
-                                    else if (curveType == VOI.LINE) {
-                                        contains = ( (VOILine) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).contains(
-                                            xS, yS, true);
-                                        isActive = ( (VOILine) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive();
-                                    }
-                                    else if (curveType == VOI.PROTRACTOR) {
-                                        contains = ( (VOIProtractor) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).
-                                            contains(
-                                                xS, yS, true);
-                                        isActive = ( (VOIProtractor) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).
-                                            isActive();
-                                    }
-
-                                    if (contains && isActive) {
+                                        System.err.println("calling moveVOI for POLYLINE_SLICE: " + xS + "," + yS);
                                         VOIs.VOIAt(i).moveVOI(sl, xDim, yDim, zDim, distX, distY, 0);
                                         imageActive.notifyImageDisplayListeners();
+                                    }
+
+                                } else {
+
+                                    for (j = 0;
+                                             j < VOIs.VOIAt(i).getCurves()[sl].
+                                             size(); j++) {
+                                        boolean contains = false;
+                                        boolean isActive = false;
+
+                                        if (curveType == VOI.CONTOUR ||
+                                            curveType == VOI.POLYLINE) {
+
+                                            contains = ((VOIContour) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    contains(
+                                                    xS, yS, true);
+
+                                            isActive = ((VOIContour) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    isActive();
+                                        } else if (curveType == VOI.LINE) {
+                                            contains = ((VOILine) (VOIs.VOIAt(i).
+                                                    getCurves()[sl].elementAt(j))).
+                                                    contains(
+                                                    xS, yS, true);
+                                            isActive = ((VOILine) (VOIs.VOIAt(i).
+                                                    getCurves()[sl].elementAt(j))).
+                                                    isActive();
+                                        } else if (curveType == VOI.PROTRACTOR) {
+                                            contains = ((VOIProtractor) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    contains(
+                                                    xS, yS, true);
+                                            isActive = ((VOIProtractor) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    isActive();
+                                        }
+
+                                        if (contains && isActive) {
+                                            VOIs.VOIAt(i).moveVOI(sl, xDim,
+                                                    yDim, zDim, distX, distY, 0);
+                                            imageActive.
+                                                    notifyImageDisplayListeners();
+                                        }
                                     }
                                 }
                             }
@@ -8202,7 +8370,7 @@ public class ViewJComponentEditImage
             // that are happening here, in fact, zoom breaks if we don't return
             return;
         }
-        
+
         xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
@@ -8277,7 +8445,7 @@ public class ViewJComponentEditImage
         if (mode == RECTANGLE || mode == ELLIPSE || mode == LINE || mode == RECTANGLE3D || mode == POINT_VOI
             || mode == POLYLINE || mode == LEVELSET || mode == PAINT_VOI || mode == DROPPER_PAINT
             || mode == ERASER_PAINT || mode == QUICK_LUT || mode == PROTRACTOR || mode == LIVEWIRE
-            || mode == ANNOTATION) {
+            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI) {
             g.dispose();
             return;
         }
@@ -8354,6 +8522,7 @@ public class ViewJComponentEditImage
                             }
                         }
                     }
+                    //see if the mouse is near the line in between the points of the contour/polyline/polyline_slice
                     else if ( (VOIs.VOIAt(i)).nearLine(xS, yS, slice)
                              && mouseEvent.isAltDown() == false) {
 
@@ -8432,6 +8601,15 @@ public class ViewJComponentEditImage
                     return;
                 }
             }
+            else if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                if (VOIs.VOIAt(i).isVisible()
+                    && VOIs.VOIAt(i).nearLine(x, y, slice)) {
+                    setMode(MOVE);
+
+                    g.dispose();
+                    return;
+                }
+            }
         }
 
         setMode(DEFAULT);
@@ -8454,7 +8632,7 @@ public class ViewJComponentEditImage
             }
         }
     }
-	
+
 	public void setModifyFlag(boolean flag)
 	{
 		modifyFlag = flag;
@@ -9180,6 +9358,10 @@ public class ViewJComponentEditImage
                 rubberband.setActive(false);
                 setCursor(addPointCursor);
                 break;
+            case POLYLINE_SLICE_VOI:
+                rubberband.setActive(false);
+                setCursor(crosshairCursor);
+                break;
 
             case DELETE_POINT:
                 rubberband.setActive(false);
@@ -9469,49 +9651,49 @@ public class ViewJComponentEditImage
     public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity) {
     	commitMask(imagesDone, clearPaintMask, polarity, null);
     }
-    
+
     /** Replace intensities in the image using painted mask.
      *  @param imagesDone  IMAGE_A, IMAGE_B, or BseedVOTH
      *  @param clearPaintMask if true clear paint mask
      *  @param polarity
-     *  @param intensityLockVector Vector containing Integers values which are indexed to the 
+     *  @param intensityLockVector Vector containing Integers values which are indexed to the
      *  locked intensity values in the image
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, 
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
     		               Vector intensityLockVector) {
     	commitMask(imagesDone, clearPaintMask, polarity, intensityLockVector, true);
     }
-    
+
     /** Replace intensities in the image using painted mask.
      *  @param imagesDone  IMAGE_A, IMAGE_B, or BseedVOTH
      *  @param clearPaintMask if true clear paint mask
      *  @param polarity
-     *  @param intensityLockVector Vector containing Integers values which are indexed to the 
+     *  @param intensityLockVector Vector containing Integers values which are indexed to the
      *  locked intensity values in the image
      *  @param showProgressBar if true, shows the progress bar for this algorithm
      */
-    public void commitMask(ModelImage affectedImage, boolean clearPaintMask, boolean polarity, 
+    public void commitMask(ModelImage affectedImage, boolean clearPaintMask, boolean polarity,
     		               Vector intensityLockVector, boolean showProgressBar) {
 
     	if (affectedImage == imageA) {
     		commitMask(IMAGE_A, clearPaintMask, polarity, intensityLockVector, showProgressBar);
     	}
-    	
+
     	if (imageB != null && affectedImage == imageB) {
     		commitMask(IMAGE_B, clearPaintMask, polarity, intensityLockVector, showProgressBar);
     	}
     }
 
-    
+
     /** Replace intensities in the image using painted mask.
      *  @param imagesDone  IMAGE_A, IMAGE_B, or BseedVOTH
      *  @param clearPaintMask if true clear paint mask
      *  @param polarity
-     *  @param intensityLockVector Vector containing Integers values which are indexed to the 
+     *  @param intensityLockVector Vector containing Integers values which are indexed to the
      *  locked intensity values in the image
      *  @param showProgressBar if true, shows the progress bar for this algorithm
      */
-    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity, 
+    public void commitMask(int imagesDone, boolean clearPaintMask, boolean polarity,
     		               Vector intensityLockVector, boolean showProgressBar) {
 
         float min, max;
@@ -9698,6 +9880,32 @@ public class ViewJComponentEditImage
         } else {
             return imageBCopy.getImageName();
         }
+    }
+
+    public boolean convertPointToPoly( ) {
+
+        // first determine if there is more than one point on more than one slice/frame
+
+        ViewVOIVector VOIs = imageActive.getVOIs();
+        int nVOI = VOIs.size();
+        int xDim = imageActive.getExtents()[0];
+        int yDim = imageActive.getExtents()[1];
+        int zDim = 1;
+        if (imageActive.getNDims() > 2) {
+            zDim = imageActive.getExtents()[2];
+        } else {
+            return false;
+        }
+
+        for (int i = 0; i < nVOI; i++) {
+            int curveType = VOIs.VOIAt(i).getCurveType();
+
+            if (VOIs.VOIAt(i).isActive() && curveType == VOI.POINT) {
+                System.err.println("got active point... will convert");
+            }
+        }
+
+        return true;
     }
 
     /** Erases all paint. */

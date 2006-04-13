@@ -390,7 +390,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * number of time slices, the initial z-slice, etc.
      * @param img  the image to set the extent variables for
      */
-    protected void initExtentsVariables(ModelImage img)
+    public void initExtentsVariables(ModelImage img)
     {
         int[] slices = null;
         int[] numImages = null;
@@ -2145,7 +2145,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         else if (command.equals("LoadB") || command.equals("OpenMask"))
         {
             File fil = pickImageFile();
-            
+
             if (fil == null)
             {
             	return;
@@ -2532,6 +2532,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
             }
             componentImage.setMode(ViewJComponentEditImage.LINE);
+        }
+        else if (command.equals("Polyslice"))
+        {
+            if (!checkForVOICompatibility(VOI.POLYLINE_SLICE))
+            {
+                componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
+            }
+            componentImage.setMode(ViewJComponentEditImage.POLYLINE_SLICE_VOI);
         }
         else if (command.equals("protractor"))
         {
