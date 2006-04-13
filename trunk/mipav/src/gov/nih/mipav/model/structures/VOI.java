@@ -2647,7 +2647,7 @@ public class VOI extends ModelSerialCloneable {
 
                 }
             }
-           // System.err.println("DISTANCE IS: " + distance);
+            System.err.println("DISTANCE IS: " + distance);
         }
         else {
             for (i = 0; i < curves[slice].size(); i++) {
