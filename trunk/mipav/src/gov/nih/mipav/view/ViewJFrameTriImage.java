@@ -3666,81 +3666,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                if (getSelectedImage() == ViewJComponentBase.IMAGE_A)
                {
                    dialog = new JDialogTriImageTransformation(this, imageA);
-                   if (!dialog.doNew())
-                   {
-                       setImageA(imageA);
-                       for (int i = 0; i < MAX_TRI_IMAGES; i++)
-                       {
-                           if (triImage[i] != null)
-                           {
-                               triImage[i].setZoom(originalZoom, originalZoom);
-                           }
-                       }
-
-                       if (triImage[AXIAL_A] != null)
-                       {
-                           triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-                       }
-                       if (triImage[AXIAL_B] != null)
-                       {
-                           triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
-                       }
-                   }
                }
                else if (getSelectedImage() == ViewJComponentBase.IMAGE_B)
                {
                    dialog = new JDialogTriImageTransformation(this, imageB);
-                   if (!dialog.doNew())
-                   {
-                       setImageB(imageB);
-                       for (int i = 0; i < MAX_TRI_IMAGES; i++)
-                       {
-                           if (triImage[i] != null)
-                           {
-                               triImage[i].setZoom(originalZoom, originalZoom);
-                           }
-                       }
-
-                       if (triImage[AXIAL_A] != null)
-                       {
-                           triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-                       }
-                       if (triImage[AXIAL_B] != null)
-                       {
-                           triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
-                       }
-                   }
                }
                else if (getSelectedImage() == ViewJComponentBase.BOTH)
                {
                    dialog = new JDialogTriImageTransformation(this, imageA, imageB);
-                   if (!dialog.doNew())
-                   {
-                       setImageA(imageA);
-                       for (int i = 0; i < MAX_TRI_IMAGES; i++)
-                       {
-                           if (triImage[i] != null)
-                           {
-                               triImage[i].setZoom(originalZoom, originalZoom);
-                           }
-                       }
-                       setImageB(imageB);
-                       for (int i = 0; i < MAX_TRI_IMAGES; i++)
-                       {
-                           if (triImage[i] != null)
-                           {
-                               triImage[i].setZoom(originalZoom, originalZoom);
-                           }
-                       }
-                       if (triImage[AXIAL_A] != null)
-                       {
-                           triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-                       }
-                       if (triImage[AXIAL_B] != null)
-                       {
-                           triImage[AXIAL_B].getActiveImage().notifyImageDisplayListeners(null, true);
-                       }
-                   }
                }
            }
            else if (command.equals("addPoint"))
