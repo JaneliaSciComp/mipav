@@ -1615,7 +1615,6 @@ public class FileImageXML extends FileXML {
     private void addFunctionToLUT() {
 
         if ( LUT == null ) {
-            System.err.println("making a ModelLUT.GRAY");
             LUT = new ModelLUT( ModelLUT.GRAY, 256, new int[] { 4, 256 } );
         }
 

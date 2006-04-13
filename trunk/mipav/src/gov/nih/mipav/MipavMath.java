@@ -6,7 +6,7 @@ import gov.nih.mipav.model.structures.Point3Df;
 
 /**
  * Math functions not found in Java's Math class or they are slow.
- * 
+ *
  * @author not attributable
  * @version 1.0
  */
@@ -80,6 +80,15 @@ public class MipavMath {
     public final static double distance(Point3Df pt1, Point3Df pt2) {
         return Math.sqrt( (pt2.x - pt1.x) * (pt2.x - pt1.x) + (pt2.y - pt1.y) * (pt2.y - pt1.y) + (pt2.z - pt1.z)
                 * (pt2.z - pt1.z));
+    }
+
+    public final static double distance(float x0, float y0, float z0,
+                                        float x1, float y1, float z1,
+                                        float res[]) {
+
+        return Math.sqrt( ((x1 - x0) * (x1 - x0) * (res[0] * res[0])) +
+                                   ((y1 - y0) * (y1 - y0) * (res[1] * res[1])) +
+                                   ((z1 - z0) * (z1 - z0) * (res[2] * res[2]))  );
     }
 
     /**

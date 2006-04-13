@@ -86,6 +86,9 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             else if (event.getActionCommand().equals("Properties")) {
                 component.showVOIProperties(false);
             }
+            else if (event.getActionCommand().equals("BuildPoly")) {
+                component.convertPointToPoly();
+            }
 
         }
         catch (OutOfMemoryError error) {

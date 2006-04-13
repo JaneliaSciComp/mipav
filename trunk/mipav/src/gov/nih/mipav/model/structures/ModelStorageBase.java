@@ -3,6 +3,7 @@ package gov.nih.mipav.model.structures;
 
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.*;
 
 import java.io.*;
 import java.util.*;
@@ -785,7 +786,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final float getFreq2() {
         return freq2;
     }
-    
+
     /**
      * returns frequency U of filter
      * @return freqU
@@ -801,7 +802,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final float getFreqV() {
         return freqV;
     }
-    
+
     /**
      * returns standard deviation U of filter
      * @return sigmaU
@@ -817,7 +818,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final float getSigmaV() {
         return sigmaV;
     }
-    
+
     /**
      * returns roation angle theta in radians of filter
      * @return theta
@@ -1213,7 +1214,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public void setFreq2( float _freq2 ) {
         freq2 = _freq2;
     }
-    
+
     /**
     *
     * @param _freqU float
@@ -1229,7 +1230,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
    public void setFreqV( float _freqV ) {
        freqV = _freqV;
    }
-   
+
    /**
    *
    * @param _sigmaU float
@@ -1245,7 +1246,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
   public void setSigmaV( float _sigmaV ) {
       sigmaV = _sigmaV;
   }
-  
+
   /**
   *
   * @param _theta float

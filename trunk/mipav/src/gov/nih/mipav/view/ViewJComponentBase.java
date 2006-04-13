@@ -81,6 +81,7 @@ public abstract class ViewJComponentBase extends JComponent
     public static final int MOVE_INTERSECTION_POINT = 34;
     public static final int ZOOMING_IN = 35;
     public static final int ZOOMING_OUT = 36;
+    public static final int POLYLINE_SLICE_VOI = 37;
 
     // 48 show possibilities for each view
     public static final int SHOW012 = 0;

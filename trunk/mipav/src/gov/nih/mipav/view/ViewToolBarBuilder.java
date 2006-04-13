@@ -340,11 +340,18 @@ public class ViewToolBarBuilder implements ItemListener {
         VOIToolBar.add( makeSeparator() );
 
         VOIToolBar.add( buildToggleButton( "Point", "Draw point VOI", "pointROI", VOIGroup ) );
+        JToggleButton polysliceButton = buildToggleButton( "Polyslice", "Draw inter-slice polyline", "polyframe", VOIGroup );
+        polysliceButton.setEnabled( numberOfDimensions > 2);
+        VOIToolBar.add( polysliceButton );
+
+
         VOIToolBar.add( buildToggleButton( "Line", "Draw line VOI", "linear", VOIGroup ) );
         VOIToolBar.add( buildToggleButton( "protractor", "Protractor tool", "protractor", VOIGroup ) );
         VOIToolBar.add( buildToggleButton( "RectVOI", "Draw rectangle VOI", "rect", VOIGroup ) );
         VOIToolBar.add( buildToggleButton( "EllipseVOI", "Draw ellipse VOI", "circle", VOIGroup ) );
         VOIToolBar.add( buildToggleButton( "Polyline", "Draw polygon/polyline VOI", "polygon", VOIGroup ) );
+
+
         VOIToolBar.add( buildToggleButton( "LevelSetVOI", "Draw levelset VOI", "contour", VOIGroup ) );
         VOIToolBar.add( buildToggleButton( "LiveWireVOI", KeyEvent.VK_L, "Live wire VOI", "livewire", VOIGroup ) );
         JToggleButton cubeVOIButton = buildToggleButton( "Rect3DVOI", "3D rectangular VOI", "cube", VOIGroup );

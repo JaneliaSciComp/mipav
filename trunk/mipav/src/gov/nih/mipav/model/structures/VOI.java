@@ -8,6 +8,7 @@ import javax.swing.event.EventListenerList;
 import java.awt.*;
 import java.util.*;
 import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.view.dialogs.JDialogShortcutEditor;
 
 
 /**
@@ -51,8 +52,8 @@ public class VOI extends ModelSerialCloneable {
     /** Indicates that the VOI is of type CARDIOLOGY, special VOI for specific tasks needed in cardiology */
     public static final int CARDIOLOGY = 6; // cardiology VOI
 
-    /** Indicates that the VOI is of type POLYLINE that will go through more than one frame*/
-    public static final int INTER_FRAME_POLYLINE = 7;
+    /** Indicates that the VOI is of type POLYLINE that will go through more than one slice*/
+    public static final int POLYLINE_SLICE = 7;
 
     /**         */
     public static final float NOT_A_LEVELSET = Float.MIN_VALUE;
@@ -960,12 +961,15 @@ public class VOI extends ModelSerialCloneable {
             curve = new VOIProtractor();
         } else if (curveType == ANNOTATION) {
             curve = new VOIText();
-        } else {
+        } else if (curveType == POLYLINE_SLICE) {
+            curve = new VOIPoint(name, true);
+        }
+        else {
             return;
         }
         curve.importArrays(x, y, z, x.length);
         curves[slice].addElement(curve);
-        if (curveType == POINT) {
+        if (curveType == POINT || curveType == POLYLINE_SLICE) {
             ((VOIPoint) (curves[slice].lastElement())).setLabel(String.valueOf(elementLabel++ ));
         } else if (curveType == PROTRACTOR) {
             for (int i = 0; i < curves[slice].size(); i++ ) {
@@ -1418,7 +1422,7 @@ public class VOI extends ModelSerialCloneable {
                     yEnd = y[1];
             }
         }
-        if (curveType == POINT) {
+        if (curveType == POINT || curveType == POLYLINE_SLICE) {
             for (i = 0; i < nContours; i++ ) {
                 ((VOIPoint) (curves[slice].elementAt(i))).getBounds(x, y, z);
                 if (x[0] < xStart)
@@ -2428,32 +2432,85 @@ public class VOI extends ModelSerialCloneable {
         boolean isSolid = false;
         if (displayMode == VOI.SOLID)
             isSolid = true;
-        for (i = 0; i < curves[slice].size(); i++ ) {
-            if (visible) {
-                g.setColor(color);
-                if (curveType == CONTOUR || curveType == POLYLINE) {
-                    // getBounds(xBounds, yBounds, zBounds);
-                    ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
-                    ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds, yBounds, zBounds);
-                    ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                            originX, originY, resols, unitsOfMeasure, orientation, g, boundingBox);
-                } else if (curveType == LINE) {
-                    ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == POINT) {
-                    ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == PROTRACTOR) {
-                    ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
-                    ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                            originX, originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == ANNOTATION) {
-                    ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == CARDIOLOGY) {
-                    // System.err.println("got here");
-                    ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                            originX, originY, resols, unitsOfMeasure, orientation, g, isSolid);
+
+        if (curveType == POLYLINE_SLICE) {
+            double distance = 0;
+            Vector distanceVector = new Vector();
+            Point3Df firstPoint, secondPoint;
+            //first calculate the total distance from pt->pt (even in !visible Points)
+
+            for (i = 0; i < curves[slice].size(); i++) {
+
+                firstPoint = ((VOIPoint)curves[slice].elementAt(i)).exportPoint();
+                firstPoint.z = slice;
+                distanceVector.add(firstPoint);
+            }
+
+            for (i = 0; i < distanceVector.size() - 1; i++) {
+                firstPoint = (Point3Df)distanceVector.elementAt(i);
+                secondPoint = (Point3Df)distanceVector.elementAt(i+1);
+
+                distance += MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z,
+                                               secondPoint.x, secondPoint.y, secondPoint.z, resols);
+            }
+
+            //next draw lines between the points of the visible slice
+
+            //to do....
+
+            //finally draw the points
+            for (i = 0; i < curves[slice].size(); i++) {
+                if (visible) {
+                    ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
+                            resolutionX, resolutionY, originX,
+                            originY, resols, unitsOfMeasure, orientation, g,
+                            isSolid);
+                }
+            }
+           // System.err.println("DISTANCE IS: " + distance);
+
+        } else {
+            for (i = 0; i < curves[slice].size(); i++) {
+                if (visible) {
+                    g.setColor(color);
+                    if (curveType == CONTOUR) {
+                        // getBounds(xBounds, yBounds, zBounds);
+                        ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds,
+                                yBounds, zBounds);
+                        ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds,
+                                yBounds, zBounds);
+                        ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX,
+                                zoomY, resolutionX, resolutionY,
+                                originX, originY, resols, unitsOfMeasure, orientation,
+                                g, boundingBox);
+                    } else if (curveType == LINE) {
+                        ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
+                                resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+                    } else if (curveType == POINT) {
+                        ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
+                                resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+                    } else if (curveType == PROTRACTOR) {
+                        ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
+                        ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX,
+                                zoomY, resolutionX, resolutionY,
+                                originX, originY, resols, unitsOfMeasure, orientation,
+                                g, isSolid);
+                    } else if (curveType == ANNOTATION) {
+                        ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
+                                resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+                    } else if (curveType == CARDIOLOGY) {
+                        // System.err.println("got here");
+                        ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX,
+                                zoomY, resolutionX, resolutionY,
+                                originX, originY, resols, unitsOfMeasure, orientation,
+                                g, isSolid);
+                    }
                 }
             }
         }
@@ -2481,39 +2538,164 @@ public class VOI extends ModelSerialCloneable {
         boolean isSolid = false;
         if (displayMode == VOI.SOLID)
             isSolid = true;
-        for (i = 0; i < curves[slice].size(); i++ ) {
-            // gon = ((Contour)(curves[slice].elementAt(i))).exportPolygon(scaleX, scaleY);
-            // gon = ((Contour)(curves[slice].elementAt(i))).generatePolygon(0,0,0,0,0,0,scaleX, scaleY,scaleY);
+
+
+        if (curveType == POLYLINE_SLICE) {
+            double distance = 0;
+            Vector distanceVector = new Vector();
+            Point3Df firstPoint, secondPoint;
+            //first calculate the total distance from pt->pt (even in !visible Points)
+
+
+            int numSlices = fileInfo.getExtents()[2];
+            int sliceCounter;
+            int pointNumber = 0;
+            for (sliceCounter = 0; sliceCounter < numSlices; sliceCounter++) {
+                for (i = 0; i < curves[sliceCounter].size(); i++) {
+
+                    try {
+                        pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
+                        firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).
+                                     exportPoint();
+                        firstPoint.z = slice;
+                        distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            Collections.sort(distanceVector, new PointComparator());
+
+            for (i = 0; i < distanceVector.size() - 1; i++) {
+                firstPoint = ((PolyPointHolder)distanceVector.elementAt(i)).getPoint();
+                secondPoint = ((PolyPointHolder)distanceVector.elementAt(i+1)).getPoint();
+
+                distance += MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z,
+                                               secondPoint.x, secondPoint.y, secondPoint.z, resols);
+            }
+
+            //next draw lines between the points of the visible slice
             if (visible) {
-                g.setColor(color);
-                if (curveType == CONTOUR || curveType == POLYLINE) {
-                    // getBounds(xBounds, yBounds, zBounds);
-                    ((VOIContour) (curves[slice].elementAt(i))).getBounds(xBounds, yBounds, zBounds);
-                    ((VOIContour) (curves[slice].elementAt(i))).setBounds(xBounds, yBounds, zBounds);
-                    /*
-                     * ((VOIContour)(curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                     * originX, originY, resols, unitsOfMeasure, orientation, g, boundingBox);
-                     */
-                    ((VOIContour) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                            originX, originY, resols, unitsOfMeasure, orientation, g, boundingBox, fileInfo, dim);
-                } else if (curveType == LINE) {
-                    ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == POINT) {
-                    ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == PROTRACTOR) {
-                    ((VOIProtractor) (curves[slice].elementAt(i))).setColor(color);
-                    ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                            originX, originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == ANNOTATION) {
-                    // System.err.println("Text: " + ((VOIText)(curves[slice].elementAt(i))).getText());
-                    ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g, isSolid);
-                } else if (curveType == CARDIOLOGY) {
-                    // System.err.println("got here");
-                    ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY, resolutionX, resolutionY,
-                            originX, originY, resols, unitsOfMeasure, orientation, g, isSolid);
+                int xS, yS, xS2, yS2;
+                int firstPointLabel;
+                int secondPointLabel;
+
+                for (i = 0; i < curves[slice].size() - 1; i++) {
+                    g.setColor(color);
+
+                    firstPointLabel = 0;
+                    secondPointLabel = 0;
+                    try {
+                        firstPointLabel = Integer.parseInt(((VOIPoint) curves[slice].elementAt(
+                                i)).getLabel());
+                        secondPointLabel = Integer.parseInt(((VOIPoint) curves[slice].elementAt(
+                                i + 1)).getLabel());
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    if (secondPointLabel - firstPointLabel == 1) {
+                        firstPoint = ((VOIPoint) curves[slice].elementAt(i)).exportPoint();
+                        secondPoint = ((VOIPoint) curves[slice].elementAt(i + 1)).exportPoint();
+
+                        if (orientation == VOIBase.NA || orientation == VOIBase.XY) {
+                            // 1 -> imageDim instead of 0 -> imageDim - 1
+                            xS = Math.round(firstPoint.x * zoomX * resolutionX);
+                            yS = Math.round(firstPoint.y * zoomY * resolutionY);
+
+                            xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
+                            yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+
+                        } else if (orientation == VOIBase.ZY) {
+                            // 1 -> imageDim instead of 0 -> imageDim - 1
+                            xS = Math.round(firstPoint.z * zoomX * resolutionX);
+                            yS = Math.round(firstPoint.y * zoomY * resolutionY);
+
+                            xS2 = Math.round(secondPoint.z * zoomX * resolutionX);
+                            yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+
+                        } else if (orientation == VOIBase.XZ) {
+                            // 1 -> imageDim instead of 0 -> imageDim - 1
+                            xS = Math.round(firstPoint.x * zoomX * resolutionX);
+                            yS = Math.round(firstPoint.z * zoomY * resolutionY);
+
+                            xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
+                            yS2 = Math.round(secondPoint.z * zoomY * resolutionY);
+
+                        } else {
+                            // 1 -> imageDim instead of 0 -> imageDim - 1
+                            xS = Math.round(firstPoint.x * zoomX * resolutionX);
+                            yS = Math.round(firstPoint.y * zoomY * resolutionY);
+
+                            xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
+                            yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+                        }
+                        g.drawLine(xS, yS, xS2, yS2);
+                    }
+                }
+            }
+            //finally draw the points
+            for (i = 0; i < curves[slice].size(); i++) {
+                if (visible) {
+                    g.setColor(color);
+
+                    ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
+                            resolutionX, resolutionY, originX,
+                            originY, resols, unitsOfMeasure, orientation, g,
+                            isSolid);
+
+                }
+            }
+           // System.err.println("DISTANCE IS: " + distance);
+        }
+        else {
+            for (i = 0; i < curves[slice].size(); i++) {
+                // gon = ((Contour)(curves[slice].elementAt(i))).exportPolygon(scaleX, scaleY);
+                // gon = ((Contour)(curves[slice].elementAt(i))).generatePolygon(0,0,0,0,0,0,scaleX, scaleY,scaleY);
+                if (visible) {
+                    g.setColor(color);
+                    if (curveType == CONTOUR || curveType == POLYLINE) {
+                        // getBounds(xBounds, yBounds, zBounds);
+                        ((VOIContour) (curves[slice].elementAt(i))).getBounds(
+                                xBounds, yBounds, zBounds);
+                        ((VOIContour) (curves[slice].elementAt(i))).setBounds(
+                                xBounds, yBounds, zBounds);
+
+                        ((VOIContour) (curves[slice].elementAt(i))).drawSelf(
+                                zoomX, zoomY, resolutionX, resolutionY,
+                                originX, originY, resols, unitsOfMeasure,
+                                orientation, g, boundingBox, fileInfo, dim);
+                    } else if (curveType == LINE) {
+                        ((VOILine) (curves[slice].elementAt(i))).drawSelf(zoomX,
+                                zoomY, resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+                    } else if (curveType == POINT) {
+                        ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(
+                                zoomX, zoomY, resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+                    } else if (curveType == PROTRACTOR) {
+                        ((VOIProtractor) (curves[slice].elementAt(i))).setColor(
+                                color);
+                        ((VOIProtractor) (curves[slice].elementAt(i))).drawSelf(
+                                zoomX, zoomY, resolutionX, resolutionY,
+                                originX, originY, resols, unitsOfMeasure,
+                                orientation, g, isSolid);
+                    } else if (curveType == ANNOTATION) {
+                        // System.err.println("Text: " + ((VOIText)(curves[slice].elementAt(i))).getText());
+                        ((VOIText) (curves[slice].elementAt(i))).drawSelf(zoomX,
+                                zoomY, resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+                    } else if (curveType == CARDIOLOGY) {
+                        // System.err.println("got here");
+                        ((VOICardiology) (curves[slice].elementAt(i))).drawSelf(
+                                zoomX, zoomY, resolutionX, resolutionY,
+                                originX, originY, resols, unitsOfMeasure,
+                                orientation, g, isSolid);
+                    }
                 }
             }
         }
@@ -2854,6 +3036,26 @@ public class VOI extends ModelSerialCloneable {
                     return true;
                 }
             }
+        } else if (curveType == POLYLINE_SLICE) {
+            Point3Df pt1;
+            Point3Df pt2;
+            int x1, y1, x2, y2;
+
+            for (i = 0; i < curves[slice].size() - 1; i++) {
+                pt1 = ((VOIPoint)curves[slice].elementAt(i)).exportPoint();
+                pt2 = ((VOIPoint)curves[slice].elementAt(i + 1)).exportPoint();
+
+                x1 = MipavMath.round( pt1.x);
+                y1 = MipavMath.round( pt1.y);
+                x2 = MipavMath.round( pt2.x);
+                y2 = MipavMath.round( pt2.y);
+
+                if (VOIBase.testDistance(x, x1, x2, y, y1, y2, 3)) {
+                    polygonIndex = i;
+                    return true;
+                }
+            }
+
         }
         polygonIndex = -99;
         return false;
@@ -3006,7 +3208,9 @@ public class VOI extends ModelSerialCloneable {
         if (fixed) {
             return;
         }
-        if (curveType != POINT && curveType != ANNOTATION) {
+        if (curveType != POINT
+            && curveType != ANNOTATION
+            && curveType != POLYLINE_SLICE) {
             if (slice == -1) {
                 getBounds(xBounds, yBounds, zBounds);
                 if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0)
@@ -3058,7 +3262,28 @@ public class VOI extends ModelSerialCloneable {
                 }
                 return;
             }
-        } else if (curveType == POINT) {
+        }
+        else if (curveType == POLYLINE_SLICE) {
+            getSliceBounds(slice, xBounds, yBounds);
+            if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0)
+                return;
+            if (xBounds[1] + xM >= xDim || xBounds[1] + xM < 0)
+                return;
+            if (yBounds[0] + yM >= yDim || yBounds[0] + yM < 0)
+                return;
+            if (yBounds[1] + yM >= yDim || yBounds[1] + yM < 0)
+                return;
+
+           // System.err.println("Moving...");
+
+            for (i = 0; i < curves[slice].size(); i++) {
+                if (((VOIPoint) (curves[slice].elementAt(i))).isActive()) {
+                    ((VOIPoint) (curves[slice].elementAt(i))).moveVOIPoint(xM,
+                            yM, zM, xDim, yDim, zDim);
+                }
+            }
+        }
+        else if (curveType == POINT) {
             if (slice == -1) {
                 getBounds(xBounds, yBounds, zBounds);
                 if (xBounds[0] + xM >= xDim || xBounds[0] + xM < 0)
@@ -3593,4 +3818,35 @@ public class VOI extends ModelSerialCloneable {
         }
         super.finalize();
     }
+
+    private class PolyPointHolder {
+        private Point3Df pt;
+        private int number;
+
+        public PolyPointHolder(Point3Df p, int n) {
+            this.pt = p;
+            this.number = n;
+        }
+
+        public Point3Df getPoint() {
+            return this.pt;
+        }
+
+        public int getNumber() {
+            return this.number;
+        }
+    }
+
+    private class PointComparator implements Comparator {
+
+        public int compare( Object o1, Object o2)
+        {
+            int a = ((PolyPointHolder)o1).getNumber();
+            int b = ((PolyPointHolder)o2).getNumber();
+
+            return ((new Integer(a)).compareTo( new Integer(b)));
+        }
+
+    }
+
 }
