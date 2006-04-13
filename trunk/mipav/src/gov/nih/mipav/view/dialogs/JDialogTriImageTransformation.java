@@ -27,13 +27,10 @@ public class JDialogTriImageTransformation extends JDialogBase
     /** Progress bar. */
     private ViewJProgressBar progressBar;
 
-    private JRadioButton replaceImage;
-    private JRadioButton newImage;
     private JComboBox comboBoxInterp;
-    private boolean doNew;
 
     private double thetaXY, thetaXZ, thetaZY; // rotation angles in degrees, the negative of these
-    // angles is passed to setRotate
+    // angles are passed to setRotate
     private double centerX, centerY, centerZ; // centers of original images
     private int boxIndex = 0; // index from interpolation combo box
     private double xfrmD[][] = new double[4][4]; // (xfrm.inverse()).getArray()
@@ -75,38 +72,8 @@ public class JDialogTriImageTransformation extends JDialogBase
     {
         setTitle("Apply transformation matrix");
 
-        JPanel destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        ButtonGroup destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-        // Only if the image is unlocked can it be replaced.
-        if (imageA.getLockStatus() == ModelStorageBase.UNLOCKED)
-        {
-            replaceImage.setEnabled(true);
-        }
-        else
-        {
-            replaceImage.setEnabled(false);
-        }
-
+        
         JPanel interpolationPanel = new JPanel(new GridBagLayout());
         interpolationPanel.setBorder(buildTitledBorder("Interpolation"));
 
@@ -129,12 +96,12 @@ public class JDialogTriImageTransformation extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         interpolationPanel.add(labelInterp, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         interpolationPanel.add(comboBoxInterp, gbc);
 
         buildOKButton();
@@ -149,10 +116,9 @@ public class JDialogTriImageTransformation extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(interpolationPanel, gbc);
         gbc.gridy = 1;
-        mainPanel.add(destinationPanel, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         getContentPane().add(mainPanel);
@@ -171,16 +137,15 @@ public class JDialogTriImageTransformation extends JDialogBase
         if (command.equals("Apply"))
         {
             boxIndex = comboBoxInterp.getSelectedIndex();
-            doNew = newImage.isSelected();
 
             dispose();
 
             final SwingWorker worker = new SwingWorker() {
                 public Object construct() {
-                    transform(imageA, doNew);
+                    transform(imageA);
                     if (imageB != null)
                     {
-                        transform(imageB, doNew);
+                        transform(imageB);
                     }
 
                     return null;
@@ -196,228 +161,188 @@ public class JDialogTriImageTransformation extends JDialogBase
         }
     }
 
-
-    /**
-     *   Accessor that returns whether or not a new image was created.
-     *   @return <code>true</code> if new image.
-     */
-    public boolean doNew()
-    {
-        return doNew;
-    }
-
     /**
      *   Sets the transformation matrix and sends the image data to the appropriate
      *   interpolation routine.
      *   @param image    Image on which to perform the transformation.
-     *   @param doNew    Flag indicating if should create new image.
      */
-    private void transform(ModelImage image, boolean doNew)
+    private void transform(ModelImage image)
     {
-        //if (doNew && (resultImage == null)) {
-        ModelImage resultImage = null;
-        float[] imgBuffer;
-        int bufferSize;
-
-        if (image.isColorImage()) {
-            bufferSize = 4 * image.getSliceSize() * image.getExtents()[2];
-        }
-        else {
-            bufferSize = image.getSliceSize() * image.getExtents()[2];
-        }
-
-        progressBar = new ViewJProgressBar("Preparing image ...", "Transforming image ...", 0, 100, false, null, null);
-        progressBar.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2, 50);
-        progressBar.setSeparateThread(!SwingUtilities.isEventDispatchThread());
-        MipavUtil.centerOnScreen(progressBar);
-
-        if (doNew) {
-            try {
-                resultImage = (ModelImage) image.clone();
-                resultImage.resetVOIs();
-            }
-            catch (OutOfMemoryError x) {
-                MipavUtil.displayError("ViewJFrameTriImage: Unable to allocate memory for result image");
-                if (resultImage != null) {
-                    resultImage.disposeLocal();
-                    resultImage = null;
-                }
-            }
-        }
-        else {
-            if (resultImage != null) {
-                resultImage.disposeLocal();
-                resultImage = null;
-            }
-        }
-
-        thetaXY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).getTheta();
-        thetaXZ = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_A)).getTheta();
-        thetaZY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A)).getTheta();
-
-        TransMatrix xfrm = new TransMatrix(4);
-        xfrm.identity();
-
-        xfrm.setTranslate(centerX * image.getFileInfo()[0].getResolutions()[0],
-                          centerY * image.getFileInfo()[0].getResolutions()[1],
-                          centerZ * image.getFileInfo()[0].getResolutions()[2]);
-
-        int imageOrient = imageA.getFileInfo(0).getImageOrientation();
-        if (imageOrient == FileInfoBase.AXIAL){
-            xfrm.setRotate( -thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
-        }
-        else if (imageOrient == FileInfoBase.CORONAL){
-            xfrm.setRotate( -thetaXY, -thetaZY, -thetaXZ, TransMatrix.DEGREES);
-        }
-        else if (imageOrient == FileInfoBase.SAGITTAL){
-            xfrm.setRotate( -thetaXZ, -thetaXY, -thetaZY, TransMatrix.DEGREES);
-        }
-        else
-        {
-            xfrm.setRotate( -thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
-        }
-
-        xfrm.setTranslate( - (double) centerX * image.getFileInfo()[0].getResolutions()[0],
-                           - (double) centerY * image.getFileInfo()[0].getResolutions()[1],
-                           - (double) centerZ * image.getFileInfo()[0].getResolutions()[2]);
-
-        System.gc();
-        imgBuffer = new float[bufferSize];
-
-        try
-        {
-            if (resultImage != null)
+    	try
+    	{
+	        ModelImage clonedImage = null;
+	        float[] imgBuffer;
+	        int bufferSize;
+	        
+	        progressBar = new ViewJProgressBar("Preparing image ...", "Transforming image ...", 0, 100, false, null, null);
+	        progressBar.setLocation(Toolkit.getDefaultToolkit().getScreenSize().width / 2, 50);
+	        progressBar.setSeparateThread(!SwingUtilities.isEventDispatchThread());
+	        MipavUtil.centerOnScreen(progressBar);
+	        progressBar.setVisible(true);
+	
+	        if (image.isColorImage()) {
+	            bufferSize = 4 * image.getSliceSize() * image.getExtents()[2];
+	        }
+	        else {
+	            bufferSize = image.getSliceSize() * image.getExtents()[2];
+	        }
+	
+            clonedImage = (ModelImage) image.clone();
+            clonedImage.resetVOIs();
+            
+            int selectedImage;
+            boolean oldLayout = Preferences.is(Preferences.PREF_TRIPLANAR_2X2_LAYOUT);
+            
+            if (frame.getTriImage(ViewJFrameTriImage.AXIAL_B) != null)
             {
-                resultImage.exportData(0, bufferSize, imgBuffer);
+	            if (oldLayout == true)
+	            {
+	            	// if old 2x2 layout is in use (which means the image is the composite AB) 
+	            	// we must force selectedImage to be BOTH
+	            	selectedImage = ViewJComponentBase.BOTH;
+	            }
+	            else
+	            {
+	            	selectedImage = frame.getSelectedImage();
+	            }
             }
             else
             {
-                image.exportData(0, bufferSize, imgBuffer);
+            	selectedImage = ViewJComponentBase.IMAGE_A;
             }
-        }
-        catch (IOException error)
-        {
-            MipavUtil.displayError("ViewJFrameTriImage: IOException error on exportData");
-        }
-        progressBar.setTitle("Transforming image ...");
-        progressBar.setVisible(true);
-        if (image.getNDims() == 3)
-        {
-            if (boxIndex == 0)
+            
+            if (selectedImage == ViewJComponentBase.IMAGE_A)
             {
-                if (!image.isColorImage())
-                {
-                    image = doTrilinear(image, resultImage, imgBuffer, xfrm, progressBar); // black and white
-                }
-                else
-                {
-                    image = AlgorithmTransform.transformTrilinearC(image, resultImage, imgBuffer, xfrm, xfrmD, progressBar); // color
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
+		        thetaXY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).getTheta();
+		        thetaXZ = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_A)).getTheta();
+		        thetaZY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A)).getTheta();
             }
-            else if (boxIndex == 1)
+            else if (selectedImage == ViewJComponentBase.IMAGE_B)
             {
-                if (!image.isColorImage())
-                {
-                    image = AlgorithmTransform.bspline(image, resultImage, 3, xfrm, progressBar); // black and white
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                    image.calcMinMax();
-                }
-                else
-                {
-                    image = AlgorithmTransform.bsplineC(image, resultImage, 3, xfrm, progressBar); // color
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-            }
-            else if (boxIndex == 2)
+		        thetaXY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_B)).getTheta();
+		        thetaXZ = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_B)).getTheta();
+		        thetaZY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B)).getTheta();
+            } 
+            else
             {
-                if (!image.isColorImage())
-                {
-                    image = AlgorithmTransform.bspline(image, resultImage, 4, xfrm, progressBar); // black and white
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-                else
-                {
-                    image = AlgorithmTransform.bsplineC(image, resultImage, 4, xfrm, progressBar); // color
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
+		        thetaXY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_AB)).getTheta();
+		        thetaXZ = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.CORONAL_AB)).getTheta();
+		        thetaZY = ( (ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB)).getTheta();
             }
-        } // if (image.getNDims() == 3)
-        else if (image.getNDims() == 4)
-        {
-            if (boxIndex == 0)
-            {
-                if (!image.isColorImage())
-                {
-                    image = AlgorithmTransform.transformTrilinear4D(image, resultImage, xfrm, progressBar); // black and white
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-                else
-                {
-                    image = AlgorithmTransform.transformTrilinearC4D(image, resultImage, xfrm, progressBar); // color
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-            }
-            else if (boxIndex == 1)
-            {
-                if (!image.isColorImage())
-                {
-                    image = AlgorithmTransform.bspline4D(image, resultImage, 3, xfrm, progressBar); // black and white
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-                else
-                {
-                    image = AlgorithmTransform.bsplineC4D(image, resultImage, 3, xfrm, progressBar); // color
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-            }
-            else if (boxIndex == 2)
-            {
-                if (!image.isColorImage())
-                {
-                    image = AlgorithmTransform.bspline4D(image, resultImage, 4, xfrm, progressBar); // black and white
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-                else
-                {
-                    image = AlgorithmTransform.bsplineC4D(image, resultImage, 4, xfrm, progressBar); // color
-                    if (doNew)
-                    {
-                        new ViewJFrameImage(image, null, new Dimension(610, 200), image.getLogMagDisplay());
-                    }
-                }
-            }
-        } // else if (image.getNDims == 4)
+	        
+	        TransMatrix xfrm = new TransMatrix(4);
+	        xfrm.identity();
+	
+	        xfrm.setTranslate(centerX * image.getFileInfo()[0].getResolutions()[0],
+	                          centerY * image.getFileInfo()[0].getResolutions()[1],
+	                          centerZ * image.getFileInfo()[0].getResolutions()[2]);
+	
+	        int imageOrient = imageA.getFileInfo(0).getImageOrientation();
+	        if (imageOrient == FileInfoBase.AXIAL){
+	            xfrm.setRotate( -thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
+	        }
+	        else if (imageOrient == FileInfoBase.CORONAL){
+	            xfrm.setRotate( -thetaXY, -thetaZY, -thetaXZ, TransMatrix.DEGREES);
+	        }
+	        else if (imageOrient == FileInfoBase.SAGITTAL){
+	            xfrm.setRotate( -thetaXZ, -thetaXY, -thetaZY, TransMatrix.DEGREES);
+	        }
+	        else
+	        {
+	            xfrm.setRotate( -thetaZY, -thetaXZ, -thetaXY, TransMatrix.DEGREES);
+	        }
+	
+	        xfrm.setTranslate( - (double) centerX * image.getFileInfo()[0].getResolutions()[0],
+	                           - (double) centerY * image.getFileInfo()[0].getResolutions()[1],
+	                           - (double) centerZ * image.getFileInfo()[0].getResolutions()[2]);
+	
+	        System.gc();
+	        imgBuffer = new float[bufferSize];
+	
+	        clonedImage.exportData(0, bufferSize, imgBuffer);
+	        
+	        progressBar.setTitle("Transforming image ...");
+	        
+	        if (image.getNDims() == 3)
+	        {
+	            if (boxIndex == 0)
+	            {
+	                if (!image.isColorImage())
+	                {
+	                    image = doTrilinear(clonedImage, null, imgBuffer, xfrm, progressBar); // black and white
+	                }
+	                else
+	                {
+	                    image = AlgorithmTransform.transformTrilinearC(image, clonedImage, imgBuffer, xfrm, xfrmD, progressBar); // color
+	                }
+	            }
+	            else if (boxIndex == 1)
+	            {
+	                if (!image.isColorImage())
+	                {
+	                    image = AlgorithmTransform.bspline(image, clonedImage, 3, xfrm, progressBar); // black and white
+	                }
+	                else
+	                {
+	                    image = AlgorithmTransform.bsplineC(image, clonedImage, 3, xfrm, progressBar); // color
+	                }
+	            }
+	            else if (boxIndex == 2)
+	            {
+	                if (!image.isColorImage())
+	                {
+	                    image = AlgorithmTransform.bspline(image, clonedImage, 4, xfrm, progressBar); // black and white
+	                }
+	                else
+	                {
+	                    image = AlgorithmTransform.bsplineC(image, clonedImage, 4, xfrm, progressBar); // color
+	                }
+	            }
+	        } // if (image.getNDims() == 3)
+	        else if (image.getNDims() == 4)
+	        {
+	            if (boxIndex == 0)
+	            {
+	                if (!image.isColorImage())
+	                {
+	                    image = AlgorithmTransform.transformTrilinear4D(image, clonedImage, xfrm, progressBar); // black and white
+	                }
+	                else
+	                {
+	                    image = AlgorithmTransform.transformTrilinearC4D(image, clonedImage, xfrm, progressBar); // color
+	                }
+	            }
+	            else if (boxIndex == 1)
+	            {
+	                if (!image.isColorImage())
+	                {
+	                    image = AlgorithmTransform.bspline4D(image, clonedImage, 3, xfrm, progressBar); // black and white
+	                }
+	                else
+	                {
+	                    image = AlgorithmTransform.bsplineC4D(image, clonedImage, 3, xfrm, progressBar); // color
+	                }
+	            }
+	            else if (boxIndex == 2)
+	            {
+	                if (!image.isColorImage())
+	                {
+	                    image = AlgorithmTransform.bspline4D(image, clonedImage, 4, xfrm, progressBar); // black and white
+	                }
+	                else
+	                {
+	                    image = AlgorithmTransform.bsplineC4D(image, clonedImage, 4, xfrm, progressBar); // color
+	                }
+	            }
+	        } // else if (image.getNDims == 4)
+	        
+	        new ViewJFrameImage(image);
+    	}
+    	catch (Throwable t)
+    	{
+    		MipavUtil.displayError("Error: unable to complete transform algorithm");
+    		t.printStackTrace();
+    	}
     }
 
     /**
@@ -433,7 +358,6 @@ public class JDialogTriImageTransformation extends JDialogBase
                                                 TransMatrix xfrm,
                                                 ViewJProgressBar progressBar)
     {
-
         int xDim = image.getExtents()[0];
         int yDim = image.getExtents()[1];
         int zDim = image.getExtents()[2];
@@ -464,7 +388,7 @@ public class JDialogTriImageTransformation extends JDialogBase
             image.calcMinMax();
         }
 
-        new ViewJFrameImage(resultImage, null, new Dimension(610, 200), image.getLogMagDisplay());
+        //new ViewJFrameImage(resultImage, null, new Dimension(610, 200), image.getLogMagDisplay());
         return image;
     }
 
@@ -474,37 +398,7 @@ public class JDialogTriImageTransformation extends JDialogBase
     {
         setTitle("Apply transformation matrix");
 
-        JPanel destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        ButtonGroup destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-        // Only if the image is unlocked can it be replaced.
-        if (imageA.getLockStatus() == ModelStorageBase.UNLOCKED)
-        {
-            replaceImage.setEnabled(true);
-        }
-        else
-        {
-            replaceImage.setEnabled(false);
-        }
 
         JPanel interpolationPanel = new JPanel(new GridBagLayout());
         interpolationPanel.setBorder(buildTitledBorder("Interpolation"));
@@ -528,37 +422,33 @@ public class JDialogTriImageTransformation extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         interpolationPanel.add(labelInterp, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         interpolationPanel.add(comboBoxInterp, gbc);
 
         buildOKButton();
         OKButton.setText("Apply");
-        // buildCancelButton();
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OKButton);
-        // buttonPanel.add(cancelButton);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(interpolationPanel, gbc);
         gbc.gridy = 1;
-        mainPanel.add(destinationPanel, gbc);
+
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JPanel panel = new JPanel();
-        // panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
         panel.add(mainPanel);
         panel.add(buttonPanel, BorderLayout.SOUTH);
-        // pack();
         return panel;
     }
 
