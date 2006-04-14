@@ -130,9 +130,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         FileInfoBase fileInfo1;
         HardSeg2 = new ModelImage[1];
         FileInfoBase fileInfo2;
-
+        
         for (aa = 1; aa <= 2; aa++) {
             if (aa == 1) {
+            //	getVariables(destImageA);
+            	
                 xDim = destImageA.getExtents()[0];
                 yDim = destImageA.getExtents()[1];
                 if (destImageA.getNDims() == 3) {
@@ -155,13 +157,16 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 				fileInfo2.setUnitsOfMeasure(destImageA.getFileInfo()[0].getUnitsOfMeasure());
 				HardSeg2[0].setFileInfo(fileInfo2, 0);
 		
-                tempImageOne = new ModelImage(destImageA.getType(), destImageA.getExtents(), "tempImageOne",destImageA.getUserInterface());
-                tempImageTwo = new ModelImage(destImageA.getType(), destImageA.getExtents(), "tempImageTwo",destImageA.getUserInterface());
+         //       tempImageOne = new ModelImage(destImageA.getType(), destImageA.getExtents(), "tempImageOne",destImageA.getUserInterface());
+  //              tempImageTwo = new ModelImage(destImageA.getType(), destImageA.getExtents(), "tempImageTwo",destImageA.getUserInterface());
     //            BoneID = new ModelImage(destImageA.getType(), destImageA.getExtents(), "BoneID", destImageA.getUserInterface());
 								
 				destImage3a = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3a", destImageA.getUserInterface());
                 destImage3b = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3b", destImageA.getUserInterface());
             } else if (aa == 2) {
+            	
+            	
+            	
                 xDim = destImageB.getExtents()[0];
                 yDim = destImageB.getExtents()[1];
                 if (destImageB.getNDims() == 3) {
@@ -184,8 +189,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 				fileInfo2.setUnitsOfMeasure(destImageB.getFileInfo()[0].getUnitsOfMeasure());
 				HardSeg2[0].setFileInfo(fileInfo2, 0);
 
-				tempImageOne = new ModelImage(destImageB.getType(), destImageB.getExtents(), "tempImageOne",destImageB.getUserInterface());
-                tempImageTwo = new ModelImage(destImageB.getType(), destImageB.getExtents(), "tempImageTwo",destImageB.getUserInterface());
+		//		tempImageOne = new ModelImage(destImageB.getType(), destImageB.getExtents(), "tempImageOne",destImageB.getUserInterface());
+   //             tempImageTwo = new ModelImage(destImageB.getType(), destImageB.getExtents(), "tempImageTwo",destImageB.getUserInterface());
   //              BoneID = new ModelImage(destImageB.getType(), destImageB.getExtents(), "BoneID", destImageB.getUserInterface());
 				
                 destImage3a = new ModelImage(destImageB.getType(), destImageB.getExtents(), "destImage3a", destImageB.getUserInterface());
@@ -206,16 +211,16 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             
             //STEP 1: VOI to Mask 
-            
-            voiMask = destImage1.generateBinaryImage(false, false);
+            voiMask = makeVOI(destImage1);
             progressBar.updateValue(50 * (aa - 1) + 4, activeImage);
-            progressBar.setMessage("Taking N3 inside VOI");
  //           ShowImage(voiMask,"voiMask");
             
                         
             //STEP 2: N3 inside VOI 
             
-            AlgorithmIHN3Correction ihn3Algo1 = null;
+            N3(destImage1);
+            progressBar.updateValue(50 * (aa - 1) + 39, activeImage);
+/*            AlgorithmIHN3Correction ihn3Algo1 = null;
             ihn3Algo1 = new AlgorithmIHN3Correction(destImage1, fieldImage,destImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, false, false, false);
             ihn3Algo1.setProgressBarVisible(false);
             ihn3Algo1.run();            
@@ -224,7 +229,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
             ihn3Algo1.finalize();            ihn3Algo1 = null;
             fieldImage.disposeLocal();            fieldImage = null;
-            
+  */          
 //            ShowImage(destImage1,"N3'd image");
             
             
@@ -250,6 +255,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                     destImage1.importData((bb * imgBuffer.length), imgBuffer, false);
                 } catch (IOException ex) {
                     System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
+                    destImage1.disposeLocal();            destImage1 = null;
+                    return;
                 }
             }
             HardFuzzy(HardSeg2, destImage1, 4, zDim);
@@ -533,6 +540,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                     System.err.println("error exporting data from destImage3A in AlgorithmPipeline2");
                 }
             }
+            tempImageOne.disposeLocal();
+            tempImageOne = null;
             progressBar.updateValue(50 * (aa - 1) + 43, activeImage);
             progressBar.setMessage("Labeling Bone Marrow");
            
@@ -707,6 +716,67 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
     }
     
+    
+    public void getVariables(ModelImage destImage){
+    	
+        HardSeg1 = new ModelImage[1];
+        FileInfoBase fileInfo1;
+        HardSeg2 = new ModelImage[1];
+        FileInfoBase fileInfo2;
+        
+        int xDim,yDim,zDim;
+    	
+        xDim = destImageA.getExtents()[0];
+        yDim = destImageA.getExtents()[1];
+        if (destImageA.getNDims() == 3) {
+            zDim = destImageA.getExtents()[2];
+        }
+        destImage1 = (ModelImage) destImageA.clone();
+        destImage1.setVOIs(destImageA.getVOIs());
+        obMask = (ModelImage) obMaskA.clone();
+        voiMask = new ModelImage(destImageA.getType(), destImageA.getExtents(), "voiMask", destImageA.getUserInterface());
+        
+        fieldImage = new ModelImage(destImageA.getType(), destImageA.getExtents(), "fieldImage", destImageA.getUserInterface());
+        HardSeg1[0] = new ModelImage(ModelStorageBase.UBYTE, destImageA.getExtents(), "Hard-Fuzzy_seg1", destImageA.getUserInterface());
+		fileInfo1 = HardSeg1[0].getFileInfo()[0];
+		fileInfo1.setResolutions(destImageA.getFileInfo()[0].getResolutions());
+		fileInfo1.setUnitsOfMeasure(destImageA.getFileInfo()[0].getUnitsOfMeasure());
+		HardSeg1[0].setFileInfo(fileInfo1, 0);
+		HardSeg2[0] = new ModelImage(ModelStorageBase.UBYTE, destImageA.getExtents(), "Hard-Fuzzy_seg2", destImageA.getUserInterface());
+		fileInfo2 = HardSeg2[0].getFileInfo()[0];
+		fileInfo2.setResolutions(destImageA.getFileInfo()[0].getResolutions());
+		fileInfo2.setUnitsOfMeasure(destImageA.getFileInfo()[0].getUnitsOfMeasure());
+		HardSeg2[0].setFileInfo(fileInfo2, 0);
+
+ //       tempImageOne = new ModelImage(destImageA.getType(), destImageA.getExtents(), "tempImageOne",destImageA.getUserInterface());
+//              tempImageTwo = new ModelImage(destImageA.getType(), destImageA.getExtents(), "tempImageTwo",destImageA.getUserInterface());
+//            BoneID = new ModelImage(destImageA.getType(), destImageA.getExtents(), "BoneID", destImageA.getUserInterface());
+						
+		destImage3a = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3a", destImageA.getUserInterface());
+        destImage3b = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3b", destImageA.getUserInterface());
+
+    }
+    
+    public ModelImage makeVOI(ModelImage destImage1){
+    	progressBar.setMessage("Taking N3 inside VOI");
+    
+    return destImage1.generateBinaryImage(false, false);
+    }
+    
+    
+    public void N3(ModelImage destImage1){
+    AlgorithmIHN3Correction ihn3Algo1 = null;
+    ihn3Algo1 = new AlgorithmIHN3Correction(destImage1, fieldImage,destImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, false, false, false);
+    ihn3Algo1.setProgressBarVisible(false);
+    ihn3Algo1.run();
+    progressBar.setMessage("Taking Fuzzy-C Means over entire image");
+
+    ihn3Algo1.finalize();            ihn3Algo1 = null;
+    fieldImage.disposeLocal();            fieldImage = null;
+    }
+    
+    
+    
     public ModelImage HardFuzzy(ModelImage[] HardSeg, ModelImage srcImage, int nClasses, int zDim){
   
     	//older centroid method
@@ -773,8 +843,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		
 		int bb, cc;
 		
-		ModelImage tempImageOne = null;
-		tempImageOne = new ModelImage(sourceImg.getType(), sourceImg.getExtents(), "tempImageOne", sourceImg.getUserInterface());
 		tempImageOne = threshold(sourceImg, threshCuts);
 				
 			for (bb = 0; bb < zDim; bb++) {
@@ -791,6 +859,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
 			    }
 			}
+			tempImageOne.disposeLocal();
+            tempImageOne = null;
         }
     
     
@@ -805,9 +875,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		
 		int bb, cc;
 		
-		ModelImage tempImageOne = null;
-		tempImageOne = new ModelImage(sourceImg.getType(), sourceImg.getExtents(), "tempImageOne", sourceImg.getUserInterface());
-		tempImageOne = threshold(sourceImg, threshCuts);
+			tempImageOne = threshold(sourceImg, threshCuts);
 		
 		IDObjects(tempImageOne, MinMax);
 		
@@ -825,6 +893,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
 			    }
 			}
+			
+			tempImageOne.disposeLocal();
+            tempImageOne = null;
         }
     
 	    
@@ -905,6 +976,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
     public void disposeLocal() {
         imgBuffer = null;
+        
+        if (destImageA != null)
+        {
+        	destImageA.disposeLocal();
+        	destImageA = null;
+        }
+        if (destImageB != null)
+        {
+        	destImageB.disposeLocal();
+        	destImageB = null;
+        }
 
         obMaskA.disposeLocal();
         obMaskA = null;
