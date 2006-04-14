@@ -225,7 +225,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             //STEP 3: FUZZY CMEANS-WHOLE IMAGE
 
-            HardFuzzy(HardSeg1, destImage1, 3, zDim);
+            HardFuzzy(HardSeg1, destImage1, 3);
             progressBar.updateValue(50 * (aa - 1) + 40, activeImage);
             progressBar.setMessage("Taking Fuzzy-C Means inside muscle bundle");
  //           ShowImage(HardSeg1[0],"whole image hard fuzzied");
@@ -233,27 +233,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             //STEP 4: FUZZY CMEANS- INSIDE MUSCLE BUNDLE
             destImage1 = crop(voiMask, destImage1);
-/*            public ModelImage crop(ModelImage voiMask, ModelImage destImage1){
-	            for (bb = 0; bb < zDim; bb++) {
-	                try {
-	                    destImage1.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-	                    voiMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
-	                    for (cc = 0; cc < imgBuffer.length; cc++) {
-	                        if (imgBuffer1[cc] == 0) {
-	                            imgBuffer[cc] = 0;
-	                        }
-	                    }
-	                    destImage1.importData((bb * imgBuffer.length), imgBuffer, false);
-	                } catch (IOException ex) {
-	                    System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
-	                    destImage1.disposeLocal();            destImage1 = null;
-	                    return;
-	                }
-	            }
-	            return destImage1;
-            }
-            */
-            HardFuzzy(HardSeg2, destImage1, 4, zDim);
+            HardFuzzy(HardSeg2, destImage1, 4);
             progressBar.updateValue(50 * (aa - 1) + 41, activeImage);
             progressBar.setMessage("Labeling Subcutaneous Fat and Background");
 //            ShowImage(destImage1,"inside muscle bundle hard fuzzied");
@@ -548,13 +528,13 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             //STEP 10: inside bundle CLEANUP 
             //1.CONVERTING INSIDE BLACK NOISE (65 used in 4class destImage3b)into MUSCLE
             //conversion: black noise --> muscle, muscle2 --> muscle.
-           convert(destImage3b, BACKGROUND_2, FAT, zDim);
-           convert(destImage3b, FAT_2_A, FAT, zDim);
-           convert(destImage3b, FAT_2_B, FAT, zDim);
-           convert(destImage3b, MUSCLE_2, MUSCLE, zDim);
+           convert(destImage3b, BACKGROUND_2, FAT);
+           convert(destImage3b, FAT_2_A, FAT);
+           convert(destImage3b, FAT_2_B, FAT);
+           convert(destImage3b, MUSCLE_2, MUSCLE);
   //         ShowImage(destImage3b, "basic cleanup");
             
-            cleanUp(destImage3b, FAT, MUSCLE, 200*zDim/20, zDim);
+            cleanUp(destImage3b, FAT, MUSCLE, 200*zDim/20);
   //          ShowImage(destImage3b, "noise filtered");
             
             
@@ -587,8 +567,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                             "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
                 }
             }            
-            cleanUp(destImage3b, BACKGROUND_NEW, SUB_CUT_FAT, 100*zDim/20, zDim);
-            cleanUp(destImage3b, SUB_CUT_FAT, BACKGROUND_NEW, 100*zDim/20, zDim);
+            cleanUp(destImage3b, BACKGROUND_NEW, SUB_CUT_FAT, 100*zDim/20);
+            cleanUp(destImage3b, SUB_CUT_FAT, BACKGROUND_NEW, 100*zDim/20);
             
             
             
@@ -771,11 +751,15 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     
     
     
-    public ModelImage HardFuzzy(ModelImage[] HardSeg, ModelImage srcImage, int nClasses, int zDim){
+    public ModelImage HardFuzzy(ModelImage[] HardSeg, ModelImage srcImage, int nClasses){
   
     	//older centroid method
     	float centroid_array[] = new float[nClasses];
         int i, bb, cc;
+        int zDim = 0;
+    	if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
+        }
         float percentSoFar = 0;
         float count = 0;
         int totalCount = 0;
@@ -830,25 +814,28 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     
         
         
-    public void convert(ModelImage sourceImg, int initialIntensity, int newIntensity, int zDim){
+    public void convert(ModelImage srcImage, int initialIntensity, int newIntensity){
     	float threshCuts[] = null;
 		threshCuts = new float[2];
 		threshCuts[0] = initialIntensity - 10;            threshCuts[1]=initialIntensity + 10;
 		
 		int bb, cc;
-		
-		tempImageOne = threshold(sourceImg, threshCuts);
+		int zDim = 0;
+    	if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
+        }
+		tempImageOne = threshold(srcImage, threshCuts);
 				
 			for (bb = 0; bb < zDim; bb++) {
 			    try {
-			    	sourceImg.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer); //4 class segmented muscle bundle
+			    	srcImage.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer); //4 class segmented muscle bundle
 			        tempImageOne.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2); //thresholded background noise
 			        for (cc = 0; cc < imgBuffer.length; cc++) {
 			            if (imgBuffer2[cc] != 0) { 
 			                imgBuffer[cc] = newIntensity; 
 			            }
 			        }
-			        sourceImg.importData((bb * imgBuffer.length), imgBuffer, false);
+			        srcImage.importData((bb * imgBuffer.length), imgBuffer, false);
 			    } catch (IOException ex) {
 			        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
 			    }
@@ -858,7 +845,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         }
     
     
-    public void cleanUp(ModelImage sourceImg, int noiseIntensity, int bkrdIntensity, int sizeNoise, int zDim){
+    public void cleanUp(ModelImage srcImage, int noiseIntensity, int bkrdIntensity, int sizeNoise){
     	float threshCuts[] = null;
 		threshCuts = new float[2];
 		threshCuts[0] = noiseIntensity - 10;            threshCuts[1]=noiseIntensity + 10;
@@ -868,21 +855,25 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		MinMax[0]=0;            						MinMax[1]=sizeNoise;
 		
 		int bb, cc;
+		int zDim = 0;
+		if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
+        }
 		
-			tempImageOne = threshold(sourceImg, threshCuts);
+			tempImageOne = threshold(srcImage, threshCuts);
 		
 		IDObjects(tempImageOne, MinMax);
 		
 			for (bb = 0; bb < zDim; bb++) {
 			    try {
-			    	sourceImg.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer); //4 class segmented muscle bundle
+			    	srcImage.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer); //4 class segmented muscle bundle
 			        tempImageOne.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2); //thresholded background noise
 			        for (cc = 0; cc < imgBuffer.length; cc++) {
 			            if (imgBuffer2[cc] != 0) { 
 			                imgBuffer[cc] = bkrdIntensity; 
 			            }
 			        }
-			        sourceImg.importData((bb * imgBuffer.length), imgBuffer, false);
+			        srcImage.importData((bb * imgBuffer.length), imgBuffer, false);
 			    } catch (IOException ex) {
 			        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
 			    }
