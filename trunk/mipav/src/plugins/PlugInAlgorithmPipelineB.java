@@ -220,16 +220,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             N3(destImage1);
             progressBar.updateValue(50 * (aa - 1) + 39, activeImage);
-/*            AlgorithmIHN3Correction ihn3Algo1 = null;
-            ihn3Algo1 = new AlgorithmIHN3Correction(destImage1, fieldImage,destImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, false, false, false);
-            ihn3Algo1.setProgressBarVisible(false);
-            ihn3Algo1.run();            
-            progressBar.updateValue(50 * (aa - 1) + 39, activeImage);
-            progressBar.setMessage("Taking Fuzzy-C Means over entire image");
-
-            ihn3Algo1.finalize();            ihn3Algo1 = null;
-            fieldImage.disposeLocal();            fieldImage = null;
-  */          
 //            ShowImage(destImage1,"N3'd image");
             
             
@@ -242,23 +232,27 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             
             //STEP 4: FUZZY CMEANS- INSIDE MUSCLE BUNDLE
-            
-            for (bb = 0; bb < zDim; bb++) {
-                try {
-                    destImage1.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-                    voiMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer1[cc] == 0) {
-                            imgBuffer[cc] = 0;
-                        }
-                    }
-                    destImage1.importData((bb * imgBuffer.length), imgBuffer, false);
-                } catch (IOException ex) {
-                    System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
-                    destImage1.disposeLocal();            destImage1 = null;
-                    return;
-                }
+            destImage1 = crop(voiMask, destImage1);
+/*            public ModelImage crop(ModelImage voiMask, ModelImage destImage1){
+	            for (bb = 0; bb < zDim; bb++) {
+	                try {
+	                    destImage1.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
+	                    voiMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
+	                    for (cc = 0; cc < imgBuffer.length; cc++) {
+	                        if (imgBuffer1[cc] == 0) {
+	                            imgBuffer[cc] = 0;
+	                        }
+	                    }
+	                    destImage1.importData((bb * imgBuffer.length), imgBuffer, false);
+	                } catch (IOException ex) {
+	                    System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
+	                    destImage1.disposeLocal();            destImage1 = null;
+	                    return;
+	                }
+	            }
+	            return destImage1;
             }
+            */
             HardFuzzy(HardSeg2, destImage1, 4, zDim);
             progressBar.updateValue(50 * (aa - 1) + 41, activeImage);
             progressBar.setMessage("Labeling Subcutaneous Fat and Background");
@@ -948,6 +942,34 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	MorphIDObj.setProgressBarVisible(false);
     	MorphIDObj.run();
     }
+    
+    
+    public ModelImage crop(ModelImage voiMask, ModelImage destImage1){
+    	int bb, cc;
+    	
+    	int zDim = 0;
+    	if (destImage1.getNDims() == 3) {
+            zDim = destImage1.getExtents()[2];
+        }
+    	
+        for (bb = 0; bb < zDim; bb++) {
+            try {
+                destImage1.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
+                voiMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
+                for (cc = 0; cc < imgBuffer.length; cc++) {
+                    if (imgBuffer1[cc] == 0) {
+                        imgBuffer[cc] = 0;
+                    }
+                }
+                destImage1.importData((bb * imgBuffer.length), imgBuffer, false);
+            } catch (IOException ex) {
+                System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
+                destImage1.disposeLocal();            destImage1 = null;
+            }
+        }
+        return destImage1;
+    }
+    
 
     public ModelImage threshold(ModelImage threshSourceImg, float [] thresh) {
     	ModelImage resultImage = null;
@@ -977,21 +999,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     public void disposeLocal() {
         imgBuffer = null;
         
-        if (destImageA != null)
+        if (obMaskA != null)
         {
-        	destImageA.disposeLocal();
-        	destImageA = null;
+        	obMaskA.disposeLocal();
+        	obMaskA = null;
         }
-        if (destImageB != null)
+        if (obMaskB != null)
         {
-        	destImageB.disposeLocal();
-        	destImageB = null;
+        	obMaskB.disposeLocal();
+        	obMaskB = null;
         }
 
-        obMaskA.disposeLocal();
-        obMaskA = null;
-        obMaskB.disposeLocal();
-        obMaskB = null;
     }
 
     private void jbInit() throws Exception {
