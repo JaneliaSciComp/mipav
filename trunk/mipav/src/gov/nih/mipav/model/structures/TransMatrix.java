@@ -1442,13 +1442,34 @@ public class TransMatrix extends Matrix //                            implements
             }
         }
 
-        // Now, get the rotations out, as described in the gem.
-        tran[U_ROTATEY] = Math.asin( -row[0].z );
+        // Now, get the rotations out, similar to gem
+        // but gem uses different rotation matrices then we do
+        // In going between our 3 rotation matrices and the 
+        // 3 gem rotation matrices the sine and -sine reverse
+        // positions.  We have:
+        // rx = 1        0         0
+        //      0        cos(A)    -sin(A)
+        //      0        sin(A)    cos(A)
+        // ry = cos(B)   0         sin(B)
+        //      0        1         0
+        //      -sin(B)  0         cos(B)
+        // rz = cos(G)   -sin(G)   0
+        //      sin(G)   cos(G)    0
+        //      0        0         1
+        // for a composite rotation matrix:
+        // cos(B)cos(G)            -cos(B)sin(G)         sin(B)
+        //
+        // sin(A)sin(B)cos(G)      -sin(A)sin(B)sin(G)   -sin(A)cos(B)
+        // + cos(A)sin(G)          + cos(A)cos(G)
+        //
+        // -cos(A)sin(B)cos(G)     cos(A)sin(B)sin(G)    cos(A)cos(B)
+        // +sin(A)sin(G)           +sin(A)cos(G)
+        tran[U_ROTATEY] = Math.asin( row[0].z );
         if ( Math.cos( tran[U_ROTATEY] ) != 0 ) {
             tran[U_ROTATEX] = -Math.atan2( row[1].z, row[2].z );
-            tran[U_ROTATEZ] = Math.atan2( row[0].y, row[0].x );
+            tran[U_ROTATEZ] = -Math.atan2( row[0].y, row[0].x );
         } else {
-            tran[U_ROTATEX] = Math.atan2( -row[2].x, row[1].y );
+            tran[U_ROTATEX] = Math.atan2( row[2].y, row[1].y );
             tran[U_ROTATEZ] = 0;
         }
 
