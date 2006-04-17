@@ -114,13 +114,17 @@ public class JDialogFileInfoDICOM extends JDialogBase
                 ListSelectionModel lsm = (ListSelectionModel) e.getSource();
 
                 if ( lsm.isSelectionEmpty() ) {
-                    editDicom.setEnabled( false ); // ...//no rows are selected
+                    if (editDicom != null) {
+                        editDicom.setEnabled( false ); // ...//no rows are selected
+                    }
                 } else {
                     int oldSelectedRow = selectedRowDicom;
 
                     selectedRowDicom = lsm.getMinSelectionIndex();
                     if ( oldSelectedRow != selectedRowDicom && ( selectedRowDicom - lsm.getMaxSelectionIndex() == 0 ) ) {
-                        editDicom.setEnabled( true );
+                        if (editDicom != null) {
+                            editDicom.setEnabled( true );
+                        }
                     }   // ...//selectedRow is selected
                     // else {
                     // lsm.clearSelection();
