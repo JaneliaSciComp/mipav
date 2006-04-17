@@ -1340,7 +1340,7 @@ public class TransMatrix extends Matrix //                            implements
         }
         pmat.set( 3, 3, 1 );
 
-        if ( pmat.det() == 0.0 ) {
+        if ( pmat.getMatrix(0, 2, 0, 2).det() == 0.0 ) {
             return false;
         }
 
