@@ -110,6 +110,20 @@ public class Preferences {
     public static final String PREF_USE_VOI_XOR = "UseVOIXOR";
     
     /**
+     * Constants that indicate the SRB server login properties.
+     */
+    public static final String PREF_USERNAME_SRB = "userNameSRB";
+    
+    public static final String PREF_SERVER_HOST_SRB = "serverHostSRB";
+    
+    public static final String PREF_SERVER_DOMAIN_SRB = "serverDomainSRB";
+    
+    public static final String PREF_SERVER_PORT_SRB = "serverPortSRB";
+    
+    public static final String PREF_SERVER_AUTHENTICATION_SRB = "serverAuthenticationSRB";
+    
+    public static final String PREF_STORAGE_RESOURCE_SRB = "defaultStorageResource";
+    /**
      * Constant that indicates the initial directory in which to open the file chooser
      * of the image browser.
      */
@@ -216,7 +230,14 @@ public class Preferences {
         defaultProps.setProperty("ShowOutput", "true");
         defaultProps.setProperty("Shortcuts", PREF_DEFAULT_SHORTCUTS);
  //       defaultProps.setProperty("MenuAcceleratorFontColor", "");
-
+        
+        // username and srb server properties
+        defaultProps.setProperty(PREF_USERNAME_SRB, "");
+        defaultProps.setProperty(PREF_SERVER_HOST_SRB, "");
+        defaultProps.setProperty(PREF_SERVER_DOMAIN_SRB, "");
+        defaultProps.setProperty(PREF_SERVER_PORT_SRB, "5544");
+        defaultProps.setProperty(PREF_SERVER_AUTHENTICATION_SRB, "ENCRYPT1");
+        defaultProps.setProperty(PREF_STORAGE_RESOURCE_SRB, "");
     }
 
     /**
@@ -2096,5 +2117,127 @@ public class Preferences {
         }
 
         return subsampleDimension;
+    }
+    
+    /**
+     * Retrieves the user name to login the SRB server.
+     */
+    public static String getUserNameSRB(){
+        if(mipavProps == null){
+            read();
+        }
+        return getProperty(PREF_USERNAME_SRB);
+    }
+    
+    /**
+     * Sets the user name to login the SRB server.
+     * @param loginNameSR
+     */
+    public static void setUserNameSRB(String userNameSRB){
+        if(userNameSRB == null)
+            return;
+        setProperty(PREF_USERNAME_SRB, userNameSRB);
+    }
+    
+    /**
+     * Retrieves the ip address or DNS name of the machine which hosts the SRB server.
+     */
+    public static String getServerHostSRB(){
+        if(mipavProps == null){
+            read();
+        }
+        return getProperty(PREF_SERVER_HOST_SRB);
+    }
+    
+    /**
+     * Sets the ip address or DNS name of the machine which hosts the SRB server.
+     * @param loginNameSR
+     */
+    public static void setServerHostSRB(String serverHostSRB){
+        if(serverHostSRB == null)
+            return;
+        setProperty(PREF_SERVER_HOST_SRB, serverHostSRB);
+    }
+    
+    /**
+     * Retrieves the domain information of the SRB server.
+     */
+    public static String getServerDomainSRB(){
+        if(mipavProps == null){
+            read();
+        }
+        return getProperty(PREF_SERVER_DOMAIN_SRB);
+    }
+    
+    /**
+     * Sets the domain information of the SRB server
+     * @param loginNameSR
+     */
+    public static void setServerDomainSRB(String serverDomainSRB){
+        if(serverDomainSRB == null)
+            return;
+        setProperty(PREF_SERVER_DOMAIN_SRB, serverDomainSRB);
+    }
+    
+    /**
+     * Retrieves the SRB server port.
+     */
+    public static int getServerPortSRB(){
+        if(mipavProps == null){
+            read();
+        }
+        int port = -1;
+        try{
+            String strPort = getProperty(PREF_SERVER_PORT_SRB);
+            if(strPort != null){
+                port = Integer.parseInt(strPort);
+            }
+        }catch(NumberFormatException e){
+            debug("Cannot retrieve previous SRB server port.", DEBUG_MINOR);
+        }
+        return port;
+    }
+    
+    /**
+     * Sets the server port where the SRB server is listening.
+     * @param loginNameSR the new SRB server port 
+     */
+    public static void setServerPortSRB(int serverPortSRB){
+        setProperty(PREF_SERVER_PORT_SRB, Integer.toString(serverPortSRB));
+    }
+    
+    /**
+     * Retrieves the SRB server authentication schema.
+     */
+    public static String getServerAuthSRB(){
+        if(mipavProps == null){
+            read();
+        }
+        return getProperty(PREF_SERVER_AUTHENTICATION_SRB);
+   }
+    
+    /**
+     * Sets the server authentication schema which the SRB server is using.
+     * @param loginNameSR the new SRB server authentication schema 
+     */
+    public static void setServerAuthSRB(String serverAuthSRB){
+        setProperty(PREF_SERVER_AUTHENTICATION_SRB, serverAuthSRB);
+    }
+    
+    /**
+     * Retrieves the default storage resource for the user.
+     */
+    public static String getStorageResourceSRB(){
+        if(mipavProps == null){
+            read();
+        }
+        return getProperty(PREF_STORAGE_RESOURCE_SRB);
+    }
+    
+    /**
+     * Sets the default storage resource for the user.
+     */
+    public static void setStorageResourceSRB(String storageResource){
+        setProperty(PREF_STORAGE_RESOURCE_SRB, storageResource);
     }
 }
