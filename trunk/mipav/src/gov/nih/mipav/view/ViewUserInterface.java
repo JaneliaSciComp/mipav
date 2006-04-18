@@ -1563,6 +1563,59 @@ public class ViewUserInterface
     }
 
     /**
+     * Open an image or images and put it into a new frame, given the image file name.
+     * @param imageFile the image file name with the path.
+     */
+    public void openImageFrame(String imageFile, boolean multiFile){
+        ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
+        String imageName;
+
+        // TODO: multifiles?
+
+        imageName = openFile.open(imageFile, multiFile, null);
+
+        // if open failed, then imageNames will be null
+        if (imageName == null) {
+            return;
+        }
+        else {
+            //here we will add this to the recently opened image list
+            // because we now know if this was a multifile as well as the dimensionality
+            int numDim = openFile.getImage().getExtents().length;
+        }
+
+        boolean sizeChanged = false;
+
+        // if the SaveAllOnSave preference flag is set, then
+        // load all the files associated with this image (VOIs, LUTs, etc.)
+        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+            try {
+                ModelImage img = getRegisteredImageByName(imageName);
+
+                // get frame for image
+                ViewJFrameImage imgFrame = img.getParentFrame();
+
+                // if the image size was changed to FLOAT, then don't
+                // load any luts (chances are they won't work)
+                if (!sizeChanged) {
+                    // load any luts
+                    imgFrame.loadLUT(true, true);
+                }
+
+                // load any vois
+                imgFrame.loadAllVOIs(true);
+            }
+            catch (IllegalArgumentException iae) {
+                //MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                Preferences.debug(
+                    "Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). "
+                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " + "\n",
+                    1);
+                Preferences.debug("Bad argument.");
+            }
+        }
+    }
+    /**
      * Register image model by adding it to the image hashtable.
      * Use the image name as the key.  If the name is not unique
      * then the <code>CustomHashtable</code> will attempt to
