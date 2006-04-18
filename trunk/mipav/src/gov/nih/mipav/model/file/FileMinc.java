@@ -705,7 +705,7 @@ public class FileMinc extends FileBase {
             // I'm not sure why this ever an option before.
             flipped = true;
 
-            if (!options.isSaveAs()) {
+            if (!options.isSaveAs() || _image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
                 FileInfoMinc fileInfo;
                 fileInfo = (FileInfoMinc)_image.getFileInfo(0);
                 int length;
@@ -1473,6 +1473,7 @@ public class FileMinc extends FileBase {
                 for (i=0; i<values.length; i++) {
                     raFile.write(((Byte)values[i]).byteValue());
                 }
+                location = values.length;
                 writePadding();
                 break;
             case FileInfoMinc.NC_CHAR:
@@ -1481,12 +1482,14 @@ public class FileMinc extends FileBase {
                     s += ((Character)values[i]).charValue();
                 }
                 raFile.writeBytes(s);
+                location = values.length;
                 writePadding();
                 break;
             case FileInfoMinc.NC_SHORT:
                 for (i=0; i<values.length; i++) {
                     writeShort(((Short)values[i]).shortValue(), endianess);
                 }
+                location = values.length * 2;
                 writePadding();
                 break;
             case FileInfoMinc.NC_INT:
