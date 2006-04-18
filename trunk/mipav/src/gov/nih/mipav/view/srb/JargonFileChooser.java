@@ -8,6 +8,7 @@ import java.net.*;
 import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.lang.StringBuffer;
 
 import javax.swing.*;
 import javax.swing.tree.*;
@@ -15,6 +16,11 @@ import javax.swing.event.*;
 
 import gov.nih.mipav.view.components.*;
 
+/**
+ * This JComponent is used to select file or fold of the SRB server.
+ * @author Hailong Wang 04/14/2006
+ * @version 1.0
+ */
 
 public class JargonFileChooser extends JComponent implements TreeSelectionListener, ActionListener{
     /** Instruction to display only files. */
@@ -51,11 +57,15 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     
     private JTextField selectedFileField;
     
+    private JButton approveButton;
+    
     private JDialog dialog = null;
     
     private String dialogTitle = null;
     
-    private String approveButtonText = "Open";
+    private String defaultApproveButtonText = "Open";
+    
+    private String approveButtonText;
     
     private String approveButtonToolTipText = null;
     
@@ -66,27 +76,47 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     private boolean multiSelectionEnabled = false;
 
     private int returnValue;
-    private String title = "Jargon File Chooser";
     
-    /******************************
-     ***** Instance Functions *****
-     ******************************
+    /**
+     * The selected files(multi file selection is enabled).
+     */
+    private SRBFile[] selectedFiles;
+    
+    /**
+     * The selected file.
+     */
+    private SRBFile selectedFile;
+    private String title = "SRB File Chooser";
+    
+    /***********************
+     ***** Constructor *****
+     ***********************
      */
     
     public JargonFileChooser(SRBAccount srbAccount) throws IOException{
-        if(srbAccount != null){
-            SRBFileSystem fs = new SRBFileSystem(srbAccount);
-            SRBFile f = new SRBFile(fs, fs.getHomeDirectory());
-            if(f != null){
-                init(f);
-            }
-        }
+        this(srbAccount, null);
     }
-    public JargonFileChooser(SRBAccount srbAccount, String filePath) throws IOException{
-        if(srbAccount != null){
-            SRBFileSystem fs = new SRBFileSystem(srbAccount);
-            SRBFile f = new SRBFile(fs, filePath);
-            if(f != null){
+    
+    public JargonFileChooser(SRBAccount srbAccount, String path) throws IOException{
+        this(new SRBFileSystem(srbAccount), path);
+    }
+    
+    public JargonFileChooser(SRBFileSystem fs) throws IOException{
+        this(fs, null);
+    }
+    
+    public JargonFileChooser(SRBFileSystem fs, String path) throws IOException{
+        if (fs != null) {
+            fileSystem = fs;
+            if(path == null || path.length() == 0){
+                path = fs.getHomeDirectory();
+            }
+            
+            if(path == null || path.length() == 0){
+                path = "/home";
+            }
+            SRBFile f = new SRBFile(fileSystem, path);
+            if (f != null) {
                 init(f);
             }
         }
@@ -103,6 +133,11 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         }
     }
     
+    /******************************
+     ***** Instance Functions *****
+     ******************************
+     */
+
     private SRBFile getRoot(SRBFile f){
         while(!f.getPath().equals("/home"))
             f = (SRBFile)f.getParentFile();
@@ -116,7 +151,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         fileSystem = (SRBFileSystem)f.getFileSystem();
         
         jargonTree = new JargonTree(root.listFiles());
-        jargonTree.useDefaultPopupMenu(true);
+        jargonTree.useDefaultPopupMenu(false);
         jargonTree.setEditable(false);
         JScrollPane scrollPane = new JScrollPane(jargonTree);
         
@@ -137,7 +172,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         selectedFileField.setPreferredSize(new Dimension(20, 25));
         selectedFileField.setColumns(40);
         manager.add(selectedFileField);
-        JButton approveButton = WidgetFactory.buildTextButton(approveButtonText, "Open srb or local file.", approveButtonText, this);
+        approveButton = WidgetFactory.buildTextButton(approveButtonText, "Open srb or local file.", approveButtonText, this);
         approveButton.setPreferredSize(new Dimension(80, 25));
         manager.add(approveButton);
         JPanel topPanel = manager.getPanel();
@@ -173,11 +208,11 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         return dialog;
     }
     
-    public int showDialog(Component parent, String aprroveButtonText){
-        if(approveButtonText != null){
-            setApproveButtonText(approveButtonText);
-            // setDialogType(CUSTOM_DIALOG); ?
+    public int showDialog(Component parent, String approveButtonText){
+        if(approveButtonText == null || approveButtonText.length() == 0){
+            approveButtonText = defaultApproveButtonText;
         }
+        setApproveButtonText(approveButtonText);
         dialog = createDialog(parent);
         dialog.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
@@ -252,6 +287,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     
     public void setApproveButtonText(String newApproveButtonText){
         this.approveButtonText = newApproveButtonText;
+        approveButton.setText(newApproveButtonText);
     }
     
     public String getApproveButtonToolTipText(){
@@ -265,12 +301,11 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     }
     
     public SRBFile getSelectedFile(){
-        String fileName = selectedFileField.getText();
-        if(fileName.length() > 0 && fileSystem != null){
-            SRBFile f = new SRBFile(fileSystem, fileName);
-            return f;
-        }
-        return null;
+        return selectedFile;
+    }
+    
+    public SRBFile[] getSelectedFiles(){
+        return selectedFiles;
     }
     
     /**
@@ -281,28 +316,101 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         Object o = e.getSource();
         if(o instanceof JargonTree){
             JargonTree tree = (JargonTree)o;
-            Object selectedObj = tree.getLastSelectedPathComponent();
-            if(selectedObj instanceof SRBFile){
-                SRBFile srbFile = (SRBFile)selectedObj;
-                if(getFileSelectionMode() == FILES_ONLY){
-                    if(srbFile.isFile()){
-                        selectedFileField.setText(srbFile.getPath());
-                    }
-                } else if (getFileSelectionMode() == DIRECTORIES_ONLY){
-                    if(srbFile.isDirectory()){
-                        selectedFileField.setText(srbFile.getPath());
-                    }
-                } else {
-                    selectedFileField.setText(srbFile.getPath());
-                }
+            TreePath[] selectedPaths = tree.getSelectionPaths();
+            if(selectedPaths == null || selectedPaths.length == 0){
+                return;
             }
+            StringBuffer sb = new StringBuffer("");
+            if(isMultiSelectionEnabled()){
+                selectedFileField.setText("");
+                for(int i = 0; i < selectedPaths.length; i++){
+                    convertSelectedPathToString(selectedPaths[i], getFileSelectionMode(), sb);
+                }
+            }else{
+                convertSelectedPathToString(selectedPaths[selectedPaths.length-1], getFileSelectionMode(), sb);
+            }
+            selectedFileField.setText(sb.toString());
         }
     }
     
+    /**
+     * The helper function to set the <code>textField</code> to the selected path.
+     * @param treePath
+     * @param textField
+     */
+    private StringBuffer convertSelectedPathToString(TreePath treePath, int selectionMode, StringBuffer sb){
+        if(treePath == null){
+            return null;
+        }
+        if(sb == null){
+            sb = new StringBuffer("");
+        }
+        Object selectedObj = treePath.getLastPathComponent();
+        if(selectedObj instanceof SRBFile){
+            SRBFile srbFile = (SRBFile)selectedObj;
+            if(selectionMode == FILES_ONLY){
+                if(srbFile.isFile()){
+                    if(sb.length() == 0){
+                        sb.append(srbFile.getPath());
+                    }else{
+                        sb.append("," + srbFile.getPath());
+                    }
+                }
+            } else if (selectionMode == DIRECTORIES_ONLY){
+                if(srbFile.isDirectory()){
+                    if(sb.length() == 0){
+                        sb.append(srbFile.getPath());
+                    }else{
+                        sb.append("," + srbFile.getPath());
+                    }
+                }
+            } else {
+                if(sb.length() == 0){
+                    sb.append(srbFile.getPath());
+                }else{
+                    sb.append("," + srbFile.getPath());
+                }
+            }
+        }
+        return sb;
+    }
+
     public void actionPerformed(ActionEvent e){
         String actionCommand = e.getActionCommand();
         if(actionCommand.equals(approveButtonText)){
             returnValue = APPROVE_OPTION;
+            
+            /**
+             * Sets the selected files/file.
+             */
+            String fileName = selectedFileField.getText();
+            if(isMultiSelectionEnabled()){
+                if(fileName.indexOf(",") >= 0){
+                    String[]fileNames = fileName.split(",");
+                    if(fileNames == null || fileNames.length == 0){
+                        return;
+                    }
+                    selectedFiles = new SRBFile[fileNames.length];
+                    for(int i = 0; i < fileNames.length; i++){
+                        if(fileNames[i].length() > 0 && fileSystem != null){
+                            selectedFiles[i] = new SRBFile(fileSystem, fileNames[i]);
+                        }
+                    }
+                }else{
+                     if(fileName.length() > 0 && fileSystem != null){
+                        selectedFile = new SRBFile(fileSystem, fileName);
+                        selectedFiles = new SRBFile[1];
+                        selectedFiles[0] = selectedFile;
+                    }
+                }
+            }else{
+                if(fileName.length() > 0 && fileSystem != null){
+                    selectedFile = new SRBFile(fileSystem, fileName);
+                    selectedFiles = new SRBFile[1];
+                    selectedFiles[0] = selectedFile;
+                }
+            }
+            
             if(dialog != null){
                 dialog.setVisible(false);
             }
