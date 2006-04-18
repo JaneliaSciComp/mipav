@@ -255,6 +255,8 @@ public class ViewOpenImageSequence extends JFrame implements
                 // remember this path for the next time this component is used
                 Preferences.setLastOpenSequencePath(currentPath.getAbsolutePath());
 
+                Arrays.sort(fileListData);
+                
                 Vector fileListVector = new Vector();
 
                 for (int i = 0; i < fileListData.length; i++)
