@@ -2654,6 +2654,423 @@ public abstract class ViewJFrameBase
         }
 
     }
+    /**
+     * Exactly same as the save(FileWriteOptions options, int filterType) except changing
+     * the saveInSubdirectories parameter of the FileWriteOptions.
+     */
+    public void saveSRB(FileWriteOptions options, int filterType) {
+        String fileName = null;
+        String extension = null;
+        String directory = null;
+        String suffix = null;
+        int fileType = FileBase.UNDEFINED;
+        ModelImage img = null;
+        ViewImageFileFilter vFilter = null;
+        int i;
+
+        if (displayMode == IMAGE_A) {
+            img = imageA;
+        }
+        else if (displayMode == IMAGE_B) {
+            img = imageB;
+        }
+        else {
+            MipavUtil.displayError(
+                " Cannot save images when viewing both images.");
+            return;
+        }
+
+        if (options.isSaveAs()) {
+            // save into its own subdirectory when on SaveAs.
+            // (preferrably used in multi-file formats., ie DICOM)
+            /**
+             * Changing the pass-in parameters in the function is not good,
+             * and i removed it.   Hailong Wang 04/13/2006 
+             */
+            // options.setSaveInSubdirectory(true);
+            if (options.isSet()) {
+                fileName = options.getFileName();
+                directory = options.getFileDirectory();
+            }
+            else {
+                try {
+                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(
+                        userInterface, true, true);
+
+                    try {
+                        // try to prefill the "save as" text area
+                        fileChooser.getFileChooser().setSelectedFile(new File(img.getFileInfo(0).getFileDirectory() +
+                            img.getImageFileName()));
+                    }
+                    catch (Throwable t) {
+                        // if prefill fails, do nothing
+                    }
+
+                    if (!fileChooser.useAWT()) {
+                        JFileChooser chooser = fileChooser.getFileChooser();
+                        // chooser.setName("Save image as");
+                        if (userInterface.getDefaultDirectory() != null) {
+                            chooser.setCurrentDirectory(new File(userInterface.
+                                getDefaultDirectory()));
+                        }
+                        else {
+                            chooser.setCurrentDirectory(new File(System.
+                                getProperties().getProperty("user.dir")));
+                        }
+                        if (filterType >= 0) {
+                            chooser.addChoosableFileFilter(new
+                                ViewImageFileFilter(filterType));
+                        }
+                        else {
+                            chooser.addChoosableFileFilter(new
+                                ViewImageFileFilter(ViewImageFileFilter.ALL));
+                            chooser.addChoosableFileFilter(new
+                                ViewImageFileFilter(ViewImageFileFilter.GEN));
+                            chooser.addChoosableFileFilter(new
+                                ViewImageFileFilter(ViewImageFileFilter.TECH));
+                        }
+                        int returnVal = chooser.showSaveDialog(this);
+
+                        if (returnVal == JFileChooser.APPROVE_OPTION) {
+                            fileName = chooser.getSelectedFile().getName();
+                            if (filterType >= 0) {
+                                i = fileName.lastIndexOf('.');
+                                if (i > 0 && i < fileName.length() - 1) {
+                                    extension = fileName.substring(i + 1).
+                                        toLowerCase();
+                                    vFilter = new ViewImageFileFilter(
+                                        filterType);
+                                    if (!vFilter.accept(extension)) {
+                                        MipavUtil.displayError(
+                                            "Extension does not match filter type");
+                                        return;
+                                    }
+                                } // if ( i > 0 && i < fileName.length() - 1 )
+                                else if (i < 0) {
+                                    switch (filterType) {
+                                        case ViewImageFileFilter.AVI:
+                                            fileName = fileName + ".avi";
+                                            break;
+
+                                        case ViewImageFileFilter.VOI:
+                                            fileName = fileName + ".voi";
+                                            break;
+
+                                        case ViewImageFileFilter.FUNCT:
+                                            fileName = fileName + ".fun";
+                                            break;
+
+                                        case ViewImageFileFilter.LUT:
+                                            fileName = fileName + ".lut";
+                                            break;
+
+                                        case ViewImageFileFilter.PLOT:
+                                            fileName = fileName + ".plt";
+                                            break;
+
+                                        case ViewImageFileFilter.CLASS:
+                                            fileName = fileName + ".class";
+                                            break;
+
+                                        case ViewImageFileFilter.SCRIPT:
+                                            fileName = fileName + ".sct";
+                                            break;
+
+                                        case ViewImageFileFilter.SURFACE:
+                                            fileName = fileName + ".sur";
+                                            break;
+
+                                        case ViewImageFileFilter.FREESURFER:
+                                            fileName = fileName + ".asc";
+                                            break;
+                                    }
+                                } // else if (i < 0)
+                            } // if (filterType >= 0)
+                            directory = String.valueOf(chooser.
+                                getCurrentDirectory()) + File.separatorChar;
+                            userInterface.setDefaultDirectory(directory);
+                        }
+                        else {
+                            return;
+                        }
+                    }
+                    else {
+                        fileName = fileChooser.getFileName();
+                        directory = fileChooser.getDirectory();
+                        if (fileName == null || directory == null) {
+                            return;
+                        }
+                    }
+                }
+                catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: ViewJFrameBase.save");
+                    Preferences.debug("Out of memory: ViewJFrameBase.save\n", 3);
+                    return;
+                }
+            }
+
+        }
+        else {
+            fileName = img.getFileInfo(0).getFileName();
+            directory = img.getFileInfo(0).getFileDirectory();
+        }
+
+        if (!options.isScript() && Preferences.is(Preferences.PREF_SAVE_PROMPT_OVERWRITE) &&
+            new File(directory + File.separator + fileName).exists()) {
+            int response = JOptionPane.showConfirmDialog(this,
+                directory + fileName +
+                " exists.  Overwrite?", "File exists",
+                JOptionPane.YES_NO_OPTION);
+            if (response == JOptionPane.NO_OPTION) {
+                options.setSaveAs(true);
+                userInterface.setDefaultDirectory(directory);
+                this.save(options, filterType);
+                return;
+            }
+        }
+
+        /*
+         * I'm not sure why this wasn't done before.... if we do a save-as we should
+         * also update the name of the file
+         */
+        // if (options.isSaveAs()) {
+        // img.setImageName(fileName.substring(0, fileName.length()-4));
+        // }
+
+        options.setFileName(fileName);
+        options.setFileDirectory(directory);
+        if(!options.isSaveAs()){
+        if (img.getNDims() == 3) {
+                options.setBeginSlice(0);
+                options.setEndSlice(img.getExtents()[2] - 1);
+            } else if (img.getNDims() == 4) {
+                options.setBeginSlice(0);
+                options.setEndSlice(img.getExtents()[2] - 1);
+                options.setBeginTime(0);
+                options.setEndTime(img.getExtents()[3] - 1);
+            }
+        }
+        if ( (fileName != null)
+            && ( (fileName.endsWith(".avi")) || (fileName.endsWith(".AVI"))
+                || (fileName.endsWith(".mov")) || (fileName.endsWith(".MOV")))) {
+
+            ModelImage imageAvi = imageA;
+            boolean converted = false;
+
+            // must convert to ARGB if ARGB float or ARGB ushort
+            if (imageA.getType() == ModelStorageBase.ARGB_FLOAT ||
+                imageA.getType() == ModelStorageBase.ARGB_USHORT) {
+                int response = JOptionPane.NO_OPTION;
+
+                if (!options.isScript()) {
+                    response = JOptionPane.showConfirmDialog(userInterface.
+                        getMainFrame(),
+                        new String(
+                            "Image must be converted to ARGB to save as .avi"),
+                        "Convert?",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE);
+                }
+                else {
+                    response = JOptionPane.YES_OPTION;
+                }
+                if (response == JOptionPane.NO_OPTION) {
+                    return;
+                }
+
+                imageAvi = new ModelImage(ModelStorageBase.ARGB,
+                                          imageA.getExtents(),
+                                          fileName + "ARGB", userInterface);
+
+                AlgorithmChangeType algoChange = new AlgorithmChangeType(
+                    imageAvi, imageA, (float) imageA.getMin(),
+                    (float) imageA.getMax(), 0, 255, false);
+
+                algoChange.setActiveImage(false);
+                algoChange.run();
+
+                algoChange.finalize();
+                algoChange = null;
+                converted = true;
+            }
+
+            try {
+                suffix = new String(".avi");
+                fileType = FileBase.AVI;
+                FileAvi aviFile;
+
+                aviFile = new FileAvi(userInterface, fileName, directory);
+
+                if (fileName.endsWith(".mov") || fileName.endsWith(".MOV")) {
+                    aviFile.setWriteQT(true);
+
+                }
+
+                aviFile.setIsScript(options.isScript());
+                if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(),
+                                        getRGBTB(), red, green, blue,
+                                        opacity, alphaBlend, paintBitmap,
+                                        options.getAVICompression())) {
+
+                    System.err.println("AVI image write cancelled");
+                }
+                if (converted && imageAvi != null) {
+                    imageAvi.disposeLocal();
+                }
+                imageAvi = null;
+            }
+            catch (IOException error) {
+                if (converted && imageAvi != null) {
+                    imageAvi.disposeLocal();
+                }
+
+                MipavUtil.displayError("ViewJFrameBase: " + error);
+                return;
+            }
+            catch (OutOfMemoryError error) {
+                if (converted && imageAvi != null) {
+                    imageAvi.disposeLocal();
+                }
+
+                MipavUtil.displayError("ViewJFrameBase: " + error);
+                return;
+            }
+        }
+        else {
+            if (fileName != null) {
+                FileIO fileIO = new FileIO();
+
+                if (displayMode == IMAGE_A) {
+                    fileIO.setModelLUT(this.getLUTa());
+                }
+                else {
+                    fileIO.setModelLUT(this.getLUTb());
+                }
+
+                if (img.isColorImage()) {
+                    if (displayMode == IMAGE_A) {
+                        options.setRGBTa(this.getRGBTA());
+                    }
+                    else {
+                        options.setRGBTa(this.getRGBTB());
+                    }
+                }
+                // fileIO.setQuiet(true);
+                fileIO.writeImage(img, options);
+            }
+        }
+
+        // if the SaveAllOnSave preference flag is set, then
+        // save all the files associated with this image (VOIs, LUTs, etc.)
+        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+            // Since the options may have changed the filename
+            // and the directory --- get new fileName and directory
+            // from options
+            String fName = options.getFileName(); // if you use the name from img, then DICOM has funny names
+            String dirName = img.getFileInfo(0).getFileDirectory();
+            String filebase;
+            int ind = fName.lastIndexOf(".");
+
+            if (ind > 0) {
+                filebase = fName.substring(0, fName.lastIndexOf("."));
+            }
+            else {
+                filebase = new String(fName);
+            }
+
+            if (options.getFileType() == FileBase.DICOM) {
+                int newIndex = filebase.length();
+
+                for (i = filebase.length() - 1; i >= 0; i--) {
+                    char myChar = filebase.charAt(i);
+
+                    if (Character.isDigit(myChar)) {
+                        newIndex = i;
+                    }
+                    else {
+                        break;
+                    } // as soon as something is NOT a digit, leave loop
+                }
+                if (newIndex > 0) {
+                    filebase = filebase.substring(0, newIndex);
+                }
+            }
+
+            // save any luts
+            String lutName = new String(filebase + ".lut");
+
+            saveLUTAs(true, lutName, dirName);
+
+            // save any vois
+            String voiName = filebase.replace('^', '_');
+            String voiDir = new String(dirName + File.separator +
+                                       "defaultVOIs_" + voiName +
+                                       File.separator);
+
+            saveAllVOIsTo(voiDir);
+        }
+
+        // set the new fileName and directory in the fileInfo for the img -- so that it's
+        // updated correctly in memory as well -- don't move this before the saveAllOnSave loop --
+        // that needs to look at the former settings!
+        FileInfoBase[] fileInfo = img.getFileInfo();
+
+        if (suffix == null) {
+            FileIO fileIO = new FileIO();
+
+            suffix = FileIO.getSuffixFrom(fileName);
+            fileType = fileIO.getFileType(fileName, directory, false);
+            fileIO = null;
+        }
+
+        // now, get rid of any numbers at the end of the name (these
+        // are part of the dicom file name, but we only want the 'base'
+        // part of the name
+        String baseName = new String(fileName);
+
+        if (fileType == FileBase.DICOM) {
+            int index = fileName.lastIndexOf(".");
+
+            if (index > 0) {
+                baseName = fileName.substring(0, index);
+            }
+
+            int newIndex = baseName.length();
+
+            for (i = baseName.length() - 1; i >= 0; i--) {
+                char myChar = baseName.charAt(i);
+
+                if (Character.isDigit(myChar)) {
+                    newIndex = i;
+                }
+                else {
+                    break;
+                } // as soon as something is NOT a digit, leave loop
+            }
+            if (newIndex > 0) {
+                baseName = baseName.substring(0, newIndex);
+            }
+            fileName = new String(baseName + ".dcm");
+            if (!directory.endsWith(baseName)) {
+                directory = new String(directory + baseName + File.separator);
+            }
+        }
+
+        for (i = 0; i < fileInfo.length; i++) {
+            fileInfo[i].setFileDirectory(directory);
+            if (fileType == FileBase.DICOM) {
+                fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
+            }
+            else {
+                fileInfo[i].setFileName(fileName);
+            }
+
+            fileInfo[i].setFileSuffix(suffix);
+            // fileInfo[i].setFileFormat (fileType);
+        }
+
+    }
+
 
     /**
      *   Creates save dialog so that the image can be saved
