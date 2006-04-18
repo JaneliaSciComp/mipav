@@ -192,6 +192,17 @@ public class WidgetFactory {
     }
 
     /**
+     * Helper method to create a password field with the proper font and font color.
+     * @return New password field.
+     */
+    public static final JPasswordField buildPasswordField() {
+        JPasswordField pf = new JPasswordField();
+        pf.setFont(WidgetFactory.font12);
+        pf.setForeground(Color.black);
+        return pf;
+    }
+
+    /**
      * Builds a new text area.
      * @param text the text to put inside the text area
      * @param isEditable whether the text area should be editable by the user
