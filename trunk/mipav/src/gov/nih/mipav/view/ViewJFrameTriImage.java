@@ -969,6 +969,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
             null, null, zoom, extents, imageA.getLogMagDisplay(), orientation, hasOrientation, orient);
 
         int axisOrder[] = triImage.getAxisOrder();
+        float tmpResols [] = new float [3];
+        float minResol = 0;
+        
+        minResol = resols[0];
+        if(resols[1] < minResol) minResol = resols[1];
+        if(resols[2] < minResol) minResol = resols[2];
+        tmpResols[0] = resols[0]/minResol;
+        tmpResols[1] = resols[1]/minResol;
+        tmpResols[2] = resols[2]/minResol;
 
         triImage.setBuffers(triImage.getImageBufferA(),
                             triImage.getImageBufferB(),
@@ -981,27 +990,33 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         // the correct values for the XY, XZ, and ZY images.
         float axialWidthResFactor = 1.0f;
         float axialHeightResFactor = 1.0f;
+        
         if (imageA.getType() == ModelImage.COMPLEX)
         {
             triImage.setResolutions(1, 1);
         }
-        else if ( (resols[axisOrder[1]] >= resols[axisOrder[0]]) && (resols[axisOrder[1]] < 50.0f * resols[axisOrder[0]])
-                 && (units[axisOrder[0]] == units[axisOrder[1]]))
+        else if ( (tmpResols[axisOrder[1]] > tmpResols[axisOrder[0]]) && 
+                  (tmpResols[axisOrder[1]] < 50.0f * tmpResols[axisOrder[0]]) &&
+                  (units[axisOrder[0]] == units[axisOrder[1]]))
         {
-            axialHeightResFactor = resols[axisOrder[1]] / resols[axisOrder[0]];
+            axialHeightResFactor = tmpResols[axisOrder[1]] / tmpResols[axisOrder[0]];
             triImage.setResolutions(1, axialHeightResFactor);
         }
-        else if ( (resols[axisOrder[0]] > resols[axisOrder[1]]) && (resols[axisOrder[0]] < 50.0f * resols[axisOrder[1]])
-                 && (units[axisOrder[0]] == units[axisOrder[1]]))
+        else if ( (tmpResols[axisOrder[0]] > tmpResols[axisOrder[1]]) && 
+                  (tmpResols[axisOrder[0]] < 50.0f * tmpResols[axisOrder[1]]) && 
+                  (units[axisOrder[0]] == units[axisOrder[1]]))
         {
-            axialWidthResFactor = resols[axisOrder[0]] / resols[axisOrder[1]];
+            axialWidthResFactor = tmpResols[axisOrder[0]] / tmpResols[axisOrder[1]];
             triImage.setResolutions(axialWidthResFactor, 1);
+        }
+        else if ( (tmpResols[axisOrder[0]] == tmpResols[axisOrder[1]])){
+            triImage.setResolutions(tmpResols[axisOrder[0]], tmpResols[axisOrder[0]]);
         }
         else
         {
             triImage.setResolutions(1, 1);
         }
-
+        
         return triImage;
     }
 
@@ -2105,272 +2120,152 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @param sourceImage the triImage that called this method
      */
     public void setCrosshairs(int x, int y, int z, ViewJComponentTriImage sourceImage)
-    {
-    	if (sourceImage == null)
-    	{
-    		return;
-    	}
-    	
-    	int orientation = sourceImage.getOrientation();
-    	
-    	boolean affectA = false;
-    	boolean affectB = false;
-    	
-    	if (sourceImage == triImage[AXIAL_A] || sourceImage == triImage[SAGITTAL_A] || sourceImage == triImage[CORONAL_A] ||
-   			sourceImage == triImage[AXIAL_AB] || sourceImage == triImage[SAGITTAL_AB] || sourceImage == triImage[CORONAL_AB])
-    	{
-    		affectA = true;
-    	}
-    	
-    	if (sourceImage == triImage[AXIAL_B] || sourceImage == triImage[SAGITTAL_B] || sourceImage == triImage[CORONAL_B] ||
-   			sourceImage == triImage[AXIAL_AB] || sourceImage == triImage[SAGITTAL_AB] || sourceImage == triImage[CORONAL_AB])
-    	{
-    		affectB = true;
-    	}
-    	
-        if (hasOrientation == false)
         {
-            // This updates positions of the cursors in the other components.
-            if (orientation == ViewJComponentBase.AXIAL)
-            {
-                if (triImage[SAGITTAL_A] != null && affectA)
+        	if (sourceImage == null)
+        	{
+        		return;
+        	}
+        	
+            Point3D volPt = sourceImage.getVolumePosition(x,y,z);
+            
+        	int orientation = sourceImage.getOrientation();
+        	
+        	boolean affectA = false;
+        	boolean affectB = false;
+        	
+        	if (sourceImage == triImage[AXIAL_A] || sourceImage == triImage[SAGITTAL_A] || sourceImage == triImage[CORONAL_A] ||
+       			sourceImage == triImage[AXIAL_AB] || sourceImage == triImage[SAGITTAL_AB] || sourceImage == triImage[CORONAL_AB])
+        	{
+        		affectA = true;
+        	}
+        	
+        	if (sourceImage == triImage[AXIAL_B] || sourceImage == triImage[SAGITTAL_B] || sourceImage == triImage[CORONAL_B] ||
+       			sourceImage == triImage[AXIAL_AB] || sourceImage == triImage[SAGITTAL_AB] || sourceImage == triImage[CORONAL_AB])
+        	{
+        		affectB = true;
+        	}
+        	
+    
+                // This updates positions of the cursors in the other components.
+                if (orientation == ViewJComponentBase.AXIAL || orientation == ViewJComponentBase.NA)
                 {
-                    triImage[SAGITTAL_A].updateCrosshairPosition(z, y);
+                    if (triImage[SAGITTAL_A] != null && affectA)
+                    {
+                        triImage[SAGITTAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_B] != null && affectB)
+                    {
+                        triImage[SAGITTAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[SAGITTAL_AB].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_A] != null && affectA)
+                    {
+                        triImage[CORONAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_B] != null && affectB)
+                    {
+                        triImage[CORONAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[CORONAL_AB].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_A] != null && affectA)
+                    {
+                        triImage[AXIAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_B] != null && affectB)
+                    {
+                        triImage[AXIAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[AXIAL_AB].updateCrosshairPosition(volPt);
+                    }
                 }
-                if (triImage[SAGITTAL_B] != null && affectB)
+                else if (orientation == ViewJComponentBase.CORONAL)
                 {
-                    triImage[SAGITTAL_B].updateCrosshairPosition(z, y);
+                    if (triImage[AXIAL_A] != null && affectA)
+                    {
+                        triImage[AXIAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_B] != null && affectB)
+                    {
+                        triImage[AXIAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[AXIAL_AB].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_A] != null && affectA)
+                    {
+                        triImage[SAGITTAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_B] != null && affectB)
+                    {
+                        triImage[SAGITTAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[SAGITTAL_AB].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_A] != null && affectA)
+                    {
+                        triImage[CORONAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_B] != null && affectB)
+                    {
+                        triImage[CORONAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[CORONAL_AB].updateCrosshairPosition(volPt);
+                    }
                 }
-                if (triImage[SAGITTAL_AB] != null && affectA && affectB)
+                else // SAGITTAL
                 {
-                    triImage[SAGITTAL_AB].updateCrosshairPosition(z, y);
+                    if (triImage[AXIAL_A] != null && affectA)
+                    {
+                        triImage[AXIAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_B] != null && affectB)
+                    {
+                        triImage[AXIAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[AXIAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[AXIAL_AB].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_A] != null && affectA)
+                    {
+                        triImage[CORONAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_B] != null && affectB)
+                    {
+                        triImage[CORONAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[CORONAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[CORONAL_AB].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_A] != null && affectA)
+                    {
+                        triImage[SAGITTAL_A].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_B] != null && affectB)
+                    {
+                        triImage[SAGITTAL_B].updateCrosshairPosition(volPt);
+                    }
+                    if (triImage[SAGITTAL_AB] != null && affectA && affectB)
+                    {
+                        triImage[SAGITTAL_AB].updateCrosshairPosition(volPt);
+                    }
                 }
-                if (triImage[CORONAL_A] != null && affectA)
-                {
-                    triImage[CORONAL_A].updateCrosshairPosition(x, z);
-                }
-                if (triImage[CORONAL_B] != null && affectB)
-                {
-                    triImage[CORONAL_B].updateCrosshairPosition(x, z);
-                }
-                if (triImage[CORONAL_AB] != null && affectA && affectB)
-                {
-                    triImage[CORONAL_AB].updateCrosshairPosition(x, z);
-                }
-                if (triImage[AXIAL_A] != null && affectA)
-                {
-                    triImage[AXIAL_A].updateCrosshairPosition(x, y);
-                }
-                if (triImage[AXIAL_B] != null && affectB)
-                {
-                    triImage[AXIAL_B].updateCrosshairPosition(x, y);
-                }
-                if (triImage[AXIAL_AB] != null && affectA && affectB)
-                {
-                    triImage[AXIAL_AB].updateCrosshairPosition(x, y);
-                }
-            }
-            else if (orientation == ViewJComponentBase.CORONAL)
-            {
-                if (triImage[AXIAL_A] != null && affectA)
-                {
-                    triImage[AXIAL_A].updateCrosshairPosition(x, z);
-                }
-                if (triImage[AXIAL_B] != null && affectB)
-                {
-                    triImage[AXIAL_B].updateCrosshairPosition(x, z);
-                }
-                if (triImage[AXIAL_AB] != null && affectA && affectB)
-                {
-                    triImage[AXIAL_AB].updateCrosshairPosition(x, z);
-                }
-                if (triImage[SAGITTAL_A] != null && affectA)
-                {
-                    triImage[SAGITTAL_A].updateCrosshairPosition(y, z);
-                }
-                if (triImage[SAGITTAL_B] != null && affectB)
-                {
-                    triImage[SAGITTAL_B].updateCrosshairPosition(y, z);
-                }
-                if (triImage[SAGITTAL_AB] != null && affectA && affectB)
-                {
-                    triImage[SAGITTAL_AB].updateCrosshairPosition(y, z);
-                }
-                if (triImage[CORONAL_A] != null && affectA)
-                {
-                    triImage[CORONAL_A].updateCrosshairPosition(x, y);
-                }
-                if (triImage[CORONAL_B] != null && affectB)
-                {
-                    triImage[CORONAL_B].updateCrosshairPosition(x, y);
-                }
-                if (triImage[CORONAL_AB] != null && affectA && affectB)
-                {
-                    triImage[CORONAL_AB].updateCrosshairPosition(x, y);
-                }
-            }
-            else // SAGITTAL
-            {
-                if (triImage[AXIAL_A] != null && affectA)
-                {
-                    triImage[AXIAL_A].updateCrosshairPosition(z, y);
-                }
-                if (triImage[AXIAL_B] != null && affectB)
-                {
-                    triImage[AXIAL_B].updateCrosshairPosition(z, y);
-                }
-                if (triImage[AXIAL_AB] != null && affectA && affectB)
-                {
-                    triImage[AXIAL_AB].updateCrosshairPosition(z, y);
-                }
-                if (triImage[CORONAL_A] != null && affectA)
-                {
-                    triImage[CORONAL_A].updateCrosshairPosition(z, x);
-                }
-                if (triImage[CORONAL_B] != null && affectB)
-                {
-                    triImage[CORONAL_B].updateCrosshairPosition(z, x);
-                }
-                if (triImage[CORONAL_AB] != null && affectA && affectB)
-                {
-                    triImage[CORONAL_AB].updateCrosshairPosition(z, x);
-                }
-                if (triImage[SAGITTAL_A] != null && affectA)
-                {
-                    triImage[SAGITTAL_A].updateCrosshairPosition(x, y);
-                }
-                if (triImage[SAGITTAL_B] != null && affectB)
-                {
-                    triImage[SAGITTAL_B].updateCrosshairPosition(x, y);
-                }
-                if (triImage[SAGITTAL_AB] != null && affectA && affectB)
-                {
-                    triImage[SAGITTAL_AB].updateCrosshairPosition(x, y);
-                }
-            }
-        }
 
-        // This updates positions of the cursors in the other components.
-        else // hasOrientation == true
-        {
-	        if (orientation == ViewJComponentBase.AXIAL)
-	        {
-	            if (triImage[SAGITTAL_A] != null && affectA)
-	            {
-	                triImage[SAGITTAL_A].updateCrosshairPosition(y, z);
-	            }
-	            if (triImage[SAGITTAL_B] != null && affectB)
-	            {
-	                triImage[SAGITTAL_B].updateCrosshairPosition(y, z);
-	            }
-	            if (triImage[SAGITTAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[SAGITTAL_AB].updateCrosshairPosition(y, z);
-	            }
-	            if (triImage[CORONAL_A] != null && affectA)
-	            {
-	                triImage[CORONAL_A].updateCrosshairPosition(x, z);
-	            }
-	            if (triImage[CORONAL_B] != null && affectB)
-	            {
-	                triImage[CORONAL_B].updateCrosshairPosition(x, z);
-	            }
-	            if (triImage[CORONAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[CORONAL_AB].updateCrosshairPosition(x, z);
-	            }
-	            if (triImage[AXIAL_A] != null && affectA)
-	            {
-	                triImage[AXIAL_A].updateCrosshairPosition(x, y);
-	            }
-	            if (triImage[AXIAL_B] != null && affectB)
-	            {
-	                triImage[AXIAL_B].updateCrosshairPosition(x, y);
-	            }
-	            if (triImage[AXIAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[AXIAL_AB].updateCrosshairPosition(x, y);
-	            }
-	        }
-	        else if (orientation == ViewJComponentBase.CORONAL)
-	        {
-	            if (triImage[AXIAL_A] != null && affectA)
-	            {
-	                triImage[AXIAL_A].updateCrosshairPosition(x, z);
-	            }
-	            if (triImage[AXIAL_B] != null && affectB)
-	            {
-	                triImage[AXIAL_B].updateCrosshairPosition(x, z);
-	            }
-	            if (triImage[AXIAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[AXIAL_AB].updateCrosshairPosition(x, z);
-	            }
-	            if (triImage[SAGITTAL_A] != null && affectA)
-	            {
-	                triImage[SAGITTAL_A].updateCrosshairPosition(z, y);
-	            }
-	            if (triImage[SAGITTAL_B] != null && affectB)
-	            {
-	                triImage[SAGITTAL_B].updateCrosshairPosition(z, y);
-	            }
-	            if (triImage[SAGITTAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[SAGITTAL_AB].updateCrosshairPosition(z, y);
-	            }
-	            if (triImage[CORONAL_A] != null && affectA)
-	            {
-	                triImage[CORONAL_A].updateCrosshairPosition(x, y);
-	            }
-	            if (triImage[CORONAL_B] != null && affectB)
-	            {
-	                triImage[CORONAL_B].updateCrosshairPosition(x, y);
-	            }
-	            if (triImage[CORONAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[CORONAL_AB].updateCrosshairPosition(x, y);
-	            }
-	        }
-	        else // SAGITTAL
-	        {
-	            if (triImage[AXIAL_A] != null && affectA)
-	            {
-	                triImage[AXIAL_A].updateCrosshairPosition(z, x);
-	            }
-	            if (triImage[AXIAL_B] != null && affectB)
-	            {
-	                triImage[AXIAL_B].updateCrosshairPosition(z, x);
-	            }
-	            if (triImage[AXIAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[AXIAL_AB].updateCrosshairPosition(z, x);
-	            }
-	            if (triImage[CORONAL_A] != null && affectA)
-	            {
-	                triImage[CORONAL_A].updateCrosshairPosition(z, y);
-	            }
-	            if (triImage[CORONAL_B] != null && affectB)
-	            {
-	                triImage[CORONAL_B].updateCrosshairPosition(z, y);
-	            }
-	            if (triImage[CORONAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[CORONAL_AB].updateCrosshairPosition(z, y);
-	            }
-	            if (triImage[SAGITTAL_A] != null && affectA)
-	            {
-	                triImage[SAGITTAL_A].updateCrosshairPosition(x, y);
-	            }
-	            if (triImage[SAGITTAL_B] != null && affectB)
-	            {
-	                triImage[SAGITTAL_B].updateCrosshairPosition(x, y);
-	            }
-	            if (triImage[SAGITTAL_AB] != null && affectA && affectB)
-	            {
-	                triImage[SAGITTAL_AB].updateCrosshairPosition(x, y);
-	            }
-	        }
-        }
+        
         
         if (linkTriFrame != null)
         {
@@ -3616,7 +3511,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     	   triImage[i].updateCrosshairPosition(newX, newY);
                     	   
                     	   adjustScrollbars(newX, newY, scrollPane[i]);
-                       }
+                       } 
                    }
                }
                validate();
@@ -3643,7 +3538,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                     	   triImage[i].updateCrosshairPosition(newX, newY);
                     	   
                     	   adjustScrollbars(newX, newY, scrollPane[i]);
-                       }
+                       } 
                    }
                }
                validate();
