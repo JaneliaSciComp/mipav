@@ -352,10 +352,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Changes the slices that this component should display.
-     * @param x  which x slice to show
-     * @param y  which y slice to show
-     * @param z  which z slice to show
+     * Changes the crosshair coordinate (screen coordinate) that this component should display.
+     * @param x  which x screen coordinate to show
+     * @param y  which y screen coordinate to show
      * @see #xSlice
      * @see #ySlice
      * @see #zSlice
@@ -364,6 +363,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     {
         crosshairPt.x = x;
         crosshairPt.y = y;
+    }
+    
+    /**
+     * Changes the slices that this component should display.
+     * @param pt3D  volume point (3D) to be converted to screen point
+     */
+    public void updateCrosshairPosition(Point3D pt3D)
+    {
+        Point screenPt = getScreenCoordinates(pt3D);
+        crosshairPt.x = screenPt.x;
+        crosshairPt.y = screenPt.y;
     }
 
     /**
@@ -711,11 +721,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     private void drawCenterMark(Graphics2D offscreenGraphics2d) {
 
-        Point pt = getScreenCoordinates(new Point3D(triImageFrame.getCenter()[0],
-                                        triImageFrame.getCenter()[1],
-                                        triImageFrame.getCenter()[2]));
-
-    //pt = getScreenCoordinates(getTriImagePosition(pt.x, pt.y));
+        Point pt = crosshairPt;
 
         offscreenGraphics2d.setColor(Color.yellow);
         int centerXD = pt.x;
@@ -736,7 +742,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCrosshairLines(Graphics2D offscreenGraphics2d) {
 
         //This snaps the crosshair to the voxel boundary
-        Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
+        Point pt = crosshairPt;
 
         offscreenGraphics2d.setColor(xColor);
         offscreenGraphics2d.drawLine(pt.x, 0, pt.x, pt.y - 10);
@@ -754,7 +760,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCrosshairStubs(Graphics2D offscreenGraphics2d)
     {
         //This snaps the crosshair to the voxel boundary
-        Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
+        //Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
+        Point pt = crosshairPt;
 
         // border
         offscreenGraphics2d.setColor(zColor);
@@ -1567,7 +1574,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     private void drawBoundingRect_SAGITTAL(Graphics graphics)
     {
-        graphics.setColor(Color.red.darker());
+        graphics.setColor(Color.red);
 
         int [] indices = new int[4];
 
@@ -1801,7 +1808,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     private void drawBoundingRect_CORONAL(Graphics graphics)
     {
-        graphics.setColor(Color.red.darker());
+        graphics.setColor(Color.red);
 
         int [] indices = new int[4];
 
@@ -2110,9 +2117,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     private void drawBoundingRect_AXIAL(Graphics graphics)
     {
-        graphics.setColor(Color.red.darker());
+        graphics.setColor(Color.red);
 
         int [] indices = new int[4];
+        
 
         if (getOriginalOrientation() == CORONAL)
         {
@@ -2130,10 +2138,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
         else if (getOriginalOrientation() == SAGITTAL)
         {
+            
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
-            indices[2] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
-            indices[3] = ViewJFrameTriImage.LOWER_LEFT_BACK;
+            indices[2] = ViewJFrameTriImage.LOWER_RIGHT_FRONT;
+            indices[3] = ViewJFrameTriImage.LOWER_RIGHT_BACK;
         }
         else if (!hasOrientation)
         {
@@ -3153,21 +3162,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                 triImageFrame.setVolumeCenter(point3d);
 
-                float zoomer = 1;
-                if (resolutionY == resolutionX) {
-                    zoomer = Math.max(res[2], res[0]) / Math.min(res[2], res[0]);
-                }
-
-                float flipper = slice;
-                // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-                if (hasOrientation && (triComponentOrientation == AXIAL)) {
-                    flipper = (imageActive.getExtents()[axisOrder[2]] - 1) - flipper;
-                }
-
-                flipper = flipper * zoomer * getZoomY();
-                triImageFrame.setCrosshairs(mouseEvent.getX(), mouseEvent.getY(),
-                                            (int) ( flipper + (0.5f * zoomer) ),
-                                            this);
+                triImageFrame.setCrosshairs(xS, yS, slice, this);
 
                 // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
                 if (hasOrientation && (triComponentOrientation == SAGITTAL ||
@@ -3210,22 +3205,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
             
             updateFrameLabels(frame, xS, yS);
-            
-            float zoomer = 1;
-            if (resolutionY == resolutionX) {
-                zoomer = Math.max(res[2], res[0]) / Math.min(res[2], res[0]);
-            }
 
-            float flipper = slice;
-            // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-            if (hasOrientation && (triComponentOrientation == AXIAL)) {
-                flipper = (imageActive.getExtents()[axisOrder[2]] - 1) - flipper;
-            }
-
-            flipper = flipper * zoomer * getZoomY();
-            triImageFrame.setCrosshairs(mouseEvent.getX(), mouseEvent.getY(),
-                                        (int) ( flipper + (0.5f * zoomer) ),
-                                        this);
+            triImageFrame.setCrosshairs(xS, yS, slice, this);
 
             // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
             if (hasOrientation && (triComponentOrientation == SAGITTAL ||
@@ -4396,7 +4377,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     originalOrientation = CORONAL;
                     break;
 
-                case 1:
+                case 2:
                     originalOrientation = SAGITTAL;
                     break;
             }
@@ -4550,20 +4531,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public void mouseWheelMoved(MouseWheelEvent event)
     {
-    	float zoomer = 1;
-        if (resolutionY == resolutionX) {
-            zoomer = Math.max(res[2], res[0]) / Math.min(res[2], res[0]);
-        }
         
-        float flipper = slice;
-        int newSlice = (int) flipper;
-        flipper += ( -event.getWheelRotation());
+        int newSlice = slice;
+
         newSlice += ( -event.getWheelRotation());
-        
-        // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-        if (hasOrientation && (triComponentOrientation == AXIAL)) {
-            flipper = (imageActive.getExtents()[axisOrder[2]] - 1) - flipper;
-        }
 
         if (newSlice < 0)
         {
@@ -4575,20 +4546,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }  
         
         slice = newSlice;
+        int xS = (int)(crosshairPt.x / (getZoomX() * resolutionX));
+        int yS = (int)(crosshairPt.y / (getZoomY() * resolutionY));
         
-        if (flipper < 0)
-        {
-        	flipper = 0;
-        }
-        if (flipper >= imageActive.getExtents()[axisOrder[2]])
-        {
-        	flipper = imageActive.getExtents()[axisOrder[2]] - 1;
-        }
-
-        flipper = flipper * zoomer * getZoomY();
-        triImageFrame.setCrosshairs(crosshairPt.x, crosshairPt.y,
-                (int) ( flipper + (0.5f * zoomer) ),
-                this);
+        triImageFrame.setCrosshairs(xS, yS, slice, this);
         
         Point3D newLabel = null;
         
@@ -4770,6 +4731,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     {
     	return crosshairPt;
     }
+    
+ 
     
     /**
      * Gets the current out-of-component slice the component is displaying in volume space (ie, post reversal, if needed).
