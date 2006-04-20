@@ -51,7 +51,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
      ***** Instance Variables *****
      ******************************
      */
-    private JargonTree jargonTree = null;
+    private JSRBTree jsrbTree = null;
     
     private SRBFileSystem fileSystem = null;
     
@@ -143,6 +143,12 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
             f = (SRBFile)f.getParentFile();
         return f;
     }
+    
+    /**
+     * Initialize the JargonFileChooser.
+     * @param f
+     * @throws IOException
+     */
     private void init(SRBFile f) throws IOException {
         if(f == null)
             return;
@@ -150,10 +156,11 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         
         fileSystem = (SRBFileSystem)f.getFileSystem();
         
-        jargonTree = new JargonTree(root.listFiles());
-        jargonTree.useDefaultPopupMenu(false);
-        jargonTree.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(jargonTree);
+        jsrbTree = new JSRBTree(root.listFiles());
+
+        jsrbTree.useDefaultPopupMenu(false);
+        jsrbTree.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(jsrbTree);
         
         scrollPane.setPreferredSize(new Dimension(600, 400));
         
@@ -179,7 +186,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         topPanel.setAlignmentY(JComponent.CENTER_ALIGNMENT);
         this.add(scrollPane, BorderLayout.CENTER);
         this.add(manager.getPanel(), BorderLayout.NORTH);
-        jargonTree.addTreeSelectionListener(this);
+        jsrbTree.addTreeSelectionListener(this);
     }
     
     protected JDialog createDialog(Component parent) throws HeadlessException {
@@ -248,10 +255,14 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
      * @param b true if multiple files may be selected.
      */
     public void setMultiSelectionEnabled(boolean b) {
-        if(multiSelectionEnabled == b) {
-            return;
+        if(multiSelectionEnabled != b) {
+            multiSelectionEnabled = b;
         }
-        multiSelectionEnabled = b;
+        if(multiSelectionEnabled){
+            jsrbTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+        }else{
+            jsrbTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        }
     }
 
     /**
@@ -314,8 +325,8 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
      */
     public void valueChanged(TreeSelectionEvent e){
         Object o = e.getSource();
-        if(o instanceof JargonTree){
-            JargonTree tree = (JargonTree)o;
+        if(o instanceof JSRBTree){
+            JSRBTree tree = (JSRBTree)o;
             TreePath[] selectedPaths = tree.getSelectionPaths();
             if(selectedPaths == null || selectedPaths.length == 0){
                 return;
