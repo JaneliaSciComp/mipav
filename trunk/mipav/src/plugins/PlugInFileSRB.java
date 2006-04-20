@@ -546,6 +546,9 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         /**
          * Gets the current image file opened inside the active ViewJFrameImage.
          */
+        if(currentImageFrame == null){
+            return;
+        }
         ModelImage currentImage = currentImageFrame.getActiveImage();
         
         if(currentImage == null){
