@@ -17,7 +17,10 @@ import java.awt.FlowLayout;
 import java.awt.Dimension;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 
+import edu.sdsc.grid.io.srb.SRBFile;
 import edu.sdsc.grid.io.srb.SRBFileSystem;
 import edu.sdsc.grid.io.srb.SRBAccount;
 
@@ -27,7 +30,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogLoginSRB extends JDialog implements ActionListener{
+public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListener{
     private static final String auth_schemas[] = {"ENCRYPT1", "PASSWD_AUTH"};
     private final int COLUMN_COUNT = 30;
     
@@ -80,6 +83,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the name field.
         nameField = WidgetFactory.buildTextField(Preferences.getUserNameSRB());
         nameField.setColumns(COLUMN_COUNT);
+        nameField.addKeyListener(this);
         manager.add(nameField);
         
         // Sets up the password label.
@@ -90,6 +94,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the password field.
         passwordField = WidgetFactory.buildPasswordField();
         passwordField.setColumns(COLUMN_COUNT);
+        passwordField.addKeyListener(this);
         manager.add(passwordField);
         
         // Sets up the host label.
@@ -100,6 +105,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the host field.
         hostField = WidgetFactory.buildTextField(Preferences.getServerHostSRB());
         hostField.setColumns(COLUMN_COUNT);
+        hostField.addKeyListener(this);
         manager.add(hostField);
         
         // Sets up the domain label.
@@ -110,6 +116,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the domain field.
         domainField = WidgetFactory.buildTextField(Preferences.getServerDomainSRB());
         domainField.setColumns(COLUMN_COUNT);
+        domainField.addKeyListener(this);
         manager.add(domainField);
         
         // Sets up the port label.
@@ -120,6 +127,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the port field.
         portField = WidgetFactory.buildTextField(Integer.toString(Preferences.getServerPortSRB()));
         portField.setColumns(COLUMN_COUNT);
+        portField.addKeyListener(this);
         manager.add(portField);
         
         // Sets up the default storage resource field.
@@ -130,6 +138,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the port field.
         storageResourceField = WidgetFactory.buildTextField(Preferences.getStorageResourceSRB());
         storageResourceField.setColumns(COLUMN_COUNT);
+        storageResourceField.addKeyListener(this);
         manager.add(storageResourceField);
         
         // Sets up the authentication label.
@@ -140,6 +149,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         // Sets up the authentication field.
         authenticationComboBox = new JComboBox(auth_schemas);
         authenticationComboBox.setSelectedItem(Preferences.getServerAuthSRB());
+        authenticationComboBox.addKeyListener(this);
         manager.add(authenticationComboBox);
         
         this.getContentPane().setLayout(new BorderLayout());
@@ -147,6 +157,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         connectButton = WidgetFactory.buildTextButton("Connect", "Connect to the SRB server", "Connect", this);
         connectButton.setPreferredSize(new Dimension(90, 30));
+        connectButton.addKeyListener(this);
         bottomPanel.add(connectButton);
         
         cancelButton = WidgetFactory.buildTextButton("Cancel", "Cancel connecting to the SRB server", "Cancel", this);
@@ -171,6 +182,29 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
         return srbFileSystem;
     }
     
+    /**
+     * Returns whether the srb file system is valid. 
+     * @return whether the srb file system is valid.
+     */
+    public static boolean hasValidSRBFileSystem(){
+        if(srbFileSystem == null || !srbFileSystem.isConnected()){
+            return false;
+        }
+        String path = "/home";
+        SRBFile root = new SRBFile(srbFileSystem, path);
+        try{
+            if(root.listFiles().length > 0){
+                return true;
+            }
+        }catch(Exception e){
+            return false;
+        }
+        return false;
+    }
+    
+    /**
+     * Action event listener.
+     */
     public void actionPerformed(ActionEvent e){
         String command = e.getActionCommand();
         if(command.equals("Connect")){
@@ -258,6 +292,23 @@ public class JDialogLoginSRB extends JDialog implements ActionListener{
             this.dispose();
         }else if(command.equals("Cancel")){
             this.dispose();
+        }
+    }
+    
+    public void keyPressed(KeyEvent e){
+        
+    }
+    
+    public void keyReleased(KeyEvent e){
+        
+    }
+    
+    public void keyTyped(KeyEvent e){
+        int keyChar = e.getKeyChar();
+        if(keyChar == KeyEvent.VK_ENTER){
+            actionPerformed(new ActionEvent(this, 10, "Connect"));
+        }else if(keyChar == KeyEvent.VK_ESCAPE){
+            actionPerformed(new ActionEvent(this, 11, "Cancel"));
         }
     }
 }
