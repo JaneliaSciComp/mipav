@@ -159,33 +159,32 @@ public class FileTransferSRB extends Thread implements ActionListener, WindowLis
          * Builds a progress bar first.
          */
         int mod = 1;
+        buildProgressBar("Transfering " + ((GeneralFile)sourceFileList.get(0)).getName(), "Transfering files ...", 0, 100);
         if(sourceFileList.size() > 100){
-            buildProgressBar("Transfering " + ((GeneralFile)sourceFileList.get(0)).getName(), "Transfering files ...", 0, 100);
             mod = sourceFileList.size()/100;
-        }else{
-            buildProgressBar("Transfering " + ((GeneralFile)sourceFileList.get(0)).getName(), "Transfering files ...", 0, sourceFileList.size());
-        }
-        
+        }        
  
         initProgressBar();
         for(int i = 0; i < sourceFileList.size(); i++){
             if ((i)%mod==0 && isProgressBarVisible()){
                 progressBar.setTitle("Transfering " + ((GeneralFile)sourceFileList.get(i)).getName());
                 if(sourceFileList.size() > 100){
-                    progressBar.updateValue(Math.round((float)i/(sourceFileList.size()-1) * 100), isThreadSeperated());
+                    progressBar.updateValue(Math.round(((float)i/sourceFileList.size()) * 100), isThreadSeperated());
                 }else{
-                    if(sourceFileList.size() == 1){
-                        progressBar.updateValue(100, isThreadSeperated());
-                    }else{
-                        progressBar.updateValue(Math.round((float)i/(sourceFileList.size()-1) * 100), isThreadSeperated());
-                    }
+                    progressBar.updateValue(Math.round(((float)i/sourceFileList.size()) * 100), isThreadSeperated());
                 }
             }
             GeneralFile sourceFile = (GeneralFile)sourceFileList.get(i);
             GeneralFile targetFile = (GeneralFile)targetFileList.get(i);
             copy(sourceFile, targetFile);
         }
-        
+
+        progressBar.updateValue(100, isThreadSeperated());
+        try{
+            Thread.sleep(100);
+        }catch(InterruptedException e){
+            
+        }
         disposeProgressBar();
         completed = true;
     }
