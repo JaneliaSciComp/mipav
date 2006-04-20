@@ -71,7 +71,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
          * If the srbFileSystem was not set up, then uses the JDialogLoginSRB dialog
          * to retrieve information to construct SRBFileSystem instance.
          */
-        if(JDialogLoginSRB.srbFileSystem == null || !JDialogLoginSRB.srbFileSystem.isConnected()){
+        if(!JDialogLoginSRB.hasValidSRBFileSystem()){
             new JDialogLoginSRB("Connect to");
         }
         if(JDialogLoginSRB.srbFileSystem == null){
@@ -635,6 +635,12 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         fileTransferThread.start();
     }
     
+    /**
+     * Creates the local file list according to the local directory and the file name list.
+     * @param localDir      the target local directory.
+     * @param fileNameList  the file name list.
+     * @return the local file list which are under the local directory.
+     */
     public static Vector createLocalFileList(LocalFile localDir, Vector fileNameList){
         if(localDir == null || fileNameList == null){
             return null;
@@ -649,8 +655,14 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             }
         }
         return fileList;
-   }
+    }
     
+    /**
+     * Creates the srb file list according to the srb directory and the file name list.
+     * @param srbDir        the target srb directory.
+     * @param fileNameList  the file name list.
+     * @return the srb file list which are under the srb directory.
+     */
     public static Vector createSRBFileList(SRBFile srbDir, Vector fileNameList){
         if(srbDir == null || fileNameList == null){
             return null;
@@ -723,6 +735,8 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             return null;
         /** Analyze format (Mayo).              */
         case FileBase.ANALYZE:
+        /** NIFTI format */
+        case FileBase.NIFTI:
             fileNameList = new Vector();
             String imgFileName = fileInfo.getFileName();
             String hdrFileName = imgFileName.replaceFirst(".img", ".hdr");
@@ -830,11 +844,6 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         /** MIPAV project format */
         case FileBase.PROJECT:
             return null;
-        /** NIFTI format */
-        case FileBase.NIFTI:
-            fileNameList = new Vector();
-            fileNameList.add(fileInfo.getFileName());
-            return fileNameList;
         /** NIFTI multi-file format */
         case FileBase.NIFTI_MULTIFILE:
             return null;
@@ -950,7 +959,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
      * @inheritDoc
      */
     public void writeImage(ModelImage image) {
-        if(JDialogLoginSRB.srbFileSystem == null){
+        if(!JDialogLoginSRB.hasValidSRBFileSystem()){
             new JDialogLoginSRB("Connect to");
         }
         if(JDialogLoginSRB.srbFileSystem == null){
