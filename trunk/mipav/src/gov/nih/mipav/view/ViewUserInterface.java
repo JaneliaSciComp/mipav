@@ -2568,6 +2568,32 @@ public class ViewUserInterface
                    MipavUtil.displayError("Unable to load plugin (acc)");
                }
            }
+           else if(command.equals("PlugInFileTransfer")){
+               Object thePlugIn = null;
+               String plugInName = ( (JMenuItem) (event.getSource())).getComponent().getName();
+
+               try {
+                   thePlugIn = Class.forName(plugInName).newInstance();
+                   if (thePlugIn instanceof PlugInFileTransfer) {
+                       if (((PlugInFileTransfer)thePlugIn).canTransferFiles()) {
+                           ((PlugInFileTransfer)thePlugIn).transferFiles();
+                       } else {
+                           MipavUtil.displayInfo(plugInName + " does not support files transfering.");
+                       }
+                   } else {
+                       MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File Transfer PlugIn, but does not implement PlugInFileTransfer.");
+                   }
+               }
+               catch (ClassNotFoundException e) {
+                   MipavUtil.displayError("PlugIn not found: " + plugInName);
+               }
+               catch (InstantiationException e) {
+                   MipavUtil.displayError("Unable to load plugin (ins)");
+               }
+               catch (IllegalAccessException e) {
+                   MipavUtil.displayError("Unable to load plugin (acc)");
+               }
+           }
            else if (command.equals("InstallPlugin")) {
                JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame, this);
                instPlugin.setVisible(true);
@@ -3016,6 +3042,8 @@ public class ViewUserInterface
 
         JMenu algorithmMenu = ViewMenuBuilder.buildMenu("Algorithm", 0, false);
 
+        JMenu fileTransferMenu = ViewMenuBuilder.buildMenu("File Transfer", 0, false);
+        
         JMenu viewMenu = ViewMenuBuilder.buildMenu("View", 0, false);
 
         File pluginsDir = new File(userPlugins);
@@ -3063,6 +3091,13 @@ public class ViewUserInterface
                         }
                         //  System.err.println("adding " + name + " as PlugInFile");
                     }
+                    else if(plugIn instanceof PlugInFileTransfer){
+                        if (((PlugInFileTransfer)plugIn).canTransferFiles()) {
+                            menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - transfer files", "PlugInFileTransfer", 0, al, null, false);
+                            fileTransferMenu.add(menuItem);
+                            menuItem.setName(name);
+                        }
+                    }
                     else if (plugIn instanceof PlugInView && ! (al instanceof ViewUserInterface)) {
                         //  System.err.println("adding " + name + " as PlugInView");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()),
@@ -3086,6 +3121,9 @@ public class ViewUserInterface
         }
         if (fileMenu.getItemCount() > 0) {
             menu.add(fileMenu);
+        }
+        if (fileTransferMenu.getItemCount() > 0) {
+            menu.add(fileTransferMenu);
         }
         if (! (al instanceof ViewUserInterface)) {
             if (viewMenu.getItemCount() > 0) {
