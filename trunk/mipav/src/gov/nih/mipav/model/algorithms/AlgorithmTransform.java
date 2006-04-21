@@ -446,7 +446,11 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } // if (srcImage.getNDims() > 2)
                 else { // srcImage.getNDims() == 2
                     newMatrix = new Matrix(3, 3);
-                    newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
+                    
+                    //There is the posibility the for 2D DICOM that the matrix might  be 4x4
+                    // If 3 x3 OK to load else the newMatrix is identity
+                    if( srcImage.getMatrix().getColumnDimension() == 3)
+                       newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
 
                     //newMatrix.print();
                     //System.out.println("transMatrix matrix = " + transMatrix);
