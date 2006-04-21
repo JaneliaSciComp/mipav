@@ -162,12 +162,14 @@ public abstract class RenderViewBase extends VolumeCanvas3D implements ViewImage
         imageB = _imageB;
         displayMode = IMAGE_A;
 
-        m_iSizeX = imageA.getExtents()[0];
-        m_iSizeY = imageA.getExtents()[1];
-        m_iSizeZ = imageA.getExtents()[2];
-        m_iNumVoxels = m_iSizeX*m_iSizeY*m_iSizeZ;
-
-        calcImageNormals();
+        if ( imageA.getNDims() == 3 ) {
+           m_iSizeX = imageA.getExtents()[0];
+           m_iSizeY = imageA.getExtents()[1];
+           m_iSizeZ = imageA.getExtents()[2];
+           m_iNumVoxels = m_iSizeX*m_iSizeY*m_iSizeZ;
+           calcImageNormals();
+        }
+        // calcImageNormals();
 
         objRootBG = new BranchGroup();
         objRootBG.setCapability(BranchGroup.ALLOW_DETACH);
