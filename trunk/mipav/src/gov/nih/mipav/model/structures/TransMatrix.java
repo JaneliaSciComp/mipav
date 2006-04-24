@@ -1280,6 +1280,167 @@ public class TransMatrix extends Matrix //                            implements
             return;
         }
     }
+    
+    /**
+     * Decomposing a matrix into simple transformations
+     * TransMatrix transformation sequence:
+     * Scale(Sx, Sy)*ShearXY*RotateZ*Translate(tx, ty)*Perspective(Px, Py, Pw).
+     * @param mat   TransMatrix to decompose.
+     * @return  successfully decompose or not.
+     */
+    public boolean decomposeMatrix2D( Matrix mat ) {
+        tran = new double[16];
+
+        int i, j;
+        Matrix locmat;
+        Matrix pmat, invpmat, tinvpmat;
+
+        locmat = new Matrix( 3, 3 );
+        pmat = new Matrix( 3, 3 );
+        invpmat = new Matrix( 3, 3 );
+        tinvpmat = new Matrix( 3, 3 );
+
+        pmat.identity( 3, 3 );
+        invpmat.identity( 3, 3 );
+        tinvpmat.identity( 3, 3 );
+
+        /* Vector3 type and functions need to be added to the common set. */
+        Vector3Dd prhs, psol;
+        prhs = new Vector3Dd();
+        psol = new Vector3Dd();
+        Vector2Dd[] row;
+        Vector2Dd pdum2;
+        row = new Vector2Dd[2];
+        pdum2 = new Vector2Dd();
+        for ( i = 0; i < 2; i++ ) {
+            row[i] = new Vector2Dd();
+        }
+
+        locmat = (Matrix) mat.clone();
+        // locmat = mat;
+
+        /* Normalize the matrix. */
+        if ( locmat.get( 2, 2 ) == 0 ) {
+            return false;
+        }
+        for ( i = 0; i < 3; i++ ) {
+            for ( j = 0; j < 3; j++ ) {
+                double val;
+                val = locmat.get( i, j ) / locmat.get( 2, 2 );
+                locmat.set( i, j, val );
+            }
+        }
+
+        // pmat is used to solve for perspective, but it also provides
+        // an easy way to test for singularity of the upper 3x3 component.
+        pmat = (Matrix) locmat.clone();
+        //pmat = locmat;
+        for ( i = 0; i < 2; i++ ) {
+            pmat.set( i, 2, 0 );
+        }
+        pmat.set( 2, 2, 1 );
+
+        if ( pmat.getMatrix(0, 1, 0, 1).det() == 0.0 ) {
+            return false;
+        }
+
+        /// removed perspective code -- we shouldn't need to do this since our transforms are affine
+        /*
+        // First, isolate perspective.  This is the messiest.
+        if ( locmat.get( 0, 2 ) != 0 || locmat.get( 1, 2 ) != 0) {
+
+            // prhs is the right hand side of the equation.
+            prhs.x = locmat.get( 0, 2 );
+            prhs.y = locmat.get( 1, 2 );
+            prhs.w = locmat.get( 2, 2 );
+
+            // Solve the equation by inverting pmat and multiplying
+            // prhs by the inverse.  (This is the easiest way, not
+            // necessarily the best.)
+            // inverse function (and det3x3, above) from the Matrix
+            // Inversion gem in the first volume.
+
+            // inverse( &pmat, &invpmat );
+            invpmat = pmat.inverse();
+            // TransposeMatrix3( &invpmat, &tinvpmat );
+            tinvpmat = invpmat.transpose();
+            V3MulPointByMatrix( prhs, tinvpmat, psol );
+
+            // Stuff the answer away.
+            tran[U_PERSPX] = psol.x;
+            tran[U_PERSPY] = psol.y;
+            tran[U_PERSPW] = psol.w;
+
+            tran[U_TRANSX] = psol.x;
+            tran[U_TRANSY] = psol.y;
+
+            // Clear the perspective partition.
+            locmat.set( 0, 2, 0 );
+            locmat.set( 1, 2, 0 );
+            locmat.set( 2, 2, 1 );
+        } else {
+            // No perspective.
+            tran[U_PERSPX] = tran[U_PERSPY] = tran[U_PERSPW] = 0;
+        }*/
+
+        // Next take care of translation (easy).
+        for ( i=0; i<2; i++ ) {
+//            tran[U_TRANSX + i] = locmat.get(2, i);
+//            locmat.set(2, i, 0);
+            tran[U_TRANSX + i] = locmat.get(i, 2);
+            locmat.set(i, 2, 0);
+        }
+
+        // Now get scale and shear.
+        for ( i = 0; i < 2; i++ ) {
+            row[i].x = locmat.get( i, 0 );
+            row[i].y = locmat.get( i, 1 );
+        }
+
+        // Compute X scale factor and normalize first row.
+        tran[U_SCALEX] = row[0].length();
+        // row[0] = *V2Scale(&row[0], 1.0);
+        row[0].normalizeVector();
+
+        // Compute XY shear factor and make 2nd row orthogonal to 1st.
+        tran[U_SHEARXY] = V2Dot( row[0], row[1] );
+        V2Combine( row[1], row[0], row[1], 1.0, -tran[U_SHEARXY] );
+
+        // Now, compute Y scale and normalize 2nd row.
+        // tran[U_SCALEY] = V3Length(&row[1]);
+        tran[U_SCALEY] = row[1].length();
+        row[1].normalizeVector();
+        tran[U_SHEARXY] /= tran[U_SCALEY];
+
+        // At this point, the matrix (in rows[]) is orthonormal.
+        // Check for a coordinate system flip.  If the determinant
+        // is positive, then negate the matrix and the scaling factors.
+        if ((row[0].x * row[1].y - row[1].x - row[0].y) < 0 ) {
+            for ( i = 0; i < 2; i++ ) {
+                tran[U_SCALEX + i] *= -1;
+                row[i].x *= -1;
+                row[i].y *= -1;
+            }
+        }
+
+        // Now, get the rotation out, similar to gem
+        // but gem uses  a different rotation matrix then we do
+        // In going between our rotation matrix and the 
+        // gem rotation matrix the sine and -sine reverse
+        // positions.  We have:
+        // rz = cos(G)   -sin(G)   0
+        //      sin(G)   cos(G)    0
+        //      0        0         1
+        
+        tran[U_ROTATEZ] = Math.asin( row[1].x );
+
+        //System.out.println( "transform:" );
+        //System.out.println( "rot z: " + getRotateZ() );
+        //System.out.println( "scl x: " + getScaleX() + " scl y: " + getScaleY());
+        //System.out.println( "trn x: " + getTranslateX() + " trn y: " + getTranslateY());
+
+        return true;
+    }
 
     /**
      * Decomposing a matrix into simple transformations
@@ -1567,10 +1728,24 @@ public class TransMatrix extends Matrix //                            implements
     public double getTranslateZ() {
         return tran[U_TRANSZ];
     }
+    
+    /* return the dot product of vectors a and b */
+    private double V2Dot( Vector2Dd a, Vector2Dd b ) {
+        return ( ( a.x * b.x ) + ( a.y * b.y ));
+    }
 
     /* return the dot product of vectors a and b */
     private double V3Dot( Vector3Dd a, Vector3Dd b ) {
         return ( ( a.x * b.x ) + ( a.y * b.y ) + ( a.z * b.z ) );
+    }
+    
+    /* make a linear combination of two vectors and return the result. */
+
+    /* result = (a * ascl) + (b * bscl) */
+    private Vector2Dd V2Combine( Vector2Dd a, Vector2Dd b, Vector2Dd result, double ascl, double bscl ) {
+        result.x = ( ascl * a.x ) + ( bscl * b.x );
+        result.y = ( ascl * a.y ) + ( bscl * b.y );
+        return ( result );
     }
 
     /* make a linear combination of two vectors and return the result. */
