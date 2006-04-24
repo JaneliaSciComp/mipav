@@ -77,6 +77,7 @@ public class JDialogTransform
     private int oXdim, oYdim, oZdim, cXdim, cYdim, cZdim;
     private boolean doVOI, doClip, doPad, addPix, doUpdateOrigin;
     private int interp = 0, padValue = 0;
+    private boolean rigidBodyBSpline = false;
 
     private TalairachTransformInfo tInfo = null;
     private boolean doTalairach = false;
@@ -828,6 +829,8 @@ public class JDialogTransform
         else {
             comboBoxInterp.addItem("Trilinear");
         }
+        comboBoxInterp.addItem("Rigid Body Bspline 3rd order");
+        comboBoxInterp.addItem("Rigid Body Bspline 4th order");
         comboBoxInterp.addItem("Bspline 3rd order");
         comboBoxInterp.addItem("Bspline 4th order");
         comboBoxInterp.addItem("Cubic Lagrangian");
@@ -902,7 +905,7 @@ public class JDialogTransform
         voiCheckbox.setSelected(false);
         voiCheckbox.addItemListener(this);
         voiCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-
+        
         // Should be transform VOI also
         if (image.getVOIs() == null || image.getVOIs().isEmpty() == true) {
             voiCheckbox.setEnabled(false);
@@ -1477,16 +1480,20 @@ public class JDialogTransform
             }
         } // else if (boxIndex)
         else if (boxIndex == 2)
-            interp = AlgorithmTransform.BSPLINE3;
+            interp = AlgorithmTransform.RIGID_BODY_BSPLINE3;
         else if (boxIndex == 3)
-            interp = AlgorithmTransform.BSPLINE4;
+            interp = AlgorithmTransform.RIGID_BODY_BSPLINE4;
         else if (boxIndex == 4)
-            interp = AlgorithmTransform.CUBIC_LAGRANGIAN;
+            interp = AlgorithmTransform.BSPLINE3;
         else if (boxIndex == 5)
-            interp = AlgorithmTransform.QUINTIC_LAGRANGIAN;
+            interp = AlgorithmTransform.BSPLINE4;
         else if (boxIndex == 6)
-            interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;
+            interp = AlgorithmTransform.CUBIC_LAGRANGIAN;
         else if (boxIndex == 7)
+            interp = AlgorithmTransform.QUINTIC_LAGRANGIAN;
+        else if (boxIndex == 8)
+            interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;
+        else if (boxIndex == 9)
             interp = AlgorithmTransform.WSINC;
 
         doVOI = voiCheckbox.isSelected();
@@ -2471,18 +2478,22 @@ public class JDialogTransform
                 comboBoxInterp.insertItemAt("Bilinear",1);
                 comboBoxInterp.setSelectedIndex(1); //bilinear
 
-                labelTx.setEnabled(true);
-                labelTy.setEnabled(true);
-                labelRz.setEnabled(true);
-                labelSx.setEnabled(true);
-                labelSy.setEnabled(true);
-                labelSKx.setEnabled(true);
-                textTx.setEnabled(true);
-                textTy.setEnabled(true);
-                textRz.setEnabled(true);
-                textSx.setEnabled(true);
-                textSy.setEnabled(true);
-                textSKy.setEnabled(true);
+                if (userDefinedMatrix.isSelected()) {
+                    labelTx.setEnabled(true);
+                    labelTy.setEnabled(true);
+                    labelRz.setEnabled(true);
+                    textTx.setEnabled(true);
+                    textTy.setEnabled(true);
+                    textRz.setEnabled(true);
+                    if (!rigidBodyBSpline) {
+                        labelSx.setEnabled(true);
+                        labelSy.setEnabled(true);
+                        labelSKx.setEnabled(true);
+                        textSx.setEnabled(true);
+                        textSy.setEnabled(true);
+                        textSKy.setEnabled(true);
+                    }
+                }
 
                 labelTz.setEnabled(false);
                 labelRx.setEnabled(false);
@@ -2509,21 +2520,27 @@ public class JDialogTransform
                 comboBoxInterp.insertItemAt("Trilinear",1);
                 comboBoxInterp.setSelectedIndex(1); ///trilinear
 
-                labelTz.setEnabled(true);
-                labelRx.setEnabled(true);
-                labelRy.setEnabled(true);
-                labelSz.setEnabled(true);
-                labelSKz.setEnabled(true);
-                textTz.setEnabled(true);
-                textRx.setEnabled(true);
-                textRy.setEnabled(true);
-                textSz.setEnabled(true);
-                textSKz.setEnabled(true);
+                if (userDefinedMatrix.isSelected()) {
+                    labelTz.setEnabled(true);
+                    labelRx.setEnabled(true);
+                    labelRy.setEnabled(true);
+                    textTz.setEnabled(true);
+                    textRx.setEnabled(true);
+                    textRy.setEnabled(true);
+                    if (!rigidBodyBSpline) {
+                        labelSz.setEnabled(true);
+                        labelSKz.setEnabled(true);
+                        textSz.setEnabled(true);
+                        textSKz.setEnabled(true);
+                    }
+                }
 
-                labelResZ.setEnabled(true);
-                labelDimZ.setEnabled(true);
-                textResZ.setEnabled(true);
-                textDimZ.setEnabled(true);
+                if (resampletoUser.isSelected()) {
+                    labelResZ.setEnabled(true);
+                    labelDimZ.setEnabled(true);
+                    textResZ.setEnabled(true);
+                    textDimZ.setEnabled(true);
+                }
             }
             else if (DIM == 2) {
                 comboBoxInterp.setSelectedIndex(1); // bilinear
@@ -2532,15 +2549,65 @@ public class JDialogTransform
         }
 
         if (source == comboBoxInterp) {
-            if (comboBoxInterp.getSelectedIndex() < 4) {
+            if (comboBoxInterp.getSelectedIndex() < 6) {
                 clipCheckbox.setSelected(true);
                 clipCheckbox.setEnabled(false);
             }
             else {
                 clipCheckbox.setEnabled(true);
             }
+            if ((comboBoxInterp.getSelectedIndex() == 2) || 
+                (comboBoxInterp.getSelectedIndex() == 3)) {
+                rigidBodyBSpline = true; 
+                labelSx.setEnabled(false);
+                labelSy.setEnabled(false);
+                labelSz.setEnabled(false);
+                labelSKx.setEnabled(false);
+                labelSKy.setEnabled(false);
+                labelSKz.setEnabled(false); 
+                textSx.setEnabled(false);
+                textSy.setEnabled(false);
+                textSz.setEnabled(false);
+                textSKx.setEnabled(false);
+                textSKy.setEnabled(false);
+                textSKz.setEnabled(false);
+                textSx.setText("1");
+                textSy.setText("1");
+                textSz.setText("1");
+                textSKx.setText("0");
+                textSKy.setText("0");
+                textSKz.setText("0");
+                resampletoUser.setSelected(false);
+                resampletoUser.setEnabled(false);
+                resampleSlider.setSelected(false);
+                resampleSlider.setEnabled(false);
+                resampletoImage.setSelected(true);
+                comboBoxImage.setSelectedIndex(0);
+                comboBoxImage.setEnabled(false);
+            }
+            else { // not BSpline interpolation
+                rigidBodyBSpline = false;
+                if (userDefinedMatrix.isSelected()) {
+                    labelSx.setEnabled(true);
+                    labelSy.setEnabled(true);
+                    labelSKx.setEnabled(true);
+                    labelSKy.setEnabled(true);
+                    textSx.setEnabled(true);
+                    textSy.setEnabled(true);
+                    textSKx.setEnabled(true);
+                    textSKy.setEnabled(true);
+                    if ( (DIM >= 3) && (image25DCheckbox.isSelected() == false)) {
+                        labelSz.setEnabled(true);
+                        labelSKz.setEnabled(true);
+                        textSz.setEnabled(true);
+                        textSKz.setEnabled(true);
+                    }
+                } // if (userDefinedMatrix.isSelected())
+                resampletoUser.setEnabled(true);
+                resampleSlider.setEnabled(true);
+                comboBoxImage.setEnabled(true);
+            }
         }
-
         if (source == computeTImage) {
             if (computeTImage.isSelected()) {
                 comboBoxTalTransform.setEnabled(true);
@@ -2616,28 +2683,32 @@ public class JDialogTransform
                 labelTx.setEnabled(true);
                 labelTy.setEnabled(true);
                 labelRz.setEnabled(true);
-                labelSx.setEnabled(true);
-                labelSy.setEnabled(true);
-                labelSKx.setEnabled(true);
-                labelSKy.setEnabled(true);
                 textTx.setEnabled(true);
                 textTy.setEnabled(true);
                 textRz.setEnabled(true);
-                textSx.setEnabled(true);
-                textSy.setEnabled(true);
-                textSKx.setEnabled(true);
-                textSKy.setEnabled(true);
+                if (!rigidBodyBSpline) {
+                    labelSx.setEnabled(true);
+                    labelSy.setEnabled(true);
+                    labelSKx.setEnabled(true);
+                    labelSKy.setEnabled(true);
+                    textSx.setEnabled(true);
+                    textSy.setEnabled(true);
+                    textSKx.setEnabled(true);
+                    textSKy.setEnabled(true);
+                }
                 if ( (DIM >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelTz.setEnabled(true);
                     labelRx.setEnabled(true);
                     labelRy.setEnabled(true);
-                    labelSz.setEnabled(true);
-                    labelSKz.setEnabled(true);
                     textTz.setEnabled(true);
                     textRx.setEnabled(true);
                     textRy.setEnabled(true);
-                    textSz.setEnabled(true);
-                    textSKz.setEnabled(true);
+                    if (!rigidBodyBSpline) {
+                        labelSz.setEnabled(true);
+                        labelSKz.setEnabled(true);
+                        textSz.setEnabled(true);
+                        textSKz.setEnabled(true);
+                    }
                 }
             }
             else {
