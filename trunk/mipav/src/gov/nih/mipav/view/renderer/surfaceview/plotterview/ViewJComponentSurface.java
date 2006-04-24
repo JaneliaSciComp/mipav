@@ -241,6 +241,9 @@ public class ViewJComponentSurface
         imageA = null;
         LUTa = null;
         imageExtents = null;
+        cVertex = null;
+        cConnect = null;
+        imageExtents = null;
 
         if (plottedRoot != null) {
             Enumeration e = plottedRoot.getAllChildren();
