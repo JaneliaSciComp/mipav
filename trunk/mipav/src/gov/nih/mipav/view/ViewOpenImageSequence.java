@@ -862,7 +862,7 @@ public class ViewOpenImageSequence extends JFrame implements
      */
     protected File getLastOpenSequencePath()
     {
-        String srsPathName = Preferences.getProperty("OpenSequencePath");
+        String srsPathName = Preferences.getLastOpenSequencePath();
         File srsPath;
 
         if (srsPathName != null)
@@ -871,7 +871,9 @@ public class ViewOpenImageSequence extends JFrame implements
 
             if (srsPath.exists() == false || srsPath.canRead() == false)
             {
-                srsPath = new File(Preferences.getProperty("user.home"));
+                String home = System.getProperty("user.home");
+                System.out.println("home: " + home);
+                srsPath = new File(home);
             }
         }
         else
@@ -880,7 +882,7 @@ public class ViewOpenImageSequence extends JFrame implements
             
             if (srsPath.exists() == false || srsPath.canRead() == false)
             {
-                srsPath = new File(Preferences.getProperty("user.home"));
+                srsPath = new File(System.getProperty("user.home"));
             }
         }
 
