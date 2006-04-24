@@ -549,6 +549,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
                 else if ( interp == BILINEAR ) {
                     transformBilinear3D( imgBuf, xfrm );
+                } else if ( interp == RIGID_BODY_BSPLINE3 ) {
+                    transformRigidBspline2D( imgBuf, transMatrix, 3 );
+                } else if ( interp == RIGID_BODY_BSPLINE4 ) {
+                    transformRigidBspline2D( imgBuf, transMatrix, 4 );
                 } else if ( interp == BSPLINE3 ) {
                     transformBspline3Dim2D( imgBuf, xfrm, 3 );
                 } else if ( interp == BSPLINE4 ) {
@@ -3679,7 +3683,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         rotZ = -tMat.getRotateZ() * Math.PI/180.0;
         nx = srcImage.getExtents()[0] + 2*border;
         ny = srcImage.getExtents()[1] + 2*border;
-        nz = 1 + 2*border;
+        if (srcImage.getNDims() == 2) {
+            nz = 1 + 2*border;
+        }
+        else {
+            nz = srcImage.getExtents()[2] + 2*border;
+        }
         image = new float[nx][ny][nz];
         for (x = 0; x < nx; x++) {
             for (y = 0; y < ny; y++) {
@@ -3688,11 +3697,20 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             }
         }
-        for (x = border; x < nx - border; x++) {
+        for (z = border; z < nz - border; z++) {
+            if ((z >= border + 1) && (z <= nz - 1 - border)) {
+                try {
+                    srcImage.exportData( ( z - border ) * imgLength, imgLength, imgBuf );
+                } catch ( IOException error ) {
+                    displayError( "Algorithm Transform: Image(s) locked" );
+                    setCompleted( false );
+                    disposeProgressBar();
+                    return;
+                }    
+            }
             for (y = border; y < ny - border; y++) {
-                for (z = border; z < nz - border; z++) {
-                    image[x][y][z] = imgBuf[(x-border) + (nx-2*border)*(y-border) +
-                                            (nx-2*border)*(ny-2*border)*(z-border)];
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = imgBuf[(x-border) + (nx-2*border)*(y-border)];
                 }
             }
         }
@@ -3701,6 +3719,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         img2D = new float[nx][ny];
         res2D = new float[nx][ny];
         for (z = 0; z < nz; z++) {
+            if ( isProgressBarVisible() ) {
+                progressBar.updateValue( (int) ( (float) z/ nz * 50 + 0.5 ), activeImage );
+            }
             for (x = 0; x < nx; x++) {
                 for (y = 0; y < ny; y++) {
                     img2D[x][y] = image[x][y][z];
@@ -3726,6 +3747,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         
         // Visit all the pixels of the output image asnd assign their value
         for (z = 0; z < nz; z++) {
+            if ( isProgressBarVisible() ) {
+                progressBar.updateValue( (int) ( (float) z/ nz * 50 + 50.5 ), activeImage );
+            }
             for (x = 0; x < nx; x++) {
                 for (y = 0; y < ny; y++) {
                     img2D[x][y] = image[x][y][z];
@@ -3765,19 +3789,20 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (z = 0; z < nz; z++) {
             for (x = 0; x < nx; x++) {
                 for (y = 0; y < ny; y++) {
-                    imgBuf[x + nx*y + nx*ny*z] = image[x + border][y + border][z + border];   
+                    imgBuf[x + nx*y] = image[x + border][y + border][z + border];   
                 }
             }
+            try {
+            destImage.importData(z*imgLength, imgBuf, false);
+            }
+            catch(IOException e) {
+                displayError( "Algorithm Transform: IOException Error on importData" );
+                setCompleted( false );
+                disposeProgressBar();
+                return;   
+            }
         }
-        try {
-        destImage.importData(0, imgBuf,true);
-        }
-        catch(IOException e) {
-            displayError( "Algorithm Transform: IOException Error on importData" );
-            setCompleted( false );
-            disposeProgressBar();
-            return;   
-        }
+        destImage.calcMinMax();
         return;
     }
     
