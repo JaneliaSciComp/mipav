@@ -833,7 +833,9 @@ public class SurfacePlotter extends RenderViewBase
         }
         LUTa = null;
 
-        System.gc();
+        super.disposeLocal();
+
+
     }
 
 
