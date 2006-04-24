@@ -818,6 +818,10 @@ public class FileRawChunk extends FileBase {
                         bufferInt = new int[4 * bufferSize];
                         bufferByte = new byte[6 * bufferSize];
                         break;
+                    case ModelStorageBase.COMPLEX:
+                        bufferFloat = new float[2 * bufferSize];
+                        bufferByte  = new byte[8 * bufferSize];
+                        break;
                     default:
                         throw new IOException();
                 }
@@ -1189,6 +1193,46 @@ public class FileRawChunk extends FileBase {
                  * bufferByte[j] = (byte)(bufferInt[i+3] & 0xff); bufferByte[j+1] = (byte)(bufferInt[i+3] >>> 8); } } //
                  * else endianess == LITTLE_ENDIAN raFile.write(bufferByte); } catch (IOException error) { throw error; } } }
                  */
+                break;
+            case ModelStorageBase.COMPLEX:
+                try {
+                    image.exportData(2 * start, 2 * bufferSize, bufferFloat);
+                    int tmpInt;
+                    if (endianess == BIG_ENDIAN) {
+                        for (i = 0, index = 0; i < 2 * bufferSize; i+= 2 ) {
+                            tmpInt = Float.floatToIntBits(bufferFloat[i]);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 24);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 16);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 8);
+                            bufferByte[index++ ] = (byte) (tmpInt & 0xff);
+                            tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 24);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 16);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 8);
+                            bufferByte[index++ ] = (byte) (tmpInt & 0xff);
+                        }
+                    } else {
+                        for (i = 0, index = 0; i < 2 * bufferSize; i+= 2 ) {
+                            tmpInt = Float.floatToIntBits(bufferFloat[i]);
+                            bufferByte[index++ ] = (byte) (tmpInt & 0xff);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 8);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 16);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 24);
+                            tmpInt = Float.floatToIntBits(bufferFloat[i+1]);
+                            bufferByte[index++ ] = (byte) (tmpInt & 0xff);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 8);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 16);
+                            bufferByte[index++ ] = (byte) (tmpInt >>> 24);
+                        }
+                    }
+                    if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                        raFile.write(bufferByte);
+                    } else {
+                        deflaterStream.write(bufferByte);
+                    }
+                } catch (IOException error) {
+                    throw error;
+                }
                 break;
             default:
                 throw new IOException();
