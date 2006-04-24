@@ -391,7 +391,8 @@ public class FileAnalyze
         fileInfo.setDataType(ModelStorageBase.FLOAT);
         break;
       case FileInfoAnalyze.DT_COMPLEX:
-        return false; // Should add complex type sometime!
+        fileInfo.setDataType(ModelStorageBase.COMPLEX);
+        break;
       case FileInfoAnalyze.DT_DOUBLE:
         fileInfo.setDataType(ModelStorageBase.DOUBLE);
         break;
@@ -492,6 +493,7 @@ public class FileAnalyze
         break;
       case ModelStorageBase.LONG:
       case ModelStorageBase.DOUBLE:
+      case ModelStorageBase.COMPLEX:
         offset *= 8;
         break;
       case ModelStorageBase.ARGB:
@@ -671,6 +673,9 @@ public class FileAnalyze
         fileInfo.setDataType( FileInfoAnalyze.DT_RGB);
         fileInfo.setBitPix( (short) 24);
         break;
+      case ModelStorageBase.COMPLEX:
+        fileInfo.setDataType(FileInfoAnalyze.DT_COMPLEX);
+        break;
       default:
         return false;
     }
@@ -837,6 +842,9 @@ public class FileAnalyze
           break;
         case ModelStorageBase.ARGB: // only RGB for Analyze images
           fileInfo.setBitPix( (short) 24);
+          break;
+        case ModelStorageBase.COMPLEX:
+          fileInfo.setBitPix((short) 64);
           break;
         default:
           return false;
@@ -1077,6 +1085,27 @@ public class FileAnalyze
           image.importData(k * bufferSize, resultBuffer, false);
         }
       }
+      else if (image.getType() == ModelStorageBase.COMPLEX) {
+
+          buffer = new float[bufferSize * 2];
+          resultBuffer = new float[bufferSize * 2];
+          bufferSize = bufferSize * 2;
+
+          int i, j, k;
+          int xDim = image.getExtents()[0] * 2;
+          int yDim = image.getExtents()[1];
+
+          for (k = 0; k < nBuffers; k++) {
+            image.exportData(k * bufferSize, bufferSize, buffer);
+            for (j = 0; j < yDim; j++) {
+              for (i = 0; i < xDim; i += 2) {
+                resultBuffer[j * xDim + i] = buffer[ (yDim - 1 - j) * xDim + i];
+                resultBuffer[j * xDim + i + 1] = buffer[ (yDim - 1 - j) * xDim + i + 1];
+              }
+            }
+            image.importData(k * bufferSize, resultBuffer, false);
+          }
+        }
       else {
         buffer = new float[bufferSize];
         resultBuffer = new float[bufferSize];
@@ -1135,7 +1164,8 @@ public class FileAnalyze
       }
 
 
-      if (!image.isColorImage()) {
+      if (!image.isColorImage() && image.getType() != ModelStorageBase.COMPLEX &&
+           image.getType() != ModelStorageBase.DCOMPLEX) {
         buffer = new float[bufferSize];
 
         int i, j, k;
@@ -1217,6 +1247,26 @@ public class FileAnalyze
           }
         }
       }
+      else if (fileInfo.getDataTypeCode() == FileInfoAnalyze.DT_COMPLEX) {
+
+          resultBuffer = new float[bufferSize * 2];
+          bufferSize = bufferSize * 2;
+
+          int i, j, k;
+          int xDim = image.getExtents()[0] * 2;
+          int yDim = image.getExtents()[1];
+
+          for (k = 0; k < nBuffers; k++) {
+            for (j = 0; j < yDim; j++) {
+              for (i = 0; i < xDim; i += 2) {
+                resultBuffer[j * xDim + i] = 
+                    buffer[k * bufferSize + (yDim - 1 - j) * xDim + i];
+                resultBuffer[k * bufferSize + j * xDim + i +
+                    1] = buffer[k * bufferSize + (yDim - 1 - j) * xDim + i + 1];
+              }
+            }
+          }
+        }
       else {
         resultBuffer = new float[buffer.length];
 
