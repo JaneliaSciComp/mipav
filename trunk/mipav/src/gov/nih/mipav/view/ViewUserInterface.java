@@ -2563,11 +2563,7 @@ public class ViewUserInterface
                try {
                    thePlugIn = Class.forName(plugInName).newInstance();
                    if (thePlugIn instanceof PlugInFileTransfer) {
-                       if (((PlugInFileTransfer)thePlugIn).canTransferFiles()) {
-                           ((PlugInFileTransfer)thePlugIn).transferFiles();
-                       } else {
-                           MipavUtil.displayInfo(plugInName + " does not support files transfering.");
-                       }
+                       ((PlugInFileTransfer)thePlugIn).transferFiles();
                    } else {
                        MipavUtil.displayError("PlugIn " + plugInName + " claims to be an File Transfer PlugIn, but does not implement PlugInFileTransfer.");
                    }
@@ -3075,11 +3071,9 @@ public class ViewUserInterface
                         //  System.err.println("adding " + name + " as PlugInFile");
                     }
                     else if(plugIn instanceof PlugInFileTransfer){
-                        if (((PlugInFileTransfer)plugIn).canTransferFiles()) {
-                            menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - transfer files", "PlugInFileTransfer", 0, al, null, false);
-                            fileTransferMenu.add(menuItem);
-                            menuItem.setName(name);
-                        }
+                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6, name.length()) + " - transfer files", "PlugInFileTransfer", 0, al, null, false);
+                        fileTransferMenu.add(menuItem);
+                        menuItem.setName(name);
                     }
                     else if (plugIn instanceof PlugInView && ! (al instanceof ViewUserInterface)) {
                         //  System.err.println("adding " + name + " as PlugInView");
