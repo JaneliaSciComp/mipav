@@ -593,6 +593,16 @@ public class AlgorithmTransform extends AlgorithmBase {
                     if ( transformVOI == true ) {
                         transform3DVOI( srcImage, imgBuf, xfrm );
                     }
+                } else if ( interp == RIGID_BODY_BSPLINE3 ) {
+                    transformRigidBspline3D( imgBuf, transMatrix, 3 );
+                    if ( transformVOI == true ) {
+                        transform3DVOI( srcImage, imgBuf, xfrm );
+                    }
+                } else if ( interp == RIGID_BODY_BSPLINE4 ) {
+                    transformRigidBspline3D( imgBuf, transMatrix, 4 );
+                    if ( transformVOI == true ) {
+                        transform3DVOI( srcImage, imgBuf, xfrm );
+                    }
                 } else if ( interp == BSPLINE3 ) {
                     transformBspline3D( imgBuf, xfrm, 3 );
                     if ( transformVOI == true ) {
@@ -3674,12 +3684,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         boolean masking = true;
         success = tMat.decomposeMatrix2D(tMat);
         if (!success) {
-            MipavUtil.displayError("decomposeMatrix failure in transformRigidBSpline2D");
+            MipavUtil.displayError("decomposeMatrix2D failure in transformRigidBSpline2D");
             disposeLocal();
             setCompleted(false);
         }
-        transX = tMat.getTranslateX();
-        transY = tMat.getTranslateY();
+        transX = tMat.getTranslateX()/iXres;
+        transY = tMat.getTranslateY()/iYres;
         rotZ = -tMat.getRotateZ() * Math.PI/180.0;
         nx = srcImage.getExtents()[0] + 2*border;
         ny = srcImage.getExtents()[1] + 2*border;
@@ -3803,6 +3813,155 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
         }
         destImage.calcMinMax();
+        return;
+    }
+    
+    /**
+     *  Transforms and resamples volume using Bspline interpolation
+     *  @param imgBuf  image array
+     *  @param tMat    transformation matrix to be applied
+     *  @param degree  degree of polynomial
+     */
+    private void transformRigidBspline3D( float[] imgBuf, TransMatrix tMat, int degree ) {
+        boolean success;
+        double transX;
+        double transY;
+        double transZ;
+        double rotX;
+        double rotY;
+        double rotZ;
+        double xOrigin = 0.0;
+        double yOrigin = 0.0;
+        double zOrigin = 0.0;
+        int nx, ny, nz;
+        int border = 0;
+        float image[][][];
+        int x, y, z;
+        BSplineProcessing splineAlg = null;
+        float res3D[][][];
+        double xShift = 0.0;
+        double yShift = 0.0;
+        double zShift = 0.0;
+        double x0, y0, z0, x1, y1, z1, x2, y2, z2;
+        double a11, a12, a13, a21, a22, a23, a31, a32, a33;
+        boolean masking = true;
+        success = tMat.decomposeMatrix(tMat);
+        if (!success) {
+            MipavUtil.displayError("decomposeMatrix failure in transformRigidBSpline3D");
+            disposeLocal();
+            setCompleted(false);
+        }
+        transX = tMat.getTranslateX()/iXres;
+        transY = tMat.getTranslateY()/iYres;
+        transZ = tMat.getTranslateZ()/iZres;
+        rotX = -tMat.getRotateX() * Math.PI/180.0;
+        rotY = -tMat.getRotateY() * Math.PI/180.0;
+        rotZ = -tMat.getRotateZ() * Math.PI/180.0;
+        nx = srcImage.getExtents()[0] + 2*border;
+        ny = srcImage.getExtents()[1] + 2*border;
+        nz = srcImage.getExtents()[2] + 2*border;
+   
+        image = new float[nx][ny][nz];
+        for (x = 0; x < nx; x++) {
+            for (y = 0; y < ny; y++) {
+                for (z = 0; z < nz; z++) {
+                    image[x][y][z] = -1.0f;
+                }
+            }
+        }
+        for (z = border; z < nz - border; z++) {
+            for (y = border; y < ny - border; y++) {
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = imgBuf[(x-border) + (nx-2*border)*(y-border) +
+                                            (nx - 2*border)*(ny - 2*border)*(z-border)];
+                }
+            }
+        }
+        
+        splineAlg = new BSplineProcessing();
+        splineAlg.samplesToCoefficients(image, nx, ny, nz, degree);
+        res3D = new float[nx][ny][nz];
+        
+        // Prepare the geometry
+        a11 = Math.cos(rotY) * Math.cos(rotZ);
+        a12 = -Math.cos(rotY) * Math.sin(rotZ);
+        a13 = Math.sin(rotY);
+        a21 = Math.sin(rotX) * Math.sin(rotY) * Math.cos(rotZ) +
+              Math.cos(rotX) * Math.sin(rotZ);
+        a22 = -Math.sin(rotX)* Math.sin(rotY) * Math.sin(rotZ) +
+              Math.cos(rotX) * Math.cos(rotZ);
+        a23 = -Math.sin(rotX) * Math.cos(rotY);
+        a31 = -Math.cos(rotX)* Math.sin(rotY) * Math.cos(rotZ) +
+              Math.sin(rotX) * Math.sin(rotZ);
+        a32 = Math.cos(rotX) * Math.sin(rotY) * Math.sin(rotZ) +
+              Math.sin(rotX) * Math.cos(rotZ);
+        a33 = Math.cos(rotX) * Math.cos(rotY);
+        x0 = a11 * (transX + xOrigin) + a12 * (transY + yOrigin) +
+             a13 * (transZ + zOrigin);
+        y0 = a21 * (transX + xOrigin) + a22 * (transY + yOrigin) +
+             a23 * (transZ + zOrigin);
+        z0 = a31 * (transX + xOrigin) + a32 * (transY + yOrigin) +
+             a33 * (transZ + zOrigin);
+        xShift = xOrigin - x0;
+        yShift = yOrigin - y0;
+        zShift = zOrigin - z0;
+        //System.out.println("a11 = " + a11 + " a12 = " + a12 + " a13 = " + a13);
+        //System.out.println("a21 = " + a21 + " a22 = " + a22 + " a23 = " + a23);
+        //System.out.println("a31 = " + a31 + " a32 = " + a32 + " a33 = " + a33);
+        
+        // Visit all the pixels of the output image asnd assign their value
+        for (z = 0; z < nz; z++) {
+            if ( isProgressBarVisible() ) {
+                progressBar.updateValue( (int) ( (float) z/ nz * 50 + 50.5 ), activeImage );
+            }
+                x0 = a13 * (double)z + xShift;
+                y0 = a23 * (double)z + yShift;
+                z0 = a33 * (double)z + zShift;
+            for (y = 0; y < ny; y++) {
+                x1 = x0 + a12 * (double)y;
+                y1 = y0 + a22 * (double)y;
+                z1 = z0 + a32 * (double)y;
+                for (x = 0; x < nx; x++) {
+                    x2 = x1 + a11 * (double)x;
+                    y2 = y1 + a21 * (double)x;
+                    z2 = z1 + a31 * (double)x;
+                    if (masking) {
+                        if ((x2 <= -0.5) || (((double)nx - 0.5) <= x2) ||
+                            (y2 <= -0.5) || (((double)ny - 0.5) <= y2) ||
+                            (z2 <= -0.5) || (((double)nz - 0.5) <= z2)) {
+                            res3D[x][y][z] = 0.0f;
+                        }
+                        else {
+                            res3D[x][y][z] = (float)splineAlg.interpolatedValue(image,
+                                    x2, y2, z2, nx, ny, nz, degree);
+                        }
+                    } // if (masking)
+                    else {
+                        res3D[x][y][z] = (float)splineAlg.interpolatedValue(image,
+                                x2, y2, z2, nx, ny, nz, degree);
+                    } 
+                } // for (x = 0; x < nx; x++)
+            } // for (y = 0; y < ny; y++)   
+        } // for (z = 0; z < nz; z++)
+        nx = nx - 2*border;
+        ny = ny - 2*border;
+        nz = nz - 2*border;
+        for (z = 0; z < nz; z++) {
+            for (x = 0; x < nx; x++) {
+                for (y = 0; y < ny; y++) {
+                    imgBuf[x + nx*y + nx*ny*z] = res3D[x + border][y + border][z + border];   
+                }
+            }
+        }
+        try {
+            destImage.importData(0, imgBuf, true);
+        }
+        catch(IOException e) {
+            displayError( "Algorithm Transform: IOException Error on importData" );
+            setCompleted( false );
+            disposeProgressBar();
+            return;   
+        }
         return;
     }
     
