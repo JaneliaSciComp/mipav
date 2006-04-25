@@ -27,7 +27,6 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     private int         imgHeight;
     private PreviewImageContainer parent;
 
-    private JChatFrame chatParent;
     private MemoryImageSource memImage;
 
     private int brightness; // offset ranging from -255 to 255 add to each
@@ -261,12 +260,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     */
     public Dimension getPreferredSize() {
       Dimension size = null;
-      if (chatParent !=null) {
-        size = chatParent.getPanelSize();
-      }
-      else {
-        size = parent.getPanelSize();
-      }
+      size = parent.getPanelSize();
       setImgSize(size.width, size.height);
         try {
             return new Dimension(imgWidth, imgHeight);

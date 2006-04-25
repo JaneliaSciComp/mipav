@@ -1996,10 +1996,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         {
             userInterface.createBlankImage(null);
         }
-        else if (command.equals("Chat"))
-        {
-            new JChatFrame(userInterface);
-        }
         else if (command.equals("CreateTree"))
         {
             userInterface.buildTreeDialog();
