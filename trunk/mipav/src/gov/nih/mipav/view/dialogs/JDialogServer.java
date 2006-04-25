@@ -34,8 +34,6 @@ public class JDialogServer extends JDialogBase {
 
     private     boolean     server;
 
-    private     boolean     isChat = false;
-
     /**
     *  Creates new dialog for setting server.
     *  @param theParentFrame parent frame
@@ -45,8 +43,6 @@ public class JDialogServer extends JDialogBase {
 	public JDialogServer(JFrame theParentFrame, String title, boolean server) {
 
 	    super(theParentFrame, true);
-
-        isChat = (theParentFrame instanceof JChatFrame);
 
 	    setTitle(title);
 
@@ -71,7 +67,6 @@ public class JDialogServer extends JDialogBase {
 
 	    super(theParentFrame, true);
 	    setTitle(title);
-        isChat = (theParentFrame instanceof JChatFrame);
 	    buildContentPane(server);
 	    this.server = server;
 	    setValues(values);
@@ -115,14 +110,7 @@ public class JDialogServer extends JDialogBase {
         gbc.insets = leftInsets;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        String temp = "";
-        if (isChat) {
-            temp = "Name";
-        }
-        else {
-            temp = "AE Title";
-        }
-        titleLabel = buildLabel(temp);
+        titleLabel = buildLabel("AE Title");
         getContentPane().add(titleLabel, gbc);
 
         gbc.gridx = 2;
