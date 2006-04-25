@@ -9387,6 +9387,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         double x0, y0, x1, y1;
         double a11, a12, a21, a22;
         boolean masking = true;
+        float sliceMin[];
+        float sliceMax[];
+        int i;
         success = tMat.decomposeMatrix2D(tMat);
 
         if (!success) {
@@ -9403,8 +9406,17 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         if (srcImage.getNDims() == 2) {
             nz = 1 + (2 * border);
+            sliceMin = new float[1];
+            sliceMax = new float[1];
         } else {
             nz = srcImage.getExtents()[2] + (2 * border);
+            sliceMin = new float[srcImage.getExtents()[2]];
+            sliceMax = new float[srcImage.getExtents()[2]];
+        }
+        
+        for (i = 0; i < sliceMin.length; i++) {
+            sliceMin[i] = Float.MAX_VALUE;
+            sliceMax[i] = -Float.MAX_VALUE;
         }
 
         image = new float[nx][ny][nz];
@@ -9438,6 +9450,12 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 for (x = border; x < (nx - border); x++) {
                     image[x][y][z] = imgBuf[(x - border) + ((nx - (2 * border)) * (y - border))];
+                    if (image[x][y][z] > sliceMax[z-border]) {
+                        sliceMax[z-border] = image[x][y][z];
+                    }
+                    if (image[x][y][z] < sliceMin[z-border]) {
+                        sliceMin[z-border] = image[x][y][z];   
+                    }
                 }
             }
         }
@@ -9505,13 +9523,25 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         if ((x1 <= -0.5) || (((double) nx - 0.5) <= x1) || (y1 <= -0.5) ||
                                 (((double) ny - 0.5) <= y1)) {
-                            res2D[x][y] = 0.0f;
+                            res2D[x][y] = sliceMin[z];
                         } else {
                             res2D[x][y] = (float) splineAlg.interpolatedValue(img2D, x1, y1, nx, ny, degree);
+                            if (res2D[x][y] > sliceMax[z]) {
+                                res2D[x][y] = sliceMax[z];
+                            }
+                            if (res2D[x][y] < sliceMin[z]) {
+                                res2D[x][y] = sliceMin[z];
+                            }
                         }
                     } // if (masking)
                     else {
                         res2D[x][y] = (float) splineAlg.interpolatedValue(img2D, x1, y1, nx, ny, degree);
+                        if (res2D[x][y] > sliceMax[z]) {
+                            res2D[x][y] = sliceMax[z];
+                        }
+                        if (res2D[x][y] < sliceMin[z]) {
+                            res2D[x][y] = sliceMin[z];
+                        }
                     }
                 } // for (x = 0; x < nx; x++)
             } // for (y = 0; y < ny; y++)
@@ -9583,6 +9613,13 @@ public class AlgorithmTransform extends AlgorithmBase {
         double x0, y0, z0, x1, y1, z1, x2, y2, z2;
         double a11, a12, a13, a21, a22, a23, a31, a32, a33;
         boolean masking = true;
+        float imageMin;
+        float imageMax;
+        
+        srcImage.calcMinMax();
+        imageMin = (float)srcImage.getMin();
+        imageMax = (float)srcImage.getMax();
+        
         success = tMat.decomposeMatrix(tMat);
 
         if (!success) {
@@ -9594,9 +9631,19 @@ public class AlgorithmTransform extends AlgorithmBase {
         transX = tMat.getTranslateX() / iXres;
         transY = tMat.getTranslateY() / iYres;
         transZ = tMat.getTranslateZ() / iZres;
+        /*rotX = tMat.getRotateX();
+        System.out.println("rotX = " + rotX);
+        rotY = tMat.getRotateY();
+        System.out.println("rotY = " + rotY);
+        rotZ = tMat.getRotateZ();
+        System.out.println("rotZ = " + rotZ);*/
         rotX = -tMat.getRotateX() * Math.PI / 180.0;
         rotY = -tMat.getRotateY() * Math.PI / 180.0;
         rotZ = -tMat.getRotateZ() * Math.PI / 180.0;
+        //System.out.println("transX = " + transX + " transY = " + transY +
+                           //" transZ = " + transZ);
+        //System.out.println("rotX = " + rotX + " rotY = " + rotY +
+                           //" rotZ = " + rotZ);
         nx = srcImage.getExtents()[0] + (2 * border);
         ny = srcImage.getExtents()[1] + (2 * border);
         nz = srcImage.getExtents()[2] + (2 * border);
@@ -9673,13 +9720,25 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         if ((x2 <= -0.5) || (((double) nx - 0.5) <= x2) || (y2 <= -0.5) ||
                                 (((double) ny - 0.5) <= y2) || (z2 <= -0.5) || (((double) nz - 0.5) <= z2)) {
-                            res3D[x][y][z] = 0.0f;
+                            res3D[x][y][z] = imageMin;
                         } else {
                             res3D[x][y][z] = (float) splineAlg.interpolatedValue(image, x2, y2, z2, nx, ny, nz, degree);
+                            if (res3D[x][y][z] > imageMax) {
+                                res3D[x][y][z] = imageMax;
+                            }
+                            if (res3D[x][y][z] < imageMin) {
+                                res3D[x][y][z] = imageMin;
+                            }
                         }
                     } // if (masking)
                     else {
                         res3D[x][y][z] = (float) splineAlg.interpolatedValue(image, x2, y2, z2, nx, ny, nz, degree);
+                        if (res3D[x][y][z] > imageMax) {
+                            res3D[x][y][z] = imageMax;
+                        }
+                        if (res3D[x][y][z] < imageMin) {
+                            res3D[x][y][z] = imageMin;
+                        }
                     }
                 } // for (x = 0; x < nx; x++)
             } // for (y = 0; y < ny; y++)
