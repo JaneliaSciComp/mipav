@@ -131,8 +131,6 @@ public class ViewMenuBar {
                                     menuBuilder.buildMenuItem("Capture images to new frame", "CaptureTiffs", 0,
             "camera.gif", true),
                                     separator,
-                                    menuBuilder.buildMenuItem("Secure file transfer & chat", "Chat", 0, null, true),
-                                    separator,
                                     menuBuilder.buildMenuItem("Image browser", "CreateTree", 0, null, true),
                                     separator,
                                     menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),

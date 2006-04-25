@@ -2270,13 +2270,6 @@ public class ViewUserInterface
     }
 
     /**
-     * Open the secure chat and file transfer client.
-     */
-    public void startChatClient() {
-        new JChatFrame(this);
-    }
-
-    /**
      * Toggles the display of the Output window and updates all JFrameImages so that
      * the menu checkbox will reflect the status of the output window
      */
@@ -2464,12 +2457,7 @@ public class ViewUserInterface
            else if (command.equals("Browse")) {
                buildTreeDialog();
            }
-           else if (command.equals("Chat")) {
-               startChatClient();
-           }
-           /*
-            * else if (command.equals("ChatServe")) { startChatServer(); }
-            */ else if (command.equals("BrowseDICOM")) {
+           else if (command.equals("BrowseDICOM")) {
                buildDICOMFrame();
            }
            else if (command.equals("RecordScript")) {
@@ -2932,11 +2920,6 @@ public class ViewUserInterface
 
         fileMenu.add(ViewMenuBuilder.buildMenuItem("Create blank image(A)", "CreateBlankImage",
             0, this, "new.gif", true));
-
-        fileMenu.addSeparator();
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Secure file transfer & chat", "Chat",
-            0, this, null, true));
 
         fileMenu.addSeparator();
 
