@@ -270,7 +270,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             boneCount = 0;
             bone_marrowCount = 0;
             total_thighCount = 0;
-            AVGsubcutfatCount, AVGfatCount, AVGmuscleCount,AVGmuscleCount, AVGbone_marrowCount, AVGtotal_thighCount  = 0;
+            //AVGsubcutfatCount, AVGfatCount, AVGmuscleCount,AVGmuscleCount, AVGbone_marrowCount, AVGtotal_thighCount  = 0;
             for (bb = 0; bb < zDim; bb++) {
                 try {
                     destImage3b.exportData((bb * imgBuffer1.length),
