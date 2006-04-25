@@ -5,17 +5,17 @@ package gov.nih.mipav.model.structures;
  * @author Evan McCreedy
  * @version 1.0
  */
-public class ParserException extends Exception {
+public class TokenizerException extends Exception {
     /**
      * Create a new exception.
      */
-    public ParserException() {}
+    public TokenizerException() {}
 
     /**
      * Create a new exception with a specific message.
      * @param msg  the exception message
      */
-    public ParserException( String msg ) {
+    public TokenizerException( String msg ) {
         super( msg );
     }
 }
