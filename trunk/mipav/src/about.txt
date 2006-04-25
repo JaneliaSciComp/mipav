@@ -18,7 +18,7 @@ This software may NOT be used for diagnostic purposes.
 	   Center for Information Technology (CIT) 
 	     National Institutes of Health (NIH)
 
-Version:	 2.4  (2006-04-14)
+Version:	 2.4.11  (2006-04-24)
 
 Project Leader:
 
@@ -40,7 +40,6 @@ Software contributors:
      Zohara Cohen, Ph.D., PDB, CC, NIH
      
      Paul Hemler, Ph.D., Hampden-Sydney College
-     Pilou Bazin, Ph.D. Johns Hopkins University
      
      David Eberly, Ph.D., Geometric Software
      Dennis Wenzel, Geometric Software
