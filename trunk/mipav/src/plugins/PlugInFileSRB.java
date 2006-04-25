@@ -697,12 +697,15 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
          * According to the file type, determines what other files should
          * be added into the file list.
          */
-        if(extension.equals(".xml")){
-            fileNameList.add(new SRBFile((SRBFile)srbFile.getParentFile(), srbFile.getName().replaceFirst(".xml", ".raw")));
-        }else if(extension.equals(".img")){
-            fileNameList.add(new SRBFile((SRBFile)srbFile.getParentFile(), srbFile.getName().replaceFirst(".img", ".hdr")));
-        }else if(extension.equals(".HEAD")){
-            fileNameList.add(new SRBFile((SRBFile)srbFile.getParentFile(), srbFile.getName().replaceFirst(".HEAD", ".BRIK")));
+        if (extension.toLowerCase().equals(".xml")) {
+            fileNameList.add(new SRBFile((SRBFile) srbFile.getParentFile(),
+                    srbFile.getName().toLowerCase().replaceFirst(".xml", ".raw")));
+        } else if (extension.toLowerCase().equals(".img")) {
+            fileNameList.add(new SRBFile((SRBFile) srbFile.getParentFile(),
+                    srbFile.getName().toLowerCase().replaceFirst(".img", ".hdr")));
+        } else if (extension.toLowerCase().equals(".head")) {
+            fileNameList.add(new SRBFile((SRBFile) srbFile.getParentFile(),
+                    srbFile.getName().toLowerCase().replaceFirst(".head", ".brik")));
         }
         return fileNameList;
     }
