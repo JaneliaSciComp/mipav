@@ -701,6 +701,8 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             fileNameList.add(new SRBFile((SRBFile)srbFile.getParentFile(), srbFile.getName().replaceFirst(".xml", ".raw")));
         }else if(extension.equals(".img")){
             fileNameList.add(new SRBFile((SRBFile)srbFile.getParentFile(), srbFile.getName().replaceFirst(".img", ".hdr")));
+        }else if(extension.equals(".HEAD")){
+            fileNameList.add(new SRBFile((SRBFile)srbFile.getParentFile(), srbFile.getName().replaceFirst(".HEAD", ".BRIK")));
         }
         return fileNameList;
     }
@@ -789,7 +791,12 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             return null;
         /** AFNI file type. */
         case FileBase.AFNI:
-            return null;
+            fileNameList = new Vector();
+            String headFileName = fileInfo.getFileName();
+            String brikFileName = headFileName.replaceFirst(".HEAD", ".BRIK");
+            fileNameList.add(headFileName);
+            fileNameList.add(brikFileName);
+            return fileNameList;
         /** FITS file type. */
         case FileBase.FITS:
             return null;
