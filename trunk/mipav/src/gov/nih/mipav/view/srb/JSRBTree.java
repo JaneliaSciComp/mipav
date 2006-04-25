@@ -413,7 +413,7 @@ rename
                         JFrame frame = new JFrame();
                         frame.getContentPane().add(transfer);
                         frame.pack();
-                        frame.show();
+                        frame.setVisible(true);
                         transfer.start();
                     }
                     else {
@@ -423,7 +423,7 @@ rename
                         JFrame frame = new JFrame();
                         frame.getContentPane().add(transfer);
                         frame.pack();
-                        frame.show();
+                        frame.setVisible(true);
                         transfer.start();
                     }
                     refresh( getSelectionPath() );
@@ -587,7 +587,7 @@ rename
             });
             frame.getContentPane().add(pane, BorderLayout.NORTH);
             frame.pack();
-            frame.show();
+            frame.setVisible(true);
             frame.validate();
 
         } catch (Throwable e) {
