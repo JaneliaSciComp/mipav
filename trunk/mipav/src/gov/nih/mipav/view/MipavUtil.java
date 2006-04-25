@@ -2,7 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.view.icons.PlaceHolder;
-import gov.nih.mipav.model.structures.ParserException;
+import gov.nih.mipav.model.structures.TokenizerException;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -859,15 +859,15 @@ public class MipavUtil extends JComponent {
     /**
      * Get a boolean value from a string tokenizer.
      * @param st                the tokenizer to get the boolean from
-     * @throws ParserException  thrown if the string retrieved is not a boolean value
+     * @throws TokenizerException  thrown if the string retrieved is not a boolean value
      * @return                  true if the token equals "true" without regard to case
      */
-    public static final boolean getBoolean( StringTokenizer st ) throws ParserException {
+    public static final boolean getBoolean( StringTokenizer st ) throws TokenizerException {
         String str = st.nextToken();
 
         // should either be a variation of true or false; otherwise we want to know that something is wrong
         if ( !str.equalsIgnoreCase( "true" ) && !str.equalsIgnoreCase( "false" ) ) {
-            throw new ParserException( "Unable to parse boolean value: " + str );
+            throw new TokenizerException( "Unable to parse boolean value: " + str );
         }
 
         // returns true if str.equalsIgnoreCase( "true" )
@@ -877,32 +877,32 @@ public class MipavUtil extends JComponent {
     /**
      * Get a float value from a string tokenizer.
      * @param st                the tokenizer to get the float from
-     * @throws ParserException  thrown if the string retrieved is not a float value
+     * @throws TokenizerException  thrown if the string retrieved is not a float value
      * @return                  a float value
      */
-    public static final float getFloat( StringTokenizer st ) throws ParserException {
+    public static final float getFloat( StringTokenizer st ) throws TokenizerException {
         String str = st.nextToken();
 
         try {
             return Float.parseFloat( str );
         } catch ( NumberFormatException nfe ) {
-            throw new ParserException( "Unable to parse float value: " + str );
+            throw new TokenizerException( "Unable to parse float value: " + str );
         }
     }
 
     /**
      * Get an integer value from a string tokenizer.
      * @param st                the tokenizer to get the integer from
-     * @throws ParserException  thrown if the string retrieved is not an integer value
+     * @throws TokenizerException  thrown if the string retrieved is not an integer value
      * @return                  a ninteger value
      */
-    public static final int getInt( StringTokenizer st ) throws ParserException {
+    public static final int getInt( StringTokenizer st ) throws TokenizerException {
         String str = st.nextToken();
 
         try {
             return Integer.parseInt( str );
         } catch ( NumberFormatException nfe ) {
-            throw new ParserException( "Unable to parse integer value: " + str );
+            throw new TokenizerException( "Unable to parse integer value: " + str );
         }
     }
 
