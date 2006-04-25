@@ -2,105 +2,78 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+
 import java.io.*;
 
 
 /**
- *  Calculates the Laplacian of the gaussian of an image at a scale defined
- *  by the user
+ * Calculates the Laplacian of the gaussian of an image at a scale defined by the user.
  *
- *		@version 0.1 Feb 11, 1998
- *		@author Matthew J. McAuliffe, Ph.D.
+ * @version  0.1 Feb 11, 1998
+ * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmLapMedianess extends AlgorithmBase {
 
-    /**
-     *   Flag, if true, indicates that the whole image should be processed. If
-     *   false on process the image over the mask areas.
-     */
-    private boolean entireImage;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**
-     *   Dimensionality of the kernel
-     */
-    private int[] kExtents;
-
-    /**
-     *   Standard deviations of the gaussian used to calculate the kernels
-     */
-    private float[] sigmas;
-
-    /**
-     *   Storage location of the second derivative of the Gaussian in the X direction
-     */
-    private float[] GxxData;
-
-    /**
-     *   Storage location of the second derivative of the Gaussian in the Y direction
-     */
-    private float[] GyyData;
-
-    /**
-     *   Storage location of the second derivative of the Gaussian in the Z direction
-     */
-    private float[] GzzData;
-
-    /**
-     *   An amplification factor greater than 1.0 causes this filter to act like a
-     *   highpass filter.
-     */
+    /** An amplification factor greater than 1.0 causes this filter to act like a highpass filter. */
     private float amplificationFactor = 1.0f;
 
     /**
-     *   Buffer that stores the s value in calcInPlace2DBuffer that contributed to
-     *   resultBuffer
+     * Flag, if true, indicates that the whole image should be processed. If false on process the image over the mask
+     * areas.
      */
+    private boolean entireImage;
+
+    /** Storage location of the second derivative of the Gaussian in the X direction. */
+    private float[] GxxData;
+
+    /** Storage location of the second derivative of the Gaussian in the Y direction. */
+    private float[] GyyData;
+
+    /** Storage location of the second derivative of the Gaussian in the Z direction. */
+    private float[] GzzData;
+
+    /** Dimensionality of the kernel. */
+    private int[] kExtents;
+
+    /** Buffer that stores the s value in calcInPlace2DBuffer that contributed to resultBuffer. */
     private byte[] sBuffer;
 
-    /**
-     *   Constructs a Laplacian algorithm object
-     *   @param destImg  image model where result image is to stored
-     *   @param srcImg   source image model
-     *   @param sigmas   Gaussian's standard deviations in the each dimension
-     *   @param maskFlag Flag that indicates that the Laplacian will be
-     *                   calculated for the whole image if equal to true
-     *   @param img25D   Flag, if true, indicates that each slice of the 3D volume
-     *                   should be processed independently. 2D images disregard this flag.
-     *   @param ampFactor An amplification factor greater than 1.0 causes this filter to act like a
-     *                    highpass filter.
-     *	@param activeImage	whether the algorithm is running in a separate thread
-     */
-    public AlgorithmLapMedianess( ModelImage destImg, ModelImage srcImg, float[] sigmas,
-            boolean maskFlag, boolean img25D, float ampFactor, boolean activeImage ) {
-        super( destImg, srcImg );
+    /** Standard deviations of the gaussian used to calculate the kernels. */
+    private float[] sigmas;
 
-        destImage = destImg; // Put results in destination image.
-        srcImage = srcImg;
-        this.sigmas = sigmas;
-        entireImage = maskFlag;
-        image25D = img25D;
-        amplificationFactor = ampFactor;
-        this.activeImage = activeImage;
-        if ( entireImage == false ) {
-            mask = srcImage.generateVOIMask();
-        }
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Constructs a Laplacian algorithm object.
+     *
+     * @param  srcImg     source image model
+     * @param  sigmas     Gaussian's standard deviations in the each dimension
+     * @param  maskFlag   Flag that indicates that the Laplacian will be calculated for the whole image if equal to true
+     * @param  img25D     Flag, if true, indicates that each slice of the 3D volume should be processed independently.
+     *                    2D images disregard this flag.
+     * @param  ampFactor  An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
+     */
+    public AlgorithmLapMedianess(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor) {
+        this(srcImg, sigmas, maskFlag, img25D, ampFactor, true);
     }
 
     /**
-     *   Constructs a Laplacian algorithm object
-     *   @param srcImg   source image model
-     *   @param sigmas   Gaussian's standard deviations in the each dimension
-     *   @param maskFlag Flag that indicates that the Laplacian will be
-     *                   calculated for the whole image if equal to true
-     *   @param img25D   Flag, if true, indicates that each slice of the 3D volume
-     *                   should be processed independently. 2D images disregard this flag.
-     *   @param ampFactor An amplification factor greater than 1.0 causes this filter to act like a
-     *                    highpass filter.
-     *	@param activeImage	whether the algorithm is running in a separate thread
+     * Constructs a Laplacian algorithm object.
+     *
+     * @param  srcImg       source image model
+     * @param  sigmas       Gaussian's standard deviations in the each dimension
+     * @param  maskFlag     Flag that indicates that the Laplacian will be calculated for the whole image if equal to
+     *                      true
+     * @param  img25D       Flag, if true, indicates that each slice of the 3D volume should be processed independently.
+     *                      2D images disregard this flag.
+     * @param  ampFactor    An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
+     * @param  activeImage  whether the algorithm is running in a separate thread
      */
-    public AlgorithmLapMedianess( ModelImage srcImg, float[] sigmas,
-            boolean maskFlag, boolean img25D, float ampFactor, boolean activeImage ) {
-        super( null, srcImg );
+    public AlgorithmLapMedianess(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor,
+                                 boolean activeImage) {
+        super(null, srcImg);
 
         destImage = null; // Calc in place
         srcImage = srcImg;
@@ -109,45 +82,74 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         image25D = img25D;
         amplificationFactor = ampFactor;
         this.activeImage = activeImage;
-        if ( entireImage == false ) {
+
+        if (entireImage == false) {
             mask = srcImage.generateVOIMask();
         }
     }
 
     /**
-     *   Constructs a Laplacian algorithm object
-     *   @param destImg  image model where result image is to stored
-     *   @param srcImg   source image model
-     *   @param sigmas   Gaussian's standard deviations in the each dimension
-     *   @param maskFlag Flag that indicates that the Laplacian will be
-     *                   calculated for the whole image if equal to true
-     *   @param img25D   Flag, if true, indicates that each slice of the 3D volume
-     *                   should be processed independently. 2D images disregard this flag.
-     *   @param ampFactor An amplification factor greater than 1.0 causes this filter to act like a
-     *                    highpass filter.
+     * Constructs a Laplacian algorithm object.
+     *
+     * @param  destImg    image model where result image is to stored
+     * @param  srcImg     source image model
+     * @param  sigmas     Gaussian's standard deviations in the each dimension
+     * @param  maskFlag   Flag that indicates that the Laplacian will be calculated for the whole image if equal to true
+     * @param  img25D     Flag, if true, indicates that each slice of the 3D volume should be processed independently.
+     *                    2D images disregard this flag.
+     * @param  ampFactor  An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
      */
-    public AlgorithmLapMedianess( ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor ) {
-        this( destImg, srcImg, sigmas, maskFlag, img25D, ampFactor, true );
+    public AlgorithmLapMedianess(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+                                 boolean img25D, float ampFactor) {
+        this(destImg, srcImg, sigmas, maskFlag, img25D, ampFactor, true);
     }
 
     /**
-     *   Constructs a Laplacian algorithm object
-     *   @param srcImg   source image model
-     *   @param sigmas   Gaussian's standard deviations in the each dimension
-     *   @param maskFlag Flag that indicates that the Laplacian will be
-     *                   calculated for the whole image if equal to true
-     *   @param img25D   Flag, if true, indicates that each slice of the 3D volume
-     *                   should be processed independently. 2D images disregard this flag.
-     *   @param ampFactor An amplification factor greater than 1.0 causes this filter to act like a
-     *                    highpass filter.
+     * Constructs a Laplacian algorithm object.
+     *
+     * @param  destImg      image model where result image is to stored
+     * @param  srcImg       source image model
+     * @param  sigmas       Gaussian's standard deviations in the each dimension
+     * @param  maskFlag     Flag that indicates that the Laplacian will be calculated for the whole image if equal to
+     *                      true
+     * @param  img25D       Flag, if true, indicates that each slice of the 3D volume should be processed independently.
+     *                      2D images disregard this flag.
+     * @param  ampFactor    An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
+     * @param  activeImage  whether the algorithm is running in a separate thread
      */
-    public AlgorithmLapMedianess( ModelImage srcImg, float[] sigmas,
-            boolean maskFlag, boolean img25D, float ampFactor ) {
-        this( srcImg, sigmas, maskFlag, img25D, ampFactor, true );
+    public AlgorithmLapMedianess(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+                                 boolean img25D, float ampFactor, boolean activeImage) {
+        super(destImg, srcImg);
+
+        destImage = destImg; // Put results in destination image.
+        srcImage = srcImg;
+        this.sigmas = sigmas;
+        entireImage = maskFlag;
+        image25D = img25D;
+        amplificationFactor = ampFactor;
+        this.activeImage = activeImage;
+
+        if (entireImage == false) {
+            mask = srcImage.generateVOIMask();
+        }
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Calculates the laplacian medianess of a 2D image and returns it as a float buffer.
+     *
+     * @param   buffer   DOCUMENT ME!
+     * @param   extents  DOCUMENT ME!
+     *
+     * @return  Buffer with the laplacian medianess of the image.
+     */
+    public float[] calcInBuffer2D(float[] buffer, int[] extents) {
+        return calcInPlace2DBuffer(1, buffer, extents);
     }
 
     /**
-     *   Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         GxxData = null;
@@ -159,240 +161,99 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
     }
 
     /**
-     *  @return sBuffer
+     * DOCUMENT ME!
+     *
+     * @return  sBuffer
      */
     public byte[] getSBuffer() {
         return sBuffer;
     }
 
     /**
-     *  Creates Gaussian derivative kernels.
-     */
-    private void makeKernels2D( float[] sigmas ) {
-        int xkDim, ykDim;
-        int[] derivOrder = new int[2];
-
-        kExtents = new int[2];
-        derivOrder[0] = 2;
-        derivOrder[1] = 0;
-
-        xkDim = Math.round( 8 * sigmas[0] );
-        if ( xkDim % 2 == 0 ) {
-            xkDim++;
-        }
-        if ( xkDim < 3 ) {
-            xkDim = 3;
-        }
-        kExtents[0] = xkDim;
-
-        ykDim = Math.round( 8 * sigmas[1] );
-        if ( ykDim % 2 == 0 ) {
-            ykDim++;
-        }
-        if ( ykDim < 3 ) {
-            ykDim = 3;
-        }
-        kExtents[1] = ykDim;
-
-        GxxData = new float[xkDim * ykDim];
-        GenerateGaussian Gxx = new GenerateGaussian( GxxData, kExtents, sigmas, derivOrder );
-
-        Gxx.calc( false );
-
-        derivOrder[0] = 0;
-        derivOrder[1] = 2;
-        GyyData = new float[xkDim * ykDim];
-        GenerateGaussian Gyy = new GenerateGaussian( GyyData, kExtents, sigmas, derivOrder );
-
-        Gyy.calc( false );
-
-        float tmp;
-
-        for ( int i = 0; i < GyyData.length; i++ ) {
-            tmp = -( GxxData[i] + GyyData[i] );
-            if ( tmp > 0 ) {
-                tmp *= amplificationFactor;
-            }
-            GxxData[i] = tmp;
-        }
-    }
-
-    /**
-     *   Creates Gaussian derivative kernels.
-     */
-    private void makeKernels3D( float[] sigmas ) {
-        int xkDim, ykDim, zkDim;
-        int[] derivOrder = new int[3];
-
-        kExtents = new int[3];
-        derivOrder[0] = 2;
-        derivOrder[1] = 0;
-        derivOrder[2] = 0;
-
-        xkDim = Math.round( 8 * sigmas[0] );
-        if ( xkDim % 2 == 0 ) {
-            xkDim++;
-        }
-        if ( xkDim < 3 ) {
-            xkDim = 3;
-        }
-        kExtents[0] = xkDim;
-
-        ykDim = Math.round( 8 * sigmas[1] );
-        if ( ykDim % 2 == 0 ) {
-            ykDim++;
-        }
-        if ( ykDim < 3 ) {
-            ykDim = 3;
-        }
-        kExtents[1] = ykDim;
-
-        float scaleFactor = sigmas[2];
-
-        sigmas[2] = sigmas[1];
-        zkDim = Math.round( 8 * sigmas[2] );
-        if ( zkDim % 2 == 0 ) {
-            zkDim++;
-        }
-        if ( zkDim < 3 ) {
-            zkDim = 3;
-        }
-        kExtents[2] = zkDim;
-
-        GxxData = new float[xkDim * ykDim * zkDim];
-        GenerateGaussian Gxx = new GenerateGaussian( GxxData, kExtents, sigmas, derivOrder );
-
-        Gxx.calc( false );
-
-        derivOrder[0] = 0;
-        derivOrder[1] = 2;
-        derivOrder[2] = 0;
-        GyyData = new float[xkDim * ykDim * zkDim];
-        GenerateGaussian Gyy = new GenerateGaussian( GyyData, kExtents, sigmas, derivOrder );
-
-        Gyy.calc( false );
-
-        derivOrder[0] = 0;
-        derivOrder[1] = 0;
-        derivOrder[2] = 2;
-        GzzData = new float[xkDim * ykDim * zkDim];
-        GenerateGaussian Gzz = new GenerateGaussian( GzzData, kExtents, sigmas, derivOrder );
-
-        Gzz.calc( false );
-
-        float tmp;
-
-        for ( int i = 0; i < GyyData.length; i++ ) {
-            tmp = -( GxxData[i] + GyyData[i] + GzzData[i] * scaleFactor );
-            if ( tmp > 0 ) {
-                tmp *= amplificationFactor;
-            }
-            GxxData[i] = tmp;
-        }
-    }
-
-    /**
-     *   Constructs a string of the contruction parameters and outputs the
-     *   string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        String sigmaStr = new String();
-
-        for ( int i = 0; i < sigmas.length; i++ ) {
-            sigmaStr += ( " " + String.valueOf( sigmas[i] ) + ", " );
-        }
-
-        historyString = new String(
-                "Laplacian(" + sigmaStr + String.valueOf( entireImage ) + ", " + String.valueOf( image25D ) + ", "
-                + String.valueOf( amplificationFactor ) + ")\n" );
-    }
-
-    /**
-     *   Starts the program
+     * Starts the program.
      */
     public void runAlgorithm() {
-        if ( srcImage == null ) {
-            displayError( "Source Image is null" );
+
+        if (srcImage == null) {
+            displayError("Source Image is null");
+
             return;
         }
 
-        if ( srcImage.getNDims() == 2 ) {
-            makeKernels2D( sigmas );
-        } else if ( srcImage.getNDims() == 3 && image25D == false ) {
-            makeKernels3D( sigmas );
-        } else if ( srcImage.getNDims() == 3 && image25D == true ) {
-            makeKernels2D( sigmas );
+        if (srcImage.getNDims() == 2) {
+            makeKernels2D(sigmas);
+        } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
+            makeKernels3D(sigmas);
+        } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
+            makeKernels2D(sigmas);
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             finalize();
+
             return;
         }
 
         constructLog();
-        if ( destImage != null ) {
-            if ( srcImage.getNDims() == 2 ) {
-                calcStoreInDest2D( 1 );
-            } else if ( srcImage.getNDims() == 3 && image25D == false ) {
+
+        if (destImage != null) {
+
+            if (srcImage.getNDims() == 2) {
+                calcStoreInDest2D(1);
+            } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
                 calcStoreInDest3D();
-            } else if ( srcImage.getNDims() == 3 && image25D == true ) {
-                calcStoreInDest2D( srcImage.getExtents()[2] );
+            } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
+                calcStoreInDest2D(srcImage.getExtents()[2]);
             }
         } else {
-            if ( srcImage.getNDims() == 2 ) {
-                calcInPlace2D( 1 );
-            } else if ( srcImage.getNDims() == 3 && image25D == false ) {
+
+            if (srcImage.getNDims() == 2) {
+                calcInPlace2D(1);
+            } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
                 calcInPlace3D();
-            } else if ( srcImage.getNDims() == 3 && image25D == true ) {
-                calcInPlace2D( srcImage.getExtents()[2] );
+            } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
+                calcInPlace2D(srcImage.getExtents()[2]);
             }
         }
     }
 
     /**
-     *   Calculates the laplacian medianess of a 2D image and returns
-     *   it as a float buffer.
-     *   @return Buffer with the laplacian medianess of the image.
+     * Calculates the gradient image and replaces the source image with the new image.
+     *
+     * @param  nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
+     *                  processed independently then nImages equals the number of images in the volume.
      */
-    public float[] calcInBuffer2D( float[] buffer, int[] extents ) {
-        return calcInPlace2DBuffer( 1, buffer, extents );
-    }
+    private void calcInPlace2D(int nImages) {
+        float[] buffer = calcInPlace2DBuffer(nImages, null, srcImage.getExtents());
 
-    /**
-     *   Calculates the gradient image and replaces the source image with the new image.
-     *   @param nImages      number of images to be blurred. If 2D image then nImage = 1,
-     *                       if 3D image where each image is to processed independently
-     *                       then nImages equals the number of images in the volume.
-     */
-    private void calcInPlace2D( int nImages ) {
-        float[] buffer = calcInPlace2DBuffer( nImages, null, srcImage.getExtents() );
-
-        if ( threadStopped || buffer == null ) {
+        if (threadStopped || (buffer == null)) {
             finalize();
+
             return;
         }
 
         try {
-            srcImage.importData( 0, buffer, true );
-        } catch ( IOException error ) {
-            errorCleanUp( "Algorithm Laplacian importData: Image(s) locked", false );
+            srcImage.importData(0, buffer, true);
+        } catch (IOException error) {
+            errorCleanUp("Algorithm Laplacian importData: Image(s) locked", false);
+
             return;
         }
 
-        setCompleted( true );
+        setCompleted(true);
     }
 
     /**
-     *   Calculates the Laplacian image and replaces the source image with the new image.
+     * Calculates the Laplacian image and replaces the source image with the new image.
      *
-     *   @param nImages      number of images to be blurred. If 2D image then nImage = 1,
-     *                       if 3D image where each image is to processed independently
-     *                       then nImages equals the number of images in the volume.
-     *   @param buffer
-     *   @param extents
-     *   @return resultBuffer
+     * @param   nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
+     *                   processed independently then nImages equals the number of images in the volume.
+     * @param   buffer   DOCUMENT ME!
+     * @param   extents  DOCUMENT ME!
+     *
+     * @return  resultBuffer
      */
-    private float[] calcInPlace2DBuffer( int nImages, float[] buffer, int[] extents ) {
+    private float[] calcInPlace2DBuffer(int nImages, float[] buffer, int[] extents) {
 
         int i, s;
         int length;
@@ -400,149 +261,77 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         float lap;
 
         try {
-            if ( buffer == null ) {
+
+            if (buffer == null) {
                 length = srcImage.getSliceSize();
                 buffer = new float[length];
             } else {
                 length = buffer.length;
             }
+
             resultBuffer = new float[length * nImages];
             sBuffer = new byte[length * nImages];
-            if ( srcImage != null ) {
-                buildProgressBar( srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100 );
+
+            if (srcImage != null) {
+                buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
             } else {
-                buildProgressBar( "Medialness", "Calculating the Laplacian ...", 0, 100 );
+                buildProgressBar("Medialness", "Calculating the Laplacian ...", 0, 100);
             }
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
             sBuffer = null;
-            errorCleanUp( "Algorithm Laplacian exportData: Out of memory", true );
+            errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
+
             return null;
         }
 
         initProgressBar();
 
         try {
-            if ( srcImage != null ) {
-                srcImage.exportData( 0, length, buffer ); // locks and releases lock
+
+            if (srcImage != null) {
+                srcImage.exportData(0, length, buffer); // locks and releases lock
             }
-        } catch ( IOException error ) {
+        } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
             System.gc();
-            errorCleanUp( "Algorithm Laplacian: " + error, false );
+            errorCleanUp("Algorithm Laplacian: " + error, false);
+
             return null;
         }
 
         float[] sigs = new float[2];
 
-        for ( s = 1; s <= 8 && !threadStopped; s++ ) {
+        for (s = 1; (s <= 8) && !threadStopped; s++) {
             sigs[0] = s;
             sigs[1] = s;
-            makeKernels2D( sigs );
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) ( s ) / 8 * 100 ), activeImage );
+            makeKernels2D(sigs);
+
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) (s) / 8 * 100), activeImage);
             }
 
-            for ( i = 0; i < length && !threadStopped; i++ ) {
+            for (i = 0; (i < length) && !threadStopped; i++) {
 
-                lap = AlgorithmConvolver.convolve2DPtMed( i, extents, buffer, kExtents, GxxData );
+                lap = AlgorithmConvolver.convolve2DPtMed(i, extents, buffer, kExtents, GxxData);
 
-                if ( lap > resultBuffer[i] ) {
+                if (lap > resultBuffer[i]) {
                     resultBuffer[i] = lap;
                 }
+
                 sBuffer[i] = (byte) s;
             }
         }
+
         disposeProgressBar();
+
         return resultBuffer;
     }
 
     /**
-     *   Calculates the Laplacian image and replaces the source image with the new image.
-     *
-     *   @param buffer
-     *   @param extents
-     *   @return resultBuffer
-     */
-    private float[] calcInPlace3DBuffer( float[] buffer, int[] extents ) {
-
-        int i, s;
-        int length;
-        float[] resultBuffer;
-        float lap;
-
-        try {
-            if ( buffer == null ) {
-                length = srcImage.getSliceSize() * srcImage.getExtents()[2];
-                buffer = new float[length];
-            } else {
-                length = buffer.length;
-            }
-            resultBuffer = new float[length];
-            sBuffer = new byte[length];
-            if ( srcImage != null ) {
-                buildProgressBar( srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100 );
-            } else {
-                buildProgressBar( "Medialness", "Calculating the Laplacian ...", 0, 100 );
-            }
-        } catch ( OutOfMemoryError e ) {
-            buffer = null;
-            resultBuffer = null;
-            sBuffer = null;
-            errorCleanUp( "Algorithm Laplacian exportData: Out of memory", true );
-            return null;
-        }
-
-        initProgressBar();
-
-        try {
-            if ( srcImage != null ) {
-                srcImage.exportData( 0, length, buffer ); // locks and releases lock
-            }
-        } catch ( IOException error ) {
-            buffer = null;
-            resultBuffer = null;
-            System.gc();
-            errorCleanUp( "Algorithm Laplacian: " + error, false );
-            return null;
-        }
-
-        float[] sigs = new float[3];
-
-        for ( s = 1; s <= 8 && !threadStopped; s++ ) {
-            sigs[0] = s;
-            sigs[1] = s;
-            sigs[2] = s;
-            makeKernels3D( sigs );
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) ( s ) / 8 * 100 ), activeImage );
-            }
-
-            for ( i = 0; i < length && !threadStopped; i++ ) {
-
-                // if (entireImage == true || mask.get(i)) {
-
-                lap = AlgorithmConvolver.convolve3DPtMed( i, extents, buffer, kExtents, GxxData );
-
-                if ( lap > resultBuffer[i] ) {
-                    resultBuffer[i] = lap;
-                }
-                sBuffer[i] = (byte) s;
-                // }
-                // else {
-                // resultBuffer[i] = 0;
-                // }
-            }
-        }
-        disposeProgressBar();
-        return resultBuffer;
-    }
-
-    /**
-     *   Calculates the Laplacian and replaces the source image with the new image.
-     *
+     * Calculates the Laplacian and replaces the source image with the new image.
      */
     private void calcInPlace3D() {
 
@@ -556,15 +345,17 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             resultBuffer = new float[length];
-            srcImage.exportData( 0, length, buffer ); // locks and releases lock
-            buildProgressBar( srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100 );
-        } catch ( IOException error ) {
+            srcImage.exportData(0, length, buffer); // locks and releases lock
+            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+        } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
-            errorCleanUp( "Algorithm Laplacian exportData: Image(s) locked", true );
+            errorCleanUp("Algorithm Laplacian exportData: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
-            errorCleanUp( "Algorithm Laplacian exportData: Out of memory", true );
+        } catch (OutOfMemoryError e) {
+            errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
+
             return;
         }
 
@@ -572,12 +363,14 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        for ( i = 0; i < length && !threadStopped; i++ ) {
-            if ( i % mod == 0 && isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) i / ( length - 1 ) * 100 ), activeImage );
+        for (i = 0; (i < length) && !threadStopped; i++) {
+
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
             }
-            if ( entireImage == true || mask.get( i ) ) {
-                lap = AlgorithmConvolver.convolve3DPt( i, srcImage.getExtents(), buffer, kExtents, GxxData );
+
+            if ((entireImage == true) || mask.get(i)) {
+                lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
                 resultBuffer[i] = lap;
             } else {
                 resultBuffer[i] = buffer[i];
@@ -587,32 +380,125 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         buffer = null;
         System.gc();
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             finalize();
+
             return;
         }
 
         try {
-            srcImage.importData( 0, resultBuffer, true );
-        } catch ( IOException error ) {
+            srcImage.importData(0, resultBuffer, true);
+        } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
-            errorCleanUp( "Algorithm Laplacian importData: Image(s) locked", true );
+            errorCleanUp("Algorithm Laplacian importData: Image(s) locked", true);
+
             return;
         }
 
-        setCompleted( true );
+        setCompleted(true);
         disposeProgressBar();
     }
 
     /**
-     *   This function produces the Laplacian of input image. See this Neva
+     * Calculates the Laplacian image and replaces the source image with the new image.
      *
-     *   @param nImages      number of images to be blurred. If 2D image then nImage = 1,
-     *                       if 3D image where each image is to processed independently
-     *                       then nImages equals the number of images in the volume.
+     * @param   buffer   DOCUMENT ME!
+     * @param   extents  DOCUMENT ME!
+     *
+     * @return  resultBuffer
      */
-    private void calcStoreInDest2D( int nImages ) {
+    private float[] calcInPlace3DBuffer(float[] buffer, int[] extents) {
+
+        int i, s;
+        int length;
+        float[] resultBuffer;
+        float lap;
+
+        try {
+
+            if (buffer == null) {
+                length = srcImage.getSliceSize() * srcImage.getExtents()[2];
+                buffer = new float[length];
+            } else {
+                length = buffer.length;
+            }
+
+            resultBuffer = new float[length];
+            sBuffer = new byte[length];
+
+            if (srcImage != null) {
+                buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+            } else {
+                buildProgressBar("Medialness", "Calculating the Laplacian ...", 0, 100);
+            }
+        } catch (OutOfMemoryError e) {
+            buffer = null;
+            resultBuffer = null;
+            sBuffer = null;
+            errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
+
+            return null;
+        }
+
+        initProgressBar();
+
+        try {
+
+            if (srcImage != null) {
+                srcImage.exportData(0, length, buffer); // locks and releases lock
+            }
+        } catch (IOException error) {
+            buffer = null;
+            resultBuffer = null;
+            System.gc();
+            errorCleanUp("Algorithm Laplacian: " + error, false);
+
+            return null;
+        }
+
+        float[] sigs = new float[3];
+
+        for (s = 1; (s <= 8) && !threadStopped; s++) {
+            sigs[0] = s;
+            sigs[1] = s;
+            sigs[2] = s;
+            makeKernels3D(sigs);
+
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) (s) / 8 * 100), activeImage);
+            }
+
+            for (i = 0; (i < length) && !threadStopped; i++) {
+
+                // if (entireImage == true || mask.get(i)) {
+
+                lap = AlgorithmConvolver.convolve3DPtMed(i, extents, buffer, kExtents, GxxData);
+
+                if (lap > resultBuffer[i]) {
+                    resultBuffer[i] = lap;
+                }
+
+                sBuffer[i] = (byte) s;
+                // }
+                // else {
+                // resultBuffer[i] = 0;
+                // }
+            }
+        }
+
+        disposeProgressBar();
+
+        return resultBuffer;
+    }
+
+    /**
+     * This function produces the Laplacian of input image. See this Neva
+     *
+     * @param  nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
+     *                  processed independently then nImages equals the number of images in the volume.
+     */
+    private void calcStoreInDest2D(int nImages) {
         int i, s;
         int length, totalLength;
         float[] buffer;
@@ -624,64 +510,68 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length];
-            buildProgressBar( srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100 );
-        } catch ( OutOfMemoryError e ) {
+            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+        } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
-            errorCleanUp( "Algorithm Laplacian exportData: Out of memory", true );
+            errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
+
             return;
         }
 
         initProgressBar();
 
         try {
-            srcImage.exportData( 0, length, buffer ); // locks and releases lock
-        } catch ( IOException error ) {
-            displayError( "Algorithm Gaussian Blur: Image(s) locked" );
-            setCompleted( false );
+            srcImage.exportData(0, length, buffer); // locks and releases lock
+        } catch (IOException error) {
+            displayError("Algorithm Gaussian Blur: Image(s) locked");
+            setCompleted(false);
             disposeProgressBar();
             destImage.releaseLock();
+
             return;
         }
 
         float[] sigs = new float[2];
 
-        for ( s = 1; s <= 8 && !threadStopped; s++ ) {
+        for (s = 1; (s <= 8) && !threadStopped; s++) {
             sigs[0] = s;
             sigs[1] = s;
-            makeKernels2D( sigs );
+            makeKernels2D(sigs);
 
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) ( s ) / 8 * 100 ), activeImage );
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) (s) / 8 * 100), activeImage);
             }
 
-            for ( i = 0; i < length && !threadStopped; i++ ) {
-                lap = AlgorithmConvolver.convolve2DPtMed( i, srcImage.getExtents(), buffer, kExtents, GxxData );
+            for (i = 0; (i < length) && !threadStopped; i++) {
+                lap = AlgorithmConvolver.convolve2DPtMed(i, srcImage.getExtents(), buffer, kExtents, GxxData);
 
-                if ( lap > resultBuffer[i] ) {
+                if (lap > resultBuffer[i]) {
                     resultBuffer[i] = lap;
                 }
             }
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             finalize();
+
             return;
         }
 
         try {
-            destImage.importData( 0, resultBuffer, true );
-        } catch ( IOException error ) {
-            errorCleanUp( "Algorithm Gaussian Blur: Image(s) locked", false );
+            destImage.importData(0, resultBuffer, true);
+        } catch (IOException error) {
+            errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", false);
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
     }
 
     /**
-     *   This function produces the Laplacian of input image.
+     * This function produces the Laplacian of input image.
      */
     private void calcStoreInDest3D() {
 
@@ -692,29 +582,33 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
 
         try {
             destImage.setLock();
-        } catch ( IOException error ) {
-            displayError( "Algorithm Laplacian: Image(s) locked" );
-            setCompleted( false );
+        } catch (IOException error) {
+            displayError("Algorithm Laplacian: Image(s) locked");
+            setCompleted(false);
             destImage.releaseLock();
+
             return;
         }
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
-            srcImage.exportData( 0, length, buffer ); // locks and releases lock
-            buildProgressBar( srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100 );
-        } catch ( IOException error ) {
+            srcImage.exportData(0, length, buffer); // locks and releases lock
+            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+        } catch (IOException error) {
             buffer = null;
-            errorCleanUp( "Algorithm Laplacian exportData: Image(s) locked", true );
+            errorCleanUp("Algorithm Laplacian exportData: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
-            errorCleanUp( "Algorithm Laplacian exportData: Out of memory", true );
+            errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
+
             return;
         }
 
         initProgressBar();
+
         int mod = length / 100; // mod is 1 percent of length
 
         float min, max;
@@ -727,60 +621,239 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         minL = Float.MAX_VALUE;
         maxL = -Float.MAX_VALUE;
 
-        if ( entireImage == false ) {
-            for ( i = 0; i < length; i++ ) {
-                if ( mask.get( i ) ) {
-                    if ( buffer[i] > max ) {
+        if (entireImage == false) {
+
+            for (i = 0; i < length; i++) {
+
+                if (mask.get(i)) {
+
+                    if (buffer[i] > max) {
                         max = buffer[i];
-                    } else if ( buffer[i] < min ) {
+                    } else if (buffer[i] < min) {
                         min = buffer[i];
                     }
                 }
             }
         }
 
-        for ( i = 0; i < length && !threadStopped; i++ ) {
-            if ( i % mod == 0 && isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) i / ( length - 1 ) * 100 ), activeImage );
-            }
-            if ( entireImage == true || mask.get( i ) ) {
-                lap = AlgorithmConvolver.convolve3DPt( i, srcImage.getExtents(), buffer, kExtents, GxxData );
+        for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ( entireImage == false ) {
-                    if ( mask.get( i ) ) {
-                        if ( lap > maxL ) {
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+            }
+
+            if ((entireImage == true) || mask.get(i)) {
+                lap = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents, GxxData);
+
+                if (entireImage == false) {
+
+                    if (mask.get(i)) {
+
+                        if (lap > maxL) {
                             maxL = lap;
-                        } else if ( lap < minL ) {
+                        } else if (lap < minL) {
                             minL = lap;
                         }
                     }
                 }
 
-                destImage.set( i, lap );
+                destImage.set(i, lap);
             } else {
-                destImage.set( i, buffer[i] );
+                destImage.set(i, buffer[i]);
             }
         }
 
-        if ( entireImage == false ) {
-            for ( i = 0; i < length; i++ ) {
-                if ( mask.get( i ) ) {
-                    lap = destImage.getFloat( i );
-                    lap = ( ( lap - minL ) / ( maxL - minL ) ) * ( max - min ) + min;
-                    destImage.set( i, lap );
+        if (entireImage == false) {
+
+            for (i = 0; i < length; i++) {
+
+                if (mask.get(i)) {
+                    lap = destImage.getFloat(i);
+                    lap = (((lap - minL) / (maxL - minL)) * (max - min)) + min;
+                    destImage.set(i, lap);
                 }
             }
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             finalize();
+
             return;
         }
 
         destImage.calcMinMax();
         destImage.releaseLock();
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        String sigmaStr = new String();
+
+        for (int i = 0; i < sigmas.length; i++) {
+            sigmaStr += (" " + String.valueOf(sigmas[i]) + ", ");
+        }
+
+        historyString = new String("Laplacian(" + sigmaStr + String.valueOf(entireImage) + ", " +
+                                   String.valueOf(image25D) + ", " + String.valueOf(amplificationFactor) + ")\n");
+    }
+
+    /**
+     * Creates Gaussian derivative kernels.
+     *
+     * @param  sigmas  DOCUMENT ME!
+     */
+    private void makeKernels2D(float[] sigmas) {
+        int xkDim, ykDim;
+        int[] derivOrder = new int[2];
+
+        kExtents = new int[2];
+        derivOrder[0] = 2;
+        derivOrder[1] = 0;
+
+        xkDim = Math.round(8 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+
+        ykDim = Math.round(8 * sigmas[1]);
+
+        if ((ykDim % 2) == 0) {
+            ykDim++;
+        }
+
+        if (ykDim < 3) {
+            ykDim = 3;
+        }
+
+        kExtents[1] = ykDim;
+
+        GxxData = new float[xkDim * ykDim];
+
+        GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas, derivOrder);
+
+        Gxx.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 2;
+        GyyData = new float[xkDim * ykDim];
+
+        GenerateGaussian Gyy = new GenerateGaussian(GyyData, kExtents, sigmas, derivOrder);
+
+        Gyy.calc(false);
+
+        float tmp;
+
+        for (int i = 0; i < GyyData.length; i++) {
+            tmp = -(GxxData[i] + GyyData[i]);
+
+            if (tmp > 0) {
+                tmp *= amplificationFactor;
+            }
+
+            GxxData[i] = tmp;
+        }
+    }
+
+    /**
+     * Creates Gaussian derivative kernels.
+     *
+     * @param  sigmas  DOCUMENT ME!
+     */
+    private void makeKernels3D(float[] sigmas) {
+        int xkDim, ykDim, zkDim;
+        int[] derivOrder = new int[3];
+
+        kExtents = new int[3];
+        derivOrder[0] = 2;
+        derivOrder[1] = 0;
+        derivOrder[2] = 0;
+
+        xkDim = Math.round(8 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+
+        ykDim = Math.round(8 * sigmas[1]);
+
+        if ((ykDim % 2) == 0) {
+            ykDim++;
+        }
+
+        if (ykDim < 3) {
+            ykDim = 3;
+        }
+
+        kExtents[1] = ykDim;
+
+        float scaleFactor = sigmas[2];
+
+        sigmas[2] = sigmas[1];
+        zkDim = Math.round(8 * sigmas[2]);
+
+        if ((zkDim % 2) == 0) {
+            zkDim++;
+        }
+
+        if (zkDim < 3) {
+            zkDim = 3;
+        }
+
+        kExtents[2] = zkDim;
+
+        GxxData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gxx = new GenerateGaussian(GxxData, kExtents, sigmas, derivOrder);
+
+        Gxx.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 2;
+        derivOrder[2] = 0;
+        GyyData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gyy = new GenerateGaussian(GyyData, kExtents, sigmas, derivOrder);
+
+        Gyy.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 0;
+        derivOrder[2] = 2;
+        GzzData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gzz = new GenerateGaussian(GzzData, kExtents, sigmas, derivOrder);
+
+        Gzz.calc(false);
+
+        float tmp;
+
+        for (int i = 0; i < GyyData.length; i++) {
+            tmp = -(GxxData[i] + GyyData[i] + (GzzData[i] * scaleFactor));
+
+            if (tmp > 0) {
+                tmp *= amplificationFactor;
+            }
+
+            GxxData[i] = tmp;
+        }
     }
 
 }

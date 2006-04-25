@@ -1,141 +1,200 @@
 package gov.nih.mipav.view.renderer.surfaceview.rfaview;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogBase;
-import javax.swing.*;
-import java.awt.event.*;
-import java.awt.*;
 
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.*;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+
+
+/**
+ * DOCUMENT ME!
+ */
 public class JDialogBurnParameter extends JDialogBase {
 
-  public float volume;
-  public float radius;
-  public float opacity;
-  public float diameter;
-  public float voltage;
-  public float time;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-  private JTextField diameterField;
-  private JTextField timeField;
-  private JTextField voltageField;
-  public boolean ok = false;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -1568251410627012713L;
 
-  private JPanelProbe probePanel;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-  public JDialogBurnParameter( JPanelProbe _probePanel, ViewJFrameBase _parentFrame) {
-    super(_parentFrame, false);
-    init();
-    probePanel = _probePanel;
-  }
+    /** DOCUMENT ME! */
+    public float diameter;
 
-  public void actionPerformed( ActionEvent event ) {
-       String command = event.getActionCommand();
+    /** DOCUMENT ME! */
+    public boolean ok = false;
 
-       if ( command.equals( "OK" ) ) {
-           setVariables();
-           setVisible(false);
-           probePanel.startBurn();
-       } else if ( command.equals( "Cancel" ) ) {
-           setVisible(false);
-       }
-   }
+    /** DOCUMENT ME! */
+    public float opacity;
 
-   public void setVariables() {
-      String timeString = timeField.getText();
-      String diameterSting = diameterField.getText();
-      diameter = Float.valueOf(diameterSting).floatValue();
-      time = Float.valueOf(timeString).floatValue();
-      ok = true;
-   }
+    /** DOCUMENT ME! */
+    public float radius;
 
+    /** DOCUMENT ME! */
+    public float time;
 
-   private void init() {
+    /** DOCUMENT ME! */
+    public float voltage;
 
-      setTitle("Parameter");
-      setLocation(300, 400);
+    /** DOCUMENT ME! */
+    public float volume;
 
-      Box contentBox = new Box(BoxLayout.Y_AXIS);
-      JPanel optionPanel = new JPanel();
-      // make border
-      optionPanel.setBorder(buildTitledBorder("Burn Parameter"));
-      contentBox.add(optionPanel);
-      // set layout
-      GridBagLayout gbl = new GridBagLayout();
-      GridBagConstraints gbc = new GridBagConstraints();
-      optionPanel.setLayout(gbl);
+    /** DOCUMENT ME! */
+    private JTextField diameterField;
 
-      gbc.anchor = GridBagConstraints.NORTHWEST;
+    /** DOCUMENT ME! */
+    private JPanelProbe probePanel;
 
-      // diameter
-      optionPanel.add(Box.createHorizontalStrut(10));
-      JLabel diameterLabel = new JLabel( "Burn diameter: " );
-      diameterLabel.setFont( serif12 );
-      diameterLabel.setForeground( Color.black );
+    /** DOCUMENT ME! */
+    private JTextField timeField;
 
-      gbc.gridwidth = 2;
-      gbl.setConstraints(diameterLabel, gbc);
-      optionPanel.add(diameterLabel);
-      optionPanel.add(Box.createHorizontalStrut(10));
+    /** DOCUMENT ME! */
+    private JTextField voltageField;
 
-      diameterField = new JTextField( 10 );
-      diameterField.setText("0.1");
-      MipavUtil.makeNumericsOnly(diameterField, true, true);
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
-      gbc.gridwidth = GridBagConstraints.REMAINDER;
-      gbl.setConstraints(diameterField, gbc);
-      optionPanel.add(diameterField);
+    /**
+     * Creates a new JDialogBurnParameter object.
+     *
+     * @param  _probePanel   DOCUMENT ME!
+     * @param  _parentFrame  DOCUMENT ME!
+     */
+    public JDialogBurnParameter(JPanelProbe _probePanel, ViewJFrameBase _parentFrame) {
+        super(_parentFrame, false);
+        init();
+        probePanel = _probePanel;
+    }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-      // time
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
 
-      optionPanel.add(Box.createHorizontalStrut(10));
-      JLabel timeLabel = new JLabel(" Burn Time (s): ");
-      timeLabel.setFont( serif12 );
-      timeLabel.setForeground( Color.black );
-      timeLabel.setRequestFocusEnabled(false);
-      gbc.gridwidth = 2;
-      gbl.setConstraints(timeLabel, gbc);
-      optionPanel.add(timeLabel);
-      optionPanel.add(Box.createHorizontalStrut(10));
+        if (command.equals("OK")) {
+            setVariables();
+            setVisible(false);
+            probePanel.startBurn();
+        } else if (command.equals("Cancel")) {
+            setVisible(false);
+        }
+    }
 
-      timeField = new JTextField( 10 );
-      timeField.setText("1");
-
-      MipavUtil.makeNumericsOnly(timeField, true, true);
-
-      gbc.gridwidth = GridBagConstraints.REMAINDER;
-      gbl.setConstraints(timeField, gbc);
-      optionPanel.add(timeField);
-
-      // voltage
-      optionPanel.add(Box.createHorizontalStrut(10));
-      JLabel voltageLabel = new JLabel(" Burn Voltage (v): ");
-      voltageLabel.setFont(serif12);
-      voltageLabel.setForeground(Color.black);
-
-      gbc.gridwidth = 2;
-      gbl.setConstraints(voltageLabel, gbc);
-      optionPanel.add(voltageLabel);
-      optionPanel.add(Box.createHorizontalStrut(10));
-       voltageField = new JTextField(10);
-      MipavUtil.makeNumericsOnly(voltageField, true, true);
-      gbc.gridwidth = GridBagConstraints.REMAINDER;
-      gbl.setConstraints(voltageField, gbc);
-      optionPanel.add(voltageField);
-      voltageLabel.setEnabled(false);
-      voltageField.setEnabled(false);
+    /**
+     * DOCUMENT ME!
+     */
+    public void setVariables() {
+        String timeString = timeField.getText();
+        String diameterSting = diameterField.getText();
+        diameter = Float.valueOf(diameterSting).floatValue();
+        time = Float.valueOf(timeString).floatValue();
+        ok = true;
+    }
 
 
-      JPanel buttonPanel = new JPanel();
-      OKButton = buildOKButton();
-      cancelButton = buildCancelButton();
-      buttonPanel.add( OKButton );
-      buttonPanel.add( cancelButton );
+    /**
+     * DOCUMENT ME!
+     */
+    private void init() {
 
-      contentBox.add( buttonPanel );
-      getContentPane().add( contentBox );
-      pack();
-      setVisible(true);
-   }
+        setTitle("Parameter");
+        setLocation(300, 400);
+
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
+        JPanel optionPanel = new JPanel();
+
+        // make border
+        optionPanel.setBorder(buildTitledBorder("Burn Parameter"));
+        contentBox.add(optionPanel);
+
+        // set layout
+        GridBagLayout gbl = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+        optionPanel.setLayout(gbl);
+
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+
+        // diameter
+        optionPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel diameterLabel = new JLabel("Burn diameter: ");
+        diameterLabel.setFont(serif12);
+        diameterLabel.setForeground(Color.black);
+
+        gbc.gridwidth = 2;
+        gbl.setConstraints(diameterLabel, gbc);
+        optionPanel.add(diameterLabel);
+        optionPanel.add(Box.createHorizontalStrut(10));
+
+        diameterField = new JTextField(10);
+        diameterField.setText("0.1");
+        MipavUtil.makeNumericsOnly(diameterField, true, true);
+
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(diameterField, gbc);
+        optionPanel.add(diameterField);
+
+
+        // time
+
+        optionPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel timeLabel = new JLabel(" Burn Time (s): ");
+        timeLabel.setFont(serif12);
+        timeLabel.setForeground(Color.black);
+        timeLabel.setRequestFocusEnabled(false);
+        gbc.gridwidth = 2;
+        gbl.setConstraints(timeLabel, gbc);
+        optionPanel.add(timeLabel);
+        optionPanel.add(Box.createHorizontalStrut(10));
+
+        timeField = new JTextField(10);
+        timeField.setText("1");
+
+        MipavUtil.makeNumericsOnly(timeField, true, true);
+
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(timeField, gbc);
+        optionPanel.add(timeField);
+
+        // voltage
+        optionPanel.add(Box.createHorizontalStrut(10));
+
+        JLabel voltageLabel = new JLabel(" Burn Voltage (v): ");
+        voltageLabel.setFont(serif12);
+        voltageLabel.setForeground(Color.black);
+
+        gbc.gridwidth = 2;
+        gbl.setConstraints(voltageLabel, gbc);
+        optionPanel.add(voltageLabel);
+        optionPanel.add(Box.createHorizontalStrut(10));
+        voltageField = new JTextField(10);
+        MipavUtil.makeNumericsOnly(voltageField, true, true);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(voltageField, gbc);
+        optionPanel.add(voltageField);
+        voltageLabel.setEnabled(false);
+        voltageField.setEnabled(false);
+
+
+        JPanel buttonPanel = new JPanel();
+        OKButton = buildOKButton();
+        cancelButton = buildCancelButton();
+        buttonPanel.add(OKButton);
+        buttonPanel.add(cancelButton);
+
+        contentBox.add(buttonPanel);
+        getContentPane().add(contentBox);
+        pack();
+        setVisible(true);
+    }
 
 }

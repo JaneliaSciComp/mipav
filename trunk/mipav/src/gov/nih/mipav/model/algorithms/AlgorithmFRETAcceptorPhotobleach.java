@@ -3,131 +3,126 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
-import java.io.*;
 import java.awt.*;
+
+import java.io.*;
 
 
 /**
- *  Fluorescence Resonance Energy Transfer
- *  FRET refers to the nonradiative transfer of energy from an excited state
- *  donor fluorescent molecule to a nearby acceptor fluorescent molecule.  The
- *  energy transfer efficiency E, defined as the number of energy transfer
- *  events divided by the number of photons absorbed by the donor, is related to
- *  the distance R between the acceptor and donor by:
- *  E = 1/[1 + (r/R0)**6]  (eq. 1)
- *  where R0, the Forster critical distance, is the distance at which E = 0.5.
- *  We also have
- *  E = 1 - FDA/FD,        (eq. 2)
- *  where FDA is the donor fluorescence in the presence of an acceptor and FD
- *  is the donor fluorescence in the absence of the acceptor.  The equivalent
- *  of an acceptor's absence can be created by photobleaching the acceptor.
- *  Thus, a method using equation 2, can be performed on a single sample by
- *  measuring the donor fluorescence before and after photobleaching the
- *  acceptor molecules.
+ * Fluorescence Resonance Energy Transfer FRET refers to the nonradiative transfer of energy from an excited state donor
+ * fluorescent molecule to a nearby acceptor fluorescent molecule. The energy transfer efficiency E, defined as the
+ * number of energy transfer events divided by the number of photons absorbed by the donor, is related to the distance R
+ * between the acceptor and donor by: E = 1/[1 + (r/R0)**6] (eq. 1) where R0, the Forster critical distance, is the
+ * distance at which E = 0.5. We also have E = 1 - FDA/FD, (eq. 2) where FDA is the donor fluorescence in the presence
+ * of an acceptor and FD is the donor fluorescence in the absence of the acceptor. The equivalent of an acceptor's
+ * absence can be created by photobleaching the acceptor. Thus, a method using equation 2, can be performed on a single
+ * sample by measuring the donor fluorescence before and after photobleaching the acceptor molecules.
  *
- *  Because FRET falls off as the sixth power of the distance between the donor
- *  and the acceptor, no FRET occurs for distances greater than 2R0.  Since R0
- *  is on the order of 10 to 70 Angstroms, by performing FRET measurements it
- *  is possible to distinguish proteins that are merely nearby in the same
- *  compartment from those proteins that are interacting with each other.
+ * <p>Because FRET falls off as the sixth power of the distance between the donor and the acceptor, no FRET occurs for
+ * distances greater than 2R0. Since R0 is on the order of 10 to 70 Angstroms, by performing FRET measurements it is
+ * possible to distinguish proteins that are merely nearby in the same compartment from those proteins that are
+ * interacting with each other.</p>
  *
- *  This program compares the fluorescence of two 2D images or of two 2D slices
- *  inside a 2 slice 3D image - an image before acceptor photobleaching and an
- *  image after acceptor photobleaching. In the 3D image the prebleached slice is
- *  required to be the first slice and the postbleached slice is required to be
- *  the second slice. Before acceptor photobleaching, the donor fluorescence is
- *  quenched by FRET with the unbleached acceptor.  After destroying the acceptor
- *  by photobleaching, the donor fluorescence will increase.
- *  Only 1 color will be used from a color image.
+ * <p>This program compares the fluorescence of two 2D images or of two 2D slices inside a 2 slice 3D image - an image
+ * before acceptor photobleaching and an image after acceptor photobleaching. In the 3D image the prebleached slice is
+ * required to be the first slice and the postbleached slice is required to be the second slice. Before acceptor
+ * photobleaching, the donor fluorescence is quenched by FRET with the unbleached acceptor. After destroying the
+ * acceptor by photobleaching, the donor fluorescence will increase. Only 1 color will be used from a color image.</p>
  *
- *  An optional registration may be performed before FRET.  In this
- *  registration the prebleached image is registered to the postbleached image.
- *  AlgorithmRegOAR2D is used with the cost function
- *  being the only registration parameter the user can vary in the dialog box.  Correlation
- *  ratio is the default cost function, but the user can also select least squares,
- *  normalized cross correlation, or normalized mutual information.  The
- *  FRET will be performed with the registered prebleached image rather than on
- *  the original prebleached image.  If the image is a color image, the selected color
- *  will determine the transformations for all the colors.
+ * <p>An optional registration may be performed before FRET. In this registration the prebleached image is registered to
+ * the postbleached image. AlgorithmRegOAR2D is used with the cost function being the only registration parameter the
+ * user can vary in the dialog box. Correlation ratio is the default cost function, but the user can also select least
+ * squares, normalized cross correlation, or normalized mutual information. The FRET will be performed with the
+ * registered prebleached image rather than on the original prebleached image. If the image is a color image, the
+ * selected color will determine the transformations for all the colors.</p>
  *
- *  The code here assumes the presence of 1 or 2 or 3 VOI regions - a required
- *  donor region and optional background region and optional signal normalization
- *  region.
- *  The VOIs must all be placed in the postbleached image.
- *  Radio buttons in the dialog box are used to select a red photobleached
- *  or a blue background VOI or a green signal VOI.
- *  Either an ellipse VOI, rectangle VOI, or
- *  polyline VOI will be selected from the top MIPAV toolbar.
- *  There is no need to hit the NEW_VOI button.
- *  The background region will have a smaller average intensity than the
- *  donor region.
+ * <p>The code here assumes the presence of 1 or 2 or 3 VOI regions - a required donor region and optional background
+ * region and optional signal normalization region. The VOIs must all be placed in the postbleached image. Radio buttons
+ * in the dialog box are used to select a red photobleached or a blue background VOI or a green signal VOI. Either an
+ * ellipse VOI, rectangle VOI, or polyline VOI will be selected from the top MIPAV toolbar. There is no need to hit the
+ * NEW_VOI button. The background region will have a smaller average intensity than the donor region.</p>
  *
- *  If a background VOI is present, the average of the prebleached background is
- *  subtracted from the average of the prebleached donor region and the average of the
- *  postbleached background is subtracted is subtracted from the average of the
- *  postbleached donor region.  Then, the energy transfer efficiency is calculated as
- *  (background subtracted postbleached donor intensity -
- *  (background subtracted prebleached donor intensity)/
- *  background subtracted postbleached donor intensity
+ * <p>If a background VOI is present, the average of the prebleached background is subtracted from the average of the
+ * prebleached donor region and the average of the postbleached background is subtracted is subtracted from the average
+ * of the postbleached donor region. Then, the energy transfer efficiency is calculated as (background subtracted
+ * postbleached donor intensity - (background subtracted prebleached donor intensity)/ background subtracted
+ * postbleached donor intensity</p>
  *
- * A signal VOI cannot be used unless a background VOI is also present.  Let b1
- * and s1 be the prebleached values and b2 and s2 be the postbleached values.
- * The following equation is used to convert a donor value from the prebleached
- * image into a donor value on the postbleached image:
- * postbleached = ((s2 - b2)/(s1 - b1)) * prebleached + (b2*s1 - b1*s2)/(s1 - b1)
+ * <p>A signal VOI cannot be used unless a background VOI is also present. Let b1 and s1 be the prebleached values and
+ * b2 and s2 be the postbleached values. The following equation is used to convert a donor value from the prebleached
+ * image into a donor value on the postbleached image: postbleached = ((s2 - b2)/(s1 - b1)) * prebleached + (b2*s1 -
+ * b1*s2)/(s1 - b1)</p>
  *
- *  Reference:
- *  1.) "Imaging Protein-Protein Interactions Using Fluorescence Energy Transfer
- *       Microscopy" by Anne K. Kenworthy, Methods, 24, 2001, pp. 289 - 296.
+ * <p>Reference: 1.) "Imaging Protein-Protein Interactions Using Fluorescence Energy Transfer Microscopy" by Anne K.
+ * Kenworthy, Methods, 24, 2001, pp. 289 - 296.</p>
  *
- *  2.) "Quantitative Fluorescence Resonance Energy Transfer Measurements Using
- *       Fluorescence Microscopy" by Gerald W. Gordon, Gail Berry, Xiao Huan Liang,
- *       Beth Levine, and Brian Herman, Biophysical Journal, Volume 74, May, 1998,
- *       pp. 2702-2713.
+ * <p>2.) "Quantitative Fluorescence Resonance Energy Transfer Measurements Using Fluorescence Microscopy" by Gerald W.
+ * Gordon, Gail Berry, Xiao Huan Liang, Beth Levine, and Brian Herman, Biophysical Journal, Volume 74, May, 1998, pp.
+ * 2702-2713.</p>
  */
 public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
 
-    //private ModelImage srcImage; // image before acceptor photobleaching
-    private ModelImage postImage; // image after acceptor photobleaching
-    private boolean useRed = false;
-    private boolean useGreen = false;
-    private boolean useBlue = false;
-    private int donorIndex;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private int backgroundIndex;
-    private int signalIndex;
-    private boolean register;
+
+    /** DOCUMENT ME! */
     private int cost;
+
+    /** DOCUMENT ME! */
     private boolean createRegImage;
+
+    /** DOCUMENT ME! */
+    private int donorIndex;
+
+    /** private ModelImage srcImage; // image before acceptor photobleaching. */
+    private ModelImage postImage; // image after acceptor photobleaching
+
+    /** DOCUMENT ME! */
+    private boolean register;
+
+    /** DOCUMENT ME! */
+    private int signalIndex;
+
+    /** DOCUMENT ME! */
     private ViewUserInterface UI;
 
-    /**
-     *   @param preImage     image before acceptor photobleaching
-     *                       or 2 slice 3D image
-     *   @param postImage    image after acceptor photobleaching
-     *                       null if 3D image is used
-     *   @param useRed       If true, use the red color values for the FRET
-     *   @param useGreen     If true, use the green color values for the FRET
-     *   @param useBlue      If true, use the blue color values for the FRET
-     *   @param donorIndex the index of the donor VOI
-     *   @param backgroundIndex the index of the background VOI if >= 0
-     *   @param signalIndex the index of the signal normalization VOI if >= 0
-     *   @param register     If true register the preImage to the postImage
-     *                       before FRET
-     *   @param cost         Cost function used in registration
-     *   @param createRegImage If register = true and createRegImage = true, then
-     *                       create a frame with the registered image
-     */
-    public AlgorithmFRETAcceptorPhotobleach( ModelImage preImage, ModelImage postImage,
-            boolean useRed, boolean useGreen, boolean useBlue,
-            int donorIndex,
-            int backgroundIndex,
-            int signalIndex,
-            boolean register, int cost,
-            boolean createRegImage ) {
+    /** DOCUMENT ME! */
+    private boolean useBlue = false;
 
-        super( null, preImage );
+    /** DOCUMENT ME! */
+    private boolean useGreen = false;
+
+    /** DOCUMENT ME! */
+    private boolean useRed = false;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new AlgorithmFRETAcceptorPhotobleach object.
+     *
+     * @param  preImage         image before acceptor photobleaching or 2 slice 3D image
+     * @param  postImage        image after acceptor photobleaching null if 3D image is used
+     * @param  useRed           If true, use the red color values for the FRET
+     * @param  useGreen         If true, use the green color values for the FRET
+     * @param  useBlue          If true, use the blue color values for the FRET
+     * @param  donorIndex       the index of the donor VOI
+     * @param  backgroundIndex  the index of the background VOI if >= 0
+     * @param  signalIndex      the index of the signal normalization VOI if >= 0
+     * @param  register         If true register the preImage to the postImage before FRET
+     * @param  cost             Cost function used in registration
+     * @param  createRegImage   If register = true and createRegImage = true, then create a frame with the registered
+     *                          image
+     */
+    public AlgorithmFRETAcceptorPhotobleach(ModelImage preImage, ModelImage postImage, boolean useRed, boolean useGreen,
+                                            boolean useBlue, int donorIndex, int backgroundIndex, int signalIndex,
+                                            boolean register, int cost, boolean createRegImage) {
+
+        super(null, preImage);
         this.postImage = postImage;
         this.useRed = useRed;
         this.useGreen = useGreen;
@@ -141,23 +136,19 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         UI = srcImage.getUserInterface();
     }
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the
-     *  string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String(
-                "FRET(" + useRed + ", " + useGreen + ", " + useBlue + ", " + donorIndex + ", " + backgroundIndex + ", "
-                + signalIndex + ", " + register + ", " + cost + "\n" );
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /** Prepares this class for destruction. */
+    /**
+     * Prepares this class for destruction.
+     */
     public void finalize() {
         srcImage = null;
         super.finalize();
     }
 
-    /** starts the algorithm */
+    /**
+     * starts the algorithm.
+     */
     public void runAlgorithm() {
         int i;
         int c = 0;
@@ -165,6 +156,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         int c3 = 0;
         int xDim, yDim, sliceSize;
         float[] floatBuffer;
+
         // black and white image created from selected color of color image
         ModelImage bwImage = null;
         ModelImage bwImage2 = null;
@@ -205,13 +197,15 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         VOI inVOI, outVOI;
         Color voiColor;
 
-        if ( srcImage == null ) {
-            displayError( "Prebleached Image is null" );
+        if (srcImage == null) {
+            displayError("Prebleached Image is null");
+
             return;
         }
 
-        if ( ( srcImage.getNDims() == 2 ) && ( postImage == null ) ) {
-            displayError( "Postbleached Image is null" );
+        if ((srcImage.getNDims() == 2) && (postImage == null)) {
+            displayError("Postbleached Image is null");
+
             return;
         }
 
@@ -224,247 +218,300 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         srcExtents[1] = yDim;
         sliceSize = xDim * yDim;
         floatBuffer = new float[sliceSize];
-        if ( srcImage.getNDims() == 2 ) {
+
+        if (srcImage.getNDims() == 2) {
             VOIs = postImage.getVOIs();
         } else {
             VOIs = srcImage.getVOIs();
             nVOI = VOIs.size();
             VOIs2 = new VOIVector();
-            for ( i = 0; i < nVOI; i++ ) {
-                inVOI = (VOI) VOIs.VOIAt( i ).clone();
+
+            for (i = 0; i < nVOI; i++) {
+                inVOI = (VOI) VOIs.VOIAt(i).clone();
                 voiColor = inVOI.getColor();
-                outVOI = new VOI( inVOI.getID(), inVOI.getName(), 1, inVOI.getCurveType(), -1.0f );
-                outVOI.setColor( voiColor );
-                outVOI.importNewVOI( 0, 1, inVOI, 1 );
-                VOIs2.addElement( outVOI );
+                outVOI = new VOI(inVOI.getID(), inVOI.getName(), 1, inVOI.getCurveType(), -1.0f);
+                outVOI.setColor(voiColor);
+                outVOI.importNewVOI(0, 1, inVOI, 1);
+                VOIs2.addElement(outVOI);
             }
         }
+
         // Create black and white image using only the selected color
-        if ( srcImage.isColorImage() ) {
-            progressBar.setMessage( "Creating black and white image" );
+        if (srcImage.isColorImage()) {
+            progressBar.setMessage("Creating black and white image");
             minR = srcImage.getMinR();
             maxR = srcImage.getMaxR();
-            if ( minR != maxR ) {
+
+            if (minR != maxR) {
                 haveRed = true;
             }
+
             minG = srcImage.getMinG();
             maxG = srcImage.getMaxG();
-            if ( minG != maxG ) {
+
+            if (minG != maxG) {
                 haveGreen = true;
             }
+
             minB = srcImage.getMinB();
             maxB = srcImage.getMaxB();
-            if ( minB != maxB ) {
+
+            if (minB != maxB) {
                 haveBlue = true;
             }
 
             colorsPresent = 0;
-            if ( haveRed ) {
+
+            if (haveRed) {
                 colorsPresent++;
             }
-            if ( haveGreen ) {
+
+            if (haveGreen) {
                 colorsPresent++;
             }
-            if ( haveBlue ) {
+
+            if (haveBlue) {
                 colorsPresent++;
             }
-            bwImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI );
-            if ( postImage != null ) {
-                bwPostImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, postImage.getImageName() + "_bw", UI );
+
+            bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI);
+
+            if (postImage != null) {
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, postImage.getImageName() + "_bw", UI);
             } else {
-                bwPostImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
-                        UI );
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
+                                             UI);
             }
-            if ( createRegImage && ( colorsPresent >= 2 ) ) {
-                bwImage2 = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw2", UI );
-                colorImageReg = new ModelImage( srcImage.getType(), srcExtents, srcImage.getImageName() + "_registered",
-                        UI );
+
+            if (createRegImage && (colorsPresent >= 2)) {
+                bwImage2 = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw2", UI);
+                colorImageReg = new ModelImage(srcImage.getType(), srcExtents, srcImage.getImageName() + "_registered",
+                                               UI);
             }
-            if ( createRegImage && ( colorsPresent == 3 ) ) {
-                bwImage3 = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw3", UI );
+
+            if (createRegImage && (colorsPresent == 3)) {
+                bwImage3 = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw3", UI);
             }
-            if ( useRed ) {
+
+            if (useRed) {
                 c = 1;
-            } else if ( useGreen ) {
+            } else if (useGreen) {
                 c = 2;
             } else {
                 c = 3;
             }
 
             try {
-                srcImage.exportRGBData( c, 0, sliceSize, floatBuffer );
-            } catch ( IOException e ) {
-                MipavUtil.displayError( "IOException " + e + " on srcImage.exportRGBData" );
-                setCompleted( false );
+                srcImage.exportRGBData(c, 0, sliceSize, floatBuffer);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
+                setCompleted(false);
+
                 return;
             }
+
             try {
-                bwImage.importData( 0, floatBuffer, false );
-            } catch ( IOException e ) {
-                MipavUtil.displayError( "IOException " + e + " on bwImage.importData" );
-                setCompleted( false );
+                bwImage.importData(0, floatBuffer, false);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on bwImage.importData");
+                setCompleted(false);
+
                 return;
             }
 
             bwImage.calcMinMax();
 
-            if ( srcImage.getNDims() == 2 ) {
+            if (srcImage.getNDims() == 2) {
+
                 try {
-                    postImage.exportRGBData( c, 0, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on postImage.exportRGBData" );
-                    setCompleted( false );
+                    postImage.exportRGBData(c, 0, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on postImage.exportRGBData");
+                    setCompleted(false);
+
                     return;
                 }
             } // if (srcImage.getNDims() == 2)
             else { // slice 3D image
+
                 try {
-                    srcImage.exportRGBData( c, 4 * sliceSize, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportRGBData" );
-                    setCompleted( false );
+                    srcImage.exportRGBData(c, 4 * sliceSize, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
+                    setCompleted(false);
+
                     return;
                 }
 
             }
+
             try {
-                bwPostImage.importData( 0, floatBuffer, false );
-            } catch ( IOException e ) {
-                MipavUtil.displayError( "IOException " + e + " on bwPostImage.importData" );
-                setCompleted( false );
+                bwPostImage.importData(0, floatBuffer, false);
+            } catch (IOException e) {
+                MipavUtil.displayError("IOException " + e + " on bwPostImage.importData");
+                setCompleted(false);
+
                 return;
             }
 
             bwPostImage.calcMinMax();
-            if ( srcImage.getNDims() == 2 ) {
-                bwPostImage.setVOIs( VOIs );
+
+            if (srcImage.getNDims() == 2) {
+                bwPostImage.setVOIs(VOIs);
             } else {
-                bwPostImage.setVOIs( VOIs2 );
+                bwPostImage.setVOIs(VOIs2);
             }
 
-            if ( createRegImage && !useRed && haveRed ) {
+            if (createRegImage && !useRed && haveRed) {
                 c2 = 1;
-            } else if ( createRegImage && !useGreen && haveGreen ) {
+            } else if (createRegImage && !useGreen && haveGreen) {
                 c2 = 2;
-            } else if ( createRegImage && !useBlue && haveBlue ) {
+            } else if (createRegImage && !useBlue && haveBlue) {
                 c2 = 3;
             }
 
-            if ( c2 > 0 ) {
+            if (c2 > 0) {
+
                 try {
-                    srcImage.exportRGBData( c2, 0, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportRGBData" );
-                    setCompleted( false );
+                    srcImage.exportRGBData(c2, 0, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
+                    setCompleted(false);
+
                     return;
                 }
+
                 try {
-                    bwImage2.importData( 0, floatBuffer, true );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on bwImage2.importData" );
-                    setCompleted( false );
+                    bwImage2.importData(0, floatBuffer, true);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on bwImage2.importData");
+                    setCompleted(false);
+
                     return;
                 }
-                if ( c2 == 1 && !useGreen && haveGreen ) {
+
+                if ((c2 == 1) && !useGreen && haveGreen) {
                     c3 = 2;
-                } else if ( ( ( c2 == 1 ) || ( c2 == 2 ) ) && !useBlue && haveBlue ) {
+                } else if (((c2 == 1) || (c2 == 2)) && !useBlue && haveBlue) {
                     c3 = 3;
                 }
             } // if (c2 > 0)
 
-            if ( c3 > 0 ) {
+            if (c3 > 0) {
+
                 try {
-                    srcImage.exportRGBData( c3, 0, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportRGBData" );
-                    setCompleted( false );
+                    srcImage.exportRGBData(c3, 0, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
+                    setCompleted(false);
+
                     return;
                 }
+
                 try {
-                    bwImage3.importData( 0, floatBuffer, true );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on bwImage3.importData" );
-                    setCompleted( false );
+                    bwImage3.importData(0, floatBuffer, true);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on bwImage3.importData");
+                    setCompleted(false);
+
                     return;
                 }
             } // if (c3 > 0)
         } // if (srcImage.isColorImage())
         else {
-            if ( srcImage.getNDims() == 2 ) {
-                bwImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI );
+
+            if (srcImage.getNDims() == 2) {
+                bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI);
+
                 try {
-                    srcImage.exportData( 0, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportData" );
-                    setCompleted( false );
-                    return;
-                }
-                try {
-                    bwImage.importData( 0, floatBuffer, true );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on bwImage.importData" );
-                    setCompleted( false );
+                    srcImage.exportData(0, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+                    setCompleted(false);
+
                     return;
                 }
 
-                bwPostImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
-                        UI );
                 try {
-                    postImage.exportData( 0, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportData" );
-                    setCompleted( false );
-                    return;
-                }
-                try {
-                    bwPostImage.importData( 0, floatBuffer, true );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on bwPostImage.importData" );
-                    setCompleted( false );
+                    bwImage.importData(0, floatBuffer, true);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on bwImage.importData");
+                    setCompleted(false);
+
                     return;
                 }
 
-                bwPostImage.setVOIs( VOIs );
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
+                                             UI);
+
+                try {
+                    postImage.exportData(0, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+                    setCompleted(false);
+
+                    return;
+                }
+
+                try {
+                    bwPostImage.importData(0, floatBuffer, true);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on bwPostImage.importData");
+                    setCompleted(false);
+
+                    return;
+                }
+
+                bwPostImage.setVOIs(VOIs);
             } // if (srcImage.getNDims() == 2)
             else { // 2 slice 3D image
-                bwImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI );
+                bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI);
+
                 try {
-                    srcImage.exportData( 0, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportData" );
-                    setCompleted( false );
-                    return;
-                }
-                try {
-                    bwImage.importData( 0, floatBuffer, true );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on bwImage.importData" );
-                    setCompleted( false );
+                    srcImage.exportData(0, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+                    setCompleted(false);
+
                     return;
                 }
 
-                bwPostImage = new ModelImage( ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
-                        UI );
                 try {
-                    srcImage.exportData( sliceSize, sliceSize, floatBuffer );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on srcImage.exportData" );
-                    setCompleted( false );
+                    bwImage.importData(0, floatBuffer, true);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on bwImage.importData");
+                    setCompleted(false);
+
                     return;
                 }
+
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
+                                             UI);
+
                 try {
-                    bwPostImage.importData( 0, floatBuffer, true );
-                } catch ( IOException e ) {
-                    MipavUtil.displayError( "IOException " + e + " on bwPostImage.importData" );
-                    setCompleted( false );
+                    srcImage.exportData(sliceSize, sliceSize, floatBuffer);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+                    setCompleted(false);
+
                     return;
                 }
-                bwPostImage.setVOIs( VOIs2 );
+
+                try {
+                    bwPostImage.importData(0, floatBuffer, true);
+                } catch (IOException e) {
+                    MipavUtil.displayError("IOException " + e + " on bwPostImage.importData");
+                    setCompleted(false);
+
+                    return;
+                }
+
+                bwPostImage.setVOIs(VOIs2);
             } // 2 slice 3D image
         }
 
-        if ( register ) {
-            progressBar.setMessage( "Registering images" );
+        if (register) {
+            progressBar.setMessage("Registering images");
 
             int DOF = 3; // rigid transformation
             int interp = AlgorithmTransform.BILINEAR;
@@ -480,160 +527,195 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
             int maxIterations = 2;
             int numMinima = 3;
 
-            regAlgo = new AlgorithmRegOAR2D( bwPostImage, bwImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
-                    fineRate, doSubsample, bracketBound, maxIterations, numMinima );
+            regAlgo = new AlgorithmRegOAR2D(bwPostImage, bwImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
+                                            fineRate, doSubsample, bracketBound, maxIterations, numMinima);
             regAlgo.run();
-            transform = new AlgorithmTransform( bwImage, regAlgo.getTransform(), interp2,
-                    bwPostImage.getFileInfo()[0].getResolutions()[0], bwPostImage.getFileInfo()[0].getResolutions()[1],
-                    bwPostImage.getExtents()[0], bwPostImage.getExtents()[1], false, false, false );
+            transform = new AlgorithmTransform(bwImage, regAlgo.getTransform(), interp2,
+                                               bwPostImage.getFileInfo()[0].getResolutions()[0],
+                                               bwPostImage.getFileInfo()[0].getResolutions()[1],
+                                               bwPostImage.getExtents()[0], bwPostImage.getExtents()[1], false, false,
+                                               false);
 
-            transform.setUpdateOriginFlag( true );
+            transform.setUpdateOriginFlag(true);
             transform.run();
             bwImage = transform.getTransformedImage();
             transform.finalize();
-            if ( colorsPresent >= 2 ) {
-                transform = new AlgorithmTransform( bwImage2, regAlgo.getTransform(), interp2,
-                        bwPostImage.getFileInfo()[0].getResolutions()[0],
-                        bwPostImage.getFileInfo()[0].getResolutions()[1], bwPostImage.getExtents()[0],
-                        bwPostImage.getExtents()[1], false, false, false );
 
-                transform.setUpdateOriginFlag( true );
+            if (colorsPresent >= 2) {
+                transform = new AlgorithmTransform(bwImage2, regAlgo.getTransform(), interp2,
+                                                   bwPostImage.getFileInfo()[0].getResolutions()[0],
+                                                   bwPostImage.getFileInfo()[0].getResolutions()[1],
+                                                   bwPostImage.getExtents()[0], bwPostImage.getExtents()[1], false,
+                                                   false, false);
+
+                transform.setUpdateOriginFlag(true);
                 transform.run();
                 bwImage2 = transform.getTransformedImage();
                 transform.finalize();
             } // if (colorsPresent >= 2)
-            if ( colorsPresent == 3 ) {
-                transform = new AlgorithmTransform( bwImage3, regAlgo.getTransform(), interp2,
-                        bwPostImage.getFileInfo()[0].getResolutions()[0],
-                        bwPostImage.getFileInfo()[0].getResolutions()[1], bwPostImage.getExtents()[0],
-                        bwPostImage.getExtents()[1], false, false, false );
 
-                transform.setUpdateOriginFlag( true );
+            if (colorsPresent == 3) {
+                transform = new AlgorithmTransform(bwImage3, regAlgo.getTransform(), interp2,
+                                                   bwPostImage.getFileInfo()[0].getResolutions()[0],
+                                                   bwPostImage.getFileInfo()[0].getResolutions()[1],
+                                                   bwPostImage.getExtents()[0], bwPostImage.getExtents()[1], false,
+                                                   false, false);
+
+                transform.setUpdateOriginFlag(true);
                 transform.run();
                 bwImage3 = transform.getTransformedImage();
                 transform.finalize();
             } // if (colorsPresent == 3)
+
             regAlgo.finalize();
             regAlgo = null;
 
-            if ( createRegImage ) {
-                if ( colorsPresent >= 2 ) {
+            if (createRegImage) {
+
+                if (colorsPresent >= 2) {
+
                     try {
-                        bwImage.exportData( 0, sliceSize, floatBuffer );
-                    } catch ( IOException e ) {
-                        MipavUtil.displayError( "IOException " + e + " on bwImage.exportData" );
-                        setCompleted( false );
-                        return;
-                    }
-                    try {
-                        colorImageReg.importRGBData( c, 0, floatBuffer, false );
-                    } catch ( IOException e ) {
-                        MipavUtil.displayError( "IOException " + e + " on colorImageReg.importRGBData" );
-                        setCompleted( false );
+                        bwImage.exportData(0, sliceSize, floatBuffer);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on bwImage.exportData");
+                        setCompleted(false);
+
                         return;
                     }
 
                     try {
-                        bwImage2.exportData( 0, sliceSize, floatBuffer );
-                    } catch ( IOException e ) {
-                        MipavUtil.displayError( "IOException " + e + " on bwImage2.exportData" );
-                        setCompleted( false );
+                        colorImageReg.importRGBData(c, 0, floatBuffer, false);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on colorImageReg.importRGBData");
+                        setCompleted(false);
+
                         return;
                     }
+
                     try {
-                        colorImageReg.importRGBData( c2, 0, floatBuffer, false );
-                    } catch ( IOException e ) {
-                        MipavUtil.displayError( "IOException " + e + " on colorImageReg.importRGBData" );
-                        setCompleted( false );
+                        bwImage2.exportData(0, sliceSize, floatBuffer);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on bwImage2.exportData");
+                        setCompleted(false);
+
                         return;
                     }
-                    if ( colorsPresent == 3 ) {
+
+                    try {
+                        colorImageReg.importRGBData(c2, 0, floatBuffer, false);
+                    } catch (IOException e) {
+                        MipavUtil.displayError("IOException " + e + " on colorImageReg.importRGBData");
+                        setCompleted(false);
+
+                        return;
+                    }
+
+                    if (colorsPresent == 3) {
+
                         try {
-                            bwImage3.exportData( 0, sliceSize, floatBuffer );
-                        } catch ( IOException e ) {
-                            MipavUtil.displayError( "IOException " + e + " on bwImage3.exportData" );
-                            setCompleted( false );
+                            bwImage3.exportData(0, sliceSize, floatBuffer);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on bwImage3.exportData");
+                            setCompleted(false);
+
                             return;
                         }
+
                         try {
-                            colorImageReg.importRGBData( c3, 0, floatBuffer, false );
-                        } catch ( IOException e ) {
-                            MipavUtil.displayError( "IOException " + e + " on colorImageReg.importRGBData" );
-                            setCompleted( false );
+                            colorImageReg.importRGBData(c3, 0, floatBuffer, false);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on colorImageReg.importRGBData");
+                            setCompleted(false);
+
                             return;
                         }
                     } // if (colorsPresent == 3)
                     else { // colorsPresent == 2
-                        if ( ( ( c == 2 ) || ( c2 == 2 ) ) && ( ( c == 3 ) || ( c2 == 3 ) ) ) {
+
+                        if (((c == 2) || (c2 == 2)) && ((c == 3) || (c2 == 3))) {
                             c3 = 1;
-                        } else if ( ( ( c == 1 ) || ( c2 == 1 ) ) && ( ( c == 3 ) || ( c2 == 3 ) ) ) {
+                        } else if (((c == 1) || (c2 == 1)) && ((c == 3) || (c2 == 3))) {
                             c3 = 2;
                         } else {
                             c3 = 3;
                         }
-                        for ( i = 0; i < floatBuffer.length; i++ ) {
+
+                        for (i = 0; i < floatBuffer.length; i++) {
                             floatBuffer[i] = 0.0f;
                         }
+
                         try {
-                            colorImageReg.importRGBData( c3, 0, floatBuffer, false );
-                        } catch ( IOException e ) {
-                            MipavUtil.displayError( "IOException " + e + " on colorImageReg.importRGBData" );
-                            setCompleted( false );
+                            colorImageReg.importRGBData(c3, 0, floatBuffer, false);
+                        } catch (IOException e) {
+                            MipavUtil.displayError("IOException " + e + " on colorImageReg.importRGBData");
+                            setCompleted(false);
+
                             return;
                         }
                     } // else colorsPresent == 2
+
                     colorImageReg.calcMinMax();
-                    if ( srcImage.getNDims() == 2 ) {
-                        colorImageReg.setVOIs( VOIs );
-                        bwImage.setVOIs( VOIs );
+
+                    if (srcImage.getNDims() == 2) {
+                        colorImageReg.setVOIs(VOIs);
+                        bwImage.setVOIs(VOIs);
                     } else {
-                        colorImageReg.setVOIs( VOIs2 );
-                        bwImage.setVOIs( VOIs2 );
+                        colorImageReg.setVOIs(VOIs2);
+                        bwImage.setVOIs(VOIs2);
                     }
-                    colorImageReg.setImageName( srcImage.getImageName() + "_registered" );
+
+                    colorImageReg.setImageName(srcImage.getImageName() + "_registered");
                     new ViewJFrameImage(colorImageReg);
                 } // if (colorsPresent >= 2)
                 else {
-                    bwImage.setImageName( srcImage.getImageName() + "_registered" );
+                    bwImage.setImageName(srcImage.getImageName() + "_registered");
                     bwImage.calcMinMax();
-                    if ( srcImage.getNDims() == 2 ) {
-                        bwImage.setVOIs( VOIs );
+
+                    if (srcImage.getNDims() == 2) {
+                        bwImage.setVOIs(VOIs);
                     } else {
-                        bwImage.setVOIs( VOIs2 );
+                        bwImage.setVOIs(VOIs2);
                     }
+
                     new ViewJFrameImage(bwImage);
                 }
             } // if (createRegImage)
         } // if (register)
         else { // not registered
-            if ( srcImage.getNDims() == 2 ) {
-                srcImage.setVOIs( VOIs );
-                bwImage.setVOIs( VOIs );
+
+            if (srcImage.getNDims() == 2) {
+                srcImage.setVOIs(VOIs);
+                bwImage.setVOIs(VOIs);
             } else {
-                bwImage.setVOIs( VOIs2 );
+                bwImage.setVOIs(VOIs2);
             }
         } // else not registered
 
-        progressBar.setMessage( "Cacluating average intensities" );
+        progressBar.setMessage("Cacluating average intensities");
         mask = new short[sliceSize];
-        for ( i = 0; i < mask.length; i++ ) {
+
+        for (i = 0; i < mask.length; i++) {
             mask[i] = -1;
         }
-        mask = bwPostImage.generateVOIMask( mask, donorIndex );
-        if ( backgroundIndex >= 0 ) {
-            mask = bwPostImage.generateVOIMask( mask, backgroundIndex );
+
+        mask = bwPostImage.generateVOIMask(mask, donorIndex);
+
+        if (backgroundIndex >= 0) {
+            mask = bwPostImage.generateVOIMask(mask, backgroundIndex);
         }
-        if ( signalIndex >= 0 ) {
-            mask = bwPostImage.generateVOIMask( mask, signalIndex );
+
+        if (signalIndex >= 0) {
+            mask = bwPostImage.generateVOIMask(mask, signalIndex);
         }
         // Find the average intensities in each VOI
         // The backgroundVOI intensity will be less than the donorVOI intensity
 
         try {
-            bwImage.exportData( 0, sliceSize, floatBuffer );
-        } catch ( IOException e ) {
-            MipavUtil.displayError( "IOException " + e + " on bwImage.export(0,sliceSize,floatBuffer)" );
-            setCompleted( false );
+            bwImage.exportData(0, sliceSize, floatBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on bwImage.export(0,sliceSize,floatBuffer)");
+            setCompleted(false);
+
             return;
         }
 
@@ -643,44 +725,52 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         preDonorIntensity = 0.0f;
         preBackgroundIntensity = 0.0f;
         preSignalIntensity = 0.0f;
-        for ( i = 0; i < sliceSize; i++ ) {
-            if ( mask[i] == donorIndex ) {
+
+        for (i = 0; i < sliceSize; i++) {
+
+            if (mask[i] == donorIndex) {
                 preDonorIntensity += floatBuffer[i];
                 preDonorCount++;
             }
-            if ( backgroundIndex >= 0 ) {
-                if ( mask[i] == backgroundIndex ) {
+
+            if (backgroundIndex >= 0) {
+
+                if (mask[i] == backgroundIndex) {
                     preBackgroundIntensity += floatBuffer[i];
                     preBackgroundCount++;
                 }
             } // if (backgroundIndex >= 0)
-            if ( signalIndex >= 0 ) {
-                if ( mask[i] == signalIndex ) {
+
+            if (signalIndex >= 0) {
+
+                if (mask[i] == signalIndex) {
                     preSignalIntensity += floatBuffer[i];
                     preSignalCount++;
                 }
             } // if (signalIndex >= 0)
 
         }
+
         preDonorIntensity = preDonorIntensity / preDonorCount;
 
-        if ( backgroundIndex >= 0 ) {
+        if (backgroundIndex >= 0) {
             preBackgroundIntensity = preBackgroundIntensity / preBackgroundCount;
             correctedPreDonorIntensity = preDonorIntensity - preBackgroundIntensity;
         } else {
             correctedPreDonorIntensity = preDonorIntensity;
         }
 
-        if ( signalIndex >= 0 ) {
+        if (signalIndex >= 0) {
             preSignalIntensity = preSignalIntensity / preSignalCount;
             preSignalRange = preSignalIntensity - preBackgroundIntensity;
         } // if (signalIntensity >= 0)
 
         try {
-            bwPostImage.exportData( 0, sliceSize, floatBuffer );
-        } catch ( IOException e ) {
-            MipavUtil.displayError( "IOException " + e + " on bwPostImage.export(0,sliceSize,floatBuffer)" );
-            setCompleted( false );
+            bwPostImage.exportData(0, sliceSize, floatBuffer);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOException " + e + " on bwPostImage.export(0,sliceSize,floatBuffer)");
+            setCompleted(false);
+
             return;
         }
 
@@ -690,118 +780,149 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         postDonorIntensity = 0.0f;
         postBackgroundIntensity = 0.0f;
         postSignalIntensity = 0.0f;
-        for ( i = 0; i < sliceSize; i++ ) {
-            if ( mask[i] == donorIndex ) {
+
+        for (i = 0; i < sliceSize; i++) {
+
+            if (mask[i] == donorIndex) {
                 postDonorIntensity += floatBuffer[i];
                 postDonorCount++;
             }
-            if ( backgroundIndex >= 0 ) {
-                if ( mask[i] == backgroundIndex ) {
+
+            if (backgroundIndex >= 0) {
+
+                if (mask[i] == backgroundIndex) {
                     postBackgroundIntensity += floatBuffer[i];
                     postBackgroundCount++;
                 }
             } // if (backgroundIndex >= 0)
-            if ( signalIndex >= 0 ) {
-                if ( mask[i] == signalIndex ) {
+
+            if (signalIndex >= 0) {
+
+                if (mask[i] == signalIndex) {
                     postSignalIntensity += floatBuffer[i];
                     postSignalCount++;
                 }
             } // if (signalIndex >= 0)
 
         }
+
         postDonorIntensity = postDonorIntensity / postDonorCount;
-        if ( backgroundIndex >= 0 ) {
+
+        if (backgroundIndex >= 0) {
             postBackgroundIntensity = postBackgroundIntensity / postBackgroundCount;
             correctedPostDonorIntensity = postDonorIntensity - postBackgroundIntensity;
         } else {
             correctedPostDonorIntensity = postDonorIntensity;
         }
-        if ( signalIndex >= 0 ) {
+
+        if (signalIndex >= 0) {
             postSignalIntensity = postSignalIntensity / postSignalCount;
             postSignalRange = postSignalIntensity - postBackgroundIntensity;
+
             // Scale the donor signal from the prebleached image to the postbleached
             // image using the 2 background intensities and the 2 signal intensities
-            correctedPreDonorIntensity = ( postSignalRange / preSignalRange ) * preDonorIntensity
-                    + ( postBackgroundIntensity * preSignalIntensity - preBackgroundIntensity * postSignalIntensity )
-                            / preSignalRange;
+            correctedPreDonorIntensity = ((postSignalRange / preSignalRange) * preDonorIntensity) +
+                                         (((postBackgroundIntensity * preSignalIntensity) -
+                                           (preBackgroundIntensity * postSignalIntensity)) / preSignalRange);
             correctedPostDonorIntensity = postDonorIntensity;
         }
 
-        efficiency = ( correctedPostDonorIntensity - correctedPreDonorIntensity ) / correctedPostDonorIntensity;
+        efficiency = (correctedPostDonorIntensity - correctedPreDonorIntensity) / correctedPostDonorIntensity;
 
-        if ( ( colorsPresent >= 2 ) || ( !createRegImage ) ) {
-            if ( bwImage != null ) {
+        if ((colorsPresent >= 2) || (!createRegImage)) {
+
+            if (bwImage != null) {
                 bwImage.disposeLocal();
                 bwImage = null;
             }
         }
 
-        if ( bwImage2 != null ) {
+        if (bwImage2 != null) {
             bwImage2.disposeLocal();
             bwImage2 = null;
         }
 
-        if ( bwImage3 != null ) {
+        if (bwImage3 != null) {
             bwImage3.disposeLocal();
             bwImage3 = null;
         }
 
-        if ( bwPostImage != null ) {
+        if (bwPostImage != null) {
             bwPostImage.disposeLocal();
             bwPostImage = null;
         }
 
-        if ( backgroundIndex >= 0 ) {
-            UI.setDataText( "Prebleached background intensity = " + preBackgroundIntensity + "\n" );
-        }
-        UI.setDataText( "Prebleached donor intensity = " + preDonorIntensity + "\n" );
-        if ( signalIndex >= 0 ) {
-            UI.setDataText( "Prebleached signal intensity = " + preSignalIntensity + "\n" );
-        }
-        if ( ( backgroundIndex >= 0 ) && ( signalIndex >= 0 ) ) {
-            UI.setDataText( "Linearly scaled prebleached donor intensity = " + correctedPreDonorIntensity + "\n" );
-        } else if ( backgroundIndex >= 0 ) {
-            UI.setDataText( "Background subtracted prebleached donor intensity = " + correctedPreDonorIntensity + "\n" );
-        }
-        if ( backgroundIndex >= 0 ) {
-            UI.setDataText( "Postbleached background intensity = " + postBackgroundIntensity + "\n" );
-        }
-        UI.setDataText( "Postbleached donor intensity = " + postDonorIntensity + "\n" );
-        if ( signalIndex >= 0 ) {
-            UI.setDataText( "Postbleached signal intensity = " + postSignalIntensity + "\n" );
+        if (backgroundIndex >= 0) {
+            UI.setDataText("Prebleached background intensity = " + preBackgroundIntensity + "\n");
         }
 
-        if ( ( signalIndex < 0 ) && ( backgroundIndex >= 0 ) ) {
-            UI.setDataText( "Background subtracted postbleached donor intensity = " + correctedPostDonorIntensity + "\n" );
-        }
-        UI.setDataText( "Efficiency = " + efficiency + "\n" );
+        UI.setDataText("Prebleached donor intensity = " + preDonorIntensity + "\n");
 
-        if ( progressBar != null ) {
+        if (signalIndex >= 0) {
+            UI.setDataText("Prebleached signal intensity = " + preSignalIntensity + "\n");
+        }
+
+        if ((backgroundIndex >= 0) && (signalIndex >= 0)) {
+            UI.setDataText("Linearly scaled prebleached donor intensity = " + correctedPreDonorIntensity + "\n");
+        } else if (backgroundIndex >= 0) {
+            UI.setDataText("Background subtracted prebleached donor intensity = " + correctedPreDonorIntensity + "\n");
+        }
+
+        if (backgroundIndex >= 0) {
+            UI.setDataText("Postbleached background intensity = " + postBackgroundIntensity + "\n");
+        }
+
+        UI.setDataText("Postbleached donor intensity = " + postDonorIntensity + "\n");
+
+        if (signalIndex >= 0) {
+            UI.setDataText("Postbleached signal intensity = " + postSignalIntensity + "\n");
+        }
+
+        if ((signalIndex < 0) && (backgroundIndex >= 0)) {
+            UI.setDataText("Background subtracted postbleached donor intensity = " + correctedPostDonorIntensity +
+                           "\n");
+        }
+
+        UI.setDataText("Efficiency = " + efficiency + "\n");
+
+        if (progressBar != null) {
             progressBar.dispose();
         }
     }
 
     /**
-     *   To create the standard progressBar.
-     *   Stores in the class-global, progressBar
+     * To create the standard progressBar. Stores in the class-global, progressBar
      */
     private void buildProgressBar() {
+
         try {
-            if ( pBarVisible == true ) {
-                progressBar = new ViewJProgressBar( srcImage.getImageName(), "Performing FRET ...", 0, 100, true, this,
-                        this );
+
+            if (pBarVisible == true) {
+                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing FRET ...", 0, 100, true, this,
+                                                   this);
+
                 int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
                 int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
 
-                progressBar.setLocation( xScreen / 2, yScreen / 2 );
-                progressBar.setVisible( true );
+                progressBar.setLocation(xScreen / 2, yScreen / 2);
+                progressBar.setVisible(true);
             }
-        } catch ( NullPointerException npe ) {
-            if ( threadStopped ) {
-                Preferences.debug(
-                        "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM );
+        } catch (NullPointerException npe) {
+
+            if (threadStopped) {
+                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                  Preferences.DEBUG_ALGORITHM);
             }
         }
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        historyString = new String("FRET(" + useRed + ", " + useGreen + ", " + useBlue + ", " + donorIndex + ", " +
+                                   backgroundIndex + ", " + signalIndex + ", " + register + ", " + cost + "\n");
     }
 
 }

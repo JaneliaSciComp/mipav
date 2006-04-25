@@ -1,48 +1,58 @@
 package gov.nih.mipav.model.dicomcomm;
 
-import java.io.*;
-import java.net.*;
-import javax.swing.JFrame;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.DICOMDisplayer;
-import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.JDialogText;
+
 import gov.nih.mipav.model.file.*;
 
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.*;
+
+import java.io.*;
+
+import java.net.*;
+
+import javax.swing.*;
+
+
 /**
- *      This is the DICOM server class that hangs a listener on a given port for
- *      incoming image store requests from a remote DICOM client.
+ * This is the DICOM server class that hangs a listener on a given port for incoming image store requests from a remote
+ * DICOM client.
  *
- *      @version    1.0
+ * @version  1.0
  */
 public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
 
-    /** Reference to the DICOM verification object. */
-    private DICOM_Verification verification;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Used to number XRay image file names so that they are numbered differently. */
+    private static int crNum = 1;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Socket used to receive the data. */
     private Socket acceptedSocket = null;
 
+    /** Flag to indicate if the receive process should be cancelled. Cancel if true. */
+    private boolean cancelled = false;
+
+    /** Port number used to accept data. */
+    private int port = 3100;
+
+    /** DICOM part 10 preample buffer. */
+    private byte[] preambleBuffer;
+
     /** Socket manager. */
     private ServerSocket recSocket = null;
 
-    /** Port number used to accept data  */
-    private int port = 3100;
-
-    /** Thread object manager for running receiver.  */
+    /** Thread object manager for running receiver. */
     private RunnerThread runner;
 
-    /** Flag to indicate if the receive process should be cancelled. Cancel if true.  */
-    private boolean cancelled = false;
+    /** Reference to the DICOM verification object. */
+    private DICOM_Verification verification;
 
-    /** Used to number XRay image file names so that they are numbered differently.  */
-    private static int crNum = 1;
-
-    /** DICOM part 10 preample buffer  */
-    private byte preambleBuffer[];
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     *   Constructor that starts the thread.
+     * Constructor that starts the thread.
      */
     public DICOM_Receiver() {
         super();
@@ -50,97 +60,19 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         start(Thread.MIN_PRIORITY);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Thread manager for running the DICOM receiver.
+     * Checks to see if the thread controlling the receivers execution is alive.
+     *
+     * @return  flag indicating whether or not the thread is alive
      */
-    public class RunnerThread  extends Thread {
-        private boolean keepGoing = true;
-
-        public RunnerThread(Runnable target) {
-            super(target);
-        }
-
-        public void setStop() {
-            keepGoing = false;
-        }
-
-        public boolean keepGoing() {
-            return keepGoing;
-        }
+    public boolean isAlive() {
+        return runner.isAlive();
     }
 
     /**
-     *   Checks to see if a thread is already running on this object, and if not starts it.
-     *   @param priority  thread priority
-     */
-    public void start(int priority) {
-        try {
-            runner = new RunnerThread(this);
-        }
-        catch (OutOfMemoryError error) {
-            MipavUtil.displayError("Out of memory: DICOMReceiver.start");
-            return;
-        }
-
-        String storageProperty = Preferences.getProperty(Preferences.getDefaultStorageKey());
-        if (storageProperty != null) {
-            port = Integer.valueOf(parseServerInfo(storageProperty)[3]).intValue();
-        }
-        else {
-            MipavUtil.displayError("Cannot find port number from preference file.  Go to DICOM\n" +
-                                   "database access and set storage destination properties.");
-            String values = "MIPAV;MIPAV;C:\\images;3100";
-            Preferences.setProperty("Storage1", values);
-            return;
-        }
-
-        if (runner.isAlive() == true)
-            return;
-        else {
-            if (priority < Thread.MAX_PRIORITY && priority > Thread.MIN_PRIORITY) {
-                runner.setPriority(priority);
-            }
-            else {
-                runner.setPriority(Thread.MIN_PRIORITY);
-            }
-            runner.start();
-        }
-        return;
-    }
-
-    /**
-     *   Run method so that this receiver can execute in its own thread.
-     */
-    public void run() {
-        if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-            Preferences.debug("Starting DICOMReceiver.run\n");
-        mipavReceiver();
-    }
-
-    /**
-     *   Resets the port and changes where the receiver is listening
-     *   @param port port to listen on
-     */
-    public synchronized void resetPort(int port) {
-        this.port = port;
-
-        try {
-            runner.setStop();
-            wait(3000);
-            start(Thread.MIN_PRIORITY);
-        }
-        catch (Exception e) {
-            if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-                Preferences.debug("DICOMReceiver.mipavReciever: Reset fatal: Server listen failed: " + e + "\n");
-            return;
-        }
-        if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-            Preferences.debug("DICOMReceiver.mipavReciever: Reset listening on port " + port + ".\n");
-    }
-
-    /**
-     *  Starts the DICOM image receiver
+     * Starts the DICOM image receiver.
      */
     public void mipavReceiver() {
 
@@ -150,119 +82,116 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         // Create an unconnected server socket to the port.
         try {
             recSocket = new ServerSocket(port);
-        }
-        catch (Exception e) {
-            if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+        } catch (Exception e) {
+
+            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug("DICOMReceiver.mipavReciever: Fatal: MIPAV's receiver failed to start: " + e + "\n");
+            }
+
             MipavUtil.displayError("MIPAV's receiver failed to start: " + e);
 
             return;
         }
 
-        if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug("DICOMReceiver.mipavReciever: Listening on port " + port + ". \n");
+        }
 
         // synchronous routine for handling connection requests
         while (runner.keepGoing()) {
+
             try {
+
                 try {
                     recSocket.setSoTimeout(1500);
                     acceptedSocket = recSocket.accept();
+                } catch (IOException error) {
+                    // if (Preferences.debugLevel(Preferences.DEBUG_COMMS))    Preferences.debug( "DICOMReceiver - error
+                    // during socket acceptance " + error + "\n");
                 }
-                catch (IOException error) {
-                    //if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-                    //    Preferences.debug( "DICOMReceiver - error during socket acceptance " + error + "\n");
-                }
+
                 if (acceptedSocket != null) {
+
                     // Return the port number on the remote host to which this socket is connected.
                     InetAddress inetAddress = acceptedSocket.getInetAddress();
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug("DICOMReceiver.mipavReciever: (" + this.hashCode() +
                                           ") Accepted connection from " + inetAddress + "\n");
-                    try {
-                        // Call the client routine to process the DICOM C-Store Request or C-Echo
-                        receiverClient(acceptedSocket);
-                    }
-                    catch (Exception e) {
-                        showMessage("receiverClient() exception: " + e);
-                        // report it even if showMessage() doesn't ...
-                        if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-                            Preferences.debug("DICOMReceiver.mipavReciever: " + e);
                     }
 
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    try {
+
+                        // Call the client routine to process the DICOM C-Store Request or C-Echo
+                        receiverClient(acceptedSocket);
+                    } catch (Exception e) {
+                        showMessage("receiverClient() exception: " + e);
+
+                        // report it even if showMessage() doesn't ...
+                        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                            Preferences.debug("DICOMReceiver.mipavReciever: " + e);
+                        }
+                    }
+
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug("DICOMReceiver.mipavReciever: (" + this.hashCode() +
                                           ") Closing connection from " + inetAddress + "\n");
+                    }
 
                     try {
                         acceptedSocket.close();
-                    }
-                    catch (Exception e) {
-                        if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    } catch (Exception e) {
+
+                        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                             Preferences.debug("DICOMReceiver.mipavReciever: Problems closing socket." + "\n");
+                        }
                     }
+
                     acceptedSocket = null;
                 }
-            }
-            catch (Exception e) {
-                if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+            } catch (Exception e) {
+
+                if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                     Preferences.debug("DICOMReceiver.mipavReciever: Error mipav_rcvr " + e + "\n");
+                }
+
                 e.printStackTrace();
             }
         }
 
-        //cleanup
+        // cleanup
         if (recSocket != null) {
+
             try {
                 recSocket.close();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 System.err.println("Caught exception closing rec socket");
             }
+
             recSocket = null;
         }
+
         if (acceptedSocket != null) {
+
             try {
                 acceptedSocket.close();
-            }
-            catch (Exception ex) {
+            } catch (Exception ex) {
                 System.err.println("Caught exception closing acceptedsocket");
             }
+
             acceptedSocket = null;
         }
     }
 
     /**
-         *   Checks to see if the thread controlling the receivers execution is alive
-         *   @return   flag indicating whether or not the thread is alive
-         */
-        public boolean isAlive() {
-            return runner.isAlive();
-        }
-
-        /**
-         *  Stops the receiver thread
-         */
-        public void setStop() {
-            runner.setStop();
-    }
-
-    /**
-     * Turns the cancelled flag on or off
-     * @param flag    indicator flag
-     */
-    public void setCancelled(boolean flag) {
-        cancelled = flag;
-    }
-
-    /**
-     *  Routine to Process a DICOM Store Request
-     *  @param socket    this is a socket
+     * Routine to Process a DICOM Store Request.
+     *
+     * @param  socket  this is a socket
      */
     public void receiverClient(Socket socket) {
 
-        DICOM_Object dco = new DICOM_Object();    /* Reference to DICOM command object */
-        DICOM_Object ddo = new DICOM_Object();    /* Reference to DICOM data object */
+        DICOM_Object dco = new DICOM_Object(); /* Reference to DICOM command object */
+        DICOM_Object ddo = new DICOM_Object(); /* Reference to DICOM data object */
 
         DICOM_CResponse cStoreRSP = new DICOM_CResponse(DICOM_Constants.COMMAND_CStoreRSP);
 
@@ -274,98 +203,119 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         FileDicom fileDicom = null;
 
         try {
-            if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+
+            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug("\n" + DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: Begin (" +
                                   this.hashCode() + ")  \n");
+            }
+
             handleConnectionFromServer(socket); // handle association negotiation with server requester
-            if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+
+            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.receiverClient(" + this.hashCode() +
                                   ") Handled connection, now go read DICOM command object. " + "\n");
+            }
 
             while (readInObject(dco)) { // Reads in DICOM command object.
 
                 command = dco.getInt16(DICOM_RTC.DD_CommandField);
+
                 if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                     Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.receiverClient: " +
                                       dco.toString("receiverClient(): Command Group: ") + "\n");
                     Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.receiverClient: Command Group = " +
-                                      command +
-                                      " (" + DICOM_Constants.convertCommandToString(command) + ") \n");
+                                      command + " (" + DICOM_Constants.convertCommandToString(command) + ") \n");
                 }
+
                 switch (command) {
+
                     case DICOM_Constants.COMMAND_CStoreRQ:
                         break;
+
                     case DICOM_Constants.COMMAND_CEchoRQ:
                         break;
+
                     default:
-                        if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-                        Preferences.debug(DICOM_Util.timeStamper() +
-                                          " DICOMReceiver.receiverClient: Unrecognized command name " +
-                                          DICOM_Util.toHexString( (short) command) + "\n");
+                        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                            Preferences.debug(DICOM_Util.timeStamper() +
+                                              " DICOMReceiver.receiverClient: Unrecognized command name " +
+                                              DICOM_Util.toHexString((short) command) + "\n");
+                        }
+
                         return;
                 }
 
 
                 if (command == DICOM_Constants.COMMAND_CEchoRQ) {
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: Begin Echo \n");
+                    }
 
                     // Read echo.
                     verification.read(this, dco);
 
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.receiverClient: " +
                                           dco.toString("COMMAND_CEchoRQ: Command Group: ") + "\n");
-                }
-                else if (command == DICOM_Constants.COMMAND_CStoreRQ) {
+                    }
+                } else if (command == DICOM_Constants.COMMAND_CStoreRQ) {
+
                     // Time to go read the data object from the received message
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
                                           " DICOMReceiver.recieverClient: Begin reading DICOM data object \n");
+                    }
 
                     try {
                         readInObject(null); // This fills the fullData buffer
                         fileDicom = new FileDicom("temp.dcm");
                         addPreambleAndGroupTwoTags(dco); // Build DICOM part 10 preample.
                         fileDicom.setTagBuffer(fullData);
+
                         if (fileDicom.readHeader(false) == false) {
-                            if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+
+                            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                                 Preferences.debug(DICOM_Util.timeStamper() +
-                                         " DICOMReceiver.recieverClient: Failure reading DICOM image. \n");
+                                                  " DICOMReceiver.recieverClient: Failure reading DICOM image. \n");
+                            }
+
                             break; // Should do something more expressive reporting
                         }
-                    }
-                    catch (IOException ioe) {
+                    } catch (IOException ioe) {
                         ioe.printStackTrace();
                     }
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-                                            Preferences.debug(DICOM_Util.timeStamper() +
+
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                        Preferences.debug(DICOM_Util.timeStamper() +
                                           " DICOMReceiver.recieverClient: Completed reading DICOM data object \n");
+                    }
 
                     // Get fileInfo object because we will need tag information later.
                     fileInfo = (FileInfoDicom) fileDicom.getFileInfo();
 
                     String uid = DICOM_Util.determineSOPClassUID(dco, null);
 
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: UID  = " + uid +
                                           "\n");
+                    }
 
                     int ID = dco.getInt16(DICOM_RTC.DD_MoveOriginatorMessageID);
                     process = dicomMessageDisplayer.getRowFromID(ID); // process = row in message table
 
-                    if (process == -1)
+                    if (process == -1) {
                         process = 0;
+                    }
 
                     // read patient name, remove all delimiters and trim all spaces
                     String patientName = (String) (fileInfo.getValue("0010,0010"));
                     patientName.trim();
 
                     // Matt and Dave patientID = might be better  or UID
-                    if (patientName == null || patientName.equals("")) {
+                    if ((patientName == null) || patientName.equals("")) {
                         patientName = new String("NA");
-                    }
-                    else {
+                    } else {
                         patientName = patientName.replace('^', '_');
                         patientName = patientName.replace(' ', '_');
                         patientName = patientName.trim();
@@ -376,72 +326,78 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
                     String imageNo = ((String) (fileInfo.getValue("0020,0013"))).trim();
                     String seriesNo = ((String) (fileInfo.getValue("0020,0011"))).trim();
 
-                    if (studyNo == null || studyNo.length() == 0) {
+                    if ((studyNo == null) || (studyNo.length() == 0)) {
                         studyNo = (String) (fileInfo.getValue("0008,1030"));
                         studyNo.trim();
                     }
-                    if (seriesNo == null || seriesNo.length() == 0) {
+
+                    if ((seriesNo == null) || (seriesNo.length() == 0)) {
                         seriesNo = (String) (fileInfo.getValue("0008,103E"));
                         studyNo.trim();
                     }
 
                     String filePath = parseServerInfo(Preferences.getProperty(Preferences.getDefaultStorageKey()))[2] +
-                        File.separatorChar;
+                                      File.separatorChar;
                     String fileName = new String("");
 
                     // set up the path and filename for received image
-                    filePath = filePath.concat(patientName + File.separatorChar + "st_" + studyNo +
-                                               File.separatorChar + "ser_" + seriesNo);
+                    filePath = filePath.concat(patientName + File.separatorChar + "st_" + studyNo + File.separatorChar +
+                                               "ser_" + seriesNo);
 
                     dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.DESTINATION);
                     showMessage(filePath);
 
                     if (modality.equals("PT")) { // If modality is PET
+
                         int imageIndex = ddo.getInt16(DICOM_RTC.DD_ImageIndex);
                         fileName = fileName.concat(File.separatorChar + "i_" + imageIndex + ".dcm");
-                    }
-                    else if (modality.equals("CR")) {
+                    } else if (modality.equals("CR")) {
                         fileName = fileName.concat(File.separatorChar + "i_" + crNum + ".dcm");
                         crNum++;
-                    }
-                    else if (imageNo != null || !imageNo.equals("")) {
+                    } else if ((imageNo != null) || !imageNo.equals("")) {
+
                         try {
-                            // pad image instance number string with preceding zeros so that 0001, 0002, ... 0010, 0011, ... 0654, ...
+
+                            // pad image instance number string with preceding zeros so that 0001, 0002, ... 0010,
+                            // 0011, ... 0654, ...
                             String imageNumStr = new String();
                             int im = Integer.parseInt(imageNo);
-                            if (im < 10)
+
+                            if (im < 10) {
                                 imageNumStr += "000";
-                            else if (im < 100)
+                            } else if (im < 100) {
                                 imageNumStr += "00";
-                            else if (im < 1000)
+                            } else if (im < 1000) {
                                 imageNumStr += "0";
+                            }
 
                             fileName = fileName.concat(File.separatorChar + "i_" + imageNumStr + imageNo + ".dcm");
-                        }
-                        catch (NumberFormatException nfe) {
+                        } catch (NumberFormatException nfe) {
                             String imageNumStr = new String();
-                            if (crNum < 10)
+
+                            if (crNum < 10) {
                                 imageNumStr += "000";
-                            else if (crNum < 100)
+                            } else if (crNum < 100) {
                                 imageNumStr += "00";
-                            else if (crNum < 1000)
+                            } else if (crNum < 1000) {
                                 imageNumStr += "0";
+                            }
 
                             fileName = fileName.concat(File.separatorChar + "i_" + imageNumStr + crNum + ".dcm");
                             crNum++;
-                        }
-                        catch (Exception e) {
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
-                    }
-                    else {
+                    } else {
                         String imageNumStr = new String();
-                        if (crNum < 10)
+
+                        if (crNum < 10) {
                             imageNumStr += "000";
-                        else if (crNum < 100)
+                        } else if (crNum < 100) {
                             imageNumStr += "00";
-                        else if (crNum < 1000)
+                        } else if (crNum < 1000) {
                             imageNumStr += "0";
+                        }
 
                         fileName = fileName.concat(File.separatorChar + "i_" + imageNumStr + crNum + ".dcm");
                         crNum++;
@@ -453,40 +409,45 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
                     showMessage("Saving images");
 
                     File DICOMFile = new File(filePath);
-                    //create the directories for the received image
+
+                    // create the directories for the received image
                     boolean status = DICOMFile.mkdirs();
 
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: Saving image: " +
                                           filePath + fileName + "\n");
+                    }
 
                     // Save preample and image data
                     saveImageToFile(preambleBuffer, filePath + fileName);
                     preambleBuffer = null;
                     fullData = null;
 
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
-                        Preferences.debug(DICOM_Util.timeStamper() + " DICOMReceiver.recieverClient: StoreRSP: Success" +
-                                          filePath + fileName + "\n");
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                        Preferences.debug(DICOM_Util.timeStamper() +
+                                          " DICOMReceiver.recieverClient: StoreRSP: Success" + filePath + fileName +
+                                          "\n");
+                    }
+
                     cStoreRSP.write(this, dco, uid, DICOM_Constants.STATUS_STORE_SUCCESS, null, null, 0, 0, 0, 0);
 
-                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS))
+                    if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
                                           " DICOMReceiver.recieverClient: Completed StoreRSP  Success  \n");
+                    }
 
                     // We need to check on this -- Matt 6/15/2000
                     // When images are pushed dicomMessageDisplayer appears null
                     if (dicomMessageDisplayer != null) {
-                        ( (DICOMDisplayer) dicomMessageDisplayer).setSucceeded(true);
-                    }
-                    else if (dicomMessageDisplayer == null && receivedImageDialog == null) {
+                        ((DICOMDisplayer) dicomMessageDisplayer).setSucceeded(true);
+                    } else if ((dicomMessageDisplayer == null) && (receivedImageDialog == null)) {
+
                         // make non-modal message frame
                         JFrame parent = new JFrame();
 
                         try {
                             parent.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-                        }
-                        catch (FileNotFoundException error) {
+                        } catch (FileNotFoundException error) {
                             Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
                                               ">.  Check that this file is available.\n");
                             System.err.println("Exception ocurred while getting <" + error.getMessage() +
@@ -499,34 +460,135 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
                             receivedImageDialog.setLocation(200, 50);
                             receivedImageDialog.setVisible(true);
                         }
+
                         receivedImageDialog.append("From: " + new String(super.getAAssociateRQ().getCallingAppTitle()) +
-                            ": " + filePath + fileName + "\n");
-                    }
-                    else if (dicomMessageDisplayer == null && receivedImageDialog != null) {
+                                                   ": " + filePath + fileName + "\n");
+                    } else if ((dicomMessageDisplayer == null) && (receivedImageDialog != null)) {
+
                         // Update message with name of newly arrived image
                         receivedImageDialog.append("From: " + new String(super.getAAssociateRQ().getCallingAppTitle()) +
-                            ": " + filePath + fileName + "\n");
+                                                   ": " + filePath + fileName + "\n");
                     }
 
                     if (cancelled) {
                         dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.STATUS);
                         showMessage("Cancelled");
                         cancelled = false;
+
                         break;
                     }
                 }
             }
-        }
-        catch (DICOM_Exception e) {
+        } catch (DICOM_Exception e) {
             dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
             showMessage("" + e);
         }
     }
 
+    /**
+     * Resets the port and changes where the receiver is listening.
+     *
+     * @param  port  port to listen on
+     */
+    public synchronized void resetPort(int port) {
+        this.port = port;
+
+        try {
+            runner.setStop();
+            wait(3000);
+            start(Thread.MIN_PRIORITY);
+        } catch (Exception e) {
+
+            if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+                Preferences.debug("DICOMReceiver.mipavReciever: Reset fatal: Server listen failed: " + e + "\n");
+            }
+
+            return;
+        }
+
+        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+            Preferences.debug("DICOMReceiver.mipavReciever: Reset listening on port " + port + ".\n");
+        }
+    }
+
+    /**
+     * Run method so that this receiver can execute in its own thread.
+     */
+    public void run() {
+
+        if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
+            Preferences.debug("Starting DICOMReceiver.run\n");
+        }
+
+        mipavReceiver();
+    }
+
+    /**
+     * Turns the cancelled flag on or off.
+     *
+     * @param  flag  indicator flag
+     */
+    public void setCancelled(boolean flag) {
+        cancelled = flag;
+    }
+
+    /**
+     * Stops the receiver thread.
+     */
+    public void setStop() {
+        runner.setStop();
+    }
+
+    /**
+     * Checks to see if a thread is already running on this object, and if not starts it.
+     *
+     * @param  priority  thread priority
+     */
+    public void start(int priority) {
+
+        try {
+            runner = new RunnerThread(this);
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: DICOMReceiver.start");
+
+            return;
+        }
+
+        String storageProperty = Preferences.getProperty(Preferences.getDefaultStorageKey());
+
+        if (storageProperty != null) {
+            port = Integer.valueOf(parseServerInfo(storageProperty)[3]).intValue();
+        } else {
+            MipavUtil.displayError("Cannot find port number from preference file.  Go to DICOM\n" +
+                                   "database access and set storage destination properties.");
+
+            String values = "MIPAV;MIPAV;C:\\images;3100";
+            Preferences.setProperty("Storage1", values);
+
+            return;
+        }
+
+        if (runner.isAlive() == true) {
+            return;
+        } else {
+
+            if ((priority < Thread.MAX_PRIORITY) && (priority > Thread.MIN_PRIORITY)) {
+                runner.setPriority(priority);
+            } else {
+                runner.setPriority(Thread.MIN_PRIORITY);
+            }
+
+            runner.start();
+        }
+
+        return;
+    }
+
 
     /**
      * Builds buffer of DICOM part 10 preamble and require Part 10 group 2 tags.
-     * @param dco DICOM_Object DICOM command object needed to extract UID information to be included in the preample.
+     *
+     * @param  dco  DICOM_Object DICOM command object needed to extract UID information to be included in the preample.
      */
     private void addPreambleAndGroupTwoTags(DICOM_Object dco) {
 
@@ -535,10 +597,10 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         String implementationClassUID;
         String transferSyntaxUID;
 
-        //Tags to add
+        // Tags to add
         // 0002, 0000 byte length from after this File Meta Element (end of value field)
-        //            up to and including the last File Meta Element of the Group 2
-        //            File Meta Information.
+        // up to and including the last File Meta Element of the Group 2
+        // File Meta Information.
         // 0002, 0001 file Meta Information Version
         // 0002, 0002 Media storage SOP class UID
         // 0002, 0003 Media storage SOP instance UID
@@ -551,31 +613,36 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         transferSyntaxUID = getTransferSyntaxID();
 
         int classUIDLength = classUID.length();
-        if (classUID.length() % 2 == 1) {
+
+        if ((classUID.length() % 2) == 1) {
             classUIDLength++;
         }
 
         int instanceUIDLength = instanceUID.length();
-        if (instanceUID.length() % 2 == 1) {
+
+        if ((instanceUID.length() % 2) == 1) {
             instanceUIDLength++;
         }
 
         int implementationClassUIDLength = implementationClassUID.length();
-        if (implementationClassUID.length() % 2 == 1) {
+
+        if ((implementationClassUID.length() % 2) == 1) {
             implementationClassUIDLength++;
         }
 
         int transferSyntaxUIDLength = transferSyntaxUID.length();
-        if (transferSyntaxUID.length() % 2 == 1) {
+
+        if ((transferSyntaxUID.length() % 2) == 1) {
             transferSyntaxUIDLength++;
         }
 
         // Length equals full length of preample.
-        int length = 132 + 12 + 10 + 8 + classUIDLength + 8 + instanceUIDLength +
-            8 + transferSyntaxUIDLength + 8 + implementationClassUIDLength;
+        int length = 132 + 12 + 10 + 8 + classUIDLength + 8 + instanceUIDLength + 8 + transferSyntaxUIDLength + 8 +
+                     implementationClassUIDLength;
 
         preambleBuffer = new byte[length];
-        byte byteArray[] = null;
+
+        byte[] byteArray = null;
 
         preambleBuffer[128] = 0x44; // D
         preambleBuffer[129] = 0x49; // I
@@ -589,7 +656,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         preambleBuffer[134] = 0x00;
         preambleBuffer[135] = 0x00;
 
-        //Length
+        // Length
         preambleBuffer[136] = 4;
         preambleBuffer[137] = 0x00;
         preambleBuffer[138] = 0x00;
@@ -603,7 +670,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         preambleBuffer[146] = 0x01;
         preambleBuffer[147] = 0x00;
 
-        //Length
+        // Length
         preambleBuffer[148] = 2;
         preambleBuffer[149] = 0x00;
         preambleBuffer[150] = 0x00;
@@ -618,18 +685,20 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         preambleBuffer[156] = 0x02;
         preambleBuffer[157] = 0x00;
 
-        //Length
+        // Length
         byteArray = classUID.getBytes();
         preambleBuffer[158] = (byte) classUIDLength;
         preambleBuffer[159] = 0x00;
         preambleBuffer[160] = 0x00;
         preambleBuffer[161] = 0x00;
+
         int idx = 162;
 
         for (int i = 0, j = 162; i < classUID.length(); i++, j++) {
             preambleBuffer[j] = byteArray[i];
             idx++;
         }
+
         if (classUID.length() != classUIDLength) {
             preambleBuffer[idx++] = 0x00;
         }
@@ -640,7 +709,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         preambleBuffer[idx++] = 0x03;
         preambleBuffer[idx++] = 0x00;
 
-        //Length
+        // Length
         byteArray = instanceUID.getBytes();
         preambleBuffer[idx++] = (byte) instanceUIDLength;
         preambleBuffer[idx++] = 0x00;
@@ -651,6 +720,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
             preambleBuffer[j] = byteArray[i];
             idx++;
         }
+
         if (instanceUID.length() != instanceUIDLength) {
             preambleBuffer[idx++] = 0x00;
         }
@@ -671,6 +741,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
             preambleBuffer[j] = byteArray[i];
             idx++;
         }
+
         if (transferSyntaxUID.length() != transferSyntaxUIDLength) {
             preambleBuffer[idx++] = 0x00;
         }
@@ -681,17 +752,19 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         preambleBuffer[idx++] = 0x12;
         preambleBuffer[idx++] = 0x00;
 
-        //Length
+        // Length
         preambleBuffer[idx++] = (byte) implementationClassUIDLength;
         preambleBuffer[idx++] = 0x00;
         preambleBuffer[idx++] = 0x00;
         preambleBuffer[idx++] = 0x00;
 
-        //new String("1.2.840.34379.17");
+        // new String("1.2.840.34379.17");
         byteArray = implementationClassUID.getBytes();
+
         for (int i = 0, j = idx; i < implementationClassUID.length(); i++, j++) {
             preambleBuffer[j] = byteArray[i];
         }
+
         if (implementationClassUID.length() != implementationClassUIDLength) {
             preambleBuffer[idx++] = 0x00;
         }
@@ -703,6 +776,41 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         return;
     }
 
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * Thread manager for running the DICOM receiver.
+     */
+    public class RunnerThread extends Thread {
+
+        /** DOCUMENT ME! */
+        private boolean keepGoing = true;
+
+        /**
+         * Creates a new RunnerThread object.
+         *
+         * @param  target  DOCUMENT ME!
+         */
+        public RunnerThread(Runnable target) {
+            super(target);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public boolean keepGoing() {
+            return keepGoing;
+        }
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void setStop() {
+            keepGoing = false;
+        }
+    }
 
 
 }

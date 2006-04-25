@@ -1,4 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
-public class JDialogDualTriImageCrop {
-}
+
+/**
+ * DOCUMENT ME!
+ */
+public class JDialogDualTriImageCrop { }

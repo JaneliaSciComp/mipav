@@ -1,95 +1,104 @@
 package gov.nih.mipav.view.renderer;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
+
+import java.awt.*;
+import java.awt.event.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
 
-import java.awt.*;
-import java.awt.event.*;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
-import gov.nih.mipav.model.algorithms.filters.*;
 
 /**
- * This class produces a frame where
- * the histogram of the image data is displayed using the color mapping. All
- * frames using the color map are dynamically updated with the new color map.
- * This is the color image volume opacity control panel.  In addition to the
- * JPanelColorHisoRGB, the panel hold the gradient magnitude hisogram control
- * panel.
+ * This class produces a frame where the histogram of the image data is displayed using the color mapping. All frames
+ * using the color map are dynamically updated with the new color map. This is the color image volume opacity control
+ * panel. In addition to the JPanelColorHisoRGB, the panel hold the gradient magnitude hisogram control panel.
  *
- * @version    1.0
+ * @version  1.0
  */
-public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
-{
+public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
 
-    /** imageA histogram of the Red channel */
-    private ModelHistogram histogramARed = null;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** imageB histogram of the Red channel */
-    private ModelHistogram histogramBRed = null;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 8837612116721229202L;
 
-    /** imageA histogram of the Green channel */
-    private ModelHistogram histogramAGreen = null;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** imageB histogram, the Green channel */
-    private ModelHistogram histogramBGreen = null;
-
-    /** imageA histogram of the Blue channel */
+    /** imageA histogram of the Blue channel. */
     private ModelHistogram histogramABlue = null;
 
-    /** imageB histogram, the Blue channel */
+    /** imageA histogram of the Green channel. */
+    private ModelHistogram histogramAGreen = null;
+
+    /** imageA histogram of the Red channel. */
+    private ModelHistogram histogramARed = null;
+
+    /** imageB histogram, the Blue channel. */
     private ModelHistogram histogramBBlue = null;
 
-    /** imageA histogram of the Red channel */
-    private ModelHistogram histogramGM_ARed = null;
+    /** imageB histogram, the Green channel. */
+    private ModelHistogram histogramBGreen = null;
 
-    /** imageB histogram of the Red channel */
-    private ModelHistogram histogramGM_BRed = null;
+    /** imageB histogram of the Red channel. */
+    private ModelHistogram histogramBRed = null;
 
-    /** imageA histogram of the Green channel */
-    private ModelHistogram histogramGM_AGreen = null;
-
-    /** imageB histogram, the Green channel */
-    private ModelHistogram histogramGM_BGreen = null;
-
-    /** imageA histogram of the Blue channel */
+    /** imageA histogram of the Blue channel. */
     private ModelHistogram histogramGM_ABlue = null;
 
-    /** imageB histogram, the Blue channel */
+    /** imageA histogram of the Green channel. */
+    private ModelHistogram histogramGM_AGreen = null;
+
+    /** imageA histogram of the Red channel. */
+    private ModelHistogram histogramGM_ARed = null;
+
+    /** imageB histogram, the Blue channel. */
     private ModelHistogram histogramGM_BBlue = null;
+
+    /** imageB histogram, the Green channel. */
+    private ModelHistogram histogramGM_BGreen = null;
+
+    /** imageB histogram of the Red channel. */
+    private ModelHistogram histogramGM_BRed = null;
+
+    /** A reference to the volume renderer frame's progress bar. */
+    private JProgressBar rendererProgressBar;
+
+    /** Tagged for deletion - Matt, Ruida, Lee, ModelRGB table for imageA, B. */
+    private ModelRGB RGBTA;
+
+    /** Tagged for deletion - Matt, Ruida, Lee, RGB table reference of the image A, B. */
+    private ModelRGB RGBTA_GM;
+
+    /** DOCUMENT ME! */
+    private ModelRGB RGBTB;
+
+    /** DOCUMENT ME! */
+    private ModelRGB RGBTB_GM;
 
     /** ToolBar that hold the linear, horizontal mode etc. */
     private JToolBar toolBar;
 
-    /** Tagged for deletion - Matt, Ruida, Lee, ModelRGB table for imageA, B */
-    private ModelRGB RGBTA;
-    private ModelRGB RGBTB;
-
-    /** Tagged for deletion - Matt, Ruida, Lee, RGB table reference of the image A, B. */
-    private ModelRGB RGBTA_GM;
-    private ModelRGB RGBTB_GM;
-    
-    /** A reference to the volume renderer frame's progress bar. */
-    private JProgressBar rendererProgressBar;
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     *   Makes a frame of the histogram
-     *   @param _imageA         Model of imageA
-     *   @param _imageB         Model of imageB
-     *   @param _RGBTA          Model RGB
-     *   @param _RGBTB          Model RGB
-     *   @param _entireFlag     Flag indicating if histogram should be done on all of image.
-     *   @param _isGMImage      Indicates image is gradient magnitude image or not
-     *   @param _isImageB       Indicates is imageB histo frame or not
+     * Makes a frame of the histogram.
+     *
+     * @param  theParentFrame  Model RGB
+     * @param  _imageA         Model of imageA
+     * @param  _imageB         Model of imageB
      */
     public JPanelVolOpacityRGB(RenderViewBase theParentFrame, ModelImage _imageA, ModelImage _imageB) {
         super(theParentFrame);
-        
+
         rendererProgressBar = ViewJFrameVolumeView.getRendererProgressBar();
-        
+
         int[] RGBExtents = new int[2];
         RGBExtents[0] = 4;
         RGBExtents[1] = 256;
@@ -140,9 +149,71 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         mainPanel.add(scrollPaneA);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    // ************************************************************************
+    // **************************** Action Events *****************************
+    // ************************************************************************
+
     /**
-     *   Method to build the toolbar for the RGB frame
-     *   @param al         action listener (this frame)
+     * Calls various methods depending on the action.
+     *
+     * @param  event  event that triggered function
+     */
+    public void actionPerformed(ActionEvent event) {
+
+        String command = event.getActionCommand();
+
+        if (command.equals("Linear")) {
+            ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
+            selectedComponent.linearMode();
+        } else if (command.equals("resetLinearBackSlash")) {
+            ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
+            selectedComponent.linearBackSlashMode();
+        } else if (command.equals("Horizon")) {
+            ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
+            selectedComponent.horizonMode();
+        }
+    }
+
+    /**
+     * Add the gradient magnitude hitogram to the opacity control panel.
+     */
+    public void addGM() {
+
+        if (panelOpacityGM_A == null) {
+            rendererProgressBar.setValue(0);
+            rendererProgressBar.update(rendererProgressBar.getGraphics());
+
+            calcHistogramGM();
+            rendererProgressBar.setValue(100);
+            rendererProgressBar.update(rendererProgressBar.getGraphics());
+            buildPanelGM_A();
+
+            if (imageB != null) {
+                buildPanelGM_B();
+            }
+        } else {
+
+            if (tabbedPane.indexOfComponent(panelOpacityGM_A) == -1) {
+                tabbedPane.addTab(OPACITY_COMPONENT_TAB_A_GM, null, panelOpacityGM_A);
+            }
+
+            if (imageB != null) {
+
+                if (tabbedPane.indexOfComponent(panelOpacityGM_B) == -1) {
+                    tabbedPane.addTab(OPACITY_COMPONENT_TAB_B_GM, null, panelOpacityGM_B);
+                }
+            }
+        }
+    }
+
+    /**
+     * Method to build the toolbar for the RGB frame.
+     *
+     * @param   al  action listener (this frame)
+     *
+     * @return  DOCUMENT ME!
      */
     public JToolBar buildRGBToolBar(ActionListener al) {
         JToolBar RGBToolBar = new JToolBar();
@@ -194,14 +265,232 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         RGBToolBar.add(GMCheckBox);
 
         RGBToolBar.setFloatable(false);
+
         return RGBToolBar;
     }
 
     /**
-     *   Method that displays the histogram and LUT and other controls to manipulate the LUT.
-     *   Panel for image A.
-     *   @param image        Model of image
-     *   @param entireFlag   Flag indicating if histogram should be made of entire image.
+     * Disposes of components and frame.
+     */
+    public void disposeLocal() {
+
+        if (componentOpacityA != null) {
+            componentOpacityA.dispose();
+        }
+
+        if (histogramARed != null) {
+            histogramARed.disposeLocal();
+        }
+
+        if (histogramAGreen != null) {
+            histogramAGreen.disposeLocal();
+        }
+
+        if (histogramABlue != null) {
+            histogramABlue.disposeLocal();
+        }
+
+        histogramAGreen = null;
+        histogramABlue = null;
+        componentOpacityA = null;
+
+        if (histogramBRed != null) {
+
+            if (componentOpacityB != null) {
+                componentOpacityB.dispose();
+            }
+
+            if (histogramBRed != null) {
+                histogramBRed.disposeLocal();
+            }
+
+            if (histogramBGreen != null) {
+                histogramBGreen.disposeLocal();
+            }
+
+            if (histogramBBlue != null) {
+                histogramBBlue.disposeLocal();
+            }
+
+            histogramBRed = null;
+            histogramBGreen = null;
+            histogramBBlue = null;
+            componentOpacityB = null;
+        }
+
+        if (RGBTA != null) {
+            RGBTA.disposeLocal();
+            RGBTA = null;
+        }
+
+        if (RGBTB != null) {
+            RGBTB.disposeLocal();
+            RGBTB = null;
+        }
+
+        if (RGBTA_GM != null) {
+            RGBTA_GM.disposeLocal();
+            RGBTA_GM = null;
+        }
+
+        if (RGBTB_GM != null) {
+            RGBTB_GM.disposeLocal();
+            RGBTB_GM = null;
+        }
+
+        if (renderBase != null) {
+            renderBase = null;
+        }
+
+        super.disposeLocal();
+    }
+
+    /**
+     * Calls dispose.
+     *
+     * @throws  Throwable  DOCUMENT ME!
+     */
+    public void finalize() throws Throwable {
+        disposeLocal();
+        super.finalize();
+    }
+
+    /**
+     * Get the gradient magnitude imageA.
+     *
+     * @return  ModelImage GM imageA
+     */
+    public ModelImage getGradMagA() {
+        return gradMagRescale_A;
+    }
+
+    /**
+     * Get the gradient magnitude imageA.
+     *
+     * @return  ModelImage GM imageA
+     */
+    public ModelImage getGradMagB() {
+        return gradMagRescale_B;
+    }
+
+    /**
+     * Returns the opacity transfer function for image A.
+     *
+     * @param   channel  DOCUMENT ME!
+     *
+     * @return  TransferFunction
+     */
+    public TransferFunction getOpacityAfn(int channel) {
+        return componentOpacityA.getOpacityTransferFunction();
+    }
+
+    /**
+     * Returns the opacity transfer function for image B.
+     *
+     * @param   channel  DOCUMENT ME!
+     *
+     * @return  TransferFunction
+     */
+    public TransferFunction getOpacityBfn(int channel) {
+        return componentOpacityB.getOpacityTransferFunction();
+    }
+
+    /**
+     * Returns the opacity transfer function for image A.
+     *
+     * @param   channel  DOCUMENT ME!
+     *
+     * @return  TransferFunction
+     */
+    public TransferFunction getOpacityGM_Afn(int channel) {
+        return componentOpacityGM_A.getOpacityTransferFunction();
+    }
+
+    /**
+     * Returns the opacity transfer function for image B.
+     *
+     * @param   channel  DOCUMENT ME!
+     *
+     * @return  TransferFunction
+     */
+    public TransferFunction getOpacityGM_Bfn(int channel) {
+        return componentOpacityGM_B.getOpacityTransferFunction();
+    }
+
+    /**
+     * Returns the opacity transfer function via the ModelRGB object for image B.
+     *
+     * @return  ModelRGB
+     */
+    public ModelRGB getRGB_OpacityA() {
+        return RGBTA;
+    }
+
+    /**
+     * Returns the opacity transfer function for the gradient magnitude image via the ModelRGB object for image A.
+     *
+     * @return  ModelRGB
+     */
+    public ModelRGB getRGB_OpacityA_GM() {
+        return RGBTA_GM;
+    }
+
+    /**
+     * Returns the opacity transfer function via the ModelRGB object for image B.
+     *
+     * @return  ModelRGB
+     */
+    public ModelRGB getRGB_OpacityB() {
+        return RGBTB;
+    }
+
+    /**
+     * Returns the opacity transfer function for the gradient magnitude image via the ModelRGB object for image B.
+     *
+     * @return  ModelRGB
+     */
+    public ModelRGB getRGB_OpacityB_GM() {
+        return RGBTB_GM;
+    }
+
+    // ********************************************************************
+    // ************************** Item Events *****************************
+    // ********************************************************************
+
+    /**
+     * Sets the flags for the checkboxes.
+     *
+     * @param  event  event that triggered this function
+     */
+    public synchronized void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
+
+        if (source == GMCheckBox) {
+
+            if (GMCheckBox.isSelected() == true) {
+                addGM();
+            } else {
+                removeGM();
+            }
+        }
+    }
+
+    /**
+     * Add the gradient magnitude hitogram to the opacity control panel.
+     */
+    public void removeGM() {
+
+        if (imageA != null) {
+            tabbedPane.remove(panelOpacityGM_A);
+        }
+
+        if (imageB != null) {
+            tabbedPane.remove(panelOpacityGM_B);
+        }
+    }
+
+    /**
+     * Method that displays the histogram and LUT and other controls to manipulate the LUT. Panel for image A.
      */
     private void buildPanelA() {
         int borderSize = 3;
@@ -227,8 +516,8 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         mouseSlider.addChangeListener(this);
         mouseSlider.setPaintLabels(true);
         mouseSlider.setLabelTable(getLabelTableA());
-        mouseSlider.setEnabled(componentOpacityA.getActiveIndex() != componentOpacityA.INACTIVE &&
-                               !componentOpacityA.getOpacityTransferFunction().isEndpoint(componentOpacityA.getActiveIndex()));
+        mouseSlider.setEnabled((componentOpacityA.getActiveIndex() != componentOpacityA.INACTIVE) &&
+                                   !componentOpacityA.getOpacityTransferFunction().isEndpoint(componentOpacityA.getActiveIndex()));
 
         JPanel precisionPanel = new JPanel(new GridLayout(1, 1));
         precisionPanel.add(mouseSlider);
@@ -240,11 +529,8 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         tabbedPane.addTab(OPACITY_COMPONENT_TAB_A, null, panelOpacityA);
     }
 
-        /**
-     *   Method that displays the histogram and LUT and other controls to manipulate the LUT.
-     *   Panel for image B.
-     *   @param image        Model of image
-     *   @param entireFlag   Flag indicating if histogram should be made of entire image.
+    /**
+     * Method that displays the histogram and LUT and other controls to manipulate the LUT. Panel for image B.
      */
     private void buildPanelB() {
         int borderSize = 3;
@@ -270,12 +556,12 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         mouseSliderB.addChangeListener(this);
         mouseSliderB.setPaintLabels(true);
         mouseSliderB.setFont(serif12);
-        mouseSliderB.setEnabled(componentOpacityB.getActiveIndex() != componentOpacityB.INACTIVE &&
-                                !componentOpacityB.getOpacityTransferFunction().isEndpoint(componentOpacityB.getActiveIndex()));
+        mouseSliderB.setEnabled((componentOpacityB.getActiveIndex() != componentOpacityB.INACTIVE) &&
+                                    !componentOpacityB.getOpacityTransferFunction().isEndpoint(componentOpacityB.getActiveIndex()));
 
         mouseSliderB.setLabelTable(getLabelTableB());
-        mouseSliderB.setEnabled(componentOpacityB.getActiveIndex() != componentOpacityB.INACTIVE &&
-                                !componentOpacityB.getOpacityTransferFunction().isEndpoint(componentOpacityB.getActiveIndex()));
+        mouseSliderB.setEnabled((componentOpacityB.getActiveIndex() != componentOpacityB.INACTIVE) &&
+                                    !componentOpacityB.getOpacityTransferFunction().isEndpoint(componentOpacityB.getActiveIndex()));
 
         JPanel precisionPanel = new JPanel(new GridLayout(1, 1));
         precisionPanel.add(mouseSliderB);
@@ -288,314 +574,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
     }
 
     /**
-     *  Calls dispose
-     */
-    public void finalize() throws Throwable {
-        disposeLocal();
-        super.finalize();
-    }
-
-    /**
-     *   Disposes of components and frame.
-     */
-    public void disposeLocal() {
-
-        if (componentOpacityA != null) {
-            componentOpacityA.dispose();
-        }
-        if (histogramARed != null) {
-            histogramARed.disposeLocal();
-        }
-        if (histogramAGreen != null) {
-            histogramAGreen.disposeLocal();
-        }
-        if (histogramABlue != null) {
-            histogramABlue.disposeLocal();
-        }
-        histogramAGreen = null;
-        histogramABlue = null;
-        componentOpacityA = null;
-
-        if (histogramBRed != null) {
-            if (componentOpacityB != null) {
-                componentOpacityB.dispose();
-            }
-            if (histogramBRed != null) {
-                histogramBRed.disposeLocal();
-            }
-            if (histogramBGreen != null) {
-                histogramBGreen.disposeLocal();
-            }
-            if (histogramBBlue != null) {
-                histogramBBlue.disposeLocal();
-            }
-            histogramBRed = null;
-            histogramBGreen = null;
-            histogramBBlue = null;
-            componentOpacityB = null;
-        }
-        if (RGBTA != null) {
-            RGBTA.disposeLocal();
-            RGBTA = null;
-        }
-        if (RGBTB != null) {
-            RGBTB.disposeLocal();
-            RGBTB = null;
-        }
-        if (RGBTA_GM != null) {
-            RGBTA_GM.disposeLocal();
-            RGBTA_GM = null;
-        }
-        if (RGBTB_GM != null) {
-            RGBTB_GM.disposeLocal();
-            RGBTB_GM = null;
-        }
-
-        if (renderBase != null) {
-            renderBase = null;
-        }
-
-        super.disposeLocal();
-    }
-
-    /**
-     * Get the gradient magnitude imageA
-     * @return ModelImage  GM imageA
-     */
-    public ModelImage getGradMagA() {
-        return gradMagRescale_A;
-    }
-
-    /**
-     * Get the gradient magnitude imageA
-     * @return ModelImage  GM imageA
-     */
-    public ModelImage getGradMagB() {
-        return gradMagRescale_B;
-    }
-
-    /**
-     * Calculates the histogram for the color images GM.
-     */
-    private void calcHistogramGM() {
-
-        ModelImage gradMag_A, gradMag_B;
-        float[] sigma = new float[3];
-
-        sigma[0] = 0.5f;
-        sigma[1] = 0.5f;
-        sigma[2] = 0.5f;
-
-        if (imageA != null) {
-            gradMag_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(), imageA.getImageName() + "_gm",
-                                       imageA.getUserInterface());
-            gradMagRescale_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(),
-                                              imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
-
-            if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(), imageA.getImageName() + "_gm_rescale" + ".xml", true)) {
-                rendererProgressBar.setValue(10);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                AlgorithmGradientMagnitude gradMagAlgo_A = new AlgorithmGradientMagnitude(gradMag_A, imageA, sigma, true, false);
-
-                gradMagAlgo_A.setRed(true);
-                gradMagAlgo_A.setBlue(true);
-                gradMagAlgo_A.setGreen(true);
-                gradMagAlgo_A.setActiveImage(isActiveImage); // progress bar junk.
-                gradMagAlgo_A.setProgressBarVisible(true);
-                gradMagAlgo_A.run();
-                if (gradMagAlgo_A.isCompleted()) {
-                    gradMagAlgo_A.finalize();
-                    gradMagAlgo_A = null;
-                }
-                rendererProgressBar.setValue(20);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
-                    gradMag_A.getMin(), gradMag_A.getMax(), 0, 255, false);
-
-                changeTypeAlgo_A.setActiveImage(isActiveImage);
-                changeTypeAlgo_A.setProgressBarVisible(false);
-                changeTypeAlgo_A.run();
-                gradMagRescale_A.calcMinMax();
-                if (changeTypeAlgo_A.isCompleted()) {
-                    if (gradMagRescale_A != null) {
-                        rendererProgressBar.setValue(30);
-                        rendererProgressBar.update(rendererProgressBar.getGraphics());
-                        saveGMImage(gradMagRescale_A);
-                        rendererProgressBar.setValue(40);
-                        rendererProgressBar.update(rendererProgressBar.getGraphics());
-                        histogramGM_ARed = calcHistogram(gradMagRescale_A, RED);
-                        histogramGM_AGreen = calcHistogram(gradMagRescale_A, GREEN);
-                        histogramGM_ABlue = calcHistogram(gradMagRescale_A, BLUE);
-                    }
-                    changeTypeAlgo_A.finalize();
-                    changeTypeAlgo_A = null;
-                }
-                rendererProgressBar.setValue(50);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-            }
-            else { // Gradient Magnitude image is calculated already.
-                rendererProgressBar.setValue(20);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                histogramGM_ARed = calcHistogram(gradMagRescale_A, RED);
-                histogramGM_AGreen = calcHistogram(gradMagRescale_A, GREEN);
-                histogramGM_ABlue = calcHistogram(gradMagRescale_A, BLUE);
-            }
-
-            rendererProgressBar.setValue(50);
-            rendererProgressBar.update(rendererProgressBar.getGraphics());
-            if (gradMag_A != null) {
-                gradMag_A.disposeLocal();
-                gradMag_A = null;
-            }
-        }
-        if (imageB != null) {
-            gradMag_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(), imageB.getImageName() + "_gm",
-                                       imageB.getUserInterface());
-            gradMagRescale_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(),
-                                              imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
-            if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(), imageB.getImageName() + "_gm_rescale" + ".xml",
-                             false)) {
-                rendererProgressBar.setValue(60);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(gradMag_B, imageB,
-                    sigma, true, false);
-
-                gradMagAlgo_B.setRed(true);
-                gradMagAlgo_B.setBlue(true);
-                gradMagAlgo_B.setGreen(true);
-                gradMagAlgo_B.setActiveImage(isActiveImage); // progress bar junk.
-                gradMagAlgo_B.setProgressBarVisible(true);
-                gradMagAlgo_B.run();
-                if (gradMagAlgo_B.isCompleted()) {
-                    gradMagAlgo_B.finalize();
-                    gradMagAlgo_B = null;
-                }
-                rendererProgressBar.setValue(70);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                AlgorithmChangeType changeTypeAlgo_B = new AlgorithmChangeType(gradMagRescale_B, gradMag_B,
-                    gradMag_B.getMin(), gradMag_B.getMax(), 0, 255, false);
-
-                changeTypeAlgo_B.setActiveImage(isActiveImage);
-                changeTypeAlgo_B.setProgressBarVisible(false);
-                changeTypeAlgo_B.run();
-                gradMagRescale_B.calcMinMax();
-
-                if (changeTypeAlgo_B.isCompleted()) {
-                    if (gradMagRescale_B != null) {
-                        saveGMImage(gradMagRescale_B);
-                        rendererProgressBar.setValue(80);
-                        rendererProgressBar.update(rendererProgressBar.getGraphics());
-                        histogramGM_BRed = calcHistogram(gradMagRescale_B, RED);
-                        histogramGM_BGreen = calcHistogram(gradMagRescale_B, GREEN);
-                        histogramGM_BBlue = calcHistogram(gradMagRescale_B, BLUE);
-                    }
-                    changeTypeAlgo_B.finalize();
-                    changeTypeAlgo_B = null;
-                    rendererProgressBar.setValue(90);
-                    rendererProgressBar.update(rendererProgressBar.getGraphics());
-                }
-
-            }
-            else { // Gradient Magnitude image is calculated already.
-                rendererProgressBar.setValue(20);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                rendererProgressBar.setValue(80);
-                rendererProgressBar.update(rendererProgressBar.getGraphics());
-                histogramGM_BRed = calcHistogram(gradMagRescale_B, RED);
-                histogramGM_BGreen = calcHistogram(gradMagRescale_B, GREEN);
-                histogramGM_BBlue = calcHistogram(gradMagRescale_B, BLUE);
-            }
-
-            if (gradMag_B != null) {
-                gradMag_B.disposeLocal();
-                gradMag_B = null;
-            }
-        }
-    }
-
-    /**
-     *   Calculates histogram for the image(s).
-     *   @param image
-     *   @param channel
-     */
-    private ModelHistogram calcHistogram(ModelImage image, int channel) {
-
-        ModelHistogram histogram = null;
-
-        int[] dimExtentsA = new int[1];
-
-        if (image != null) {
-            if (imageA.getType() != ModelStorageBase.ARGB_USHORT) {
-                dimExtentsA[0] = 256;
-            }
-            else {
-                dimExtentsA[0] = (int) (imageA.getMaxR() - imageA.getMinR() + 0.5) + 1;
-            }
-
-            histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsA);
-            AlgorithmHistogram histoAlgo = new AlgorithmHistogram(histogram, channel, image, true);
-
-            histoAlgo.setProgressBarVisible(false);
-            histoAlgo.run();
-            if (histoAlgo.isCompleted()) {
-                histoAlgo.finalize();
-                histoAlgo = null;
-            }
-        }
-        return histogram;
-    }
-
-    // ************************************************************************
-    // **************************** Action Events *****************************
-    // ************************************************************************
-
-    /**
-     *  Calls various methods depending on the action
-     *  @param event      event that triggered function
-     */
-    public void actionPerformed(ActionEvent event) {
-
-        String command = event.getActionCommand();
-        if (command.equals("Linear")) {
-            ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
-            selectedComponent.linearMode();
-        }
-        else if (command.equals("resetLinearBackSlash"))
-        {
-            ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
-            selectedComponent.linearBackSlashMode();
-        }
-        else if (command.equals("Horizon")) {
-            ViewJComponentVolOpacityBase selectedComponent = getSelectedComponent();
-            selectedComponent.horizonMode();
-        }
-    }
-
-    // ********************************************************************
-    // ************************** Item Events *****************************
-    // ********************************************************************
-
-    /**
-     *  Sets the flags for the checkboxes
-     *  @param event       event that triggered this function
-     */
-    public synchronized void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
-        if (source == GMCheckBox) {
-            if (GMCheckBox.isSelected() == true) {
-                addGM();
-            }
-            else {
-                removeGM();
-            }
-        }
-    }
-
-    /**
-     *   Method that displays the histogram and LUT and other controls to manipulate the LUT.
-     *   Panel for image A.
-     *
+     * Method that displays the histogram and LUT and other controls to manipulate the LUT. Panel for image A.
      */
     private void buildPanelGM_A() {
 
@@ -617,12 +596,12 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         mouseSliderGM_A.addChangeListener(this);
         mouseSliderGM_A.setPaintLabels(true);
         mouseSliderGM_A.setFont(serif12);
-        mouseSliderGM_A.setEnabled(componentOpacityGM_A.getActiveIndex() != componentOpacityGM_A.INACTIVE &&
-                                   !componentOpacityGM_A.getOpacityTransferFunction().isEndpoint(componentOpacityGM_A.getActiveIndex()));
+        mouseSliderGM_A.setEnabled((componentOpacityGM_A.getActiveIndex() != componentOpacityGM_A.INACTIVE) &&
+                                       !componentOpacityGM_A.getOpacityTransferFunction().isEndpoint(componentOpacityGM_A.getActiveIndex()));
 
         mouseSlider.setLabelTable(getLabelTableGM_A());
-        mouseSlider.setEnabled(componentOpacityGM_A.getActiveIndex() != componentOpacityGM_A.INACTIVE &&
-                               !componentOpacityGM_A.getOpacityTransferFunction().isEndpoint(componentOpacityGM_A.getActiveIndex()));
+        mouseSlider.setEnabled((componentOpacityGM_A.getActiveIndex() != componentOpacityGM_A.INACTIVE) &&
+                                   !componentOpacityGM_A.getOpacityTransferFunction().isEndpoint(componentOpacityGM_A.getActiveIndex()));
 
         JPanel precisionPanel = new JPanel(new GridLayout(1, 1));
         precisionPanel.add(mouseSliderGM_A);
@@ -635,9 +614,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
     }
 
     /**
-     *   Method that displays the histogram and LUT and other controls to manipulate the LUT.
-     *   Panel for image B.
-     *
+     * Method that displays the histogram and LUT and other controls to manipulate the LUT. Panel for image B.
      */
     private void buildPanelGM_B() {
 
@@ -659,12 +636,12 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
         mouseSliderGM_B.addChangeListener(this);
         mouseSliderGM_B.setPaintLabels(true);
         mouseSliderGM_B.setFont(serif12);
-        mouseSliderGM_B.setEnabled(componentOpacityGM_B.getActiveIndex() != componentOpacityGM_B.INACTIVE &&
-                                   !componentOpacityGM_B.getOpacityTransferFunction().isEndpoint(componentOpacityGM_B.getActiveIndex()));
+        mouseSliderGM_B.setEnabled((componentOpacityGM_B.getActiveIndex() != componentOpacityGM_B.INACTIVE) &&
+                                       !componentOpacityGM_B.getOpacityTransferFunction().isEndpoint(componentOpacityGM_B.getActiveIndex()));
 
         mouseSlider.setLabelTable(getLabelTableGM_B());
-        mouseSlider.setEnabled(componentOpacityGM_B.getActiveIndex() != componentOpacityGM_B.INACTIVE &&
-                               !componentOpacityGM_B.getOpacityTransferFunction().isEndpoint(componentOpacityGM_B.getActiveIndex()));
+        mouseSlider.setEnabled((componentOpacityGM_B.getActiveIndex() != componentOpacityGM_B.INACTIVE) &&
+                                   !componentOpacityGM_B.getOpacityTransferFunction().isEndpoint(componentOpacityGM_B.getActiveIndex()));
 
         JPanel precisionPanel = new JPanel(new GridLayout(1, 1));
         precisionPanel.add(mouseSliderGM_B);
@@ -678,106 +655,198 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase
     }
 
     /**
-     * Add the gradient magnitude hitogram to the opacity control panel.
+     * Calculates histogram for the image(s).
+     *
+     * @param   image    DOCUMENT ME!
+     * @param   channel  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
-    public void addGM() {
-        if (panelOpacityGM_A == null) {
-            rendererProgressBar.setValue(0);
-            rendererProgressBar.update(rendererProgressBar.getGraphics());
+    private ModelHistogram calcHistogram(ModelImage image, int channel) {
 
-            calcHistogramGM();
-            rendererProgressBar.setValue(100);
-            rendererProgressBar.update(rendererProgressBar.getGraphics());
-            buildPanelGM_A();
-            if (imageB != null) {
-                buildPanelGM_B();
+        ModelHistogram histogram = null;
+
+        int[] dimExtentsA = new int[1];
+
+        if (image != null) {
+
+            if (imageA.getType() != ModelStorageBase.ARGB_USHORT) {
+                dimExtentsA[0] = 256;
+            } else {
+                dimExtentsA[0] = (int) (imageA.getMaxR() - imageA.getMinR() + 0.5) + 1;
+            }
+
+            histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsA);
+
+            AlgorithmHistogram histoAlgo = new AlgorithmHistogram(histogram, channel, image, true);
+
+            histoAlgo.setProgressBarVisible(false);
+            histoAlgo.run();
+
+            if (histoAlgo.isCompleted()) {
+                histoAlgo.finalize();
+                histoAlgo = null;
             }
         }
-        else {
-            if (tabbedPane.indexOfComponent(panelOpacityGM_A) == -1) {
-                tabbedPane.addTab(OPACITY_COMPONENT_TAB_A_GM, null, panelOpacityGM_A);
-            }
-            if (imageB != null) {
-                if (tabbedPane.indexOfComponent(panelOpacityGM_B) == -1) {
-                    tabbedPane.addTab(OPACITY_COMPONENT_TAB_B_GM, null, panelOpacityGM_B);
-                }
-            }
-        }
+
+        return histogram;
     }
 
     /**
-     * Add the gradient magnitude hitogram to the opacity control panel.
+     * Calculates the histogram for the color images GM.
      */
-    public void removeGM() {
+    private void calcHistogramGM() {
+
+        ModelImage gradMag_A, gradMag_B;
+        float[] sigma = new float[3];
+
+        sigma[0] = 0.5f;
+        sigma[1] = 0.5f;
+        sigma[2] = 0.5f;
+
         if (imageA != null) {
-            tabbedPane.remove(panelOpacityGM_A);
+            gradMag_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(), imageA.getImageName() + "_gm",
+                                       imageA.getUserInterface());
+            gradMagRescale_A = new ModelImage(ModelImage.ARGB, imageA.getExtents(),
+                                              imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
+
+            if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
+                                 imageA.getImageName() + "_gm_rescale" + ".xml", true)) {
+                rendererProgressBar.setValue(10);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+
+                AlgorithmGradientMagnitude gradMagAlgo_A = new AlgorithmGradientMagnitude(gradMag_A, imageA, sigma,
+                                                                                          true, false);
+
+                gradMagAlgo_A.setRed(true);
+                gradMagAlgo_A.setBlue(true);
+                gradMagAlgo_A.setGreen(true);
+                gradMagAlgo_A.setActiveImage(isActiveImage); // progress bar junk.
+                gradMagAlgo_A.setProgressBarVisible(true);
+                gradMagAlgo_A.run();
+
+                if (gradMagAlgo_A.isCompleted()) {
+                    gradMagAlgo_A.finalize();
+                    gradMagAlgo_A = null;
+                }
+
+                rendererProgressBar.setValue(20);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+
+                AlgorithmChangeType changeTypeAlgo_A = new AlgorithmChangeType(gradMagRescale_A, gradMag_A,
+                                                                               gradMag_A.getMin(), gradMag_A.getMax(),
+                                                                               0, 255, false);
+
+                changeTypeAlgo_A.setActiveImage(isActiveImage);
+                changeTypeAlgo_A.setProgressBarVisible(false);
+                changeTypeAlgo_A.run();
+                gradMagRescale_A.calcMinMax();
+
+                if (changeTypeAlgo_A.isCompleted()) {
+
+                    if (gradMagRescale_A != null) {
+                        rendererProgressBar.setValue(30);
+                        rendererProgressBar.update(rendererProgressBar.getGraphics());
+                        saveGMImage(gradMagRescale_A);
+                        rendererProgressBar.setValue(40);
+                        rendererProgressBar.update(rendererProgressBar.getGraphics());
+                        histogramGM_ARed = calcHistogram(gradMagRescale_A, RED);
+                        histogramGM_AGreen = calcHistogram(gradMagRescale_A, GREEN);
+                        histogramGM_ABlue = calcHistogram(gradMagRescale_A, BLUE);
+                    }
+
+                    changeTypeAlgo_A.finalize();
+                    changeTypeAlgo_A = null;
+                }
+
+                rendererProgressBar.setValue(50);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+            } else { // Gradient Magnitude image is calculated already.
+                rendererProgressBar.setValue(20);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+                histogramGM_ARed = calcHistogram(gradMagRescale_A, RED);
+                histogramGM_AGreen = calcHistogram(gradMagRescale_A, GREEN);
+                histogramGM_ABlue = calcHistogram(gradMagRescale_A, BLUE);
+            }
+
+            rendererProgressBar.setValue(50);
+            rendererProgressBar.update(rendererProgressBar.getGraphics());
+
+            if (gradMag_A != null) {
+                gradMag_A.disposeLocal();
+                gradMag_A = null;
+            }
         }
+
         if (imageB != null) {
-            tabbedPane.remove(panelOpacityGM_B);
+            gradMag_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(), imageB.getImageName() + "_gm",
+                                       imageB.getUserInterface());
+            gradMagRescale_B = new ModelImage(ModelImage.ARGB, imageB.getExtents(),
+                                              imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
+
+            if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
+                                 imageB.getImageName() + "_gm_rescale" + ".xml", false)) {
+                rendererProgressBar.setValue(60);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+
+                AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(gradMag_B, imageB,
+                                                                                                sigma, true, false);
+
+                gradMagAlgo_B.setRed(true);
+                gradMagAlgo_B.setBlue(true);
+                gradMagAlgo_B.setGreen(true);
+                gradMagAlgo_B.setActiveImage(isActiveImage); // progress bar junk.
+                gradMagAlgo_B.setProgressBarVisible(true);
+                gradMagAlgo_B.run();
+
+                if (gradMagAlgo_B.isCompleted()) {
+                    gradMagAlgo_B.finalize();
+                    gradMagAlgo_B = null;
+                }
+
+                rendererProgressBar.setValue(70);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+
+                AlgorithmChangeType changeTypeAlgo_B = new AlgorithmChangeType(gradMagRescale_B, gradMag_B,
+                                                                               gradMag_B.getMin(), gradMag_B.getMax(),
+                                                                               0, 255, false);
+
+                changeTypeAlgo_B.setActiveImage(isActiveImage);
+                changeTypeAlgo_B.setProgressBarVisible(false);
+                changeTypeAlgo_B.run();
+                gradMagRescale_B.calcMinMax();
+
+                if (changeTypeAlgo_B.isCompleted()) {
+
+                    if (gradMagRescale_B != null) {
+                        saveGMImage(gradMagRescale_B);
+                        rendererProgressBar.setValue(80);
+                        rendererProgressBar.update(rendererProgressBar.getGraphics());
+                        histogramGM_BRed = calcHistogram(gradMagRescale_B, RED);
+                        histogramGM_BGreen = calcHistogram(gradMagRescale_B, GREEN);
+                        histogramGM_BBlue = calcHistogram(gradMagRescale_B, BLUE);
+                    }
+
+                    changeTypeAlgo_B.finalize();
+                    changeTypeAlgo_B = null;
+                    rendererProgressBar.setValue(90);
+                    rendererProgressBar.update(rendererProgressBar.getGraphics());
+                }
+
+            } else { // Gradient Magnitude image is calculated already.
+                rendererProgressBar.setValue(20);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+                rendererProgressBar.setValue(80);
+                rendererProgressBar.update(rendererProgressBar.getGraphics());
+                histogramGM_BRed = calcHistogram(gradMagRescale_B, RED);
+                histogramGM_BGreen = calcHistogram(gradMagRescale_B, GREEN);
+                histogramGM_BBlue = calcHistogram(gradMagRescale_B, BLUE);
+            }
+
+            if (gradMag_B != null) {
+                gradMag_B.disposeLocal();
+                gradMag_B = null;
+            }
         }
-    }
-
-    /**
-     * Returns the opacity transfer function for image A
-     * @return TransferFunction
-     */
-    public TransferFunction getOpacityAfn(int channel) {
-        return componentOpacityA.getOpacityTransferFunction();
-    }
-
-    /**
-     * Returns the opacity transfer function for image B
-     * @return TransferFunction
-     */
-    public TransferFunction getOpacityBfn(int channel) {
-        return componentOpacityB.getOpacityTransferFunction();
-    }
-
-    /**
-     * Returns the opacity transfer function for image A
-     * @return TransferFunction
-     */
-    public TransferFunction getOpacityGM_Afn(int channel) {
-        return componentOpacityGM_A.getOpacityTransferFunction();
-    }
-
-    /**
-     * Returns the opacity transfer function for image B
-     * @return TransferFunction
-     */
-    public TransferFunction getOpacityGM_Bfn(int channel) {
-        return componentOpacityGM_B.getOpacityTransferFunction();
-    }
-
-    /**
-     * Returns the opacity transfer function via the ModelRGB object for image  B
-     * @return ModelRGB
-     */
-    public ModelRGB getRGB_OpacityA() {
-        return RGBTA;
-    }
-
-    /**
-     * Returns the opacity transfer function via the ModelRGB object for image  B
-     * @return ModelRGB
-     */
-    public ModelRGB getRGB_OpacityB() {
-        return RGBTB;
-    }
-
-    /**
-     * Returns the opacity transfer function for the gradient magnitude image via the ModelRGB object for image A
-     * @return ModelRGB
-     */
-    public ModelRGB getRGB_OpacityA_GM() {
-        return RGBTA_GM;
-    }
-
-    /**
-     * Returns the opacity transfer function for the gradient magnitude image via the ModelRGB object for image B
-     * @return ModelRGB
-     */
-    public ModelRGB getRGB_OpacityB_GM() {
-        return RGBTB_GM;
     }
 }

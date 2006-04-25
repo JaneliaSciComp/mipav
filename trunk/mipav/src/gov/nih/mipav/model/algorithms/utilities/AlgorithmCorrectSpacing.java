@@ -1,72 +1,72 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
-import java.io.IOException;
+
+import java.io.*;
 
 
 /**
- *  Algorithm to adjust image volume for cases when the slice
- *  spacing is not equal to the slice thickness.
- *  When spacing > thickness:
- *		repeat images from original image set
- *		insert blank images
- *		(so that in the final image volume, all images will have the same
- *		slice thickness and the image volume will be to proper scale.
- *	When spacing < thickness:
- *		set thickness = spacing.
+ * Algorithm to adjust image volume for cases when the slice spacing is not equal to the slice thickness. When spacing >
+ * thickness: repeat images from original image set insert blank images (so that in the final image volume, all images
+ * will have the same slice thickness and the image volume will be to proper scale. When spacing < thickness: set
+ * thickness = spacing.
  */
 
 public class AlgorithmCorrectSpacing extends AlgorithmBase {
 
-    /** X dimension of the image.                              */
-    private int Xdim;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**  Y dimension of the image.                             */
-    private int Ydim;
+    /** The number of dimensions in the image. */
+    private int DIM;
 
-    /**  Time dimension of the image.                             */
-    private int Tdim;
-
-    /** Original Z dimension of the image.                     */
-    private int oldZdim;
-
-    /** New Z dimension */
+    /** New Z dimension. */
     private int newZdim;
 
-    /** Area of a slice (Xdim * Ydim).                         */
-    private int sliceArea;
+    /** Number of blank images, to make up gap. */
+    private int numBlanks;
 
-    /** Volume for each time step								*/
+    /** Number of repeated images, to compensate for gap. */
+    private int numRepIm;
+
+    /** Volume for each time step. */
     private int oldTimeStepVolume, newTimeStepVolume;
 
-    /**
-     * The number of dimensions in the image
-     */
-    private int DIM;
+    /** Original Z dimension of the image. */
+    private int oldZdim;
 
     /** Result Image. */
     private ModelImage resultImage;
 
-    /* Number of repeated images, to compensate for gap. */
-    private int numRepIm;
+    /** Area of a slice (Xdim * Ydim). */
+    private int sliceArea;
 
-    /* Number of blank images, to make up gap. */
-    private int numBlanks;
+    /** Time dimension of the image. */
+    private int Tdim;
+
+    /** X dimension of the image. */
+    private int Xdim;
+
+    /** Y dimension of the image. */
+    private int Ydim;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     *   Import source image into the class
-     *   @param  srcImage        source image (image to clip from)
-     *   @param  resultImage		corrected image
-     *   @param	numRepIm		number of times to repeat each of original images
-     *   @param	numBlanks		number of blank images to insert
+     * Import source image into the class.
+     *
+     * @param  srcImage     source image (image to clip from)
+     * @param  resultImage  corrected image
+     * @param  numRepIm     number of times to repeat each of original images
+     * @param  numBlanks    number of blank images to insert
      */
-    public AlgorithmCorrectSpacing( ModelImage srcImage, ModelImage resultImage, int numRepIm, int numBlanks ) {
-        super( resultImage, srcImage );
+    public AlgorithmCorrectSpacing(ModelImage srcImage, ModelImage resultImage, int numRepIm, int numBlanks) {
+        super(resultImage, srcImage);
         this.resultImage = resultImage;
         this.numRepIm = numRepIm;
         this.numBlanks = numBlanks;
@@ -76,9 +76,10 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         Ydim = resultImage.getExtents()[1];
         sliceArea = Xdim * Ydim;
         oldZdim = srcImage.getExtents()[2];
-        newZdim = oldZdim * ( numRepIm + numBlanks );
+        newZdim = oldZdim * (numRepIm + numBlanks);
         DIM = srcImage.getNDims();
-        if ( DIM == 4 ) {
+
+        if (DIM == 4) {
             Tdim = resultImage.getExtents()[3];
             oldTimeStepVolume = sliceArea * oldZdim;
             newTimeStepVolume = sliceArea * newZdim;
@@ -87,30 +88,37 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
             oldTimeStepVolume = 0;
             newTimeStepVolume = 0;
         }
-        //System.out.println("In AlgorithmCorrectSpacing.  newZdim: " +newZdim);
+        // System.out.println("In AlgorithmCorrectSpacing.  newZdim: " +newZdim);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Constructs a string of the contruction parameters and
-     *   outputs the string to the messsage frame if the logging
-     *   procedure is turned on.
+     * Dispose of local variables that may be taking up lots of room.
      */
-    private void constructLog() {
-        String correctSpcStr = new String();
-        correctSpcStr = " with " + numRepIm + " repeats of image slices and " + numBlanks
-                + " blanks between images.  Total number of new images is " + newZdim + ".";
-        historyString = new String( "CorrectSpacing" + correctSpcStr + "\n" );
+    public void disposeLocal() {
+        srcImage = null;
+        resultImage = null;
     }
 
     /**
-     *   Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         super.finalize();
     }
 
     /**
-     *   Runs algorithm.
+     * Returns corrected image.
+     *
+     * @return  resultImage
+     */
+    public ModelImage getResultImage() {
+        return resultImage;
+    }
+
+    /**
+     * Runs algorithm.
      */
     public void runAlgorithm() {
         int j, k;
@@ -121,9 +129,10 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
 
         try {
             imageBuffer = new float[sliceArea]; // assuming here 3D image set and grayscale
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             imageBuffer = null;
-            errorCleanUp( "Algorithm Correct Spacing reports: Out of memory", true );
+            errorCleanUp("Algorithm Correct Spacing reports: Out of memory", true);
+
             return;
         }
 
@@ -133,13 +142,13 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         int xPos = Toolkit.getDefaultToolkit().getScreenSize().width / 2;
         int yPos = 50;
 
-        if ( DIM == 4 ) {
+        if (DIM == 4) {
             title = "Time Progress Bar for image " + srcImage.getImageName();
             message = "Percentage of time intervals...";
-            timeBar = new ViewJProgressBar( title, message, 0, 100, true, this, this );
-            timeBar.setSize( new Dimension( 400, 130 ) );
-            timeBar.setLocation( xPos, yPos );
-            timeBar.setVisible( true );
+            timeBar = new ViewJProgressBar(title, message, 0, 100, true, this, this);
+            timeBar.setSize(new Dimension(400, 130));
+            timeBar.setLocation(xPos, yPos);
+            timeBar.setVisible(true);
             yPos += 130;
         } else {
             timeBar = null;
@@ -147,81 +156,91 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
 
         title = "Slice Progress Bar for image " + srcImage.getImageName();
         message = "Percentage of slices processed...";
-        sliceBar = new ViewJProgressBar( title, message, 0, 100, true, this, this );
-        sliceBar.setSize( new Dimension( 400, 130 ) );
-        sliceBar.setLocation( xPos, yPos );
-        sliceBar.setVisible( true );
+        sliceBar = new ViewJProgressBar(title, message, 0, 100, true, this, this);
+        sliceBar.setSize(new Dimension(400, 130));
+        sliceBar.setLocation(xPos, yPos);
+        sliceBar.setVisible(true);
 
-        //System.out.println(Thread.currentThread().getPriority());
+        // System.out.println(Thread.currentThread().getPriority());
         // main part of algorithm
-        for ( t = 0; t < Tdim && !threadStopped; t++ ) {
-            if ( timeBar != null && timeBar.isVisible() ) {
-                timeBar.updateValue( Math.round( (float) ( t + 1 ) / (float) Tdim * 100 ), activeImage );
+        for (t = 0; (t < Tdim) && !threadStopped; t++) {
+
+            if ((timeBar != null) && timeBar.isVisible()) {
+                timeBar.updateValue(Math.round((float) (t + 1) / (float) Tdim * 100), activeImage);
             }
+
             Z = 0; // Z is the slice number in the resultImage
-            for ( z = 0; z < oldZdim && !threadStopped; z++ ) { // z is the slice number in the srcImage
-                if ( sliceBar.isVisible() ) {
-                    if ( DIM == 4 ) {
-                        message = "Percentage of slices processed for time, " + ( t + 1 ) + ". ";
-                        sliceBar.setMessage( message );
+
+            for (z = 0; (z < oldZdim) && !threadStopped; z++) { // z is the slice number in the srcImage
+
+                if (sliceBar.isVisible()) {
+
+                    if (DIM == 4) {
+                        message = "Percentage of slices processed for time, " + (t + 1) + ". ";
+                        sliceBar.setMessage(message);
                     }
-                    sliceBar.updateValue( Math.round( (float) ( z + 1 ) / (float) oldZdim * 100 ), activeImage );
+
+                    sliceBar.updateValue(Math.round((float) (z + 1) / (float) oldZdim * 100), activeImage);
                 }
+
                 try {
-                    srcImage.exportData( t * oldTimeStepVolume + z * sliceArea, sliceArea, imageBuffer );
-                    for ( k = 0; k < numRepIm; k++, Z++ ) {
-                        resultImage.importData( t * newTimeStepVolume + Z * sliceArea, imageBuffer, false );
-                        resultImage.setFileInfo( srcImage.getFileInfo( z ), Z );
+                    srcImage.exportData((t * oldTimeStepVolume) + (z * sliceArea), sliceArea, imageBuffer);
+
+                    for (k = 0; k < numRepIm; k++, Z++) {
+                        resultImage.importData((t * newTimeStepVolume) + (Z * sliceArea), imageBuffer, false);
+                        resultImage.setFileInfo(srcImage.getFileInfo(z), Z);
                     }
-                    for ( j = 0; j < sliceArea; j++ ) {
+
+                    for (j = 0; j < sliceArea; j++) {
                         imageBuffer[j] = 0.0f;
                     }
-                    for ( k = 0; k < numBlanks; k++, Z++ ) {
-                        resultImage.importData( t * newTimeStepVolume + Z * sliceArea, imageBuffer, false );
-                        resultImage.setFileInfo( srcImage.getFileInfo( z ), Z );
+
+                    for (k = 0; k < numBlanks; k++, Z++) {
+                        resultImage.importData((t * newTimeStepVolume) + (Z * sliceArea), imageBuffer, false);
+                        resultImage.setFileInfo(srcImage.getFileInfo(z), Z);
                     }
-                } catch ( IOException error ) {
-                    System.out.println( "z is " + z + ", Z is " + Z + ", and t is " + t + "." );
-                    displayError( "Algorithm Correct Spacing reports: Destination image already locked." );
-                    setCompleted( false );
+                } catch (IOException error) {
+                    System.out.println("z is " + z + ", Z is " + Z + ", and t is " + t + ".");
+                    displayError("Algorithm Correct Spacing reports: Destination image already locked.");
+                    setCompleted(false);
+
                     return;
                 }
             }
         }
 
-        if ( threadStopped ) {
-            if ( DIM == 4 ) {
+        if (threadStopped) {
+
+            if (DIM == 4) {
                 timeBar.dispose();
             }
+
             sliceBar.dispose();
             imageBuffer = null;
-            setCompleted( false );
+            setCompleted(false);
             finalize();
+
             return;
         }
 
         // Clean up and let the calling dialog know that algorithm did its job
-        if ( DIM == 4 ) {
+        if (DIM == 4) {
             timeBar.dispose();
         }
+
         sliceBar.dispose();
         imageBuffer = null;
-        setCompleted( true );
+        setCompleted(true);
     }
 
     /**
-     *    Returns corrected image
-     *    @return resultImage
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
      */
-    public ModelImage getResultImage() {
-        return resultImage;
-    }
-
-    /**
-     *	Dispose of local variables that may be taking up lots of room.
-     */
-    public void disposeLocal() {
-        srcImage = null;
-        resultImage = null;
+    private void constructLog() {
+        String correctSpcStr = new String();
+        correctSpcStr = " with " + numRepIm + " repeats of image slices and " + numBlanks +
+                        " blanks between images.  Total number of new images is " + newZdim + ".";
+        historyString = new String("CorrectSpacing" + correctSpcStr + "\n");
     }
 }

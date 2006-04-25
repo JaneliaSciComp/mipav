@@ -1,137 +1,552 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.*;
 
-import java.awt.event.*;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
 
 import javax.swing.*;
 
+
 /**
- *   Dialog to get user input, then call the algorithm. The user is able to control
- *   the degree of blurring in all dimensions and indicate if a correction factor be
- *   applied to the z-dimension to account for differing resolutions between the
- *   xy resolutions (intra-plane) and the z resolution (inter-plane).
- *   The algorithms are executed in their own thread.
+ * Dialog to get user input, then call the algorithm. The user is able to control the degree of blurring in all
+ * dimensions and indicate if a correction factor be applied to the z-dimension to account for differing resolutions
+ * between the xy resolutions (intra-plane) and the z resolution (inter-plane). The algorithms are executed in their own
+ * thread.
  *
- *		@version    0.1 Nov 17, 1998
- *		@author     Matthew J. McAuliffe, Ph.D.
- *       @see        AlgorithmGaussianBlur
- *
+ * @version  0.1 Nov 17, 1998
+ * @author   Matthew J. McAuliffe, Ph.D.
+ * @see      AlgorithmGaussianBlur
  */
-public class JDialogLevelSet
-    extends JDialogBase implements AlgorithmInterface {
+public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
 
-    private final static int EXPAND = 1;
-    private final static int EXPAND_CONTRACT = 2;
-    private final static int CONTRACT = 3;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private AlgorithmLevelSet levelSetAlgo;
-    private ModelImage image; // source image
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -1593443884995027289L;
 
-    private String titles[];
+    /** DOCUMENT ME! */
+    private static final int EXPAND = 1;
 
-    private JTextField textGaussX;
-    private JLabel labelGaussX;
-    private float scaleX;
+    /** DOCUMENT ME! */
+    private static final int EXPAND_CONTRACT = 2;
 
-    private JTextField textGaussY;
-    private JLabel labelGaussY;
-    private float scaleY;
+    /** DOCUMENT ME! */
+    private static final int CONTRACT = 3;
 
-    private JTextField textGaussZ;
-    private JLabel labelGaussZ;
-    private float scaleZ;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    private float normFactor = 1; // normalization factor to adjust for resolution
-    //  difference between x,y resolutions (in plane)
-    //  and z resolution (between planes)
-    private JLabel label3D;
-    private ButtonGroup movementGroup;
-    private JRadioButton expandButton;
-    private JRadioButton expandContractButton;
+    /** DOCUMENT ME! */
     private JRadioButton contractButton;
-    private int movement;
 
-    private JTextField textIters;
-    private JLabel labelIters;
-    private int iters;
-
-    private JTextField textDeltaT;
-    private JLabel labelDeltaT;
+    /** DOCUMENT ME! */
     private float deltaT;
 
-    private JTextField textEpsilon;
-    private JLabel labelEpsilon;
-    private float epsilon;
-
-    private JTextField textEdgeAttract;
-    private JLabel labelEdgeAttract;
+    /** DOCUMENT ME! */
     private float edgeAttract;
 
-    private JCheckBox itersCheckBox;
-    private JLabel labelTestIters;
-    private JTextField textTestIters;
-    private int testIters = -1;
+    /** DOCUMENT ME! */
+    private float epsilon;
 
-    private JCheckBox resolutionCheckbox;
+    /** DOCUMENT ME! */
+    private JRadioButton expandButton;
+
+    /** DOCUMENT ME! */
+    private JRadioButton expandContractButton;
+
+    /** DOCUMENT ME! */
+    private ModelImage image; // source image
+
+    /** DOCUMENT ME! */
+    private int iters;
+
+    /** DOCUMENT ME! */
+    private JCheckBox itersCheckBox;
+
+    /** difference between x,y resolutions (in plane) and z resolution (between planes). */
+    private JLabel label3D;
+
+    /** DOCUMENT ME! */
     private JLabel labelCorrected;
 
+    /** DOCUMENT ME! */
+    private JLabel labelDeltaT;
+
+    /** DOCUMENT ME! */
+    private JLabel labelEdgeAttract;
+
+    /** DOCUMENT ME! */
+    private JLabel labelEpsilon;
+
+    /** DOCUMENT ME! */
+    private JLabel labelGaussX;
+
+    /** DOCUMENT ME! */
+    private JLabel labelGaussY;
+
+    /** DOCUMENT ME! */
+    private JLabel labelGaussZ;
+
+    /** DOCUMENT ME! */
+    private JLabel labelIters;
+
+    /** DOCUMENT ME! */
+    private JLabel labelTestIters;
+
+    /** DOCUMENT ME! */
+    private AlgorithmLevelSet levelSetAlgo;
+
+    /** DOCUMENT ME! */
+    private int movement;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup movementGroup;
+
+    /** DOCUMENT ME! */
+    private float normFactor = 1; // normalization factor to adjust for resolution
+
+    /** DOCUMENT ME! */
     private BitSet paintMask;
+
+    /** DOCUMENT ME! */
+    private JCheckBox resolutionCheckbox;
+
+    /** DOCUMENT ME! */
+    private float scaleX;
+
+    /** DOCUMENT ME! */
+    private float scaleY;
+
+    /** DOCUMENT ME! */
+    private float scaleZ;
+
+    /** DOCUMENT ME! */
+    private int testIters = -1;
+
+    /** DOCUMENT ME! */
+    private JTextField textDeltaT;
+
+    /** DOCUMENT ME! */
+    private JTextField textEdgeAttract;
+
+    /** DOCUMENT ME! */
+    private JTextField textEpsilon;
+
+    /** DOCUMENT ME! */
+    private JTextField textGaussX;
+
+    /** DOCUMENT ME! */
+    private JTextField textGaussY;
+
+    /** DOCUMENT ME! */
+    private JTextField textGaussZ;
+
+    /** DOCUMENT ME! */
+    private JTextField textIters;
+
+    /** DOCUMENT ME! */
+    private JTextField textTestIters;
+
+    /** DOCUMENT ME! */
+    private String[] titles;
+
+    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *  Creates new dialog for finding the level set.
-     *  @param theParentFrame  Parent frame
-     *  @param im              Source image
+     * Creates new dialog for finding the level set.
+     *
+     * @param  theParentFrame  Parent frame
+     * @param  im              Source image
      */
     public JDialogLevelSet(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ( (ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         image = im;
+
         ViewVOIVector VOIs = image.getVOIs();
         int nVOI = VOIs.size();
+
         if (nVOI == 0) {
             MipavUtil.displayError("Image must have a VOI for level set");
+
             return;
         }
+
         int i;
+
         for (i = 0; i < nVOI; i++) {
+
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 break;
             }
         }
+
         if (i == nVOI) {
             MipavUtil.displayError("The VOI must be a contour VOI");
+
             return;
         }
 
         if (image.getNDims() == 3) {
-            Vector curves[] = VOIs.VOIAt(i).getCurves();
+            Vector[] curves = VOIs.VOIAt(i).getCurves();
             int nCurves = 0;
             int previousCurves = 0;
             int slice;
             boolean haveConsecutive = false;
+
             for (slice = 0; slice < image.getExtents()[2]; slice++) {
                 previousCurves = nCurves;
                 nCurves = curves[slice].size();
-                if ( (previousCurves > 0) && (nCurves > 0)) {
+
+                if ((previousCurves > 0) && (nCurves > 0)) {
                     haveConsecutive = true;
                 }
             }
+
             if (!haveConsecutive) {
                 MipavUtil.displayError("Contours must be in 2 consecutive slices");
+
                 return;
             }
         }
+
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     *
+     * @param  event  event that triggers function
+     */
+    public void actionPerformed(ActionEvent event) {
+        Object source = event.getSource();
+        String tmpStr;
+
+        if (source == OKButton) {
+            tmpStr = textGaussX.getText();
+
+            if (testParameter(tmpStr, 0.5, 5.0)) {
+                scaleX = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textGaussX.requestFocus();
+                textGaussX.selectAll();
+
+                return;
+            }
+
+            tmpStr = textGaussY.getText();
+
+            if (testParameter(tmpStr, 0.5, 5.0)) {
+                scaleY = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textGaussY.requestFocus();
+                textGaussY.selectAll();
+
+                return;
+            }
+
+            tmpStr = textGaussZ.getText();
+
+            if (testParameter(tmpStr, 0.0, 5.0)) {
+                scaleZ = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textGaussZ.requestFocus();
+                textGaussZ.selectAll();
+
+                return;
+            }
+
+            if (expandButton.isSelected()) {
+                movement = EXPAND;
+            } else if (expandContractButton.isSelected()) {
+                movement = EXPAND_CONTRACT;
+            } else {
+                movement = CONTRACT;
+            }
+
+            tmpStr = textIters.getText();
+
+            if (testParameter(tmpStr, 1, 100000)) {
+                iters = Integer.valueOf(tmpStr).intValue();
+            } else {
+                textIters.requestFocus();
+                textIters.selectAll();
+
+                return;
+            }
+
+            tmpStr = textDeltaT.getText();
+
+            if (testParameter(tmpStr, 1e-10, 0.25)) {
+                deltaT = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textDeltaT.requestFocus();
+                textDeltaT.selectAll();
+
+                return;
+            }
+
+            tmpStr = textEpsilon.getText();
+
+            if (testParameter(tmpStr, 1e-10, 0.999)) {
+                epsilon = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textEpsilon.requestFocus();
+                textEpsilon.selectAll();
+
+                return;
+            }
+
+            tmpStr = textEdgeAttract.getText();
+
+            if (testParameter(tmpStr, 1e-10, 1e10)) {
+                edgeAttract = Float.valueOf(tmpStr).floatValue();
+            } else {
+                textEdgeAttract.requestFocus();
+                textEdgeAttract.selectAll();
+
+                return;
+            }
+
+            if (itersCheckBox.isSelected()) {
+                tmpStr = textTestIters.getText();
+
+                if (testParameter(tmpStr, 1, iters)) {
+                    testIters = Integer.valueOf(tmpStr).intValue();
+                } else {
+                    textTestIters.requestFocus();
+                    textTestIters.selectAll();
+
+                    return;
+                }
+            } else {
+                testIters = -1;
+            }
+
+            // Apply normalization if requested!
+            if (resolutionCheckbox.isSelected()) {
+                scaleZ = scaleZ * normFactor;
+            }
+
+            if (image.getNDims() == 2) { // source image is 2D
+
+                int[] destExtents = new int[2];
+                destExtents[0] = image.getExtents()[0]; // X dim
+                destExtents[1] = image.getExtents()[1]; // Y dim
+
+                float[] sigmas = new float[2];
+                sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
+                sigmas[1] = scaleY;
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    levelSetAlgo = new AlgorithmLevelSet(image, sigmas, movement, iters, deltaT, epsilon, edgeAttract,
+                                                         testIters);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed of failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    levelSetAlgo.addListener(this);
+
+                    // Hide the dialog since the algorithm is about to run.
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    Vector imageFrames = image.getImageFrameVector();
+                    titles = new String[imageFrames.size()];
+
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+
+                    // Start the thread as a low priority because we wish to still have user interface.
+                    if (levelSetAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog Diffusion: unable to allocate enough memory");
+
+                    return;
+                }
+            } else if (image.getNDims() == 3) {
+                int[] destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+
+                float[] sigmas = new float[3];
+                sigmas[0] = scaleX;
+                sigmas[1] = scaleY;
+                sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
+
+                try {
+
+                    // Make algorithm
+                    levelSetAlgo = new AlgorithmLevelSet(image, sigmas, movement, iters, deltaT, epsilon, edgeAttract,
+                                                         testIters);
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed of failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    levelSetAlgo.addListener(this);
+
+                    // Hide dialog
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    Vector imageFrames = image.getImageFrameVector();
+                    titles = new String[imageFrames.size()];
+
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast
+                    if (levelSetAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog diffusion: unable to allocate enough memory");
+
+                    return;
+                }
+            }
+        } else if (source == cancelButton) {
+            dispose();
+        }
+    }
+
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
+
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
+     * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+        int i;
+
+        ViewJFrameImage imageFrame = null;
+
+        if (algorithm instanceof AlgorithmLevelSet) {
+
+            if (levelSetAlgo.isCompleted()) {
+                paintMask = ((ViewJFrameImage) parentFrame).getComponentImage().getPaintBitmap();
+
+                for (i = 0; i < paintMask.size(); i++) {
+                    paintMask.clear(i);
+                }
+
+                ((ViewJFrameImage) parentFrame).getComponentImage().setPaintMask(paintMask);
+            } // if (levelSetAlgo.isCompleted())
+
+            // These next lines set the titles in all frames where the source image is displayed to
+            // image name so as to indicate that the image is now unlocked!
+            // The image frames are enabled and then registed to the userinterface.
+            Vector imageFrames = image.getImageFrameVector();
+
+            for (i = 0; i < imageFrames.size(); i++) {
+                ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                    userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                }
+            }
+
+            if (parentFrame != null) {
+                userInterface.registerFrame(parentFrame);
+            }
+
+            image.notifyImageDisplayListeners(null, true);
+        }
+
+        dispose();
+    }
+
+    /**
+     * When the user clicks the mouse out of a text field, resets the neccessary variables.
+     *
+     * @param  event  event that triggers this function
+     */
+    public void focusLost(FocusEvent event) {
+        Object source = event.getSource();
+        float tempNum;
+
+        if (source == textGaussZ) {
+
+            if (resolutionCheckbox.isSelected()) {
+                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
+                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
+            } else {
+                labelCorrected.setText(" ");
+            }
+        }
+    }
+
+    // *******************************************************************
+    // ************************* Item Events ****************************
+    // *******************************************************************
+
+    /**
+     * Changes scale based on resolution check box.
+     *
+     * @param  event  Event that cause the method to fire
+     */
+    public void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
+        float tempNum;
+
+        if (source == resolutionCheckbox) {
+
+            if (resolutionCheckbox.isSelected()) {
+                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
+                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
+            } else {
+                labelCorrected.setText(" ");
+            }
+        } else if (source == itersCheckBox) {
+
+            if (itersCheckBox.isSelected()) {
+                labelTestIters.setEnabled(true);
+                textTestIters.setEnabled(true);
+            } else {
+                labelTestIters.setEnabled(false);
+                textTestIters.setEnabled(false);
+            }
+        }
+    }
+
+    /**
+     * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
         setForeground(Color.black);
@@ -143,6 +558,7 @@ public class JDialogLevelSet
         mainPanel = new JPanel();
         mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         mainPanel.setLayout(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -175,6 +591,7 @@ public class JDialogLevelSet
 
         gbc.gridx = 0;
         gbc.gridy = 1;
+
         JPanel resPanel = new JPanel(new BorderLayout());
         resPanel.setBorder(buildTitledBorder("Resolution options"));
         resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale.");
@@ -187,14 +604,14 @@ public class JDialogLevelSet
             resolutionCheckbox.addItemListener(this); // use the correction factor
             textGaussZ.addFocusListener(this);
             textGaussZ.setEnabled(true);
-        }
-        else {
+        } else {
             resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
             labelGaussZ.setEnabled(false); // is not relevent
             textGaussZ.setEnabled(false);
         }
 
         if (image.getNDims() >= 3) { // Source image is 3D, thus show correction factor
+
             int index = image.getExtents()[2] / 2;
             float xRes = image.getFileInfo(index).getResolutions()[0];
             float zRes = image.getFileInfo(index).getResolutions()[2];
@@ -205,6 +622,7 @@ public class JDialogLevelSet
             labelCorrected.setFont(serif12);
             resPanel.add(labelCorrected, BorderLayout.CENTER);
         }
+
         mainPanel.add(resPanel, gbc);
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
@@ -220,9 +638,11 @@ public class JDialogLevelSet
 
         label3D = new JLabel("In 3D put contours in 2 or more consecutive slices");
         label3D.setForeground(Color.black);
+
         if (image.getNDims() == 2) {
             label3D.setEnabled(false);
         }
+
         paramPanel.add(label3D, gbc2);
 
         movementGroup = new ButtonGroup();
@@ -270,12 +690,13 @@ public class JDialogLevelSet
         paramPanel.add(labelDeltaT, gbc2);
 
         textDeltaT = new JTextField();
+
         if (image.getNDims() == 2) {
             textDeltaT.setText("0.05");
-        }
-        else {
+        } else {
             textDeltaT.setText("0.025");
         }
+
         textDeltaT.setFont(serif12);
         gbc2.gridx = 1;
         gbc2.gridy = 5;
@@ -335,308 +756,6 @@ public class JDialogLevelSet
         setResizable(true);
         setVisible(true);
 
-    }
-
-    /**
-     *    Closes dialog box when the OK button is pressed and
-     *    calls the algorithm
-     *    @param event       event that triggers function
-     */
-    public void actionPerformed(ActionEvent event) {
-        Object source = event.getSource();
-        String tmpStr;
-
-        if (source == OKButton) {
-            tmpStr = textGaussX.getText();
-            if (testParameter(tmpStr, 0.5, 5.0)) {
-                scaleX = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                textGaussX.requestFocus();
-                textGaussX.selectAll();
-                return;
-            }
-
-            tmpStr = textGaussY.getText();
-            if (testParameter(tmpStr, 0.5, 5.0)) {
-                scaleY = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                textGaussY.requestFocus();
-                textGaussY.selectAll();
-                return;
-            }
-
-            tmpStr = textGaussZ.getText();
-            if (testParameter(tmpStr, 0.0, 5.0)) {
-                scaleZ = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                textGaussZ.requestFocus();
-                textGaussZ.selectAll();
-                return;
-            }
-
-            if (expandButton.isSelected()) {
-                movement = EXPAND;
-            }
-            else if (expandContractButton.isSelected()) {
-                movement = EXPAND_CONTRACT;
-            }
-            else {
-                movement = CONTRACT;
-            }
-
-            tmpStr = textIters.getText();
-            if (testParameter(tmpStr, 1, 100000)) {
-                iters = Integer.valueOf(tmpStr).intValue();
-            }
-            else {
-                textIters.requestFocus();
-                textIters.selectAll();
-                return;
-            }
-
-            tmpStr = textDeltaT.getText();
-            if (testParameter(tmpStr, 1e-10, 0.25)) {
-                deltaT = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                textDeltaT.requestFocus();
-                textDeltaT.selectAll();
-                return;
-            }
-
-            tmpStr = textEpsilon.getText();
-            if (testParameter(tmpStr, 1e-10, 0.999)) {
-                epsilon = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                textEpsilon.requestFocus();
-                textEpsilon.selectAll();
-                return;
-            }
-
-            tmpStr = textEdgeAttract.getText();
-            if (testParameter(tmpStr, 1e-10, 1e10)) {
-                edgeAttract = Float.valueOf(tmpStr).floatValue();
-            }
-            else {
-                textEdgeAttract.requestFocus();
-                textEdgeAttract.selectAll();
-                return;
-            }
-
-            if (itersCheckBox.isSelected()) {
-                tmpStr = textTestIters.getText();
-                if (testParameter(tmpStr, 1, iters)) {
-                    testIters = Integer.valueOf(tmpStr).intValue();
-                }
-                else {
-                    textTestIters.requestFocus();
-                    textTestIters.selectAll();
-                    return;
-                }
-            }
-            else {
-                testIters = -1;
-            }
-
-            // Apply normalization if requested!
-            if (resolutionCheckbox.isSelected()) {
-                scaleZ = scaleZ * normFactor;
-            }
-
-            if (image.getNDims() == 2) { // source image is 2D
-                int destExtents[] = new int[2];
-                destExtents[0] = image.getExtents()[0]; // X dim
-                destExtents[1] = image.getExtents()[1]; // Y dim
-
-                float sigmas[] = new float[2];
-                sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-                sigmas[1] = scaleY;
-
-                try {
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    levelSetAlgo = new AlgorithmLevelSet(image, sigmas, movement, iters, deltaT,
-                        epsilon, edgeAttract, testIters);
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    levelSetAlgo.addListener(this);
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ( (Frame) (imageFrames.elementAt(i))).getTitle();
-                        ( (Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ( (Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame( (Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    // Start the thread as a low priority because we wish to still have user interface.
-                    if (levelSetAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                }
-                catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog Diffusion: unable to allocate enough memory");
-                    return;
-                }
-            }
-            else if (image.getNDims() == 3) {
-                int destExtents[] = new int[3];
-                destExtents[0] = image.getExtents()[0];
-                destExtents[1] = image.getExtents()[1];
-                destExtents[2] = image.getExtents()[2];
-
-                float sigmas[] = new float[3];
-                sigmas[0] = scaleX;
-                sigmas[1] = scaleY;
-                sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
-
-                try {
-                    // Make algorithm
-                    levelSetAlgo = new AlgorithmLevelSet(image, sigmas, movement, iters, deltaT,
-                        epsilon, edgeAttract, testIters);
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    levelSetAlgo.addListener(this);
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ( (Frame) (imageFrames.elementAt(i))).getTitle();
-                        ( (Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ( (Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame( (Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (levelSetAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                }
-                catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog diffusion: unable to allocate enough memory");
-                    return;
-                }
-            }
-        }
-        else if (source == cancelButton) {
-            dispose();
-        }
-    }
-
-    //************************************************************************
-     //************************** Algorithm Events ****************************
-      //************************************************************************
-
-       /**
-        *	This method is required if the AlgorithmPerformed interface is implemented. It is called by the
-        *   algorithms when it has completed or failed to to complete, so that the dialog can be display
-        *   the result image and/or clean up.
-        *   @param algorithm   Algorithm that caused the event.
-        */
-       public void algorithmPerformed(AlgorithmBase algorithm) {
-           int i;
-
-           ViewJFrameImage imageFrame = null;
-
-           if (algorithm instanceof AlgorithmLevelSet) {
-               if (levelSetAlgo.isCompleted()) {
-                   paintMask = ( (ViewJFrameImage) parentFrame).getComponentImage().getPaintBitmap();
-                   for (i = 0; i < paintMask.size(); i++) {
-                       paintMask.clear(i);
-                   }
-                   ( (ViewJFrameImage) parentFrame).getComponentImage().setPaintMask(paintMask);
-               } // if (levelSetAlgo.isCompleted())
-
-               // These next lines set the titles in all frames where the source image is displayed to
-               // image name so as to indicate that the image is now unlocked!
-               // The image frames are enabled and then registed to the userinterface.
-               Vector imageFrames = image.getImageFrameVector();
-               for (i = 0; i < imageFrames.size(); i++) {
-                   ( (Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                   ( (Frame) (imageFrames.elementAt(i))).setEnabled(true);
-                   if ( ( (Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                       userInterface.registerFrame( (Frame) (imageFrames.elementAt(i)));
-                   }
-               }
-               if (parentFrame != null) {
-                   userInterface.registerFrame(parentFrame);
-               }
-               image.notifyImageDisplayListeners(null, true);
-           }
-
-           dispose();
-       }
-
-    //*******************************************************************
-     //************************* Item Events ****************************
-      //*******************************************************************
-
-       /**
-        *   Changes scale based on resolution check box.
-        *   @param event    Event that cause the method to fire
-        */
-       public void itemStateChanged(ItemEvent event) {
-           Object source = event.getSource();
-           float tempNum;
-
-           if (source == resolutionCheckbox) {
-               if (resolutionCheckbox.isSelected()) {
-                   tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                   labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-               }
-               else {
-                   labelCorrected.setText(" ");
-               }
-           }
-           else if (source == itersCheckBox) {
-               if (itersCheckBox.isSelected()) {
-                   labelTestIters.setEnabled(true);
-                   textTestIters.setEnabled(true);
-               }
-               else {
-                   labelTestIters.setEnabled(false);
-                   textTestIters.setEnabled(false);
-               }
-           }
-       }
-
-    /**
-     *   When the user clicks the mouse out of a text field,
-     *   resets the neccessary variables.
-     *   @param event   event that triggers this function
-     */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
-        float tempNum;
-
-        if (source == textGaussZ) {
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            }
-            else {
-                labelCorrected.setText(" ");
-            }
-        }
     }
 
 }

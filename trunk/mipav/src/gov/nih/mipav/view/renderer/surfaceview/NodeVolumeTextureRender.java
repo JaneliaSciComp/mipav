@@ -1,83 +1,56 @@
 package gov.nih.mipav.view.renderer.surfaceview;
 
-import gov.nih.mipav.view.renderer.*;
+
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.renderer.*;
+
 import javax.media.j3d.*;
+
 import javax.vecmath.*;
 
+
 /**
- * Used to generate a scene node item that that represents the rendering
- * of the volume using texture maps.
+ * Used to generate a scene node item that that represents the rendering of the volume using texture maps.
  */
-public class NodeVolumeTextureRender
-    extends TransformGroup {
+public class NodeVolumeTextureRender extends TransformGroup {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Used to represent undefined AXIS_*. */
     private static final int AXIS_UNDEFINED = -1;
 
-    /**
-     * Render volume YZ planes in order of increasing/decreasing X.
-     * Parameter to selectSlices method.
-     */
+    /** Render volume YZ planes in order of increasing/decreasing X. Parameter to selectSlices method. */
     private static final int AXIS_X = 0;
 
-    /**
-     * Render volume ZX planes in order of increasing/decreasing Y.
-     * Parameter to selectSlices method.
-     */
+    /** Render volume ZX planes in order of increasing/decreasing Y. Parameter to selectSlices method. */
     private static final int AXIS_Y = 1;
 
-    /**
-     * Render volume XY planes in order of increasing/decreasing Z.
-     * Parameter to selectSlices method.
-     */
+    /** Render volume XY planes in order of increasing/decreasing Z. Parameter to selectSlices method. */
     private static final int AXIS_Z = 2;
 
-    /**  Render selected planes in order of increasing/decreasing coordinate. */
+    /** Render selected planes in order of increasing/decreasing coordinate. */
     private static final int AXIS_INC = 0;
+
+    /** DOCUMENT ME! */
     private static final int AXIS_DEC = 1;
 
-    /**  Keep track of which axis has been currently selected for slicing
-     * the volume for rendering.
-     */
-    private int m_iAxisSlice = AXIS_UNDEFINED;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Render the slices by increasing or decreasing coordinate.
-     */
-    private boolean m_bIncreasingOrder;
+    /** Maximum voxel resolution of X, Y, Z. */
+    private float fMax;
 
-    /**  Keep track of which direction along the currently selected slicing
-     * axis has been selected for rendering the slices.
-     */
-    private int m_iAxisDirection = AXIS_UNDEFINED;
+    /** Voxel resolution in the X direction. */
+    private float fMaxX;
 
-    /**  The same appearance properties used to render each slice. */
-    private Appearance m_kAppearance = new Appearance();
+    /** Voxel resolution in the Y direction. */
+    private float fMaxY;
 
-    /** This is the only node attached to the TransformGroup.  This node
-     * is a container of OrderedGroups, one OrderedGroup instance for
-     * each axis.  Only one child node is selected at any time.
-     */
-    private Switch m_kSwitch = new Switch();
+    /** Voxel resolution in the Z direction. */
+    private float fMaxZ;
 
-    /** The contents of each slice that can be rendered will be contained
-     * in an OrderedGroup node.  An OrderedGroup is chosen because it
-     * ensures the order which the nodes in the group are rendered.
-     */
-     private final OrderedGroup[] m_akOrderedGroupNodeSlices = new OrderedGroup[3];
-
-    /**
-     * This contains the childIndexOrder arrays for the axis' OrderedGroup,
-     * one for each possible way to slice the volume (by axis and by
-     * direction).  The first array loops over slice axis (AXIS_[XYZ]
-     *  constants) and the second array loops over direction (increasing
-     *  or decreasing coordinate based on AXIS_INC or AXIS_DEC constant).
-     *  the third array contains the childIndexOrder array which has
-     *  dimension equal to the number of samples in the volume for
-     *  the corresponding axis (X, Y, or Z).
-     */
-    private final int[][][] m_aaaiOrderedGroupChildIndexOrder = new int[3][2][];
+    /** Max Dimension of X, Y, and Z. */
+    private int iDimMax;
 
     /** X Dimension. */
     private int iDimX;
@@ -88,73 +61,273 @@ public class NodeVolumeTextureRender
     /** Z Dimension. */
     private int iDimZ;
 
-    /** Max Dimension of X, Y, and Z. */
-    private int iDimMax;
-
-    /** Voxel resolution in the X direction */
-    private float fMaxX;
-
-    /** Voxel resolution in the Y direction */
-    private float fMaxY;
-
-    /** Voxel resolution in the Z direction */
-    private float fMaxZ;
-
-    /** Maximum voxel resolution of X, Y, Z */
-    private float fMax;
+    /**
+     * This contains the childIndexOrder arrays for the axis' OrderedGroup, one for each possible way to slice the
+     * volume (by axis and by direction). The first array loops over slice axis (AXIS_[XYZ] constants) and the second
+     * array loops over direction (increasing or decreasing coordinate based on AXIS_INC or AXIS_DEC constant). the
+     * third array contains the childIndexOrder array which has dimension equal to the number of samples in the volume
+     * for the corresponding axis (X, Y, or Z).
+     */
+    private final int[][][] m_aaaiOrderedGroupChildIndexOrder = new int[3][2][];
 
     /**
-     * Create the scene graph node for the rendering of the volume data,
-     * everything except the textures from the volume data to be applied
-     * to the slices through the volume.
-     * @param image reference to the image volume (data and header information)
-     * the same description parameters
-     * @param kVolumeTexture VolumeTexture-derived instance which
-     * contains the texture properties.  This description parameters for
-     * the volume associated with this instance must match the parameters
-     * for which this node and its geometry.
+     * The contents of each slice that can be rendered will be contained in an OrderedGroup node. An OrderedGroup is
+     * chosen because it ensures the order which the nodes in the group are rendered.
+     */
+    private final OrderedGroup[] m_akOrderedGroupNodeSlices = new OrderedGroup[3];
+
+    /** Render the slices by increasing or decreasing coordinate. */
+    private boolean m_bIncreasingOrder;
+
+    /**
+     * Keep track of which direction along the currently selected slicing axis has been selected for rendering the
+     * slices.
+     */
+    private int m_iAxisDirection = AXIS_UNDEFINED;
+
+    /** Keep track of which axis has been currently selected for slicing the volume for rendering. */
+    private int m_iAxisSlice = AXIS_UNDEFINED;
+
+    /** The same appearance properties used to render each slice. */
+    private Appearance m_kAppearance = new Appearance();
+
+    /**
+     * This is the only node attached to the TransformGroup. This node is a container of OrderedGroups, one OrderedGroup
+     * instance for each axis. Only one child node is selected at any time.
+     */
+    private Switch m_kSwitch = new Switch();
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Create the scene graph node for the rendering of the volume data, everything except the textures from the volume
+     * data to be applied to the slices through the volume.
+     *
+     * @param  image           reference to the image volume (data and header information) the same description
+     *                         parameters
+     * @param  kVolumeTexture  VolumeTexture-derived instance which contains the texture properties. This description
+     *                         parameters for the volume associated with this instance must match the parameters for
+     *                         which this node and its geometry.
      */
     public NodeVolumeTextureRender(ModelImage image, VolumeTexture kVolumeTexture) {
         super();
-        init( image, kVolumeTexture );
+        init(image, kVolumeTexture);
     }
 
     /**
-     * Create the scene graph node for the rendering of the volume data,
-     * everything except the textures from the volume data to be applied
-     * to the slices through the volume.
-     * @param image reference to the image volume (data and header information)
-     * the same description parameters
-     * @param kVolumeTexture VolumeTexture-derived instance which
-     * contains the texture properties.  This description parameters for
-     * the volume associated with this instance must match the parameters
-     * for which this node and its geometry.
-     * @param iAxis one of AXIS_X, AXIS_Y, or AXIS_Z which selects
-     * the axis of slicing
-     * @param bIncreasingOrder true to select order of slices by increasing
-     * coordinate; false to select decreasing
+     * Create the scene graph node for the rendering of the volume data, everything except the textures from the volume
+     * data to be applied to the slices through the volume.
+     *
+     * @param  image             reference to the image volume (data and header information) the same description
+     *                           parameters
+     * @param  kVolumeTexture    VolumeTexture-derived instance which contains the texture properties. This description
+     *                           parameters for the volume associated with this instance must match the parameters for
+     *                           which this node and its geometry.
+     * @param  iAxis             one of AXIS_X, AXIS_Y, or AXIS_Z which selects the axis of slicing
+     * @param  bIncreasingOrder  true to select order of slices by increasing coordinate; false to select decreasing
      */
-    public NodeVolumeTextureRender(ModelImage image,
-                                   VolumeTexture kVolumeTexture,
-                                   int iAxis, boolean bIncreasingOrder )
-    {
+    public NodeVolumeTextureRender(ModelImage image, VolumeTexture kVolumeTexture, int iAxis,
+                                   boolean bIncreasingOrder) {
         super();
-        init( image, kVolumeTexture );
-        selectSlices( iAxis, bIncreasingOrder );
+        init(image, kVolumeTexture);
+        selectSlices(iAxis, bIncreasingOrder);
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Clean up memory of this class.
+     */
+    public void dispose() {
+
+        // System.out.println("NodeVolumeTextuerRender");
+        for (int iSliceX = 0; iSliceX < iDimX; ++iSliceX) {
+            Shape3D kShape = (Shape3D) m_akOrderedGroupNodeSlices[AXIS_X].getChild(iSliceX);
+            kShape.removeAllGeometries();
+        }
+
+        m_akOrderedGroupNodeSlices[AXIS_X].removeAllChildren();
+        m_akOrderedGroupNodeSlices[AXIS_X] = null;
+
+        for (int iSliceY = 0; iSliceY < iDimY; ++iSliceY) {
+            Shape3D kShape = (Shape3D) m_akOrderedGroupNodeSlices[AXIS_Y].getChild(iSliceY);
+            kShape.removeAllGeometries();
+        }
+
+        m_akOrderedGroupNodeSlices[AXIS_Y].removeAllChildren();
+        m_akOrderedGroupNodeSlices[AXIS_Y] = null;
+
+        for (int iSliceZ = 0; iSliceZ < iDimZ; ++iSliceZ) {
+            Shape3D kShape = (Shape3D) m_akOrderedGroupNodeSlices[AXIS_Z].getChild(iSliceZ);
+            kShape.removeAllGeometries();
+        }
+
+        m_akOrderedGroupNodeSlices[AXIS_Z].removeAllChildren();
+        m_akOrderedGroupNodeSlices[AXIS_Z] = null;
+
+        m_aaaiOrderedGroupChildIndexOrder[AXIS_X][AXIS_INC] = null;
+        m_aaaiOrderedGroupChildIndexOrder[AXIS_X][AXIS_DEC] = null;
+        m_aaaiOrderedGroupChildIndexOrder[AXIS_Y][AXIS_INC] = null;
+        m_aaaiOrderedGroupChildIndexOrder[AXIS_Y][AXIS_DEC] = null;
+        m_aaaiOrderedGroupChildIndexOrder[AXIS_Z][AXIS_INC] = null;
+        m_aaaiOrderedGroupChildIndexOrder[AXIS_Z][AXIS_DEC] = null;
+        m_kSwitch.removeAllChildren();
+        m_kSwitch = null;
+        m_kAppearance.setTexture(null);
+        m_kAppearance.setTexCoordGeneration(null);
+        m_kAppearance.setTransparencyAttributes(null);
+        m_kAppearance = null;
     }
 
     /**
-     * Initialize the scene graph node for the rendering of the volume data,
-     * everything except the textures from the volume data to be applied to
-     * the slices through the volume.
-     * @param image reference to the image volume (data and header information)
-     * the same description parameters
-     * @param kVolumeTexture VolumeTexture-derived instance which
-     * contains the texture properties.  This description parameters for
-     * the volume associated with this instance must match the parameters
-     * for which this node and its geometry.
+     * Return which axis has been currently selected for slicing the volume for rendering.
+     *
+     * @return  the current axis for slicing the volume for rendering.
+     */
+    public int getAxisSlice() {
+        return m_iAxisSlice;
+    }
+
+    /**
+     * Return the increasing order flag.
+     *
+     * @return  the increasing/decreasing slice order flag.
+     */
+    public boolean getIncreasingOrder() {
+        return m_bIncreasingOrder;
+    }
+
+    /**
+     * Not used at the moment. Update the opacity from the relate opacity change slider
+     *
+     * @param  iValue  Opacity value from the opacity slider
+     */
+    public void updateOpacity(int iValue) {
+        System.out.println("NodeVolumeTextureRender.updateOpacity iValue = " + iValue);
+
+        TransparencyAttributes tap = m_kAppearance.getTransparencyAttributes();
+        tap.setTransparency(1.0f - (iValue / 100.0f)); // 0 = Opaque
+    }
+
+    /**
+     * Automatically call selectSlices with the correct axis (X, Y, or Z) and increasing/decreasing coordinate order
+     * flag based on the specified view direction vector such that the slices are rendered back to front for the plane
+     * which is most parallel to the view plane.
+     *
+     * @param  kViewDir  view direction vector in virtual world coordinates
+     */
+    public void updateSlicing(Vector3d kViewDir) {
+
+        // Get the transform from local coordinates of the texture
+        // volume renderer node to virtual world coordinates.
+        // This call should not result in the returned transformation
+        // including the sample-to-local coordinate transform for the
+        // the transformation set at this TransformGroup.
+        Transform3D kTransform = new Transform3D();
+
+        try {
+            getLocalToVworld(kTransform);
+        } catch (RestrictedAccessException e) { }
+
+        // What we actually need is the transform from view coordinates
+        // to local coordinates.
+        kTransform.invert();
+
+        // Convert the view direction vector to local coordinates.
+        Vector3d kViewDirLocal = new Vector3d();
+        kTransform.transform(kViewDir, kViewDirLocal);
+
+        // Determine which axis is most parallel to the viewing direction.
+        // That would be the one which has the largest magnitude.
+        // Then if the sign of that view vector for that axis is positive
+        // (negative), then select the slices in decreasing (increasing)
+        // order in order to get back to front rendering.
+        double dMagX = Math.abs(kViewDirLocal.x);
+        double dMagY = Math.abs(kViewDirLocal.y);
+        double dMagZ = Math.abs(kViewDirLocal.z);
+
+        if ((dMagX >= dMagY) && (dMagX >= dMagZ)) {
+            selectSlices(AXIS_X, kViewDirLocal.x < 0.0);
+        } else if ((dMagY >= dMagX) && (dMagY >= dMagZ)) {
+            selectSlices(AXIS_Y, kViewDirLocal.y < 0.0);
+        } else {
+            selectSlices(AXIS_Z, kViewDirLocal.z < 0.0);
+        }
+    }
+
+    /**
+     * Automatically call selectSlices with the correct axis (X, Y, or Z) and increasing/decreasing coordinate order
+     * flag based on the specified view direction vector such that the slices are rendered back to front for the plane
+     * which is most parallel to the view plane.
+     *
+     * @param  kViewTransform  current view transform in virtual world coordinates
+     */
+    public void updateView(Transform3D kViewTransform) {
+
+        // Before projection, the viewing direction vector is (0,0,-1).
+        // Transform this vector by the current viewing transform.
+        Vector3d kViewDir = new Vector3d();
+        kViewTransform.transform(new Vector3d(0.0, 0.0, -1.0), kViewDir);
+
+        // Get the transform from local coordinates of the texture
+        // volume renderer node to virtual world coordinates.
+        // This call should not result in the returned transformation
+        // including the sample-to-local coordinate transform for the
+        // the transformation set at this TransformGroup.
+        Transform3D kTransform = new Transform3D();
+
+        try {
+            getLocalToVworld(kTransform);
+        } catch (RestrictedAccessException e) { }
+
+        // What we actually need is the transform from view coordinates
+        // to local coordinates.
+        kTransform.invert();
+
+        // Convert the view direction vector to local coordinates.
+        Vector3d kViewDirLocal = new Vector3d();
+        kTransform.transform(kViewDir, kViewDirLocal);
+
+        // Determine which axis is most parallel to the viewing direction.
+        // That would be the one which has the largest magnitude.
+        // Then if the sign of that view vector for that axis is positive
+        // (negative), then select the slices in decreasing (increasing)
+        // order in order to get back to front rendering.
+        double dMagX = Math.abs(kViewDirLocal.x);
+        double dMagY = Math.abs(kViewDirLocal.y);
+        double dMagZ = Math.abs(kViewDirLocal.z);
+
+        if ((dMagX >= dMagY) && (dMagX >= dMagZ)) {
+            selectSlices(AXIS_X, kViewDirLocal.x < 0.0);
+        } else if ((dMagY >= dMagX) && (dMagY >= dMagZ)) {
+            selectSlices(AXIS_Y, kViewDirLocal.y < 0.0);
+        } else {
+            selectSlices(AXIS_Z, kViewDirLocal.z < 0.0);
+        }
+    }
+
+    /**
+     * Used to call dispose of this class to clean up memory.
+     *
+     * @throws  Throwable  DOCUMENT ME!
+     */
+    protected void finalize() throws Throwable {
+        dispose();
+        super.finalize();
+    }
+
+    /**
+     * Initialize the scene graph node for the rendering of the volume data, everything except the textures from the
+     * volume data to be applied to the slices through the volume.
+     *
+     * @param  image           reference to the image volume (data and header information) the same description
+     *                         parameters
+     * @param  kVolumeTexture  VolumeTexture-derived instance which contains the texture properties. This description
+     *                         parameters for the volume associated with this instance must match the parameters for
+     *                         which this node and its geometry.
      */
     private void init(ModelImage image, VolumeTexture kVolumeTexture) {
+
         // Make note of the dimensions of each axis in the volume.
         iDimX = image.getExtents()[0];
         iDimY = image.getExtents()[1];
@@ -163,23 +336,28 @@ public class NodeVolumeTextureRender
 
         /* Changed to iDim -1 so that the values are consistent with
          * VolumeTexture: */
-        fMaxX = (float) (iDimX -1) * image.getFileInfo(0).getResolutions()[0];
-        fMaxY = (float) (iDimY -1) * image.getFileInfo(0).getResolutions()[1];
-        fMaxZ = (float) (iDimZ -1) * image.getFileInfo(0).getResolutions()[2];
+        fMaxX = (float) (iDimX - 1) * image.getFileInfo(0).getResolutions()[0];
+        fMaxY = (float) (iDimY - 1) * image.getFileInfo(0).getResolutions()[1];
+        fMaxZ = (float) (iDimZ - 1) * image.getFileInfo(0).getResolutions()[2];
         fMax = fMaxX;
+
         if (fMaxY > fMax) {
             fMax = fMaxY;
         }
+
         if (fMaxZ > fMax) {
             fMax = fMaxZ;
 
         }
+
         if (iDimY > iDimMax) {
             iDimMax = iDimY;
         }
+
         if (iDimZ > iDimMax) {
             iDimMax = iDimZ;
         }
+
         iDimX = iDimMax;
         iDimY = iDimMax;
         iDimZ = iDimMax;
@@ -201,6 +379,7 @@ public class NodeVolumeTextureRender
             m_akOrderedGroupNodeSlices[iAxis].setCapability(BranchGroup.ALLOW_DETACH);
             m_kSwitch.addChild(m_akOrderedGroupNodeSlices[iAxis]);
         }
+
         m_kSwitch.setWhichChild(Switch.CHILD_NONE);
         m_kSwitch.setCapability(Switch.ALLOW_SWITCH_WRITE);
         m_kSwitch.setCapability(Switch.ALLOW_CHILDREN_WRITE);
@@ -255,7 +434,7 @@ public class NodeVolumeTextureRender
         kTransparencyAttr.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
         kTransparencyAttr.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
         kTransparencyAttr.setCapability(TransparencyAttributes.ALLOW_BLEND_FUNCTION_WRITE);
-        kTransparencyAttr.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA); //Good
+        kTransparencyAttr.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA); // Good
         kTransparencyAttr.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA); // Good
         m_kAppearance.setTransparencyAttributes(kTransparencyAttr);
         m_kAppearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
@@ -299,7 +478,8 @@ public class NodeVolumeTextureRender
         float offset = -fMaxX / fMax;
         float range = 2.0f * -offset;
         float incSliceAmt = range / iDimX;
-        offset = offset + incSliceAmt / 2.0f;
+        offset = offset + (incSliceAmt / 2.0f);
+
         for (int iSliceX = 0; iSliceX < iDimX; ++iSliceX) {
             QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_3);
             kGeometry.setCoordinate(0, new Point3d(offset, dY0, dZ0));
@@ -325,8 +505,10 @@ public class NodeVolumeTextureRender
         offset = -fMaxY / fMax;
         range = 2.0f * -offset;
         incSliceAmt = range / iDimY;
-        offset = offset + incSliceAmt / 2.0f;
+        offset = offset + (incSliceAmt / 2.0f);
+
         for (int iSliceY = 0; iSliceY < iDimY; ++iSliceY) {
+
             // Setup the geometry of the rectangular slice.
             QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_3);
             kGeometry.setCoordinate(0, new Point3d(dX0, offset, dZ0));
@@ -351,7 +533,8 @@ public class NodeVolumeTextureRender
         offset = -fMaxZ / fMax;
         range = 2.0f * -offset;
         incSliceAmt = range / iDimZ;
-        offset = offset + incSliceAmt / 2.0f;
+        offset = offset + (incSliceAmt / 2.0f);
+
         for (int iSliceZ = 0; iSliceZ < iDimZ; ++iSliceZ) {
             QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_3);
             kGeometry.setCoordinate(0, new Point3d(dX0, dY0, offset));
@@ -375,82 +558,22 @@ public class NodeVolumeTextureRender
     }
 
     /**
-     *  Not used at the moment.
-     *  Update the opacity from the relate opacity change slider
-     *  @param iValue    Opacity value from the opacity slider
-     */
-    public void updateOpacity(int iValue) {
-        System.out.println("NodeVolumeTextureRender.updateOpacity iValue = " + iValue);
-        TransparencyAttributes tap = m_kAppearance.getTransparencyAttributes();
-        tap.setTransparency(1.0f - iValue / 100.0f); //  0 = Opaque
-    }
-
-    /**
-     * Automatically call selectSlices with the correct axis (X, Y, or Z)
-     * and increasing/decreasing coordinate order flag based on the specified
-     * view direction vector such that the slices are rendered back
-     * to front for the plane which is most parallel to the view plane.
-     * @param kViewTransform current view transform in virtual world coordinates
-     */
-    public void updateView(Transform3D kViewTransform) {
-
-        // Before projection, the viewing direction vector is (0,0,-1).
-        // Transform this vector by the current viewing transform.
-        Vector3d kViewDir = new Vector3d();
-        kViewTransform.transform(new Vector3d(0.0, 0.0, -1.0), kViewDir);
-
-        // Get the transform from local coordinates of the texture
-        // volume renderer node to virtual world coordinates.
-        // This call should not result in the returned transformation
-        // including the sample-to-local coordinate transform for the
-        // the transformation set at this TransformGroup.
-        Transform3D kTransform = new Transform3D();
-        try {
-            getLocalToVworld(kTransform);
-        }
-        catch (RestrictedAccessException e) {}
-
-        // What we actually need is the transform from view coordinates
-        // to local coordinates.
-        kTransform.invert();
-
-        // Convert the view direction vector to local coordinates.
-        Vector3d kViewDirLocal = new Vector3d();
-        kTransform.transform(kViewDir, kViewDirLocal);
-
-        // Determine which axis is most parallel to the viewing direction.
-        // That would be the one which has the largest magnitude.
-        // Then if the sign of that view vector for that axis is positive
-        // (negative), then select the slices in decreasing (increasing)
-        // order in order to get back to front rendering.
-        double dMagX = Math.abs(kViewDirLocal.x);
-        double dMagY = Math.abs(kViewDirLocal.y);
-        double dMagZ = Math.abs(kViewDirLocal.z);
-        if ( (dMagX >= dMagY) && (dMagX >= dMagZ)) {
-            selectSlices(AXIS_X, kViewDirLocal.x < 0.0);
-        }
-        else if ( (dMagY >= dMagX) && (dMagY >= dMagZ)) {
-            selectSlices(AXIS_Y, kViewDirLocal.y < 0.0);
-        }
-        else {
-            selectSlices(AXIS_Z, kViewDirLocal.z < 0.0);
-        }
-    }
-
-    /**
-     * Select along which axis and in which direction slicing in the volume
-     * is to be performed.
-     * THIS METHOD SHOULD BE MADE PRIVATE IN THE FINAL RELEASE.
-     * @param iAxis one of AXIS_X, AXIS_Y, or AXIS_Z which selects
-     * the axis of slicing
-     * @param bIncreasingOrder true to select order of slices by increasing
-     * coordinate; false to select decreasing
+     * Select along which axis and in which direction slicing in the volume is to be performed. THIS METHOD SHOULD BE
+     * MADE PRIVATE IN THE FINAL RELEASE.
+     *
+     * @param   iAxis             one of AXIS_X, AXIS_Y, or AXIS_Z which selects the axis of slicing
+     * @param   bIncreasingOrder  true to select order of slices by increasing coordinate; false to select decreasing
+     *
+     * @throws  java.lang.IllegalArgumentException  DOCUMENT ME!
      */
     private void selectSlices(int iAxis, boolean bIncreasingOrder) {
+
         // Select the axis of slices, but only change if the axis is
         // different.
         boolean bChangedAxis = false;
+
         switch (iAxis) {
+
             case AXIS_X:
             case AXIS_Y:
             case AXIS_Z:
@@ -459,143 +582,31 @@ public class NodeVolumeTextureRender
                     m_iAxisSlice = iAxis;
                     bChangedAxis = true;
                 }
+
                 break;
+
             default:
                 throw new java.lang.IllegalArgumentException("iAxis");
         }
+
         m_bIncreasingOrder = bIncreasingOrder;
 
         // Select the ordering of the slices along that axis.
         // Only update if the direction along the same axis changed
         // or if the axis itself changed.
         int iAxisDir = AXIS_DEC;
+
         if (bIncreasingOrder) {
             iAxisDir = AXIS_INC;
         }
+
         // This needs to be done each time.
-        //        if (bChangedAxis || (iAxisDir != m_iAxisDirection)) {
-            try {
-                m_akOrderedGroupNodeSlices[iAxis].setChildIndexOrder(m_aaaiOrderedGroupChildIndexOrder[iAxis][iAxisDir]);
-                m_iAxisDirection = iAxisDir;
-            }
-            catch (IllegalArgumentException e) {}
-            //        }
-    }
-
-    /**
-   * Automatically call selectSlices with the correct axis (X, Y, or Z)
-   * and increasing/decreasing coordinate order flag based on the specified
-   * view direction vector such that the slices are rendered back
-   * to front for the plane which is most parallel to the view plane.
-   * @param kViewDir view direction vector in virtual world coordinates
-   */
-  public void updateSlicing (Vector3d kViewDir)
-  {
-      // Get the transform from local coordinates of the texture
-      // volume renderer node to virtual world coordinates.
-      // This call should not result in the returned transformation
-      // including the sample-to-local coordinate transform for the
-      // the transformation set at this TransformGroup.
-      Transform3D kTransform = new Transform3D();
-      try {
-          getLocalToVworld(kTransform);
-      } catch (RestrictedAccessException e) {}
-      // What we actually need is the transform from view coordinates
-      // to local coordinates.
-      kTransform.invert();
-
-      // Convert the view direction vector to local coordinates.
-      Vector3d kViewDirLocal = new Vector3d();
-      kTransform.transform(kViewDir,kViewDirLocal);
-
-      // Determine which axis is most parallel to the viewing direction.
-      // That would be the one which has the largest magnitude.
-      // Then if the sign of that view vector for that axis is positive
-      // (negative), then select the slices in decreasing (increasing)
-      // order in order to get back to front rendering.
-      double dMagX = Math.abs(kViewDirLocal.x);
-      double dMagY = Math.abs(kViewDirLocal.y);
-      double dMagZ = Math.abs(kViewDirLocal.z);
-      if ( ( dMagX >= dMagY ) && ( dMagX >= dMagZ ) )
-      {
-          selectSlices(AXIS_X,kViewDirLocal.x < 0.0);
-      }
-      else if ( ( dMagY >= dMagX ) && ( dMagY >= dMagZ ) )
-      {
-          selectSlices(AXIS_Y,kViewDirLocal.y < 0.0);
-      }
-      else
-      {
-          selectSlices(AXIS_Z,kViewDirLocal.z < 0.0);
-      }
-    }
-
-    /**
-    *   Used to call dispose of this class to clean up memory.
-    */
-    protected void finalize() throws Throwable {
-        dispose();
-        super.finalize();
-    }
-
-
-    /**
-    *   Clean up memory of this class.
-    */
-    public void dispose() {
-        //System.out.println("NodeVolumeTextuerRender");
-        for (int iSliceX = 0; iSliceX < iDimX; ++iSliceX) {
-            Shape3D kShape = (Shape3D) m_akOrderedGroupNodeSlices[AXIS_X].getChild(iSliceX);
-            kShape.removeAllGeometries();
-        }
-        m_akOrderedGroupNodeSlices[AXIS_X].removeAllChildren();
-        m_akOrderedGroupNodeSlices[AXIS_X] = null;
-
-        for (int iSliceY = 0; iSliceY < iDimY; ++iSliceY) {
-            Shape3D kShape = (Shape3D) m_akOrderedGroupNodeSlices[AXIS_Y].getChild(iSliceY);
-            kShape.removeAllGeometries();
-        }
-        m_akOrderedGroupNodeSlices[AXIS_Y].removeAllChildren();
-        m_akOrderedGroupNodeSlices[AXIS_Y] = null;
-
-        for (int iSliceZ = 0; iSliceZ < iDimZ; ++iSliceZ) {
-            Shape3D kShape = (Shape3D) m_akOrderedGroupNodeSlices[AXIS_Z].getChild(iSliceZ);
-            kShape.removeAllGeometries();
-        }
-        m_akOrderedGroupNodeSlices[AXIS_Z].removeAllChildren();
-        m_akOrderedGroupNodeSlices[AXIS_Z] = null;
-
-        m_aaaiOrderedGroupChildIndexOrder[AXIS_X][AXIS_INC] = null;
-        m_aaaiOrderedGroupChildIndexOrder[AXIS_X][AXIS_DEC] = null;
-        m_aaaiOrderedGroupChildIndexOrder[AXIS_Y][AXIS_INC] = null;
-        m_aaaiOrderedGroupChildIndexOrder[AXIS_Y][AXIS_DEC] = null;
-        m_aaaiOrderedGroupChildIndexOrder[AXIS_Z][AXIS_INC] = null;
-        m_aaaiOrderedGroupChildIndexOrder[AXIS_Z][AXIS_DEC] = null;
-        m_kSwitch.removeAllChildren();
-        m_kSwitch = null;
-        m_kAppearance.setTexture(null);
-        m_kAppearance.setTexCoordGeneration(null);
-        m_kAppearance.setTransparencyAttributes(null);
-        m_kAppearance = null;
-    }
-
-    /**
-     * Return which axis has been currently selected for slicing the volume
-     * for rendering.
-     * @return the current axis for slicing the volume for rendering.
-     */
-    public int getAxisSlice()
-    {
-        return m_iAxisSlice;
-    }
-
-    /**
-     * Return the increasing order flag.
-     * @return the increasing/decreasing slice order flag.
-     */
-    public boolean getIncreasingOrder()
-    {
-        return m_bIncreasingOrder;
+        // if (bChangedAxis || (iAxisDir != m_iAxisDirection)) {
+        try {
+            m_akOrderedGroupNodeSlices[iAxis].setChildIndexOrder(m_aaaiOrderedGroupChildIndexOrder[iAxis][iAxisDir]);
+            m_iAxisDirection = iAxisDir;
+        } catch (IllegalArgumentException e) { }
+        // }
     }
 
 

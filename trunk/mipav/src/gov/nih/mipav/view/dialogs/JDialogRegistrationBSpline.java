@@ -1,149 +1,158 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.structures.*;
 
-import java.awt.event.*;
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
 
 import javax.swing.*;
 
+
 /**
- * This class is used to display the options to the user for performing
- * 2D, 3D, and 2.5D B-Spline registration.  In the case of 2D and 3D,
- * a separate target image is specified.  In the case of 2.5D, the target
- * image (slice) is selected from the input source image.  The registration is
- * always performed against the target image so the output registered
- * image has the values from the input source image but the dimensions
- * of the target for 2D/3D and the dimensions of the source image
- * for 2.5D.  The same dialog is presented for 2D and 3D.  The dialog
- * is nearly the same for 2.5D except for how the target slice is selected.
+ * This class is used to display the options to the user for performing 2D, 3D, and 2.5D B-Spline registration. In the
+ * case of 2D and 3D, a separate target image is specified. In the case of 2.5D, the target image (slice) is selected
+ * from the input source image. The registration is always performed against the target image so the output registered
+ * image has the values from the input source image but the dimensions of the target for 2D/3D and the dimensions of the
+ * source image for 2.5D. The same dialog is presented for 2D and 3D. The dialog is nearly the same for 2.5D except for
+ * how the target slice is selected.
  */
-public class JDialogRegistrationBSpline
-    extends JDialogBase
-    implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegistrationBSpline extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 8193864043052368084L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /**
-     * Used for scripting and to access the currently registered images.
+     * Contains names of compatible target images that can be registered to the input source image for 2D/3D
+     * registration. Null reference for 2.5D registration.
      */
-    private ViewUserInterface m_kUI;
+    private String[] m_akNamesCompatibleTargetImages = null;
 
     /**
-     * Contains names of compatible target images that can be registered to
-     * the input source image for 2D/3D registration.  Null reference
-     * for 2.5D registration.
-     */
-    private String[] m_akNamesCompatibleTargetImages=null;
-
-    /**
-     * Reference to the input source image.  Cannot be null.
-     */
-    private ModelImage m_kImageSrc;
-
-    /**
-     * Reference to the selected target image.  Null reference for
-     * 2.5D registration.
-     */
-    private ModelImage m_kImageTrg = null;
-
-    /**
-     * Reference to new image created with result of registration
-     * of source image.  Cannot be null.
-     */
-    private ModelImage m_kImageReg = null;
-
-    /**
-     * Reference to new image creatd with computed deformation
-     * resulting from registration.  Null reference is deformation
-     * computation is not selected.
-     */
-    private ModelImage m_kImageDef = null;
-
-    /**
-     * Flag set if the deformation computation is to be performed.
-     */
-    private AlgorithmRegBSpline m_kAlgorithmReg;
-
-    /**
-     * Reference to parameters to use for first pass of registration.
-     * Cannot be null.
-     */
-    private AlgorithmRegBSpline.Options m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
-
-    /**
-     * Reference to parameters to use for optional second pass of
-     * registration.  Null reference if only a single pass of
-     * registration is to be performed.
-     */
-    private AlgorithmRegBSpline.Options m_kOptionsPass2 = null;
-
-    /**
-     * Reference to concrete implementation of the RegistrationMeasure
-     * abstract class which defines the particular measure to use
-     * during registration.  Cannot be null.  Reflects the selection
-     * in the associated combo box in the dialog.
-     */
-    private RegistrationMeasure m_kRegMeasure = null;
-
-    /**
-     * Flag set if the deformation computation is to be performed.
-     * Reflects the state of the associated check box in the dialog.
+     * Flag set if the deformation computation is to be performed. Reflects the state of the associated check box in the
+     * dialog.
      */
     private boolean m_bCreateDeformationImage = false;
 
     /**
-     * Index of the slice from the source image to use for 2.5 registration.
-     * The index may be -1 to indicate registration is with adjacent slice.
-     * Reflects the state of the target slice radio buttons and the
-     * combo box if a particular reference slice is to be used.
+     * Index of the slice from the source image to use for 2.5 registration. The index may be -1 to indicate
+     * registration is with adjacent slice. Reflects the state of the target slice radio buttons and the combo box if a
+     * particular reference slice is to be used.
      */
     private int m_iTargetSlice = -1;
 
+    /** Flag set if the deformation computation is to be performed. */
+    private AlgorithmRegBSpline m_kAlgorithmReg;
+
+    /** DOCUMENT ME! */
+    private JCheckBox m_kCheckCreateDeformationImage;
+
+    /** DOCUMENT ME! */
+    private JCheckBox m_kCheckMultiPass;
+
+    /** DOCUMENT ME! */
+    private JComboBox m_kComboBoxCostFunction;
+
+    /** Controls displayed in the dialog box. All of these controls are always displayed unless otherwise noted. */
+    private JComboBox m_kComboBoxTargetImage; // only for 2D/3D
+
+    /** DOCUMENT ME! */
+    private JComboBox m_kComboBoxTargetSlice; // only for 2.5D
+
     /**
-     * Container for controls to select the parameters for the first
-     * pass of registration.  These controls are always displayed.
+     * Container for controls to select the parameters for the first pass of registration. These controls are always
+     * displayed.
      */
     private Controls m_kControlsPass1;
 
     /**
-     * Container for controls to select the parameters for the optional
-     * second pass of registration.  These controls are created but
-     * are only displayed when the check box is selected for two-pass
-     * registration.
+     * Container for controls to select the parameters for the optional second pass of registration. These controls are
+     * created but are only displayed when the check box is selected for two-pass registration.
      */
     private Controls m_kControlsPass2;
 
     /**
-     * Controls displayed in the dialog box.  All of these controls
-     * are always displayed unless otherwise noted.
+     * Reference to new image creatd with computed deformation resulting from registration. Null reference is
+     * deformation computation is not selected.
      */
-    private JComboBox m_kComboBoxTargetImage;// only for 2D/3D
-    private JRadioButton m_kRadioSliceAdjacent;// only for 2.5D
-    private JRadioButton m_kRadioSliceReference;// only for 2.5D
-    private JComboBox m_kComboBoxTargetSlice;// only for 2.5D
-    private JComboBox m_kComboBoxCostFunction;
-    private JCheckBox m_kCheckMultiPass;
-    private JCheckBox m_kCheckCreateDeformationImage;
-    private JLabel m_kLabelOptionsPass1;
-    private JLabel m_kLabelOptionsPass2;// only if two-pass registration
+    private ModelImage m_kImageDef = null;
+
+    /** Reference to new image created with result of registration of source image. Cannot be null. */
+    private ModelImage m_kImageReg = null;
+
+    /** Reference to the input source image. Cannot be null. */
+    private ModelImage m_kImageSrc;
+
+    /** Reference to the selected target image. Null reference for 2.5D registration. */
+    private ModelImage m_kImageTrg = null;
+
+    /** DOCUMENT ME! */
     private JLabel m_kLabelIterationsPass1;
-    private JLabel m_kLabelIterationsPass2;// only if two-pass registration
+
+    /** DOCUMENT ME! */
+    private JLabel m_kLabelIterationsPass2; // only if two-pass registration
+
+    /** DOCUMENT ME! */
+    private JLabel m_kLabelOptionsPass1;
+
+    /** DOCUMENT ME! */
+    private JLabel m_kLabelOptionsPass2; // only if two-pass registration
+
+    /** Reference to parameters to use for first pass of registration. Cannot be null. */
+    private AlgorithmRegBSpline.Options m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
+
+    /**
+     * Reference to parameters to use for optional second pass of registration. Null reference if only a single pass of
+     * registration is to be performed.
+     */
+    private AlgorithmRegBSpline.Options m_kOptionsPass2 = null;
+
+    /** DOCUMENT ME! */
+    private JRadioButton m_kRadioSliceAdjacent; // only for 2.5D
+
+    /** DOCUMENT ME! */
+    private JRadioButton m_kRadioSliceReference; // only for 2.5D
+
+    /**
+     * Reference to concrete implementation of the RegistrationMeasure abstract class which defines the particular
+     * measure to use during registration. Cannot be null. Reflects the selection in the associated combo box in the
+     * dialog.
+     */
+    private RegistrationMeasure m_kRegMeasure = null;
+
+    /** Used for scripting and to access the currently registered images. */
+    private ViewUserInterface m_kUI;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Empty constructor needed for dynamic instantiation. Used primarily for the script to store variables and run the
+     * algorithm. No actual dialog will appear but the set up info and result image will be stored here.
+     */
+    public JDialogRegistrationBSpline() { }
 
 
     /**
      * Creates new registration dialog.
-     * @param kParentFrame Parent frame
-     * @param kImageSrc Source image
-     * @param akNamesCompatibleTargetImages String[] Array containing
-     * the names of target images which are compatible for registering
-     * to the input source image.  This list must contain at least one
-     * image name and the list must not contain the name of the input
-     * source image.  A target image is used for 2D/3D registration.
-     * If this reference is null, then the registration is for 2.5 meaning
-     * the target image will be a selected slice from within the 3D image.
+     *
+     * @param  kParentFrame                   Parent frame
+     * @param  kImageSrc                      Source image
+     * @param  akNamesCompatibleTargetImages  String[] Array containing the names of target images which are compatible
+     *                                        for registering to the input source image. This list must contain at least
+     *                                        one image name and the list must not contain the name of the input source
+     *                                        image. A target image is used for 2D/3D registration. If this reference is
+     *                                        null, then the registration is for 2.5 meaning the target image will be a
+     *                                        selected slice from within the 3D image.
      */
     public JDialogRegistrationBSpline(Frame kParentFrame, ModelImage kImageSrc,
                                       String[] akNamesCompatibleTargetImages) {
@@ -154,24 +163,19 @@ public class JDialogRegistrationBSpline
         initControls();
     }
 
-    /**
-     * Empty constructor needed for dynamic instantiation.
-     * Used primarily for the script to store variables and run the algorithm.
-     * No actual dialog will appear but the set up info and result image
-     * will be stored here.
-     */
-    public JDialogRegistrationBSpline() {};
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Find the frame images that are compatible as targets with the specified
-     * source image for the purpose of B-spline registration.
-     * @param kImageSrc ModelImage Reference to the source image.
-     * @param kUI ViewUserInterface Reference to the user interface from
-     * which the names of framed images can be retrieved.
-     * @return String[] Array of names of compatible images.
+     * Find the frame images that are compatible as targets with the specified source image for the purpose of B-spline
+     * registration.
+     *
+     * @param   kImageSrc  ModelImage Reference to the source image.
+     * @param   kUI        ViewUserInterface Reference to the user interface from which the names of framed images can
+     *                     be retrieved.
+     *
+     * @return  String[] Array of names of compatible images.
      */
-    static public String[] getNamesCompatibleTargetImages(
-        ModelImage kImageSrc, ViewUserInterface kUI) {
+    public static String[] getNamesCompatibleTargetImages(ModelImage kImageSrc, ViewUserInterface kUI) {
 
         // Get the names of all the registered images.
         Enumeration kRegisteredImageNames = kUI.getRegisteredImageNames();
@@ -181,7 +185,7 @@ public class JDialogRegistrationBSpline
         // source image given the type of source image.  Must match in
         // number of dimensions and type (i.e., color vs. intensity).
         while (kRegisteredImageNames.hasMoreElements()) {
-            String kName = (String)kRegisteredImageNames.nextElement();
+            String kName = (String) kRegisteredImageNames.nextElement();
 
             // Skip the source image when it is found.
             if (kName.equals(kImageSrc.getImageName())) {
@@ -212,31 +216,224 @@ public class JDialogRegistrationBSpline
             kNamesList.add(kName);
         }
 
-        String[] akNamesCompatibleTargetImages = new String [kNamesList.size()];
+        String[] akNamesCompatibleTargetImages = new String[kNamesList.size()];
+
         for (int i = 0; i < akNamesCompatibleTargetImages.length; i++) {
-            akNamesCompatibleTargetImages[i] = (String)kNamesList.get(i);
+            akNamesCompatibleTargetImages[i] = (String) kNamesList.get(i);
         }
 
         return akNamesCompatibleTargetImages;
     }
 
     /**
-     * Implementation of ScriptableInterface abstract method.
-     * Run this algorithm from a script.
-     * @param parser the script parser we get the state from
-     * @throws IllegalArgumentException if there is something wrong with the arguments in the script
+     * Closes dialog box when the OK button is pressed, sets up the variables needed for running the algorithm, and
+     * calls the algorithm.
+     *
+     * @param  event  Event that triggers function
+     */
+    public void actionPerformed(ActionEvent event) {
+        Object source = event.getSource();
+
+        if (source == OKButton) {
+
+            // In order to retrieve the dialog values for the regisration,
+            // the size of each slice to be registered needs to be used
+            // as a basis for computing the limits of certain input values.
+            int[] aiExtentsReg;
+
+            if (isRefImageSourceSlice()) {
+                aiExtentsReg = new int[2];
+                aiExtentsReg[0] = m_kImageSrc.getExtents()[0];
+                aiExtentsReg[1] = m_kImageSrc.getExtents()[1];
+            } else {
+                aiExtentsReg = m_kImageTrg.getExtents();
+            }
+
+            if (m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg) &&
+                    (!m_kCheckMultiPass.isSelected() || m_kControlsPass2.getValues(m_kOptionsPass2, aiExtentsReg))) {
+
+                setVisible(false);
+                callAlgorithm();
+            }
+
+            aiExtentsReg = null;
+        } else if (source == cancelButton) {
+            dispose();
+        }
+    }
+
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithm when it
+     * has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+
+        if (algorithm instanceof AlgorithmRegBSpline) {
+            m_kImageSrc.clearMask();
+
+            if ((m_kAlgorithmReg.isCompleted() == true) && (m_kImageReg != null)) {
+
+                // The algorithm has completed and produced a new image to be displayed.
+                updateFileInfo(m_kImageSrc, m_kImageReg);
+                m_kImageReg.clearMask();
+
+                try {
+                    new ViewJFrameImage(m_kImageReg, null, new Dimension(610, 200));
+
+                    if (m_kImageDef != null) {
+                        new ViewJFrameImage(m_kImageDef, null, new Dimension(610, 240));
+                    }
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            }
+            // algorithm failed but result image(s) still has garbage
+            else {
+
+                if (m_kImageReg != null) {
+                    m_kImageReg.disposeLocal();
+                    m_kImageReg = null;
+                    System.gc();
+                }
+
+                if (m_kImageDef != null) {
+                    m_kImageDef.disposeLocal();
+                    m_kImageDef = null;
+                    System.gc();
+                }
+            }
+        }
+
+        // Update frame
+        m_kImageSrc.notifyImageDisplayListeners(null, true);
+
+        insertScriptLine(algorithm);
+
+        if (m_kAlgorithmReg != null) {
+            m_kAlgorithmReg.finalize();
+            m_kAlgorithmReg = null;
+        }
+
+        dispose();
+    }
+
+    /**
+     * Implementation of ScriptableInterface abstract method. If a script is being recorded and the algorithm is done,
+     * add an entry for this algorithm.
+     *
+     * @param  algo  the algorithm to make an entry for
+     */
+    public void insertScriptLine(AlgorithmBase algo) {
+
+        if (algo.isCompleted()) {
+
+            if (m_kUI.isScriptRecording()) {
+
+                // check to see if the match image is already in the ImgTable
+                if (m_kUI.getScriptDialog().getImgTableVar(m_kImageSrc.getImageName()) == null) {
+
+                    if (m_kUI.getScriptDialog().getActiveImgTableVar(m_kImageSrc.getImageName()) == null) {
+                        m_kUI.getScriptDialog().putActiveVar(m_kImageSrc.getImageName());
+                    }
+                }
+
+                // check to see if the ref image is already in the ImgTable
+                if (m_kUI.getScriptDialog().getImgTableVar(m_kImageTrg.getImageName()) == null) {
+
+                    if (m_kUI.getScriptDialog().getActiveImgTableVar(m_kImageTrg.getImageName()) == null) {
+                        m_kUI.getScriptDialog().putActiveVar(m_kImageTrg.getImageName());
+                    }
+                }
+
+                String line = "RegistrationBSpline " + m_kUI.getScriptDialog().getVar(m_kImageSrc.getImageName()) + " ";
+                line += m_kUI.getScriptDialog().getVar(m_kImageTrg.getImageName()) + " ";
+
+                if (isRefImageSourceSlice()) {
+                    line += String.valueOf(m_iTargetSlice) + " ";
+                } else {
+                    line += m_kUI.getScriptDialog().getVar(m_kImageReg.getImageName()) + " ";
+                }
+
+                line += m_kRegMeasure.getClass().getName() + " ";
+                line += (null == m_kOptionsPass2) ? "1 " : "2 ";
+                line += m_kOptionsPass1.toString(" ") + " ";
+
+                if (null != m_kOptionsPass2) {
+                    line += m_kOptionsPass1.toString(" ") + " ";
+                }
+
+                line += String.valueOf(m_bCreateDeformationImage);
+                // add any more variables you need to store here
+
+                m_kUI.getScriptDialog().append(line);
+            }
+        }
+    }
+
+    /**
+     * Implementation of JDialogBase abstract method. Method to handle item events.
+     *
+     * @param  event  Event that caused the method to fire
+     */
+    public void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
+
+        // If the target image is changed reset the defaults on certain
+        // other fields in the dialog.
+        if (source == m_kComboBoxTargetImage) {
+            userSetRefImage(m_kUI.getRegisteredImageByName((String) m_kComboBoxTargetImage.getSelectedItem()));
+            userSetDefaults();
+            pack();
+        }
+
+        // If the multipass check box is changed, then show/hide
+        // the 2nd pass controls.
+        else if (source == m_kCheckMultiPass) {
+            userSetMultiPassControls();
+            pack();
+        }
+
+        // If the cost function is changed, then select the appropriate
+        // registration measure instance.
+        else if (source == m_kComboBoxCostFunction) {
+            userSetCostFunction();
+        }
+
+        // If the state of the check box changed for creating
+        // the deformation image.
+        else if (source == m_kCheckCreateDeformationImage) {
+            m_bCreateDeformationImage = m_kCheckCreateDeformationImage.isSelected();
+        }
+
+        // If the state of any of the target slice controls for 2.5
+        // registration changed.
+        else if ((source == m_kRadioSliceAdjacent) || (source == m_kRadioSliceReference) ||
+                     (source == m_kComboBoxTargetSlice)) {
+            userSetTargetSlice();
+        }
+    }
+
+    /**
+     * Implementation of ScriptableInterface abstract method. Run this algorithm from a script.
+     *
+     * @param   parser  the script parser we get the state from
+     *
+     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
      */
     public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
         String srcImageKey = null;
         String trgImageKey = null;
 
         // to retrieve an image:
-        //  - get it's key
-        //  - call parser.getImage( key );
+        // - get it's key
+        // - call parser.getImage( key );
 
         // for destination images:
-        //  - get it's key
-        //  - register the image after the algorithm is done (parser.putVariable(key, destImage))
+        // - get it's key
+        // - register the image after the algorithm is done (parser.putVariable(key, destImage))
 
         // Get source image
         try {
@@ -244,10 +441,8 @@ public class JDialogRegistrationBSpline
             m_kImageSrc = parser.getImage(srcImageKey);
             m_kUI = m_kImageSrc.getUserInterface();
             parentFrame = m_kImageSrc.getParentFrame();
-            m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(
-                m_kImageSrc, m_kUI);
-        }
-        catch (Exception e) {
+            m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc, m_kUI);
+        } catch (Exception e) {
             throw new IllegalArgumentException();
         }
 
@@ -259,34 +454,34 @@ public class JDialogRegistrationBSpline
         // of the image.
         try {
             trgImageKey = parser.getNextString();
+
             try {
                 m_iTargetSlice = Integer.parseInt(trgImageKey, 10);
                 userSetRefImage(m_kImageSrc);
-            }
-            catch (NumberFormatException e) {
+            } catch (NumberFormatException e) {
                 m_iTargetSlice = -1;
                 userSetRefImage(parser.getImage(trgImageKey));
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException();
         }
 
         try {
+
             // get cost function
             String kCostMeasureName = parser.getNextString();
             Class kCostMeasureClass = Class.forName(kCostMeasureName);
-            m_kRegMeasure = (RegistrationMeasure)kCostMeasureClass.newInstance();
+            m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
 
             // get the options for each pass
             int iNumPasses = parser.getNextInteger();
             m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
             m_kOptionsPass1.setFromParser(parser);
+
             if (2 == iNumPasses) {
                 m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
                 m_kOptionsPass2.setFromParser(parser);
-            }
-            else {
+            } else {
                 m_kOptionsPass2 = null;
             }
 
@@ -294,8 +489,7 @@ public class JDialogRegistrationBSpline
             m_bCreateDeformationImage = parser.getNextBoolean();
 
             /// add any more variables you need to retrieve here
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException();
         }
 
@@ -305,64 +499,107 @@ public class JDialogRegistrationBSpline
     }
 
     /**
-     * Implementation of ScriptableInterface abstract method.
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     * @param algo the algorithm to make an entry for
+     * Runs the algorithm.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-        if (algo.isCompleted()) {
-            if (m_kUI.isScriptRecording()) {
-                // check to see if the match image is already in the ImgTable
-                if (m_kUI.getScriptDialog().getImgTableVar(m_kImageSrc.getImageName()) == null) {
-                    if (m_kUI.getScriptDialog().getActiveImgTableVar(m_kImageSrc.getImageName()) == null) {
-                        m_kUI.getScriptDialog().putActiveVar(m_kImageSrc.getImageName());
-                    }
-                }
+    private void callAlgorithm() {
 
-                // check to see if the ref image is already in the ImgTable
-                if (m_kUI.getScriptDialog().getImgTableVar(m_kImageTrg.getImageName()) == null) {
-                    if (m_kUI.getScriptDialog().getActiveImgTableVar(m_kImageTrg.getImageName()) == null) {
-                        m_kUI.getScriptDialog().putActiveVar(m_kImageTrg.getImageName());
-                    }
-                }
+        try {
 
-                String line = "RegistrationBSpline " + m_kUI.getScriptDialog().getVar(m_kImageSrc.getImageName()) + " ";
-                line += m_kUI.getScriptDialog().getVar(m_kImageTrg.getImageName()) + " ";
-                if (isRefImageSourceSlice()) {
-                    line += String.valueOf(m_iTargetSlice) + " ";
-                }
-                else {
-                    line += m_kUI.getScriptDialog().getVar(m_kImageReg.getImageName()) + " ";
-                }
-                line += m_kRegMeasure.getClass().getName() + " ";
-                line += (null == m_kOptionsPass2) ? "1 " : "2 ";
-                line += m_kOptionsPass1.toString(" ") + " ";
-                if (null != m_kOptionsPass2) {
-                    line += m_kOptionsPass1.toString(" ") + " ";
-                }
-                line += String.valueOf(m_bCreateDeformationImage);
-                // add any more variables you need to store here
+            // Note the extents/resolutions of the registered result image.
+            int[] aiImageExtentsReg = m_kImageTrg.getExtents();
+            float[] afImageResolutionsReg = m_kImageTrg.getFileInfo(0).getResolutions();
 
-                m_kUI.getScriptDialog().append(line);
+            // Create deformation image if option is selected.
+            // This is a single channel image with the same dimensions
+            // as the target image.
+            if (m_bCreateDeformationImage) {
+                m_kImageDef = new ModelImage(ModelStorageBase.FLOAT, aiImageExtentsReg,
+                                             makeImageName(m_kImageSrc.getImageName(), "_deformation"), m_kUI);
+                m_kImageDef.getFileInfo(0).setResolutions(afImageResolutionsReg);
+            } else {
+                m_kImageDef = null;
             }
+
+            // Create registration result image.
+            int iImageTypeReg = m_kImageSrc.isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT;
+            m_kImageReg = new ModelImage(iImageTypeReg, aiImageExtentsReg,
+                                         makeImageName(m_kImageSrc.getImageName(), "_registered"), m_kUI);
+            m_kImageReg.getFileInfo(0).setResolutions(afImageResolutionsReg);
+
+            // 2.5D registration
+            if (isRefImageSourceSlice()) {
+                m_kAlgorithmReg = new AlgorithmRegBSpline25D(m_kImageReg, m_kImageSrc, m_iTargetSlice, m_kImageDef,
+                                                             m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+            }
+
+            // 2D registration
+            else if (2 == m_kImageSrc.getNDims()) {
+                m_kAlgorithmReg = new AlgorithmRegBSpline2D(m_kImageReg, m_kImageSrc, m_kImageTrg, m_kImageDef,
+                                                            m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+            }
+
+            // 3D registration
+            else if (3 == m_kImageSrc.getNDims()) {
+                m_kAlgorithmReg = new AlgorithmRegBSpline3D(m_kImageReg, m_kImageSrc, m_kImageTrg, m_kImageDef,
+                                                            m_kRegMeasure, m_kOptionsPass1, m_kOptionsPass2);
+            } else {
+                MipavUtil.displayError("JDialogRegistrationBSpline - unexpected.");
+                dispose();
+
+                return;
+            }
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("Dialog RegistrationNonlinear: unable to allocate enough memory");
+
+            if (m_kImageReg != null) {
+                m_kImageReg.disposeLocal();
+                m_kImageReg = null;
+            }
+
+            if (m_kImageDef != null) {
+                m_kImageDef.disposeLocal();
+                m_kImageDef = null;
+            }
+
+            dispose();
+
+            return;
+        }
+
+        // This is very important. Adding this object as a listener allows
+        // the algorithm to notify this object when it has completed or failed.
+        // See algorithm performed event. This is made possible by implementing
+        m_kAlgorithmReg.addListener(this);
+
+        if (runInSeparateThread) {
+
+            // Start the thread as a low priority because we wish to still have
+            // user interface work fast
+            if (m_kAlgorithmReg.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+            m_kAlgorithmReg.setActiveImage(isActiveImage);
+
+            if (!m_kUI.isAppFrameVisible()) {
+                m_kAlgorithmReg.setProgressBarVisible(false);
+            }
+
+            m_kAlgorithmReg.run();
         }
     }
 
     /**
-     *	Initializes the GUI components and displays the dialog.
+     * Initializes the GUI components and displays the dialog.
      */
     private void initControls() {
 
         // What is the image dimension?
-        String kStringDimension = isRefImageSourceSlice()
-            ? "2.5"
-            : String.valueOf(m_kImageSrc.getNDims());
+        String kStringDimension = isRefImageSourceSlice() ? "2.5" : String.valueOf(m_kImageSrc.getNDims());
 
         setForeground(Color.black);
-        setTitle(
-            "B-Spline Automatic Registration - " +
-            kStringDimension + "D " +
-            (m_kImageSrc.isColorImage() ? "Color" : "Intensity"));
+        setTitle("B-Spline Automatic Registration - " + kStringDimension + "D " +
+                 (m_kImageSrc.isColorImage() ? "Color" : "Intensity"));
 
         // Create controls for Pass 1.
         m_kControlsPass1 = new Controls(this);
@@ -388,11 +625,8 @@ public class JDialogRegistrationBSpline
         m_kLabelIterationsPass2.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         // label to select target (reference image)
-        JLabel labelImage = new JLabel(
-            "Register [" +
-            m_kImageSrc.getImageName() + "] " +
-            (isRefImageSourceSlice() ? "slices " : "") +
-            "to:");
+        JLabel labelImage = new JLabel("Register [" + m_kImageSrc.getImageName() + "] " +
+                                       (isRefImageSourceSlice() ? "slices " : "") + "to:");
         labelImage.setForeground(Color.black);
         labelImage.setBounds(10, 20, 230, 25);
         labelImage.setFont(serif12);
@@ -421,9 +655,11 @@ public class JDialogRegistrationBSpline
             m_kComboBoxTargetSlice = new JComboBox();
             m_kComboBoxTargetSlice.setFont(serif12);
             m_kComboBoxTargetSlice.setBackground(Color.white);
+
             for (int i = 0; i < m_kImageSrc.getExtents()[2]; i++) {
-                m_kComboBoxTargetSlice.addItem(String.valueOf(i+1));
+                m_kComboBoxTargetSlice.addItem(String.valueOf(i + 1));
             }
+
             m_kComboBoxTargetSlice.addItemListener(this);
         }
         // For 2D/3D - select target image combo box
@@ -431,9 +667,11 @@ public class JDialogRegistrationBSpline
             m_kComboBoxTargetImage = new JComboBox();
             m_kComboBoxTargetImage.setFont(serif12);
             m_kComboBoxTargetImage.setBackground(Color.white);
+
             for (int i = 0; i < m_akNamesCompatibleTargetImages.length; i++) {
                 m_kComboBoxTargetImage.addItem(m_akNamesCompatibleTargetImages[i]);
             }
+
             m_kComboBoxTargetImage.addItemListener(this);
         }
 
@@ -447,12 +685,9 @@ public class JDialogRegistrationBSpline
         m_kComboBoxCostFunction.setFont(serif12);
         m_kComboBoxCostFunction.setBackground(Color.white);
         m_kComboBoxCostFunction.setToolTipText("Cost function");
-        m_kComboBoxCostFunction.addItem(
-            RegistrationMeasureLeastSquares.getStaticName());
-        m_kComboBoxCostFunction.addItem(
-            RegistrationMeasureCorrelationRatio.getStaticName());
-        m_kComboBoxCostFunction.addItem(
-            RegistrationMeasureNormalizedMutualInformation.getStaticName());
+        m_kComboBoxCostFunction.addItem(RegistrationMeasureLeastSquares.getStaticName());
+        m_kComboBoxCostFunction.addItem(RegistrationMeasureCorrelationRatio.getStaticName());
+        m_kComboBoxCostFunction.addItem(RegistrationMeasureNormalizedMutualInformation.getStaticName());
         m_kComboBoxCostFunction.setSelectedIndex(0);
         m_kComboBoxCostFunction.setEnabled(true);
         m_kComboBoxCostFunction.addItemListener(this);
@@ -530,7 +765,9 @@ public class JDialogRegistrationBSpline
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kGBC.fill = kGBC.HORIZONTAL;
+
         if (isRefImageSourceSlice()) {
+
             // Build the sub panel to select the target slice.
             JPanel kPanelTargetSlice = new JPanel(new GridBagLayout());
             kPanelGeneralSub.add(kPanelTargetSlice, kGBC);
@@ -548,8 +785,7 @@ public class JDialogRegistrationBSpline
             kGBC.weightx = 0.25;
             kGBC.fill = kGBC.HORIZONTAL;
             kPanelTargetSlice.add(m_kComboBoxTargetSlice, kGBC);
-        }
-        else {
+        } else {
             kPanelGeneralSub.add(m_kComboBoxTargetImage, kGBC);
         }
 
@@ -736,24 +972,52 @@ public class JDialogRegistrationBSpline
 
             // select reference slice to be middle slice
             m_kRadioSliceReference.setSelected(true);
-            m_kComboBoxTargetSlice.setSelectedIndex(
-                m_kComboBoxTargetSlice.getItemCount()/2-1);
+            m_kComboBoxTargetSlice.setSelectedIndex((m_kComboBoxTargetSlice.getItemCount() / 2) - 1);
             userSetTargetSlice();
         }
         // In 2D/3D registration, the target image is the currently
         // selected one in the combo box.
         else {
+
             // select first image in the list
             m_kComboBoxTargetImage.setSelectedIndex(0);
-            userSetRefImage(
-                m_kUI.getRegisteredImageByName(
-                m_akNamesCompatibleTargetImages[0]));
+            userSetRefImage(m_kUI.getRegisteredImageByName(m_akNamesCompatibleTargetImages[0]));
         }
+
         userSetDefaults();
         userSetMultiPassControls();
         userSetCostFunction();
         pack();
         setVisible(true);
+    }
+
+    /**
+     * Convenience method to determine if this is a 2.5D registration where the reference (target) image is once of the
+     * slices in the source image.
+     *
+     * @return  boolean
+     */
+    private boolean isRefImageSourceSlice() {
+        return null == m_akNamesCompatibleTargetImages;
+    }
+
+    /**
+     * Called to create the RegistrationMeasure-derived class associated with the current selection in the combo box of
+     * possible registration measures.
+     */
+    private void userSetCostFunction() {
+
+        // What is the text that appears in the combo box?
+        String kStrDescription = (String) m_kComboBoxCostFunction.getSelectedItem();
+
+        // Match that text to the known cost functions.
+        if (RegistrationMeasureLeastSquares.getStaticName() == kStrDescription) {
+            m_kRegMeasure = new RegistrationMeasureLeastSquares();
+        } else if (RegistrationMeasureCorrelationRatio.getStaticName() == kStrDescription) {
+            m_kRegMeasure = new RegistrationMeasureCorrelationRatio();
+        } else if (RegistrationMeasureNormalizedMutualInformation.getStaticName() == kStrDescription) {
+            m_kRegMeasure = new RegistrationMeasureNormalizedMutualInformation();
+        }
     }
 
     /**
@@ -777,12 +1041,13 @@ public class JDialogRegistrationBSpline
     }
 
     /**
-     * Called to setup controls passed on the current state of
-     * the check box for selecting single- or two-pass registration.
+     * Called to setup controls passed on the current state of the check box for selecting single- or two-pass
+     * registration.
      */
     private void userSetMultiPassControls() {
 
         if (m_kCheckMultiPass.isSelected()) {
+
             if (null == m_kOptionsPass2) {
                 m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
                 m_kOptionsPass2.iBSplineDegree = 2;
@@ -794,13 +1059,13 @@ public class JDialogRegistrationBSpline
                 m_kOptionsPass2.bSubsample = true;
                 m_kControlsPass2.setValues(m_kOptionsPass2);
             }
+
             m_kLabelOptionsPass1.setVisible(true);
             m_kLabelOptionsPass2.setVisible(true);
             m_kLabelIterationsPass1.setVisible(true);
             m_kLabelIterationsPass2.setVisible(true);
             m_kControlsPass2.setVisible(true);
-        }
-        else {
+        } else {
             m_kLabelOptionsPass1.setVisible(false);
             m_kLabelOptionsPass2.setVisible(false);
             m_kLabelIterationsPass1.setVisible(false);
@@ -811,34 +1076,16 @@ public class JDialogRegistrationBSpline
     }
 
     /**
-     * Called to create the RegistrationMeasure-derived class
-     * associated with the current selection in the combo box
-     * of possible registration measures.
+     * Accessor to set the target image.
+     *
+     * @param  image  The target image.
      */
-    private void userSetCostFunction() {
-
-        // What is the text that appears in the combo box?
-        String kStrDescription =
-            (String)m_kComboBoxCostFunction.getSelectedItem();
-
-        // Match that text to the known cost functions.
-        if (RegistrationMeasureLeastSquares.getStaticName()
-            == kStrDescription) {
-            m_kRegMeasure = new RegistrationMeasureLeastSquares();
-        }
-        else if (RegistrationMeasureCorrelationRatio.getStaticName()
-                 == kStrDescription) {
-            m_kRegMeasure = new RegistrationMeasureCorrelationRatio();
-        }
-        else if (RegistrationMeasureNormalizedMutualInformation.getStaticName()
-                 == kStrDescription) {
-            m_kRegMeasure = new RegistrationMeasureNormalizedMutualInformation();
-        }
+    private void userSetRefImage(ModelImage image) {
+        m_kImageTrg = image;
     }
 
     /**
-     * Called whenever the user changes the selection of the target slice
-     * for 2.5D image registration.
+     * Called whenever the user changes the selection of the target slice for 2.5D image registration.
      */
     private void userSetTargetSlice() {
 
@@ -855,294 +1102,45 @@ public class JDialogRegistrationBSpline
         }
     }
 
-    /**
-     * Closes dialog box when the OK button is pressed, sets up
-     * the variables needed for running the algorithm, and calls
-     * the algorithm.
-     * @param event Event that triggers function
-     */
-    public void actionPerformed(ActionEvent event) {
-        Object source = event.getSource();
-
-        if (source == OKButton) {
-
-            // In order to retrieve the dialog values for the regisration,
-            // the size of each slice to be registered needs to be used
-            // as a basis for computing the limits of certain input values.
-            int[] aiExtentsReg;
-            if (isRefImageSourceSlice()) {
-                aiExtentsReg = new int[2];
-                aiExtentsReg[0] = m_kImageSrc.getExtents()[0];
-                aiExtentsReg[1] = m_kImageSrc.getExtents()[1];
-            }
-            else {
-                aiExtentsReg = m_kImageTrg.getExtents();
-            }
-            if (m_kControlsPass1.getValues(m_kOptionsPass1, aiExtentsReg) &&
-                (!m_kCheckMultiPass.isSelected() ||
-                 m_kControlsPass2.getValues(m_kOptionsPass2, aiExtentsReg))) {
-
-                setVisible(false);
-                callAlgorithm();
-            }
-            aiExtentsReg = null;
-        }
-        else if (source == cancelButton) {
-            dispose();
-        }
-    }
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * Convenience method to determine if this is a 2.5D registration
-     * where the reference (target) image is once of the slices in
-     * the source image.
-     * @return boolean
-     */
-    private boolean isRefImageSourceSlice() {
-        return null == m_akNamesCompatibleTargetImages;
-    }
-
-    /**
-     * Accessor to set the target image.
-     * @param image The target image.
-     */
-    private void userSetRefImage(ModelImage image) {
-        m_kImageTrg = image;
-    }
-
-    /**
-     * Runs the algorithm.
-     */
-    private void callAlgorithm() {
-        try {
-
-            // Note the extents/resolutions of the registered result image.
-            int[] aiImageExtentsReg = m_kImageTrg.getExtents();
-            float[] afImageResolutionsReg = m_kImageTrg.getFileInfo(0).getResolutions();
-
-            // Create deformation image if option is selected.
-            // This is a single channel image with the same dimensions
-            // as the target image.
-            if (m_bCreateDeformationImage) {
-                m_kImageDef = new ModelImage(
-                    ModelStorageBase.FLOAT,
-                    aiImageExtentsReg,
-                    makeImageName(m_kImageSrc.getImageName(),"_deformation"),
-                    m_kUI);
-                m_kImageDef.getFileInfo(0).setResolutions(afImageResolutionsReg);
-            }
-            else {
-                m_kImageDef = null;
-            }
-
-            // Create registration result image.
-            int iImageTypeReg =
-                m_kImageSrc.isColorImage()
-                ? ModelStorageBase.ARGB_FLOAT
-                : ModelStorageBase.FLOAT;
-            m_kImageReg = new ModelImage(
-                iImageTypeReg,
-                aiImageExtentsReg,
-                makeImageName(m_kImageSrc.getImageName(),"_registered"),
-                m_kUI);
-            m_kImageReg.getFileInfo(0).setResolutions(afImageResolutionsReg);
-
-            // 2.5D registration
-            if (isRefImageSourceSlice()) {
-                m_kAlgorithmReg = new AlgorithmRegBSpline25D(
-                    m_kImageReg,
-                    m_kImageSrc,
-                    m_iTargetSlice,
-                    m_kImageDef,
-                    m_kRegMeasure,
-                    m_kOptionsPass1,
-                    m_kOptionsPass2);
-            }
-
-            // 2D registration
-            else if (2 == m_kImageSrc.getNDims()) {
-                m_kAlgorithmReg = new AlgorithmRegBSpline2D(
-                    m_kImageReg,
-                    m_kImageSrc,
-                    m_kImageTrg,
-                    m_kImageDef,
-                    m_kRegMeasure,
-                    m_kOptionsPass1,
-                    m_kOptionsPass2);
-            }
-
-            // 3D registration
-            else if (3 == m_kImageSrc.getNDims()) {
-                m_kAlgorithmReg = new AlgorithmRegBSpline3D(
-                    m_kImageReg,
-                    m_kImageSrc,
-                    m_kImageTrg,
-                    m_kImageDef,
-                    m_kRegMeasure,
-                    m_kOptionsPass1,
-                    m_kOptionsPass2);
-            }
-            else {
-                MipavUtil.displayError("JDialogRegistrationBSpline - unexpected.");
-                dispose();
-                return;
-            }
-        }
-        catch (OutOfMemoryError x) {
-            MipavUtil.displayError(
-                "Dialog RegistrationNonlinear: unable to allocate enough memory");
-            if (m_kImageReg != null) {
-                m_kImageReg.disposeLocal();
-                m_kImageReg = null;
-            }
-            if (m_kImageDef != null) {
-                m_kImageDef.disposeLocal();
-                m_kImageDef = null;
-            }
-            dispose();
-            return;
-        }
-
-        // This is very important. Adding this object as a listener allows
-        // the algorithm to notify this object when it has completed or failed.
-        // See algorithm performed event. This is made possible by implementing
-        m_kAlgorithmReg.addListener(this);
-
-        if (runInSeparateThread) {
-            // Start the thread as a low priority because we wish to still have
-            //user interface work fast
-            if (m_kAlgorithmReg.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        }
-        else {
-            m_kAlgorithmReg.setActiveImage(isActiveImage);
-            if (!m_kUI.isAppFrameVisible()) {
-                m_kAlgorithmReg.setProgressBarVisible(false);
-            }
-            m_kAlgorithmReg.run();
-        }
-    }
-
-    /**
-     * This method is required if the AlgorithmPerformed interface is implemented.
-     * It is called by the algorithm when it has completed or failed to to complete,
-     * so that the dialog can display the result image and/or clean up.
-     * @param algorithm Algorithm that caused the event.
-     */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof AlgorithmRegBSpline) {
-            m_kImageSrc.clearMask();
-
-            if (m_kAlgorithmReg.isCompleted() == true && m_kImageReg != null) {
-                //The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(m_kImageSrc, m_kImageReg);
-                m_kImageReg.clearMask();
-
-                try {
-                    new ViewJFrameImage(m_kImageReg, null, new Dimension(610, 200));
-                    if (m_kImageDef != null) {
-                        new ViewJFrameImage(m_kImageDef, null, new Dimension(610, 240));
-                    }
-                }
-                catch (OutOfMemoryError error) {
-                    System.gc();
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
-            }
-            //algorithm failed but result image(s) still has garbage
-            else {
-                if (m_kImageReg != null) {
-                    m_kImageReg.disposeLocal();
-                    m_kImageReg = null;
-                    System.gc();
-                }
-                if (m_kImageDef != null) {
-                    m_kImageDef.disposeLocal();
-                    m_kImageDef = null;
-                    System.gc();
-                }
-            }
-        }
-        // Update frame
-        m_kImageSrc.notifyImageDisplayListeners(null, true);
-
-        insertScriptLine(algorithm);
-
-        if (m_kAlgorithmReg != null) {
-            m_kAlgorithmReg.finalize();
-            m_kAlgorithmReg = null;
-        }
-        dispose();
-    }
-
-    /**
-     * Implementation of JDialogBase abstract method.
-     * Method to handle item events.
-     * @param event Event that caused the method to fire
-     */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-
-        // If the target image is changed reset the defaults on certain
-        // other fields in the dialog.
-        if (source == m_kComboBoxTargetImage) {
-            userSetRefImage(m_kUI.getRegisteredImageByName((String) m_kComboBoxTargetImage.getSelectedItem()));
-            userSetDefaults();
-            pack();
-        }
-
-        // If the multipass check box is changed, then show/hide
-        // the 2nd pass controls.
-        else if (source == m_kCheckMultiPass) {
-            userSetMultiPassControls();
-            pack();
-        }
-
-        // If the cost function is changed, then select the appropriate
-        // registration measure instance.
-        else if (source == m_kComboBoxCostFunction) {
-            userSetCostFunction();
-        }
-
-        // If the state of the check box changed for creating
-        // the deformation image.
-        else if (source == m_kCheckCreateDeformationImage) {
-            m_bCreateDeformationImage =
-                m_kCheckCreateDeformationImage.isSelected();
-        }
-
-        // If the state of any of the target slice controls for 2.5
-        // registration changed.
-        else if ( (source == m_kRadioSliceAdjacent) ||
-                 (source == m_kRadioSliceReference) ||
-                 (source == m_kComboBoxTargetSlice)) {
-            userSetTargetSlice();
-        }
-    }
-
-    /**
-     * Private class which holds dialog controls associated with the
-     * values in the AlgorithmRegBSpline.Options class for a "pass"
-     * of registration.
+     * Private class which holds dialog controls associated with the values in the AlgorithmRegBSpline.Options class for
+     * a "pass" of registration.
      */
     private static class Controls {
-        private final JDialogBase m_kDialog;
 
-        public final JComboBox kComboBoxBSplineDegree = new JComboBox();
-        public final JTextField kTextBSplineNumControlPoints = new JTextField();
-        public final JTextField kTextGradientDescentMinimizeStepSize = new JTextField();
-        public final JTextField kTextGradientDescentMinimizeMaxSteps = new JTextField();
-        public final JTextField kTextConvergenceLimit = new JTextField();
-        public final JTextField kTextMaxIterations = new JTextField();
+        /** DOCUMENT ME! */
+        private static final int[] ms_aiBSplineDegreeOptions = { 1, 2, 3, 4 };
+
+        /** DOCUMENT ME! */
         public final JCheckBox kCheckSubsample = new JCheckBox();
 
-        private static final int ms_aiBSplineDegreeOptions[] = {1, 2, 3, 4};
+        /** DOCUMENT ME! */
+        public final JComboBox kComboBoxBSplineDegree = new JComboBox();
+
+        /** DOCUMENT ME! */
+        public final JTextField kTextBSplineNumControlPoints = new JTextField();
+
+        /** DOCUMENT ME! */
+        public final JTextField kTextConvergenceLimit = new JTextField();
+
+        /** DOCUMENT ME! */
+        public final JTextField kTextGradientDescentMinimizeMaxSteps = new JTextField();
+
+        /** DOCUMENT ME! */
+        public final JTextField kTextGradientDescentMinimizeStepSize = new JTextField();
+
+        /** DOCUMENT ME! */
+        public final JTextField kTextMaxIterations = new JTextField();
+
+        /** DOCUMENT ME! */
+        private final JDialogBase m_kDialog;
 
         /**
          * Constructor which creates the controls.
-         * @param kDialog JDialogBase Dialog class from which the controls
-         * inherit certain properties (e.g., font).
+         *
+         * @param  kDialog  JDialogBase Dialog class from which the controls inherit certain properties (e.g., font).
          */
         public Controls(JDialogBase kDialog) {
 
@@ -1151,6 +1149,7 @@ public class JDialogRegistrationBSpline
             // combo box to select degree+1 for B-Spline
             kComboBoxBSplineDegree.setFont(MipavUtil.font12);
             kComboBoxBSplineDegree.setBackground(Color.white);
+
             for (int i = 0; i < ms_aiBSplineDegreeOptions.length; i++) {
                 kComboBoxBSplineDegree.addItem(Integer.toString(ms_aiBSplineDegreeOptions[i]));
             }
@@ -1181,44 +1180,15 @@ public class JDialogRegistrationBSpline
         }
 
         /**
-         * Set the state of the controls based on the specified values.
-         * @param kOptions Options Structure which contains the values
-         * to use to set the state of the controls.
-         */
-        public void setValues(AlgorithmRegBSpline.Options kOptions) {
-
-            kComboBoxBSplineDegree.setSelectedIndex(0);
-            for (int i = 0; i < ms_aiBSplineDegreeOptions.length; i++) {
-                if (kOptions.iBSplineDegree == ms_aiBSplineDegreeOptions[i]) {
-                    kComboBoxBSplineDegree.setSelectedIndex(i);
-                    break;
-                }
-                kComboBoxBSplineDegree.addItem(Integer.toString(ms_aiBSplineDegreeOptions[i]));
-            }
-
-            kTextBSplineNumControlPoints.setText(
-                Integer.toString(kOptions.iBSplineNumControlPoints));
-            kTextGradientDescentMinimizeStepSize.setText(
-                Float.toString(kOptions.fGradientDescentMinimizeStepSize));
-            kTextGradientDescentMinimizeMaxSteps.setText(
-                Integer.toString(kOptions.iGradientDescentMinimizeMaxSteps));
-            kTextConvergenceLimit.setText(
-                Float.toString(kOptions.fConvergenceLimit));
-            kTextMaxIterations.setText(
-                Integer.toString(kOptions.iMaxIterations));
-            kCheckSubsample.setSelected(kOptions.bSubsample);
-        }
-
-        /**
-         * Extract the values from the specified set of controls and store
-         * them into the options structure used by the algorithm.
-         * @param kOptions AlgorithmRegBSpline.Options Structure for storing
-         * the values extracted from those controls.
-         * @param aiExtentsReg int[] Dimensions of the reference image to
-         * be used for registration which is used to compute certain limits
-         * on the input values.
-         * @return boolean True if the input values in the controls are
-         * acceptable.
+         * Extract the values from the specified set of controls and store them into the options structure used by the
+         * algorithm.
+         *
+         * @param   kOptions      AlgorithmRegBSpline.Options Structure for storing the values extracted from those
+         *                        controls.
+         * @param   aiExtentsReg  int[] Dimensions of the reference image to be used for registration which is used to
+         *                        compute certain limits on the input values.
+         *
+         * @return  boolean True if the input values in the controls are acceptable.
          */
         public boolean getValues(AlgorithmRegBSpline.Options kOptions, int[] aiExtentsReg) {
 
@@ -1226,32 +1196,32 @@ public class JDialogRegistrationBSpline
             int iExtentMin, iExtentMax;
             iExtentMin = aiExtentsReg[0];
             iExtentMax = aiExtentsReg[0];
+
             for (int iDim = 1; iDim < aiExtentsReg.length; iDim++) {
+
                 if (aiExtentsReg[iDim] < iExtentMin) {
                     iExtentMin = aiExtentsReg[iDim];
-                }
-                else if (aiExtentsReg[iDim] > iExtentMax) {
+                } else if (aiExtentsReg[iDim] > iExtentMax) {
                     iExtentMax = aiExtentsReg[iDim];
                 }
             }
 
             // BSpline degree
-            kOptions.iBSplineDegree =
-                ms_aiBSplineDegreeOptions[kComboBoxBSplineDegree.getSelectedIndex()];
+            kOptions.iBSplineDegree = ms_aiBSplineDegreeOptions[kComboBoxBSplineDegree.getSelectedIndex()];
 
             String tmpStr;
 
             // Number of control points.
-            int iNumControlPointsMin =
-                BSplineBasisf.getMinNumControlPoints(kOptions.iBSplineDegree);
-            int iNumControlPointsMax = iExtentMin/2;
+            int iNumControlPointsMin = BSplineBasisf.getMinNumControlPoints(kOptions.iBSplineDegree);
+            int iNumControlPointsMax = iExtentMin / 2;
             tmpStr = kTextBSplineNumControlPoints.getText();
+
             if (m_kDialog.testParameter(tmpStr, iNumControlPointsMin, iNumControlPointsMax)) {
                 kOptions.iBSplineNumControlPoints = (Integer.valueOf(tmpStr).intValue());
-            }
-            else {
+            } else {
                 kTextBSplineNumControlPoints.requestFocus();
                 kTextBSplineNumControlPoints.selectAll();
+
                 return false;
             }
 
@@ -1259,45 +1229,49 @@ public class JDialogRegistrationBSpline
             float fStepSizeMin = 0.1f;
             float fStepSizeMax = 5.0f;
             tmpStr = kTextGradientDescentMinimizeStepSize.getText();
+
             if (m_kDialog.testParameter(tmpStr, fStepSizeMin, fStepSizeMax)) {
-                kOptions.fGradientDescentMinimizeStepSize = (Float.valueOf(tmpStr).floatValue()/iExtentMax);
-            }
-            else {
+                kOptions.fGradientDescentMinimizeStepSize = (Float.valueOf(tmpStr).floatValue() / iExtentMax);
+            } else {
                 kTextGradientDescentMinimizeStepSize.requestFocus();
                 kTextGradientDescentMinimizeStepSize.selectAll();
+
                 return false;
             }
 
             // Gradient descent minimize maximum number of steps
             tmpStr = kTextGradientDescentMinimizeMaxSteps.getText();
+
             if (m_kDialog.testParameter(tmpStr, 1, 100)) {
                 kOptions.iGradientDescentMinimizeMaxSteps = (Integer.valueOf(tmpStr).intValue());
-            }
-            else {
+            } else {
                 kTextGradientDescentMinimizeMaxSteps.requestFocus();
                 kTextGradientDescentMinimizeMaxSteps.selectAll();
+
                 return false;
             }
 
             // Iteration convergence limit.
             tmpStr = kTextConvergenceLimit.getText();
+
             if (m_kDialog.testParameter(tmpStr, 0.001, 0.5)) {
                 kOptions.fConvergenceLimit = (Float.valueOf(tmpStr).floatValue());
-            }
-            else {
+            } else {
                 kTextConvergenceLimit.requestFocus();
                 kTextConvergenceLimit.selectAll();
+
                 return false;
             }
 
             // Max iterations.
             tmpStr = kTextMaxIterations.getText();
+
             if (m_kDialog.testParameter(tmpStr, 1, 100)) {
                 kOptions.iMaxIterations = (Integer.valueOf(tmpStr).intValue());
-            }
-            else {
+            } else {
                 kTextMaxIterations.requestFocus();
                 kTextMaxIterations.selectAll();
+
                 return false;
             }
 
@@ -1308,8 +1282,37 @@ public class JDialogRegistrationBSpline
         }
 
         /**
+         * Set the state of the controls based on the specified values.
+         *
+         * @param  kOptions  Options Structure which contains the values to use to set the state of the controls.
+         */
+        public void setValues(AlgorithmRegBSpline.Options kOptions) {
+
+            kComboBoxBSplineDegree.setSelectedIndex(0);
+
+            for (int i = 0; i < ms_aiBSplineDegreeOptions.length; i++) {
+
+                if (kOptions.iBSplineDegree == ms_aiBSplineDegreeOptions[i]) {
+                    kComboBoxBSplineDegree.setSelectedIndex(i);
+
+                    break;
+                }
+
+                kComboBoxBSplineDegree.addItem(Integer.toString(ms_aiBSplineDegreeOptions[i]));
+            }
+
+            kTextBSplineNumControlPoints.setText(Integer.toString(kOptions.iBSplineNumControlPoints));
+            kTextGradientDescentMinimizeStepSize.setText(Float.toString(kOptions.fGradientDescentMinimizeStepSize));
+            kTextGradientDescentMinimizeMaxSteps.setText(Integer.toString(kOptions.iGradientDescentMinimizeMaxSteps));
+            kTextConvergenceLimit.setText(Float.toString(kOptions.fConvergenceLimit));
+            kTextMaxIterations.setText(Integer.toString(kOptions.iMaxIterations));
+            kCheckSubsample.setSelected(kOptions.bSubsample);
+        }
+
+        /**
          * Makes the controls visible or invisible.
-         * @param bEnable boolean True to make the controls visible.
+         *
+         * @param  bEnable  boolean True to make the controls visible.
          */
         public void setVisible(boolean bEnable) {
 

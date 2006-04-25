@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.dialogs;
 
 
-public class JDialogDualTriImagePaintGrow {
-
-}
+/**
+ * DOCUMENT ME!
+ */
+public class JDialogDualTriImagePaintGrow { }

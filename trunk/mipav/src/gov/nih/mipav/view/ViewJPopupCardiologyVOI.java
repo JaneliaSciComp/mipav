@@ -1,30 +1,56 @@
 package gov.nih.mipav.view;
 
-import javax.swing.*;
-import javax.swing.event.*;
+
 import java.awt.event.*;
 
+import javax.swing.*;
+import javax.swing.event.*;
+
+
 /**
-*
-*
-*		@version    1.0 July 27, 1999
-*		@author     Matthew J. McAuliffe, Ph.D. (primary)
-*		@author     Harman Singh
-*
-*/
+ * DOCUMENT ME!
+ *
+ * @version  1.0 July 27, 1999
+ * @author   Matthew J. McAuliffe, Ph.D. (primary)
+ * @author   Harman Singh
+ */
 public class ViewJPopupCardiologyVOI extends JPanel implements ActionListener, PopupMenuListener, MouseListener {
-    private JPopupMenu popup;
-    private JMenu sectionSubMenu;
-    private JMenu voiSubMenu;
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -5496458990593918502L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private JMenu calcSubMenu;
+
+    /** DOCUMENT ME! */
     private ViewJComponentCardiology component;
 
+    /** DOCUMENT ME! */
+    private JPopupMenu popup;
+
+    /** DOCUMENT ME! */
+    private JMenu sectionSubMenu;
+
+    /** DOCUMENT ME! */
+    private JMenu voiSubMenu;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ViewJPopupCardiologyVOI object.
+     *
+     * @param  comp  DOCUMENT ME!
+     */
     public ViewJPopupCardiologyVOI(ViewJComponentCardiology comp) {
-        popup           = new JPopupMenu();
-        sectionSubMenu  = new JMenu("Section");
-        voiSubMenu      = new JMenu("VOI");
-        calcSubMenu     = new JMenu("Calculate");
-        component       = comp;
+        popup = new JPopupMenu();
+        sectionSubMenu = new JMenu("Section");
+        voiSubMenu = new JMenu("VOI");
+        calcSubMenu = new JMenu("Calculate");
+        component = comp;
 
         JMenuItem itemSection, itemCalc;
         JCheckBoxMenuItem itemVOI;
@@ -74,53 +100,110 @@ public class ViewJPopupCardiologyVOI extends JPanel implements ActionListener, P
         popup.add(calcSubMenu);
     }
 
-    public void mousePressed(MouseEvent event)  { checkPopup(event);}
-    public void mouseClicked(MouseEvent event)  { checkPopup(event);}
-    public void mouseEntered(MouseEvent event)  { }
-    public void mouseExited(MouseEvent event)   { }
-    public void mouseReleased(MouseEvent event ) { checkPopup(event);}
-
-    private void checkPopup(MouseEvent event) {
-        if (event.isPopupTrigger()) {
-            popup.show(component, event.getX(), event.getY());
-       }
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
     public void actionPerformed(ActionEvent event) {
 
-      if (event.getActionCommand().equals("calcLengths")) {
-        component.calculateVOILengths();
-      }
-      else if (event.getActionCommand().equals("togglePoints")) {
-        component.toggleVOIPoints();
-      }
-      else if (event.getActionCommand().equals("selectAll")) {
-        component.selectAllVOISections(true);
-      }
-      else if (event.getActionCommand().equals("selectNone")) {
-        component.selectAllVOISections(false);
-      }
-      else if (event.getActionCommand().equals("calcIntensities")) {
-        component.calculateVOIIntensities();
-      }
-
+        if (event.getActionCommand().equals("calcLengths")) {
+            component.calculateVOILengths();
+        } else if (event.getActionCommand().equals("togglePoints")) {
+            component.toggleVOIPoints();
+        } else if (event.getActionCommand().equals("selectAll")) {
+            component.selectAllVOISections(true);
+        } else if (event.getActionCommand().equals("selectNone")) {
+            component.selectAllVOISections(false);
+        } else if (event.getActionCommand().equals("calcIntensities")) {
+            component.calculateVOIIntensities();
+        }
 
 
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseClicked(MouseEvent event) {
+        checkPopup(event);
+    }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseEntered(MouseEvent event) { }
 
-    public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseExited(MouseEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mousePressed(MouseEvent event) {
+        checkPopup(event);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseReleased(MouseEvent event) {
+        checkPopup(event);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void popupMenuCanceled(PopupMenuEvent event) {
         Preferences.debug("Popup menu will be visible!");
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
     public void popupMenuWillBecomeInvisible(PopupMenuEvent event) {
         Preferences.debug("Popup menu will be invisible!");
     }
 
-    public void popupMenuCanceled(PopupMenuEvent event) {
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
         Preferences.debug("Popup menu will be visible!");
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    private void checkPopup(MouseEvent event) {
+
+        if (event.isPopupTrigger()) {
+            popup.show(component, event.getX(), event.getY());
+        }
     }
 
 

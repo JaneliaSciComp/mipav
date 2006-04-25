@@ -1,103 +1,226 @@
 package gov.nih.mipav.view.dialogs;
 
+
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
+
 import javax.swing.*;
 
+
 /**
-*   Simple dialog to set certain values for the new or edited server
-*   or destination.
-*
-*
-*		@version    1.0 July 1, 1999
-*		@author     Neva Cherniavsky
-*       @see        ViewJFrameDICOMQuery
-*
-*/
+ * Simple dialog to set certain values for the new or edited server or destination.
+ *
+ * @version  1.0 July 1, 1999
+ * @author   Neva Cherniavsky
+ * @see      ViewJFrameDICOMQuery
+ */
 public class JDialogServer extends JDialogBase {
 
-	private     JTextField  titleField;
-	private     JTextField  aliasField;
-	private     JTextField  ipField;
-	private     JTextField  portField;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-	private     JLabel      titleLabel;
-    private     JLabel      aliasLabel;
-    private     JLabel      ipLabel;
-    private     JLabel      portLabel;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 1348641833737787663L;
 
-    private     String      title;
-    private     String      alias;
-    private     String      ip;
-    private     String      port;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    private     boolean     server;
+    /** DOCUMENT ME! */
+    private String alias;
+
+    /** DOCUMENT ME! */
+    private JTextField aliasField;
+
+    /** DOCUMENT ME! */
+    private JLabel aliasLabel;
+
+    /** DOCUMENT ME! */
+    private String ip;
+
+    /** DOCUMENT ME! */
+    private JTextField ipField;
+
+    /** DOCUMENT ME! */
+    private JLabel ipLabel;
+
+    /** DOCUMENT ME! */
+    private String port;
+
+    /** DOCUMENT ME! */
+    private JTextField portField;
+
+    /** DOCUMENT ME! */
+    private JLabel portLabel;
+
+    /** DOCUMENT ME! */
+    private boolean server;
+
+    /** DOCUMENT ME! */
+    private String title;
+
+    /** DOCUMENT ME! */
+    private JTextField titleField;
+
+    /** DOCUMENT ME! */
+    private JLabel titleLabel;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-    *  Creates new dialog for setting server.
-    *  @param theParentFrame parent frame
-    *  @param title          title of dialog frame
-    *  @param server         flag indicating if this is server or storage
-    */
-	public JDialogServer(JFrame theParentFrame, String title, boolean server) {
+     * Creates new dialog for setting server.
+     *
+     * @param  theParentFrame  parent frame
+     * @param  title           title of dialog frame
+     * @param  server          flag indicating if this is server or storage
+     */
+    public JDialogServer(JFrame theParentFrame, String title, boolean server) {
 
-	    super(theParentFrame, true);
+        super(theParentFrame, true);
 
-	    setTitle(title);
+        setTitle(title);
 
-	    buildContentPane(server);
-	    this.server = server;
+        buildContentPane(server);
+        this.server = server;
 
-        setBounds(theParentFrame.getBounds().width/2,
-                  theParentFrame.getBounds().height/2,
-                  300,
-                  200);
+        setBounds(theParentFrame.getBounds().width / 2, theParentFrame.getBounds().height / 2, 300, 200);
         setVisible(true);
     }
 
     /**
-    *  Creates new dialog for setting server.
-    *  @param theParentFrame  parent frame
-    *  @param title           title of dialog frame
-    *  @param values          values of the text fields
-    *  @param server          flag indicating if this is server or storage
-    */
-	public JDialogServer(JFrame theParentFrame, String title, String values[], boolean server) {
+     * Creates new dialog for setting server.
+     *
+     * @param  theParentFrame  parent frame
+     * @param  title           title of dialog frame
+     * @param  values          values of the text fields
+     * @param  server          flag indicating if this is server or storage
+     */
+    public JDialogServer(JFrame theParentFrame, String title, String[] values, boolean server) {
 
-	    super(theParentFrame, true);
-	    setTitle(title);
-	    buildContentPane(server);
-	    this.server = server;
-	    setValues(values);
-        setBounds(theParentFrame.getBounds().width/2,
-                  theParentFrame.getBounds().height/2,
-                  300,
-                  200);
+        super(theParentFrame, true);
+        setTitle(title);
+        buildContentPane(server);
+        this.server = server;
+        setValues(values);
+        setBounds(theParentFrame.getBounds().width / 2, theParentFrame.getBounds().height / 2, 300, 200);
         setVisible(true);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-    *   Builds the content pane for the dialog, making
-    *   the text fields and labels.
-    *   @param server   Flag indicating if this is server or storage
-    */
+     * If the user hits the "OK" button, checks to make sure he or she entered valid data. Then sets the values to the
+     * ones that the user entered. If the user hits the "Cancel" button, disposes of dialog.
+     *
+     * @param  e  Event that triggered this method.
+     */
+    public void actionPerformed(ActionEvent e) {
+        String command = e.getActionCommand();
+
+        if (command.equals("OK")) {
+
+            if (titleField.getText().equals("") || aliasField.getText().equals("") || ipField.getText().equals("") ||
+                    portField.getText().equals("")) {
+
+                MipavUtil.displayError("You must enter values for every field.");
+            } else {
+
+                try {
+
+                    if ((Integer.valueOf(portField.getText()).intValue() < 1) ||
+                            (Integer.valueOf(portField.getText()).intValue() > 9999)) {
+
+                        MipavUtil.displayError("The port field must be a value between 1 and 9999.");
+
+                        return;
+                    }
+                } catch (NumberFormatException error) {
+                    MipavUtil.displayError("The port field must be a value between 1 and 9999.");
+
+                    return;
+                }
+
+                if (server) {
+                    char[] ipChars = ipField.getText().toCharArray();
+                    int index = 0;
+                    int count = 0;
+                    String s;
+
+                    for (int i = 0; i < ipChars.length; i++) {
+
+                        if (!Character.isDigit(ipChars[i]) && (ipChars[i] != '.')) {
+                            MipavUtil.displayError("The IP address field must contain a valid IP address.");
+
+                            return;
+                        }
+
+                        if (ipChars[i] == '.') {
+                            count++;
+                            s = ipField.getText().substring(index, i);
+                            index = i + 1;
+
+                            if ((Integer.valueOf(s).intValue() < 0) || (Integer.valueOf(s).intValue() > 999)) {
+                                MipavUtil.displayError("The IP address field must contain a valid IP address.");
+
+                                return;
+                            }
+                        }
+
+                    }
+
+                    s = ipField.getText().substring(index);
+
+                    if ((Integer.valueOf(s).intValue() < 0) || (Integer.valueOf(s).intValue() > 999) || (count != 3)) {
+                        MipavUtil.displayError("The IP address field must contain a valid IP address.");
+
+                        return;
+                    }
+                }
+
+                title = titleField.getText();
+                alias = aliasField.getText();
+                ip = ipField.getText();
+                port = portField.getText();
+                dispose();
+            }
+        } else if (command.equals("Cancel")) {
+            cancelFlag = true;
+            dispose();
+        }
+    }
+
+    /**
+     * Returns the values entered into the text fields.
+     *
+     * @return  An array of the values.
+     */
+    public String[] getValues() {
+        String[] values = { title, alias, ip, port };
+
+        return values;
+
+    }
+
+    /**
+     * Builds the content pane for the dialog, making the text fields and labels.
+     *
+     * @param  server  Flag indicating if this is server or storage
+     */
     private void buildContentPane(boolean server) {
         GridBagConstraints gbc;
-        Insets             rightInsets, leftInsets;
+        Insets rightInsets, leftInsets;
 
         try {
             getContentPane().setLayout(new GridBagLayout());
-            gbc                      = new GridBagConstraints();
-            rightInsets              = new Insets(0, 0, 10, 10);
-            leftInsets               = new Insets(0, 10, 10, 0);
-            titleField               = new JTextField();
-            aliasField               = new JTextField();
-            ipField                  = new JTextField();
-            portField                = new JTextField();
-        }
-		catch (OutOfMemoryError error){
+            gbc = new GridBagConstraints();
+            rightInsets = new Insets(0, 0, 10, 10);
+            leftInsets = new Insets(0, 10, 10, 0);
+            titleField = new JTextField();
+            aliasField = new JTextField();
+            ipField = new JTextField();
+            portField = new JTextField();
+        } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: JDialogServer.buildContentPane");
+
             return;
         }
 
@@ -144,8 +267,13 @@ public class JDialogServer extends JDialogBase {
         gbc.insets = leftInsets;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        if (server) ipLabel = buildLabel("IP Address");
-        else ipLabel = buildLabel("Directory");
+
+        if (server) {
+            ipLabel = buildLabel("IP Address");
+        } else {
+            ipLabel = buildLabel("Directory");
+        }
+
         getContentPane().add(ipLabel, gbc);
 
         gbc.gridx = 2;
@@ -196,126 +324,39 @@ public class JDialogServer extends JDialogBase {
     }
 
     /**
-    *   If the user hits the "OK" button, checks to make
-    *   sure he or she entered valid data.  Then sets the
-    *   values to the ones that the user entered.  If the
-    *   user hits the "Cancel" button, disposes of dialog.
-    *   @param e    Event that triggered this method.
-    */
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-
-        if (command.equals("OK")) {
-            if (titleField.getText().equals("") ||
-                aliasField.getText().equals("") ||
-                ipField.getText().equals("") ||
-                portField.getText().equals("")) {
-
-                MipavUtil.displayError("You must enter values for every field.");
-            }
-            else {
-                try {
-                    if (Integer.valueOf(portField.getText()).intValue() < 1 ||
-                        Integer.valueOf(portField.getText()).intValue() > 9999) {
-
-                        MipavUtil.displayError("The port field must be a value between 1 and 9999.");
-
-                        return;
-                    }
-                }
-                catch (NumberFormatException error) {
-                    MipavUtil.displayError("The port field must be a value between 1 and 9999.");
-                    return;
-                }
-                if (server) {
-                    char[] ipChars = ipField.getText().toCharArray();
-                    int index = 0;
-                    int count = 0;
-                    String s;
-                    for (int i=0; i<ipChars.length; i++) {
-                        if (!Character.isDigit(ipChars[i]) && (ipChars[i] != '.')) {
-                            MipavUtil.displayError("The IP address field must contain a valid IP address.");
-                            return;
-                        }
-                        if (ipChars[i] == '.') {
-                            count++;
-                            s = ipField.getText().substring(index, i);
-                            index = i + 1;
-                            if (Integer.valueOf(s).intValue() < 0 ||
-                                Integer.valueOf(s).intValue() > 999) {
-                                MipavUtil.displayError("The IP address field must contain a valid IP address.");
-                                return;
-                            }
-                        }
-
-                    }
-                    s = ipField.getText().substring(index);
-                    if (Integer.valueOf(s).intValue() < 0 ||
-                        Integer.valueOf(s).intValue() > 999 ||
-                        count != 3) {
-                        MipavUtil.displayError("The IP address field must contain a valid IP address.");
-                        return;
-                    }
-                }
-                title = titleField.getText();
-                alias = aliasField.getText();
-                ip = ipField.getText();
-                port = portField.getText();
-                dispose();
-            }
-        }
-        else if (command.equals("Cancel")) {
-            cancelFlag = true;
-            dispose();
-        }
-    }
-
-    /**
-    *   Build the label for the textField, try to standardize the label
-    *   appearance in the GUI.
-    *   @param s    The name of the label
-    *   @return     The constructed label.
-    */
-    private JLabel buildLabel (String s) {
+     * Build the label for the textField, try to standardize the label appearance in the GUI.
+     *
+     * @param   s  The name of the label
+     *
+     * @return  The constructed label.
+     */
+    private JLabel buildLabel(String s) {
         JLabel label;
+
         try {
             label = new JLabel(s);
             label.setFont(MipavUtil.font12);
-        }
-		catch (OutOfMemoryError error){
+        } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: JDialogServer.buildContentPane");
+
             return null;
         }
 
         label.setForeground(Color.black);
         label.setHorizontalTextPosition(SwingConstants.LEFT);
+
         return label;
     }
 
     /**
-    *   Returns the values entered into the text fields
-    *   @return An array of the values.
-    */
-    public String[] getValues() {
-        String[] values = {title,
-                           alias,
-                           ip,
-                           port};
-        return values;
-
-    }
-
-    /**
-    *   Sets the current values in the text fields to the values
-    *   in the array.
-    *   @param values  The array of current values
-    */
-    private void setValues(String values[]) {
+     * Sets the current values in the text fields to the values in the array.
+     *
+     * @param  values  The array of current values
+     */
+    private void setValues(String[] values) {
         titleField.setText(values[0]);
         aliasField.setText(values[1]);
         ipField.setText(values[2]);
         portField.setText(values[3]);
     }
 }
-
-

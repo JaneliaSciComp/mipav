@@ -1,1375 +1,1726 @@
 package gov.nih.mipav.model.file;
 
-import gov.nih.mipav.view.dialogs.*;
+
+import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.algorithms.RandomNumberGen;
+
+import gov.nih.mipav.view.dialogs.*;
+
 
 /**
-*   This structures contains the information that describes how
-*   a GE Signa 5X image is stored on disk.
-*
-*/
+ * This structures contains the information that describes how a GE Signa 5X image is stored on disk.
+ */
 
 public class FileInfoGESigna5X extends FileInfoBase {
 
-    /** 0x494d4746   or "IMGF"  or 1229801286 */
-    public int magicNumber;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** 4  - byte displacement to pixel data */
-    public int ptrImage;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -4456298776612648834L;
 
-    /** 8  - width of image */
-    public int width;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** 12 - height of image */
-    public int height;
+    /** 18. */
+    public int actualDateTime;
 
-    /** 16 - number of bits */
-    public int depth;
-
-    /** 20
-    * 0 as is
-    * 1 retangular
-    * 2 packed
-    * 3 compressed
-    * 4 compressed and packed  */
-    public int compression;
-
-    /** 32 - background value of non image locations */
-    public int valueBg;
-
-    /** 54 - 16 bit end around carry sum of pixels **** (read as unsigned short) */
-    public int checkSum;
-
-    /** 56 - pointer to unique image identifier (UID) */
-    public int ptrUID;
-
-    /** 60 - length of UID */
-    public int lenUID;
-
-    /** 64 - pointer to  */
-    public int ptrUnpackHdr;
-
-    /** 68 - length of  */
-    public int lenUnpackHdr;
-
-    /** 72 - pointer to  */
-    public int ptrCmprsnHdr;
-
-    /** 76 - length of  */
-    public int lenCmprsnHdr;
-
-    /** 80 - pointer to  */
-    public int ptrHistoHdr;
-
-    /** 84 - length of  */
-    public int lenHistoHdr;
-
-    /** 88 - pointer to  */
-    public int ptrTextPlane;
-
-    /** 92 - length of  */
-    public int lenTextPlane;
-
-    /** 96 - pointer to  */
-    public int ptrGraphics;
-
-    /** 100 - length of  */
-    public int lenGraphics;
-
-    /** 104 - pointer to  */
-    public int ptrDBHdr;
-
-    /** 108 - length of  */
-    public int lenDBHdr;
-
-    /** 112 - value to add to pixels */
+    /** 112 - value to add to pixels. */
     public int addValue;
 
-    /** 116 - pointer to  */
-    public int ptrUsrDefData;
+    /** 84 - 3 bytes - Anatomical Reference. */
+    public String anatomicalRef;
 
-    /** 120 - length of  */
-    public int lenUsrDefData;
+    /** 282 Auto Center Frequency (0.1 Hz). */
+    public int autoXmtFreq;
 
-    /** 124 - pointer to  */
-    public int ptrSuiteHdr;
+    /** 286 Auto Transmit Gain (0.1 dB). */
+    public short autoXmtGain;
 
-    /** 128 - length of  */
-    public int lenSuiteHdr;
+    /** 388 Calibrated Field Strength (x10 uGauss). */
+    public int calFldStr;
 
-    /** 132 - pointer to  */
-    public int ptrExamHdr;
+    /** 54 Cell spacing. */
+    public float cellSpace;
 
-    /** 136 - length of  */
-    public int lenExamHdr;
+    /** 296 Center frequency method. */
+    public short cenFreq;
 
-    /** 140 - pointer to  */
-    public int ptrSeriesHdr;
+    /** 54 - 16 bit end around carry sum of pixels **** (read as unsigned short). */
+    public int checkSum;
 
-    /** 144 - length of  */
-    public int lenSeriesHdr;
+    /** 362 17 characters. */
+    public String coilName;
 
-    /** 148 - pointer to  */
-    public int ptrImageHdr;
+    /** 360. */
+    public short coilType;
 
-    /** 152 - length of  */
-    public int lenImageHdr;
+    /** 120 image compression type for allocation. */
+    public short compress;
 
+    /** 20 0 as is 1 retangular 2 packed 3 compressed 4 compressed and packed. */
+    public int compression;
 
-    // Exam header for 1024 bytes, 1040 identical except for 16 more padding bytes
+    /** 222 Continuous slices flag. */
+    public short contig;
 
-    /** 0  - 4 bytes  */
-    public String suiteID;
+    /** 106. */
+    public short contrastMode;
 
-    /** 4 (internal use) The Make_Unique Flag */
-    public short  exUniq;
+    /** 260 Total cardiac phase prescribed. */
+    public short cPhase;
 
-    /** 6 - 1 byte (internal use) Disk ID for this exam */
-    public String exDiskID;
+    /** 646 Cardiac phase number. */
+    public short cPhaseNum;
 
-    /** 8  - Read as unsigned short */
-    public int    examNum;
+    /** 68 DAS type. */
+    public short dasType;
 
-    /** 10 - 33 characters hospital name */
-    public String hospName;
+    /** 14 allocation date time. */
+    public int dateTime;
 
-    /** 44 detector type */
-    public short  detect;
+    /** 838 peak rate of change in gradient field, tesla&#47sec. */
+    public float dbdt;
 
-    /** 46 Number of cells in det  */
-    public long   numCells;
+    /** 842 limit in units of percent of theoretical curve. */
+    public float dbdtPer;
 
-    /** 50 Cell number at theta */
-    public float  zeroCell;
+    /** 74 Decon kernel density. */
+    public short dcnDensity;
 
-    /** 54 Cell spacing */
-    public float  cellSpace;
+    /** 72 Number of elements in Decon kernel. */
+    public short dcnLen;
 
-    /** 58 Distance from source to detector */
-    public float  srcToDet;
+    /** 78 Decon kernel shift count. */
+    public short dcnShiftCnt;
 
-    /** 62 Distance from source to iso */
-    public float  srcToIso;
+    /** 76 Decon kernel stepsize. */
+    public short dcnStepSize;
 
-    /** 66 */
-    public short  tubeType;
+    /** 16 - number of bits. */
+    public int depth;
 
-    /** 68 DAS type */
-    public short  dasType;
+    /** 44 detector type. */
+    public short detect;
 
-    /** 70 Number of Decon kernels */
-    public short  numDcnK;
-
-    /** 72 Number of elements in Decon kernel */
-    public short  dcnLen;
-
-    /** 74 Decon kernel density */
-    public short  dcnDensity;
-
-    /** 76 Decon kernel stepsize */
-    public short  dcnStepSize;
-
-    /** 78 Decon kernel shift count */
-    public short  dcnShiftCnt;
-
-    /** 80 Magnet strength (in gauss) */
-    public int    magStrength;
-
-    /** 84 - 13 bytes */
-    public String patientID;
-
-    /** 97 - 25 bytes */
-    public String patientName;
-
-    /** 122 */
-    public short  patientAge;
-
-    /** 124 Patient Age notation */
-    public short  patian;
-
-    /** 126 */
-    public short  patientSex;
-
-    /** 128 Patient Weight */
-    public int    patWeight;
-
-    /** 132 Trauma Flag */
-    public short  trauma;
-
-    /** 134 - 61 bytes Patient history */
-    public String hist;
-
-    /** 195 - 13 bytes Requisition Number */
-    public String reqnum;
-
-    /** 208 - Exam date/time stamp */
-    public int    exDateTime;
-
-    /** 212 - 33 bytes Referring Physician */
-    public String refPhy;
-
-    /** 245 - 33 bytes Diagnostician&#47Radiologist */
+    /** 245 - 33 bytes Diagnostician&#47Radiologist. */
     public String diagRad;
 
-    /** 278 - 4 bytes operator */
-    public String op;
+    /** 6 - (internal use) Disk ID. */
+    public byte diskid;
 
-    /** 282 - 23 bytes Exam Description */
-    public String exDesc;
+    /** 240. */
+    public float echo1Alpha;
+
+    /** 244. */
+    public float echo1Beta;
+
+    /** 250. */
+    public short echo1Level;
+
+    /** 248. */
+    public short echo1Window;
+
+    /** 252. */
+    public float echo2Alpha;
+
+    /** 256. */
+    public float echo2Beta;
+
+    /** 262. */
+    public short echo2Level;
+
+    /** 260. */
+    public short echo2Window;
+
+    /** 264. */
+    public float echo3Alpha;
+
+    /** 268. */
+    public float echo3Beta;
+
+    /** 274. */
+    public short echo3Level;
+
+    /** 272. */
+    public short echo3Window;
+
+    /** 276. */
+    public float echo4Alpha;
+
+    /** 280. */
+    public float echo4Beta;
+
+    /** 286. */
+    public short echo4Level;
+
+    /** 284. */
+    public short echo4Window;
+
+    /** 288. */
+    public float echo5Alpha;
+
+    /** 292. */
+    public float echo5Beta;
+
+    /** 298. */
+    public short echo5Level;
+
+    /** 296. */
+    public short echo5Window;
+
+    /** 300. */
+    public float echo6Alpha;
+
+    /** 304. */
+    public float echo6Beta;
+
+    /** 310. */
+    public short echo6Level;
+
+    /** 308. */
+    public short echo6Window;
+
+    /** 312. */
+    public float echo7Alpha;
+
+    /** 316. */
+    public float echo7Beta;
+
+    /** 322. */
+    public short echo7Level;
+
+    /** 320. */
+    public short echo7Window;
+
+    /** 324. */
+    public float echo8Alpha;
+
+    /** 328. */
+    public float echo8Beta;
+
+    /** 334. */
+    public short echo8Level;
+
+    /** 332. */
+    public short echo8Window;
+
+    /** 212 echo number. */
+    public short echoNum;
+
+    /** 202 pulse echo time (usec). */
+    public int echoTime;
+
+    /** 828 effective echo spacing for EPI. */
+    public short effEchoSpace;
+
+    // filler4
+    /** 128 - Last scan location (L&#47S). */
+    public float endLoc;
+
+    /** 126 - 1 byte - RAS letter for last scan location (L&#47S). */
+    public String endRAS;
+
+    /** 80 - Patient Entry. */
+    public int entry;
+
+    /** 400 - 32 bytes. */
+    public String equipmentUID;
+
+    /** 846 PSD estimated limit in units of percent. */
+    public float estdbdtPer;
+
+    /** 850 PSD estimated limit in Tesla&#47sec. */
+    public float estdbdtts;
+
+    /** 640 Echo train length. */
+    public short ETL;
+
+    /** 334 - 13 bytes Process that allocated this record. */
+    public String exAllocKey;
+
+    /** 8 - Read as unsigned short. */
+    public int examNum;
 
     /** 305 - 3 bytes i.e. &quotMR&quot or &quotCT&quot */
     public String examType;
 
-    /** 308 Exam format */
-    public short  exFormat;
+    /** 356 (internal use) Exam Record Checksum. */
+    public int exChecksum;
 
-    /** 310 Start time(secs) of first axial in exam */
-    public long   firstAxTime;
+    /** 360 (internal use) Exam complete flag. */
+    public int exComplete;
 
-    /** 318 - 9 bytes Creator suite and host */
-    public String exSysID;
+    /** 208 - Exam date/time stamp. */
+    public int exDateTime;
 
-    /** 328 Date&#47Time of Last Change */
-    public int    exLastMod;
+    /** 348 (internal use) Number of updates to header. */
+    public int exDeltaCount;
 
-    /** 332 Non-zero indicates protocol exam */
-    public short  protocolFlag;
+    /** 282 - 23 bytes Exam Description. */
+    public String exDesc;
 
-    /** 334 - 13 bytes Process that allocated this record */
-    public String exAllocKey;
+    /** 6 - 1 byte (internal use) Disk ID for this exam. */
+    public String exDiskID;
 
-    /** 348 (internal use) Number of updates to header */
-    public int    exDeltaCount;
+    /** 308 Exam format. */
+    public short exFormat;
 
-    /** 352 - 2 bytes Genesis Version - Created */
-    public String exVersCre;
+    /** 328 Date&#47Time of Last Change. */
+    public int exLastMod;
 
-    /** 354 - 2 bytes Genesis Version - Now */
-    public String exVersCur;
+    /** 424 (internal use) Number of 3D Models. */
+    public int exModelCnt;
 
-    /** 356 (internal use) Exam Record Checksum */
-    public int    exChecksum;
+    /** 420 (internal use) Last Model Number Used. */
+    public int exModelNum;
 
-    /** 360 (internal use) Exam complete flag */
-    public int    exComplete;
+    /** 432. */
+    public int exModelsData;
 
-    /** 364 (innternl use) Last Series Number Used */
-    public int    exSeriesCt;
+    /** 428. */
+    public int exModelsLen;
 
-    /** 368 (internal use) Number of Series Archived */
-    public int    exNumArch;
+    /** 368 (internal use) Number of Series Archived. */
+    public int exNumArch;
 
-    /** 372 (internal use) Number of Series Existing */
-    public int    exNumSeries;
+    /** 372 (internal use) Number of Series Existing. */
+    public int exNumSeries;
 
-    /** 376 (internal use) Series keys for this exam */
-    public int    exSeriesLen;
+    /** 384 (internal use) Number of Unstored series. */
+    public int exNumUnSer;
 
-    /** 380 */
-    public int    exSeriesData;
-
-    /** 384 (internal use) Number of Unstored series */
-    public int    exNumUnSer;
-
-    /** 388 (internal use) Unstored Sers Keys in Exam */
-    public int    exUnSeriesLen;
-
-    /** 392 */
-    public int    exUnSeriesData;
-
-    /** 396 (internal use) number of Unarchived Series */
-    public int    exToArchCnt;
-
-    /** 400 (internal use) Unarchived series Keys in Exam */
-    public int    exToArchiveLen;
-
-    /** 404 */
-    public int    exToArchiveData;
-
-    /** 408 (internal use) number of Prosp&#47Scout Series */
-    public int    exProspCnt;
-
-    /** 412 (internal use) Prosp&#47Scout Sers Keys in Exam */
-    public int    exProspLen;
-
-    /** 416 */
-    public int    exProspData;
-
-    /** 420 (internal use) Last Model Number Used */
-    public int    exModelNum;
-
-    /** 424 (internal use) Number of 3D Models */
-    public int    exModelCnt;
-
-    /** 428 */
-    public int    exModelsLen;
-
-    /** 432 */
-    public int    exModelsData;
-
-    /** 436 Patient status */
-    public short  exStat;
-
-    /** 438 - 16 bytes */
-    public String uniqSysID;
-
-    /** 454 - 16 bytes */
-    public String serviceID;
-
-    /** 470 - 4 bytes */
-    public String mobileLoc;
-
-    /** 474 - 32 bytes */
-    public String studyUID;
-
-    /** 506 Indicates if study has complete info (DICOM&#47genesis) */
-    public short  studyStatus;
-
-    /** 508 - 516 bytes */
+    /** 508 - 516 bytes. */
     public String exPadding;
 
     // Series header for 1020 bytes, 1028 identical except for 8 more padding bytes
 
-    /** 0 - 4 bytes - Suite ID for this Series */
-    public String  seSuid;
+    /** 408 (internal use) number of Prosp&#47Scout Series. */
+    public int exProspCnt;
 
-    /** 4 - The make-unique flag - GE internal */
-    public short   seUniq;
+    /** 416. */
+    public int exProspData;
 
-    /** 6 - Disk ID for this series - GE internal */
-    public byte    seDiskID;
+    /** 412 (internal use) Prosp&#47Scout Sers Keys in Exam. */
+    public int exProspLen;
 
-    // filler0
-    /** 8 - Exam number */
-    public short   seExamNo;
+    /** 364 (innternl use) Last Series Number Used. */
+    public int exSeriesCt;
 
-    /** 10 - series number */
-    public short   seriesNum;
+    /** 380. */
+    public int exSeriesData;
 
-    // secs2date required
-    /** 12 - Allocation series Date&#47Time Stamp */
-    public int     seDateTime;
+    /** 376 (internal use) Series keys for this exam. */
+    public int exSeriesLen;
 
-    // secs2date required
-    /** 16 - Actual Series Date&#47Time Stamp */
-    public int     seActualDT;
+    /** 436 Patient status. */
+    public short exStat;
 
-    /** 20 - 30 bytes - Series Description */
-    public String  seDesc;
+    /** 318 - 9 bytes Creator suite and host. */
+    public String exSysID;
 
-    /** 50 - 9 bytes - Primary Receiver Suite and Host */
-    public String  prSysID;
+    /** 396 (internal use) number of Unarchived Series. */
+    public int exToArchCnt;
 
-    /** 59 - 9 bytes - Archiver Suite and Host */
-    public String  panSysID;
+    /** 404. */
+    public int exToArchiveData;
 
-    /** 68 - Series Type */
-    public short   seType;
+    /** 400 (internal use) Unarchived series Keys in Exam. */
+    public int exToArchiveLen;
 
-    /** 70 - Series from which prescribed */
-    public short   seSource;
+    /** 4 (internal use) The Make_Unique Flag. */
+    public short exUniq;
 
-    /** 72 - Most-like Plane (for L&#47S) */
-    public short   sePlane;
+    /** 392. */
+    public int exUnSeriesData;
 
-    /** 74 - Scout or Axial (for CT) */
-    public short   scanType;
+    /** 388 (internal use) Unstored Sers Keys in Exam. */
+    public int exUnSeriesLen;
 
-    /** 76 - Patient Poisition */
-    public int     position;
+    /** 352 - 2 bytes Genesis Version - Created. */
+    public String exVersCre;
 
-    /** 80 - Patient Entry */
-    public int     entry;
+    /** 354 - 2 bytes Genesis Version - Now. */
+    public String exVersCur;
 
-    /** 84 - 3 bytes - Anatomical Reference */
-    public String  anatomicalRef;
+    /** 310 Start time(secs) of first axial in exam. */
+    public long firstAxTime;
 
-    // filler1
-    /** 88 - Horizontal landmark */
-    public float   lmHor;
+    /** 574 Phase contrast flow axis. */
+    public short flax;
 
-    /** 92 - 25 bytes - Scan Protocol Name */
-    public String  scanProtocolName;
+    // For MR header continues (1022 bytes)
+    /** 190 foreign image revision. */
+    public String forImgRev;
 
-    // filler2
-    /** 118 - greater than zero if image used contrast (L&#47S) */
-    public short    seContrast;
+    /** 34. */
+    public float FOVX;
 
-    /** 120 - 1 byte - RAS letter for first scan location (L&#47S) */
-    public String   startRAS;
+    /** 38. */
+    public float FOVY;
 
-    // filler3
-    /** 122 - First scan location (L&#47S) */
-    public float    startLoc;
+    /** 642 Fractional echo-effective TE flag. */
+    public short fracEcho;
 
-    /** 126 - 1 byte - RAS letter for last scan location (L&#47S) */
-    public String   endRAS;
+    /** 742 Frequency Direction. */
+    public short freqDir;
 
-    // filler4
-    /** 128 - Last scan location (L&#47S) */
-    public float    endLoc;
+    /** 818 gradient offset in x-direction. */
+    public short gOffsetX;
 
-    /** 132 - Last Pulse Sequence Used (L&#47S) */
-    public short    sePseq;
+    /** 820 gradient offset in y-direction. */
+    public short gOffsetY;
 
-    /** 134 - (internal use) Image Sort Order (L&#47S) */
-    public short    seSortOrder;
+    /** 822 gradient offset in z-direction. */
+    public short gOffsetZ;
 
-    /** 136 - Landmark counter */
-    public int      seLandmarkCnt;
+    /** 400 Graphically prescribed. */
+    public short gpre;
 
-    /** 140 - Number of acquisitions */
-    public short    seNacq;
+    /** 224 cardiac heart rate (beats per minute). */
+    public short heartRate;
 
-    /** 142 - Starting number for baselines */
-    public short    xBaseSt;
+    /** 12 - height of image. */
+    public int height;
 
-    /** 144 - Ending number for baselines */
-    public short    xBaseEnd;
+    /** 134 - 61 bytes Patient history. */
+    public String hist;
 
-    /** 146 - Starting number for enhanced scans */
-    public short    xenhSt;
+    /** 10 - 33 characters hospital name. */
+    public String hospName;
 
-    /** 148 - Ending number for enhanced scans */
-    public short    xenhEnd;
+    /** 506 13 characters Process that allocated this record. */
+    public String im_alloc_key;
 
-    // secs2date required
-    /** 150 - Date&#47Time of last change */
-    public int      seLastMod;
+    /** 544 (internal use) Image Archive Flag. */
+    public int im_archived;
 
-    /** 154 - 13 bytes - Process that allocated this record */
-    public String   seAllocKey;
+    /** 540 (internal use) AcqRecon record checksum. */
+    public int im_checksum;
 
-    // filler5
-    /** 168 - (internal use) number of updates to header */
-    public int      seDeltaCnt;
+    /** 548 (Internal use) Image Complete Flag. */
+    public int im_complete;
 
-    /** 172 - 2 bytes - Genesis Version - Created */
-    public String   seVersCre;
+    /** 520. */
+    public int im_lastmod;
 
-    /** 174 - 2 bytes - Genesis Version - Now */
-    public String   seVersCur;
+    /** 528 PixelData size - as stored. */
+    public int im_pds_a;
 
-    /** 176 - Pixel data size - as stored */
-    public float    sePdsA;
+    /** 532 PixelData size - compressed. */
+    public int im_pds_c;
 
-    /** 180 - Pixel data size - Compressed */
-    public float    sePdsC;
+    /** 536 PixelData size - Uncompressed. */
+    public int im_pds_u;
 
-    /** 184 - Pixel data size - Uncompressed */
-    public float    sePdsU;
+    /** 524 2 characters Genesis Version - Created. */
+    public String im_verscre;
 
-    /** 188 - (internal use) Series Record checksum */
-    public int      seChecksum;
+    /** 526 2 characters Genesis Version - Now. */
+    public String im_verscur;
 
-    /** 192 - (internal use) Series Complete Flag */
-    public int      seComplete;
+    /** 584 Magnitude, Phase, Imaginary, or Real. */
+    public short image_type;
 
-    /** 196 - (internal use) Number of Images Archived */
-    public int      seNumArch;
+    /** 746 32 characters Image Unique ID. */
+    public String image_uid;
 
-    /** 200 - (internal use) Last Image Number Used */
-    public int      seImageCt;
+    /** 42. */
+    public float imageDimX;
 
-    /** 204 - (internal use) Number of Images Existing */
-    public int      seNumImages;
+    /** 46. */
+    public float imageDimY;
 
-    /** 208 - (internal use) Image keys for this Series */
-    public int      imagesLen;
+    /** 12. */
+    public short imageNum;
 
-    /** 212 */
-    public int      imagesData;
+    /** 212. */
+    public int imagesData;
 
-    /** 216 - (internal use) Number of Unstored Images */
-    public int      numUnImg;
+    /** 208 - (internal use) Image keys for this Series. */
+    public int imagesLen;
 
-    /** 220 - (internal use) Unstored Image keys in Series */
-    public int      unImagesLen;
+    /** 182 Bottom Right Hand Corner Anterior. */
+    public float imgBRHC_A;
 
-    /** 224 */
-    public int      unImagesData;
+    /** 178 Bottom Right Hand Corner Right. */
+    public float imgBRHC_R;
 
-    /** 228 - (internal use) number of Unarchived images */
-    public int      toArchiveCnt;
+    /** 186 Bottom Right Hand Corner Superior. */
+    public float imgBRHC_S;
 
-    /** 232 - (internal use) Unarchived images keys in Series */
-    public int      toArchiveLen;
+    /** 134 Anterior(i.e. X positive to anterior) */
+    public float imgCtrA;
 
-    /** 236 */
-    public int      toArchiveData;
+    /** 130 Right (i.e. X positive to right) */
+    public float imgCtrR;
 
-    /** 240 */
-    public float    echo1Alpha;
+    /** 138 Superior(i.e. X positive to superior) */
+    public float imgCtrS;
 
-    /** 244 */
-    public float    echo1Beta;
+    /** 8 - Read as unsigned short. */
+    public int imgHdrExamNum;
 
-    /** 248 */
-    public short    echo1Window;
-
-    /** 250 */
-    public short    echo1Level;
-
-    /** 252 */
-    public float    echo2Alpha;
-
-    /** 256 */
-    public float    echo2Beta;
-
-    /** 260 */
-    public short    echo2Window;
-
-    /** 262 */
-    public short    echo2Level;
-
-    /** 264 */
-    public float    echo3Alpha;
-
-    /** 268 */
-    public float    echo3Beta;
-
-    /** 272 */
-    public short    echo3Window;
-
-    /** 274 */
-    public short    echo3Level;
-
-    /** 276 */
-    public float    echo4Alpha;
-
-    /** 280 */
-    public float    echo4Beta;
-
-    /** 284 */
-    public short    echo4Window;
-
-    /** 286 */
-    public short    echo4Level;
-
-    /** 288 */
-    public float    echo5Alpha;
-
-    /** 292 */
-    public float    echo5Beta;
-
-    /** 296 */
-    public short    echo5Window;
-
-    /** 298 */
-    public short    echo5Level;
-
-    /** 300 */
-    public float    echo6Alpha;
-
-    /** 304 */
-    public float    echo6Beta;
-
-    /** 308 */
-    public short    echo6Window;
-
-    /** 310 */
-    public short    echo6Level;
-
-    /** 312 */
-    public float    echo7Alpha;
-
-    /** 316 */
-    public float    echo7Beta;
-
-    /** 320 */
-    public short    echo7Window;
-
-    /** 322 */
-    public short    echo7Level;
-
-    /** 324 */
-    public float    echo8Alpha;
-
-    /** 328 */
-    public float    echo8Beta;
-
-    /** 332 */
-    public short    echo8Window;
-
-    /** 334 */
-    public short    echo8Level;
-
-    /** 336  - 32 bytes */
-    public String   seriesUID;
-
-    /** 368  - 32 bytes */
-    public String   landmarkUID;
-
-    /** 400  - 32 bytes */
-    public String   equipmentUID;
-
-    /** 432  - 588 bytes */
-    public String   sePadding;
+    /** 10. */
+    public short imgHdrSeriesNum;
 
 
     // Image header for 1022 bytes, 1044 identical except for 22 more padding bytes */
-    /** 0 - 4 bytes - suite ID */
-    public String  imgHdrSuiteID;
+    /** 0 - 4 bytes - suite ID. */
+    public String imgHdrSuiteID;
 
-    /** 4 - (internal use) Make-Unique Flag */
-    public short   uniq;
+    /** 654 Level value. */
+    public short imgLevel;
 
-    /** 6 - (internal use) Disk ID */
-    public byte    diskid;
+    /** 126. */
+    public float imgLoc;
 
-    /** 8 - Read as unsigned short */
-    public int     imgHdrExamNum;
+    /** 246 Images per cardiac .1 cycle. */
+    public short imgPCycle;
 
-    /** 10  */
-    public short   imgHdrSeriesNum;
+    /** 110 - image from which prescribed. */
+    public short imgrx;
 
-    /** 12 */
-    public short   imageNum;
+    /** 158 Top Left Hand Corner Anterior. */
+    public float imgTLHC_A;
 
-    /** 14  allocation date time */
-    public int     dateTime;
+    /** 154 Top Left Hand Corner Right. */
+    public float imgTLHC_R;
 
-    /** 18 */
-    public int     actualDateTime;
+    /** 162 Top Left Hand Corner Superior. */
+    public float imgTLHC_S;
 
-    /** 22 scan duration in seconds */
-    public float   scTime;
+    /** 170 Top Right Hand Corner Anterior. */
+    public float imgTRHC_A;
 
-    /** 26 in mm */
-    public float   sliceThickness;
+    /** 166 Top Right Hand Corner Right. */
+    public float imgTRHC_R;
 
-    /** 30 */
-    public short   matrixSizeX;
+    /** 174 Top Right Hand Corner Superior. */
+    public float imgTRHC_S;
 
-    /** 32 */
-    public short   matrixSizeY;
+    /** 652 Window value. */
+    public short imgWindow;
 
-    /** 34 */
-    public float   FOVX;
+    /** 298 Imaging mode. */
+    public short iMode;
 
-    /** 38 */
-    public float   FOVY;
+    /** 736 GE Image Integrity. */
+    public short integrity;
 
-    /** 42 */
-    public float   imageDimX;
+    /** 402 Interimage&#47interloc delay (uSec). */
+    public long intr_del;
 
-    /** 46 */
-    public float   imageDimY;
+    /** 198 pulse inversion time (usec). */
+    public int inverTime;
 
-    /** 50 */
-    public float   pixelResX;
+    /** 300 Imaging options. */
+    public long iOptions;
 
-    /** 54 */
-    public float   pixelResY;
+    /** 72 - 17 bytes. */
+    public String IVCntrstAgent;
 
-    /** 58 - 14 bytes */
-    public String  pixelID;
+    /** 368 - 32 bytes. */
+    public String landmarkUID;
 
-    /** 72 - 17 bytes */
-    public String  IVCntrstAgent;
+    /** 76 - length of. */
+    public int lenCmprsnHdr;
 
-    /** 89 - 17 bytes */
-    public String  OralCntrstAgent;
+    /** 108 - length of. */
+    public int lenDBHdr;
 
-    /** 106 */
-    public short   contrastMode;
+    /** 136 - length of. */
+    public int lenExamHdr;
 
-    /** 108 - series from which prescribed */
-    public short   serrx;
+    /** 100 - length of. */
+    public int lenGraphics;
 
-    /** 110 - image from which prescribed */
-    public short   imgrx;
+    /** 84 - length of. */
+    public int lenHistoHdr;
 
-    /** 112 - (8&#4716) bits */
-    public short   screenFormat;
+    /** 152 - length of. */
+    public int lenImageHdr;
 
-    /** 114 */
-    public short   planeType;
+    /** 144 - length of. */
+    public int lenSeriesHdr;
 
-    /** 116 Spacing between scans (mm?) */
-    public float   scanSpacing;
+    /** 128 - length of. */
+    public int lenSuiteHdr;
 
-    /** 120 image compression type for allocation */
-    public short   compress;
+    /** 92 - length of. */
+    public int lenTextPlane;
 
-    /** 122 Scout Type (AP or lateral) */
-    public short   scoutType;
+    /** 60 - length of UID. */
+    public int lenUID;
 
-    /** 124 1 byte RAS letter of image location */
-    public String  loc_ras;
+    /** 68 - length of. */
+    public int lenUnpackHdr;
 
-    /** 126 */
-    public float   imgLoc;
+    /** 120 - length of. */
+    public int lenUsrDefData;
 
-    /** 130 Right   (i.e. X positive to right) */
-    public float   imgCtrR;
+    // filler1
+    /** 88 - Horizontal landmark. */
+    public float lmHor;
 
-    /** 134 Anterior(i.e. X positive to anterior) */
-    public float   imgCtrA;
+    /** 124 1 byte RAS letter of image location. */
+    public String loc_ras;
 
-    /** 138 Superior(i.e. X positive to superior) */
-    public float   imgCtrS;
+    /** 0x494d4746 or "IMGF" or 1229801286. */
+    public int magicNumber;
 
-    /** 142 Normal R coordinate */
-    public float   norm_R;
+    /** 80 Magnet strength (in gauss). */
+    public int magStrength;
 
-    /** 146 Normal A coordinate */
-    public float   norm_A;
+    /** 730 Magnitude Weighting Flag. */
+    public short magWgtFlag;
 
-    /** 150 Normal S coordinate */
-    public float   norm_S;
+    /** 30. */
+    public short matrixSizeX;
 
-    /** 154 Top Left Hand Corner Right */
-    public float   imgTLHC_R;
+    /** 32. */
+    public short matrixSizeY;
 
-    /** 158 Top Left Hand Corner Anterior */
-    public float   imgTLHC_A;
+    /** 256 minimum delay after trigger (usec). */
+    public int minDAT;
 
-    /** 162 Top Left Hand Corner Superior */
-    public float   imgTLHC_S;
+    /** 470 - 4 bytes. */
+    public String mobileLoc;
 
-    /** 166 Top Right Hand Corner Right */
-    public float   imgTRHC_R;
+    /** 238 Monitor SAR Flag. */
+    public short monSar;
 
-    /** 170 Top Right Hand Corner Anterior */
-    public float   imgTRHC_A;
+    /** 254 Flip angle for grass scans (degrees). */
+    public short mr_flip;
 
-    /** 174 Top Right Hand Corner Superior */
-    public float   imgTRHC_S;
+    /** 990 spare space. */
+    public String mr_padding;
 
-    /** 178 Bottom Right Hand Corner Right */
-    public float   imgBRHC_R;
+    /** 210 number of echoes. */
+    public short nEchoes;
 
-    /** 182 Bottom Right Hand Corner Anterior */
-    public float   imgBRHC_A;
+    /** 858 Negative scan spacing for overlap slices. */
+    public float negScanSpacing;
 
-    /** 186 Bottom Right Hand Corner Superior */
-    public float   imgBRHC_S;
+    /** 826 number of EPI shots. */
+    public short nEPI;
 
-    // For MR header continues (1022 bytes)
-    /** 190 foreign image revision */
-    public String  forImgRev;
+    /** 218 Number of excitations. */
+    public float NEX;
 
-    /** 194 pulse repetition time (usec) */
-    public int     pulseRepTime;
+    /** 146 Normal A coordinate. */
+    public float norm_A;
 
-    /** 198 pulse inversion time (usec) */
-    public int     inverTime;
+    /** 142 Normal R coordinate. */
+    public float norm_R;
 
-    /** 202 pulse echo time (usec) */
-    public int     echoTime;
+    /** 150 Normal S coordinate. */
+    public float norm_S;
 
-    /** 206 second echo echo (usec) */
-    public int     te2;
+    /** 738 Number of Phases. */
+    public int nPhase;
 
-    /** 210 number of echoes */
-    public short   nEchoes;
+    /** 46 Number of cells in det. */
+    public long numCells;
 
-    /** 212 echo number */
-    public short   echoNum;
+    /** 70 Number of Decon kernels. */
+    public short numDcnK;
 
-    /** 214 */
-    public float   tableDelta;
+    /** 216 - (internal use) Number of Unstored Images. */
+    public int numUnImg;
 
-    /** 218 Number of excitations */
-    public float   NEX;
-
-    /** 222 Continuous slices flag */
-    public short   contig;
-
-    /** 224 cardiac heart rate (beats per minute) */
-    public short   heartRate;
-
-    /** 226 Delay time after trigger (msec) */
-    public int     tDel;
-
-    /** 230 Average SAR */
-    public float   sarAvg;
-
-    /** 234 Peak SAR */
-    public float   sarPeak;
-
-    /** 238 Monitor SAR Flag */
-    public short   monSar;
-
-    /** 240 Trigger window (&#37 of R-R interval) */
-    public short   trgWindow;
-
-    /** 242 Cardiac repertition time */
-    public float   repTime;
-
-    /** 246 Images per cardiac .1 cycle */
-    public short   imgPCycle;
-
-    /** 248 Actual transmit gain (.1 db) */
-    public short   xmtGain;
-
-    /** 250 Actual receive gain analog (.1db) */
-    public short   rcvGain1;
-
-    /** 252 Actual receive gain digital (.1db) */
-    public short   rcvGain2;
-
-    /** 254 Flip angle for grass scans (degrees) */
-    public short   mr_flip;
-
-    /** 256 minimum delay after trigger (usec) */
-    public int     minDAT;
-
-    /** 260 Total cardiac phase prescribed */
-    public short   cPhase;
-
-    /** 262 Swap phase-frequency axis */
-    public short   swapPF;
-
-    /** 264 Pause interval (slices) */
-    public short   pauseInterval;
-
-    /** 266 */
-    public float   pauseTime;
-
-    /** 270 */
-    public int     obliquePlane;
-
-    /** 274 Slice offsets on frequency axis */
-    public int     slocfov;
-
-    /** 278 Center Frequency (0.1 Hz) */
-    public int     xmtFreq;
-
-    /** 282 Auto Center Frequency (0.1 Hz) */
-    public int     autoXmtFreq;
-
-    /** 286 Auto Transmit Gain (0.1 dB) */
-    public short   autoXmtGain;
-
-    /** 288 PreScan R1-Analog */
-    public short   prescan_r1;
-
-    /** 290 PreScan R2-DIgital  */
-    public short   prescan_r2;
-
-    /** 292 Bitmap defining user Cvs */
-    public int     user_bitmap;
-
-    /** 296 Center frequency method */
-    public short   cenFreq;
-
-    /** 298 Imaging mode */
-    public short   iMode;
-
-    /** 300 Imaging options */
-    public long    iOptions;
-
-    /** 304 Pulse sequence */
-    public short   pSeq;
-
-    /** 306 */
-    public short   pulseSeqMode;
-
-    /** 308 33 characters */
-    public String  pulseSeqName;
-
-    /** 342 PSD Creation Date and Time */
-    public int     psd_dateTime;
-
-    /** 346 13 characters */
-    public String  psd_iname;
-
-    /** 360 */
-    public short   coilType;
-
-    /** 362 17 characters */
-    public String  coilName;
-
-    /** 380 */
-    public short   surfaceCoilType;
-
-    /** 382 Extremity Coil Flag */
-    public short   surfcext;
-
-    /** 384 RawData Run Number */
-    public int     rawRunNum;
-
-    /** 388 Calibrated Field Strength (x10 uGauss) */
-    public int     calFldStr;
-
-    /** 392 SAT fat&#47water&#47none */
-    public short   supp_tech;
-
-    /** 394 Variable Bandwidth (Hz) */
-    public float   vbw;
-
-    /** 398 Number of slices in this scan group */
-    public short   slquant;
-
-    /** 400 Graphically prescribed */
-    public short   gpre;
-
-    /** 402 Interimage&#47interloc delay (uSec) */
-    public long    intr_del;
-
-    /** 406 User Variable 0 */
-    public float   user0;
-
-    /** 410 User Variable 1 */
-    public float   user1;
-
-    /** 414 User Variable 2 */
-    public float   user2;
-
-    /** 418 User Variable 3 */
-    public float   user3;
-
-    /** 422 User Variable 4 */
-    public float   user4;
-
-    /** 426 User Variable 5 */
-    public float   user5;
-
-    /** 430 User Variable 6 */
-    public float   user6;
-
-    /** 434 User Variable 7 */
-    public float   user7;
-
-    /** 438 User Variable 8 */
-    public float   user8;
-
-    /** 442 User Variable 9 */
-    public float   user9;
-
-    /** 446 User Variable 10 */
-    public float   user10;
-
-    /** 450 User Variable 11 */
-    public float   user11;
-
-    /** 454 User Variable 12 */
-    public float   user12;
-
-    /** 458 User Variable 13 */
-    public float   user13;
-
-    /** 462 User Variable 14 */
-    public float   user14;
-
-    /** 466 User Variable 15 */
-    public float   user15;
-
-    /** 470 User Variable 16 */
-    public float   user16;
-
-    /** 474 User Variable 17 */
-    public float   user17;
-
-    /** 478 User Variable 18 */
-    public float   user18;
-
-    /** 482 User Variable 19 */
-    public float   user19;
-
-    /** 486 User Variable 20 */
-    public float   user20;
-
-    /** 490 User Variable 21 */
-    public float   user21;
-
-    /** 494 User Variable 22 */
-    public float   user22;
-
-    /** 498 Projection Angle */
-    public float   projectAngle;
-
-    /** 502 Concat Sat Type Flag */
-    public float   user24;
-
-    /** 506 13 characters Process that allocated this record */
-    public String  im_alloc_key;
-
-    /** 520 */
-    public int     im_lastmod;
-
-    /** 524 2 characters Genesis Version - Created */
-    public String  im_verscre;
-
-    /** 526 2 characters Genesis Version - Now */
-    public String  im_verscur;
-
-    /** 528 PixelData size - as stored */
-    public int     im_pds_a;
-
-    /** 532 PixelData size - compressed */
-    public int     im_pds_c;
-
-    /** 536 PixelData size - Uncompressed */
-    public int     im_pds_u;
-
-    /** 540 (internal use) AcqRecon record checksum */
-    public int     im_checksum;
-
-    /** 544 (internal use) Image Archive Flag */
-    public int     im_archived;
-
-    /** 548 (Internal use) Image Complete Flag */
-    public int     im_complete;
-
-    /** 552 Bitmap of SAT selections */
-    public short   satbits;
-
-    /** 554 Surface Coil Intensity Correction Flag */
-    public short   scic;
-
-    /** 556 R-side pulse rel to lndmrk */
-    public short   satxloc1;
-
-    /** 558 L-side pulse rel to lndmrk */
-    public short   satxloc2;
-
-    /** 560 A-side SAT pulse rel to lndmrk */
-    public short   satyloc1;
-
-    /** 562 P-side SAT pulse rel to lndmrk */
-    public short   satyloc2;
-
-    /** 564 S-side SAT pulse rel to lndmrk */
-    public short   satzloc1;
-
-    /** 566 I-side SAT pulse rel to lndmrk */
-    public short   satzloc2;
-
-    /** 568 Thickness of X-axis SAT pulse */
-    public short   satxthick;
-
-    /** 570 Thickness of Y-axis SAT pulse */
-    public short   satythick;
-
-    /** 572 Thickness of Z-axis SAT pulse */
-    public short   satzthick;
-
-    /** 574 Phase contrast flow axis */
-    public short   flax;
-
-    /** 576 Phase contrast velocity encoding (mm&#47sec) */
-    public short   venc;
-
-    /** 578 Slice Thickness */
-    public short   thk_disclmr;
-
-    /** 580 Auto&#47Manual Prescan flag */
-    public short   ps_flag;
-
-    /** 582 Bitmap of changed values */
-    public short   ps_status;
-
-    /** 584 Magnitude, Phase, Imaginary, or Real */
-    public short   image_type;
-
-    /** 586 Collapse image */
-    public short   vas_collapse;
-
-    /** 588 User Variable 23 */
-    public float   user23n;
-
-    /** 592 User Variable 24 */
-    public float   user24n;
-
-    /** 596 Projection Algorithm */
-    public short   proj_alg;
-
-    /** 598 13 characters Projection Algorithm Name */
-    public String  proj_name;
-
-    /** 612 X axis rotation */
-    public float   xAxisRot;
-
-    /** 616 Yaxis rotation */
-    public float   yAxisRot;
-
-    /** 620 Z axis rotation */
-    public float   zAxisRot;
-
-    /** 624 Lower range of pixels 1 */
-    public int     threshMin1;
-
-    /** 628 Upper range of pixels 1 */
-    public int     threshMax1;
-
-    /** 632 Lower range of pixels 2 */
-    public int     threshMin2;
-
-    /** 636 Upper range of pixels 2 */
-    public int     threshMax2;
-
-    /** 640 Echo train length  */
-    public short   ETL;
-
-    /** 642 Fractional echo-effective TE flag */
-    public short   fracEcho;
-
-    /** 644 Prepartory pulse option */
-    public short   prepPulse;
-
-    /** 646 Cardiac phase number */
-    public short   cPhaseNum;
-
-    /** 648 Variable echo flag */
-    public short   varEcho;
-
-    /** 650 Reference image field */
-    public String  refImg;
-
-    /** 651 Summary image field */
-    public String  sumImg;
-
-    /** 652 Window value */
-    public short   imgWindow;
-
-    /** 654 Level value */
-    public short   imgLevel;
-
-    /** 656 Integer Slop Field 1 */
-    public int     slop_int_1;
-
-    /** 660 Integer Slop Field 2 */
-    public int     slop_int_2;
-
-    /** 664 Integer Slop Field 3 */
-    public int     slop_int_3;
-
-    /** 668 Integer Slop Field 4 */
-    public int     slop_int_4;
-
-    /** 672 Integer Slop Field 5 */
-    public int     slop_int_5;
-
-    /** 676 Float Slop Field 1 */
-    public float   slop_float_1;
-
-    /** 680 Float Slop Field 2 */
-    public float   slop_float_2;
-
-    /** 684 Float Slop Field 3 */
-    public float   slop_float_3;
-
-    /** 688 Float Slop Field 4 */
-    public float   slop_float_4;
-
-    /** 692 Float Slop Field 5 */
-    public float   slop_float_5;
-
-    /** 696 16 characters String Slop Field 1 */
-    public String  slop_str_1;
-
-    /** 712 16 characters String Slop Field 2 */
-    public String  slop_str_2;
-
-    /** 728 Scan Acquisition Number */
-    public short   scanAcqNum;
-
-    /** 730 Magnitude Weighting Flag */
-    public short   magWgtFlag;
-
-    /** 732 Scale Weighting Venc (Velocity Encoding&#47PI) */
-    public float   vencScale;
-
-    /** 736 GE Image Integrity */
-    public short   integrity;
-
-    /** 738 Number of Phases */
-    public int     nPhase;
-
-    /** 742 Frequency Direction */
-    public short   freqDir;
-
-    /** 744 Vascular Mode */
-    public short   vasMode;
-
-    /** 746 32 characters Image Unique ID */
-    public String  image_uid;
-
-    /** 778 32 characters Service Obj Clas Unique ID */
-    public String  sop_uid;
-
-    /** 816 bitmap of prescan options */
-    public short   preScanOpts;
-
-    /** 818 gradient offset in x-direction */
-    public short   gOffsetX;
-
-    /** 820 gradient offset in y-direction */
-    public short   gOffsetY;
-
-    /** 822 gradient offset in z-direction */
-    public short   gOffsetZ;
-
-    /** 824 identifies image as original or unoriginal */
-    public short   unOriginal;
-
-    /** 826 number of EPI shots */
-    public short   nEPI;
-
-    /** 828 effective echo spacing for EPI */
-    public short   effEchoSpace;
-
-    /** 830 views per segment */
-    public short   viewsPerSeg;
-
-    /** 832 respiratory rate, breaths per minute */
-    public short   rbpm;
-
-    /** 834 repiratory trigger point as percent of max */
-    public short   rtPoint;
-
-    /** 836 type of receiver used */
-    public short   rcvType;
-
-    /** 838 peak rate of change in gradient field, tesla&#47sec */
-    public float   dbdt;
-
-    /** 842 limit in units of percent of theoretical curve */
-    public float   dbdtPer;
-
-    /** 846 PSD estimated limit in units of percent */
-    public float   estdbdtPer;
-
-    /** 850 PSD estimated limit in Tesla&#47sec */
-    public float   estdbdtts;
-
-    /** 854 Avg head SAR */
-    public float   sarAvgHead;
-
-    /** 858 Negative scan spacing for overlap slices */
-    public float   negScanSpacing;
+    /** 270. */
+    public int obliquePlane;
 
     /** 862 offset Frequency_Mag. Transfer */
-    public int     offsetFreq;
+    public int offsetFreq;
 
-    /** 866 Defines how following user CVs are to be filled in */
-    public int     userUsageTag;
+    /** 278 - 4 bytes operator. */
+    public String op;
 
-    /** 870 Describes what process fills in the user CVs,
-    * ifcc or TIR */
-    public int     userFillMapMSW;
+    /** 89 - 17 bytes. */
+    public String OralCntrstAgent;
 
-    /** 874 Describes what process fills in the user CVs,
-    * ifcc or TIR */
-    public int     userFillMapLSW;
+    /** 59 - 9 bytes - Archiver Suite and Host. */
+    public String panSysID;
 
-    /** 878 User Variable 25 */
-    public float   user25;
+    /** 124 Patient Age notation. */
+    public short patian;
 
-    /** 882 User Variable 26 */
-    public float   user26;
+    /** 122. */
+    public short patientAge;
 
-    /** 886 User Variable 27 */
-    public float   user27;
+    /** 84 - 13 bytes. */
+    public String patientID;
 
-    /** 890 User Variable 28 */
-    public float   user28;
+    /** 97 - 25 bytes. */
+    public String patientName;
 
-    /** 894 User Variable 29 */
-    public float   user29;
+    /** 126. */
+    public short patientSex;
 
-    /** 898 User Variable 30 */
-    public float   user30;
+    /** 128 Patient Weight. */
+    public int patWeight;
 
-    /** 902 User Variable 31 */
-    public float   user31;
+    /** 264 Pause interval (slices). */
+    public short pauseInterval;
 
-    /** 906 User Variable 32 */
-    public float   user32;
+    /** 266. */
+    public float pauseTime;
 
-    /** 910 User Variable 33 */
-    public float   user33;
+    /** 58 - 14 bytes. */
+    public String pixelID;
 
-    /** 914 User Variable 34 */
-    public float   user34;
+    /** 50. */
+    public float pixelResX;
 
-    /** 918 User Variable 35 */
-    public float   user35;
+    /** 54. */
+    public float pixelResY;
 
-    /** 922 User Variable 36 */
-    public float   user36;
+    /** 114. */
+    public short planeType;
 
-    /** 926 User Variable 37 */
-    public float   user37;
+    /** 76 - Patient Poisition. */
+    public int position;
 
-    /** 930 User Variable 38 */
-    public float   user38;
+    /** 644 Prepartory pulse option. */
+    public short prepPulse;
 
-    /** 934 User Variable 39 */
-    public float   user39;
+    /** 288 PreScan R1-Analog. */
+    public short prescan_r1;
 
-    /** 938 User Variable 40 */
-    public float   user40;
+    /** 290 PreScan R2-DIgital. */
+    public short prescan_r2;
 
-    /** 942 User Variable 41 */
-    public float   user41;
+    /** 816 bitmap of prescan options. */
+    public short preScanOpts;
 
-    /** 946 User Variable 42 */
-    public float   user42;
+    /** 596 Projection Algorithm. */
+    public short proj_alg;
 
-    /** 950 User Variable 43 */
-    public float   user43;
+    /** 598 13 characters Projection Algorithm Name. */
+    public String proj_name;
 
-    /** 954 User Variable 44 */
-    public float   user44;
+    /** 498 Projection Angle. */
+    public float projectAngle;
 
-    /** 958 User Variable 45 */
-    public float   user45;
+    /** 332 Non-zero indicates protocol exam. */
+    public short protocolFlag;
 
-    /** 962 User Variable 46 */
-    public float   user46;
+    /** 50 - 9 bytes - Primary Receiver Suite and Host. */
+    public String prSysID;
 
-    /** 966 User Variable 47 */
-    public float   user47;
+    /** 580 Auto&#47Manual Prescan flag. */
+    public short ps_flag;
 
-    /** 970 User variable 48 */
-    public float   user48;
+    /** 582 Bitmap of changed values. */
+    public short ps_status;
 
-    /** 974 Integer Slop Field 6 */
-    public int     slop_int_6;
+    /** 342 PSD Creation Date and Time. */
+    public int psd_dateTime;
 
-    /** 978 Integer Slop Field 7 */
-    public int     slop_int_7;
+    /** 346 13 characters. */
+    public String psd_iname;
 
-    /** 982 Integer Slop Field 8 */
-    public int     slop_int_8;
+    /** 304 Pulse sequence. */
+    public short pSeq;
 
-    /** 986 Integer Slop Field 9 */
-    public int     slop_int_9;
+    /** 72 - pointer to. */
+    public int ptrCmprsnHdr;
 
-    /** 990 spare space */
-    public String  mr_padding;
+    /** 104 - pointer to. */
+    public int ptrDBHdr;
 
-    private int    year;
+    /** 132 - pointer to. */
+    public int ptrExamHdr;
+
+    /** 96 - pointer to. */
+    public int ptrGraphics;
+
+    /** 80 - pointer to. */
+    public int ptrHistoHdr;
+
+    /** 4 - byte displacement to pixel data. */
+    public int ptrImage;
+
+    /** 148 - pointer to. */
+    public int ptrImageHdr;
+
+    /** 140 - pointer to. */
+    public int ptrSeriesHdr;
+
+    /** 124 - pointer to. */
+    public int ptrSuiteHdr;
+
+    /** 88 - pointer to. */
+    public int ptrTextPlane;
+
+    /** 56 - pointer to unique image identifier (UID). */
+    public int ptrUID;
+
+    /** 64 - pointer to. */
+    public int ptrUnpackHdr;
+
+    /** 116 - pointer to. */
+    public int ptrUsrDefData;
+
+    /** 194 pulse repetition time (usec). */
+    public int pulseRepTime;
+
+    /** 306. */
+    public short pulseSeqMode;
+
+    /** 308 33 characters. */
+    public String pulseSeqName;
+
+    /** 384 RawData Run Number. */
+    public int rawRunNum;
+
+    /** 832 respiratory rate, breaths per minute. */
+    public short rbpm;
+
+    /** 250 Actual receive gain analog (.1db). */
+    public short rcvGain1;
+
+    /** 252 Actual receive gain digital (.1db). */
+    public short rcvGain2;
+
+    /** 836 type of receiver used. */
+    public short rcvType;
+
+    /** 650 Reference image field. */
+    public String refImg;
+
+    /** 212 - 33 bytes Referring Physician. */
+    public String refPhy;
+
+    /** 242 Cardiac repertition time. */
+    public float repTime;
+
+    /** 195 - 13 bytes Requisition Number. */
+    public String reqnum;
+
+    /** 834 repiratory trigger point as percent of max. */
+    public short rtPoint;
+
+    /** 230 Average SAR. */
+    public float sarAvg;
+
+    /** 854 Avg head SAR. */
+    public float sarAvgHead;
+
+    /** 234 Peak SAR. */
+    public float sarPeak;
+
+    /** 552 Bitmap of SAT selections. */
+    public short satbits;
+
+    /** 556 R-side pulse rel to lndmrk. */
+    public short satxloc1;
+
+    /** 558 L-side pulse rel to lndmrk. */
+    public short satxloc2;
+
+    /** 568 Thickness of X-axis SAT pulse. */
+    public short satxthick;
+
+    /** 560 A-side SAT pulse rel to lndmrk. */
+    public short satyloc1;
+
+    /** 562 P-side SAT pulse rel to lndmrk. */
+    public short satyloc2;
+
+    /** 570 Thickness of Y-axis SAT pulse. */
+    public short satythick;
+
+    /** 564 S-side SAT pulse rel to lndmrk. */
+    public short satzloc1;
+
+    /** 566 I-side SAT pulse rel to lndmrk. */
+    public short satzloc2;
+
+    /** 572 Thickness of Z-axis SAT pulse. */
+    public short satzthick;
+
+    /** 728 Scan Acquisition Number. */
+    public short scanAcqNum;
+
+    /** 92 - 25 bytes - Scan Protocol Name. */
+    public String scanProtocolName;
+
+    /** 116 Spacing between scans (mm?). */
+    public float scanSpacing;
+
+    /** 74 - Scout or Axial (for CT). */
+    public short scanType;
+
+    /** 554 Surface Coil Intensity Correction Flag. */
+    public short scic;
+
+    /** 122 Scout Type (AP or lateral). */
+    public short scoutType;
+
+    /** 112 - (8&#4716) bits. */
+    public short screenFormat;
+
+    /** 22 scan duration in seconds. */
+    public float scTime;
+
+    // secs2date required
+    /** 16 - Actual Series Date&#47Time Stamp. */
+    public int seActualDT;
+
+    /** 154 - 13 bytes - Process that allocated this record. */
+    public String seAllocKey;
+
+    /** 188 - (internal use) Series Record checksum. */
+    public int seChecksum;
+
+    /** 192 - (internal use) Series Complete Flag. */
+    public int seComplete;
+
+    // filler2
+    /** 118 - greater than zero if image used contrast (L&#47S). */
+    public short seContrast;
+
+    // secs2date required
+    /** 12 - Allocation series Date&#47Time Stamp. */
+    public int seDateTime;
+
+    // filler5
+    /** 168 - (internal use) number of updates to header. */
+    public int seDeltaCnt;
+
+    /** 20 - 30 bytes - Series Description. */
+    public String seDesc;
+
+    /** 6 - Disk ID for this series - GE internal. */
+    public byte seDiskID;
+
+    // filler0
+    /** 8 - Exam number. */
+    public short seExamNo;
+
+    /** 200 - (internal use) Last Image Number Used. */
+    public int seImageCt;
+
+    /** 136 - Landmark counter. */
+    public int seLandmarkCnt;
+
+    // secs2date required
+    /** 150 - Date&#47Time of last change. */
+    public int seLastMod;
+
+    /** 140 - Number of acquisitions. */
+    public short seNacq;
+
+    /** 196 - (internal use) Number of Images Archived. */
+    public int seNumArch;
+
+    /** 204 - (internal use) Number of Images Existing. */
+    public int seNumImages;
+
+    /** 432 - 588 bytes. */
+    public String sePadding;
+
+    /** 176 - Pixel data size - as stored. */
+    public float sePdsA;
+
+    /** 180 - Pixel data size - Compressed. */
+    public float sePdsC;
+
+    /** 184 - Pixel data size - Uncompressed. */
+    public float sePdsU;
+
+    /** 72 - Most-like Plane (for L&#47S). */
+    public short sePlane;
+
+    /** 132 - Last Pulse Sequence Used (L&#47S). */
+    public short sePseq;
+
+    /** 10 - series number. */
+    public short seriesNum;
+
+    /** 336 - 32 bytes. */
+    public String seriesUID;
+
+    /** 108 - series from which prescribed. */
+    public short serrx;
+
+    /** 454 - 16 bytes. */
+    public String serviceID;
+
+    /** 134 - (internal use) Image Sort Order (L&#47S). */
+    public short seSortOrder;
+
+    /** 70 - Series from which prescribed. */
+    public short seSource;
+
+    /** 0 - 4 bytes - Suite ID for this Series. */
+    public String seSuid;
+
+    /** 68 - Series Type. */
+    public short seType;
+
+    /** 4 - The make-unique flag - GE internal. */
+    public short seUniq;
+
+    /** 172 - 2 bytes - Genesis Version - Created. */
+    public String seVersCre;
+
+    /** 174 - 2 bytes - Genesis Version - Now. */
+    public String seVersCur;
+
+    /** 26 in mm. */
+    public float sliceThickness;
+
+    /** 274 Slice offsets on frequency axis. */
+    public int slocfov;
+
+    /** 676 Float Slop Field 1. */
+    public float slop_float_1;
+
+    /** 680 Float Slop Field 2. */
+    public float slop_float_2;
+
+    /** 684 Float Slop Field 3. */
+    public float slop_float_3;
+
+    /** 688 Float Slop Field 4. */
+    public float slop_float_4;
+
+    /** 692 Float Slop Field 5. */
+    public float slop_float_5;
+
+    /** 656 Integer Slop Field 1. */
+    public int slop_int_1;
+
+    /** 660 Integer Slop Field 2. */
+    public int slop_int_2;
+
+    /** 664 Integer Slop Field 3. */
+    public int slop_int_3;
+
+    /** 668 Integer Slop Field 4. */
+    public int slop_int_4;
+
+    /** 672 Integer Slop Field 5. */
+    public int slop_int_5;
+
+    /** 974 Integer Slop Field 6. */
+    public int slop_int_6;
+
+    /** 978 Integer Slop Field 7. */
+    public int slop_int_7;
+
+    /** 982 Integer Slop Field 8. */
+    public int slop_int_8;
+
+    /** 986 Integer Slop Field 9. */
+    public int slop_int_9;
+
+    /** 696 16 characters String Slop Field 1. */
+    public String slop_str_1;
+
+    /** 712 16 characters String Slop Field 2. */
+    public String slop_str_2;
+
+    /** 398 Number of slices in this scan group. */
+    public short slquant;
+
+    /** 778 32 characters Service Obj Clas Unique ID. */
+    public String sop_uid;
+
+    /** 58 Distance from source to detector. */
+    public float srcToDet;
+
+    /** 62 Distance from source to iso. */
+    public float srcToIso;
+
+    // filler3
+    /** 122 - First scan location (L&#47S). */
+    public float startLoc;
+
+    /** 120 - 1 byte - RAS letter for first scan location (L&#47S). */
+    public String startRAS;
+
+    /** 506 Indicates if study has complete info (DICOM&#47genesis). */
+    public short studyStatus;
+
+    /** 474 - 32 bytes. */
+    public String studyUID;
+
+
+    // Exam header for 1024 bytes, 1040 identical except for 16 more padding bytes
+
+    /** 0 - 4 bytes. */
+    public String suiteID;
+
+    /** 651 Summary image field. */
+    public String sumImg;
+
+    /** 392 SAT fat&#47water&#47none. */
+    public short supp_tech;
+
+    /** 380. */
+    public short surfaceCoilType;
+
+    /** 382 Extremity Coil Flag. */
+    public short surfcext;
+
+    /** 262 Swap phase-frequency axis. */
+    public short swapPF;
+
+    /** 214. */
+    public float tableDelta;
+
+    /** 226 Delay time after trigger (msec). */
+    public int tDel;
+
+    /** 206 second echo echo (usec). */
+    public int te2;
+
+    /** 578 Slice Thickness. */
+    public short thk_disclmr;
+
+    /** 628 Upper range of pixels 1. */
+    public int threshMax1;
+
+    /** 636 Upper range of pixels 2. */
+    public int threshMax2;
+
+    /** 624 Lower range of pixels 1. */
+    public int threshMin1;
+
+    /** 632 Lower range of pixels 2. */
+    public int threshMin2;
+
+    /** 228 - (internal use) number of Unarchived images. */
+    public int toArchiveCnt;
+
+    /** 236. */
+    public int toArchiveData;
+
+    /** 232 - (internal use) Unarchived images keys in Series. */
+    public int toArchiveLen;
+
+    /** 132 Trauma Flag. */
+    public short trauma;
+
+    /** 240 Trigger window (&#37 of R-R interval). */
+    public short trgWindow;
+
+    /** 66. */
+    public short tubeType;
+
+    /** 224. */
+    public int unImagesData;
+
+    /** 220 - (internal use) Unstored Image keys in Series. */
+    public int unImagesLen;
+
+    /** 4 - (internal use) Make-Unique Flag. */
+    public short uniq;
+
+    /** 438 - 16 bytes. */
+    public String uniqSysID;
+
+    /** 824 identifies image as original or unoriginal. */
+    public short unOriginal;
+
+    /** 406 User Variable 0. */
+    public float user0;
+
+    /** 410 User Variable 1. */
+    public float user1;
+
+    /** 446 User Variable 10. */
+    public float user10;
+
+    /** 450 User Variable 11. */
+    public float user11;
+
+    /** 454 User Variable 12. */
+    public float user12;
+
+    /** 458 User Variable 13. */
+    public float user13;
+
+    /** 462 User Variable 14. */
+    public float user14;
+
+    /** 466 User Variable 15. */
+    public float user15;
+
+    /** 470 User Variable 16. */
+    public float user16;
+
+    /** 474 User Variable 17. */
+    public float user17;
+
+    /** 478 User Variable 18. */
+    public float user18;
+
+    /** 482 User Variable 19. */
+    public float user19;
+
+    /** 414 User Variable 2. */
+    public float user2;
+
+    /** 486 User Variable 20. */
+    public float user20;
+
+    /** 490 User Variable 21. */
+    public float user21;
+
+    /** 494 User Variable 22. */
+    public float user22;
+
+    /** 588 User Variable 23. */
+    public float user23n;
+
+    /** 502 Concat Sat Type Flag. */
+    public float user24;
+
+    /** 592 User Variable 24. */
+    public float user24n;
+
+    /** 878 User Variable 25. */
+    public float user25;
+
+    /** 882 User Variable 26. */
+    public float user26;
+
+    /** 886 User Variable 27. */
+    public float user27;
+
+    /** 890 User Variable 28. */
+    public float user28;
+
+    /** 894 User Variable 29. */
+    public float user29;
+
+    /** 418 User Variable 3. */
+    public float user3;
+
+    /** 898 User Variable 30. */
+    public float user30;
+
+    /** 902 User Variable 31. */
+    public float user31;
+
+    /** 906 User Variable 32. */
+    public float user32;
+
+    /** 910 User Variable 33. */
+    public float user33;
+
+    /** 914 User Variable 34. */
+    public float user34;
+
+    /** 918 User Variable 35. */
+    public float user35;
+
+    /** 922 User Variable 36. */
+    public float user36;
+
+    /** 926 User Variable 37. */
+    public float user37;
+
+    /** 930 User Variable 38. */
+    public float user38;
+
+    /** 934 User Variable 39. */
+    public float user39;
+
+    /** 422 User Variable 4. */
+    public float user4;
+
+    /** 938 User Variable 40. */
+    public float user40;
+
+    /** 942 User Variable 41. */
+    public float user41;
+
+    /** 946 User Variable 42. */
+    public float user42;
+
+    /** 950 User Variable 43. */
+    public float user43;
+
+    /** 954 User Variable 44. */
+    public float user44;
+
+    /** 958 User Variable 45. */
+    public float user45;
+
+    /** 962 User Variable 46. */
+    public float user46;
+
+    /** 966 User Variable 47. */
+    public float user47;
+
+    /** 970 User variable 48. */
+    public float user48;
+
+    /** 426 User Variable 5. */
+    public float user5;
+
+    /** 430 User Variable 6. */
+    public float user6;
+
+    /** 434 User Variable 7. */
+    public float user7;
+
+    /** 438 User Variable 8. */
+    public float user8;
+
+    /** 442 User Variable 9. */
+    public float user9;
+
+    /** 292 Bitmap defining user Cvs. */
+    public int user_bitmap;
+
+    /** 874 Describes what process fills in the user CVs, ifcc or TIR. */
+    public int userFillMapLSW;
+
+    /** 870 Describes what process fills in the user CVs, ifcc or TIR. */
+    public int userFillMapMSW;
+
+    /** 866 Defines how following user CVs are to be filled in. */
+    public int userUsageTag;
+
+    /** 32 - background value of non image locations. */
+    public int valueBg;
+
+    /** 648 Variable echo flag. */
+    public short varEcho;
+
+    /** 586 Collapse image. */
+    public short vas_collapse;
+
+    /** 744 Vascular Mode. */
+    public short vasMode;
+
+    /** 394 Variable Bandwidth (Hz). */
+    public float vbw;
+
+    /** 576 Phase contrast velocity encoding (mm&#47sec). */
+    public short venc;
+
+    /** 732 Scale Weighting Venc (Velocity Encoding&#47PI). */
+    public float vencScale;
+
+    /** 830 views per segment. */
+    public short viewsPerSeg;
+
+    /** 8 - width of image. */
+    public int width;
+
+    /** 612 X axis rotation. */
+    public float xAxisRot;
+
+    /** 144 - Ending number for baselines. */
+    public short xBaseEnd;
+
+    /** 142 - Starting number for baselines. */
+    public short xBaseSt;
+
+    /** 148 - Ending number for enhanced scans. */
+    public short xenhEnd;
+
+    /** 146 - Starting number for enhanced scans. */
+    public short xenhSt;
+
+    /** 278 Center Frequency (0.1 Hz). */
+    public int xmtFreq;
+
+    /** 248 Actual transmit gain (.1 db). */
+    public short xmtGain;
+
+    /** 616 Yaxis rotation. */
+    public float yAxisRot;
+
+    /** 620 Z axis rotation. */
+    public float zAxisRot;
+
+    /** 50 Cell number at theta. */
+    public float zeroCell;
+
+    /** DOCUMENT ME! */
+    private long currentSeconds;
+
+    /** DOCUMENT ME! */
+    private int day;
+
+    /** DOCUMENT ME! */
+    private int hour;
+
+    /** DOCUMENT ME! */
+    private int minute;
+
+    /** DOCUMENT ME! */
     private String month;
-    private int    monthIndex;
-    private int    day;
-    private int    hour;
-    private int    minute;
-    private int    seconds;
-    private long   currentSeconds;
+
+    /** DOCUMENT ME! */
+    private int monthIndex;
+
+    /** DOCUMENT ME! */
+    private int seconds;
+
+    /** DOCUMENT ME! */
+    private int year;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-    *  File info storage constructor
-    *  @param name        file name
-    *  @param directory   directory
-    *  @param format      file format
-    */
+     * File info storage constructor.
+     *
+     * @param  name       file name
+     * @param  directory  directory
+     * @param  format     file format
+     */
     public FileInfoGESigna5X(String name, String directory, int format) {
         super(name, directory, format);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-    *  Displays the file information
-    *  @param dlog    dialog box that is written to
-    *  @param matrix  transformation matrix
-    */
-    public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix){
-        JDialogText dialog = (JDialogText)dlog;
+     * DOCUMENT ME!
+     *
+     * @param   i  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public FileInfoDicom convertToDICOMInfo(int i) {
+
+        FileInfoDicom fileInfo = null;
+        int[] extents = null;
+        int[] units = null;
+        float[] resols = null;
+
+
+        if (getExtents().length == 2) {
+            extents = new int[2];
+            resols = new float[2];
+            units = new int[5];
+            extents[0] = getExtents()[0];
+            extents[1] = getExtents()[1];
+            resols[0] = getResolutions()[0];
+            resols[1] = getResolutions()[1];
+            units[0] = FileInfoBase.MILLIMETERS;
+            units[1] = FileInfoBase.MILLIMETERS;
+            units[2] = FileInfoBase.MILLIMETERS;
+            units[3] = FileInfoBase.MILLIMETERS;
+            units[4] = FileInfoBase.MILLIMETERS;
+        } else if (getExtents().length == 3) {
+            extents = new int[3];
+            resols = new float[3];
+            units = new int[5];
+            extents[0] = getExtents()[0];
+            extents[1] = getExtents()[1];
+            extents[2] = getExtents()[2];
+            resols[0] = getResolutions()[0];
+            resols[1] = getResolutions()[1];
+            resols[2] = getResolutions()[2];
+            units[0] = FileInfoBase.MILLIMETERS;
+            units[1] = FileInfoBase.MILLIMETERS;
+            units[2] = FileInfoBase.MILLIMETERS;
+            units[3] = FileInfoBase.MILLIMETERS;
+            units[4] = FileInfoBase.MILLIMETERS;
+        }
+
+        String name = JDialogBase.makeImageName(fileName, ".dcm");
+        fileInfo = new FileInfoDicom(name, fileDir, FileBase.DICOM);
+        fileInfo.setExtents(extents);
+        fileInfo.setResolutions(resols);
+        fileInfo.setUnitsOfMeasure(units);
+        fileInfo.setDataType(ModelImage.SHORT);
+        fileInfo.setImageOrientation(getImageOrientation());
+
+        //
+        // set a bunch of variables from GE to DICOM ....
+
+        // fileInfo.setValue("0002,0001", version, 2);
+        // fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+        fileInfo.setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
+        fileInfo.setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer syntax
+        fileInfo.setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
+        fileInfo.setValue("0002,0013", "MIPAV--NIH", 10); //
+
+        fileInfo.setEndianess(FileBase.LITTLE_ENDIAN); // ??
+        fileInfo.setRescaleIntercept(getRescaleIntercept()); // ??
+        fileInfo.setRescaleSlope(getRescaleSlope()); // ??
+
+        // Column and row
+        fileInfo.setValue("0028,0011", new Short((short) getExtents()[0]), 2);
+        fileInfo.setValue("0028,0010", new Short((short) getExtents()[1]), 2);
+
+        fileInfo.setValue("0028,0100", new Short((short) 16), 2);
+        fileInfo.setValue("0028,0101", new Short((short) 16), 2);
+        fileInfo.setValue("0028,0102", new Short((short) 15), 2);
+        fileInfo.setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
+        fileInfo.setValue("0028,0004", new String("MONOCHROME2 "), 12); // photometric
+        fileInfo.setValue("0028,0103", new Short((short) 1), 2);
+
+        // Instance number
+        fileInfo.setValue("0020,0013", String.valueOf(i + 1).trim(), String.valueOf(i + 1).trim().length());
+
+        // Pixel resolutions X, and Y.
+        String s = String.valueOf(pixelResX) + "\\" + String.valueOf(pixelResY);
+        String mmStr;
+        String ddStr;
+        String hhStr;
+        String ssStr;
+        fileInfo.setValue("0028,0030", s, s.length());
+
+        // Slice thickness
+        s = String.valueOf(sliceThickness);
+        fileInfo.setValue("0018,0050", s, s.length()); // slice thickness
+        s = String.valueOf(scanSpacing);
+        fileInfo.setValue("0018,0088", s, s.length()); // spacing between slices
+
+        if (examType.trim().equals("CT")) {
+            fileInfo.setValue("0008,0060", "CT", 2);
+            fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.2", 25);
+            fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.2", 25);
+        } else {
+            fileInfo.setValue("0008,0060", "MR", 2);
+            fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4", 25);
+            fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4", 25);
+        }
+
+        // fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
+        fileInfo.setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID all secondary
+                                                                          // capture info is installed by
+                                                                          // FileDicom.writeImage(), under the
+                                                                          // assumption that all saves must have been
+                                                                          // modified (and need that stuff)
+
+        secs2date(exDateTime);
+
+        if (monthIndex < 10) {
+            mmStr = "0" + monthIndex;
+        } else {
+            mmStr = "" + monthIndex;
+        }
+
+        if (day < 10) {
+            ddStr = "0" + day;
+        } else {
+            ddStr = "" + day;
+        }
+
+        s = year + mmStr + ddStr;
+        fileInfo.setValue("0008,0020", s, s.length()); // Study date
+
+        if (hour < 10) {
+            hhStr = "0" + hour;
+        } else {
+            hhStr = "" + hour;
+        }
+
+        if (minute < 10) {
+            mmStr = "0" + minute;
+        } else {
+            mmStr = "" + minute;
+        }
+
+        if (seconds < 10) {
+            ssStr = "0" + seconds;
+        } else {
+            ssStr = "" + seconds;
+        }
+
+        s = hhStr + mmStr + ssStr + ".0";
+        fileInfo.setValue("0008,0030", s, s.length()); // Study time
+
+        secs2date(seDateTime);
+
+        if (monthIndex < 10) {
+            mmStr = "0" + monthIndex;
+        } else {
+            mmStr = "" + monthIndex;
+        }
+
+        if (day < 10) {
+            ddStr = "0" + day;
+        } else {
+            ddStr = "" + day;
+        }
+
+        s = year + mmStr + ddStr;
+        fileInfo.setValue("0008,0021", s, s.length()); // Series date
+
+        if (hour < 10) {
+            hhStr = "0" + hour;
+        } else {
+            hhStr = "" + hour;
+        }
+
+        if (minute < 10) {
+            mmStr = "0" + minute;
+        } else {
+            mmStr = "" + minute;
+        }
+
+        if (seconds < 10) {
+            ssStr = "0" + seconds;
+        } else {
+            ssStr = "" + seconds;
+        }
+
+        s = hhStr + mmStr + ssStr + ".0";
+        fileInfo.setValue("0008,0031", s, s.length()); // Series time
+
+        secs2date(actualDateTime);
+
+        if (monthIndex < 10) {
+            mmStr = "0" + monthIndex;
+        } else {
+            mmStr = "" + monthIndex;
+        }
+
+        if (day < 10) {
+            ddStr = "0" + day;
+        } else {
+            ddStr = "" + day;
+        }
+
+        s = year + mmStr + ddStr;
+        fileInfo.setValue("0008,0023", s, s.length()); // Image date
+
+        if (hour < 10) {
+            hhStr = "0" + hour;
+        } else {
+            hhStr = "" + hour;
+        }
+
+        if (minute < 10) {
+            mmStr = "0" + minute;
+        } else {
+            mmStr = "" + minute;
+        }
+
+        if (seconds < 10) {
+            ssStr = "0" + seconds;
+        } else {
+            ssStr = "" + seconds;
+        }
+
+        s = hhStr + mmStr + ssStr + ".0";
+        fileInfo.setValue("0008,0033", s, s.length()); // Image time
+
+        fileInfo.setValue("0008,0050", "123456", 6);
+        fileInfo.setValue("0008,0080", hospName.trim(), hospName.trim().length()); // Institution name
+        fileInfo.setValue("0008,1030", exDesc.trim(), exDesc.trim().length()); // Study description
+        fileInfo.setValue("0008,103E", seDesc.trim(), seDesc.trim().length()); // Series description
+
+        fileInfo.setValue("0010,0010", patientName.trim(), patientName.trim().length());
+        fileInfo.setValue("0010,0020", patientID.trim(), patientID.trim().length());
+        fileInfo.setValue("0010,1010", "0" + String.valueOf(patientAge), String.valueOf(patientAge).length() + 1);
+        fileInfo.setValue("0010,21B0", hist.trim(), hist.trim().length());
+
+        RandomNumberGen randomNum = new RandomNumberGen();
+        randomNum.genUniformRandomNum(1, 100000);
+        s = "1.2.840.34379.17.139875.234.455." + randomNum.genUniformRandomNum(1, 100000);
+        fileInfo.setValue("0020,000D", s, s.length()); // study UID
+        s = "1.2.840.34379.17.139875.234.456." + randomNum.genUniformRandomNum(1, 100000);
+        fileInfo.setValue("0020,000E", s, s.length()); // series UID
+
+
+        // study Number  (SH  short string)
+        fileInfo.setValue("0020,0010", String.valueOf((short) examNum), String.valueOf((short) examNum).length());
+
+        // series Number (IS integer string)
+        fileInfo.setValue("0020,0011", String.valueOf((int) seriesNum), String.valueOf((int) seriesNum).length());
+
+        s = -imgTLHC_R + "\\" + -imgTLHC_A + "\\" + imgTLHC_S;
+
+        // s = imgTLHC_R + "\\" + imgTLHC_A + "\\" + imgTLHC_S;
+        fileInfo.setValue("0020,0032", s, s.length()); // image position Right center .....
+
+
+        // This will depend on MR or CT
+        // fileInfo.setValue("0020,0037", ,   );  // image orientation
+        if (examType.trim().equals("CT")) {
+
+            // axial
+            s = "1.0" + "\\" + "0.0" + "\\" + "0.0" + "\\" + "0.0" + "\\" + "1.0" + "\\" + "0.0";
+            fileInfo.setValue("0020,0037", s, s.length()); // image orientation
+        } else {
+
+            // int[] orients = getAxisOrientation();
+            float[] dicomOrients = new float[6];
+
+            for (int j = 0; j < 6; j++) {
+                dicomOrients[j] = 0;
+            }
+
+            if (imageOrientation == SAGITTAL) {
+
+                if (axisOrientation[0] == ORI_A2P_TYPE) {
+                    dicomOrients[1] = 1f;
+                } else {
+                    dicomOrients[1] = -1f;
+                }
+
+                if (axisOrientation[1] == ORI_I2S_TYPE) {
+                    dicomOrients[5] = 1f;
+                } else {
+                    dicomOrients[5] = -1f;
+                }
+            } else if (imageOrientation == CORONAL) {
+
+                if (axisOrientation[0] == ORI_R2L_TYPE) {
+                    dicomOrients[0] = 1f;
+                } else {
+                    dicomOrients[0] = -1f;
+                }
+
+                if (axisOrientation[1] == ORI_I2S_TYPE) {
+                    dicomOrients[5] = 1f;
+                } else {
+                    dicomOrients[5] = -1f;
+                }
+            } else { // AXIAL, default
+
+                if (axisOrientation[0] == ORI_R2L_TYPE) {
+                    dicomOrients[0] = 1f;
+                } else {
+                    dicomOrients[0] = -1f;
+                }
+
+                if (axisOrientation[1] == ORI_A2P_TYPE) {
+                    dicomOrients[4] = 1f;
+                } else {
+                    dicomOrients[4] = -1f;
+                }
+            }
+
+            s = "";
+
+            for (int j = 0; j < 5; j++) {
+                s += dicomOrients[j] + "\\";
+            }
+
+            s += dicomOrients[5];
+            fileInfo.setValue("0020,0037", s, s.length()); // image orientation
+        }
+
+        s = String.valueOf(imgLoc);
+        fileInfo.setValue("0020,1041", s, s.length()); // slice location
+
+        return fileInfo;
+    }
+
+    /**
+     * Displays the file information.
+     *
+     * @param  dlog    dialog box that is written to
+     * @param  matrix  transformation matrix
+     */
+    public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
+        JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
 
         dialog.append("\n\n                Other information\n\n");
@@ -1383,13 +1734,17 @@ public class FileInfoGESigna5X extends FileInfoBase {
 
         /***********************************************************************************************/
         dialog.append("\nExam informaton \n");
+
         if (suiteID != null) {
             dialog.append("Suite ID for this exam = " + suiteID.trim() + "\n");
         }
+
         dialog.append("Examination number = " + examNum + "\n");
+
         if (hospName != null) {
             dialog.append("Hospital name = " + hospName.trim() + "\n");
         }
+
         dialog.append("Detector type = " + detect + "\n");
         dialog.append("Number of cells in detector = " + numCells + "\n");
         dialog.append("Cell number at theta = " + zeroCell + "\n");
@@ -1404,98 +1759,128 @@ public class FileInfoGESigna5X extends FileInfoBase {
         dialog.append("Decon kernel stepsize = " + dcnStepSize + "\n");
         dialog.append("Decon kernel Shift Count = " + dcnShiftCnt + "\n");
         dialog.append("Magnet strength (in gauss) = " + magStrength + "\n");
+
         if (patientID != null) {
             dialog.append("Patient ID for this exam = " + patientID.trim() + "\n");
         }
+
         if (patientName != null) {
             dialog.append("Patient name = " + patientName.trim() + "\n");
         }
+
         dialog.append("Patient age = " + patientAge + "\n");
         dialog.append("Patient age notation = " + patian + "\n");
         dialog.append("Patient sex = " + patientSex + "\n");
         dialog.append("Patient weight = " + patWeight + "\n");
         dialog.append("Trauma flag = " + trauma + "\n");
+
         if (hist != null) {
             dialog.append("Patient history = " + hist.trim() + "\n");
         }
+
         if (reqnum != null) {
             dialog.append("Requisition number = " + reqnum.trim() + "\n");
         }
+
         secs2date(exDateTime);
-        dialog.append("Exam date/time stamp = " + month + " " + day + "," + " " + year + " " +
-                       hour + ":" + minute + ":" + seconds + "\n");
+        dialog.append("Exam date/time stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                      ":" + seconds + "\n");
+
         if (refPhy != null) {
             dialog.append("Referring physician = " + refPhy.trim() + "\n");
         }
+
         if (diagRad != null) {
             dialog.append("Diagnostician/Radiologist = " + diagRad.trim() + "\n");
         }
+
         if (op != null) {
             dialog.append("Operator = " + op.trim() + "\n");
         }
+
         if (exDesc != null) {
             dialog.append("Exam Description = " + exDesc.trim() + "\n");
         }
+
         if (examType != null) {
             dialog.append("Examination type = " + examType.trim() + "\n");
         }
+
         dialog.append("Exam format = " + exFormat + "\n");
         dialog.append("Start time (secs) of first axial in exam = " + firstAxTime + "\n");
+
         if (exSysID != null) {
             dialog.append("Creator Suite and Host = " + exSysID.trim() + "\n");
         }
+
         secs2date(exLastMod);
-        dialog.append("Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " +
-                           hour + ":" + minute + ":" + seconds + "\n");
+        dialog.append("Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                      ":" + seconds + "\n");
         dialog.append("Non-zero indicates Protocol Exam = " + protocolFlag + "\n");
+
         if (exAllocKey != null) {
             dialog.append("Process that allocated this record = " + exAllocKey.trim() + "\n");
         }
+
         dialog.append("Genesis Version - Created = " + exVersCre + "\n");
         dialog.append("Genesis Version - Now = " + exVersCur + "\n");
         dialog.append("Patient Status = " + exStat + "\n");
+
         if (studyUID != null) {
             dialog.append("Study UID = " + studyUID.trim() + "\n");
         }
+
         dialog.append("Indicates if study has complete info (DICOM/genesis) = " + studyStatus + "\n");
+
         if (exPadding != null) {
             dialog.append("exPadding = " + exPadding.trim() + "\n");
         }
+
         /***********************************************************************************************/
         dialog.append("\nSeries information \n");
+
         if (seSuid != null) {
             dialog.append("Suite ID for this Series = " + seSuid.trim() + "\n");
         }
+
         dialog.append("Exam Number = " + seExamNo + "\n");
         dialog.append("Series Number = " + seriesNum + "\n");
         secs2date(seDateTime);
-        dialog.append("Allocation Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " +
-                           hour + ":" + minute + ":" + seconds + "\n");
+        dialog.append("Allocation Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" +
+                      minute + ":" + seconds + "\n");
         secs2date(seActualDT);
-        dialog.append("Actual Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " +
-                           hour + ":" + minute + ":" + seconds + "\n");
+        dialog.append("Actual Series Date/Time Stamp = " + month + " " + day + "," + " " + year + " " + hour + ":" +
+                      minute + ":" + seconds + "\n");
+
         if (seDesc != null) {
             dialog.append("Series Description = " + seDesc.trim() + "\n");
         }
+
         if (prSysID != null) {
             dialog.append("Primary Receiver Suite and Host = " + prSysID.trim() + "\n");
         }
+
         if (panSysID != null) {
             dialog.append("Archiver Suite and Host = " + panSysID.trim() + "\n");
         }
+
         dialog.append("Series Type = " + seType + "\n");
         dialog.append("Series from which prescribed = " + seSource + "\n");
         dialog.append("Most-like Plane (for L/S) = " + sePlane + "\n");
         dialog.append("Scout or Axial (for CT) = " + scanType + "\n");
         dialog.append("Patient Position = " + position + "\n");
         dialog.append("Patient Entry = " + entry + "\n");
+
         if (anatomicalRef != null) {
             dialog.append("Anatomical reference = " + anatomicalRef.trim() + "\n");
         }
+
         dialog.append("Horizontal landmark = " + lmHor + "\n");
+
         if (scanProtocolName != null) {
             dialog.append("Scan Protocol Name = " + scanProtocolName.trim() + "\n");
         }
+
         dialog.append("If greater than 0 image used contrast (L/S) = " + seContrast + "\n");
         dialog.append("RAS letter for first scan location (L/S) = " + startRAS + "\n");
         dialog.append("First scan location (L/S) = " + startLoc + "\n");
@@ -1509,11 +1894,13 @@ public class FileInfoGESigna5X extends FileInfoBase {
         dialog.append("Starting number for enhanced scans = " + xenhSt + "\n");
         dialog.append("Ending number for enhanced scans = " + xenhEnd + "\n");
         secs2date(seLastMod);
-        dialog.append("Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " +
-                           hour + ":" + minute + ":" + seconds + "\n");
+        dialog.append("Date/Time of Last Change = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                      ":" + seconds + "\n");
+
         if (seAllocKey != null) {
             dialog.append("Process that allocated this record = " + seAllocKey.trim() + "\n");
         }
+
         dialog.append("Genesis Version - Created = " + seVersCre + "\n");
         dialog.append("Genesis Version - Now = " + seVersCur + "\n");
         dialog.append("Pixel Data size - as stored = " + sePdsA + "\n");
@@ -1551,28 +1938,33 @@ public class FileInfoGESigna5X extends FileInfoBase {
         dialog.append("Echo 8 Beta Value = " + echo8Beta + "\n");
         dialog.append("Echo 8 Window Value = " + echo8Window + "\n");
         dialog.append("Echo 8 Level Value = " + echo8Level + "\n");
+
         if (sePadding != null) {
             dialog.append("sePadding = " + sePadding.trim() + "\n");
         }
+
         /***********************************************************************************************/
         dialog.append("\nImage informaton \n");
         dialog.append("Image Header Suite ID = " + imgHdrSuiteID + "\n");
         dialog.append("Image Exam number = " + imgHdrExamNum + "\n");
         dialog.append("Image Series number = " + imgHdrSeriesNum + "\n");
         dialog.append("Image number = " + imageNum + "\n");
-        currentSeconds = System.currentTimeMillis()/1000L;
-        //dateTime >= 0 means dateTime does not exceed January 19, 2038 3:14:07
+        currentSeconds = System.currentTimeMillis() / 1000L;
+
+        // dateTime >= 0 means dateTime does not exceed January 19, 2038 3:14:07
         if ((dateTime >= 0) && (dateTime < currentSeconds)) {
             secs2date(dateTime);
-            dialog.append("Image date time = " + month + " " + day + "," + " " + year + " " +
-                           hour + ":" + minute + ":" + seconds + "\n");
+            dialog.append("Image date time = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                          ":" + seconds + "\n");
         }
-        //actualDateTime >= 0 means actualDateTime does not exceed January 19, 2038 3:14:07
+
+        // actualDateTime >= 0 means actualDateTime does not exceed January 19, 2038 3:14:07
         if ((actualDateTime >= 0) && (actualDateTime < currentSeconds)) {
             secs2date(actualDateTime);
-            dialog.append("Image actual time = " + month + " " + day + "," + " " + year + " " +
-                           hour + ":" + minute + ":" + seconds + "\n");
+            dialog.append("Image actual time = " + month + " " + day + "," + " " + year + " " + hour + ":" + minute +
+                          ":" + seconds + "\n");
         }
+
         dialog.append("Image scan time = " + scTime + "\n");
         dialog.append("Slice thickness = " + sliceThickness + "\n");
         dialog.append("Matrix size X = " + matrixSizeX + "\n");
@@ -1583,15 +1975,19 @@ public class FileInfoGESigna5X extends FileInfoBase {
         dialog.append("Image dim Y = " + imageDimY + "\n");
         dialog.append("Pixel resolution X = " + pixelResX + "\n");
         dialog.append("Pixel resolution Y = " + pixelResY + "\n");
+
         if (pixelID != null) {
             dialog.append("Pixel ID = " + pixelID.trim() + "\n");
         }
+
         if (IVCntrstAgent != null) {
             dialog.append("IV contrast agent = " + IVCntrstAgent.trim() + "\n");
         }
+
         if (OralCntrstAgent != null) {
             dialog.append("Oral contrast agent = " + OralCntrstAgent.trim() + "\n");
         }
+
         dialog.append("Image contrast mode = " + contrastMode + "\n");
         dialog.append("Series from which prescribed = " + serrx + "\n");
         dialog.append("Image from which prescribed = " + imgrx + "\n");
@@ -1619,10 +2015,12 @@ public class FileInfoGESigna5X extends FileInfoBase {
         dialog.append("Anterior bottom right hand corner = " + imgBRHC_A + "\n");
         dialog.append("Superior bottom right hand corner = " + imgBRHC_S + "\n");
 
-        if ( (examType != null) && (examType.trim().equals("MR")) ) {
+        if ((examType != null) && (examType.trim().equals("MR"))) {
+
             if (forImgRev != null) {
                 dialog.append("Foreign Image Revision = " + forImgRev.trim() + "\n");
             }
+
             dialog.append("Pulse repetition time (usec) = " + pulseRepTime + "\n");
             dialog.append("Pulse Inversion time (usec) = " + inverTime + "\n");
             dialog.append("Pulse echo time (usec) = " + echoTime + "\n");
@@ -1652,12 +2050,15 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Pause time = " + pauseTime + "\n");
             dialog.append("Oblique plane = " + obliquePlane + "\n");
             dialog.append("Slice offsets on Freq axis = " + slocfov + "\n");
+
             if (xmtFreq > 0) {
                 dialog.append("Center Frequency (0.1Hz) = " + xmtFreq + "\n");
             }
+
             if (autoXmtFreq > 0) {
                 dialog.append("Auto Center frequency (0.1Hz) = " + autoXmtFreq + "\n");
             }
+
             dialog.append("Auto transmit gain (0.1dB) = " + autoXmtGain + "\n");
             dialog.append("Prescan R1-Analog = " + prescan_r1 + "\n");
             dialog.append("Prescan R2-Digital = " + prescan_r2 + "\n");
@@ -1668,22 +2069,28 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Imaging options = " + iOptions + "\n");
             dialog.append("Pulse sequence = " + pSeq + "\n");
             dialog.append("Pulse sequence mode = " + pulseSeqMode + "\n");
+
             if (pulseSeqName != null) {
                 dialog.append("Pulse sequence name = " + pulseSeqName.trim() + "\n");
             }
+
             // psd_dateTime >= 0 menas psd_dateTime does not exceed January 19, 2038 3:14:07
             if ((psd_dateTime >= 0) && (psd_dateTime < currentSeconds)) {
                 secs2date(psd_dateTime);
-                dialog.append("PSD Creation date and time = " + month + " " + day + "," + " " +
-                            year + " " + hour + ":" + minute + ":" + seconds + "\n");
+                dialog.append("PSD Creation date and time = " + month + " " + day + "," + " " + year + " " + hour +
+                              ":" + minute + ":" + seconds + "\n");
             }
+
             if (psd_iname != null) {
                 dialog.append("PSD name from inside PSD = " + psd_iname.trim() + "\n");
             }
+
             dialog.append("Coil type = " + coilType + "\n");
+
             if (coilName != null) {
                 dialog.append("Coil name = " + coilName.trim() + "\n");
             }
+
             dialog.append("Surface coil type = " + surfaceCoilType + "\n");
             dialog.append("Extremity coil flag = " + surfcext + "\n");
             dialog.append("Raw data run number = " + rawRunNum + "\n");
@@ -1719,25 +2126,31 @@ public class FileInfoGESigna5X extends FileInfoBase {
 
             dialog.append("Projection angle = " + projectAngle + "\n");
             dialog.append("Concat SAT type flag = " + user24 + "\n");
+
             if (im_alloc_key != null) {
                 dialog.append("Process that allocated record = " + im_alloc_key.trim() + "\n");
             }
+
             // im_lastmod menas im_lastmod does not exceed January 19, 2038 3:14:07
             if ((im_lastmod >= 0) && (im_lastmod < currentSeconds)) {
                 secs2date(im_lastmod);
-                dialog.append("Date/Time of last change = " + month + " " + day + "," + " " + year + " " +
-                            hour + ":" + minute + ":" + seconds + "\n");
+                dialog.append("Date/Time of last change = " + month + " " + day + "," + " " + year + " " + hour + ":" +
+                              minute + ":" + seconds + "\n");
             }
+
             dialog.append("Genesis version - created = " + im_verscre + "\n");
+
             if (im_verscur != null) {
                 dialog.append("Genesis version - now = " + im_verscur.trim() + "\n");
             }
+
             dialog.append("Pixel data size - as stored = " + im_pds_a + "\n");
             dialog.append("Pixel data size - compressed  = " + im_pds_c + "\n");
             dialog.append("Pixel data size - uncompressed = " + im_pds_u + "\n");
-            //dialog.append("AcqRecon record checksum = " + im_checksum + "\n");
-            //dialog.append("Image Archive Flag = " + im_archived + "\n");
-            //dialog.append("Image Complete Flag = " + im_complete + "\n");
+
+            // dialog.append("AcqRecon record checksum = " + im_checksum + "\n");
+            // dialog.append("Image Archive Flag = " + im_archived + "\n");
+            // dialog.append("Image Complete Flag = " + im_complete + "\n");
             dialog.append("Bitmap of SAT selections = " + satbits + "\n");
             dialog.append("Surface coil intensity correction flag = " + scic + "\n");
             dialog.append("R-side pulse loc rel to landmark = " + satxloc1 + "\n");
@@ -1760,9 +2173,11 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("User variable 23 = " + user23n + "\n");
             dialog.append("User variable 24 = " + user24n + "\n");
             dialog.append("Projection algorithm = " + proj_alg + "\n");
+
             if (proj_name != null) {
                 dialog.append("Projection algorithm name = " + proj_name.trim() + "\n");
             }
+
             dialog.append("X axis rotation = " + xAxisRot + "\n");
             dialog.append("Y axis rotation = " + yAxisRot + "\n");
             dialog.append("Z axis rotation = " + zAxisRot + "\n");
@@ -1775,12 +2190,15 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Preparatory pulse option = " + prepPulse + "\n");
             dialog.append("Cardiac phase number = " + cPhaseNum + "\n");
             dialog.append("Variable echo flag = " + varEcho + "\n");
+
             if (refImg != null) {
                 dialog.append("Reference image field = " + refImg.trim() + "\n");
             }
+
             if (sumImg != null) {
                 dialog.append("Summary image field = " + sumImg.trim() + "\n");
             }
+
             dialog.append("Window value = " + imgWindow + "\n");
             dialog.append("Level value = " + imgLevel + "\n");
             dialog.append("Integer Slop Field 1 = " + slop_int_1 + "\n");
@@ -1793,12 +2211,15 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Float Slop Field 3 = " + slop_float_3 + "\n");
             dialog.append("Float Slop Field 4 = " + slop_float_4 + "\n");
             dialog.append("Float Slop Field 5 = " + slop_float_5 + "\n");
+
             if (slop_str_1 != null) {
                 dialog.append("String Slop Field 1 = " + slop_str_1.trim() + "\n");
             }
+
             if (slop_str_2 != null) {
                 dialog.append("String Slop Field 2 = " + slop_str_2.trim() + "\n");
             }
+
             dialog.append("Scan Acquisition Number = " + scanAcqNum + "\n");
             dialog.append("Magnitude Weighting Flag = " + magWgtFlag + "\n");
             dialog.append("Scale Weighted Venc (Velocity Encoding/PI) = " + vencScale + "\n");
@@ -1806,12 +2227,15 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Number of Phases = " + nPhase + "\n");
             dialog.append("Frequency Direction = " + freqDir + "\n");
             dialog.append("Vascular Mode = " + vasMode + "\n");
+
             if (image_uid != null) {
                 dialog.append("Image Unique ID = " + image_uid.trim() + "\n");
             }
+
             if (sop_uid != null) {
                 dialog.append("Service Obj Clas Unique ID = " + sop_uid.trim() + "\n");
             }
+
             dialog.append("Bitmap of prescan options = " + preScanOpts + "\n");
             dialog.append("Gradient offset in the x-direction = " + gOffsetX + "\n");
             dialog.append("Gradient offset in the y-direction = " + gOffsetY + "\n");
@@ -1830,12 +2254,9 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Avg head SAR = " + sarAvgHead + "\n");
             dialog.append("Negative scan spacing for overlap slices = " + negScanSpacing + "\n");
             dialog.append("Offset Frequency-Mag. Transfer = " + offsetFreq + "\n");
-            dialog.append("Defines how the following user tags are to be filled in = " +
-                        userUsageTag + "\n");
-            dialog.append("Define what process fills in the user CVs, ifcc or TIR = " +
-                        userFillMapMSW + "\n");
-            dialog.append("Define what process fills in the user CVs, ifcc or TIR = " +
-                        userFillMapLSW + "\n");
+            dialog.append("Defines how the following user tags are to be filled in = " + userUsageTag + "\n");
+            dialog.append("Define what process fills in the user CVs, ifcc or TIR = " + userFillMapMSW + "\n");
+            dialog.append("Define what process fills in the user CVs, ifcc or TIR = " + userFillMapLSW + "\n");
             dialog.append("User Variable 25 = " + user25 + "\n");
             dialog.append("User Variable 26 = " + user26 + "\n");
             dialog.append("User Variable 27 = " + user27 + "\n");
@@ -1864,6 +2285,7 @@ public class FileInfoGESigna5X extends FileInfoBase {
             dialog.append("Integer Slop Field 7 = " + slop_int_7 + "\n");
             dialog.append("Integer Slop Field 8 = " + slop_int_8 + "\n");
             dialog.append("Integer Slop Field 9 = " + slop_int_9 + "\n");
+
             if (mr_padding != null) {
                 dialog.append("Spare Space = " + mr_padding.trim() + "\n");
             }
@@ -1872,37 +2294,71 @@ public class FileInfoGESigna5X extends FileInfoBase {
         dialog.setSize(600, 500);
     }
 
+    /**
+     * Gets the origin of a particular slice; resets for the z dimension.
+     *
+     * @return  New start locations
+     */
+    public float[] getOriginAtSlice() {
+        float[] newOrigin = new float[3];
+
+        for (int i = 0; i < 3; i++) {
+            newOrigin[i] = origin[i];
+        }
+
+        switch (imageOrientation) {
+
+            case CORONAL:
+                newOrigin[2] = -imgTLHC_A;
+                break;
+
+            case SAGITTAL:
+                newOrigin[2] = -imgTLHC_R;
+                break;
+
+            case AXIAL:
+            default:
+                newOrigin[2] = imgTLHC_S;
+                break;
+        }
+
+        return newOrigin;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  numberSeconds  DOCUMENT ME!
+     */
     private void secs2date(int numberSeconds) {
         long longSeconds;
-        long secondsPerMinute   = 60L;
-        long secondsPerHour     = 60L * secondsPerMinute;
-        long secondsPerDay      = 24L * secondsPerHour;
-        long JanuarySeconds     = 31L * secondsPerDay;
-        long FebNoLeapSeconds   = 28L * secondsPerDay;
-        long FebLeapSeconds     = 29L * secondsPerDay;
-        long MarchSeconds       = 31L * secondsPerDay;
-        long AprilSeconds       = 30L * secondsPerDay;
-        long MaySeconds         = 31L * secondsPerDay;
-        long JuneSeconds        = 30L * secondsPerDay;
-        long JulySeconds        = 31L * secondsPerDay;
-        long AugustSeconds      = 31L * secondsPerDay;
-        long SeptemberSeconds   = 30L * secondsPerDay;
-        long OctoberSeconds     = 31L * secondsPerDay;
-        long NovemberSeconds    = 30L * secondsPerDay;
-        long DecemberSeconds    = 31L * secondsPerDay;
-        long secondsPerNonLeapYear = JanuarySeconds + FebNoLeapSeconds + MarchSeconds     +
-                                     AprilSeconds   + MaySeconds       + JuneSeconds      +
-                                     JulySeconds    + AugustSeconds    + SeptemberSeconds +
-                                     OctoberSeconds + NovemberSeconds  + DecemberSeconds;
+        long secondsPerMinute = 60L;
+        long secondsPerHour = 60L * secondsPerMinute;
+        long secondsPerDay = 24L * secondsPerHour;
+        long JanuarySeconds = 31L * secondsPerDay;
+        long FebNoLeapSeconds = 28L * secondsPerDay;
+        long FebLeapSeconds = 29L * secondsPerDay;
+        long MarchSeconds = 31L * secondsPerDay;
+        long AprilSeconds = 30L * secondsPerDay;
+        long MaySeconds = 31L * secondsPerDay;
+        long JuneSeconds = 30L * secondsPerDay;
+        long JulySeconds = 31L * secondsPerDay;
+        long AugustSeconds = 31L * secondsPerDay;
+        long SeptemberSeconds = 30L * secondsPerDay;
+        long OctoberSeconds = 31L * secondsPerDay;
+        long NovemberSeconds = 30L * secondsPerDay;
+        long DecemberSeconds = 31L * secondsPerDay;
+        long secondsPerNonLeapYear = JanuarySeconds + FebNoLeapSeconds + MarchSeconds + AprilSeconds + MaySeconds +
+                                     JuneSeconds + JulySeconds + AugustSeconds + SeptemberSeconds + OctoberSeconds +
+                                     NovemberSeconds + DecemberSeconds;
 
-        long secondsPerLeapYear =    JanuarySeconds + FebLeapSeconds   + MarchSeconds     +
-                                     AprilSeconds   + MaySeconds       + JuneSeconds      +
-                                     JulySeconds    + AugustSeconds    + SeptemberSeconds +
-                                     OctoberSeconds + NovemberSeconds  + DecemberSeconds;
+        long secondsPerLeapYear = JanuarySeconds + FebLeapSeconds + MarchSeconds + AprilSeconds + MaySeconds +
+                                  JuneSeconds + JulySeconds + AugustSeconds + SeptemberSeconds + OctoberSeconds +
+                                  NovemberSeconds + DecemberSeconds;
         int leapIndex = 2;
         boolean doYear = true;
         boolean doMonth = true;
-        long monthSeconds[] = new long[12];
+        long[] monthSeconds = new long[12];
         monthSeconds[0] = JanuarySeconds;
         monthSeconds[2] = MarchSeconds;
         monthSeconds[3] = AprilSeconds;
@@ -1914,10 +2370,11 @@ public class FileInfoGESigna5X extends FileInfoBase {
         monthSeconds[9] = OctoberSeconds;
         monthSeconds[10] = NovemberSeconds;
         monthSeconds[11] = DecemberSeconds;
-        String monthString[] = {"January", "Februrary", "March",
-                                "April", "May", "June",
-                                "July", "August", "September",
-                                "October", "November", "December"};
+
+        String[] monthString = {
+            "January", "Februrary", "March", "April", "May", "June", "July", "August", "September", "October",
+            "November", "December"
+        };
         monthIndex = 0;
         year = 1970;
 
@@ -1925,301 +2382,58 @@ public class FileInfoGESigna5X extends FileInfoBase {
         // numberSeconds is meant to be unsigned, so convert to long
         longSeconds = numberSeconds;
         longSeconds = 0x0ffffffffL & longSeconds;
+
         while (doYear) {
-            if ((leapIndex%4) != 0) {
+
+            if ((leapIndex % 4) != 0) {
+
                 if (longSeconds >= secondsPerNonLeapYear) {
                     year++;
                     longSeconds -= secondsPerNonLeapYear;
                     leapIndex++;
-                }
-                else {
+                } else {
                     doYear = false;
                 }
             } // if ((leapIndex%4) != 0)
             else { // (leapIndex%4) == 0
+
                 if (longSeconds >= secondsPerLeapYear) {
                     year++;
                     longSeconds -= secondsPerLeapYear;
                     leapIndex++;
-                }
-                else {
+                } else {
                     doYear = false;
                 }
             }
         } // while (doYear)
-        if ((leapIndex%4) != 0) {
+
+        if ((leapIndex % 4) != 0) {
             monthSeconds[1] = FebNoLeapSeconds;
-        }
-        else {
+        } else {
             monthSeconds[1] = FebLeapSeconds;
         }
+
         month = monthString[0];
+
         while (doMonth) {
+
             if (longSeconds >= monthSeconds[monthIndex]) {
                 longSeconds -= monthSeconds[monthIndex];
                 monthIndex++;
                 month = monthString[monthIndex];
-            }
-            else {
+            } else {
                 doMonth = false;
             }
         } // while (doMonth);
 
-        day         = (int)(longSeconds/secondsPerDay) + 1;
-        longSeconds = longSeconds - (day-1)*secondsPerDay;
-        hour        = (int)(longSeconds/secondsPerHour);
-        longSeconds = longSeconds - hour*secondsPerHour;
-        minute      = (int)(longSeconds/secondsPerMinute);
-        seconds     = (int)(longSeconds - minute*secondsPerMinute);
+        day = (int) (longSeconds / secondsPerDay) + 1;
+        longSeconds = longSeconds - ((day - 1) * secondsPerDay);
+        hour = (int) (longSeconds / secondsPerHour);
+        longSeconds = longSeconds - (hour * secondsPerHour);
+        minute = (int) (longSeconds / secondsPerMinute);
+        seconds = (int) (longSeconds - (minute * secondsPerMinute));
+
         return;
-    }
-
-
-    /**
-    *
-    *
-    */
-     public FileInfoDicom convertToDICOMInfo(int i) {
-
-        FileInfoDicom fileInfo  = null;
-        int     extents[]   = null;
-        int     units[]     = null;
-        float   resols[]    = null;
-
-
-        if (getExtents().length == 2) {
-            extents = new int[2];
-            resols  = new float[2];
-            units   = new int[5];
-            extents[0] = getExtents()[0];
-            extents[1] = getExtents()[1];
-            resols[0]  = getResolutions()[0];
-            resols[1]  = getResolutions()[1];
-            units[0]   = FileInfoBase.MILLIMETERS;
-            units[1]   = FileInfoBase.MILLIMETERS;
-            units[2]   = FileInfoBase.MILLIMETERS;
-            units[3]   = FileInfoBase.MILLIMETERS;
-            units[4]   = FileInfoBase.MILLIMETERS;
-        }
-        else if (getExtents().length == 3) {
-            extents = new int[3];
-            resols  = new float[3];
-            units   = new int[5];
-            extents[0] = getExtents()[0];
-            extents[1] = getExtents()[1];
-            extents[2] = getExtents()[2];
-            resols[0]  = getResolutions()[0];
-            resols[1]  = getResolutions()[1];
-            resols[2]  = getResolutions()[2];
-            units[0]   = FileInfoBase.MILLIMETERS;
-            units[1]   = FileInfoBase.MILLIMETERS;
-            units[2]   = FileInfoBase.MILLIMETERS;
-            units[3]   = FileInfoBase.MILLIMETERS;
-            units[4]   = FileInfoBase.MILLIMETERS;
-        }
-
-        String name = JDialogBase.makeImageName(fileName, ".dcm");
-        fileInfo    = new FileInfoDicom(name, fileDir, FileBase.DICOM);
-        fileInfo.setExtents(extents);
-        fileInfo.setResolutions(resols);
-        fileInfo.setUnitsOfMeasure(units);
-        fileInfo.setDataType(ModelImage.SHORT);
-        fileInfo.setImageOrientation(getImageOrientation());
-
-        //
-        // set a bunch of variables from GE to DICOM ....
-
-        //fileInfo.setValue("0002,0001", version, 2);
-        //fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-        fileInfo.setValue("0002,0003", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
-        fileInfo.setValue("0002,0010", "1.2.840.10008.1.2 ", 18); // Little Endian transfer syntax
-        fileInfo.setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-        fileInfo.setValue("0002,0013", "MIPAV--NIH", 10); //
-
-        fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);                            // ??
-        fileInfo.setRescaleIntercept(getRescaleIntercept()); // ??
-        fileInfo.setRescaleSlope(getRescaleSlope());         // ??
-        //Column and row
-        fileInfo.setValue("0028,0011", new Short((short)getExtents()[0]), 2);
-        fileInfo.setValue("0028,0010", new Short((short)getExtents()[1]), 2);
-
-        fileInfo.setValue("0028,0100", new Short((short)16), 2);
-        fileInfo.setValue("0028,0101", new Short((short)16), 2);
-        fileInfo.setValue("0028,0102", new Short((short)15), 2);
-        fileInfo.setValue("0028,0002", new Short((short)1), 2);         // samples per pixel
-        fileInfo.setValue("0028,0004", new String("MONOCHROME2 "), 12);    // photometric
-        fileInfo.setValue("0028,0103", new Short((short)1), 2);
-
-        //Instance number
-        fileInfo.setValue("0020,0013", String.valueOf(i+1).trim(), String.valueOf(i+1).trim().length());
-
-        //Pixel resolutions X, and Y.
-        String s = String.valueOf(pixelResX) + "\\" + String.valueOf(pixelResY);
-        String mmStr;
-        String ddStr;
-        String hhStr;
-        String ssStr;
-        fileInfo.setValue("0028,0030", s, s.length());
-
-        // Slice thickness
-        s = String.valueOf(sliceThickness);
-	    fileInfo.setValue("0018,0050", s, s.length());  // slice thickness
-	    s = String.valueOf(scanSpacing);
-	    fileInfo.setValue("0018,0088", s, s.length());  // spacing between slices
-
-	    if (examType.trim().equals("CT")) {
-	        fileInfo.setValue("0008,0060", "CT", 2);
-	        fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.2", 25);
-	        fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.2", 25);
-	    }
-	    else {
-	        fileInfo.setValue("0008,0060", "MR", 2);
-	        fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.4", 25);
-	        fileInfo.setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.4", 25);
-        }
-
-        //fileInfo.setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture UID
-        fileInfo.setValue("0008,0018", "1.2.840.999999999999999999", 26); // bogus SOP Instance UID
-        // all secondary capture info is installed by FileDicom.writeImage(), under the assumption that all saves must have been modified (and need that stuff)
-
-        secs2date(exDateTime);
-        if (monthIndex < 10) { mmStr = "0" + monthIndex;  }
-        else {                 mmStr = ""  + monthIndex;  }
-        if (day < 10) {        ddStr = "0" + day;         }
-        else {                 ddStr = ""  + day;         }
-        s = year+mmStr+ddStr;
-        fileInfo.setValue("0008,0020", s, s.length());      // Study date
-
-        if (hour  < 10) {   hhStr = "0" + hour;     }
-        else {              hhStr = ""  + hour;     }
-        if (minute  < 10) { mmStr = "0" + minute;   }
-        else {              mmStr = ""  + minute;   }
-        if (seconds < 10) { ssStr = "0" + seconds;   }
-        else {              ssStr = ""  + seconds;   }
-        s = hhStr+mmStr+ssStr+".0";
-        fileInfo.setValue("0008,0030", s, s.length());      // Study time
-
-        secs2date(seDateTime);
-        if (monthIndex < 10) { mmStr = "0" + monthIndex;  }
-        else {                 mmStr = ""  + monthIndex;  }
-        if (day < 10) {        ddStr = "0" + day;         }
-        else {                 ddStr = ""  + day;         }
-        s = year+mmStr+ddStr;
-        fileInfo.setValue("0008,0021",  s, s.length());                         // Series date
-
-        if (hour   < 10)  { hhStr = "0" + hour;     }
-        else {              hhStr = ""  + hour;     }
-        if (minute  < 10) { mmStr = "0" + minute;   }
-        else {              mmStr = ""  + minute;   }
-        if (seconds < 10) { ssStr = "0" + seconds;   }
-        else {              ssStr = ""  + seconds;   }
-        s = hhStr+mmStr+ssStr+".0";
-        fileInfo.setValue("0008,0031",  s, s.length());                         // Series time
-
-        secs2date(actualDateTime);
-        if (monthIndex < 10) { mmStr = "0" + monthIndex;  }
-        else {                 mmStr = ""  + monthIndex;  }
-        if (day < 10) {        ddStr = "0" + day;         }
-        else {                 ddStr = ""  + day;         }
-        s = year+mmStr+ddStr;
-        fileInfo.setValue("0008,0023",  s, s.length());                         // Image date
-
-        if (hour  < 10)   { hhStr = "0" + hour;     }
-        else {              hhStr = ""  + hour;     }
-        if (minute  < 10) { mmStr = "0" + minute;   }
-        else {              mmStr = ""  + minute;   }
-        if (seconds < 10) { ssStr = "0" + seconds;   }
-        else {              ssStr = ""  + seconds;   }
-        s = hhStr+mmStr+ssStr+".0";
-        fileInfo.setValue("0008,0033",  s, s.length());                         // Image time
-
-        fileInfo.setValue("0008,0050", "123456", 6);
-        fileInfo.setValue("0008,0080", hospName.trim(), hospName.trim().length());     // Institution name
-        fileInfo.setValue("0008,1030", exDesc.trim(),   exDesc.trim().length());         // Study description
-        fileInfo.setValue("0008,103E", seDesc.trim(),   seDesc.trim().length());         // Series description
-
-        fileInfo.setValue("0010,0010", patientName.trim(), patientName.trim().length());
-        fileInfo.setValue("0010,0020", patientID.trim(),   patientID.trim().length());
-        fileInfo.setValue("0010,1010", "0"+String.valueOf(patientAge),  String.valueOf(patientAge).length()+1);
-        fileInfo.setValue("0010,21B0", hist.trim(),   hist.trim().length());
-
-        RandomNumberGen randomNum = new RandomNumberGen();
-        randomNum.genUniformRandomNum(1, 100000);
-        s = "1.2.840.34379.17.139875.234.455." + randomNum.genUniformRandomNum(1, 100000);
-        fileInfo.setValue("0020,000D", s, s.length());  // study UID
-        s = "1.2.840.34379.17.139875.234.456." + randomNum.genUniformRandomNum(1, 100000);
-        fileInfo.setValue("0020,000E", s, s.length());  // series UID
-
-
-        // study Number  (SH  short string)
-        fileInfo.setValue("0020,0010", String.valueOf((short)examNum),  String.valueOf((short)examNum).length());
-
-        // series Number (IS integer string)
-        fileInfo.setValue("0020,0011", String.valueOf((int)seriesNum),  String.valueOf((int)seriesNum).length());
-
-        s = -imgTLHC_R + "\\" + -imgTLHC_A + "\\" + imgTLHC_S;
-        //s = imgTLHC_R + "\\" + imgTLHC_A + "\\" + imgTLHC_S;
-        fileInfo.setValue("0020,0032", s , s.length());  // image position Right center .....
-
-
-        // This will depend on MR or CT
-        //fileInfo.setValue("0020,0037", ,   );  // image orientation
-        if (examType.trim().equals("CT")) {
-            //axial
-            s =  "1.0" + "\\" + "0.0" + "\\" + "0.0" + "\\" +
-                    "0.0" + "\\" + "1.0" + "\\" + "0.0";
-            fileInfo.setValue("0020,0037", s ,  s.length() );  // image orientation
-        }
-        else {
-            //int[] orients = getAxisOrientation();
-            float[] dicomOrients = new float[6];
-            for (int j=0; j<6; j++) dicomOrients[j] = 0;
-            if (imageOrientation == SAGITTAL) {
-                if (axisOrientation[0] == ORI_A2P_TYPE) dicomOrients[1] = 1f;
-                else									dicomOrients[1] = -1f;
-                if (axisOrientation[1] == ORI_I2S_TYPE) dicomOrients[5] = 1f;
-                else									dicomOrients[5] = -1f;
-            }
-            else if (imageOrientation == CORONAL) {
-                if (axisOrientation[0] == ORI_R2L_TYPE) dicomOrients[0] = 1f;
-                else									dicomOrients[0] = -1f;
-                if (axisOrientation[1] == ORI_I2S_TYPE) dicomOrients[5] = 1f;
-                else									dicomOrients[5] = -1f;
-            }
-            else { // AXIAL, default
-                if (axisOrientation[0] == ORI_R2L_TYPE) dicomOrients[0] = 1f;
-                else									dicomOrients[0] = -1f;
-                if (axisOrientation[1] == ORI_A2P_TYPE) dicomOrients[4] = 1f;
-                else									dicomOrients[4] = -1f;
-            }
-            s = "";
-            for (int j=0; j<5; j++) {
-                s += dicomOrients[j] + "\\";
-            }
-            s += dicomOrients[5];
-            fileInfo.setValue("0020,0037", s ,  s.length() );  // image orientation
-        }
-
-        s = String.valueOf(imgLoc);
-	    fileInfo.setValue("0020,1041", s, s.length());  // slice location
-        return fileInfo;
-    }
-
-    /**
-    *   Gets the origin of a particular slice; resets for the z dimension.
-    *   @return         New start locations
-    */
-    public float[] getOriginAtSlice() {
-        float[] newOrigin = new float[3];
-        for (int i=0; i<3; i++)
-            newOrigin[i] = origin[i];
-        switch (imageOrientation) {
-            case CORONAL:  newOrigin[2] = -imgTLHC_A; break;
-            case SAGITTAL: newOrigin[2] = -imgTLHC_R; break;
-            case AXIAL:
-            default:       newOrigin[2] =  imgTLHC_S; break;
-        }
-        return newOrigin;
     }
 
 }

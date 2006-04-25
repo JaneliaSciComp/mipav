@@ -2,43 +2,53 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
 import java.io.*;
+
 import java.util.*;
 
 
 /**
- *  Algorithm that randomizes the order of 3D dataset.
+ * Algorithm that randomizes the order of 3D dataset.
  *
- *		@version 1.0 April 1, 2002
- *		@author Matthew J. McAuliffe, Ph.D.
+ * @version  1.0 April 1, 2002
+ * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmRandSliceOrder extends AlgorithmBase {
-    private int randomOrder[] = null;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private int[] randomOrder = null;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     *   Constructs an algorithm object that randomizes the order of
-     *   3D image dataset.
-     *   @param srcImg   source image model
+     * Constructs an algorithm object that randomizes the order of 3D image dataset.
+     *
+     * @param  srcImg  source image model
      */
-    public AlgorithmRandSliceOrder( ModelImage srcImg ) {
-        super( null, srcImg );
+    public AlgorithmRandSliceOrder(ModelImage srcImg) {
+        super(null, srcImg);
     }
 
     /**
-     *   Constructs an algorithm object that randomizes the order of
-     *   3D image dataset.
-     *   @param srcImg   source image model
-     *   @param progress Progress mode - see AlgorithmBase.
+     * Constructs an algorithm object that randomizes the order of 3D image dataset.
+     *
+     * @param  srcImg    source image model
+     * @param  progress  Progress mode - see AlgorithmBase.
      */
-    public AlgorithmRandSliceOrder( ModelImage srcImg, int progress ) {
-        this( srcImg );
+    public AlgorithmRandSliceOrder(ModelImage srcImg, int progress) {
+        this(srcImg);
         progressMode = progress;
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *  Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         randomOrder = null;
@@ -46,41 +56,37 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
     }
 
     /**
-     * Accessor returns randomOrder
-     * @return int[]
+     * Accessor returns randomOrder.
+     *
+     * @return  int[]
      */
     public int[] getRandomOrder() {
         return randomOrder;
     }
 
     /**
-     *  Constructs a string of the contruction parameters and outputs the
-     *  string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String( "RandSliceOrder()\n" );
-    }
-
-    /**
-     *   Starts the program
+     * Starts the program.
      */
     public void runAlgorithm() {
 
-        if ( srcImage == null ) {
-            displayError( "RandSliceOrder.run(): Source Image is null" );
+        if (srcImage == null) {
+            displayError("RandSliceOrder.run(): Source Image is null");
+
             return;
         }
-        if ( ( srcImage.getNDims() != 3 ) ) {
-            displayError( "RandSliceOrder.run(): Source Image is not 3D" );
+
+        if ((srcImage.getNDims() != 3)) {
+            displayError("RandSliceOrder.run(): Source Image is not 3D");
+
             return;
         }
+
         constructLog();
         calcInPlace();
     }
 
     /**
-     *   Forms the reversed order image and places the result in
-     *   original image.
+     * Forms the reversed order image and places the result in original image.
      */
     private void calcInPlace() {
 
@@ -98,11 +104,11 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
             sliceNumber = srcImage.getExtents()[2];
             randomOrder = new int[sliceNumber];
 
-            for ( int r = 0; r < sliceNumber; r++ ) {
-                vectRand.add( new Integer( r ) );
+            for (int r = 0; r < sliceNumber; r++) {
+                vectRand.add(new Integer(r));
             }
 
-            if ( srcImage.isColorImage() ) {
+            if (srcImage.isColorImage()) {
                 length = 4 * srcImage.getSliceSize();
             } else {
                 length = srcImage.getSliceSize();
@@ -111,44 +117,48 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
             threeDLength = length * srcImage.getExtents()[2];
             buffer = new float[threeDLength];
             sliceBuffer = new float[length];
-            buildProgressBar( srcImage.getImageName(), "Reordering image ...", 0, 100 );
-        } catch ( OutOfMemoryError e ) {
+            buildProgressBar(srcImage.getImageName(), "Reordering image ...", 0, 100);
+        } catch (OutOfMemoryError e) {
             buffer = null;
             sliceBuffer = null;
-            errorCleanUp( "Algorithm Randomize slice order: Out of memory", true );
+            errorCleanUp("Algorithm Randomize slice order: Out of memory", true);
+
             return;
         }
 
         initProgressBar();
 
-        for ( s = 0; s < sliceNumber && !threadStopped; s++ ) {
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) ( s ) / ( sliceNumber - 1 ) * 100 ), activeImage );
+        for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
+
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) (s) / (sliceNumber - 1) * 100), activeImage);
             }
 
             try {
-                srcImage.exportData( s * length, length, sliceBuffer ); // locks and releases lock
-            } catch ( IOException error ) {
+                srcImage.exportData(s * length, length, sliceBuffer); // locks and releases lock
+            } catch (IOException error) {
                 buffer = null;
                 sliceBuffer = null;
-                errorCleanUp( "Algorithm Randomize slice order: Image(s) locked", true );
+                errorCleanUp("Algorithm Randomize slice order: Image(s) locked", true);
+
                 return;
             }
 
-            int randNum = randomGen.genUniformRandomNum( 0, vectRand.size() - 1 );
-            Integer randSlice = (Integer) vectRand.elementAt( randNum );
-            vectRand.removeElementAt( randNum );
+            int randNum = randomGen.genUniformRandomNum(0, vectRand.size() - 1);
+            Integer randSlice = (Integer) vectRand.elementAt(randNum);
+            vectRand.removeElementAt(randNum);
             randomOrder[randSlice.intValue()] = s;
 
-            for ( i = 0, idx = randSlice.intValue() * length; i < length && !threadStopped; i++, idx++ ) {
+            for (i = 0, idx = randSlice.intValue() * length; (i < length) && !threadStopped; i++, idx++) {
                 buffer[idx] = sliceBuffer[i];
             }
         } // for (s = 0; s < sliceNumber; s++)
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             sliceBuffer = null;
             finalize();
+
             return;
         }
 
@@ -157,43 +167,55 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
         FileInfoBase[] fileInfoNew = new FileInfoBase[sliceNumber];
         fileInfo = srcImage.getFileInfo();
 
-        int orient = FileInfoBase.oppositeOrient( fileInfo[0].getAxisOrientation( 2 ) );
-        for ( s = 0, idx = sliceNumber - 1; s < sliceNumber && !threadStopped; s++, idx-- ) {
+        int orient = FileInfoBase.oppositeOrient(fileInfo[0].getAxisOrientation(2));
+
+        for (s = 0, idx = sliceNumber - 1; (s < sliceNumber) && !threadStopped; s++, idx--) {
             fileInfoNew[s] = fileInfo[idx];
-            fileInfoNew[s].setAxisOrientation( orient, 2 );
+            fileInfoNew[s].setAxisOrientation(orient, 2);
         }
 
-        for ( s = 0; s < sliceNumber && !threadStopped; s++ ) {
-            srcImage.setFileInfo( fileInfoNew[s], s );
+        for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
+            srcImage.setFileInfo(fileInfoNew[s], s);
         }
 
-        if ( threadStopped ) {
-            srcImage.setFileInfo( fileInfo );
+        if (threadStopped) {
+            srcImage.setFileInfo(fileInfo);
             buffer = null;
             sliceBuffer = null;
             finalize();
+
             return;
         }
 
         try {
-            srcImage.importData( 0, buffer, true );
-        } catch ( IOException error ) {
+            srcImage.importData(0, buffer, true);
+        } catch (IOException error) {
             buffer = null;
             sliceBuffer = null;
-            errorCleanUp( "Algorithm Randomize slice order: Image(s) locked", false );
+            errorCleanUp("Algorithm Randomize slice order: Image(s) locked", false);
+
             return;
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             sliceBuffer = null;
             finalize();
+
             return;
         }
 
         srcImage.calcMinMax();
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        historyString = new String("RandSliceOrder()\n");
     }
 
 }

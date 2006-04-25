@@ -1,69 +1,88 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-
-
 /**
-* DICOM Presentation Context Acceptance PDU Item Type
-*/
+ * DICOM Presentation Context Acceptance PDU Item Type.
+ */
 public class DICOM_PresentationContextAccept extends DICOM_PDUItemType {
 
-    public byte             presentationContextID;
-    public byte             result    = 2;              // 2 = no reason
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    public byte presentationContextID;
+
+    /** DOCUMENT ME! */
+    public byte result = 2; // 2 = no reason
+
+    /** DOCUMENT ME! */
     public DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(PDUTYPE_TransferSyntax);
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
+
+    /**
+     * Creates a new DICOM_PresentationContextAccept object.
+     */
     public DICOM_PresentationContextAccept() {
         super(PDUTYPE_PresentationContextAccept);
-        presentationContextID = (byte)DICOM_Util.getUniqueOddID8();
+        presentationContextID = (byte) DICOM_Util.getUniqueOddID8();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-    *   Sets the transfer syntax for this object
-    *   @param transferSyntax
-    */
-    public void setTransferSyntax( DICOM_PDUItemType transferSyntax ) {
-        trnSyntax = transferSyntax;
-    }
-    
-    /**
-    *   Calculates length of message
-    *   @return the length of the message
-    */
+     * Calculates length of message.
+     *
+     * @return  the length of the message
+     */
     public int length() {
         int length;
 
-                    // presentationcontextid + reserved2 + result + reserved3
-        length = 4; //           1           +     1     +    1   +     1;
+        // presentationcontextid + reserved2 + result + reserved3
+        length = 4; // 1           +     1     +    1   +     1;
         length += trnSyntax.calcSize();
-        return( length );
+
+        return (length);
     }
-    
+
     /**
-    * Reads the body of an accepted presentation context
-    * @param  connection   the I/O Buffer to read from
-    * @exception DICOM_Exception unknown PDUType
-    */
-    public void readBody( DICOM_Comms connection ) throws DICOM_Exception {
+     * Reads the body of an accepted presentation context.
+     *
+     * @param      connection  the I/O Buffer to read from
+     *
+     * @exception  DICOM_Exception  unknown PDUType
+     */
+    public void readBody(DICOM_Comms connection) throws DICOM_Exception {
         presentationContextID = connection.readByte();
-        reserved2             = connection.readByte();
-        result                = connection.readByte();
-        reserved3             = connection.readByte();
+        reserved2 = connection.readByte();
+        result = connection.readByte();
+        reserved3 = connection.readByte();
 
         trnSyntax.read(connection);
     }
-    
+
     /**
-    * Writes the body of an accepted presentation context
-    * @param connection the I/O Buffer to write to
-    * @exception DICOM_Exception problem with writing association request
-    */
-    public void writeBody( DICOM_Comms connection ) throws DICOM_Exception {
-        connection.writeByte( presentationContextID );
-        connection.writeByte( reserved2 );
-        connection.writeByte( result    );
-        connection.writeByte( reserved3 );
-        
+     * Sets the transfer syntax for this object.
+     *
+     * @param  transferSyntax  DOCUMENT ME!
+     */
+    public void setTransferSyntax(DICOM_PDUItemType transferSyntax) {
+        trnSyntax = transferSyntax;
+    }
+
+    /**
+     * Writes the body of an accepted presentation context.
+     *
+     * @param      connection  the I/O Buffer to write to
+     *
+     * @exception  DICOM_Exception  problem with writing association request
+     */
+    public void writeBody(DICOM_Comms connection) throws DICOM_Exception {
+        connection.writeByte(presentationContextID);
+        connection.writeByte(reserved2);
+        connection.writeByte(result);
+        connection.writeByte(reserved3);
+
         trnSyntax.write(connection);
         connection.flush();
     }

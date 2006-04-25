@@ -1,80 +1,105 @@
 package gov.nih.mipav.view;
 
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
+
 import java.io.*;
-import java.util.Hashtable;
+
+import java.util.*;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
+
 /**
  * Panel which contains the LUT / HistoLUT components and related GUI components.
- * @author Evan McCreedy
- * @version 1.0
+ *
+ * @author   Evan McCreedy
+ * @version  1.0
  */
-public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListener, ChangeListener, KeyListener,
-    HistoLUTParent
-{
-    private ViewJFrameHistoLUT panelParent;
+public class ViewJPanelLUT extends JPanel
+        implements ItemListener, ActionListener, ChangeListener, KeyListener, HistoLUTParent {
 
-    private ViewUserInterface userInterface;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -1769974472965867218L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private JCheckBox binaryThreshBox, binaryThreshBoxB;
+
+    /** DOCUMENT ME! */
+    private JDialogCT ctDialogA, ctDialogB;
+
+    /** Active mouse cursor index of the imageA, B and GM image A, B. */
+    private int cursorIndex, cursorIndexB;
+
+    /** DOCUMENT ME! */
+    private boolean entireFlag = true;
+
+    /** DOCUMENT ME! */
     private ModelHistogram histogramA = null;
+
+    /** DOCUMENT ME! */
     private ModelHistogram histogramB = null;
 
+    /** DOCUMENT ME! */
     private ViewJPanelHistoLUT histoPanelA;
+
+    /** DOCUMENT ME! */
     private ViewJPanelHistoLUT histoPanelB;
 
-    private JPanel panelA;
-    private JPanel panelB = null;
-    private JCheckBox logCheckBoxA, logCheckBoxB;
-    private JCheckBox updateCheckBoxA = null, updateCheckBoxB = null;
-    private JCheckBox interpCheckBoxA, interpCheckBoxB;
-    private JCheckBox binaryThreshBox, binaryThreshBoxB;
-    private JCheckBox oneBasedLUTCheckBoxImageB;
-    private JCheckBox oneBasedLUTCheckBoxImageA;
-    private JTextField nColorsATextF, nColorsBTextF;
+    /** DOCUMENT ME! */
     private JTextField indexColorATextF, indexColorBTextF;
 
-    // threshold related
-    private JTextField threshLowerF, threshUpperF, threshFillF;
-    private JTextField threshLowerBF, threshUpperBF, threshFillBF;
+    /** DOCUMENT ME! */
+    private JCheckBox interpCheckBoxA, interpCheckBoxB;
 
-    private ViewToolBarBuilder toolBarObj;
+    /** Historgram dialog slider labels of the imageA, B and GM imageA, B. */
+    private Hashtable labelsTable, labelsTableB;
 
-    private JToolBar toolBarTop;
-    private JToolBar toolBarBottom;
-    private JToolBar toolBarThreshold;
+    /** DOCUMENT ME! */
+    private JCheckBox logCheckBoxA, logCheckBoxB;
 
-    private JTabbedPane tabbedPane;
-
-    /** The opacity slider label.*/
+    /** The opacity slider label. */
     private JLabel mouseLabel, mouseLabelB;
 
-    /** The labels below the opacity slider.*/
+    /** Opacity X scale sliders. */
+    private JSlider mouseSlider, mouseSliderB;
+
+    /** The labels below the opacity slider. */
     private JLabel[] mouseSliderLabels, mouseSliderLabelsB;
 
-    /** Opacity X scale sliders */
-    private JSlider mouseSlider, mouseSliderB;
+    /** DOCUMENT ME! */
+    private JTextField nColorsATextF, nColorsBTextF;
+
+    /** DOCUMENT ME! */
+    private JCheckBox oneBasedLUTCheckBoxImageA;
+
+    /** DOCUMENT ME! */
+    private JCheckBox oneBasedLUTCheckBoxImageB;
+
+    /** DOCUMENT ME! */
+    private JPanel panelA;
+
+    /** DOCUMENT ME! */
+    private JPanel panelB = null;
+
+    /** DOCUMENT ME! */
+    private ViewJFrameHistoLUT panelParent;
 
     /** X range text field in the imageA, B historgram dialog. */
     private JTextField rangeText, rangeTextB;
-
-    /** X range text field in the imageA, B and GM image A, B historgram dialog.
-     *  Following text fields are used by the tri-planar volume view.
-     */
-    private JTextField xRangeTextA, xRangeTextB;
-
-    /** Y range text field in the imageA, B and GM image A, B historgram dialog.
-     *  Following text fields are used by the tri-planar volume view.
-     */
-    private JTextField yRangeTextA, yRangeTextB;
 
     /** X range value of the imageA, B and GM imageA, B. */
     private float rangeX, rangeXB;
@@ -82,24 +107,56 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     /** Scale range value according to the image min and max. */
     private int scaleRangeA, scaleRangeB;
 
-    /** Active mouse cursor index of the imageA, B and GM image A, B. */
-    private int cursorIndex, cursorIndexB;
+    /** DOCUMENT ME! */
+    private JTabbedPane tabbedPane;
 
-    /** Historgram dialog slider labels of the imageA, B and GM imageA, B. */
-    private Hashtable labelsTable, labelsTableB;
+    /** DOCUMENT ME! */
+    private JTextField threshLowerBF, threshUpperBF, threshFillBF;
 
-    private JDialogCT ctDialogA, ctDialogB;
+    /** threshold related. */
+    private JTextField threshLowerF, threshUpperF, threshFillF;
 
-    private boolean entireFlag = true;
+    /** DOCUMENT ME! */
+    private JToolBar toolBarBottom;
+
+    /** DOCUMENT ME! */
+    private ViewToolBarBuilder toolBarObj;
+
+    /** DOCUMENT ME! */
+    private JToolBar toolBarThreshold;
+
+    /** DOCUMENT ME! */
+    private JToolBar toolBarTop;
+
+    /** DOCUMENT ME! */
+    private JCheckBox updateCheckBoxA = null, updateCheckBoxB = null;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
 
     /** Used to display the volume or area of the voxels/pixels between the upper and lower bounds. */
     private JLabel voxelVolumeLabel;
 
     /**
-     * Set up the LUT panel.
+     * X range text field in the imageA, B and GM image A, B historgram dialog. Following text fields are used by the
+     * tri-planar volume view.
      */
-    public ViewJPanelLUT(ViewJFrameHistoLUT parent)
-    {
+    private JTextField xRangeTextA, xRangeTextB;
+
+    /**
+     * Y range text field in the imageA, B and GM image A, B historgram dialog. Following text fields are used by the
+     * tri-planar volume view.
+     */
+    private JTextField yRangeTextA, yRangeTextB;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Set up the LUT panel.
+     *
+     * @param  parent  DOCUMENT ME!
+     */
+    public ViewJPanelLUT(ViewJFrameHistoLUT parent) {
         panelParent = parent;
         userInterface = ViewUserInterface.getReference();
         entireFlag = parent.getWholeImageFlag();
@@ -107,46 +164,780 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         initGUI();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Disposes of components and frame.
+     * end KeyListener.
+     *
+     * @param  event  DOCUMENT ME!
      */
-    public void dispose()
-    {
+
+    /**
+     * ActionListener.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+
+    /**
+     * Calls various methods depending on the action.
+     *
+     * @param  event  event that triggered function
+     */
+    public void actionPerformed(ActionEvent event) {
+
+        String text;
+        int nColors = 256;
+        String command;
+
+        command = event.getActionCommand();
+
+        if (isImageASelected()) {
+            text = nColorsATextF.getText();
+
+            if (MipavUtil.testParameter(text, 2, 256)) {
+                nColors = Integer.valueOf(text).intValue();
+            }
+        } else {
+            text = nColorsBTextF.getText();
+
+            if (MipavUtil.testParameter(text, 2, 256)) {
+                nColors = Integer.valueOf(text).intValue();
+            }
+        }
+
+        if (event.getActionCommand().equals("grayLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeGrayTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeGrayTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("redLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeRedTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeRedTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("greenLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeGreenTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeGreenTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("blueLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeBlueTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeBlueTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("graybrLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeGrayBRTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeGrayBRTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("hotmetalLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeHotMetalTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeHotMetalTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("spectrumLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeSpectrumTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeSpectrumTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("coolHotLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeCoolHotTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeCoolHotTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("skinLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeSkinTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeSkinTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("boneLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeBoneTransferFunctions();
+                panelParent.getLUTa().makeLUT(nColors);
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeBoneTransferFunctions();
+                panelParent.getLUTb().makeLUT(nColors);
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("stripedLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().makeStripedLUT();
+                panelParent.setLUTA(panelParent.getLUTa());
+                oneBasedLUTCheckBoxImageA.setSelected(false);
+            } else {
+                panelParent.getLUTb().makeStripedLUT();
+                panelParent.setLUTB(panelParent.getLUTb());
+                oneBasedLUTCheckBoxImageB.setSelected(false);
+            }
+        } else if (event.getActionCommand().equals("invertLUT")) {
+
+            if (isImageASelected()) {
+                panelParent.getLUTa().invertLUT();
+                panelParent.setLUTA(panelParent.getLUTa());
+            } else {
+                panelParent.getLUTb().invertLUT();
+                panelParent.setLUTB(panelParent.getLUTb());
+            }
+        } else if (command.equals("ctPresetsLUT")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    ctDialogA = new JDialogCT(panelParent);
+                    ctDialogA.setVisible(true);
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    ctDialogB = new JDialogCT(panelParent);
+                    ctDialogB.setVisible(true);
+                }
+            }
+        } else if (event.getActionCommand().equals("linearLUT")) {
+            toolBarBottom.getComponentAtIndex(1).setEnabled(true);
+            threshUpperF.setEnabled(false);
+            threshLowerF.setEnabled(false);
+            threshFillF.setEnabled(false);
+
+            toolBarThreshold.getComponentAtIndex(0).setEnabled(false);
+            toolBarThreshold.getComponentAtIndex(1).setEnabled(false);
+            toolBarThreshold.getComponentAtIndex(3).setEnabled(false);
+            toolBarThreshold.getComponentAtIndex(4).setEnabled(false);
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    binaryThreshBox.setEnabled(false);
+                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().LINEAR);
+                    histoPanelA.updateLUTRecorder();
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    binaryThreshBoxB.setEnabled(false);
+                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().LINEAR);
+                    histoPanelB.updateLUTRecorder();
+                }
+            }
+        } else if (event.getActionCommand().equals("resetLinearLUT")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    getHistoLUTComponentA().linearMode();
+                    histoPanelA.updateLUTRecorder();
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    getHistoLUTComponentB().linearMode();
+                    histoPanelB.updateLUTRecorder();
+                }
+            }
+        } else if (event.getActionCommand().equals("evendistriLUT")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    getHistoLUTComponentA().evenDistribution();
+                    histoPanelA.updateLUTRecorder();
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    getHistoLUTComponentB().evenDistribution();
+                    histoPanelB.updateLUTRecorder();
+                }
+            }
+        } else if (event.getActionCommand().equals("thresholdLUT")) {
+
+            // turn on the run threshold button
+            toolBarBottom.getComponentAtIndex(1).setEnabled(false);
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    binaryThreshBox.setEnabled(true);
+                    panelParent.enableThresholdingItems(true);
+                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(3).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(4).setEnabled(false);
+                    panelParent.getLUTa().makeGrayTransferFunctions();
+                    panelParent.getLUTa().makeLUT(nColors);
+                    panelParent.getLUTa().setColor(255, new Color(200, 0, 0));
+                    panelParent.setLUTA(panelParent.getLUTa());
+                    oneBasedLUTCheckBoxImageA.setSelected(false);
+                    getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
+                    threshLowerF.setEnabled(true);
+                    threshUpperF.setEnabled(true);
+                    threshFillF.setEnabled(true);
+
+                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
+                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    threshLowerF.setText(Float.toString(lower));
+                    threshUpperF.setText(Float.toString(upper));
+                    threshFillF.setText(Double.toString(panelParent.getImageA().getMin()));
+
+                    if (panelParent.doCalcThresholdVolume()) {
+                        calculateThreshold(lower, upper);
+                    }
+
+                    histoPanelA.updateLUTRecorder();
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    binaryThreshBoxB.setEnabled(true);
+                    panelParent.enableThresholdingItems(true);
+                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(3).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(4).setEnabled(false);
+                    panelParent.getLUTb().makeGrayTransferFunctions();
+                    panelParent.getLUTb().makeLUT(nColors);
+                    panelParent.getLUTb().setColor(255, new Color(200, 0, 0));
+                    panelParent.setLUTB(panelParent.getLUTb());
+                    oneBasedLUTCheckBoxImageB.setSelected(false);
+                    getHistoLUTComponentB().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
+                    threshLowerBF.setEnabled(true);
+                    threshUpperBF.setEnabled(true);
+                    threshFillBF.setEnabled(true);
+
+                    float upper = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
+                    float lower = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
+                    threshLowerBF.setText(Float.toString(lower));
+                    threshUpperBF.setText(Float.toString(upper));
+
+                    if (panelParent.doCalcThresholdVolume()) {
+                        calculateThreshold(lower, upper);
+                    }
+
+                    threshFillBF.setText(Double.toString(panelParent.getImageB().getMin()));
+                    histoPanelA.updateLUTRecorder();
+                }
+            }
+        } else if (event.getActionCommand().equals("inverseThresholdLUT")) {
+
+            // turn on the run threshold button
+            // toolBarBottom.getComponentAtIndex(13).setEnabled(true);
+            toolBarBottom.getComponentAtIndex(1).setEnabled(false);
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    binaryThreshBox.setEnabled(true);
+                    panelParent.enableThresholdingItems(true);
+                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(3).setEnabled(false);
+                    toolBarThreshold.getComponentAtIndex(4).setEnabled(true);
+                    panelParent.getLUT().setColor(255, new Color(200, 0, 0));
+                    panelParent.setLUTA(panelParent.getLUTa());
+                    oneBasedLUTCheckBoxImageA.setSelected(false);
+                    getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD_INV);
+                    threshLowerF.setEnabled(true);
+                    threshUpperF.setEnabled(true);
+                    threshFillF.setEnabled(true);
+
+                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x;
+                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    threshLowerF.setText(Float.toString(lower));
+                    threshUpperF.setText(Float.toString(upper));
+
+                    if (panelParent.doCalcThresholdVolume()) {
+                        calculateThreshold(lower, upper);
+                    }
+
+                    threshFillF.setText(Double.toString(panelParent.getImageA().getMin()));
+                    histoPanelA.updateLUTRecorder();
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    binaryThreshBoxB.setEnabled(true);
+                    panelParent.enableThresholdingItems(true);
+                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
+                    toolBarThreshold.getComponentAtIndex(3).setEnabled(false);
+                    toolBarThreshold.getComponentAtIndex(4).setEnabled(true);
+                    panelParent.getLUTb().setColor(255, new Color(200, 0, 0));
+                    panelParent.setLUTB(panelParent.getLUTb());
+                    oneBasedLUTCheckBoxImageB.setSelected(false);
+                    getHistoLUTComponentB().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD_INV);
+                    threshLowerBF.setEnabled(true);
+                    threshUpperBF.setEnabled(true);
+                    threshFillBF.setEnabled(true);
+
+                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x;
+                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+                    threshLowerBF.setText(Float.toString(lower));
+                    threshUpperBF.setText(Float.toString(upper));
+
+                    if (panelParent.doCalcThresholdVolume()) {
+                        calculateThreshold(lower, upper);
+                    }
+
+                    threshFillBF.setText(Double.toString(panelParent.getImageB().getMin()));
+                    histoPanelA.updateLUTRecorder();
+                }
+            }
+        } else if (event.getActionCommand().equals("runInverseThreshold") ||
+                       event.getActionCommand().equals("runThreshold")) {
+            boolean isInverse = true;
+
+            if (event.getActionCommand().equals("runThreshold")) {
+                isInverse = false;
+            }
+
+            if (isImageASelected()) {
+
+                if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
+                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+
+                    if (MipavUtil.testParameter(threshUpperF.getText(),
+                                                    ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
+                                                    panelParent.getImageA().getMax())) {
+
+                        // run threshold algorithm
+                        JDialogThreshold threshD = new JDialogThreshold();
+
+                        threshD.runFromLUTFrame(panelParent.getImageA(), new Float(threshLowerF.getText()).floatValue(),
+                                                new Float(threshUpperF.getText()).floatValue(),
+                                                new Float(threshFillF.getText()).floatValue(),
+                                                binaryThreshBox.isSelected(), isInverse);
+
+                    } else {
+                        threshUpperF.requestFocus();
+                        threshUpperF.selectAll();
+                    }
+
+                } else {
+                    threshLowerF.requestFocus();
+                    threshLowerF.selectAll();
+                }
+            } else {
+
+                if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
+                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
+
+                    if (MipavUtil.testParameter(threshUpperBF.getText(),
+                                                    ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
+                                                    panelParent.getImageB().getMax())) {
+
+                        // run threshold algorithm
+                        JDialogThreshold threshD = new JDialogThreshold();
+
+                        threshD.runFromLUTFrame(panelParent.getImageB(), new Float(threshLowerBF.getText()).floatValue(),
+                                                new Float(threshUpperBF.getText()).floatValue(),
+                                                new Float(threshFillBF.getText()).floatValue(),
+                                                binaryThreshBoxB.isSelected(), isInverse);
+
+                    } else {
+                        threshUpperBF.requestFocus();
+                        threshUpperBF.selectAll();
+                    }
+
+                } else {
+                    threshLowerBF.requestFocus();
+                    threshLowerBF.selectAll();
+                }
+
+            }
+        } else if (event.getActionCommand().equals("otsuThreshold")) {
+
+            if (isImageASelected()) {
+                int otsu = histogramA.getOtsuThreshold();
+
+                if ((otsu > panelParent.getImageA().getMin()) && (otsu < panelParent.getImageA().getMax())) {
+
+                    if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) {
+                        threshLowerF.setText(Integer.toString(otsu));
+                        threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
+                        getHistoLUTComponentA().updateDualThreshold(otsu, (float) panelParent.getImageA().getMax());
+                        calculateThreshold((float) otsu, (float) panelParent.getImageA().getMax());
+                    } else {
+                        threshUpperF.setText(Integer.toString(otsu));
+                        threshLowerF.setText(Double.toString(panelParent.getImageA().getMin()));
+                        getHistoLUTComponentA().updateDualThreshold((float) panelParent.getImageA().getMin(), otsu);
+                        calculateThreshold((float) panelParent.getImageA().getMin(), (float) otsu);
+                    }
+                }
+            } else {
+                int otsu = histogramB.getOtsuThreshold();
+
+                if ((otsu > panelParent.getImageB().getMin()) && (otsu < panelParent.getImageB().getMax())) {
+
+                    if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) {
+                        threshLowerBF.setText(Integer.toString(otsu));
+                        threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
+                        getHistoLUTComponentB().updateDualThreshold(otsu, (float) panelParent.getImageB().getMax());
+
+                        if (panelParent.doCalcThresholdVolume()) {
+                            calculateThreshold((float) otsu, (float) panelParent.getImageA().getMax());
+                        }
+                    } else {
+                        threshUpperBF.setText(Integer.toString(otsu));
+                        threshLowerBF.setText(Double.toString(panelParent.getImageB().getMin()));
+                        getHistoLUTComponentB().updateDualThreshold((float) panelParent.getImageB().getMin(), otsu);
+
+                        if (panelParent.doCalcThresholdVolume()) {
+                            calculateThresholdVolume((float) panelParent.getImageA().getMin(), (float) otsu);
+                        }
+                    }
+                }
+
+            }
+        } else if (event.getActionCommand().equals("maxEntThreshold")) {
+
+            if (isImageASelected()) {
+                int ent = histogramA.getMaxEntropyThreshold();
+
+                if ((ent > panelParent.getImageA().getMin()) && (ent < panelParent.getImageA().getMax())) {
+
+                    if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV) {
+                        threshLowerF.setText(Integer.toString(ent));
+                        threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
+                        getHistoLUTComponentA().updateDualThreshold(ent, (float) panelParent.getImageA().getMax());
+
+                        if (panelParent.doCalcThresholdVolume()) {
+                            calculateThreshold((float) ent, (float) panelParent.getImageA().getMax());
+                        }
+                    } else {
+                        threshUpperF.setText(Integer.toString(ent));
+                        threshLowerF.setText(Double.toString(panelParent.getImageA().getMin()));
+                        getHistoLUTComponentA().updateDualThreshold((float) panelParent.getImageA().getMin(), ent);
+
+                        if (panelParent.doCalcThresholdVolume()) {
+                            calculateThreshold((float) panelParent.getImageA().getMin(), (float) ent);
+                        }
+                    }
+
+                }
+            } else {
+                int ent = histogramA.getMaxEntropyThreshold();
+
+                if ((ent > panelParent.getImageB().getMin()) && (ent < panelParent.getImageB().getMax())) {
+
+                    if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV) {
+                        threshLowerBF.setText(Integer.toString(ent));
+                        threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
+                        getHistoLUTComponentB().updateDualThreshold(ent, (float) panelParent.getImageB().getMax());
+                    } else {
+                        threshUpperBF.setText(Integer.toString(ent));
+                        threshLowerBF.setText(Double.toString(panelParent.getImageB().getMin()));
+                        getHistoLUTComponentB().updateDualThreshold((float) panelParent.getImageB().getMin(), ent);
+                    }
+                }
+            }
+        } else if (event.getActionCommand().equals("alpha")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().ALPHA);
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().ALPHA);
+                }
+            }
+        } else if (event.getActionCommand().equals("red")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().RED);
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().RED);
+                }
+            }
+        } else if (event.getActionCommand().equals("green")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().GREEN);
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().GREEN);
+                }
+            }
+        } else if (event.getActionCommand().equals("blue")) {
+
+            if (isImageASelected()) {
+
+                if (getHistoLUTComponentA() != null) {
+                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().BLUE);
+                }
+            } else {
+
+                if (getHistoLUTComponentB() != null) {
+                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().BLUE);
+                }
+            }
+        } else if (event.getActionCommand().equals("Threshold")) {
+
+            if (panelParent.doCalcThresholdVolume()) {
+                calcThreshold();
+            }
+
+            if (panelParent.getImageA().getType() == ModelStorageBase.BOOLEAN) {
+                setVisible(false);
+                panelParent.getImageA().removeImageDisplayListener(panelParent);
+
+                if (panelParent.getImageB() != null) {
+                    panelParent.getImageB().removeImageDisplayListener(panelParent);
+                }
+
+                dispose();
+            }
+
+            updateFrames(false);
+        } else if (event.getActionCommand().equals("OpenUDLUT") || event.getActionCommand().equals("SaveUDLUT")) {
+            panelParent.actionPerformed(event);
+        } else if (event.getActionCommand().equals("GenerateLUT")) {
+            histoPanelA.showLUTRecorder();
+        }
+
+        // Setup threshold buttons to be enabled or disabled.
+        if (isImageASelected()) {
+
+            if ((getHistoLUTComponentA() != null) &&
+                    (getHistoLUTComponentA().getMode() != ViewJComponentHistoLUT.DUAL_THRESHOLD)) {
+                panelParent.enableThresholdingItems(false);
+            }
+        } else {
+
+            if ((getHistoLUTComponentB() != null) &&
+                    (getHistoLUTComponentB().getMode() != ViewJComponentHistoLUT.DUAL_THRESHOLD)) {
+                panelParent.enableThresholdingItems(false);
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void clearVoxelLabel() {
+
+        if (panelParent.getImageA().getNDims() == 3) {
+            voxelVolumeLabel.setText("Threshold volume(red):");
+        } else {
+            voxelVolumeLabel.setText("Threshold area(red):");
+        }
+    }
+
+    /**
+     * Disposes of components and frame.
+     */
+    public void dispose() {
         getHistoLUTComponentA().dispose();
         getLUTComponentA().dispose(true);
         histogramA.disposeLocal();
 
-        if (histogramB != null)
-        {
+        if (histogramB != null) {
             getHistoLUTComponentB().dispose();
             getLUTComponentB().dispose(true);
             histogramB.disposeLocal();
         }
-        if (histoPanelA != null)
-        {
+
+        if (histoPanelA != null) {
             histoPanelA.finalize();
             histoPanelA = null;
         }
 
-        if (histoPanelB != null)
-        {
+        if (histoPanelB != null) {
             histoPanelB.finalize();
             histoPanelB = null;
         }
     }
 
-    public void clearVoxelLabel() {
-        if (panelParent.getImageA().getNDims() == 3)
-            voxelVolumeLabel.setText("Threshold volume(red):");
-        else
-            voxelVolumeLabel.setText("Threshold area(red):");
+    /**
+     * Placeholder.
+     *
+     * @param  mouseEvent  drag event
+     */
+    public void dragPoint(MouseEvent mouseEvent) { }
+
+    /**
+     * Get the histogram component for imageA.
+     *
+     * @return  the imageA histogram component
+     */
+    public final ViewJComponentHLUTBase getHistoLUTComponentA() {
+        return histoPanelA.getHistoLUTComponent();
+    }
+
+    /**
+     * Get the histogram component for imageB.
+     *
+     * @return  the imageB histogram component
+     */
+    public final ViewJComponentHLUTBase getHistoLUTComponentB() {
+        return histoPanelB.getHistoLUTComponent();
+    }
+
+    /**
+     * Returns the lower threshold value.
+     *
+     * @return  float lower thresh
+     */
+    public float getLowerThreshold() {
+
+        if (isImageASelected()) {
+            return new Float(threshLowerF.getText()).floatValue();
+        } else {
+            return new Float(threshLowerBF.getText()).floatValue();
+        }
+    }
+
+    /**
+     * Get the imageA histo component lut.
+     *
+     * @return  ModelLUT
+     */
+    public final ModelLUT getLUTa() {
+        return ((ViewJComponentHistoLUT) getHistoLUTComponentA()).getLUT();
+    }
+
+    /**
+     * Get the imageB histo component lut.
+     *
+     * @return  ModelLUT
+     */
+    public final ModelLUT getLUTb() {
+        return ((ViewJComponentHistoLUT) getHistoLUTComponentB()).getLUT();
+    }
+
+    /**
+     * Get the imageA LUT.
+     *
+     * @return  the imageA LUT component
+     */
+    public final ViewJComponentLUT getLUTComponentA() {
+        return histoPanelA.getLUTComponent();
+    }
+
+    /**
+     * Get the imageB LUT.
+     *
+     * @return  the imageB LUT component
+     */
+    public final ViewJComponentLUT getLUTComponentB() {
+        return histoPanelB.getLUTComponent();
+    }
+
+    /**
+     * Get the LUT recorder reference.
+     *
+     * @return  JDialogRecordLUT reference to LUT recorder.
+     */
+    public JDialogRecordLUT getLUTRecorder() {
+        return histoPanelA.getLUTRecorder();
+    }
+
+    /**
+     * Returns the upper threshold value.
+     *
+     * @return  float upper thresh
+     */
+    public float getUpperThreshold() {
+
+        if (isImageASelected()) {
+            return new Float(threshUpperF.getText()).floatValue();
+        } else {
+            return new Float(threshUpperBF.getText()).floatValue();
+        }
     }
 
     /**
      * Set up the panel components.
      */
-    public void initGUI()
-    {
+    public void initGUI() {
         setBackground(new Color(160, 160, 160));
 
         toolBarObj = new ViewToolBarBuilder(this);
@@ -155,10 +946,11 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         toolBarBottom = toolBarObj.buildLUTToolBarBottom();
         toolBarThreshold = toolBarObj.buildLUTThresholdToolBar();
 
-        if (panelParent.getImageA().getNDims() == 3)
+        if (panelParent.getImageA().getNDims() == 3) {
             voxelVolumeLabel = new JLabel("Threshold volume(red):");
-        else
+        } else {
             voxelVolumeLabel = new JLabel("Threshold area(red):");
+        }
 
         toolBarThreshold.add(voxelVolumeLabel);
 
@@ -179,8 +971,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         tabbedPane.setFont(MipavUtil.font12B);
         buildPanelA(panelParent.getImageA(), panelParent.getLUTa(), entireFlag);
 
-        if (panelParent.getImageB() != null)
-        {
+        if (panelParent.getImageB() != null) {
             buildPanelB(panelParent.getImageB(), panelParent.getLUTb(), entireFlag);
         }
 
@@ -191,14 +982,715 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     /**
-     *   Method that displays the histogram and LUT and other controls to manipulate the LUT.
-     *   Panel for image A.
-     *   @param image        Model of image
-     *   @param LUT          Model of LUT
-     *   @param entireFlag   Flag indicating if histogram should be made of entire image.
+     * Returns whether the imageA LUT panel is the one being worked on.
+     *
+     * @return  whether the imageA LUT panel is the one being worked on
      */
-    private void buildPanelA(ModelImage image, ModelLUT LUT, boolean entireFlag)
-    {
+    public boolean isImageASelected() {
+        return tabbedPane.getSelectedComponent() == panelA;
+    }
+
+    /**
+     * Returns whether the imageB LUT panel is the one being worked on.
+     *
+     * @return  whether the imageB LUT panel is the one being worked on
+     */
+    public boolean isImageBSelected() {
+        return tabbedPane.getSelectedComponent() == panelB;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public boolean isImageUpdate() {
+        return updateCheckBoxA.isSelected();
+    }
+
+    /**
+     * end ActionListener.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+
+    /**
+     * ItemListener.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+
+    /**
+     * Sets the flags for the checkboxes.
+     *
+     * @param  event  event that triggered this function
+     */
+    public synchronized void itemStateChanged(ItemEvent event) {
+
+        Object source = event.getSource();
+
+        if (source == logCheckBoxA) {
+
+            if (logCheckBoxA.isSelected() == true) {
+                getHistoLUTComponentA().setLogFlag(true);
+            } else {
+                getHistoLUTComponentA().setLogFlag(false);
+            }
+
+            getHistoLUTComponentA().showHistogram();
+        } else if (source == logCheckBoxB) {
+
+            if (logCheckBoxB.isSelected() == true) {
+                getHistoLUTComponentB().setLogFlag(true);
+            } else {
+                getHistoLUTComponentB().setLogFlag(false);
+            }
+
+            getHistoLUTComponentB().showHistogram();
+        } else if (source == interpCheckBoxA) {
+            // the following code could look a little screwey to some people, like maybe there is a simpler way of doing
+            // it. basically, the interpolation of images used to be controlled by one variable, and both images were
+            // interpolated according to this variable. however, now we want to be able to interpolate the images
+            // independently. so without changing the code structure, i added some constants that represent whether or
+            // not to interpolate each image. note: INTERPOLATE_A means interpolate image A only. likewise for image B.
+            // NEAREST_BOTH means no interpolation for either image
+
+            int interpMode = 0;
+
+            if (interpCheckBoxA.isSelected() == true) {
+
+                if (interpCheckBoxB != null) {
+
+                    if (interpCheckBoxB.isSelected() == true) {
+                        interpMode = ViewJComponentBase.INTERPOLATE_BOTH;
+                    } else {
+                        interpMode = ViewJComponentBase.INTERPOLATE_A;
+                    }
+                } else {
+                    interpMode = ViewJComponentBase.INTERPOLATE_A;
+                }
+            } else {
+
+                if (interpCheckBoxB != null) {
+
+                    if (interpCheckBoxB.isSelected() == true) {
+                        interpMode = ViewJComponentBase.INTERPOLATE_B;
+                    } else {
+                        interpMode = ViewJComponentBase.NEAREST_BOTH;
+                    }
+                } else {
+                    interpMode = ViewJComponentBase.INTERPOLATE_B;
+                }
+            }
+
+            // the -50 means do not change the opacity of the image (actually, any negative value
+            // will serve not to change the opacity levels. previously, this was hard-coded to "50"
+            // but the problem was that then the opacity would change every time the images were
+            // interpolated or de-interpolated
+            panelParent.getImageA().notifyImageDisplayListeners(panelParent.getLUTa(), true, -50, interpMode);
+        } else if (source == interpCheckBoxB) {
+            int interpMode = 0;
+
+            if (interpCheckBoxB.isSelected() == true) {
+
+                if (interpCheckBoxA.isSelected() == true) {
+                    interpMode = ViewJComponentBase.INTERPOLATE_BOTH;
+                } else {
+                    interpMode = ViewJComponentBase.INTERPOLATE_B;
+                }
+            } else {
+
+                if (interpCheckBoxA.isSelected() == true) {
+                    interpMode = ViewJComponentBase.INTERPOLATE_A;
+                } else {
+                    interpMode = ViewJComponentBase.NEAREST_BOTH;
+                }
+            }
+
+            panelParent.getImageB().notifyImageDisplayListeners(panelParent.getLUTb(), true, -50, interpMode);
+        } else if (source == updateCheckBoxA) {
+
+            if (updateCheckBoxB != null) {
+                updateCheckBoxB.removeItemListener(this);
+            }
+
+            if ((updateCheckBoxA.isSelected() == true) && (updateCheckBoxB != null)) {
+                updateCheckBoxB.setSelected(true);
+            } else if ((updateCheckBoxA.isSelected() == false) && (updateCheckBoxB != null)) {
+                updateCheckBoxB.setSelected(false);
+            }
+
+            if (updateCheckBoxB != null) {
+                updateCheckBoxB.addItemListener(this);
+            }
+        } else if (source == updateCheckBoxB) {
+            updateCheckBoxB.removeItemListener(this);
+
+            if (updateCheckBoxB.isSelected() == true) {
+                updateCheckBoxA.setSelected(true);
+            } else {
+                updateCheckBoxA.setSelected(false);
+            }
+
+            updateCheckBoxA.addItemListener(this);
+        } else if (source == binaryThreshBox) {
+            threshFillF.setEnabled(!binaryThreshBox.isSelected());
+        } else if (source == binaryThreshBoxB) {
+            threshFillBF.setEnabled(!binaryThreshBoxB.isSelected());
+        } else if (source == oneBasedLUTCheckBoxImageA) {
+
+            // get the color of the LUT index 0
+            Color zeroIndexColor = getLUTa().getColor(0);
+
+            // test to see if the color is R == 0, G == 0, B == 0
+            boolean zeroIndexColorIs000 = ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) &&
+                                               (zeroIndexColor.getBlue() == 0));
+            boolean zeroIndexColorIs111 = ((zeroIndexColor.getRed() == 1) && (zeroIndexColor.getGreen() == 1) &&
+                                               (zeroIndexColor.getBlue() == 1));
+
+            // if the user wants a 1-based LUT
+            if (oneBasedLUTCheckBoxImageA.isSelected() == true) {
+
+                // only change index 0 to 1's if it is currently R == 0, G == 0, B == 0.
+                if (zeroIndexColorIs000 == true) {
+                    getLUTa().setColor(0, new Color(1, 1, 1));
+                }
+            } else {
+
+                // only change index 1 to 0's if it is currently R == 1, G == 1, B == 1.
+                if (zeroIndexColorIs111 == true) {
+                    getLUTa().setColor(0, new Color(0, 0, 0));
+                }
+            }
+
+            updateFrames(false);
+        } else if (source == oneBasedLUTCheckBoxImageB) {
+
+            // get the color of the LUT index 0
+            Color zeroIndexColor = getLUTb().getColor(0);
+
+            // test to see if the color is R == 0, G == 0, B == 0
+            boolean zeroIndexColorIs000 = ((zeroIndexColor.getRed() == 0) && (zeroIndexColor.getGreen() == 0) &&
+                                               (zeroIndexColor.getBlue() == 0));
+            boolean zeroIndexColorIs111 = ((zeroIndexColor.getRed() == 1) && (zeroIndexColor.getGreen() == 1) &&
+                                               (zeroIndexColor.getBlue() == 1));
+
+            // if the user wants a 1-based LUT
+            if (oneBasedLUTCheckBoxImageB.isSelected() == true) {
+
+                // only change index 0 to 1's if it is currently R == 0, G == 0, B == 0.
+                if (zeroIndexColorIs000 == true) {
+                    getLUTb().setColor(0, new Color(1, 1, 1));
+                }
+            } else {
+
+                // only change index 1 to 0's if it is currently R == 1, G == 1, B == 1.
+                if (zeroIndexColorIs111 == true) {
+                    getLUTb().setColor(0, new Color(0, 0, 0));
+                }
+            }
+
+            updateFrames(false);
+        }
+
+    }
+
+    /**
+     * KeyListener.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+
+    /**
+     * Unchanged.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyPressed(KeyEvent e) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyReleased(KeyEvent e) { }
+
+    /**
+     * If the ENTER key is hit while in threshold boxes, update the LUT's threshold (for dual threshold).
+     *
+     * @param  e  KeyEvent
+     */
+    public void keyTyped(KeyEvent e) {
+
+        if (e.getKeyChar() == KeyEvent.VK_ENTER) {
+
+            if (e.getSource().equals(threshLowerF)) {
+
+                if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
+                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+
+                    getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
+                                                                new Float(threshUpperF.getText()).floatValue());
+                } else {
+                    threshLowerF.requestFocus();
+                    threshLowerF.selectAll();
+                }
+            } else if (e.getSource().equals(threshUpperF)) {
+
+                if (MipavUtil.testParameter(threshUpperF.getText(),
+                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
+                                                panelParent.getImageA().getMax())) {
+                    getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
+                                                                new Float(threshUpperF.getText()).floatValue());
+                } else {
+                    threshUpperF.requestFocus();
+                    threshUpperF.selectAll();
+                }
+            } else if (e.getSource().equals(threshFillF)) {
+
+                // System.err.println("MIN: " + imageA.getMin() + " MAX: " + imageA.getMax());
+                if (MipavUtil.testParameter(threshFillF.getText(), panelParent.getImageA().getMin(),
+                                                panelParent.getImageA().getMax())) { //
+                                                                                     // componentHistogramA.updateDualThreshold(new
+                                                                                     // 
+                                                                                     // Float(threshFillF.getText()).floatValue(),
+                                                                                     // -1);
+                } else {
+                    threshFillF.requestFocus();
+                    threshFillF.selectAll();
+                }
+            } else if (e.getSource().equals(threshLowerBF)) {
+
+                if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
+                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
+
+                    getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
+                                                                new Float(threshUpperBF.getText()).floatValue());
+                } else {
+                    threshLowerBF.requestFocus();
+                    threshLowerBF.selectAll();
+                }
+            } else if (e.getSource().equals(threshUpperBF)) {
+
+                if (MipavUtil.testParameter(threshUpperBF.getText(),
+                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
+                                                panelParent.getImageB().getMax())) {
+                    getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
+                                                                new Float(threshUpperBF.getText()).floatValue());
+                } else {
+                    threshUpperBF.requestFocus();
+                    threshUpperBF.selectAll();
+                }
+            } else if (e.getSource().equals(threshFillBF)) {
+
+                // System.err.println("MIN: " + imageA.getMin() + " MAX: " + imageA.getMax());
+                if (MipavUtil.testParameter(threshFillBF.getText(), panelParent.getImageB().getMin(),
+                                                panelParent.getImageB().getMax())) { //
+                                                                                     // componentHistogramA.updateDualThreshold(new
+                                                                                     // 
+                                                                                     // Float(threshFillF.getText()).floatValue(),
+                                                                                     // -1);
+                } else {
+                    threshFillBF.requestFocus();
+                    threshFillBF.selectAll();
+                }
+            }
+        }
+    }
+
+    /**
+     * Removes the tabbed pane for the histogram of image B.
+     */
+    public void removeHistoLUTb() {
+
+        if (tabbedPane.getTabCount() == 2) {
+            tabbedPane.removeTabAt(1);
+            panelParent.setImageB(null);
+            panelB = null;
+            tabbedPane.validate();
+            validate();
+        }
+    }
+
+    /**
+     * Placeholder.
+     */
+    public void setAllOff() { }
+
+    /**
+     * end ChangeListener.
+     *
+     * @param  newLUT  DOCUMENT ME!
+     */
+
+    /**
+     * HistoLUTParent.
+     *
+     * @param  newLUT  DOCUMENT ME!
+     */
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setLUT(ModelLUT newLUT) {
+
+        if (isImageASelected()) {
+            panelParent.setLUTA(newLUT);
+            oneBasedLUTCheckBoxImageA.setSelected(false);
+        } else {
+            panelParent.setLUTB(newLUT);
+            oneBasedLUTCheckBoxImageB.setSelected(false);
+        }
+    }
+
+    /**
+     * Change the histogram component LUT.
+     *
+     * @param  lut  the new lut
+     */
+    public final void setLUTa(ModelLUT lut) {
+        ((ViewJComponentHistoLUT) getHistoLUTComponentA()).setLUT(lut);
+        oneBasedLUTCheckBoxImageA.setSelected(false);
+    }
+
+    /**
+     * Change the histogram component LUT.
+     *
+     * @param  lut  the new lut
+     */
+    public final void setLUTb(ModelLUT lut) {
+        ((ViewJComponentHistoLUT) getHistoLUTComponentB()).setLUT(lut);
+        oneBasedLUTCheckBoxImageB.setSelected(false);
+    }
+
+    /**
+     * Change the text field showing the number of colors.
+     *
+     * @param  value  the number of colors
+     */
+    public void setNColors(int value) {
+        nColorsATextF.setText(String.valueOf(value));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setRangeText(float x, float y, int _index) {
+
+        if (panelParent.doCalcThresholdVolume()) {
+            calculateThreshold();
+        }
+
+        String start, mid, end;
+
+        if (isImageASelected()) {
+            String str = String.valueOf(x);
+
+            cursorIndex = _index;
+            rangeX = x;
+
+            int index = str.indexOf(".");
+            int length = str.length();
+            int indexE = str.indexOf("E");
+
+            if (((index + 2) < length) && (indexE == -1)) {
+                str = str.substring(0, index + 2 + 1);
+            } else if (indexE != -1) {
+                str = str.substring(0, index + 2 + 1) + str.substring(indexE);
+            }
+
+            if (labelsTable == null) {
+                rangeText.setText(str);
+                mouseSlider.setValue(255 - (int) y);
+            } else {
+                xRangeTextA.setText(str);
+                yRangeTextA.setText(String.valueOf(255 - (int) y));
+
+                // Change slider's labels
+                start = MipavUtil.makeFloatString(x - scaleRangeA, 2);
+                mid = MipavUtil.makeFloatString(x, 2);
+                end = MipavUtil.makeFloatString(x + scaleRangeA, 2);
+                mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(start);
+                mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
+                mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(end);
+                labelsTable = new Hashtable();
+                labelsTable.put(new Integer(0 + (start.length() / 2)), mouseSliderLabels[0]);
+                labelsTable.put(new Integer(50 + (mid.length() / 2)), mouseSliderLabels[1]);
+                labelsTable.put(new Integer(100 - (mid.length() / 2)), mouseSliderLabels[2]);
+                mouseSlider.setLabelTable(labelsTable);
+                mouseSlider.repaint();
+                mouseSlider.setValue(50);
+            }
+        } else if (isImageBSelected()) {
+            String str = String.valueOf(x);
+
+            cursorIndexB = _index;
+            rangeXB = x;
+
+            int index = str.indexOf(".");
+            int length = str.length();
+            int indexE = str.indexOf("E");
+
+            if (((index + 2) < length) && (indexE == -1)) {
+                str = str.substring(0, index + 2 + 1);
+            } else if (indexE != -1) {
+                str = str.substring(0, index + 2 + 1) + str.substring(indexE);
+            }
+
+            if (labelsTableB == null) {
+                rangeTextB.setText(str);
+                mouseSliderB.setValue(255 - (int) y);
+            } else {
+                xRangeTextB.setText(str);
+                yRangeTextB.setText(String.valueOf(255 - (int) y));
+
+                // Change slider's labels
+                start = MipavUtil.makeFloatString(x - scaleRangeB, 2);
+                mid = MipavUtil.makeFloatString(x, 2);
+                end = MipavUtil.makeFloatString(x + scaleRangeB, 2);
+                mouseSliderLabelsB[0] = ViewJFrameHistoLUT.createSliderLabel(start);
+                mouseSliderLabelsB[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
+                mouseSliderLabelsB[2] = ViewJFrameHistoLUT.createSliderLabel(end);
+                labelsTableB = new Hashtable();
+                labelsTableB.put(new Integer(0 + (start.length() / 2)), mouseSliderLabelsB[0]);
+                labelsTableB.put(new Integer(50 + (mid.length() / 2)), mouseSliderLabelsB[1]);
+                labelsTableB.put(new Integer(100 - (mid.length() / 2)), mouseSliderLabelsB[2]);
+                mouseSliderB.setLabelTable(labelsTableB);
+                mouseSliderB.repaint();
+                mouseSliderB.setValue(50);
+            }
+        }
+    }
+
+    /**
+     * end ItemListener.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+
+    /**
+     * ChangeListener.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+
+    /**
+     * Sets values based on knob along slider.
+     *
+     * @param  e  event that triggered this function
+     */
+    public void stateChanged(ChangeEvent e) {
+        Object source = e.getSource();
+        float value, sliderValue;
+
+        // Slider has changed lets update.
+        if ((source == tabbedPane) && isImageASelected()) {
+            panelParent.setDisplayMode(panelParent.IMAGE_A);
+            panelParent.setLUTA(panelParent.getLUTa());
+            panelParent.setTitle("Lookup Table: " + panelParent.getImageA().getImageName());
+
+            if (panelParent.doCalcThresholdVolume()) {
+                calculateThreshold();
+            }
+        } else if ((source == tabbedPane) && isImageBSelected() && (panelParent.getImageB() != null)) {
+            panelParent.setDisplayMode(panelParent.IMAGE_B);
+            panelParent.setLUTB(panelParent.getLUTb());
+            panelParent.setTitle("Lookup Table: " + panelParent.getImageB().getImageName());
+
+            if (panelParent.doCalcThresholdVolume()) {
+                calculateThreshold();
+            }
+        }
+
+        if (source == mouseSlider) {
+
+            // componentOpacityA.updateCursor(rangeX, 100-mouseSlider.getValue(), cursorIndex);
+            if (mouseSlider.getValueIsAdjusting() == true) {
+                return;
+            }
+
+            if (xRangeTextA != null) {
+                sliderValue = mouseSlider.getValue();
+
+                if (mouseSliderLabels[0].getText().equals("0")) {
+                    value = rangeX + ((sliderValue) / 100.0f * scaleRangeA * 2.0f);
+                } else {
+
+                    if (sliderValue > 50) {
+                        value = rangeX + ((sliderValue - 50) / 100.0f * scaleRangeA * 2.0f);
+                    } else {
+                        value = rangeX - ((50 - sliderValue) / 100.0f * scaleRangeA * 2.0f);
+                    }
+                }
+
+                // value = (mouseSlider.getValue() / 100.0f * 32.0f) + rangeX;
+                xRangeTextA.setText(MipavUtil.makeFloatString(value, 2));
+                ((ViewJComponentHistoLUT) getHistoLUTComponentA()).updateCursorXPos(value, 100 - mouseSlider.getValue(),
+                                                                                    cursorIndex);
+            } else {
+                ((ViewJComponentHistoLUT) getHistoLUTComponentA()).updateCursor(rangeX, 100 - mouseSlider.getValue(),
+                                                                                cursorIndex);
+            }
+        } else if (source == mouseSliderB) {
+
+            if (mouseSliderB.getValueIsAdjusting() == true) {
+                return;
+            }
+
+            if (xRangeTextB != null) {
+                sliderValue = mouseSliderB.getValue();
+
+                if (mouseSliderLabelsB[0].getText().equals("0")) {
+                    value = rangeXB + (sliderValue / 100.0f * scaleRangeB * 2.0f);
+                } else {
+
+                    if (sliderValue > 50) {
+                        value = rangeXB + ((sliderValue - 50) / 100.0f * scaleRangeB * 2.0f);
+                    } else {
+                        value = rangeXB - ((50 - sliderValue) / 100.0f * scaleRangeB * 2.0f);
+                    }
+                }
+
+                // value = (mouseSliderB.getValue() / 100.0f * 32.0f) + rangeXB;
+                xRangeTextB.setText(MipavUtil.makeFloatString(value, 2));
+                ((ViewJComponentHistoLUT) getHistoLUTComponentB()).updateCursorXPos(value,
+                                                                                    100 - mouseSliderB.getValue(),
+                                                                                    cursorIndexB);
+            } else {
+                ((ViewJComponentHistoLUT) getHistoLUTComponentB()).updateCursor(rangeXB, 100 - mouseSliderB.getValue(),
+                                                                                cursorIndexB);
+            }
+        }
+    }
+
+    /**
+     * Placeholder.
+     */
+    public void updateComponentLUT() { }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void updateFrames(boolean flag) {
+        panelParent.updateFrames(flag);
+    }
+
+    /**
+     * This method is called to update the histogram(s) displayed in each tabbed pane of the frame.
+     *
+     * @param  _imageA       image A
+     * @param  _LUTa         lookup table for image A
+     * @param  _imageB       image B
+     * @param  _LUTb         lookup table for image B
+     * @param  progressFlag  passed to calculateHistogram algorithm. If false progress bar is not displayed
+     */
+    public void updateHistoLUT(ModelImage _imageA, ModelLUT _LUTa, ModelImage _imageB, ModelLUT _LUTb,
+                               boolean progressFlag) {
+
+        if (_imageA != null) {
+            panelParent.setImageA(_imageA);
+
+            if (_LUTa != null) {
+                panelParent.setLUTa(_LUTa);
+
+                if (isImageASelected()) {
+                    getLUTComponentA().show(panelParent.getLUTa());
+                }
+            }
+
+            calcHistogram(panelParent.IMAGE_A, entireFlag, progressFlag);
+            setLUTa(panelParent.getLUTa());
+            getHistoLUTComponentA().setHistogramInfo(panelParent.getImageA(), histogramA);
+
+            if (isImageASelected()) {
+                getHistoLUTComponentA().linearMode();
+                getHistoLUTComponentA().showHistogram(_LUTa);
+            }
+        }
+
+        if ((_imageB != null) && (panelParent.getImageB() != null)) {
+
+            panelParent.setImageB(_imageB);
+
+            if (_LUTb != null) {
+                panelParent.setLUTb(_LUTb);
+            }
+
+            if (panelB == null) {
+                buildPanelB(panelParent.getImageB(), panelParent.getLUTb(), true);
+            }
+
+            getLUTComponentB().show(panelParent.getLUTb());
+
+            calcHistogram(panelParent.IMAGE_B, entireFlag, progressFlag);
+            setLUTb(panelParent.getLUTb());
+            getHistoLUTComponentB().setHistogramInfo(panelParent.getImageB(), histogramB);
+
+            getHistoLUTComponentB().linearMode();
+            getHistoLUTComponentB().showHistogram(panelParent.getLUTb());
+        } else if ((_imageB != null) && (panelParent.getImageB() == null)) {
+
+            if (_LUTb != null) {
+                panelParent.setLUTb(_LUTb);
+            }
+
+            panelParent.setImageB(_imageB);
+            buildPanelB(panelParent.getImageB(), panelParent.getLUTb(), true);
+        }
+
+        tabbedPane.validate();
+        validate();
+    }
+
+    /**
+     * Placeholder.
+     *
+     * @param  str  string
+     */
+    public void updateLUTPositionString(String str) {
+
+        if (isImageASelected()) {
+            indexColorATextF.setText(str);
+        } else {
+            indexColorBTextF.setText(str);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void updateThresholdFields(float lower, float upper) {
+
+        if (isImageASelected()) {
+            threshLowerF.setText(Float.toString(lower));
+            threshUpperF.setText(Float.toString(upper));
+
+            if (panelParent.isThresholding()) {
+
+                if (panelParent.doCalcThresholdVolume()) {
+                    calculateThreshold(lower, upper);
+                }
+            }
+        } else {
+            threshLowerBF.setText(Float.toString(lower));
+            threshUpperBF.setText(Float.toString(upper));
+
+            if (panelParent.isThresholding()) {
+
+                if (panelParent.doCalcThresholdVolume()) {
+                    calculateThreshold(lower, upper);
+                }
+            }
+
+        }
+    }
+
+    /**
+     * Method that displays the histogram and LUT and other controls to manipulate the LUT. Panel for image A.
+     *
+     * @param  image       Model of image
+     * @param  LUT         Model of LUT
+     * @param  entireFlag  Flag indicating if histogram should be made of entire image.
+     */
+    private void buildPanelA(ModelImage image, ModelLUT LUT, boolean entireFlag) {
         calcHistogram(panelParent.IMAGE_A, entireFlag, true);
 
         JPanel controlPanel = new JPanel(new GridBagLayout());
@@ -276,8 +1768,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         oneBasedLUTCheckBoxImageA = new JCheckBox("0 to 1 LUT adjustment", false);
         oneBasedLUTCheckBoxImageA.setFont(MipavUtil.font12);
-        oneBasedLUTCheckBoxImageA.setToolTipText(
-            "Only relevant when the LUT's first index is either the color (0, 0, 0) or (1, 1, 1)");
+        oneBasedLUTCheckBoxImageA.setToolTipText("Only relevant when the LUT's first index is either the color (0, 0, 0) or (1, 1, 1)");
         oneBasedLUTCheckBoxImageA.setSelected(isLUT1Based(LUT));
         oneBasedLUTCheckBoxImageA.addItemListener(this);
 
@@ -371,7 +1862,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         mouseLabel.setFont(MipavUtil.font12B);
         mouseLabel.setForeground(Color.black);
 
-        scaleRangeA = ( (int) Math.round(image.getMax() - image.getMin()) + 1) / 256;
+        scaleRangeA = ((int) Math.round(image.getMax() - image.getMin()) + 1) / 256;
 
         mouseSliderLabels = new JLabel[3];
         mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(0));
@@ -422,6 +1913,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 35;
         gbc.weighty = 35;
+
         JPanel panelMouse = new JPanel();
 
         panelMouse.setLayout(cpGBL);
@@ -466,14 +1958,14 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     /**
-     *   Method that displays the histogram and LUT and other controls to manipulate the LUT.
-     *   Panel for image B.
-     *   @param image        Model of image
-     *   @param LUT          Model of LUT
-     *   @param entireFlag   Flag indicating if histogram should be made of entire image.
+     * Method that displays the histogram and LUT and other controls to manipulate the LUT. Panel for image B.
+     *
+     * @param  image       Model of image
+     * @param  LUT         Model of LUT
+     * @param  entireFlag  Flag indicating if histogram should be made of entire image.
      */
-    private void buildPanelB(ModelImage image, ModelLUT LUT, boolean entireFlag)
-    {
+    private void buildPanelB(ModelImage image, ModelLUT LUT, boolean entireFlag) {
+
         // go calc histo
         calcHistogram(panelParent.IMAGE_B, entireFlag, true);
 
@@ -501,8 +1993,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         oneBasedLUTCheckBoxImageB = new JCheckBox("0 to 1 LUT adjustment", false);
         oneBasedLUTCheckBoxImageB.setFont(MipavUtil.font12);
-        oneBasedLUTCheckBoxImageB.setToolTipText(
-            "Only relevant when the LUT's first index is either the color (0, 0, 0) or (1, 1, 1)");
+        oneBasedLUTCheckBoxImageB.setToolTipText("Only relevant when the LUT's first index is either the color (0, 0, 0) or (1, 1, 1)");
         oneBasedLUTCheckBoxImageB.setSelected(isLUT1Based(LUT));
         oneBasedLUTCheckBoxImageB.addItemListener(this);
 
@@ -647,7 +2138,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         mouseLabelB.setFont(MipavUtil.font12B);
         mouseLabelB.setForeground(Color.black);
 
-        scaleRangeB = ( (int) Math.round(image.getMax() - image.getMin()) + 1) / 256;
+        scaleRangeB = ((int) Math.round(image.getMax() - image.getMin()) + 1) / 256;
 
         mouseSliderLabelsB = new JLabel[3];
         mouseSliderLabelsB[0] = ViewJFrameHistoLUT.createSliderLabel(String.valueOf(0));
@@ -699,6 +2190,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         gbc.weightx = 35;
         gbc.weighty = 35;
+
         JPanel panelMouse = new JPanel();
 
         panelMouse.setLayout(cpGBL);
@@ -744,167 +2236,23 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     /**
-     * Returns whether the imageA LUT panel is the one being worked on.
-     * @return  whether the imageA LUT panel is the one being worked on
+     * Calculates histogram for the image(s).
+     *
+     * @param  imageAorB     flag to indicate if histogram is to be calculated for imageA or imageB.
+     * @param  entireFlag    if true calculate histogram for the entire image. if false uses areas defined by VOI
+     *                       regions.
+     * @param  progressFlag  passed to calculateHistogram algorithm. If false progress bar is not displayed
      */
-    public boolean isImageASelected()
-    {
-        return tabbedPane.getSelectedComponent() == panelA;
-    }
-
-    /**
-     * Returns whether the imageB LUT panel is the one being worked on.
-     * @return  whether the imageB LUT panel is the one being worked on
-     */
-    public boolean isImageBSelected()
-    {
-        return tabbedPane.getSelectedComponent() == panelB;
-    }
-
-    /**
-     * Get the LUT recorder reference
-     * @return JDialogRecordLUT  reference to LUT recorder.
-     */
-    public JDialogRecordLUT getLUTRecorder()
-    {
-        return histoPanelA.getLUTRecorder();
-    }
-
-    /**
-     * Get the imageA LUT.
-     * @return  the imageA LUT component
-     */
-    public final ViewJComponentLUT getLUTComponentA()
-    {
-        return histoPanelA.getLUTComponent();
-    }
-
-    /**
-     * Get the histogram component for imageA.
-     * @return  the imageA histogram component
-     */
-    public final ViewJComponentHLUTBase getHistoLUTComponentA()
-    {
-        return histoPanelA.getHistoLUTComponent();
-    }
-
-    /**
-     * Get the imageB LUT.
-     * @return  the imageB LUT component
-     */
-    public final ViewJComponentLUT getLUTComponentB()
-    {
-        return histoPanelB.getLUTComponent();
-    }
-
-    /**
-     * Get the histogram component for imageB.
-     * @return  the imageB histogram component
-     */
-    public final ViewJComponentHLUTBase getHistoLUTComponentB()
-    {
-        return histoPanelB.getHistoLUTComponent();
-    }
-
-    /**
-     * Get the imageA histo component lut.
-     * @return ModelLUT
-     */
-    public final ModelLUT getLUTa()
-    {
-        return ( (ViewJComponentHistoLUT) getHistoLUTComponentA()).getLUT();
-    }
-
-    /**
-     * Get the imageB histo component lut.
-     * @return ModelLUT
-     */
-    public final ModelLUT getLUTb()
-    {
-        return ( (ViewJComponentHistoLUT) getHistoLUTComponentB()).getLUT();
-    }
-
-    /**
-     * Change the histogram component LUT.
-     * @param lut  the new lut
-     */
-    public final void setLUTa(ModelLUT lut)
-    {
-        ( (ViewJComponentHistoLUT) getHistoLUTComponentA()).setLUT(lut);
-        oneBasedLUTCheckBoxImageA.setSelected(false);
-    }
-
-    /**
-     * Change the histogram component LUT.
-     * @param lut  the new lut
-     */
-    public final void setLUTb(ModelLUT lut)
-    {
-        ( (ViewJComponentHistoLUT) getHistoLUTComponentB()).setLUT(lut);
-        oneBasedLUTCheckBoxImageB.setSelected(false);
-    }
-
-    /**
-     * Returns the lower threshold value
-     * @return float lower thresh
-     */
-    public float getLowerThreshold()
-    {
-        if (isImageASelected())
-        {
-            return new Float(threshLowerF.getText()).floatValue();
-        }
-        else
-        {
-            return new Float(threshLowerBF.getText()).floatValue();
-        }
-    }
-
-    /**
-     * Returns the upper threshold value
-     * @return float upper thresh
-     */
-    public float getUpperThreshold()
-    {
-        if (isImageASelected())
-        {
-            return new Float(threshUpperF.getText()).floatValue();
-        }
-        else
-        {
-            return new Float(threshUpperBF.getText()).floatValue();
-        }
-    }
-
-    /**
-     * Change the text field showing the number of colors.
-     * @param value  the number of colors
-     */
-    public void setNColors(int value)
-    {
-        nColorsATextF.setText(String.valueOf(value));
-    }
-
-    /**
-     *   Calculates histogram for the image(s).
-     *   @param imageAorB  flag to indicate if histogram is to be calculated
-     *                     for imageA or imageB.
-     *   @param entireFlag if true calculate histogram for the entire image.
-     *                     if false uses areas defined by VOI regions.
-     *   @param progressFlag passed to calculateHistogram algorithm.
-     *                       If false progress bar is not displayed
-     */
-    private void calcHistogram(int imageAorB, boolean entireFlag, boolean progressFlag)
-    {
+    private void calcHistogram(int imageAorB, boolean entireFlag, boolean progressFlag) {
 
         int[] dimExtentsA = new int[1];
         int[] dimExtentsB = new int[1];
 
-        if (panelParent.getImageA() != null && imageAorB == panelParent.IMAGE_A)
-        {
+        if ((panelParent.getImageA() != null) && (imageAorB == panelParent.IMAGE_A)) {
 
             dimExtentsA[0] = 256;
             histogramA = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsA);
+
             AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogramA, panelParent.getImageA(), entireFlag);
 
             histoAlgoA.setProgressBarVisible(progressFlag);
@@ -912,10 +2260,10 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
             histoAlgoA.run();
         }
 
-        if (panelParent.getImageB() != null && imageAorB == panelParent.IMAGE_B)
-        {
+        if ((panelParent.getImageB() != null) && (imageAorB == panelParent.IMAGE_B)) {
             dimExtentsB[0] = 256;
             histogramB = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsB);
+
             AlgorithmHistogram histoAlgoB = new AlgorithmHistogram(histogramB, panelParent.getImageB(), entireFlag);
 
             histoAlgoB.setProgressBarVisible(progressFlag);
@@ -925,49 +2273,39 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     /**
-     *   Calculates the thresholded image based on the parameters
-     *   of the threshold transfer function. Image A is thresholded if
-     *   the selected panel is for imageA and likewise for image B.
+     * Calculates the thresholded image based on the parameters of the threshold transfer function. Image A is
+     * thresholded if the selected panel is for imageA and likewise for image B.
      */
-    private void calcThreshold()
-    {
+    private void calcThreshold() {
         float[] thresholds = new float[2];
 
-        if (isImageASelected())
-        {
-            thresholds[0] = ( (Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
-            thresholds[1] = ( (Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
+        if (isImageASelected()) {
+            thresholds[0] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
+            thresholds[1] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
 
             JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, userInterface, panelParent.getImageA(),
-                thresholds[0], thresholds[1]);
+                                                                    thresholds[0], thresholds[1]);
 
-            if (dialogLUT.cancelFlag == false && panelParent.getImageA().getType() != ModelStorageBase.BOOLEAN)
-            {
+            if ((dialogLUT.cancelFlag == false) && (panelParent.getImageA().getType() != ModelStorageBase.BOOLEAN)) {
                 updateHistoLUT(panelParent.getImageA(), panelParent.getLUTa(), null, null, false);
                 getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
-            }
-            else if (panelParent.getImageA().getType() == ModelStorageBase.BOOLEAN)
-            {
+            } else if (panelParent.getImageA().getType() == ModelStorageBase.BOOLEAN) {
                 panelParent.getLUTa().makeGrayTransferFunctions();
                 panelParent.getLUTa().makeLUT(256);
                 panelParent.setLUTA(panelParent.getLUTa());
                 oneBasedLUTCheckBoxImageA.setSelected(false);
             }
-        }
-        else
-        {
-            thresholds[0] = ( (Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
-            thresholds[1] = ( (Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
-            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, userInterface, panelParent.getImageB(),
-                thresholds[0], thresholds[1]);
+        } else {
+            thresholds[0] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
+            thresholds[1] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
 
-            if (dialogLUT.cancelFlag == false && panelParent.getImageB().getType() != ModelStorageBase.BOOLEAN)
-            {
+            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, userInterface, panelParent.getImageB(),
+                                                                    thresholds[0], thresholds[1]);
+
+            if ((dialogLUT.cancelFlag == false) && (panelParent.getImageB().getType() != ModelStorageBase.BOOLEAN)) {
                 updateHistoLUT(null, null, panelParent.getImageB(), panelParent.getLUTb(), false);
                 getHistoLUTComponentB().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
-            }
-            else if (panelParent.getImageB().getType() == ModelStorageBase.BOOLEAN)
-            {
+            } else if (panelParent.getImageB().getType() == ModelStorageBase.BOOLEAN) {
                 panelParent.getLUTb().makeGrayTransferFunctions();
                 panelParent.getLUTb().makeLUT(256);
                 panelParent.setLUTB(panelParent.getLUTb());
@@ -977,1665 +2315,179 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
     }
 
     /**
-     *   This method is called to update the histogram(s)
-     *   displayed in each tabbed pane of the frame.
-     *   @param _imageA  image A
-     *   @param _LUTa    lookup table for image A
-     *   @param _imageB  image B
-     *   @param _LUTb    lookup table for image B
-     *   @param progressFlag passed to calculateHistogram algorithm.
-     *                       If false progress bar is not displayed
+     * Calculates the volume (for 3D images) or area (for 2D images) of the image between the two values from the upper
+     * and lower bounds text areas.
      */
-    public void updateHistoLUT(ModelImage _imageA, ModelLUT _LUTa,
-                               ModelImage _imageB, ModelLUT _LUTb,
-                               boolean progressFlag)
-    {
+    private void calculateThreshold() {
+        float upper, lower;
 
-        if (_imageA != null)
-        {
-            panelParent.setImageA(_imageA);
-            if (_LUTa != null)
-            {
-                panelParent.setLUTa(_LUTa);
-                if (isImageASelected())
+        if (panelParent.isThresholding()) {
+
+            try {
+
+                if (isImageASelected()) {
+                    lower = Float.parseFloat(threshLowerF.getText());
+                    upper = Float.parseFloat(threshUpperF.getText());
+                } else // image B is selected
                 {
-                    getLUTComponentA().show(panelParent.getLUTa());
+                    lower = Float.parseFloat(threshLowerBF.getText());
+                    upper = Float.parseFloat(threshUpperBF.getText());
                 }
-            }
-
-            calcHistogram(panelParent.IMAGE_A, entireFlag, progressFlag);
-            setLUTa(panelParent.getLUTa());
-            getHistoLUTComponentA().setHistogramInfo(panelParent.getImageA(), histogramA);
-            if (isImageASelected())
-            {
-                getHistoLUTComponentA().linearMode();
-                getHistoLUTComponentA().showHistogram(_LUTa);
-            }
-        }
-
-        if (_imageB != null && panelParent.getImageB() != null)
-        {
-
-            panelParent.setImageB(_imageB);
-
-            if (_LUTb != null)
-            {
-                panelParent.setLUTb(_LUTb);
-            }
-            if (panelB == null)
-            {
-                buildPanelB(panelParent.getImageB(), panelParent.getLUTb(), true);
-            }
-
-            getLUTComponentB().show(panelParent.getLUTb());
-
-            calcHistogram(panelParent.IMAGE_B, entireFlag, progressFlag);
-            setLUTb(panelParent.getLUTb());
-            getHistoLUTComponentB().setHistogramInfo(panelParent.getImageB(), histogramB);
-
-            getHistoLUTComponentB().linearMode();
-            getHistoLUTComponentB().showHistogram(panelParent.getLUTb());
-        }
-        else if (_imageB != null && panelParent.getImageB() == null)
-        {
-            if (_LUTb != null)
-            {
-                panelParent.setLUTb(_LUTb);
-            }
-            panelParent.setImageB(_imageB);
-            buildPanelB(panelParent.getImageB(), panelParent.getLUTb(), true);
-        }
-
-        tabbedPane.validate();
-        validate();
-    }
-
-    /**
-     *   Removes the tabbed pane for the histogram of image B.
-     */
-    public void removeHistoLUTb()
-    {
-        if (tabbedPane.getTabCount() == 2)
-        {
-            tabbedPane.removeTabAt(1);
-            panelParent.setImageB(null);
-            panelB = null;
-            tabbedPane.validate();
-            validate();
-        }
-    }
-
-    /**************************** KeyListener *****************************/
-
-    /**
-     *	Unchanged.
-     */
-    public void keyPressed(KeyEvent e)
-    {}
-
-    /**
-     *	Unchanged.
-     */
-    public void keyReleased(KeyEvent e)
-    {}
-
-    /**
-     * If the ENTER key is hit while in threshold boxes, update the LUT's threshold (for dual threshold)
-     * @param e KeyEvent
-     */
-    public void keyTyped(KeyEvent e)
-    {
-        if (e.getKeyChar() == KeyEvent.VK_ENTER)
-        {
-            if (e.getSource().equals(threshLowerF))
-            {
-                if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
-                                            ( (Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x))
-                {
-
-                    getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
-                        new Float(threshUpperF.getText()).floatValue());
-                }
-                else
-                {
-                    threshLowerF.requestFocus();
-                    threshLowerF.selectAll();
-                }
-            }
-            else if (e.getSource().equals(threshUpperF))
-            {
-                if (MipavUtil.testParameter(threshUpperF.getText(),
-                                            ( (Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
-                                            panelParent.getImageA().getMax()))
-                {
-                    getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
-                        new Float(threshUpperF.getText()).floatValue());
-                }
-                else
-                {
-                    threshUpperF.requestFocus();
-                    threshUpperF.selectAll();
-                }
-            }
-            else if (e.getSource().equals(threshFillF))
-            {
-
-                // System.err.println("MIN: " + imageA.getMin() + " MAX: " + imageA.getMax());
-                if (MipavUtil.testParameter(threshFillF.getText(), panelParent.getImageA().getMin(),
-                                            panelParent.getImageA().getMax()))
-                { // componentHistogramA.updateDualThreshold(new Float(threshFillF.getText()).floatValue(), -1);
-                }
-                else
-                {
-                    threshFillF.requestFocus();
-                    threshFillF.selectAll();
-                }
-            }
-            else if (e.getSource().equals(threshLowerBF))
-            {
-                if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
-                                            ( (Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x))
-                {
-
-                    getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
-                        new Float(threshUpperBF.getText()).floatValue());
-                }
-                else
-                {
-                    threshLowerBF.requestFocus();
-                    threshLowerBF.selectAll();
-                }
-            }
-            else if (e.getSource().equals(threshUpperBF))
-            {
-                if (MipavUtil.testParameter(threshUpperBF.getText(),
-                                            ( (Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
-                                            panelParent.getImageB().getMax()))
-                {
-                    getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
-                        new Float(threshUpperBF.getText()).floatValue());
-                }
-                else
-                {
-                    threshUpperBF.requestFocus();
-                    threshUpperBF.selectAll();
-                }
-            }
-            else if (e.getSource().equals(threshFillBF))
-            {
-
-                // System.err.println("MIN: " + imageA.getMin() + " MAX: " + imageA.getMax());
-                if (MipavUtil.testParameter(threshFillBF.getText(), panelParent.getImageB().getMin(),
-                                            panelParent.getImageB().getMax()))
-                { // componentHistogramA.updateDualThreshold(new Float(threshFillF.getText()).floatValue(), -1);
-                }
-                else
-                {
-                    threshFillBF.requestFocus();
-                    threshFillBF.selectAll();
-                }
-            }
-        }
-    }
-
-    /**************************** end KeyListener *****************************/
-
-    /**************************** ActionListener *****************************/
-
-    /**
-     *  Calls various methods depending on the action
-     *  @param event      event that triggered function
-     */
-    public void actionPerformed(ActionEvent event)
-    {
-
-        String text;
-        int nColors = 256;
-        String command;
-
-        command = event.getActionCommand();
-
-        if (isImageASelected())
-        {
-            text = nColorsATextF.getText();
-            if (MipavUtil.testParameter(text, 2, 256))
-            {
-                nColors = Integer.valueOf(text).intValue();
-            }
-        }
-        else
-        {
-            text = nColorsBTextF.getText();
-            if (MipavUtil.testParameter(text, 2, 256))
-            {
-                nColors = Integer.valueOf(text).intValue();
-            }
-        }
-
-        if (event.getActionCommand().equals("grayLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeGrayTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeGrayTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("redLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeRedTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeRedTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("greenLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeGreenTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeGreenTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("blueLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeBlueTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeBlueTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("graybrLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeGrayBRTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeGrayBRTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("hotmetalLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeHotMetalTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeHotMetalTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("spectrumLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeSpectrumTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeSpectrumTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("coolHotLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeCoolHotTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeCoolHotTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("skinLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeSkinTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeSkinTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("boneLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeBoneTransferFunctions();
-                panelParent.getLUTa().makeLUT(nColors);
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeBoneTransferFunctions();
-                panelParent.getLUTb().makeLUT(nColors);
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("stripedLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().makeStripedLUT();
-                panelParent.setLUTA(panelParent.getLUTa());
-                oneBasedLUTCheckBoxImageA.setSelected(false);
-            }
-            else
-            {
-                panelParent.getLUTb().makeStripedLUT();
-                panelParent.setLUTB(panelParent.getLUTb());
-                oneBasedLUTCheckBoxImageB.setSelected(false);
-            }
-        }
-        else if (event.getActionCommand().equals("invertLUT"))
-        {
-            if (isImageASelected())
-            {
-                panelParent.getLUTa().invertLUT();
-                panelParent.setLUTA(panelParent.getLUTa());
-            }
-            else
-            {
-                panelParent.getLUTb().invertLUT();
-                panelParent.setLUTB(panelParent.getLUTb());
-            }
-        }
-        else if (command.equals("ctPresetsLUT"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    ctDialogA = new JDialogCT(panelParent);
-                    ctDialogA.setVisible(true);
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    ctDialogB = new JDialogCT(panelParent);
-                    ctDialogB.setVisible(true);
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("linearLUT"))
-        {
-            toolBarBottom.getComponentAtIndex(1).setEnabled(true);
-            threshUpperF.setEnabled(false);
-            threshLowerF.setEnabled(false);
-            threshFillF.setEnabled(false);
-
-            toolBarThreshold.getComponentAtIndex(0).setEnabled(false);
-            toolBarThreshold.getComponentAtIndex(1).setEnabled(false);
-            toolBarThreshold.getComponentAtIndex(3).setEnabled(false);
-            toolBarThreshold.getComponentAtIndex(4).setEnabled(false);
-
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    binaryThreshBox.setEnabled(false);
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().LINEAR);
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    binaryThreshBoxB.setEnabled(false);
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().LINEAR);
-                    histoPanelB.updateLUTRecorder();
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("resetLinearLUT"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    getHistoLUTComponentA().linearMode();
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    getHistoLUTComponentB().linearMode();
-                    histoPanelB.updateLUTRecorder();
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("evendistriLUT"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    getHistoLUTComponentA().evenDistribution();
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    getHistoLUTComponentB().evenDistribution();
-                    histoPanelB.updateLUTRecorder();
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("thresholdLUT"))
-        {
-            // turn on the run threshold button
-            toolBarBottom.getComponentAtIndex(1).setEnabled(false);
-
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    binaryThreshBox.setEnabled(true);
-                    panelParent.enableThresholdingItems(true);
-                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(3).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(4).setEnabled(false);
-                    panelParent.getLUTa().makeGrayTransferFunctions();
-                    panelParent.getLUTa().makeLUT(nColors);
-                    panelParent.getLUTa().setColor(255, new Color(200, 0, 0));
-                    panelParent.setLUTA(panelParent.getLUTa());
-                    oneBasedLUTCheckBoxImageA.setSelected(false);
-                    getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
-                    threshLowerF.setEnabled(true);
-                    threshUpperF.setEnabled(true);
-                    threshFillF.setEnabled(true);
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
-                    threshLowerF.setText(Float.toString(lower));
-                    threshUpperF.setText(Float.toString(upper));
-                    threshFillF.setText(Double.toString(panelParent.getImageA().getMin()));
-                    if (panelParent.doCalcThresholdVolume()) {
-                        calculateThreshold(lower, upper);
-                    }
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    binaryThreshBoxB.setEnabled(true);
-                    panelParent.enableThresholdingItems(true);
-                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(3).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(4).setEnabled(false);
-                    panelParent.getLUTb().makeGrayTransferFunctions();
-                    panelParent.getLUTb().makeLUT(nColors);
-                    panelParent.getLUTb().setColor(255, new Color(200, 0, 0));
-                    panelParent.setLUTB(panelParent.getLUTb());
-                    oneBasedLUTCheckBoxImageB.setSelected(false);
-                    getHistoLUTComponentB().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD);
-                    threshLowerBF.setEnabled(true);
-                    threshUpperBF.setEnabled(true);
-                    threshFillBF.setEnabled(true);
-                    float upper = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
-                    float lower = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
-                    threshLowerBF.setText(Float.toString(lower));
-                    threshUpperBF.setText(Float.toString(upper));
-                    if (panelParent.doCalcThresholdVolume()) {
-                        calculateThreshold(lower, upper);
-                    }
-                    threshFillBF.setText(Double.toString(panelParent.getImageB().getMin()));
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("inverseThresholdLUT"))
-        {
-            // turn on the run threshold button
-            // toolBarBottom.getComponentAtIndex(13).setEnabled(true);
-            toolBarBottom.getComponentAtIndex(1).setEnabled(false);
-
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    binaryThreshBox.setEnabled(true);
-                    panelParent.enableThresholdingItems(true);
-                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(3).setEnabled(false);
-                    toolBarThreshold.getComponentAtIndex(4).setEnabled(true);
-                    panelParent.getLUT().setColor(255, new Color(200, 0, 0));
-                    panelParent.setLUTA(panelParent.getLUTa());
-                    oneBasedLUTCheckBoxImageA.setSelected(false);
-                    getHistoLUTComponentA().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD_INV);
-                    threshLowerF.setEnabled(true);
-                    threshUpperF.setEnabled(true);
-                    threshFillF.setEnabled(true);
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
-                    threshLowerF.setText(Float.toString(lower));
-                    threshUpperF.setText(Float.toString(upper));
-                    if (panelParent.doCalcThresholdVolume()) {
-                        calculateThreshold(lower, upper);
-                    }
-                    threshFillF.setText(Double.toString(panelParent.getImageA().getMin()));
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    binaryThreshBoxB.setEnabled(true);
-                    panelParent.enableThresholdingItems(true);
-                    toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
-                    toolBarThreshold.getComponentAtIndex(3).setEnabled(false);
-                    toolBarThreshold.getComponentAtIndex(4).setEnabled(true);
-                    panelParent.getLUTb().setColor(255, new Color(200, 0, 0));
-                    panelParent.setLUTB(panelParent.getLUTb());
-                    oneBasedLUTCheckBoxImageB.setSelected(false);
-                    getHistoLUTComponentB().dualThresholdMode(ViewJComponentHLUTBase.DUAL_THRESHOLD_INV);
-                    threshLowerBF.setEnabled(true);
-                    threshUpperBF.setEnabled(true);
-                    threshFillBF.setEnabled(true);
-                    float upper = ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x;
-                    float lower = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
-                    threshLowerBF.setText(Float.toString(lower));
-                    threshUpperBF.setText(Float.toString(upper));
-                    if (panelParent.doCalcThresholdVolume()) {
-                        calculateThreshold(lower, upper);
-                    }
-                    threshFillBF.setText(Double.toString(panelParent.getImageB().getMin()));
-                    histoPanelA.updateLUTRecorder();
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("runInverseThreshold")
-                 || event.getActionCommand().equals("runThreshold"))
-        {
-            boolean isInverse = true;
-
-            if (event.getActionCommand().equals("runThreshold"))
-            {
-                isInverse = false;
-            }
-
-            if (isImageASelected())
-            {
-                if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
-                                            ( (Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x))
-                {
-
-                    if (MipavUtil.testParameter(threshUpperF.getText(),
-                                                ( (Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
-                                                panelParent.getImageA().getMax()))
-                    {
-
-                        // run threshold algorithm
-                        JDialogThreshold threshD = new JDialogThreshold();
-
-                        threshD.runFromLUTFrame(panelParent.getImageA(),
-                                                new Float(threshLowerF.getText()).floatValue(),
-                                                new Float(threshUpperF.getText()).floatValue(),
-                                                new Float(threshFillF.getText()).floatValue(),
-                                                binaryThreshBox.isSelected(), isInverse);
-
-                    }
-                    else
-                    {
-                        threshUpperF.requestFocus();
-                        threshUpperF.selectAll();
-                    }
-
-                }
-                else
-                {
-                    threshLowerF.requestFocus();
-                    threshLowerF.selectAll();
-                }
-            }
-            else
-            {
-                if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
-                                            ( (Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x))
-                {
-
-                    if (MipavUtil.testParameter(threshUpperBF.getText(),
-                                                ( (Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
-                                                panelParent.getImageB().getMax()))
-                    {
-
-                        // run threshold algorithm
-                        JDialogThreshold threshD = new JDialogThreshold();
-
-                        threshD.runFromLUTFrame(panelParent.getImageB(),
-                                                new Float(threshLowerBF.getText()).floatValue(),
-                                                new Float(threshUpperBF.getText()).floatValue(),
-                                                new Float(threshFillBF.getText()).floatValue(),
-                                                binaryThreshBoxB.isSelected(),
-                                                isInverse);
-
-                    }
-                    else
-                    {
-                        threshUpperBF.requestFocus();
-                        threshUpperBF.selectAll();
-                    }
-
-                }
-                else
-                {
-                    threshLowerBF.requestFocus();
-                    threshLowerBF.selectAll();
-                }
-
-            }
-        }
-        else if (event.getActionCommand().equals("otsuThreshold"))
-        {
-            if (isImageASelected())
-            {
-                int otsu = histogramA.getOtsuThreshold();
-
-                if (otsu > panelParent.getImageA().getMin() && otsu < panelParent.getImageA().getMax())
-                {
-                    if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV)
-                    {
-                        threshLowerF.setText(Integer.toString(otsu));
-                        threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
-                        getHistoLUTComponentA().updateDualThreshold(otsu, (float) panelParent.getImageA().getMax());
-                        calculateThreshold((float) otsu, (float) panelParent.getImageA().getMax());
-                    }
-                    else
-                    {
-                        threshUpperF.setText(Integer.toString(otsu));
-                        threshLowerF.setText(Double.toString(panelParent.getImageA().getMin()));
-                        getHistoLUTComponentA().updateDualThreshold( (float) panelParent.getImageA().getMin(), otsu);
-                        calculateThreshold((float) panelParent.getImageA().getMin(), (float) otsu);
-                    }
-                }
-            }
-            else
-            {
-                int otsu = histogramB.getOtsuThreshold();
-
-                if (otsu > panelParent.getImageB().getMin() && otsu < panelParent.getImageB().getMax())
-                {
-                    if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV)
-                    {
-                        threshLowerBF.setText(Integer.toString(otsu));
-                        threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
-                        getHistoLUTComponentB().updateDualThreshold(otsu, (float) panelParent.getImageB().getMax());
-                         if (panelParent.doCalcThresholdVolume()) {
-                             calculateThreshold( (float) otsu, (float) panelParent.getImageA().getMax());
-                         }
-                    }
-                    else
-                    {
-                        threshUpperBF.setText(Integer.toString(otsu));
-                        threshLowerBF.setText(Double.toString(panelParent.getImageB().getMin()));
-                        getHistoLUTComponentB().updateDualThreshold( (float) panelParent.getImageB().getMin(), otsu);
-                        if (panelParent.doCalcThresholdVolume()) {
-                            calculateThresholdVolume( (float) panelParent.getImageA().getMin(), (float) otsu);
-                        }
-                    }
-                }
-
-            }
-        }
-        else if (event.getActionCommand().equals("maxEntThreshold"))
-        {
-            if (isImageASelected())
-            {
-                int ent = histogramA.getMaxEntropyThreshold();
-
-                if (ent > panelParent.getImageA().getMin() && ent < panelParent.getImageA().getMax())
-                {
-
-                    if (getHistoLUTComponentA().getMode() == getHistoLUTComponentA().DUAL_THRESHOLD_INV)
-                    {
-                        threshLowerF.setText(Integer.toString(ent));
-                        threshUpperF.setText(Double.toString(panelParent.getImageA().getMax()));
-                        getHistoLUTComponentA().updateDualThreshold(ent, (float) panelParent.getImageA().getMax());
-                         if (panelParent.doCalcThresholdVolume()) {
-                             calculateThreshold( (float) ent, (float) panelParent.getImageA().getMax());
-                         }
-                    }
-                    else
-                    {
-                        threshUpperF.setText(Integer.toString(ent));
-                        threshLowerF.setText(Double.toString(panelParent.getImageA().getMin()));
-                        getHistoLUTComponentA().updateDualThreshold( (float) panelParent.getImageA().getMin(), ent);
-                         if (panelParent.doCalcThresholdVolume()) {
-                             calculateThreshold( (float) panelParent.getImageA().getMin(), (float) ent);
-                         }
-                    }
-
-                }
-            }
-            else
-            {
-                int ent = histogramA.getMaxEntropyThreshold();
-
-                if (ent > panelParent.getImageB().getMin() && ent < panelParent.getImageB().getMax())
-                {
-
-                    if (getHistoLUTComponentB().getMode() == getHistoLUTComponentB().DUAL_THRESHOLD_INV)
-                    {
-                        threshLowerBF.setText(Integer.toString(ent));
-                        threshUpperBF.setText(Double.toString(panelParent.getImageB().getMax()));
-                        getHistoLUTComponentB().updateDualThreshold(ent, (float) panelParent.getImageB().getMax());
-                    }
-                    else
-                    {
-                        threshUpperBF.setText(Integer.toString(ent));
-                        threshLowerBF.setText(Double.toString(panelParent.getImageB().getMin()));
-                        getHistoLUTComponentB().updateDualThreshold( (float) panelParent.getImageB().getMin(), ent);
-                    }
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("alpha"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().ALPHA);
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().ALPHA);
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("red"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().RED);
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().RED);
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("green"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().GREEN);
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().GREEN);
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("blue"))
-        {
-            if (isImageASelected())
-            {
-                if (getHistoLUTComponentA() != null)
-                {
-                    getHistoLUTComponentA().setMode(getHistoLUTComponentA().BLUE);
-                }
-            }
-            else
-            {
-                if (getHistoLUTComponentB() != null)
-                {
-                    getHistoLUTComponentB().setMode(getHistoLUTComponentB().BLUE);
-                }
-            }
-        }
-        else if (event.getActionCommand().equals("Threshold"))
-        {
-            if (panelParent.doCalcThresholdVolume()) {
-                calcThreshold();
-            }
-            if (panelParent.getImageA().getType() == ModelStorageBase.BOOLEAN)
-            {
-                setVisible(false);
-                panelParent.getImageA().removeImageDisplayListener(panelParent);
-                if (panelParent.getImageB() != null)
-                {
-                    panelParent.getImageB().removeImageDisplayListener(panelParent);
-                }
-                dispose();
-            }
-
-            updateFrames(false);
-        }
-        else if (event.getActionCommand().equals("OpenUDLUT") || event.getActionCommand().equals("SaveUDLUT"))
-        {
-            panelParent.actionPerformed(event);
-        }
-        else if (event.getActionCommand().equals("GenerateLUT"))
-        {
-            histoPanelA.showLUTRecorder();
-        }
-
-        // Setup threshold buttons to be enabled or disabled.
-        if (isImageASelected())
-        {
-            if (getHistoLUTComponentA() != null
-                && getHistoLUTComponentA().getMode() != ViewJComponentHistoLUT.DUAL_THRESHOLD)
-            {
-                panelParent.enableThresholdingItems(false);
-            }
-        }
-        else
-        {
-            if (getHistoLUTComponentB() != null
-                && getHistoLUTComponentB().getMode() != ViewJComponentHistoLUT.DUAL_THRESHOLD)
-            {
-                panelParent.enableThresholdingItems(false);
-            }
-        }
-    }
-
-    /**************************** end ActionListener *****************************/
-
-    /**************************** ItemListener *****************************/
-
-    /**
-     *  Sets the flags for the checkboxes
-     *  @param event       event that triggered this function
-     */
-    public synchronized void itemStateChanged(ItemEvent event)
-    {
-
-        Object source = event.getSource();
-
-        if (source == logCheckBoxA)
-        {
-            if (logCheckBoxA.isSelected() == true)
-            {
-                getHistoLUTComponentA().setLogFlag(true);
-            }
-            else
-            {
-                getHistoLUTComponentA().setLogFlag(false);
-            }
-            getHistoLUTComponentA().showHistogram();
-        }
-        else if (source == logCheckBoxB)
-        {
-            if (logCheckBoxB.isSelected() == true)
-            {
-                getHistoLUTComponentB().setLogFlag(true);
-            }
-            else
-            {
-                getHistoLUTComponentB().setLogFlag(false);
-            }
-            getHistoLUTComponentB().showHistogram();
-        }
-        else if (source == interpCheckBoxA)
-        {
-            // the following code could look a little screwey to some people, like maybe
-            // there is a simpler way of doing it. basically, the interpolation of images
-            // used to be controlled by one variable, and both images were
-            // interpolated according to this variable. however, now we want to be able
-            // to interpolate the images independently. so without changing the code
-            // structure, i added some constants that represent whether or not to
-            // interpolate each image. note: INTERPOLATE_A means interpolate image A only.
-            // likewise for image B. NEAREST_BOTH means no interpolation for either image
-
-            int interpMode = 0;
-
-            if (interpCheckBoxA.isSelected() == true)
-            {
-                if (interpCheckBoxB != null)
-                {
-                    if (interpCheckBoxB.isSelected() == true)
-                    {
-                        interpMode = ViewJComponentBase.INTERPOLATE_BOTH;
-                    }
-                    else
-                    {
-                        interpMode = ViewJComponentBase.INTERPOLATE_A;
-                    }
-                }
-                else
-                {
-                    interpMode = ViewJComponentBase.INTERPOLATE_A;
-                }
-            }
-            else
-            {
-                if (interpCheckBoxB != null)
-                {
-                    if (interpCheckBoxB.isSelected() == true)
-                    {
-                        interpMode = ViewJComponentBase.INTERPOLATE_B;
-                    }
-                    else
-                    {
-                        interpMode = ViewJComponentBase.NEAREST_BOTH;
-                    }
-                }
-                else
-                {
-                    interpMode = ViewJComponentBase.INTERPOLATE_B;
-                }
-            }
-
-            // the -50 means do not change the opacity of the image (actually, any negative value
-            // will serve not to change the opacity levels. previously, this was hard-coded to "50"
-            // but the problem was that then the opacity would change every time the images were
-            // interpolated or de-interpolated
-            panelParent.getImageA().notifyImageDisplayListeners(panelParent.getLUTa(), true, -50, interpMode);
-        }
-        else if (source == interpCheckBoxB)
-        {
-            int interpMode = 0;
-
-            if (interpCheckBoxB.isSelected() == true)
-            {
-                if (interpCheckBoxA.isSelected() == true)
-                {
-                    interpMode = ViewJComponentBase.INTERPOLATE_BOTH;
-                }
-                else
-                {
-                    interpMode = ViewJComponentBase.INTERPOLATE_B;
-                }
-            }
-            else
-            {
-                if (interpCheckBoxA.isSelected() == true)
-                {
-                    interpMode = ViewJComponentBase.INTERPOLATE_A;
-                }
-                else
-                {
-                    interpMode = ViewJComponentBase.NEAREST_BOTH;
-                }
-            }
-
-            panelParent.getImageB().notifyImageDisplayListeners(panelParent.getLUTb(), true, -50, interpMode);
-        }
-        else if (source == updateCheckBoxA)
-        {
-            if (updateCheckBoxB != null)
-            {
-                updateCheckBoxB.removeItemListener(this);
-            }
-            if (updateCheckBoxA.isSelected() == true && updateCheckBoxB != null)
-            {
-                updateCheckBoxB.setSelected(true);
-            }
-            else if (updateCheckBoxA.isSelected() == false && updateCheckBoxB != null)
-            {
-                updateCheckBoxB.setSelected(false);
-            }
-            if (updateCheckBoxB != null)
-            {
-                updateCheckBoxB.addItemListener(this);
-            }
-        }
-        else if (source == updateCheckBoxB)
-        {
-            updateCheckBoxB.removeItemListener(this);
-            if (updateCheckBoxB.isSelected() == true)
-            {
-                updateCheckBoxA.setSelected(true);
-            }
-            else
-            {
-                updateCheckBoxA.setSelected(false);
-            }
-            updateCheckBoxA.addItemListener(this);
-        }
-        else if (source == binaryThreshBox)
-        {
-            threshFillF.setEnabled(!binaryThreshBox.isSelected());
-        }
-        else if (source == binaryThreshBoxB)
-        {
-            threshFillBF.setEnabled(!binaryThreshBoxB.isSelected());
-        }
-        else if (source == oneBasedLUTCheckBoxImageA)
-        {
-            // get the color of the LUT index 0
-            Color zeroIndexColor = getLUTa().getColor(0);
-
-            // test to see if the color is R == 0, G == 0, B == 0
-            boolean zeroIndexColorIs000 = (zeroIndexColor.getRed() == 0 && zeroIndexColor.getGreen() == 0
-                                           && zeroIndexColor.getBlue() == 0);
-            boolean zeroIndexColorIs111 = (zeroIndexColor.getRed() == 1 && zeroIndexColor.getGreen() == 1
-                                           && zeroIndexColor.getBlue() == 1);
-
-            // if the user wants a 1-based LUT
-            if (oneBasedLUTCheckBoxImageA.isSelected() == true)
-            {
-                // only change index 0 to 1's if it is currently R == 0, G == 0, B == 0.
-                if (zeroIndexColorIs000 == true)
-                {
-                    getLUTa().setColor(0, new Color(1, 1, 1));
-                }
-            }
-            else
-            {
-                // only change index 1 to 0's if it is currently R == 1, G == 1, B == 1.
-                if (zeroIndexColorIs111 == true)
-                {
-                    getLUTa().setColor(0, new Color(0, 0, 0));
-                }
-            }
-
-            updateFrames(false);
-        }
-        else if (source == oneBasedLUTCheckBoxImageB)
-        {
-            // get the color of the LUT index 0
-            Color zeroIndexColor = getLUTb().getColor(0);
-
-            // test to see if the color is R == 0, G == 0, B == 0
-            boolean zeroIndexColorIs000 = (zeroIndexColor.getRed() == 0 && zeroIndexColor.getGreen() == 0
-                                           && zeroIndexColor.getBlue() == 0);
-            boolean zeroIndexColorIs111 = (zeroIndexColor.getRed() == 1 && zeroIndexColor.getGreen() == 1
-                                           && zeroIndexColor.getBlue() == 1);
-
-            // if the user wants a 1-based LUT
-            if (oneBasedLUTCheckBoxImageB.isSelected() == true)
-            {
-                // only change index 0 to 1's if it is currently R == 0, G == 0, B == 0.
-                if (zeroIndexColorIs000 == true)
-                {
-                    getLUTb().setColor(0, new Color(1, 1, 1));
-                }
-            }
-            else
-            {
-                // only change index 1 to 0's if it is currently R == 1, G == 1, B == 1.
-                if (zeroIndexColorIs111 == true)
-                {
-                    getLUTb().setColor(0, new Color(0, 0, 0));
-                }
-            }
-
-            updateFrames(false);
-        }
-
-    }
-
-    /**************************** end ItemListener *****************************/
-
-    /**************************** ChangeListener *****************************/
-
-    /**
-     *    Sets values based on knob along slider
-     *    @param ChangeEvent  event that triggered this function
-     */
-    public void stateChanged(ChangeEvent e)
-    {
-        Object source = e.getSource();
-        float value, sliderValue;
-
-        // Slider has changed lets update.
-        if (source == tabbedPane && isImageASelected())
-        {
-            panelParent.setDisplayMode(panelParent.IMAGE_A);
-            panelParent.setLUTA(panelParent.getLUTa());
-            panelParent.setTitle("Lookup Table: " + panelParent.getImageA().getImageName());
-             if (panelParent.doCalcThresholdVolume()) {
-                 calculateThreshold();
-             }
-        }
-        else if (source == tabbedPane && isImageBSelected() && panelParent.getImageB() != null)
-        {
-            panelParent.setDisplayMode(panelParent.IMAGE_B);
-            panelParent.setLUTB(panelParent.getLUTb());
-            panelParent.setTitle("Lookup Table: " + panelParent.getImageB().getImageName());
-            if (panelParent.doCalcThresholdVolume()) {
-                calculateThreshold();
-            }
-        }
-
-        if (source == mouseSlider)
-        {
-            // componentOpacityA.updateCursor(rangeX, 100-mouseSlider.getValue(), cursorIndex);
-            if (mouseSlider.getValueIsAdjusting() == true)
-            {
+            } catch (Exception e) {
                 return;
             }
-            if (xRangeTextA != null)
+
+
+            if (isImageASelected()) {
+
+                if (panelParent.getImageA().getNDims() == 3) {
+                    calculateThresholdVolume(lower, upper);
+                } else {
+                    calculateThresholdArea(lower, upper);
+                }
+            } else // image B is selected
             {
-                sliderValue = mouseSlider.getValue();
-                if (mouseSliderLabels[0].getText().equals("0"))
-                {
-                    value = rangeX + (sliderValue) / 100.0f * scaleRangeA * 2.0f;
-                }
-                else
-                {
-                    if (sliderValue > 50)
-                    {
-                        value = rangeX + (sliderValue - 50) / 100.0f * scaleRangeA * 2.0f;
-                    }
-                    else
-                    {
-                        value = rangeX - (50 - sliderValue) / 100.0f * scaleRangeA * 2.0f;
-                    }
-                }
 
-                // value = (mouseSlider.getValue() / 100.0f * 32.0f) + rangeX;
-                xRangeTextA.setText(MipavUtil.makeFloatString(value, 2));
-                ( (ViewJComponentHistoLUT) getHistoLUTComponentA()).updateCursorXPos(value,
-                    100 - mouseSlider.getValue(), cursorIndex);
-            }
-            else
-            {
-                ( (ViewJComponentHistoLUT) getHistoLUTComponentA()).updateCursor(rangeX, 100 - mouseSlider.getValue(),
-                    cursorIndex);
-            }
-        }
-        else if (source == mouseSliderB)
-        {
-            if (mouseSliderB.getValueIsAdjusting() == true)
-            {
-                return;
-            }
-            if (xRangeTextB != null)
-            {
-                sliderValue = mouseSliderB.getValue();
-                if (mouseSliderLabelsB[0].getText().equals("0"))
-                {
-                    value = rangeXB + sliderValue / 100.0f * scaleRangeB * 2.0f;
-                }
-                else
-                {
-                    if (sliderValue > 50)
-                    {
-                        value = rangeXB + (sliderValue - 50) / 100.0f * scaleRangeB * 2.0f;
-                    }
-                    else
-                    {
-                        value = rangeXB - (50 - sliderValue) / 100.0f * scaleRangeB * 2.0f;
-                    }
-                }
-                // value = (mouseSliderB.getValue() / 100.0f * 32.0f) + rangeXB;
-                xRangeTextB.setText(MipavUtil.makeFloatString(value, 2));
-                ( (ViewJComponentHistoLUT) getHistoLUTComponentB()).updateCursorXPos(value,
-                    100 - mouseSliderB.getValue(), cursorIndexB);
-            }
-            else
-            {
-                ( (ViewJComponentHistoLUT) getHistoLUTComponentB()).updateCursor(rangeXB,
-                    100 - mouseSliderB.getValue(), cursorIndexB);
-            }
-        }
-    }
-
-    /**************************** end ChangeListener *****************************/
-
-    /**************************** HistoLUTParent *****************************/
-
-    /**
-     * {@inheritDoc}
-     */
-    public void setLUT(ModelLUT newLUT)
-    {
-        if (isImageASelected())
-        {
-            panelParent.setLUTA(newLUT);
-            oneBasedLUTCheckBoxImageA.setSelected(false);
-        }
-        else
-        {
-            panelParent.setLUTB(newLUT);
-            oneBasedLUTCheckBoxImageB.setSelected(false);
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public boolean isImageUpdate()
-    {
-        return updateCheckBoxA.isSelected();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void updateFrames(boolean flag)
-    {
-        panelParent.updateFrames(flag);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void updateThresholdFields(float lower, float upper)
-    {
-
-        if (isImageASelected()) {
-            threshLowerF.setText(Float.toString(lower));
-            threshUpperF.setText(Float.toString(upper));
-            if (panelParent.isThresholding()) {
-                if (panelParent.doCalcThresholdVolume()) {
-                    calculateThreshold(lower, upper);
+                if (panelParent.getImageB().getNDims() == 3) {
+                    calculateThresholdVolume(lower, upper);
+                } else {
+                    calculateThresholdArea(lower, upper);
                 }
             }
         }
-        else {
-            threshLowerBF.setText(Float.toString(lower));
-            threshUpperBF.setText(Float.toString(upper));
-            if (panelParent.isThresholding()) {
-                if (panelParent.doCalcThresholdVolume()) {
-                    calculateThreshold(lower, upper);
-                }
-            }
-
-        }
-    }
-
-    /**
-     * Calculates the volume (for 3D images) or area (for 2D images)
-     * of the image between the two values from the upper and lower 
-     * bounds text areas.
-     */
-    private void calculateThreshold()
-    {
-    	float upper, lower;
-
-    	if (panelParent.isThresholding())
-    	{
-	    	try
-	    	{
-		    	if (isImageASelected())
-		    	{
-		    		lower = Float.parseFloat(threshLowerF.getText());
-		    		upper = Float.parseFloat(threshUpperF.getText());
-		    	}
-		    	else // image B is selected
-		    	{
-		    		lower = Float.parseFloat(threshLowerBF.getText());
-		    		upper = Float.parseFloat(threshUpperBF.getText());
-		    	}
-	    	}
-	    	catch (Exception e)
-	    	{
-	    		return;
-	    	}
-	    	
-	
-	    	if (isImageASelected())
-	    	{
-		        if (panelParent.getImageA().getNDims() == 3)
-		            calculateThresholdVolume(lower, upper);
-		        else
-		            calculateThresholdArea(lower, upper);
-	    	}
-	    	else // image B is selected
-	    	{
-		        if (panelParent.getImageB().getNDims() == 3)
-		            calculateThresholdVolume(lower, upper);
-		        else
-		            calculateThresholdArea(lower, upper);
-	    	}
-    	}
     }
 
     /**
      * Calculates the volume or area of the image between the two values from the upper and lower bounds (inclusive).
-     * @param lower Lower bound of the threshold (inclusive).
-     * @param upper Upper bound of the threshold (inclusive).
+     *
+     * @param  lower  Lower bound of the threshold (inclusive).
+     * @param  upper  Upper bound of the threshold (inclusive).
      */
-    private void calculateThreshold (float lower, float upper)
-    {
-        if (panelParent.getImageA().getNDims() == 3)
+    private void calculateThreshold(float lower, float upper) {
+
+        if (panelParent.getImageA().getNDims() == 3) {
             calculateThresholdVolume(lower, upper);
-        else
+        } else {
             calculateThresholdArea(lower, upper);
-    }
-
-    /**
-     * Calculates the volume of the image between the two values from the upper and lower bounds (inclusive).
-     * @param lower Lower bound of the threshold (inclusive).
-     * @param upper Upper bound of the threshold (inclusive).
-     */
-    private void calculateThresholdVolume(float lower, float upper)
-    {
-        ModelImage image;
-
-        boolean isInverse = false;
-
-        if (isImageASelected())
-        {
-            image = panelParent.getImageA();
-            if (getHistoLUTComponentA().getMode() == ViewJComponentHistoLUT.DUAL_THRESHOLD_INV) {
-                isInverse = true;
-            }
         }
-        else
-        {
-            image = panelParent.getImageB();
-            if (getHistoLUTComponentB().getMode() == ViewJComponentHistoLUT.DUAL_THRESHOLD_INV) {
-               isInverse = true;
-           }
-
-        }
-
-        int imageBuffer [] = new int[image.getExtents()[0] * image.getExtents()[1]];
-        int numVoxels = 0;
-
-        for (int i = 0; i < image.getExtents()[2]; i++)
-        {
-            try
-            {
-                image.exportData(i * image.getExtents()[0] * image.getExtents()[1], imageBuffer.length, imageBuffer);
-
-                for (int j = 0; j < imageBuffer.length; j++)
-                {
-                    if (!isInverse) {
-                        if (imageBuffer[j] >= lower && imageBuffer[j] <= upper) {
-                            numVoxels++;
-                        }
-                    } else{
-                        if (imageBuffer[j] <= lower || imageBuffer[j] >= upper) {
-                            numVoxels++;
-                        }
-                    }
-                }
-            }
-            catch (IOException ioe)
-            {
-                return;
-            }
-        }
-
-        float res[] = new float[3];
-        res[0] = Math.abs(image.getFileInfo(0).getResolutions()[0]);
-        res[1] = Math.abs(image.getFileInfo(0).getResolutions()[1]);
-        res[2] = Math.abs(image.getFileInfo(0).getResolutions()[2]);
-        String units = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-
-        voxelVolumeLabel.setText("Threshold volume(red): " +
-                                 String.valueOf(numVoxels * res[0] * res[1] * res[2]) +
-                                 units);
     }
 
     /**
      * Calculates the area of the image between the two values from the upper and lower bounds (inclusive).
-     * @param lower Lower bound of the threshold (inclusive).
-     * @param upper Upper bound of the threshold (inclusive).
+     *
+     * @param  lower  Lower bound of the threshold (inclusive).
+     * @param  upper  Upper bound of the threshold (inclusive).
      */
-    private void calculateThresholdArea(float lower, float upper)
-        {
-            ModelImage image;
+    private void calculateThresholdArea(float lower, float upper) {
+        ModelImage image;
 
-            if (isImageASelected())
-            {
-                image = panelParent.getImageA();
-            }
-            else
-            {
-                image = panelParent.getImageB();
-            }
+        if (isImageASelected()) {
+            image = panelParent.getImageA();
+        } else {
+            image = panelParent.getImageB();
+        }
 
-            int imageBuffer [] = new int[image.getExtents()[0] * image.getExtents()[1]];
-            int numPixels = 0;
+        int[] imageBuffer = new int[image.getExtents()[0] * image.getExtents()[1]];
+        int numPixels = 0;
 
-            try {
-                image.exportData(0, imageBuffer.length, imageBuffer);
+        try {
+            image.exportData(0, imageBuffer.length, imageBuffer);
 
-                for (int j = 0; j < imageBuffer.length; j++) {
-                    if (imageBuffer[j] >= lower && imageBuffer[j] <= upper) {
-                        numPixels++;
-                    }
+            for (int j = 0; j < imageBuffer.length; j++) {
+
+                if ((imageBuffer[j] >= lower) && (imageBuffer[j] <= upper)) {
+                    numPixels++;
                 }
             }
-            catch (IOException ioe) {
+        } catch (IOException ioe) {
+            return;
+        }
+
+        float[] res = new float[2];
+        res[0] = Math.abs(image.getFileInfo(0).getResolutions()[0]);
+        res[1] = Math.abs(image.getFileInfo(0).getResolutions()[1]);
+
+        String units = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+
+        voxelVolumeLabel.setText("Threshold area(red): " + String.valueOf(numPixels * res[0] * res[1]) + units);
+    }
+
+    /**
+     * Calculates the volume of the image between the two values from the upper and lower bounds (inclusive).
+     *
+     * @param  lower  Lower bound of the threshold (inclusive).
+     * @param  upper  Upper bound of the threshold (inclusive).
+     */
+    private void calculateThresholdVolume(float lower, float upper) {
+        ModelImage image;
+
+        boolean isInverse = false;
+
+        if (isImageASelected()) {
+            image = panelParent.getImageA();
+
+            if (getHistoLUTComponentA().getMode() == ViewJComponentHistoLUT.DUAL_THRESHOLD_INV) {
+                isInverse = true;
+            }
+        } else {
+            image = panelParent.getImageB();
+
+            if (getHistoLUTComponentB().getMode() == ViewJComponentHistoLUT.DUAL_THRESHOLD_INV) {
+                isInverse = true;
+            }
+
+        }
+
+        int[] imageBuffer = new int[image.getExtents()[0] * image.getExtents()[1]];
+        int numVoxels = 0;
+
+        for (int i = 0; i < image.getExtents()[2]; i++) {
+
+            try {
+                image.exportData(i * image.getExtents()[0] * image.getExtents()[1], imageBuffer.length, imageBuffer);
+
+                for (int j = 0; j < imageBuffer.length; j++) {
+
+                    if (!isInverse) {
+
+                        if ((imageBuffer[j] >= lower) && (imageBuffer[j] <= upper)) {
+                            numVoxels++;
+                        }
+                    } else {
+
+                        if ((imageBuffer[j] <= lower) || (imageBuffer[j] >= upper)) {
+                            numVoxels++;
+                        }
+                    }
+                }
+            } catch (IOException ioe) {
                 return;
             }
+        }
 
-            float res[] = new float[2];
-            res[0] = Math.abs(image.getFileInfo(0).getResolutions()[0]);
-            res[1] = Math.abs(image.getFileInfo(0).getResolutions()[1]);
-            String units = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+        float[] res = new float[3];
+        res[0] = Math.abs(image.getFileInfo(0).getResolutions()[0]);
+        res[1] = Math.abs(image.getFileInfo(0).getResolutions()[1]);
+        res[2] = Math.abs(image.getFileInfo(0).getResolutions()[2]);
 
-            voxelVolumeLabel.setText("Threshold area(red): " +
-                                     String.valueOf(numPixels * res[0] * res[1] ) +
-                                     units);
+        String units = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+
+        voxelVolumeLabel.setText("Threshold volume(red): " + String.valueOf(numVoxels * res[0] * res[1] * res[2]) +
+                                 units);
     }
 
     /**
-     * {@inheritDoc}
+     * end HistoLUTParent.
+     *
+     * @param   LUT  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
-    public void setRangeText(float x, float y, int _index)
-    {
-        if (panelParent.doCalcThresholdVolume()) {
-            calculateThreshold();
-        }
 
-        String start, mid, end;
-
-        if (isImageASelected())
-        {
-            String str = String.valueOf(x);
-
-            cursorIndex = _index;
-            rangeX = x;
-            int index = str.indexOf(".");
-            int length = str.length();
-            int indexE = str.indexOf("E");
-
-            if ( (index + 2 < length) && (indexE == -1))
-            {
-                str = str.substring(0, index + 2 + 1);
-            }
-            else if (indexE != -1)
-            {
-                str = str.substring(0, index + 2 + 1) + str.substring(indexE);
-            }
-            if (labelsTable == null)
-            {
-                rangeText.setText(str);
-                mouseSlider.setValue(255 - (int) y);
-            }
-            else
-            {
-                xRangeTextA.setText(str);
-                yRangeTextA.setText(String.valueOf(255 - (int) y));
-                // Change slider's labels
-                start = MipavUtil.makeFloatString(x - scaleRangeA, 2);
-                mid = MipavUtil.makeFloatString(x, 2);
-                end = MipavUtil.makeFloatString(x + scaleRangeA, 2);
-                mouseSliderLabels[0] = ViewJFrameHistoLUT.createSliderLabel(start);
-                mouseSliderLabels[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
-                mouseSliderLabels[2] = ViewJFrameHistoLUT.createSliderLabel(end);
-                labelsTable = new Hashtable();
-                labelsTable.put(new Integer(0 + start.length() / 2), mouseSliderLabels[0]);
-                labelsTable.put(new Integer(50 + mid.length() / 2), mouseSliderLabels[1]);
-                labelsTable.put(new Integer(100 - mid.length() / 2), mouseSliderLabels[2]);
-                mouseSlider.setLabelTable(labelsTable);
-                mouseSlider.repaint();
-                mouseSlider.setValue(50);
-            }
-        }
-        else if (isImageBSelected())
-        {
-            String str = String.valueOf(x);
-
-            cursorIndexB = _index;
-            rangeXB = x;
-            int index = str.indexOf(".");
-            int length = str.length();
-            int indexE = str.indexOf("E");
-
-            if ( (index + 2 < length) && (indexE == -1))
-            {
-                str = str.substring(0, index + 2 + 1);
-            }
-            else if (indexE != -1)
-            {
-                str = str.substring(0, index + 2 + 1) + str.substring(indexE);
-            }
-            if (labelsTableB == null)
-            {
-                rangeTextB.setText(str);
-                mouseSliderB.setValue(255 - (int) y);
-            }
-            else
-            {
-                xRangeTextB.setText(str);
-                yRangeTextB.setText(String.valueOf(255 - (int) y));
-                // Change slider's labels
-                start = MipavUtil.makeFloatString(x - scaleRangeB, 2);
-                mid = MipavUtil.makeFloatString(x, 2);
-                end = MipavUtil.makeFloatString(x + scaleRangeB, 2);
-                mouseSliderLabelsB[0] = ViewJFrameHistoLUT.createSliderLabel(start);
-                mouseSliderLabelsB[1] = ViewJFrameHistoLUT.createSliderLabel(mid);
-                mouseSliderLabelsB[2] = ViewJFrameHistoLUT.createSliderLabel(end);
-                labelsTableB = new Hashtable();
-                labelsTableB.put(new Integer(0 + start.length() / 2), mouseSliderLabelsB[0]);
-                labelsTableB.put(new Integer(50 + mid.length() / 2), mouseSliderLabelsB[1]);
-                labelsTableB.put(new Integer(100 - mid.length() / 2), mouseSliderLabelsB[2]);
-                mouseSliderB.setLabelTable(labelsTableB);
-                mouseSliderB.repaint();
-                mouseSliderB.setValue(50);
-            }
-        }
-    }
-
-    /**
-     * Placeholder.
-     */
-    public void updateComponentLUT()
-    {}
-
-    /**
-     * Placeholder.
-     */
-    public void setAllOff()
-    {}
-
-    /**
-     * Placeholder.
-     * @param mouseEvent  drag event
-     */
-    public void dragPoint(MouseEvent mouseEvent)
-    {}
-
-    /**
-     * Placeholder.
-     * @param str  string
-     */
-    public void updateLUTPositionString(String str)
-    {
-        if (isImageASelected())
-        {
-            indexColorATextF.setText(str);
-        }
-        else
-        {
-            indexColorBTextF.setText(str);
-        }
-    }
-
-    /**************************** end HistoLUTParent *****************************/
-
-    private boolean isLUT1Based(ModelLUT LUT)
-    {
+    private boolean isLUT1Based(ModelLUT LUT) {
         Color color = LUT.getColor(0);
 
-        if (color.getRed() == 1 && color.getGreen() == 1 && color.getGreen() == 1)
-        {
+        if ((color.getRed() == 1) && (color.getGreen() == 1) && (color.getGreen() == 1)) {
             return true;
         }
 

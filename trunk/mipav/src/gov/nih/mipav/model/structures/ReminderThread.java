@@ -1,70 +1,95 @@
 package gov.nih.mipav.model.structures;
 
+
 import java.lang.reflect.*;
+
 import java.util.*;
 
-public class ReminderThread extends Thread
-{
-    private boolean isRunning;
-    private long sleeptime;
+
+/**
+ * DOCUMENT ME!
+ */
+public class ReminderThread extends Thread {
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     protected Hashtable subscribersHashtable;
 
-    public ReminderThread(long sleeptime)
-    {
+    /** DOCUMENT ME! */
+    private boolean isRunning;
+
+    /** DOCUMENT ME! */
+    private long sleeptime;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ReminderThread object.
+     *
+     * @param  sleeptime  DOCUMENT ME!
+     */
+    public ReminderThread(long sleeptime) {
         subscribersHashtable = new Hashtable();
         this.sleeptime = sleeptime;
         isRunning = false;
     }
 
-    public void addSubscriber(Object object, Method method)
-    {
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  object  DOCUMENT ME!
+     * @param  method  DOCUMENT ME!
+     */
+    public void addSubscriber(Object object, Method method) {
         subscribersHashtable.put(object, method);
     }
 
-    public void removeSubscriber(Object object)
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  object  DOCUMENT ME!
+     */
+    public void removeSubscriber(Object object) {
         subscribersHashtable.remove(object);
     }
 
-    public void run()
-    {
+    /**
+     * DOCUMENT ME!
+     */
+    public void run() {
         isRunning = true;
 
-        try
-        {
-            while (isRunning)
-            {
+        try {
+
+            while (isRunning) {
                 Enumeration e = subscribersHashtable.keys();
 
-                while (e.hasMoreElements())
-                {
+                while (e.hasMoreElements()) {
                     Object object = e.nextElement();
 
                     Object value = subscribersHashtable.get(object);
 
                     Method method = (Method) value;
 
-                    try
-                    {
+                    try {
                         method.invoke(object, null);
-                    }
-                    catch (Exception exception)
-                    {
+                    } catch (Exception exception) {
                         subscribersHashtable.remove(object);
                     }
                 }
 
                 sleep(sleeptime);
             }
-        }
-        catch (InterruptedException ie)
-        {
-
-        }
+        } catch (InterruptedException ie) { }
     }
 
-    public void shutdown()
-    {
+    /**
+     * DOCUMENT ME!
+     */
+    public void shutdown() {
         isRunning = false;
     }
 }

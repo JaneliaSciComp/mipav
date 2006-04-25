@@ -1,37 +1,93 @@
 package gov.nih.mipav.view;
 
+
 import java.io.*;
 
+
 /**
-*		@version    1.0 Mar 1, 1999
-*		@author     Matthew J. McAuliffe, Ph.D.
-*
-*/
+ * DOCUMENT ME!
+ *
+ * @version  1.0 Mar 1, 1999
+ * @author   Matthew J. McAuliffe, Ph.D.
+ */
 
 public class ViewList implements Serializable {
 
-    private String  string;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 3493522274714412775L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private boolean state;
 
-    public ViewList (String _string, boolean _state) {
+    /** DOCUMENT ME! */
+    private String string;
 
-        string  = _string;
-        state   = _state;
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ViewList object.
+     *
+     * @param  _string  DOCUMENT ME!
+     * @param  _state   DOCUMENT ME!
+     */
+    public ViewList(String _string, boolean _state) {
+
+        string = _string;
+        state = _state;
     }
 
-    public String getString() { return string;}
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    public boolean getState() { return state; }
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean getState() {
+        return state;
+    }
 
-    public void setState(boolean _state) { state = _state;}
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public String getString() {
+        return string;
+    }
 
-    public void setString(String _string) { string = _string;}
-
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  value  DOCUMENT ME!
+     */
     public void printSelf(float value) {
 
         if (state == true) {
             Preferences.debug(string + "\t\t" + value + "\n");
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  _state  DOCUMENT ME!
+     */
+    public void setState(boolean _state) {
+        state = _state;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  _string  DOCUMENT ME!
+     */
+    public void setString(String _string) {
+        string = _string;
     }
 
 

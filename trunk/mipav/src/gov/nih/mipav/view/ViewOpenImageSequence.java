@@ -1,93 +1,180 @@
 package gov.nih.mipav.view;
 
+
+import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
 
 import java.awt.*;
 import java.awt.event.*;
+
 import java.io.*;
+
+import java.text.*;
+
 import java.util.*;
+
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.table.*;
-import java.text.NumberFormat;
 
 
 /**
- * The purpose of this class is to present the user with a window enabling him/her to
- * open a sequence of TIFF files based on timepoint-channel-slice ordering. This is useful for opening
- * a dataset captured by a machine where the order of the files on disk may not necessarily be the correct
- * sequence from the machine. Also shows a preview of each image.
+ * The purpose of this class is to present the user with a window enabling him/her to open a sequence of TIFF files
+ * based on timepoint-channel-slice ordering. This is useful for opening a dataset captured by a machine where the order
+ * of the files on disk may not necessarily be the correct sequence from the machine. Also shows a preview of each
+ * image.
  */
-public class ViewOpenImageSequence extends JFrame implements
-        ActionListener, ListSelectionListener, PreviewImageContainer,
-        MouseListener, KeyListener, ChangeListener
-{
-    protected JTextField txtDirectory;
+public class ViewOpenImageSequence extends JFrame
+        implements ActionListener, ListSelectionListener, PreviewImageContainer, MouseListener, KeyListener,
+                   ChangeListener {
 
-    protected JTextField txtSlices;
-    protected JTextField txtChannels;
-    protected JTextField txtTimePoints;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    protected JCheckBox enableCheckbox;
-    protected JCheckBox chkForceUBYTE;
-    protected JTextField txtHeight;
-    protected JTextField txtWidth;
-    protected JLabel lblOrigDim;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 5007701357886039L;
 
-    protected JList filenameList;
+    /** DOCUMENT ME! */
+    protected static final String CANCEL = "Close";
 
-    protected final int ZCT = 0;
-    protected final int ZTC = 1;
-    protected final int CTZ = 2;
-    protected final int CZT = 3;
-    protected final int TZC = 4;
-    protected final int TCZ = 5;
+    /** DOCUMENT ME! */
+    protected static final String OK = "Open";
 
-    protected JRadioButton radZCT = new JRadioButton("Z-C-T");
-    protected JRadioButton radZTC = new JRadioButton("Z-T-C");
-    protected JRadioButton radCZT = new JRadioButton("C-Z-T");
-    protected JRadioButton radCTZ = new JRadioButton("C-T-Z");
-    protected JRadioButton radTZC = new JRadioButton("T-Z-C");
-    protected JRadioButton radTCZ = new JRadioButton("T-C-Z");
+    /** DOCUMENT ME! */
+    protected static final String APPLY = "Apply";
 
-    protected final static String CANCEL = "Close";
-    protected final static String OK = "Open";
-    protected final static String APPLY = "Apply";
-    protected final static String BROWSE = "Browse";
-    protected final static String FILTER = "Crop";
-    protected final static String REMOVE = "Remove";
-    protected final static String CONFIGURE_CHANNELS = "Configure channel order";
-    protected final static String ENABLE = "Enable";
+    /** DOCUMENT ME! */
+    protected static final String BROWSE = "Browse";
 
-    protected JTable table;
-    protected UneditableTableModel tableModel;
+    /** DOCUMENT ME! */
+    protected static final String FILTER = "Crop";
+
+    /** DOCUMENT ME! */
+    protected static final String REMOVE = "Remove";
+
+    /** DOCUMENT ME! */
+    protected static final String CONFIGURE_CHANNELS = "Configure channel order";
+
+    /** DOCUMENT ME! */
+    protected static final String ENABLE = "Enable";
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    protected JSlider brightnessSlider;
+
+    /** DOCUMENT ME! */
     protected AlternatingTableCellRenderer cellRenderer;
 
-    protected File [] fileListData;
-    protected File currentPath;
+    /** DOCUMENT ME! */
+    protected JCheckBox chkForceUBYTE;
+
+    /** DOCUMENT ME! */
     protected JComboBox cmbFilter;
-    protected JPanel previewPanel;
 
-    int [] channelMap;
-
-    protected String previewFilename;
-
-    protected JSlider brightnessSlider;
+    /** DOCUMENT ME! */
     protected JSlider contrastSlider;
 
-    public ViewOpenImageSequence()
-    {
+    /** DOCUMENT ME! */
+    protected final int CTZ = 2;
+
+    /** DOCUMENT ME! */
+    protected File currentPath;
+
+    /** DOCUMENT ME! */
+    protected final int CZT = 3;
+
+    /** DOCUMENT ME! */
+    protected JCheckBox enableCheckbox;
+
+    /** DOCUMENT ME! */
+    protected File[] fileListData;
+
+    /** DOCUMENT ME! */
+    protected JList filenameList;
+
+    /** DOCUMENT ME! */
+    protected JLabel lblOrigDim;
+
+    /** DOCUMENT ME! */
+    protected String previewFilename;
+
+    /** DOCUMENT ME! */
+    protected JPanel previewPanel;
+
+    /** DOCUMENT ME! */
+    protected JRadioButton radCTZ = new JRadioButton("C-T-Z");
+
+    /** DOCUMENT ME! */
+    protected JRadioButton radCZT = new JRadioButton("C-Z-T");
+
+    /** DOCUMENT ME! */
+    protected JRadioButton radTCZ = new JRadioButton("T-C-Z");
+
+    /** DOCUMENT ME! */
+    protected JRadioButton radTZC = new JRadioButton("T-Z-C");
+
+    /** DOCUMENT ME! */
+    protected JRadioButton radZCT = new JRadioButton("Z-C-T");
+
+    /** DOCUMENT ME! */
+    protected JRadioButton radZTC = new JRadioButton("Z-T-C");
+
+    /** DOCUMENT ME! */
+    protected JTable table;
+
+    /** DOCUMENT ME! */
+    protected UneditableTableModel tableModel;
+
+    /** DOCUMENT ME! */
+    protected final int TCZ = 5;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtChannels;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtDirectory;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtHeight;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtSlices;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtTimePoints;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtWidth;
+
+    /** DOCUMENT ME! */
+    protected final int TZC = 4;
+
+    /** DOCUMENT ME! */
+    protected final int ZCT = 0;
+
+    /** DOCUMENT ME! */
+    protected final int ZTC = 1;
+
+    /** DOCUMENT ME! */
+    int[] channelMap;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ViewOpenImageSequence object.
+     */
+    public ViewOpenImageSequence() {
         setSize(new Dimension(800, 760));
 
         MipavUtil.centerOnScreen(this);
 
         setTitle("Open image sequence");
 
-        channelMap = new int[] {1, 2, 3, 0};
+        channelMap = new int[] { 1, 2, 3, 0 };
 
         buildUserInterface();
 
@@ -96,158 +183,30 @@ public class ViewOpenImageSequence extends JFrame implements
         setVisible(true);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+
     /**
-     * The purpose of this method is to load the previous values in from the preferences file.
+     * DOCUMENT ME!
      *
+     * @param  event  DOCUMENT ME!
      */
-    private void setDefaults()
-    {
-        txtSlices.setText(Preferences.getLastOpenSequenceSlices());
-        txtChannels.setText(Preferences.getLastOpenSequenceChannels());
-        txtTimePoints.setText(Preferences.getLastOpenSequenceTimePoints());
-
-        String ordering = Preferences.getLastOpenSequenceOrdering();
-
-        try
-        {
-            int selectedSequence = Integer.parseInt(ordering);
-
-            switch (selectedSequence)
-            {
-                case ZCT: radZCT.setSelected(true);
-                          break;
-                case ZTC: radZTC.setSelected(true);
-                          break;
-                case CTZ: radCTZ.setSelected(true);
-                          break;
-                case CZT: radCZT.setSelected(true);
-                          break;
-                case TZC: radTZC.setSelected(true);
-                          break;
-                case TCZ: radTCZ.setSelected(true);
-                          break;
-            }
-        }
-        catch (NumberFormatException nfe)
-        {
-
-        }
-    }
-
-    protected void buildUserInterface()
-    {
-        try {
-            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        }
-        catch (FileNotFoundException error) {
-            Preferences.debug(
-                "Exception ocurred while getting <" + error.getMessage()
-                + ">.  Check that this file is available.\n");
-        }
-
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
-
-        getContentPane().setLayout(gbLayout);
-
-        /** adding the 'Browse' button **/
-        JButton btnBrowse = new JButton("Browse");
-        btnBrowse.setActionCommand("Browse");
-        btnBrowse.addActionListener(this);
-        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
-        gbConstraints.insets = new Insets(4, 4, 0, 4);
-        gbConstraints.gridwidth = 1;
-        gbLayout.setConstraints(btnBrowse, gbConstraints);
-        getContentPane().add(btnBrowse);
-        /** end adding 'Browse' button **/
-
-        // adding the 'directory' textfield
-        txtDirectory = new JTextField();
-        txtDirectory.setEditable(false);
-        txtDirectory.setPreferredSize(new Dimension(txtDirectory.
-                getPreferredSize().width, btnBrowse.getPreferredSize().height));
-
-        gbConstraints.insets = new Insets(4, 4, 4, 4);
-        gbConstraints.gridx = 1;
-        gbConstraints.gridy = 0;
-        gbConstraints.gridheight = 1;
-        gbConstraints.weighty = 0;
-        gbConstraints.weightx = 1;
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbLayout.setConstraints(txtDirectory, gbConstraints);
-        getContentPane().add(txtDirectory);
-        // end adding the 'directory' textfield
-
-        // instantiate the table
-        tableModel = new UneditableTableModel();
-        table = new JTable(tableModel);
-        cellRenderer = new AlternatingTableCellRenderer();
-        cellRenderer.setColor2(new Color(204, 204, 255));
-        table.addMouseListener(this);
-        table.addKeyListener(this);
-        table.setDefaultRenderer(Object.class, cellRenderer);
-        table.setIntercellSpacing(new Dimension(1, 0));
-        //table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        table.setShowGrid(false);
-        table.setShowVerticalLines(true);
-        table.setShowHorizontalLines(false);
-        table.getTableHeader().setReorderingAllowed(false);
-        JScrollPane scrollPane = new JScrollPane(table);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        // end table instantiation
-
-        JSplitPane splitPanelChild = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildCenterPanel(), scrollPane);
-        splitPanelChild.setDividerLocation(150);
-
-        JSplitPane splitPanelParent = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildLeftSubPanel(), splitPanelChild);
-        splitPanelParent.setDividerLocation(200);
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 1;
-        gbConstraints.weighty = 1;
-        gbConstraints.fill = GridBagConstraints.BOTH;
-        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-        gbConstraints.gridheight = 6;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbLayout.setConstraints(splitPanelParent, gbConstraints);
-        getContentPane().add(splitPanelParent);
-
-        JPanel okCancelPanel = buildOKCancelPanel();
-        gbConstraints.gridy = 8;
-        gbConstraints.gridheight = 1;
-        gbConstraints.weighty = 0;
-        gbConstraints.insets = new Insets(0, 0, 2, 0);
-        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbLayout.setConstraints(okCancelPanel, gbConstraints);
-        getContentPane().add(okCancelPanel);
-    }
-
-
-    public void actionPerformed(ActionEvent event)
-    {
+    public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equals(BROWSE))
-        {
+        if (command.equals(BROWSE)) {
             JFileChooser fileChooser = new JFileChooser(getLastOpenSequencePath());
             fileChooser.setMultiSelectionEnabled(false);
 
-            if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION)
-            {
+            if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 File selectedFile = fileChooser.getSelectedFile();
 
                 txtDirectory.setText(selectedFile.getAbsolutePath());
 
-                if (selectedFile.isDirectory())
-                {
+                if (selectedFile.isDirectory()) {
                     fileListData = selectedFile.listFiles();
                     currentPath = selectedFile;
-                }
-                else
-                {
+                } else {
                     currentPath = selectedFile.getParentFile();
                     fileListData = currentPath.listFiles();
                 }
@@ -256,11 +215,11 @@ public class ViewOpenImageSequence extends JFrame implements
                 Preferences.setLastOpenSequencePath(currentPath.getAbsolutePath());
 
                 Arrays.sort(fileListData);
-                
+
                 Vector fileListVector = new Vector();
 
-                for (int i = 0; i < fileListData.length; i++)
-                {
+                for (int i = 0; i < fileListData.length; i++) {
+
                     if (fileListData[i].isFile()) // only add files to the file list
                     {
                         fileListVector.addElement(fileListData[i].getName());
@@ -284,58 +243,52 @@ public class ViewOpenImageSequence extends JFrame implements
                     makePreview(currentPath.getName(), (String) filenameList.getModel().getElementAt(0));
                 }
             }
-        }
-        else if (command.equals(APPLY))
-        {
-            if (dimensionsSanityCheck() == false)
-            {
+        } else if (command.equals(APPLY)) {
+
+            if (dimensionsSanityCheck() == false) {
                 MipavUtil.displayError("One or more 'Dimensions' values invalid.");
 
                 return;
             }
 
-            if (filenameList.getModel().getSize() == 0)
-            {
+            if (filenameList.getModel().getSize() == 0) {
                 return;
             }
 
             // save dimensions parameters for next time
-            Preferences.setLastOpenSequenceParams(txtSlices.getText(), txtChannels.getText(), txtTimePoints.getText(), String.valueOf(getSelectedSequence()));
+            Preferences.setLastOpenSequenceParams(txtSlices.getText(), txtChannels.getText(), txtTimePoints.getText(),
+                                                  String.valueOf(getSelectedSequence()));
 
             // format the table according to the dimensions parameters
             formatTable(getSelectedSequence());
-        }
-        else if (command.equals(FILTER))
-        {
+        } else if (command.equals(FILTER)) {
+
             // constrain list data to selected items
             filenameList.setListData(filenameList.getSelectedValues());
-        }
-        else if (command.equals(REMOVE))
-        {
+        } else if (command.equals(REMOVE)) {
+
             // crop list data from selected items
             removeSelected();
-        }
-        else if (command.equals(CANCEL))
-        {
+        } else if (command.equals(CANCEL)) {
             dispose();
-        }
-        else if (command.equals(OK))
-        {
+        } else if (command.equals(OK)) {
             Dimension subsampleDimension = null;
 
-            if (dimensionsSanityCheck() == false)
-            {
+            if (dimensionsSanityCheck() == false) {
                 MipavUtil.displayError("One or more Z-C-T dimensions values invalid.");
+
                 return;
             }
-            if (enableCheckbox.isSelected() && subsamplingSanityCheck() == false)
-            {
+
+            if (enableCheckbox.isSelected() && (subsamplingSanityCheck() == false)) {
                 MipavUtil.displayError("Subsampling dimensions are invalid.");
+
                 return;
             }
-            if (enableCheckbox.isSelected())
-            {
-                subsampleDimension = new Dimension(Integer.parseInt(txtWidth.getText()), Integer.parseInt(txtHeight.getText()));
+
+            if (enableCheckbox.isSelected()) {
+                subsampleDimension = new Dimension(Integer.parseInt(txtWidth.getText()),
+                                                   Integer.parseInt(txtHeight.getText()));
             }
 
             int numChannels = Integer.parseInt(txtChannels.getText());
@@ -343,13 +296,9 @@ public class ViewOpenImageSequence extends JFrame implements
             int numTimePoints = Integer.parseInt(txtTimePoints.getText());
 
             openImage(numChannels, numSlices, numTimePoints, subsampleDimension); // based on dimensions parameters
-        }
-        else if (command.equals(CONFIGURE_CHANNELS))
-        {
+        } else if (command.equals(CONFIGURE_CHANNELS)) {
             new JDialogSelectChannelSequence(this, channelMap); // to change order of color channels
-        }
-        else if (command.equals(ENABLE))
-        {
+        } else if (command.equals(ENABLE)) {
             txtHeight.setEnabled(enableCheckbox.isSelected());
             txtWidth.setEnabled(enableCheckbox.isSelected());
             chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
@@ -357,251 +306,233 @@ public class ViewOpenImageSequence extends JFrame implements
     }
 
     /**
-     * Method removed selected items from the file list
-     */
-    private void removeSelected()
-    {
-        int [] selectedIndices = filenameList.getSelectedIndices();
-
-        ListModel listModel = filenameList.getModel();
-        Vector listData = new Vector();
-
-        for (int i = 0; i < listModel.getSize(); i++)
-        {
-            listData.addElement(listModel.getElementAt(i));
-        }
-
-        for (int i = selectedIndices.length - 1; i >= 0; i--)
-        {
-            listData.removeElementAt(selectedIndices[i]);
-        }
-
-        filenameList.setListData(listData);
-    }
-
-    /**
-     * Ensures the table is drawn in the way specified by the dimensions parameters and the selected sequence.
+     * Method is required by PreviewImageContainer interface to draw a preview image.
      *
-     * @param selectedSequence int - the Z-T-C ordering as selected by the user
+     * @return  Dimension - indicating the size of the preview image area.
      */
-    protected void formatTable(int selectedSequence)
-    {
-        tableModel.setColumnIdentifiers(new Vector()); // clear all columns
-
-        tableModel.setRowCount(0); // clear all rows
-
-        int numSlices = Integer.parseInt(txtSlices.getText());
-        int numChannels = Integer.parseInt(txtChannels.getText());
-        int numTimePoints = Integer.parseInt(txtTimePoints.getText());
-
-        cellRenderer.setAlternateRowCount(numSlices); // displays every other set of row in a different color
-
-        switch (selectedSequence)
-        {
-            case ZCT: arrangeZCT(numSlices, numChannels, numTimePoints);
-                      break;
-            case ZTC: arrangeZTC(numSlices, numChannels, numTimePoints);
-                      break;
-            case TZC: arrangeTZC(numSlices, numChannels, numTimePoints);
-                      break;
-            case TCZ: arrangeTCZ(numSlices, numChannels, numTimePoints);
-                      break;
-            case CTZ: arrangeCTZ(numSlices, numChannels, numTimePoints);
-                      break;
-            case CZT: arrangeCZT(numSlices, numChannels, numTimePoints);
-                      break;
-        }
-
-        table.getTableHeader().setReorderingAllowed(false); // do not allow reordering of table columns
-
-        tableModel.fireTableStructureChanged(); // alert the table model to redraw itself
-        tableModel.fireTableDataChanged();
-
-        setColumnWidths(); // cosmetic method to set the widths of the columns according to the width of the text they contain
+    public Dimension getPanelSize() {
+        return previewPanel.getSize();
     }
 
     /**
-     * This method calculates the width needed to encompass the table data for each column. Without this
-     * method, the column widths would not be set correctly and the user would potentialy have to resize
-     * each column to view the filename it contains.
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
      */
-    protected void setColumnWidths()
-    {
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        TableColumnModel columnModel = table.getColumnModel();
-        JTableHeader tableHeader = table.getTableHeader();
+    public void keyPressed(KeyEvent event) { }
 
-        // get FontMetrics object for the table header and the table rows
-        FontMetrics tableHeaderFontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
-        FontMetrics rowValueFontMetrics = table.getFontMetrics(table.getFont());
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void keyReleased(KeyEvent event) {
 
-        for (int i = 0; i < columnModel.getColumnCount(); i++)
-        {
-            TableColumn column = columnModel.getColumn(i);
-            int headerWidth = tableHeaderFontMetrics.stringWidth((String) column.getHeaderValue());
+        if (event.getSource() == table) {
 
-            for (int j = 0; j < tableModel.getRowCount(); j++)
-            {
-                String rowValue = (String) tableModel.getValueAt(j, i);
-                int rowValueWidth = rowValueFontMetrics.stringWidth(rowValue);
+            if (table.getSelectedColumn() != 0) {
+                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
+                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
+                                                                       table.getSelectedColumn());
 
-                // the column width is the greater of the header width and the row data width
-                headerWidth = Math.max(headerWidth, rowValueWidth);
+                makePreview(currentPath, filename);
             }
-
-            column.setMinWidth(headerWidth + 4); // the + 4 is a padding - otherwise the text gets cut off
         }
     }
 
     /**
-     * Arrange the table in ZCT order.
+     * DOCUMENT ME!
      *
-     * @param numSlices int - the number of slices the data represents
-     * @param numChannels int - the number of channels the data represents
-     * @param numTimePoints int - the number of time points the data represents
+     * @param  event  DOCUMENT ME!
      */
-    protected void arrangeZCT(int numSlices, int numChannels, int numTimePoints)
-    {
+    public void keyTyped(KeyEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseClicked(MouseEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseEntered(MouseEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseExited(MouseEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mousePressed(MouseEvent event) {
+
+        if (event.getButton() == MouseEvent.BUTTON1) {
+
+            if (table.getSelectedColumn() != 0) {
+                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
+                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(),
+                                                                       table.getSelectedColumn());
+
+                makePreview(currentPath, filename);
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseReleased(MouseEvent event) {
+
+        if (event.getButton() == MouseEvent.BUTTON3) {
+            JPopupMenu popupMenu = new JPopupMenu();
+
+            JMenuItem menuItem = new JMenuItem(CONFIGURE_CHANNELS);
+            menuItem.addActionListener(this);
+            menuItem.setActionCommand(CONFIGURE_CHANNELS);
+            popupMenu.add(menuItem);
+
+            popupMenu.show((Component) event.getSource(), event.getX(), event.getY());
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  channelMap  DOCUMENT ME!
+     */
+    public void newChannelMap(int[] channelMap) {
+        this.channelMap = channelMap;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void stateChanged(ChangeEvent event) {
+        Component[] components = previewPanel.getComponents();
+
+        for (int i = 0; i < components.length; i++) {
+
+            if (components[i] instanceof ViewJComponentPreviewImage) {
+                float contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
+
+                ((ViewJComponentPreviewImage) components[i]).setSliceBrightness(brightnessSlider.getValue(), contrast);
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void valueChanged(ListSelectionEvent event) {
+        String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
+        String selectedFilename = (String) filenameList.getSelectedValue();
+
+        makePreview(currentPath, selectedFilename);
+    }
+
+    /**
+     * Arrange the table in CTZ order.
+     *
+     * @param  numSlices      int - the number of slices the data represents
+     * @param  numChannels    int - the number of channels the data represents
+     * @param  numTimePoints  int - the number of time points the data represents
+     */
+    protected void arrangeCTZ(int numSlices, int numChannels, int numTimePoints) {
         Vector channelVector = new Vector();
 
-        for (int i = 0; i < numSlices * numChannels; i++)
-        {
-            if (i % numSlices == 0)
-            {
+        for (int i = 0; i < (numSlices * numChannels); i++) {
+
+            if ((i % numSlices) == 0) {
                 channelVector.addElement("" + ((i / numSlices) + 1));
-            }
-            else
-            {
+            } else {
                 channelVector.addElement("");
             }
         }
 
         tableModel.addColumn("Channel", channelVector);
 
-        try
-        {
-            for (int i = 0; i < numTimePoints; i++)
-            {
+        try {
+
+            for (int i = 0; i < numTimePoints; i++) {
                 Vector timePointVector = new Vector();
 
-                for (int k = 0; k < numChannels; k++)
-                {
+                for (int k = 0; k < numChannels; k++) {
                     Vector zSliceVector = new Vector();
 
-                    for (int j = 0; j < numSlices; j++)
-                    {
-                        zSliceVector.addElement(filenameList.getModel().getElementAt((j +
-                                (k * numSlices)) + i * numSlices * numChannels));
+                    for (int j = 0; j < numSlices; j++) {
+                        zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
+                                                                                     (numChannels * i) + k));
                     }
 
                     timePointVector.addAll(zSliceVector);
                 }
 
-                tableModel.addColumn("Time point " + (i+1), timePointVector);
+                tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        }
-        catch (ArrayIndexOutOfBoundsException aioobe)
-        {
-            MipavUtil.displayError("Index out of bounds in arrangeZCT - parameters indicate a dimension larger than available range of data.");
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil.displayError("Index out of bounds in arrangeCTZ - parameters indicate a dimension larger than available range of data.");
+
             return;
         }
     }
 
     /**
-     * Arrange the table in ZTC order.
+     * Arrange the table in CZT order.
      *
-     * @param numSlices int - the number of slices the data represents
-     * @param numChannels int - the number of channels the data represents
-     * @param numTimePoints int - the number of time points the data represents
+     * @param  numSlices      int - the number of slices the data represents
+     * @param  numChannels    int - the number of channels the data represents
+     * @param  numTimePoints  int - the number of time points the data represents
      */
-    protected void arrangeZTC(int numSlices, int numChannels, int numTimePoints)
-    {
+    protected void arrangeCZT(int numSlices, int numChannels, int numTimePoints) {
         Vector channelVector = new Vector();
 
-        for (int i = 0; i < numSlices * numChannels; i++)
-        {
-            if (i % numSlices == 0)
-            {
+        for (int i = 0; i < (numSlices * numChannels); i++) {
+
+            if ((i % numSlices) == 0) {
                 channelVector.addElement("" + ((i / numSlices) + 1));
-            }
-            else
-            {
+            } else {
                 channelVector.addElement("");
             }
         }
 
         tableModel.addColumn("Channel", channelVector);
 
-        try
-        {
-            for (int i = 0; i < numTimePoints; i++)
-            {
+        try {
+
+            for (int i = 0; i < numTimePoints; i++) {
                 Vector timePointVector = new Vector();
 
-                for (int k = 0; k < numChannels; k++)
-                {
+                for (int k = 0; k < numChannels; k++) {
                     Vector zSliceVector = new Vector();
 
-                    for (int j = 0; j < numSlices; j++)
-                    {
-                        zSliceVector.addElement(filenameList.getModel().getElementAt(j + (numSlices*i) + (numTimePoints*numSlices*k)));
+                    for (int j = 0; j < (numSlices * numChannels); j += numChannels) {
+                        zSliceVector.addElement(filenameList.getModel().getElementAt(j + k +
+                                                                                     (numSlices * numChannels * i)));
                     }
 
                     timePointVector.addAll(zSliceVector);
                 }
 
-                tableModel.addColumn("Time point " + (i+1), timePointVector);
+                tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        }
-        catch (ArrayIndexOutOfBoundsException aioobe)
-        {
-            MipavUtil.displayError("Index out of bounds in arrangeZTC - parameters indicate a dimension larger than available range of data.");
-            return;
-        }
-    }
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil.displayError("Index out of bounds in arrangeCZT - parameters indicate a dimension larger than available range of data.");
 
-    /**
-     * Arrange the table in TZC order.
-     *
-     * @param numSlices int - the number of slices the data represents
-     * @param numChannels int - the number of channels the data represents
-     * @param numTimePoints int - the number of time points the data represents
-     */
-    protected void arrangeTZC(int numSlices, int numChannels, int numTimePoints)
-    {
-        Vector channelVector = new Vector();
-
-        for (int i = 0; i < numSlices * numChannels; i++)
-        {
-            if (i % numSlices == 0)
-            {
-                channelVector.addElement("" + ((i / numSlices) + 1));
-            }
-            else
-            {
-                channelVector.addElement("");
-            }
-        }
-
-        tableModel.addColumn("Channel", channelVector);
-
-        try
-        {
-            for (int i = 0; i < numTimePoints; i++)
-            {
-                Vector timePointVector = new Vector();
-
-                for (int k = 0; k < numChannels * numSlices; k++)
-                {
-                    timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i));
-                }
-
-                tableModel.addColumn("Time point " + (i+1), timePointVector);
-            }
-        }
-        catch (ArrayIndexOutOfBoundsException aioobe)
-        {
-            MipavUtil.displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
             return;
         }
     }
@@ -609,479 +540,188 @@ public class ViewOpenImageSequence extends JFrame implements
     /**
      * Arrange the table in TCZ order.
      *
-     * @param numSlices int - the number of slices the data represents
-     * @param numChannels int - the number of channels the data represents
-     * @param numTimePoints int - the number of time points the data represents
+     * @param  numSlices      int - the number of slices the data represents
+     * @param  numChannels    int - the number of channels the data represents
+     * @param  numTimePoints  int - the number of time points the data represents
      */
-    protected void arrangeTCZ(int numSlices, int numChannels, int numTimePoints)
-    {
+    protected void arrangeTCZ(int numSlices, int numChannels, int numTimePoints) {
         Vector channelVector = new Vector();
 
-        for (int i = 0; i < numSlices * numChannels; i++)
-        {
-            if (i % numSlices == 0)
-            {
+        for (int i = 0; i < (numSlices * numChannels); i++) {
+
+            if ((i % numSlices) == 0) {
                 channelVector.addElement("" + ((i / numSlices) + 1));
-            }
-            else
-            {
+            } else {
                 channelVector.addElement("");
             }
         }
 
         tableModel.addColumn("Channel", channelVector);
 
-        try
-        {
-            for (int i = 0; i < numTimePoints; i++)
-            {
+        try {
+
+            for (int i = 0; i < numTimePoints; i++) {
                 Vector timePointVector = new Vector();
 
-                for (int k = 0; k < numChannels; k++)
-                {
+                for (int k = 0; k < numChannels; k++) {
                     Vector zSliceVector = new Vector();
 
-                    for (int j = 0; j < numSlices; j++)
-                    {
-                            zSliceVector.addElement(filenameList.getModel().getElementAt(j * numTimePoints * numChannels  + k*numTimePoints +i));
+                    for (int j = 0; j < numSlices; j++) {
+                        zSliceVector.addElement(filenameList.getModel().getElementAt((j * numTimePoints * numChannels) +
+                                                                                     (k * numTimePoints) + i));
                     }
 
                     timePointVector.addAll(zSliceVector);
                 }
 
-                tableModel.addColumn("Time point " + (i+1), timePointVector);
+                tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        }
-        catch (ArrayIndexOutOfBoundsException aioobe)
-        {
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
             MipavUtil.displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
+
             return;
         }
     }
 
-   /**
-     * Arrange the table in CTZ order.
+    /**
+     * Arrange the table in TZC order.
      *
-     * @param numSlices int - the number of slices the data represents
-     * @param numChannels int - the number of channels the data represents
-     * @param numTimePoints int - the number of time points the data represents
+     * @param  numSlices      int - the number of slices the data represents
+     * @param  numChannels    int - the number of channels the data represents
+     * @param  numTimePoints  int - the number of time points the data represents
      */
-    protected void arrangeCTZ(int numSlices, int numChannels, int numTimePoints)
-    {
+    protected void arrangeTZC(int numSlices, int numChannels, int numTimePoints) {
         Vector channelVector = new Vector();
 
-        for (int i = 0; i < numSlices * numChannels; i++)
-        {
-            if (i % numSlices == 0)
-            {
+        for (int i = 0; i < (numSlices * numChannels); i++) {
+
+            if ((i % numSlices) == 0) {
                 channelVector.addElement("" + ((i / numSlices) + 1));
-            }
-            else
-            {
+            } else {
                 channelVector.addElement("");
             }
         }
 
         tableModel.addColumn("Channel", channelVector);
 
-	try
-        {
-            for (int i = 0; i < numTimePoints; i++)
-            {
+        try {
+
+            for (int i = 0; i < numTimePoints; i++) {
                 Vector timePointVector = new Vector();
 
-                for (int k = 0; k < numChannels; k++)
-                {
-                    Vector zSliceVector = new Vector();
+                for (int k = 0; k < (numChannels * numSlices); k++) {
+                    timePointVector.addElement(filenameList.getModel().getElementAt((k * numTimePoints) + i));
+                }
 
-                    for (int j = 0; j < numSlices; j++)
-                    {
-                        zSliceVector.addElement(filenameList.getModel().getElementAt(j * numTimePoints * numChannels  + numChannels*i + k));
-                    }
-
-                    timePointVector.addAll(zSliceVector);
-            	}
-
-                tableModel.addColumn("Time point " + (i+1), timePointVector);
+                tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        }
-        catch (ArrayIndexOutOfBoundsException aioobe)
-        {
-            MipavUtil.displayError("Index out of bounds in arrangeCTZ - parameters indicate a dimension larger than available range of data.");
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil.displayError("Index out of bounds in arrangeTCZ - parameters indicate a dimension larger than available range of data.");
+
             return;
         }
     }
 
-   /**
-     * Arrange the table in CZT order.
+    /**
+     * Arrange the table in ZCT order.
      *
-     * @param numSlices int - the number of slices the data represents
-     * @param numChannels int - the number of channels the data represents
-     * @param numTimePoints int - the number of time points the data represents
+     * @param  numSlices      int - the number of slices the data represents
+     * @param  numChannels    int - the number of channels the data represents
+     * @param  numTimePoints  int - the number of time points the data represents
      */
-    protected void arrangeCZT(int numSlices, int numChannels, int numTimePoints)
-    {
+    protected void arrangeZCT(int numSlices, int numChannels, int numTimePoints) {
         Vector channelVector = new Vector();
 
-        for (int i = 0; i < numSlices * numChannels; i++)
-        {
-            if (i % numSlices == 0)
-            {
+        for (int i = 0; i < (numSlices * numChannels); i++) {
+
+            if ((i % numSlices) == 0) {
                 channelVector.addElement("" + ((i / numSlices) + 1));
-            }
-            else
-            {
+            } else {
                 channelVector.addElement("");
             }
         }
 
         tableModel.addColumn("Channel", channelVector);
 
-        try
-        {
-            for (int i = 0; i < numTimePoints; i++)
-            {
+        try {
+
+            for (int i = 0; i < numTimePoints; i++) {
                 Vector timePointVector = new Vector();
 
-                for (int k = 0; k < numChannels; k++)
-                {
+                for (int k = 0; k < numChannels; k++) {
                     Vector zSliceVector = new Vector();
 
-                    for (int j = 0; j < numSlices*numChannels; j+=numChannels)
-                    {
-                            zSliceVector.addElement(filenameList.getModel().getElementAt( j+k + numSlices*numChannels*i  ));
+                    for (int j = 0; j < numSlices; j++) {
+                        zSliceVector.addElement(filenameList.getModel().getElementAt((j + (k * numSlices)) +
+                                                                                     (i * numSlices * numChannels)));
                     }
 
                     timePointVector.addAll(zSliceVector);
-            	}
+                }
 
-                tableModel.addColumn("Time point " + (i+1), timePointVector);
+                tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
-        }
-        catch (ArrayIndexOutOfBoundsException aioobe)
-        {
-            MipavUtil.displayError("Index out of bounds in arrangeCZT - parameters indicate a dimension larger than available range of data.");
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil.displayError("Index out of bounds in arrangeZCT - parameters indicate a dimension larger than available range of data.");
+
             return;
         }
     }
 
     /**
-     * Method checks the dimensions parameters entered by the user. Returns true if valid, false otherwise.
+     * Arrange the table in ZTC order.
      *
-     * @return boolean - if the dimension parameters are valid
+     * @param  numSlices      int - the number of slices the data represents
+     * @param  numChannels    int - the number of channels the data represents
+     * @param  numTimePoints  int - the number of time points the data represents
      */
-    protected boolean dimensionsSanityCheck()
-    {
-        String slices = txtSlices.getText();
-        String channels = txtChannels.getText();
-        String timePoints = txtTimePoints.getText();
+    protected void arrangeZTC(int numSlices, int numChannels, int numTimePoints) {
+        Vector channelVector = new Vector();
 
-        try
-        {
-            int numSlices = Integer.parseInt(slices);
+        for (int i = 0; i < (numSlices * numChannels); i++) {
 
-            if (numSlices < 1)
-            {
-                return false;
+            if ((i % numSlices) == 0) {
+                channelVector.addElement("" + ((i / numSlices) + 1));
+            } else {
+                channelVector.addElement("");
             }
+        }
 
-            int numChannels = Integer.parseInt(channels);
+        tableModel.addColumn("Channel", channelVector);
 
-            if (numChannels < 1)
-            {
-                return false;
+        try {
+
+            for (int i = 0; i < numTimePoints; i++) {
+                Vector timePointVector = new Vector();
+
+                for (int k = 0; k < numChannels; k++) {
+                    Vector zSliceVector = new Vector();
+
+                    for (int j = 0; j < numSlices; j++) {
+                        zSliceVector.addElement(filenameList.getModel().getElementAt(j + (numSlices * i) +
+                                                                                     (numTimePoints * numSlices * k)));
+                    }
+
+                    timePointVector.addAll(zSliceVector);
+                }
+
+                tableModel.addColumn("Time point " + (i + 1), timePointVector);
             }
+        } catch (ArrayIndexOutOfBoundsException aioobe) {
+            MipavUtil.displayError("Index out of bounds in arrangeZTC - parameters indicate a dimension larger than available range of data.");
 
-            int numTimePoints = Integer.parseInt(timePoints);
-
-            if (numTimePoints < 1)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        catch (NumberFormatException nfe)
-        {
-            return false;
-        }
-    }
-
-    protected boolean subsamplingSanityCheck()
-    {
-        try
-        {
-            int height = Integer.parseInt(txtHeight.getText());
-            int width = Integer.parseInt(txtWidth.getText());
-
-            if (height < 1 || width < 1)
-            {
-                return false;
-            }
-
-            return true;
-        }
-        catch (NumberFormatException nfe)
-        {
-            return false;
-        }
-    }
-
-    protected int getSelectedSequence()
-    {
-        if (radZCT.isSelected() == true)
-        {
-            return ZCT;
-        }
-        else if (radZTC.isSelected() == true)
-        {
-            return ZTC;
-        }
-        else if (radCTZ.isSelected() == true)
-        {
-            return CTZ;
-        }
-        else if (radCZT.isSelected() == true)
-        {
-            return CZT;
-        }
-        else if (radTZC.isSelected() == true)
-        {
-            return TZC;
-        }
-        else
-        {
-            return TCZ;
+            return;
         }
     }
 
     /**
-     * Reads the preferences file to determine the path that was last used in opening a file sequence.
+     * DOCUMENT ME!
      *
-     * @return File - the File object representing the directory last used in opening a file sequence.
+     * @return  DOCUMENT ME!
      */
-    protected File getLastOpenSequencePath()
-    {
-        String srsPathName = Preferences.getLastOpenSequencePath();
-        File srsPath;
-
-        if (srsPathName != null)
-        {
-            srsPath = new File(srsPathName);
-
-            if (srsPath.exists() == false || srsPath.canRead() == false)
-            {
-                String home = System.getProperty("user.home");
-                System.out.println("home: " + home);
-                srsPath = new File(home);
-            }
-        }
-        else
-        {
-            srsPath = new File(Preferences.getProperty("ImageDirectory"));
-            
-            if (srsPath.exists() == false || srsPath.canRead() == false)
-            {
-                srsPath = new File(System.getProperty("user.home"));
-            }
-        }
-
-        return srsPath;
-    }
-
-    protected JPanel buildSequencesPanel()
-    {
-        JPanel sequenceSubPanel = new JPanel(new GridLayout(3, 2));
-        sequenceSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Sequences"));
-
-        ButtonGroup buttonGroup = new ButtonGroup();
-
-        radZCT.setSelected(true);
-
-        buttonGroup.add(radZCT);
-        buttonGroup.add(radZTC);
-        buttonGroup.add(radCZT);
-        buttonGroup.add(radCTZ);
-        buttonGroup.add(radTZC);
-        buttonGroup.add(radTCZ);
-
-        sequenceSubPanel.add(radZCT);
-        sequenceSubPanel.add(radZTC);
-        sequenceSubPanel.add(radCZT);
-        sequenceSubPanel.add(radCTZ);
-        sequenceSubPanel.add(radTZC);
-        sequenceSubPanel.add(radTCZ);
-
-        return sequenceSubPanel;
-    }
-
-    protected JPanel buildSubsamplePanel()
-    {
-        GridBagLayout gbLayout = new GridBagLayout();
-        GridBagConstraints gbConstraints = new GridBagConstraints();
-
-        JPanel subsamplePanel = new JPanel(gbLayout);
-        subsamplePanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Subsampling"));
-
-        gbConstraints.gridx = 1;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        enableCheckbox = new JCheckBox(ENABLE);
-        enableCheckbox.addActionListener(this);
-        enableCheckbox.setActionCommand(ENABLE);
-        gbLayout.setConstraints(enableCheckbox, gbConstraints);
-        subsamplePanel.add(enableCheckbox);
-
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 1;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        JLabel lblWidth = new JLabel("Width: ");
-        gbLayout.setConstraints(lblWidth, gbConstraints);
-        subsamplePanel.add(lblWidth);
-
-        gbConstraints.gridx = 1;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        txtWidth = new JTextField(5);
-        txtWidth.setEnabled(enableCheckbox.isSelected());
-        gbLayout.setConstraints(txtWidth, gbConstraints);
-        subsamplePanel.add(txtWidth);
-
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 2;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        JLabel lblHeight = new JLabel("Height: ");
-        gbLayout.setConstraints(lblHeight, gbConstraints);
-        subsamplePanel.add(lblHeight);
-
-        gbConstraints.gridx = 1;
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        txtHeight = new JTextField(5);
-        txtHeight.setEnabled(enableCheckbox.isSelected());
-        gbLayout.setConstraints(txtHeight, gbConstraints);
-        subsamplePanel.add(txtHeight);
-
-        gbConstraints.gridy++;
-        chkForceUBYTE = new JCheckBox("Force 8-bit");
-        chkForceUBYTE.setToolTipText("Force result images to use 8-bit channels");
-        chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
-        gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
-        subsamplePanel.add(chkForceUBYTE);
-
-        return subsamplePanel;
-    }
-
-    protected JPanel buildCenterPanel()
-    {
-        GridBagConstraints gbConstraints = new GridBagConstraints();
-        GridBagLayout gbLayout = new GridBagLayout();
-
-        JPanel centerPanel = new JPanel(gbLayout);
-
-        /** adding the 'Dimensions' panel **/
-        JPanel dimensionsSubPanel = buildDimensionsPanel();
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 0;
-        gbConstraints.weightx = 1;
-        gbConstraints.weighty = 0;
-        gbConstraints.gridwidth = 2;
-        gbConstraints.gridheight = 2;
-        gbConstraints.insets = new Insets(4, 0, 1, 4);
-        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbLayout.setConstraints(dimensionsSubPanel, gbConstraints);
-        centerPanel.add(dimensionsSubPanel);
-        /** done adding 'Dimensions' panel **/
-
-        /** adding the 'Sequences' panel **/
-        JPanel sequenceSubPanel = buildSequencesPanel();
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 3;
-        gbConstraints.insets = new Insets(1, 0, 1, 4);
-        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbLayout.setConstraints(sequenceSubPanel, gbConstraints);
-        centerPanel.add(sequenceSubPanel);
-        /** done adding the 'Sequences' panel **/
-
-        /** adding the 'Subsample' panel **/
-        JPanel subsamplePanel = buildSubsamplePanel();
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 5;
-        gbConstraints.insets = new Insets(1, 0, 1, 4);
-        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbLayout.setConstraints(subsamplePanel, gbConstraints);
-        centerPanel.add(subsamplePanel);
-        /** done adding the 'Subsample' panel **/
-
-        // this section has been moved to buildSubsamplePanel()
-        //gbConstraints.gridy = 7;
-        //gbConstraints.gridheight = 1;
-        //chkForceUBYTE = new JCheckBox("Force 8-bit");
-        //chkForceUBYTE.setToolTipText("Force result grayscale images into unsigned byte, color images into ARGB");
-        //gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
-        //centerPanel.add(chkForceUBYTE);
-
-        // adding the 'Apply' button
-        JButton btnApply = new JButton("Apply >>");
-        btnApply.setActionCommand(APPLY);
-        btnApply.addActionListener(this);
-        gbConstraints.gridx = 0;
-        gbConstraints.gridy = 8;
-        gbConstraints.gridheight = 1;
-        gbConstraints.gridwidth = 1;
-        gbConstraints.weightx = 1;
-        gbConstraints.anchor = GridBagConstraints.NORTHEAST;
-        gbConstraints.insets = new Insets(1, 0, 4, 6);
-        gbConstraints.fill = GridBagConstraints.NONE;
-        gbLayout.setConstraints(btnApply, gbConstraints);
-        centerPanel.add(btnApply);
-        // done adding the 'Apply' button
-
-        // add the image preview panel
-        previewPanel = new JPanel();
-        gbConstraints.gridy = 9;
-        gbConstraints.gridheight = 10;
-        gbConstraints.weighty = 20;
-        gbConstraints.fill = GridBagConstraints.BOTH;
-        gbConstraints.insets = new Insets(0, 0, 0, 4);
-        gbConstraints.anchor = GridBagConstraints.NORTH;
-        gbConstraints.gridwidth = 2;
-        gbLayout.setConstraints(previewPanel, gbConstraints);
-        centerPanel.add(previewPanel);
-        // done adding the image preview panel
-
-        JPanel infoPanel = new JPanel();
-        lblOrigDim = new JLabel();
-        lblOrigDim.setFont(MipavUtil.font10);
-        infoPanel.add(lblOrigDim);
-        gbConstraints.gridy = 19;
-        gbConstraints.gridheight = 1;
-        gbConstraints.weighty = 1;
-        gbConstraints.insets = new Insets(0, 0, 0, 4);
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbConstraints.anchor = GridBagConstraints.SOUTH;
-        gbLayout.setConstraints(infoPanel, gbConstraints);
-        centerPanel.add(infoPanel);
-
-        // add the brightness/contrast panel
-        JPanel bcPanel = buildBrightnessContrastPanel();
-        gbConstraints.gridy = 20;
-        gbConstraints.gridheight = 1;
-        gbConstraints.weighty = 1;
-        gbConstraints.anchor = GridBagConstraints.SOUTH;
-        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
-        gbLayout.setConstraints(bcPanel, gbConstraints);
-        centerPanel.add(bcPanel);
-        // done adding the brightness/contrast panel
-
-        return centerPanel;
-    }
-
-    protected JPanel buildBrightnessContrastPanel()
-    {
+    protected JPanel buildBrightnessContrastPanel() {
         int origBrightness = 0;
-        brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255,
-                                       origBrightness);
+        brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
 
         brightnessSlider.setMajorTickSpacing(102);
         brightnessSlider.setPaintTicks(true);
@@ -1097,7 +737,7 @@ public class ViewOpenImageSequence extends JFrame implements
         current.setForeground(Color.black);
         current.setFont(MipavUtil.font12B);
 
-        JLabel minimum = new JLabel(String.valueOf( -255));
+        JLabel minimum = new JLabel(String.valueOf(-255));
 
         minimum.setForeground(Color.black);
         minimum.setFont(MipavUtil.font12);
@@ -1139,8 +779,7 @@ public class ViewOpenImageSequence extends JFrame implements
 
         int origContrast = 1;
         contrastSlider = new JSlider(JSlider.HORIZONTAL, -200, 200,
-                                     (int) (Math.round(86.85889638 *
-                Math.log(origContrast))));
+                                     (int) (Math.round(86.85889638 * Math.log(origContrast))));
 
         contrastSlider.setMajorTickSpacing(80);
         contrastSlider.setPaintTicks(true);
@@ -1219,42 +858,133 @@ public class ViewOpenImageSequence extends JFrame implements
 
         JPanel brightnessContrastPanel = new JPanel(new BorderLayout());
         brightnessContrastPanel.add(centerPanel, BorderLayout.NORTH);
-        brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5,
-                5, 5));
+        brightnessContrastPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         return brightnessContrastPanel;
     }
 
-    protected JPanel buildOKCancelPanel()
-    {
-        GridBagLayout gbLayout = new GridBagLayout();
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildCenterPanel() {
         GridBagConstraints gbConstraints = new GridBagConstraints();
+        GridBagLayout gbLayout = new GridBagLayout();
 
-        JPanel subPanel = new JPanel(gbLayout);
+        JPanel centerPanel = new JPanel(gbLayout);
 
-        JButton btnOK = new JButton(OK);
-        btnOK.addActionListener(this);
-        btnOK.setActionCommand(OK);
-        gbConstraints.anchor = GridBagConstraints.EAST;
+        /** adding the 'Dimensions' panel **/
+        JPanel dimensionsSubPanel = buildDimensionsPanel();
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 0;
         gbConstraints.weightx = 1;
-        gbConstraints.insets = new Insets(0, 0, 0, 2);
-        gbLayout.setConstraints(btnOK, gbConstraints);
-        subPanel.add(btnOK);
+        gbConstraints.weighty = 0;
+        gbConstraints.gridwidth = 2;
+        gbConstraints.gridheight = 2;
+        gbConstraints.insets = new Insets(4, 0, 1, 4);
+        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbLayout.setConstraints(dimensionsSubPanel, gbConstraints);
+        centerPanel.add(dimensionsSubPanel);
 
-        JButton btnCancel = new JButton(CANCEL);
-        btnCancel.addActionListener(this);
-        btnCancel.setActionCommand(CANCEL);
-        gbConstraints.weightx = 0;
-        gbConstraints.gridx = 1;
-        gbLayout.setConstraints(btnCancel, gbConstraints);
-        subPanel.add(btnCancel);
+        /** done adding 'Dimensions' panel **/
 
-        return subPanel;
+        /** adding the 'Sequences' panel **/
+        JPanel sequenceSubPanel = buildSequencesPanel();
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 3;
+        gbConstraints.insets = new Insets(1, 0, 1, 4);
+        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbLayout.setConstraints(sequenceSubPanel, gbConstraints);
+        centerPanel.add(sequenceSubPanel);
+
+        /** done adding the 'Sequences' panel **/
+
+        /** adding the 'Subsample' panel **/
+        JPanel subsamplePanel = buildSubsamplePanel();
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 5;
+        gbConstraints.insets = new Insets(1, 0, 1, 4);
+        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbLayout.setConstraints(subsamplePanel, gbConstraints);
+        centerPanel.add(subsamplePanel);
+
+        /** done adding the 'Subsample' panel **/
+
+        // this section has been moved to buildSubsamplePanel()
+        // gbConstraints.gridy = 7;
+        // gbConstraints.gridheight = 1;
+        // chkForceUBYTE = new JCheckBox("Force 8-bit");
+        // chkForceUBYTE.setToolTipText("Force result grayscale images into unsigned byte, color images into ARGB");
+        // gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
+        // centerPanel.add(chkForceUBYTE);
+
+        // adding the 'Apply' button
+        JButton btnApply = new JButton("Apply >>");
+        btnApply.setActionCommand(APPLY);
+        btnApply.addActionListener(this);
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 8;
+        gbConstraints.gridheight = 1;
+        gbConstraints.gridwidth = 1;
+        gbConstraints.weightx = 1;
+        gbConstraints.anchor = GridBagConstraints.NORTHEAST;
+        gbConstraints.insets = new Insets(1, 0, 4, 6);
+        gbConstraints.fill = GridBagConstraints.NONE;
+        gbLayout.setConstraints(btnApply, gbConstraints);
+        centerPanel.add(btnApply);
+        // done adding the 'Apply' button
+
+        // add the image preview panel
+        previewPanel = new JPanel();
+        gbConstraints.gridy = 9;
+        gbConstraints.gridheight = 10;
+        gbConstraints.weighty = 20;
+        gbConstraints.fill = GridBagConstraints.BOTH;
+        gbConstraints.insets = new Insets(0, 0, 0, 4);
+        gbConstraints.anchor = GridBagConstraints.NORTH;
+        gbConstraints.gridwidth = 2;
+        gbLayout.setConstraints(previewPanel, gbConstraints);
+        centerPanel.add(previewPanel);
+        // done adding the image preview panel
+
+        JPanel infoPanel = new JPanel();
+        lblOrigDim = new JLabel();
+        lblOrigDim.setFont(MipavUtil.font10);
+        infoPanel.add(lblOrigDim);
+        gbConstraints.gridy = 19;
+        gbConstraints.gridheight = 1;
+        gbConstraints.weighty = 1;
+        gbConstraints.insets = new Insets(0, 0, 0, 4);
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.anchor = GridBagConstraints.SOUTH;
+        gbLayout.setConstraints(infoPanel, gbConstraints);
+        centerPanel.add(infoPanel);
+
+        // add the brightness/contrast panel
+        JPanel bcPanel = buildBrightnessContrastPanel();
+        gbConstraints.gridy = 20;
+        gbConstraints.gridheight = 1;
+        gbConstraints.weighty = 1;
+        gbConstraints.anchor = GridBagConstraints.SOUTH;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbLayout.setConstraints(bcPanel, gbConstraints);
+        centerPanel.add(bcPanel);
+        // done adding the brightness/contrast panel
+
+        return centerPanel;
     }
 
 
-    protected JPanel buildDimensionsPanel()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildDimensionsPanel() {
         GridBagLayout centerPanelGBLayout = new GridBagLayout();
         GridBagConstraints centerPanelGBConstraints = new GridBagConstraints();
 
@@ -1319,17 +1049,23 @@ public class ViewOpenImageSequence extends JFrame implements
         return centerSubPanel;
     }
 
-    protected JPanel buildLeftSubPanel()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildLeftSubPanel() {
         JPanel leftSubPanel = new JPanel(new BorderLayout());
         leftSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "File list"));
 
         /** adding the filename scroll pane **/
         filenameList = new JList();
+
         JScrollPane scrollPane = new JScrollPane(filenameList);
         filenameList.addListSelectionListener(this);
         filenameList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         leftSubPanel.add(scrollPane, BorderLayout.CENTER);
+
         /** end adding the filename scroll pane **/
 
         JPanel southPanel = new JPanel();
@@ -1348,25 +1084,276 @@ public class ViewOpenImageSequence extends JFrame implements
         southPanel.add(btnRemove);
 
         leftSubPanel.add(southPanel, BorderLayout.SOUTH);
+
         /** end adding the filter button **/
 
         return leftSubPanel;
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildOKCancelPanel() {
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
 
-   /**
-    * Method filters out the rawFileList based of the file extension of the parameter selectedFile.
-    * This ensures that the resulting Vector contains files only of the same extensions as
-    * selectedFile.
-    *
-    * @param rawFileList Vector - a Vector of File objects
-    * @param selectedFile File - the file whose extension will be used as a filter for rawFileList
-    * @return Vector - a new Vector containing the filtered list of String objects representing filenames
-    */
-    protected Vector filterFileExtension(Vector rawFileList, File selectedFile)
-    {
-        if (rawFileList == null || selectedFile == null)
-        {
+        JPanel subPanel = new JPanel(gbLayout);
+
+        JButton btnOK = new JButton(OK);
+        btnOK.addActionListener(this);
+        btnOK.setActionCommand(OK);
+        gbConstraints.anchor = GridBagConstraints.EAST;
+        gbConstraints.weightx = 1;
+        gbConstraints.insets = new Insets(0, 0, 0, 2);
+        gbLayout.setConstraints(btnOK, gbConstraints);
+        subPanel.add(btnOK);
+
+        JButton btnCancel = new JButton(CANCEL);
+        btnCancel.addActionListener(this);
+        btnCancel.setActionCommand(CANCEL);
+        gbConstraints.weightx = 0;
+        gbConstraints.gridx = 1;
+        gbLayout.setConstraints(btnCancel, gbConstraints);
+        subPanel.add(btnCancel);
+
+        return subPanel;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildSequencesPanel() {
+        JPanel sequenceSubPanel = new JPanel(new GridLayout(3, 2));
+        sequenceSubPanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Sequences"));
+
+        ButtonGroup buttonGroup = new ButtonGroup();
+
+        radZCT.setSelected(true);
+
+        buttonGroup.add(radZCT);
+        buttonGroup.add(radZTC);
+        buttonGroup.add(radCZT);
+        buttonGroup.add(radCTZ);
+        buttonGroup.add(radTZC);
+        buttonGroup.add(radTCZ);
+
+        sequenceSubPanel.add(radZCT);
+        sequenceSubPanel.add(radZTC);
+        sequenceSubPanel.add(radCZT);
+        sequenceSubPanel.add(radCTZ);
+        sequenceSubPanel.add(radTZC);
+        sequenceSubPanel.add(radTCZ);
+
+        return sequenceSubPanel;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildSubsamplePanel() {
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+
+        JPanel subsamplePanel = new JPanel(gbLayout);
+        subsamplePanel.setBorder(new TitledBorder(BorderFactory.createEtchedBorder(), "Subsampling"));
+
+        gbConstraints.gridx = 1;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        enableCheckbox = new JCheckBox(ENABLE);
+        enableCheckbox.addActionListener(this);
+        enableCheckbox.setActionCommand(ENABLE);
+        gbLayout.setConstraints(enableCheckbox, gbConstraints);
+        subsamplePanel.add(enableCheckbox);
+
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 1;
+        gbConstraints.anchor = GridBagConstraints.EAST;
+
+        JLabel lblWidth = new JLabel("Width: ");
+        gbLayout.setConstraints(lblWidth, gbConstraints);
+        subsamplePanel.add(lblWidth);
+
+        gbConstraints.gridx = 1;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        txtWidth = new JTextField(5);
+        txtWidth.setEnabled(enableCheckbox.isSelected());
+        gbLayout.setConstraints(txtWidth, gbConstraints);
+        subsamplePanel.add(txtWidth);
+
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 2;
+        gbConstraints.anchor = GridBagConstraints.EAST;
+
+        JLabel lblHeight = new JLabel("Height: ");
+        gbLayout.setConstraints(lblHeight, gbConstraints);
+        subsamplePanel.add(lblHeight);
+
+        gbConstraints.gridx = 1;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        txtHeight = new JTextField(5);
+        txtHeight.setEnabled(enableCheckbox.isSelected());
+        gbLayout.setConstraints(txtHeight, gbConstraints);
+        subsamplePanel.add(txtHeight);
+
+        gbConstraints.gridy++;
+        chkForceUBYTE = new JCheckBox("Force 8-bit");
+        chkForceUBYTE.setToolTipText("Force result images to use 8-bit channels");
+        chkForceUBYTE.setEnabled(enableCheckbox.isSelected());
+        gbLayout.setConstraints(chkForceUBYTE, gbConstraints);
+        subsamplePanel.add(chkForceUBYTE);
+
+        return subsamplePanel;
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    protected void buildUserInterface() {
+
+        try {
+            setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+        }
+
+        GridBagLayout gbLayout = new GridBagLayout();
+        GridBagConstraints gbConstraints = new GridBagConstraints();
+
+        getContentPane().setLayout(gbLayout);
+
+        /** adding the 'Browse' button **/
+        JButton btnBrowse = new JButton("Browse");
+        btnBrowse.setActionCommand("Browse");
+        btnBrowse.addActionListener(this);
+        gbConstraints.anchor = GridBagConstraints.NORTHWEST;
+        gbConstraints.insets = new Insets(4, 4, 0, 4);
+        gbConstraints.gridwidth = 1;
+        gbLayout.setConstraints(btnBrowse, gbConstraints);
+        getContentPane().add(btnBrowse);
+
+        /** end adding 'Browse' button **/
+
+        // adding the 'directory' textfield
+        txtDirectory = new JTextField();
+        txtDirectory.setEditable(false);
+        txtDirectory.setPreferredSize(new Dimension(txtDirectory.getPreferredSize().width,
+                                                    btnBrowse.getPreferredSize().height));
+
+        gbConstraints.insets = new Insets(4, 4, 4, 4);
+        gbConstraints.gridx = 1;
+        gbConstraints.gridy = 0;
+        gbConstraints.gridheight = 1;
+        gbConstraints.weighty = 0;
+        gbConstraints.weightx = 1;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        gbLayout.setConstraints(txtDirectory, gbConstraints);
+        getContentPane().add(txtDirectory);
+        // end adding the 'directory' textfield
+
+        // instantiate the table
+        tableModel = new UneditableTableModel();
+        table = new JTable(tableModel);
+        cellRenderer = new AlternatingTableCellRenderer();
+        cellRenderer.setColor2(new Color(204, 204, 255));
+        table.addMouseListener(this);
+        table.addKeyListener(this);
+        table.setDefaultRenderer(Object.class, cellRenderer);
+        table.setIntercellSpacing(new Dimension(1, 0));
+
+        // table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        table.setShowGrid(false);
+        table.setShowVerticalLines(true);
+        table.setShowHorizontalLines(false);
+        table.getTableHeader().setReorderingAllowed(false);
+
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        // end table instantiation
+
+        JSplitPane splitPanelChild = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildCenterPanel(), scrollPane);
+        splitPanelChild.setDividerLocation(150);
+
+        JSplitPane splitPanelParent = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, buildLeftSubPanel(), splitPanelChild);
+        splitPanelParent.setDividerLocation(200);
+        gbConstraints.gridx = 0;
+        gbConstraints.gridy = 1;
+        gbConstraints.weighty = 1;
+        gbConstraints.fill = GridBagConstraints.BOTH;
+        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        gbConstraints.gridheight = 6;
+        gbConstraints.anchor = GridBagConstraints.WEST;
+        gbLayout.setConstraints(splitPanelParent, gbConstraints);
+        getContentPane().add(splitPanelParent);
+
+        JPanel okCancelPanel = buildOKCancelPanel();
+        gbConstraints.gridy = 8;
+        gbConstraints.gridheight = 1;
+        gbConstraints.weighty = 0;
+        gbConstraints.insets = new Insets(0, 0, 2, 0);
+        gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
+        gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+        gbLayout.setConstraints(okCancelPanel, gbConstraints);
+        getContentPane().add(okCancelPanel);
+    }
+
+    /**
+     * Method checks the dimensions parameters entered by the user. Returns true if valid, false otherwise.
+     *
+     * @return  boolean - if the dimension parameters are valid
+     */
+    protected boolean dimensionsSanityCheck() {
+        String slices = txtSlices.getText();
+        String channels = txtChannels.getText();
+        String timePoints = txtTimePoints.getText();
+
+        try {
+            int numSlices = Integer.parseInt(slices);
+
+            if (numSlices < 1) {
+                return false;
+            }
+
+            int numChannels = Integer.parseInt(channels);
+
+            if (numChannels < 1) {
+                return false;
+            }
+
+            int numTimePoints = Integer.parseInt(timePoints);
+
+            if (numTimePoints < 1) {
+                return false;
+            }
+
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+
+    /**
+     * Method filters out the rawFileList based of the file extension of the parameter selectedFile. This ensures that
+     * the resulting Vector contains files only of the same extensions as selectedFile.
+     *
+     * @param   rawFileList   Vector - a Vector of File objects
+     * @param   selectedFile  File - the file whose extension will be used as a filter for rawFileList
+     *
+     * @return  Vector - a new Vector containing the filtered list of String objects representing filenames
+     */
+    protected Vector filterFileExtension(Vector rawFileList, File selectedFile) {
+
+        if ((rawFileList == null) || (selectedFile == null)) {
             return rawFileList;
         }
 
@@ -1374,8 +1361,7 @@ public class ViewOpenImageSequence extends JFrame implements
 
         int lastIndex = filename.lastIndexOf('.');
 
-        if (lastIndex == -1)
-        {
+        if (lastIndex == -1) {
             return rawFileList;
         }
 
@@ -1383,44 +1369,262 @@ public class ViewOpenImageSequence extends JFrame implements
 
         Vector filteredList = new Vector();
 
-        for (int i = 0; i < rawFileList.size(); i++)
-        {
+        for (int i = 0; i < rawFileList.size(); i++) {
             filename = (String) rawFileList.elementAt(i);
 
-            if (filename.endsWith(extension))
-            {
+            if (filename.endsWith(extension)) {
                 filteredList.addElement(filename);
             }
         }
 
         rawFileList = null;
         selectedFile = null;
+
         return filteredList;
     }
 
-    public void valueChanged(ListSelectionEvent event)
-    {
-        String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-        String selectedFilename = (String) filenameList.getSelectedValue();
+    /**
+     * Ensures the table is drawn in the way specified by the dimensions parameters and the selected sequence.
+     *
+     * @param  selectedSequence  int - the Z-T-C ordering as selected by the user
+     */
+    protected void formatTable(int selectedSequence) {
+        tableModel.setColumnIdentifiers(new Vector()); // clear all columns
 
-        makePreview(currentPath, selectedFilename);
+        tableModel.setRowCount(0); // clear all rows
+
+        int numSlices = Integer.parseInt(txtSlices.getText());
+        int numChannels = Integer.parseInt(txtChannels.getText());
+        int numTimePoints = Integer.parseInt(txtTimePoints.getText());
+
+        cellRenderer.setAlternateRowCount(numSlices); // displays every other set of row in a different color
+
+        switch (selectedSequence) {
+
+            case ZCT:
+                arrangeZCT(numSlices, numChannels, numTimePoints);
+                break;
+
+            case ZTC:
+                arrangeZTC(numSlices, numChannels, numTimePoints);
+                break;
+
+            case TZC:
+                arrangeTZC(numSlices, numChannels, numTimePoints);
+                break;
+
+            case TCZ:
+                arrangeTCZ(numSlices, numChannels, numTimePoints);
+                break;
+
+            case CTZ:
+                arrangeCTZ(numSlices, numChannels, numTimePoints);
+                break;
+
+            case CZT:
+                arrangeCZT(numSlices, numChannels, numTimePoints);
+                break;
+        }
+
+        table.getTableHeader().setReorderingAllowed(false); // do not allow reordering of table columns
+
+        tableModel.fireTableStructureChanged(); // alert the table model to redraw itself
+        tableModel.fireTableDataChanged();
+
+        setColumnWidths(); // cosmetic method to set the widths of the columns according to the width of the text they
+                           // contain
     }
 
     /**
-     * Makes an image preview of the image currentPath/selectedFilename and draws it in the
-     * image preview area.
+     * DOCUMENT ME!
      *
-     * @param currentPath String
-     * @param selectedFilename String
+     * @return  DOCUMENT ME!
      */
-    private void makePreview(String currentPath, String selectedFilename)
-    {
-        if (selectedFilename == null || currentPath == null || selectedFilename.equals(previewFilename))
-        {
-            return; // prevent multiple image loads/redraws
+    protected File[] getFileList() {
+        Vector imageList = new Vector();
+
+        for (int i = 1; i < tableModel.getColumnCount(); i++) {
+
+            for (int j = 0; j < tableModel.getRowCount(); j++) {
+                imageList.addElement(tableModel.getValueAt(j, i));
+            }
         }
-        else
-        {
+
+        File[] fileList = new File[imageList.size()];
+
+        for (int i = 0; i < imageList.size(); i++) {
+            fileList[i] = new File(currentPath.getAbsolutePath() + File.separatorChar +
+                                   (String) imageList.elementAt(i));
+        }
+
+        return fileList;
+    }
+
+    /**
+     * Reads the preferences file to determine the path that was last used in opening a file sequence.
+     *
+     * @return  File - the File object representing the directory last used in opening a file sequence.
+     */
+    protected File getLastOpenSequencePath() {
+        String srsPathName = Preferences.getLastOpenSequencePath();
+        File srsPath;
+
+        if (srsPathName != null) {
+            srsPath = new File(srsPathName);
+
+            if ((srsPath.exists() == false) || (srsPath.canRead() == false)) {
+                String home = System.getProperty("user.home");
+                System.out.println("home: " + home);
+                srsPath = new File(home);
+            }
+        } else {
+            srsPath = new File(Preferences.getProperty("ImageDirectory"));
+
+            if ((srsPath.exists() == false) || (srsPath.canRead() == false)) {
+                srsPath = new File(System.getProperty("user.home"));
+            }
+        }
+
+        return srsPath;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected int getSelectedSequence() {
+
+        if (radZCT.isSelected() == true) {
+            return ZCT;
+        } else if (radZTC.isSelected() == true) {
+            return ZTC;
+        } else if (radCTZ.isSelected() == true) {
+            return CTZ;
+        } else if (radCZT.isSelected() == true) {
+            return CZT;
+        } else if (radTZC.isSelected() == true) {
+            return TZC;
+        } else {
+            return TCZ;
+        }
+    }
+
+    /**
+     * Will read a series of images and put them into a frame.
+     *
+     * @param  numChannels         int - valid values are 1, 2, 3, and 4, which indicates the number of channels the
+     *                             image will have. "1" means a grayscale image
+     * @param  numSlices           DOCUMENT ME!
+     * @param  numTimePoints       DOCUMENT ME!
+     * @param  subsampleDimension  DOCUMENT ME!
+     */
+    protected void openImage(int numChannels, int numSlices, int numTimePoints, Dimension subsampleDimension) {
+        FileIO fileIO = new FileIO();
+        fileIO.setQuiet(true);
+
+        File[] fileList = getFileList();
+
+        if ((fileList == null) || (fileList.length < 1)) {
+            MipavUtil.displayError("Cannot open images because no images are selected.");
+
+            return;
+        }
+
+        ModelImage resultImage = null;
+
+        if (numChannels == 1) {
+            resultImage = fileIO.readOrderedGrayscale(fileList, true, subsampleDimension,
+                                                      chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
+        } else {
+            resultImage = fileIO.readOrderedARGB(fileList, numChannels, channelMap, true, subsampleDimension,
+                                                 chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
+        }
+
+        if (numTimePoints > 1) {
+            AlgorithmConvert3Dto4D algConvert = new AlgorithmConvert3Dto4D(resultImage, numSlices,
+                                                                           resultImage.getFileInfo(0).getResolutions()[2],
+                                                                           1.0f,
+                                                                           resultImage.getFileInfo(0).getUnitsOfMeasure()[2],
+                                                                           resultImage.getFileInfo(0).getUnitsOfMeasure()[2]);
+            algConvert.setActiveImage(false);
+            algConvert.runAlgorithm();
+            resultImage.disposeLocal();
+            resultImage = algConvert.getResultImage();
+        }
+
+        if (resultImage != null) {
+            ViewJFrameImage jFrameImage = new ViewJFrameImage(resultImage);
+
+            MipavUtil.centerOnScreen(jFrameImage);
+        } else {
+            MipavUtil.displayError("Unable to open image.");
+        }
+    }
+
+    /**
+     * This method calculates the width needed to encompass the table data for each column. Without this method, the
+     * column widths would not be set correctly and the user would potentialy have to resize each column to view the
+     * filename it contains.
+     */
+    protected void setColumnWidths() {
+        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+        TableColumnModel columnModel = table.getColumnModel();
+        JTableHeader tableHeader = table.getTableHeader();
+
+        // get FontMetrics object for the table header and the table rows
+        FontMetrics tableHeaderFontMetrics = tableHeader.getFontMetrics(tableHeader.getFont());
+        FontMetrics rowValueFontMetrics = table.getFontMetrics(table.getFont());
+
+        for (int i = 0; i < columnModel.getColumnCount(); i++) {
+            TableColumn column = columnModel.getColumn(i);
+            int headerWidth = tableHeaderFontMetrics.stringWidth((String) column.getHeaderValue());
+
+            for (int j = 0; j < tableModel.getRowCount(); j++) {
+                String rowValue = (String) tableModel.getValueAt(j, i);
+                int rowValueWidth = rowValueFontMetrics.stringWidth(rowValue);
+
+                // the column width is the greater of the header width and the row data width
+                headerWidth = Math.max(headerWidth, rowValueWidth);
+            }
+
+            column.setMinWidth(headerWidth + 4); // the + 4 is a padding - otherwise the text gets cut off
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected boolean subsamplingSanityCheck() {
+
+        try {
+            int height = Integer.parseInt(txtHeight.getText());
+            int width = Integer.parseInt(txtWidth.getText());
+
+            if ((height < 1) || (width < 1)) {
+                return false;
+            }
+
+            return true;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
+
+    /**
+     * Makes an image preview of the image currentPath/selectedFilename and draws it in the image preview area.
+     *
+     * @param  currentPath       String
+     * @param  selectedFilename  String
+     */
+    private void makePreview(String currentPath, String selectedFilename) {
+
+        if ((selectedFilename == null) || (currentPath == null) || selectedFilename.equals(previewFilename)) {
+            return; // prevent multiple image loads/redraws
+        } else {
             previewFilename = selectedFilename;
         }
 
@@ -1431,19 +1635,17 @@ public class ViewOpenImageSequence extends JFrame implements
 
         ModelImage modelImage = fileIO.readOneImage(selectedFilename, currentPath);
 
-        if (modelImage == null)
-        {
+        if (modelImage == null) {
             Preferences.debug("Preview image loading failed (modelImage object is null).");
+
             return;
         }
 
-        try
-        {
-            ViewJComponentPreviewImage previewImage = new ViewJComponentPreviewImage(
-                    modelImage, modelImage.getExtents(), this);
+        try {
+            ViewJComponentPreviewImage previewImage = new ViewJComponentPreviewImage(modelImage,
+                                                                                     modelImage.getExtents(), this);
 
-            int[] imageData = new int[modelImage.getExtents()[0] *
-                              modelImage.getExtents()[1]];
+            int[] imageData = new int[modelImage.getExtents()[0] * modelImage.getExtents()[1]];
             modelImage.exportData(0, imageData.length, imageData);
 
             previewImage.importImage(imageData);
@@ -1455,191 +1657,77 @@ public class ViewOpenImageSequence extends JFrame implements
             previewPanel.validate();
             previewPanel.repaint();
 
-            if (txtWidth.getText().equals("") && txtHeight.getText().equals("") && enableCheckbox.isSelected())
-            {
+            if (txtWidth.getText().equals("") && txtHeight.getText().equals("") && enableCheckbox.isSelected()) {
                 txtWidth.setText(String.valueOf(modelImage.getExtents()[0] / 2));
                 txtHeight.setText(String.valueOf(modelImage.getExtents()[1] / 2));
             }
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             Preferences.debug(e.getMessage());
-        }
-        finally
-        {
+        } finally {
             modelImage.disposeLocal();
         }
     }
 
     /**
-     * Method is required by PreviewImageContainer interface to draw a preview image.
-     *
-     * @return Dimension - indicating the size of the preview image area.
+     * Method removed selected items from the file list.
      */
-    public Dimension getPanelSize()
-    {
-        return previewPanel.getSize();
+    private void removeSelected() {
+        int[] selectedIndices = filenameList.getSelectedIndices();
+
+        ListModel listModel = filenameList.getModel();
+        Vector listData = new Vector();
+
+        for (int i = 0; i < listModel.getSize(); i++) {
+            listData.addElement(listModel.getElementAt(i));
+        }
+
+        for (int i = selectedIndices.length - 1; i >= 0; i--) {
+            listData.removeElementAt(selectedIndices[i]);
+        }
+
+        filenameList.setListData(listData);
     }
 
     /**
-     * Will read a series of images and put them into a frame.
-     *
-     * @param numChannels int - valid values are 1, 2, 3, and 4, which indicates the number of channels the
-     * image will have. "1" means a grayscale image
+     * The purpose of this method is to load the previous values in from the preferences file.
      */
-    protected void openImage(int numChannels, int numSlices, int numTimePoints, Dimension subsampleDimension)
-    {
-        FileIO fileIO = new FileIO();
-        fileIO.setQuiet(true);
+    private void setDefaults() {
+        txtSlices.setText(Preferences.getLastOpenSequenceSlices());
+        txtChannels.setText(Preferences.getLastOpenSequenceChannels());
+        txtTimePoints.setText(Preferences.getLastOpenSequenceTimePoints());
 
-        File [] fileList = getFileList();
+        String ordering = Preferences.getLastOpenSequenceOrdering();
 
-        if (fileList == null || fileList.length < 1)
-        {
-            MipavUtil.displayError("Cannot open images because no images are selected.");
-            return;
-        }
+        try {
+            int selectedSequence = Integer.parseInt(ordering);
 
-        ModelImage resultImage = null;
+            switch (selectedSequence) {
 
-        if (numChannels == 1)
-        {
-            resultImage = fileIO.readOrderedGrayscale(fileList, true, subsampleDimension, chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
-        }
-        else
-        {
-            resultImage = fileIO.readOrderedARGB(fileList, numChannels, channelMap, true, subsampleDimension, chkForceUBYTE.isSelected() && enableCheckbox.isSelected());
-        }
+                case ZCT:
+                    radZCT.setSelected(true);
+                    break;
 
-        if (numTimePoints > 1)
-        {
-            AlgorithmConvert3Dto4D algConvert = new AlgorithmConvert3Dto4D(resultImage, numSlices, resultImage.getFileInfo(0).getResolutions()[2], 1.0f, resultImage.getFileInfo(0).getUnitsOfMeasure()[2], resultImage.getFileInfo(0).getUnitsOfMeasure()[2]);
-            algConvert.setActiveImage(false);
-            algConvert.runAlgorithm();
-            resultImage.disposeLocal();
-            resultImage = algConvert.getResultImage();
-        }
+                case ZTC:
+                    radZTC.setSelected(true);
+                    break;
 
-        if (resultImage != null)
-        {
-            ViewJFrameImage jFrameImage = new ViewJFrameImage(resultImage);
+                case CTZ:
+                    radCTZ.setSelected(true);
+                    break;
 
-            MipavUtil.centerOnScreen(jFrameImage);
-        }
-        else
-        {
-            MipavUtil.displayError("Unable to open image.");
-        }
-    }
+                case CZT:
+                    radCZT.setSelected(true);
+                    break;
 
-    protected File [] getFileList()
-    {
-        Vector imageList = new Vector();
+                case TZC:
+                    radTZC.setSelected(true);
+                    break;
 
-        for (int i = 1; i < tableModel.getColumnCount(); i++)
-        {
-            for (int j = 0; j < tableModel.getRowCount(); j++)
-            {
-                imageList.addElement(tableModel.getValueAt(j, i));
+                case TCZ:
+                    radTCZ.setSelected(true);
+                    break;
             }
-        }
-
-        File [] fileList = new File[imageList.size()];
-
-        for (int i = 0; i < imageList.size(); i++)
-        {
-            fileList[i] = new File(currentPath.getAbsolutePath() + File.separatorChar + (String) imageList.elementAt(i));
-        }
-
-        return fileList;
-    }
-
-    public void newChannelMap(int [] channelMap)
-    {
-        this.channelMap = channelMap;
-    }
-
-    public void mouseEntered(MouseEvent event)
-    {
-
-    }
-
-    public void mouseExited(MouseEvent event)
-    {
-
-    }
-
-    public void mouseClicked(MouseEvent event)
-    {
-
-    }
-
-    public void mousePressed(MouseEvent event)
-    {
-        if (event.getButton() == MouseEvent.BUTTON1)
-        {
-            if (table.getSelectedColumn() != 0)
-            {
-                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(), table.getSelectedColumn());
-
-                makePreview(currentPath, filename);
-            }
-        }
-    }
-
-    public void mouseReleased(MouseEvent event)
-    {
-        if (event.getButton() == MouseEvent.BUTTON3)
-        {
-            JPopupMenu popupMenu = new JPopupMenu();
-
-            JMenuItem menuItem = new JMenuItem(CONFIGURE_CHANNELS);
-            menuItem.addActionListener(this);
-            menuItem.setActionCommand(CONFIGURE_CHANNELS);
-            popupMenu.add(menuItem);
-
-            popupMenu.show((Component) event.getSource(), event.getX(), event.getY());
-        }
-    }
-
-    public void keyPressed(KeyEvent event)
-    {
-
-    }
-
-    public void keyReleased(KeyEvent event)
-    {
-        if (event.getSource() == table)
-        {
-            if (table.getSelectedColumn() != 0)
-            {
-                String currentPath = fileListData[0].getParentFile().getAbsolutePath() + File.separatorChar;
-                String filename = (String) table.getModel().getValueAt(table.getSelectedRow(), table.getSelectedColumn());
-
-                makePreview(currentPath, filename);
-            }
-        }
-    }
-
-    public void keyTyped(KeyEvent event)
-    {
-
-    }
-
-    public void stateChanged(ChangeEvent event)
-    {
-        Component [] components = previewPanel.getComponents();
-
-        for (int i = 0; i < components.length; i++)
-        {
-            if (components[i] instanceof ViewJComponentPreviewImage)
-            {
-                float contrast = (float) Math.pow(10.0, contrastSlider.getValue() / 200.0);
-
-                ((ViewJComponentPreviewImage) components[i]).setSliceBrightness(brightnessSlider.getValue(), contrast);
-            }
-        }
+        } catch (NumberFormatException nfe) { }
     }
 
 }

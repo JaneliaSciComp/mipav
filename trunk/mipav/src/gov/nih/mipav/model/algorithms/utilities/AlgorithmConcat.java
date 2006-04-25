@@ -2,50 +2,60 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.io.*;
 
 
 /**
- *      Assumes the pixel resolutions are equal.
- *      Concatenates two images of compatible dimensions. Variants include
- *      <pre>
- *          1. 2D to 2D -> 3D
- *          2. 2D to 3D -> 3D
- *          3. 3D to 2D -> 3D
- *          4. 3D to 3D -> 3D
- *          5. 3D to 3D -> 4D
- *          6. 3D to 4D -> 4D
- *          7. 4D to 3D -> 4D
- *          8. 4D to 4D -> 4D
+ * Assumes the pixel resolutions are equal. Concatenates two images of compatible dimensions. Variants include
+ *
+ * <pre>
+            1. 2D to 2D -> 3D
+            2. 2D to 3D -> 3D
+            3. 3D to 2D -> 3D
+            4. 3D to 3D -> 3D
+            5. 3D to 3D -> 4D
+            6. 3D to 4D -> 4D
+            7. 4D to 3D -> 4D
+            8. 4D to 4D -> 4D
  *      </pre>
- *		@version 1.0 March 22, 2001
- *		@author Matthew J. McAuliffe, Ph.D.
+ *
+ * @version  1.0 March 22, 2001
+ * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmConcat extends AlgorithmBase {
 
-    /** Source image 1.     */
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Source image 1. */
     private ModelImage srcImage1;
 
-    /** Source image 2.     */
+    /** Source image 2. */
     private ModelImage srcImage2;
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *   @param srcIm1   source image model 1
-     *   @param srcIm2   source image model 2
-     *   @param dest      destination image
+     * Creates a new AlgorithmConcat object.
+     *
+     * @param  srcIm1  source image model 1
+     * @param  srcIm2  source image model 2
+     * @param  dest    destination image
      */
-    public AlgorithmConcat( ModelImage srcIm1, ModelImage srcIm2, ModelImage dest ) {
-        super( dest, srcIm1 );
+    public AlgorithmConcat(ModelImage srcIm1, ModelImage srcIm2, ModelImage dest) {
+        super(dest, srcIm1);
         srcImage1 = srcIm1; // Put results in destination image.
         srcImage2 = srcIm2;
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         srcImage1 = null;
@@ -55,62 +65,56 @@ public class AlgorithmConcat extends AlgorithmBase {
     }
 
     /**
-     *   Accessor that returns the result image.
-     *   @return Result image.
+     * Accessor that returns the result image.
+     *
+     * @return  Result image.
      */
     public ModelImage getResultImage() {
         return destImage;
     }
 
     /**
-     *   Constructs a string of the contruction parameters and
-     *   outputs the string to the messsage frame if the logging
-     *   procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String( "Concatenate images()\n" );
-    }
-
-    /**
-     *   Starts the program
+     * Starts the program.
      */
     public void runAlgorithm() {
 
-        if ( srcImage1 == null || srcImage2 == null || destImage == null ) {
-            displayError( "Source Image(s) is null" );
-            setCompleted( false );
+        if ((srcImage1 == null) || (srcImage2 == null) || (destImage == null)) {
+            displayError("Source Image(s) is null");
+            setCompleted(false);
+
             return;
         }
 
-        if ( srcImage1.getType() != srcImage2.getType() ) {
-            displayError( "Source Images must be of the same data type." );
-            setCompleted( false );
+        if (srcImage1.getType() != srcImage2.getType()) {
+            displayError("Source Images must be of the same data type.");
+            setCompleted(false);
+
             return;
         }
 
         constructLog();
-        if ( srcImage1.getNDims() == 2 && srcImage2.getNDims() == 2 ) {
+
+        if ((srcImage1.getNDims() == 2) && (srcImage2.getNDims() == 2)) {
             cat2D_2D_3D();
-        } else if ( ( srcImage1.getNDims() == 2 && srcImage2.getNDims() == 3 )
-                || ( srcImage1.getNDims() == 3 && srcImage2.getNDims() == 2 ) ) {
+        } else if (((srcImage1.getNDims() == 2) && (srcImage2.getNDims() == 3)) ||
+                       ((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 2))) {
             cat2D_3D_3D();
-        } else if ( srcImage1.getNDims() == 3 && srcImage2.getNDims() == 3 && destImage.getNDims() == 3 ) {
+        } else if ((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 3) && (destImage.getNDims() == 3)) {
             cat3D_3D_3D();
-        } else if ( srcImage1.getNDims() == 3 && srcImage2.getNDims() == 3 && destImage.getNDims() == 4 ) {
+        } else if ((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 3) && (destImage.getNDims() == 4)) {
             cat3D_3D_4D();
-        } else if ( ( srcImage1.getNDims() == 3 && srcImage2.getNDims() == 4 )
-                || ( srcImage1.getNDims() == 4 && srcImage2.getNDims() == 3 ) ) {
+        } else if (((srcImage1.getNDims() == 3) && (srcImage2.getNDims() == 4)) ||
+                       ((srcImage1.getNDims() == 4) && (srcImage2.getNDims() == 3))) {
             cat3D_4D_4D();
-        } else if ( srcImage1.getNDims() == 4 && srcImage2.getNDims() == 4 ) {
+        } else if ((srcImage1.getNDims() == 4) && (srcImage2.getNDims() == 4)) {
             cat4D_4D_4D();
         } else {
-            displayError( "Source Image(s) dimensionality not supported." );
+            displayError("Source Image(s) dimensionality not supported.");
         }
     }
 
     /**
-     *   This function produces a new image that has been concatenated.
-     *   Two 2D-images become one 3D image.
+     * This function produces a new image that has been concatenated. Two 2D-images become one 3D image.
      */
     private void cat2D_2D_3D() {
 
@@ -128,27 +132,29 @@ public class AlgorithmConcat extends AlgorithmBase {
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
 
-            if ( srcImage1.isColorImage() ) {
+            if (srcImage1.isColorImage()) {
                 cFactor = 4;
             }
 
             length = cFactor * xDim * yDim;
             buffer = new float[length];
-            srcImage1.exportData( 0, length, buffer );
-            destImage.importData( 0, buffer, false );
-            srcImage2.exportData( 0, length, buffer );
-            destImage.importData( buffer.length, buffer, true );
-        } catch ( IOException error ) {
+            srcImage1.exportData(0, length, buffer);
+            destImage.importData(0, buffer, false);
+            srcImage2.exportData(0, length, buffer);
+            destImage.importData(buffer.length, buffer, true);
+        } catch (IOException error) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Image(s) locked", true );
+            errorCleanUp("Algorithm Concat. Images: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Out of memory", true );
+            errorCleanUp("Algorithm Concat. Images: Out of memory", true);
+
             return;
         }
 
@@ -156,55 +162,62 @@ public class AlgorithmConcat extends AlgorithmBase {
         resols[1] = srcImage1.getFileInfo()[0].getResolutions()[1];
         resols[2] = 1;
 
-        if ( srcImage1.getFileInfo()[0] instanceof FileInfoDicom && srcImage2.getFileInfo()[0] instanceof FileInfoDicom ) {
+        if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
+                (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
-            fileInfoDicom[0] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[0] ).cloneItself() );
-            fileInfoDicom[1] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[0] ).cloneItself() );
-            destImage.setFileInfo( fileInfoDicom );
+            fileInfoDicom[0] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[0]).cloneItself());
+            fileInfoDicom[1] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[0]).cloneItself());
+            destImage.setFileInfo(fileInfoDicom);
         } else {
             fileInfo = destImage.getFileInfo();
-            for ( i = 0; i < destImage.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfo[i].setModality( srcImage1.getFileInfo()[0].getModality() );
-                fileInfo[i].setFileDirectory( srcImage1.getFileInfo()[0].getFileDirectory() );
-                fileInfo[i].setEndianess( srcImage1.getFileInfo()[0].getEndianess() );
-                fileInfo[i].setUnitsOfMeasure( srcImage1.getFileInfo()[0].getUnitsOfMeasure() );
-                fileInfo[i].setResolutions( resols );
-                fileInfo[i].setExtents( destImage.getExtents() );
-                fileInfo[i].setMax( destImage.getMax() );
-                fileInfo[i].setMin( destImage.getMin() );
-                fileInfo[i].setImageOrientation( srcImage1.getImageOrientation() );
-                fileInfo[i].setPixelPadValue( srcImage1.getFileInfo()[0].getPixelPadValue() );
-                fileInfo[i].setPhotometric( srcImage1.getFileInfo()[0].getPhotometric() );
+
+            for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
+                fileInfo[i].setModality(srcImage1.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage1.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage1.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage1.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resols);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
             }
-            if ( srcImage1.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[0] ).getPSetHashtable() != null ) {
-                    ( (FileInfoImageXML) fileInfo[0] ).setPSetHashtable(
-                            ( (FileInfoImageXML) srcImage1.getFileInfo()[0] ).getPSetHashtable() );
+
+            if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                if (((FileInfoImageXML) srcImage1.getFileInfo()[0]).getPSetHashtable() != null) {
+                    ((FileInfoImageXML) fileInfo[0]).setPSetHashtable(((FileInfoImageXML) srcImage1.getFileInfo()[0])
+                                                                          .getPSetHashtable());
                 }
             }
-            if ( srcImage2.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[0] ).getPSetHashtable() != null ) {
-                    ( (FileInfoImageXML) fileInfo[1] ).setPSetHashtable(
-                            ( (FileInfoImageXML) srcImage2.getFileInfo()[0] ).getPSetHashtable() );
+
+            if (srcImage2.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                if (((FileInfoImageXML) srcImage2.getFileInfo()[0]).getPSetHashtable() != null) {
+                    ((FileInfoImageXML) fileInfo[1]).setPSetHashtable(((FileInfoImageXML) srcImage2.getFileInfo()[0])
+                                                                          .getPSetHashtable());
                 }
             }
 
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             finalize();
+
             return;
         }
-        setCompleted( true );
+
+        setCompleted(true);
 
         fileInfo = null;
         fileInfoDicom = null;
     }
 
     /**
-     *   This function produces a new image that has been concatenated.
-     *   One 2D- and one 3D-image become one 3D image.
+     * This function produces a new image that has been concatenated. One 2D- and one 3D-image become one 3D image.
      */
     private void cat2D_3D_3D() {
 
@@ -216,68 +229,84 @@ public class AlgorithmConcat extends AlgorithmBase {
         float[] resols = new float[3];
         FileInfoBase[] fileInfo = null;
         FileInfoDicom[] fileInfoDicom = null;
+
         try {
-            buildProgressBar( srcImage1.getImageName(), "Concatenating images ...", 0, 100 );
+            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
             resols = new float[3];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
 
-            if ( srcImage1.isColorImage() ) {
+            if (srcImage1.isColorImage()) {
                 cFactor = 4;
             }
 
             length = cFactor * xDim * yDim;
             buffer = new float[length];
+
             int nImages;
 
             initProgressBar();
-            if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
+
+            if (srcImage1.getNDims() > srcImage2.getNDims()) {
                 nImages = srcImage1.getExtents()[2];
-                for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                    if ( isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( i ) / ( nImages - 1 ) * 100 ), activeImage );
-                    }
-                    srcImage1.exportData( i * buffer.length, length, buffer );
-                    destImage.importData( i * buffer.length, buffer, false );
-                }
-                if ( threadStopped ) {
-                    buffer = null;
-                    finalize();
-                    return;
-                }
-                srcImage2.exportData( 0, length, buffer );
-                destImage.importData( i * buffer.length, buffer, true );
-            } else {
-                srcImage1.exportData( 0, length, buffer );
-                destImage.importData( 0, buffer, false );
-                nImages = srcImage2.getExtents()[2];
-                for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                    if ( isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( i ) / ( nImages - 1 ) * 100 ), activeImage );
+
+                for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                    if (isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), activeImage);
                     }
 
-                    srcImage2.exportData( i * buffer.length, length, buffer );
-                    destImage.importData( ( i + 1 ) * buffer.length, buffer, false );
+                    srcImage1.exportData(i * buffer.length, length, buffer);
+                    destImage.importData(i * buffer.length, buffer, false);
                 }
-                if ( threadStopped ) {
+
+                if (threadStopped) {
                     buffer = null;
                     finalize();
+
                     return;
                 }
+
+                srcImage2.exportData(0, length, buffer);
+                destImage.importData(i * buffer.length, buffer, true);
+            } else {
+                srcImage1.exportData(0, length, buffer);
+                destImage.importData(0, buffer, false);
+                nImages = srcImage2.getExtents()[2];
+
+                for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+
+                    if (isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), activeImage);
+                    }
+
+                    srcImage2.exportData(i * buffer.length, length, buffer);
+                    destImage.importData((i + 1) * buffer.length, buffer, false);
+                }
+
+                if (threadStopped) {
+                    buffer = null;
+                    finalize();
+
+                    return;
+                }
+
                 destImage.calcMinMax();
             }
 
-        } catch ( IOException error ) {
+        } catch (IOException error) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Image(s) locked", true );
+            errorCleanUp("Algorithm Concat. Images: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Out of memory", true );
+            errorCleanUp("Algorithm Concat. Images: Out of memory", true);
+
             return;
         }
 
@@ -285,63 +314,85 @@ public class AlgorithmConcat extends AlgorithmBase {
         resols[1] = srcImage1.getFileInfo()[0].getResolutions()[1];
         resols[2] = 1;
 
-        if ( srcImage1.getFileInfo()[0] instanceof FileInfoDicom && srcImage2.getFileInfo()[0] instanceof FileInfoDicom ) {
-            fileInfoDicom = new FileInfoDicom[ destImage.getExtents()[2]];
+        if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
+                (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
+            fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
 
             fileInfo = destImage.getFileInfo();
-            if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
-                for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                    fileInfoDicom[i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[i] ).cloneItself() );
+
+            if (srcImage1.getNDims() > srcImage2.getNDims()) {
+
+                for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
                 }
-                fileInfoDicom[srcImage1.getExtents()[2]] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[0] ).cloneItself() );
+
+                fileInfoDicom[srcImage1.getExtents()[2]] = (FileInfoDicom)
+                                                               (((FileInfoDicom) srcImage2.getFileInfo()[0])
+                                                                    .cloneItself());
             } else {
-                fileInfoDicom[0] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[0] ).cloneItself() );
-                for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                    fileInfoDicom[i + 1] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[i] ).cloneItself() );
+                fileInfoDicom[0] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[0]).cloneItself());
+
+                for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+                    fileInfoDicom[i + 1] = (FileInfoDicom) (((FileInfoDicom) srcImage2.getFileInfo()[i]).cloneItself());
                 }
             }
-            destImage.setFileInfo( fileInfoDicom );
+
+            destImage.setFileInfo(fileInfoDicom);
         } else {
             fileInfo = destImage.getFileInfo();
-            for ( i = 0; i < destImage.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfo[i].setModality( srcImage1.getFileInfo()[0].getModality() );
-                fileInfo[i].setFileDirectory( srcImage1.getFileInfo()[0].getFileDirectory() );
-                fileInfo[i].setEndianess( srcImage1.getFileInfo()[0].getEndianess() );
-                fileInfo[i].setUnitsOfMeasure( srcImage1.getFileInfo()[0].getUnitsOfMeasure() );
-                fileInfo[i].setResolutions( resols );
-                fileInfo[i].setExtents( destImage.getExtents() );
-                fileInfo[i].setMax( destImage.getMax() );
-                fileInfo[i].setMin( destImage.getMin() );
-                fileInfo[i].setImageOrientation( srcImage1.getImageOrientation() );
-                fileInfo[i].setPixelPadValue( srcImage1.getFileInfo()[0].getPixelPadValue() );
-                fileInfo[i].setPhotometric( srcImage1.getFileInfo()[0].getPhotometric() );
+
+            for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
+                fileInfo[i].setModality(srcImage1.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage1.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage1.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage1.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resols);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
             }
-            if ( srcImage1.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
-                    for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                        if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                            ( (FileInfoImageXML) fileInfo[i] ).setPSetHashtable(
-                                    ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() );
+
+            if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                if (srcImage1.getNDims() > srcImage2.getNDims()) {
+
+                    for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                        if (((FileInfoImageXML) srcImage1.getFileInfo()[i]).getPSetHashtable() != null) {
+                            ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                   srcImage1.getFileInfo()[i])
+                                                                                  .getPSetHashtable());
                         }
                     }
                 } else {
-                    if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[0] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[0] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage1.getFileInfo()[0] ).getPSetHashtable() );
+
+                    if (((FileInfoImageXML) srcImage1.getFileInfo()[0]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[0]).setPSetHashtable(((FileInfoImageXML) srcImage1.getFileInfo()[0])
+                                                                              .getPSetHashtable());
                     }
                 }
             }
-            if ( srcImage2.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
-                    if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[0] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[srcImage1.getExtents()[2]] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage2.getFileInfo()[0] ).getPSetHashtable() );
+
+            if (srcImage2.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                if (srcImage1.getNDims() > srcImage2.getNDims()) {
+
+                    if (((FileInfoImageXML) srcImage2.getFileInfo()[0]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[srcImage1.getExtents()[2]]).setPSetHashtable(((FileInfoImageXML)
+                                                                                                       srcImage2.getFileInfo()[0])
+                                                                                                      .getPSetHashtable());
                     }
                 } else {
-                    for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                        if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                            ( (FileInfoImageXML) fileInfo[i + 1] ).setPSetHashtable(
-                                    ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() );
+
+                    for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+
+                        if (((FileInfoImageXML) srcImage2.getFileInfo()[i]).getPSetHashtable() != null) {
+                            ((FileInfoImageXML) fileInfo[i + 1]).setPSetHashtable(((FileInfoImageXML)
+                                                                                       srcImage2.getFileInfo()[i])
+                                                                                      .getPSetHashtable());
                         }
                     }
                 }
@@ -349,20 +400,21 @@ public class AlgorithmConcat extends AlgorithmBase {
 
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             finalize();
+
             return;
         }
+
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
     }
 
     /**
-     *   This function produces a new image that has been concatenated.
-     *   Two 3D--images become one 3D image.
+     * This function produces a new image that has been concatenated. Two 3D--images become one 3D image.
      */
     private void cat3D_3D_3D() {
         int length;
@@ -375,60 +427,73 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar( srcImage1.getImageName(), "Concatenating images ...", 0, 100 );
+            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
             resols = new float[3];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
 
-            if ( srcImage1.isColorImage() ) {
+            if (srcImage1.isColorImage()) {
                 cFactor = 4;
             }
 
             length = cFactor * xDim * yDim;
             buffer = new float[length];
+
             int nImages;
 
             initProgressBar();
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
-            for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                if ( isProgressBarVisible() ) {
-                    progressBar.updateValue( Math.round( (float) ( i ) / ( nImages - 1 ) * 100 ), activeImage );
+
+            for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                if (isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), activeImage);
                 }
 
-                srcImage1.exportData( i * buffer.length, length, buffer );
-                destImage.importData( i * buffer.length, buffer, false );
+                srcImage1.exportData(i * buffer.length, length, buffer);
+                destImage.importData(i * buffer.length, buffer, false);
             }
-            if ( threadStopped ) {
+
+            if (threadStopped) {
                 buffer = null;
                 finalize();
+
                 return;
             }
+
             int offset = i * buffer.length;
 
-            for ( j = 0; j < srcImage2.getExtents()[2] && !threadStopped; j++ ) {
-                if ( isProgressBarVisible() ) {
-                    progressBar.updateValue( Math.round( (float) ( i + j ) / ( nImages - 1 ) * 100 ), activeImage );
+            for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
+
+                if (isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), activeImage);
                 }
-                srcImage2.exportData( j * buffer.length, length, buffer );
-                destImage.importData( offset + j * buffer.length, buffer, false );
+
+                srcImage2.exportData(j * buffer.length, length, buffer);
+                destImage.importData(offset + (j * buffer.length), buffer, false);
             }
-            if ( threadStopped ) {
+
+            if (threadStopped) {
                 buffer = null;
                 finalize();
+
                 return;
             }
+
             destImage.calcMinMax();
-        } catch ( IOException error ) {
+        } catch (IOException error) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Image(s) locked", true );
+            errorCleanUp("Algorithm Concat. Images: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Out of memory", true );
+            errorCleanUp("Algorithm Concat. Images: Out of memory", true);
+
             return;
         }
 
@@ -436,66 +501,78 @@ public class AlgorithmConcat extends AlgorithmBase {
         resols[1] = srcImage1.getFileInfo()[0].getResolutions()[1];
         resols[2] = srcImage1.getFileInfo()[0].getResolutions()[2];
 
-        if ( srcImage1.getFileInfo()[0] instanceof FileInfoDicom && srcImage2.getFileInfo()[0] instanceof FileInfoDicom ) {
+        if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
+                (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
             fileInfoDicom = new FileInfoDicom[srcImage1.getExtents()[2] + srcImage2.getExtents()[2]];
 
-            for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfoDicom[i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[i] ).cloneItself() );
+            for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
             }
 
-            for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[i] ).cloneItself() );
+            for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+                fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom)
+                                                                   (((FileInfoDicom) srcImage2.getFileInfo()[i])
+                                                                        .cloneItself());
             }
-            destImage.setFileInfo( fileInfoDicom );
+
+            destImage.setFileInfo(fileInfoDicom);
         } else {
             fileInfo = destImage.getFileInfo();
-            for ( i = 0; i < destImage.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfo[i].setModality( srcImage1.getFileInfo()[0].getModality() );
-                fileInfo[i].setFileDirectory( srcImage1.getFileInfo()[0].getFileDirectory() );
-                fileInfo[i].setEndianess( srcImage1.getFileInfo()[0].getEndianess() );
-                fileInfo[i].setUnitsOfMeasure( srcImage1.getFileInfo()[0].getUnitsOfMeasure() );
-                fileInfo[i].setResolutions( resols );
-                fileInfo[i].setExtents( destImage.getExtents() );
-                fileInfo[i].setMax( destImage.getMax() );
-                fileInfo[i].setMin( destImage.getMin() );
-                fileInfo[i].setImageOrientation( srcImage1.getImageOrientation() );
-                fileInfo[i].setPixelPadValue( srcImage1.getFileInfo()[0].getPixelPadValue() );
-                fileInfo[i].setPhotometric( srcImage1.getFileInfo()[0].getPhotometric() );
+
+            for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
+                fileInfo[i].setModality(srcImage1.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage1.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage1.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage1.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resols);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
             }
 
-            if ( srcImage1.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                    if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[i] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() );
+            if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                    if (((FileInfoImageXML) srcImage1.getFileInfo()[i]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML) srcImage1.getFileInfo()[i])
+                                                                              .getPSetHashtable());
                     }
                 }
             }
-            if ( srcImage2.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                    if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[srcImage1.getExtents()[2] + i] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() );
+
+            if (srcImage2.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+
+                    if (((FileInfoImageXML) srcImage2.getFileInfo()[i]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[srcImage1.getExtents()[2] + i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                                           srcImage2.getFileInfo()[i])
+                                                                                                          .getPSetHashtable());
                     }
                 }
             }
 
         }
-        if ( threadStopped ) {
+
+        if (threadStopped) {
             buffer = null;
             finalize();
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
     }
 
     /**
-     *   This function produces a new image that has been concatenated.
-     *   Two 3D--images become one 4D image.
+     * This function produces a new image that has been concatenated. Two 3D--images become one 4D image.
      */
     private void cat3D_3D_4D() {
         int length;
@@ -509,61 +586,74 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar( srcImage1.getImageName(), "Concatenating images ...", 0, 100 );
+            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
             resols = new float[4];
             origins = new float[4];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
 
-            if ( srcImage1.isColorImage() ) {
+            if (srcImage1.isColorImage()) {
                 cFactor = 4;
             }
 
             length = cFactor * xDim * yDim;
             buffer = new float[length];
+
             int nImages;
 
             initProgressBar();
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
-            for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                if ( isProgressBarVisible() ) {
-                    progressBar.updateValue( Math.round( (float) ( i ) / ( nImages - 1 ) * 100 ), activeImage );
+
+            for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                if (isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), activeImage);
                 }
 
-                srcImage1.exportData( i * buffer.length, length, buffer );
-                destImage.importData( i * buffer.length, buffer, false );
+                srcImage1.exportData(i * buffer.length, length, buffer);
+                destImage.importData(i * buffer.length, buffer, false);
             }
-            if ( threadStopped ) {
+
+            if (threadStopped) {
                 buffer = null;
                 finalize();
+
                 return;
             }
+
             int offset = i * buffer.length;
 
-            for ( j = 0; j < srcImage2.getExtents()[2] && !threadStopped; j++ ) {
-                if ( isProgressBarVisible() ) {
-                    progressBar.updateValue( Math.round( (float) ( i + j ) / ( nImages - 1 ) * 100 ), activeImage );
+            for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
+
+                if (isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), activeImage);
                 }
-                srcImage2.exportData( j * buffer.length, length, buffer );
-                destImage.importData( offset + j * buffer.length, buffer, false );
+
+                srcImage2.exportData(j * buffer.length, length, buffer);
+                destImage.importData(offset + (j * buffer.length), buffer, false);
             }
-            if ( threadStopped ) {
+
+            if (threadStopped) {
                 buffer = null;
                 finalize();
+
                 return;
             }
+
             destImage.calcMinMax();
-        } catch ( IOException error ) {
+        } catch (IOException error) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Image(s) locked", true );
+            errorCleanUp("Algorithm Concat. Images: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Out of memory", true );
+            errorCleanUp("Algorithm Concat. Images: Out of memory", true);
+
             return;
         }
 
@@ -571,75 +661,88 @@ public class AlgorithmConcat extends AlgorithmBase {
         resols[1] = srcImage1.getFileInfo()[0].getResolutions()[1];
         resols[2] = srcImage1.getFileInfo()[0].getResolutions()[2];
         resols[3] = 1;
-        origins[0] = srcImage1.getFileInfo()[0].getOrigin( 0 );
-        origins[1] = srcImage1.getFileInfo()[0].getOrigin( 1 );
-        origins[2] = srcImage1.getFileInfo()[0].getOrigin( 2 );
+        origins[0] = srcImage1.getFileInfo()[0].getOrigin(0);
+        origins[1] = srcImage1.getFileInfo()[0].getOrigin(1);
+        origins[2] = srcImage1.getFileInfo()[0].getOrigin(2);
         origins[3] = 0;
 
-        if ( srcImage1.getFileInfo()[0] instanceof FileInfoDicom && srcImage2.getFileInfo()[0] instanceof FileInfoDicom ) {
+        if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
+                (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2] * destImage.getExtents()[3]];
 
-            for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfoDicom[i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[i] ).cloneItself() );
-                fileInfoDicom[i].setResolutions( resols );
-                fileInfoDicom[i].setOrigin( origins );
+            for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                fileInfoDicom[i].setResolutions(resols);
+                fileInfoDicom[i].setOrigin(origins);
             }
 
-            for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                fileInfoDicom[srcImage1.getExtents()[2] + i ] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[i] ).cloneItself() );
-                fileInfoDicom[srcImage1.getExtents()[2] + i ].setResolutions( resols );
-                fileInfoDicom[srcImage1.getExtents()[2] + i ].setOrigin( origins );
+            for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+                fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom)
+                                                                   (((FileInfoDicom) srcImage2.getFileInfo()[i])
+                                                                        .cloneItself());
+                fileInfoDicom[srcImage1.getExtents()[2] + i].setResolutions(resols);
+                fileInfoDicom[srcImage1.getExtents()[2] + i].setOrigin(origins);
             }
-            destImage.setFileInfo( fileInfoDicom );
+
+            destImage.setFileInfo(fileInfoDicom);
 
         } else {
             fileInfo = destImage.getFileInfo();
-            for ( i = 0; i < destImage.getExtents()[2] * destImage.getExtents()[3] && !threadStopped; i++ ) {
-                fileInfo[i].setModality( srcImage1.getFileInfo()[0].getModality() );
-                fileInfo[i].setFileDirectory( srcImage1.getFileInfo()[0].getFileDirectory() );
-                fileInfo[i].setEndianess( srcImage1.getFileInfo()[0].getEndianess() );
-                fileInfo[i].setUnitsOfMeasure( srcImage1.getFileInfo()[0].getUnitsOfMeasure() );
-                fileInfo[i].setResolutions( resols );
-                fileInfo[i].setExtents( destImage.getExtents() );
-                fileInfo[i].setMax( destImage.getMax() );
-                fileInfo[i].setMin( destImage.getMin() );
-                fileInfo[i].setImageOrientation( srcImage1.getImageOrientation() );
-                fileInfo[i].setPixelPadValue( srcImage1.getFileInfo()[0].getPixelPadValue() );
-                fileInfo[i].setPhotometric( srcImage1.getFileInfo()[0].getPhotometric() );
+
+            for (i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])) && !threadStopped; i++) {
+                fileInfo[i].setModality(srcImage1.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage1.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage1.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage1.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resols);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
             }
-            if ( srcImage1.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                    if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[i] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() );
+
+            if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                    if (((FileInfoImageXML) srcImage1.getFileInfo()[i]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML) srcImage1.getFileInfo()[i])
+                                                                              .getPSetHashtable());
                     }
                 }
             }
-            if ( srcImage2.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                    if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[srcImage1.getExtents()[2] + i] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() );
+
+            if (srcImage2.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+
+                    if (((FileInfoImageXML) srcImage2.getFileInfo()[i]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[srcImage1.getExtents()[2] + i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                                           srcImage2.getFileInfo()[i])
+                                                                                                          .getPSetHashtable());
                     }
                 }
             }
 
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             finalize();
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
     }
 
     /**
-     *   cat
+     * cat.
      */
     private void cat3D_4D_4D() {
 
@@ -655,89 +758,113 @@ public class AlgorithmConcat extends AlgorithmBase {
         int srcALength, srcBLength;
 
         try {
-            buildProgressBar( srcImage1.getImageName(), "Concatenating images ...", 0, 100 );
+            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
             resols = new float[4];
             origins = new float[4];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
 
-            if ( srcImage1.isColorImage() ) {
+            if (srcImage1.isColorImage()) {
                 cFactor = 4;
             }
 
             length = cFactor * xDim * yDim;
             buffer = new float[length];
+
             int nImages;
 
             initProgressBar();
 
-            if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
-                nImages = srcImage1.getExtents()[2] * srcImage1.getExtents()[3] + srcImage2.getExtents()[2];
-                for ( i = 0; i < srcImage1.getExtents()[2] * srcImage1.getExtents()[3] && !threadStopped; i++ ) {
-                    if ( isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( i ) / ( nImages - 1 ) * 100 ), activeImage );
-                    }
-                    srcImage1.exportData( i * length, length, buffer );
-                    destImage.importData( i * length, buffer, false );
-                }
-                if ( threadStopped ) {
-                    buffer = null;
-                    finalize();
-                    return;
-                }
-                for ( j = 0; j < srcImage2.getExtents()[2] && !threadStopped; j++ ) {
-                    if ( isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( i + j ) / ( nImages - 1 ) * 100 ), activeImage );
-                    }
-                    srcImage2.exportData( j * length, length, buffer );
-                    destImage.importData( ( i + j ) * length, buffer, false );
-                }
-                if ( threadStopped ) {
-                    buffer = null;
-                    finalize();
-                    return;
-                }
-                destImage.calcMinMax();
-            } else {
-                nImages = srcImage2.getExtents()[2] * srcImage2.getExtents()[3] + srcImage1.getExtents()[2];
-                for ( j = 0; j < srcImage1.getExtents()[2] && !threadStopped; j++ ) {
-                    if ( isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( j ) / ( nImages - 1 ) * 100 ), activeImage );
-                    }
-                    srcImage1.exportData( j * length, length, buffer );
-                    destImage.importData( j * length, buffer, false );
-                }
-                if ( threadStopped ) {
-                    buffer = null;
-                    finalize();
-                    return;
-                }
-                for ( i = 0; i < srcImage2.getExtents()[2] * srcImage2.getExtents()[3] && !threadStopped; i++ ) {
-                    if ( isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( i + j ) / ( nImages - 1 ) * 100 ), activeImage );
+            if (srcImage1.getNDims() > srcImage2.getNDims()) {
+                nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) + srcImage2.getExtents()[2];
+
+                for (i = 0; (i < (srcImage1.getExtents()[2] * srcImage1.getExtents()[3])) && !threadStopped; i++) {
+
+                    if (isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), activeImage);
                     }
 
-                    srcImage2.exportData( i * buffer.length, length, buffer );
-                    destImage.importData( ( i + j ) * buffer.length, buffer, false );
+                    srcImage1.exportData(i * length, length, buffer);
+                    destImage.importData(i * length, buffer, false);
                 }
-                if ( threadStopped ) {
+
+                if (threadStopped) {
                     buffer = null;
                     finalize();
+
                     return;
                 }
+
+                for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
+
+                    if (isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), activeImage);
+                    }
+
+                    srcImage2.exportData(j * length, length, buffer);
+                    destImage.importData((i + j) * length, buffer, false);
+                }
+
+                if (threadStopped) {
+                    buffer = null;
+                    finalize();
+
+                    return;
+                }
+
+                destImage.calcMinMax();
+            } else {
+                nImages = (srcImage2.getExtents()[2] * srcImage2.getExtents()[3]) + srcImage1.getExtents()[2];
+
+                for (j = 0; (j < srcImage1.getExtents()[2]) && !threadStopped; j++) {
+
+                    if (isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (j) / (nImages - 1) * 100), activeImage);
+                    }
+
+                    srcImage1.exportData(j * length, length, buffer);
+                    destImage.importData(j * length, buffer, false);
+                }
+
+                if (threadStopped) {
+                    buffer = null;
+                    finalize();
+
+                    return;
+                }
+
+                for (i = 0; (i < (srcImage2.getExtents()[2] * srcImage2.getExtents()[3])) && !threadStopped; i++) {
+
+                    if (isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), activeImage);
+                    }
+
+                    srcImage2.exportData(i * buffer.length, length, buffer);
+                    destImage.importData((i + j) * buffer.length, buffer, false);
+                }
+
+                if (threadStopped) {
+                    buffer = null;
+                    finalize();
+
+                    return;
+                }
+
                 destImage.calcMinMax();
             }
-        } catch ( IOException error ) {
+        } catch (IOException error) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Image(s) locked", true );
+            errorCleanUp("Algorithm Concat. Images: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Out of memory", true );
+            errorCleanUp("Algorithm Concat. Images: Out of memory", true);
+
             return;
         }
 
@@ -750,84 +877,107 @@ public class AlgorithmConcat extends AlgorithmBase {
         origins[2] = destImage.getFileInfo()[0].getOrigin()[2];
         origins[3] = destImage.getFileInfo()[0].getOrigin()[3];
 
-        if ( srcImage1.getFileInfo()[0] instanceof FileInfoDicom && srcImage2.getFileInfo()[0] instanceof FileInfoDicom ) {
+        if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
+                (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2] * destImage.getExtents()[3]];
 
-            if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
+            if (srcImage1.getNDims() > srcImage2.getNDims()) {
                 srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
-                for ( i = 0; i < srcALength && !threadStopped; i++ ) {
-                    fileInfoDicom[i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[i] ).cloneItself() );
-                    fileInfoDicom[i].setOrigin( origins );
+
+                for (i = 0; (i < srcALength) && !threadStopped; i++) {
+                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[i].setOrigin(origins);
                 }
 
-                for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                    fileInfoDicom[srcALength + i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[i] ).cloneItself() );
-                    fileInfoDicom[srcALength + i].setOrigin( origins );
+                for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+                    fileInfoDicom[srcALength + i] = (FileInfoDicom)
+                                                        (((FileInfoDicom) srcImage2.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[srcALength + i].setOrigin(origins);
                 }
             } else {
                 srcBLength = srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
-                for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                    fileInfoDicom[i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[i] ).cloneItself() );
-                    fileInfoDicom[i].setOrigin( origins );
+
+                for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+                    fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
+                    fileInfoDicom[i].setOrigin(origins);
                 }
 
-                for ( i = 0; i < srcBLength && !threadStopped; i++ ) {
-                    fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[i] ).cloneItself() );
-                    fileInfoDicom[srcImage1.getExtents()[2] + i].setOrigin( origins );
+                for (i = 0; (i < srcBLength) && !threadStopped; i++) {
+                    fileInfoDicom[srcImage1.getExtents()[2] + i] = (FileInfoDicom)
+                                                                       (((FileInfoDicom) srcImage2.getFileInfo()[i])
+                                                                            .cloneItself());
+                    fileInfoDicom[srcImage1.getExtents()[2] + i].setOrigin(origins);
                 }
 
             }
-            destImage.setFileInfo( fileInfoDicom );
+
+            destImage.setFileInfo(fileInfoDicom);
         } else {
             fileInfo = destImage.getFileInfo();
-            for ( i = 0; i < destImage.getExtents()[2] * destImage.getExtents()[3] && !threadStopped; i++ ) {
-                fileInfo[i].setModality( srcImage1.getFileInfo()[0].getModality() );
-                fileInfo[i].setFileDirectory( srcImage1.getFileInfo()[0].getFileDirectory() );
-                fileInfo[i].setEndianess( srcImage1.getFileInfo()[0].getEndianess() );
-                fileInfo[i].setUnitsOfMeasure( srcImage1.getFileInfo()[0].getUnitsOfMeasure() );
-                fileInfo[i].setResolutions( resols );
-                fileInfo[i].setExtents( destImage.getExtents() );
-                fileInfo[i].setMax( destImage.getMax() );
-                fileInfo[i].setMin( destImage.getMin() );
-                fileInfo[i].setImageOrientation( srcImage1.getImageOrientation() );
-                fileInfo[i].setPixelPadValue( srcImage1.getFileInfo()[0].getPixelPadValue() );
-                fileInfo[i].setPhotometric( srcImage1.getFileInfo()[0].getPhotometric() );
+
+            for (i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])) && !threadStopped; i++) {
+                fileInfo[i].setModality(srcImage1.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage1.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage1.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage1.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resols);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
             }
 
-            if ( srcImage1.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
+            if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                if (srcImage1.getNDims() > srcImage2.getNDims()) {
                     srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
-                    for ( i = 0; i < srcALength && !threadStopped; i++ ) {
-                        if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                            ( (FileInfoImageXML) fileInfo[i] ).setPSetHashtable( ( (FileInfoImageXML)
-                                    srcImage1.getFileInfo()[i] ).getPSetHashtable() );
+
+                    for (i = 0; (i < srcALength) && !threadStopped; i++) {
+
+                        if (((FileInfoImageXML) srcImage1.getFileInfo()[i]).getPSetHashtable() != null) {
+                            ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                   srcImage1.getFileInfo()[i])
+                                                                                  .getPSetHashtable());
                         }
                     }
                 } else {
-                    for ( i = 0; i < srcImage1.getExtents()[2] && !threadStopped; i++ ) {
-                        if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                            ( (FileInfoImageXML) fileInfo[i] ).setPSetHashtable( ( (FileInfoImageXML)
-                                    srcImage1.getFileInfo()[i] ).getPSetHashtable() );
+
+                    for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
+
+                        if (((FileInfoImageXML) srcImage1.getFileInfo()[i]).getPSetHashtable() != null) {
+                            ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                   srcImage1.getFileInfo()[i])
+                                                                                  .getPSetHashtable());
                         }
                     }
                 }
             }
-            if ( srcImage2.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                if ( srcImage1.getNDims() > srcImage2.getNDims() ) {
+
+            if (srcImage2.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                if (srcImage1.getNDims() > srcImage2.getNDims()) {
                     srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
-                    for ( i = 0; i < srcImage2.getExtents()[2] && !threadStopped; i++ ) {
-                        if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                            ( (FileInfoImageXML) fileInfo[srcALength + i] ).setPSetHashtable(
-                                    ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() );
+
+                    for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
+
+                        if (((FileInfoImageXML) srcImage2.getFileInfo()[i]).getPSetHashtable() != null) {
+                            ((FileInfoImageXML) fileInfo[srcALength + i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                                srcImage2.getFileInfo()[i])
+                                                                                               .getPSetHashtable());
                         }
                     }
 
                 } else {
                     srcBLength = srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
-                    for ( i = 0; i < srcBLength && !threadStopped; i++ ) {
-                        if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                            ( (FileInfoImageXML) fileInfo[srcImage1.getExtents()[2] + i] ).setPSetHashtable(
-                                    ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() );
+
+                    for (i = 0; (i < srcBLength) && !threadStopped; i++) {
+
+                        if (((FileInfoImageXML) srcImage2.getFileInfo()[i]).getPSetHashtable() != null) {
+                            ((FileInfoImageXML) fileInfo[srcImage1.getExtents()[2] + i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                                               srcImage2.getFileInfo()[i])
+                                                                                                              .getPSetHashtable());
                         }
                     }
 
@@ -836,20 +986,21 @@ public class AlgorithmConcat extends AlgorithmBase {
 
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             finalize();
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
     }
 
     /**
-     *   cat
+     * cat.
      */
     private void cat4D_4D_4D() {
 
@@ -864,59 +1015,73 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar( srcImage1.getImageName(), "Concatenating images ...", 0, 100 );
+            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
             resols = new float[4];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
 
-            if ( srcImage1.isColorImage() ) {
+            if (srcImage1.isColorImage()) {
                 cFactor = 4;
             }
 
             length = cFactor * xDim * yDim;
             buffer = new float[length];
+
             int nImages;
 
             initProgressBar();
 
-            nImages = srcImage1.getExtents()[2] * srcImage1.getExtents()[3]
-                    + srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
-            for ( i = 0; i < srcImage1.getExtents()[2] * srcImage1.getExtents()[3] && !threadStopped; i++ ) {
-                if ( isProgressBarVisible() ) {
-                    progressBar.updateValue( Math.round( (float) ( i ) / ( nImages - 1 ) * 100 ), activeImage );
+            nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) +
+                      (srcImage2.getExtents()[2] * srcImage2.getExtents()[3]);
+
+            for (i = 0; (i < (srcImage1.getExtents()[2] * srcImage1.getExtents()[3])) && !threadStopped; i++) {
+
+                if (isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), activeImage);
                 }
-                srcImage1.exportData( i * length, length, buffer );
-                destImage.importData( i * length, buffer, false );
+
+                srcImage1.exportData(i * length, length, buffer);
+                destImage.importData(i * length, buffer, false);
             }
-            if ( threadStopped ) {
+
+            if (threadStopped) {
                 buffer = null;
                 finalize();
+
                 return;
             }
-            for ( j = 0; j < srcImage2.getExtents()[2] * srcImage2.getExtents()[3] && !threadStopped; j++ ) {
-                if ( isProgressBarVisible() ) {
-                    progressBar.updateValue( Math.round( (float) ( i + j ) / ( nImages - 1 ) * 100 ), activeImage );
+
+            for (j = 0; (j < (srcImage2.getExtents()[2] * srcImage2.getExtents()[3])) && !threadStopped; j++) {
+
+                if (isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), activeImage);
                 }
-                srcImage2.exportData( j * length, length, buffer );
-                destImage.importData( ( i + j ) * length, buffer, false );
+
+                srcImage2.exportData(j * length, length, buffer);
+                destImage.importData((i + j) * length, buffer, false);
             }
-            if ( threadStopped ) {
+
+            if (threadStopped) {
                 buffer = null;
                 finalize();
+
                 return;
             }
+
             destImage.calcMinMax();
-        } catch ( IOException error ) {
+        } catch (IOException error) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Image(s) locked", true );
+            errorCleanUp("Algorithm Concat. Images: Image(s) locked", true);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             destImage.disposeLocal(); // Clean up memory of result image
             destImage = null;
-            errorCleanUp( "Algorithm Concat. Images: Out of memory", true );
+            errorCleanUp("Algorithm Concat. Images: Out of memory", true);
+
             return;
         }
 
@@ -925,64 +1090,87 @@ public class AlgorithmConcat extends AlgorithmBase {
         resols[2] = srcImage1.getFileInfo()[0].getResolutions()[2];
         resols[3] = srcImage1.getFileInfo()[0].getResolutions()[3];
 
-        if ( srcImage1.getFileInfo()[0] instanceof FileInfoDicom && srcImage2.getFileInfo()[0] instanceof FileInfoDicom ) {
+        if ((srcImage1.getFileInfo()[0] instanceof FileInfoDicom) &&
+                (srcImage2.getFileInfo()[0] instanceof FileInfoDicom)) {
             fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2] * destImage.getExtents()[3]];
 
             srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
             srcBLength = srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
-            for ( i = 0; i < srcALength && !threadStopped; i++ ) {
-                fileInfoDicom[i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage1.getFileInfo()[i] ).cloneItself() );
+
+            for (i = 0; (i < srcALength) && !threadStopped; i++) {
+                fileInfoDicom[i] = (FileInfoDicom) (((FileInfoDicom) srcImage1.getFileInfo()[i]).cloneItself());
             }
-            for ( i = 0; i < srcBLength && !threadStopped; i++ ) {
-                fileInfoDicom[srcALength + i] = (FileInfoDicom) ( ( (FileInfoDicom) srcImage2.getFileInfo()[i] ).cloneItself() );
+
+            for (i = 0; (i < srcBLength) && !threadStopped; i++) {
+                fileInfoDicom[srcALength + i] = (FileInfoDicom)
+                                                    (((FileInfoDicom) srcImage2.getFileInfo()[i]).cloneItself());
             }
-            destImage.setFileInfo( fileInfoDicom );
+
+            destImage.setFileInfo(fileInfoDicom);
         } else {
             fileInfo = destImage.getFileInfo();
-            for ( i = 0; i < destImage.getExtents()[2] * destImage.getExtents()[3] && !threadStopped; i++ ) {
-                fileInfo[i].setModality( srcImage1.getFileInfo()[0].getModality() );
-                fileInfo[i].setFileDirectory( srcImage1.getFileInfo()[0].getFileDirectory() );
-                fileInfo[i].setEndianess( srcImage1.getFileInfo()[0].getEndianess() );
-                fileInfo[i].setUnitsOfMeasure( srcImage1.getFileInfo()[0].getUnitsOfMeasure() );
-                fileInfo[i].setResolutions( resols );
-                fileInfo[i].setExtents( destImage.getExtents() );
-                fileInfo[i].setMax( destImage.getMax() );
-                fileInfo[i].setMin( destImage.getMin() );
-                fileInfo[i].setImageOrientation( srcImage1.getImageOrientation() );
-                fileInfo[i].setPixelPadValue( srcImage1.getFileInfo()[0].getPixelPadValue() );
-                fileInfo[i].setPhotometric( srcImage1.getFileInfo()[0].getPhotometric() );
+
+            for (i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])) && !threadStopped; i++) {
+                fileInfo[i].setModality(srcImage1.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(srcImage1.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setEndianess(srcImage1.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(srcImage1.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resols);
+                fileInfo[i].setExtents(destImage.getExtents());
+                fileInfo[i].setMax(destImage.getMax());
+                fileInfo[i].setMin(destImage.getMin());
+                fileInfo[i].setImageOrientation(srcImage1.getImageOrientation());
+                fileInfo[i].setPixelPadValue(srcImage1.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(srcImage1.getFileInfo()[0].getPhotometric());
             }
+
             srcALength = srcImage1.getExtents()[2] * srcImage1.getExtents()[3];
             srcBLength = srcImage2.getExtents()[2] * srcImage2.getExtents()[3];
-            if ( srcImage1.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                for ( i = 0; i < srcALength && !threadStopped; i++ ) {
-                    if ( ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[i] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage1.getFileInfo()[i] ).getPSetHashtable() );
+
+            if (srcImage1.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                for (i = 0; (i < srcALength) && !threadStopped; i++) {
+
+                    if (((FileInfoImageXML) srcImage1.getFileInfo()[i]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[i]).setPSetHashtable(((FileInfoImageXML) srcImage1.getFileInfo()[i])
+                                                                              .getPSetHashtable());
                     }
                 }
             }
-            if ( srcImage2.getFileInfo()[0] instanceof FileInfoImageXML ) {
-                for ( i = 0; i < srcBLength && !threadStopped; i++ ) {
-                    if ( ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() != null ) {
-                        ( (FileInfoImageXML) fileInfo[srcALength + i] ).setPSetHashtable(
-                                ( (FileInfoImageXML) srcImage2.getFileInfo()[i] ).getPSetHashtable() );
+
+            if (srcImage2.getFileInfo()[0] instanceof FileInfoImageXML) {
+
+                for (i = 0; (i < srcBLength) && !threadStopped; i++) {
+
+                    if (((FileInfoImageXML) srcImage2.getFileInfo()[i]).getPSetHashtable() != null) {
+                        ((FileInfoImageXML) fileInfo[srcALength + i]).setPSetHashtable(((FileInfoImageXML)
+                                                                                            srcImage2.getFileInfo()[i])
+                                                                                           .getPSetHashtable());
                     }
                 }
             }
 
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             finalize();
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        historyString = new String("Concatenate images()\n");
     }
 
 }

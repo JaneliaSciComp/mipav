@@ -2,220 +2,155 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+
 import java.util.*;
 
 
 /**
- *      This algorithm iteratively expands or contracts one or more contours to a boundary.
+ * This algorithm iteratively expands or contracts one or more contours to a boundary.
  *
- *      Reference:
- *      Level Set Methods and Fast Marching Methods by J.A. Sethian,
- *      Cambridge University Press, 1999
+ * <p>Reference: Level Set Methods and Fast Marching Methods by J.A. Sethian, Cambridge University Press, 1999</p>
  *
- *      First the distance phi of every point from a contour is determined.
- *      If the point is inside a contour, the distance is negative.  If the
- *      point is outside all contours the distance is positive.  The routine
- *      slicePointToContour(int slice, int x, int y) in VOI.java is used to
- *      obtain phi for 2D.  In 3D pointToContour(int x, int y, int z) is used.
+ * <p>First the distance phi of every point from a contour is determined. If the point is inside a contour, the distance
+ * is negative. If the point is outside all contours the distance is positive. The routine slicePointToContour(int
+ * slice, int x, int y) in VOI.java is used to obtain phi for 2D. In 3D pointToContour(int x, int y, int z) is used.</p>
  *
- *      Equation 17.8 on page 222 of the reference is used:
- *      d(phi)/dt + gI(x,y)(1 - (epsilon)(kappa))|grad(phi)|
- *                - (beta)(grad(P(x,y))) dot grad(phi) = 0
- *      where dot represents the dot product between (beta)(grad(P(x,y)))
- *      and grad(phi).
- *      Note that this equation is a development of the most basic form of the
- *      level set equation 1.6 on page 7:
- *      d(phi)/dt + F|grad phi| = 0
+ * <p>Equation 17.8 on page 222 of the reference is used: d(phi)/dt + gI(x,y)(1 - (epsilon)(kappa))|grad(phi)| -
+ * (beta)(grad(P(x,y))) dot grad(phi) = 0 where dot represents the dot product between (beta)(grad(P(x,y))) and
+ * grad(phi). Note that this equation is a development of the most basic form of the level set equation 1.6 on page 7:
+ * d(phi)/dt + F|grad phi| = 0</p>
  *
- *      Equation 17.7 on page 220 gives:
- *      gI(x,y) = 1/(1 + |grad(Gaussian sigma * I(x,y))|) = 1/(1 - P(x,y))
- *      An equation on page 222 gives:
- *      P(x,y) = -|grad(Gaussian sigma * I(x,y))|
- *      Note that in this code the |grad(Gaussian sigma * I(x,y))| is normalized
- *      to vary from 0.0 to 100.0.
- *      Equation 6.35 on page 69 gives the 2D curvature:
- *      The curvature kappa = the divergence of the normalized grad(phi) =
- *      ((phixx)(phiy)**2 - 2(phiy)(phix)(phixy) + (phiyy)(phix)**2)/
- *      ((phix)**2 + (phiy)**2)**(3/2)
- *      Derivatives based on the central difference approximation give:
- *      phix = ((phi)i+1 - (phi)i-1)/(2(deltaX))
- *      phiy = ((phi)j+1 - (phi)j-1)/(2(deltaY))
- *      phixx = ((phi)i+1 - 2(phi)i + (phi)i-1)/(deltaX**2)
- *      phiyy = ((phi)j+1 - 2(phi)j + (phi)j-1)/(deltaY**2)
- *      phixy = ((phi)i+1,j+1 - (phi)i+1,j-1 - (phi)i-1,j+1 + (phi)i-1,j-1)/(4(deltaX)(deltaY))
+ * <p>Equation 17.7 on page 220 gives: gI(x,y) = 1/(1 + |grad(Gaussian sigma * I(x,y))|) = 1/(1 - P(x,y)) An equation on
+ * page 222 gives: P(x,y) = -|grad(Gaussian sigma * I(x,y))| Note that in this code the |grad(Gaussian sigma * I(x,y))|
+ * is normalized to vary from 0.0 to 100.0. Equation 6.35 on page 69 gives the 2D curvature: The curvature kappa = the
+ * divergence of the normalized grad(phi) = ((phixx)(phiy)**2 - 2(phiy)(phix)(phixy) + (phiyy)(phix)**2)/ ((phix)**2 +
+ * (phiy)**2)**(3/2) Derivatives based on the central difference approximation give: phix = ((phi)i+1 -
+ * (phi)i-1)/(2(deltaX)) phiy = ((phi)j+1 - (phi)j-1)/(2(deltaY)) phixx = ((phi)i+1 - 2(phi)i + (phi)i-1)/(deltaX**2)
+ * phiyy = ((phi)j+1 - 2(phi)j + (phi)j-1)/(deltaY**2) phixy = ((phi)i+1,j+1 - (phi)i+1,j-1 - (phi)i-1,j+1 +
+ * (phi)i-1,j-1)/(4(deltaX)(deltaY))</p>
  *
- *      The solution to this equation is based on solution 6.45 on page 74
- *      to equation 6.44 on page 73.  Equation 6.44 is similar to equation
- *      17.8.  Note that the equation is currently set up to perform an
- *      expansion.  The discussion on page 220 says use 1 - (epsilon)(kappa)
- *      for expansion and -1 - (epsilon)(kappa) for contraction.
- *      (phi)i,j,n+1 = (phi)i,j + deltaT[c1 + c2 + c3]
- *      where:
- *      c1 = -[max(gI(i,j),0)gradPlus + min(gI(i,j),0)gradMinus] for expansion
- *      c1 = -[max(-gI(i,j),0)gradPlus + min(-gI(i,j),0)gradMinus] for contraction
- *      Since gI(i,j) is always between 0 and 1:
- *      c1 expansion = -gI(i,j)gradPlus for movement = EXPAND or EXPAND_CONTRACT
- *      c1 contraction = gI(i,j)gradMinus for movement = CONTRACT
- *      gradPlus is given by equation 6.18 on page 65:
- *      gradPlus = [max(Dminusx,0)**2 + min(Dplusx,0)**2
- *                  + max(Dminusy,0)**2 + min(Dplusy,0)**2]**0.5
- *      gradMinus is given by equation 6.19 on page 65:
- *      gradMinus = [max(Dplusx,0)**2 + min(Dminusx,0)**2
- *                   + max(Dplusy,0)**2 + min(Dminusy,0)**2]**0.5
- *      Dminusx = ((phi)i,j - (phi)i-1,j)/deltaX
- *      Dplusx = ((phi)i+1,j - (phi)1,j)/deltaX
- *      Dminusy = ((phi)i,j - (phi)i,j-1)/deltaY
- *      Dplusy = ((phi)i,j+1 - (phi)i,j)/deltaY
- *      c2 = -[max(u(i,j),0)Dminusx + min(u(i,j),0)Dplusx + max(v(i,j),0)Dminusy + min(v(i,j),0)Dplusy]
- *      where u(i,j) is the first vector component of -beta(grad(P(x,y)))
- *      and v(i,j) is the second vector component of -beta(grad(P(x,y))).
- *      c3 = epsilon(kappa(i,j))(gI(i,j))(((Dzerox)**2 + (Dzeroy)**2)**(1/2))
- *      Dzerox = phix = ((phi)i+1,j - (phi)i-1,j)/(2(deltaX))
- *      Dzeroy = phiy = ((phi)i,j+1 - (phi)i,j-1)/(2(deltaY))
+ * <p>The solution to this equation is based on solution 6.45 on page 74 to equation 6.44 on page 73. Equation 6.44 is
+ * similar to equation 17.8. Note that the equation is currently set up to perform an expansion. The discussion on page
+ * 220 says use 1 - (epsilon)(kappa) for expansion and -1 - (epsilon)(kappa) for contraction. (phi)i,j,n+1 = (phi)i,j +
+ * deltaT[c1 + c2 + c3] where: c1 = -[max(gI(i,j),0)gradPlus + min(gI(i,j),0)gradMinus] for expansion c1 =
+ * -[max(-gI(i,j),0)gradPlus + min(-gI(i,j),0)gradMinus] for contraction Since gI(i,j) is always between 0 and 1: c1
+ * expansion = -gI(i,j)gradPlus for movement = EXPAND or EXPAND_CONTRACT c1 contraction = gI(i,j)gradMinus for movement
+ * = CONTRACT gradPlus is given by equation 6.18 on page 65: gradPlus = [max(Dminusx,0)**2 + min(Dplusx,0)**2 +
+ * max(Dminusy,0)**2 + min(Dplusy,0)**2]**0.5 gradMinus is given by equation 6.19 on page 65: gradMinus =
+ * [max(Dplusx,0)**2 + min(Dminusx,0)**2 + max(Dplusy,0)**2 + min(Dminusy,0)**2]**0.5 Dminusx = ((phi)i,j -
+ * (phi)i-1,j)/deltaX Dplusx = ((phi)i+1,j - (phi)1,j)/deltaX Dminusy = ((phi)i,j - (phi)i,j-1)/deltaY Dplusy =
+ * ((phi)i,j+1 - (phi)i,j)/deltaY c2 = -[max(u(i,j),0)Dminusx + min(u(i,j),0)Dplusx + max(v(i,j),0)Dminusy +
+ * min(v(i,j),0)Dplusy] where u(i,j) is the first vector component of -beta(grad(P(x,y))) and v(i,j) is the second
+ * vector component of -beta(grad(P(x,y))). c3 = epsilon(kappa(i,j))(gI(i,j))(((Dzerox)**2 + (Dzeroy)**2)**(1/2)) Dzerox
+ * = phix = ((phi)i+1,j - (phi)i-1,j)/(2(deltaX)) Dzeroy = phiy = ((phi)i,j+1 - (phi)i,j-1)/(2(deltaY))</p>
  *
- *      The user supplies 7 constants needed for the solution of the equation:
- *      1.) epsilon
- *      2.) sigma for the gaussian derivative convolution
- *      3.) The deltaT time step value
- *      4.) The number of iterations
- *      5.) movement = EXPAND, EXPAND_CONTRACT, or CONTRACT
- *          EXPAND_CONTRACT is the EXPAND mechanism except that it does not
- *          prevent a value of phi from transiting from a negative value to
- *          value >= 0.0.
- *          movement == EXPAND prevents a boundary from ever retreating - phi is
- *          prevented from ever changing from negative to >= 0.  movement == CONTRACT
- *          prevents a boundary from ever expanding - phi is prevented from ever
- *          changing from >= 0.0 to negative.
- *      6.) edgeAttract the ratio of the maximum value of the absolute value
- *          of the edge attractive force to the maximum value of the
- *          absolute value of the sum of the propagation and curvature
- *          forces.
- *      7.) testIters if testIters > 0, check if the boundary is unchanged
- *          every testIters iterations.
- *      On page 221 the author used time step = 0.001 and 391 iterations
- *      on a 64 by 64 grid.
- *      In the paper A Fast Level Set Based Algorithm for Topology-Independent
- *      Shape Modeling by Malladi, Sethian, and Vemuri a similar scheme was used.
- *      epsilons of 0.05, 0.25, and 0.75 were used. As epsilon was increased,
- *      the level set attained a smoother final configuration.  The
- *      (epsilon)(kappa) term smoothes out the high curvature regions and
- *      has the same regularizing effect as the internal deformation energy
- *      term in thin-plate-membrane splines.  Time steps ranging from 0.00025
- *      to 0.001 were used. One run on a 64 by 64 grid using 0.001 time steps
- *      took 391 iterations to complete and one run on a 128 by 128 grid using
- *      0.0005 time steps took 575 iterations to complete.  a sigma = 3.25
- *      was used. In Shape Modeling with Front Propagation: A Level Set Approach
- *      by Malladi, Sethian, and Vemuri a 128 by 128 image with 0.00025 time
- *      steps took 1,180 iterations.
+ * <p>The user supplies 7 constants needed for the solution of the equation: 1.) epsilon 2.) sigma for the gaussian
+ * derivative convolution 3.) The deltaT time step value 4.) The number of iterations 5.) movement = EXPAND,
+ * EXPAND_CONTRACT, or CONTRACT EXPAND_CONTRACT is the EXPAND mechanism except that it does not prevent a value of phi
+ * from transiting from a negative value to value >= 0.0. movement == EXPAND prevents a boundary from ever retreating -
+ * phi is prevented from ever changing from negative to >= 0. movement == CONTRACT prevents a boundary from ever
+ * expanding - phi is prevented from ever changing from >= 0.0 to negative. 6.) edgeAttract the ratio of the maximum
+ * value of the absolute value of the edge attractive force to the maximum value of the absolute value of the sum of the
+ * propagation and curvature forces. 7.) testIters if testIters > 0, check if the boundary is unchanged every testIters
+ * iterations. On page 221 the author used time step = 0.001 and 391 iterations on a 64 by 64 grid. In the paper A Fast
+ * Level Set Based Algorithm for Topology-Independent Shape Modeling by Malladi, Sethian, and Vemuri a similar scheme
+ * was used. epsilons of 0.05, 0.25, and 0.75 were used. As epsilon was increased, the level set attained a smoother
+ * final configuration. The (epsilon)(kappa) term smoothes out the high curvature regions and has the same regularizing
+ * effect as the internal deformation energy term in thin-plate-membrane splines. Time steps ranging from 0.00025 to
+ * 0.001 were used. One run on a 64 by 64 grid using 0.001 time steps took 391 iterations to complete and one run on a
+ * 128 by 128 grid using 0.0005 time steps took 575 iterations to complete. a sigma = 3.25 was used. In Shape Modeling
+ * with Front Propagation: A Level Set Approach by Malladi, Sethian, and Vemuri a 128 by 128 image with 0.00025 time
+ * steps took 1,180 iterations.</p>
  *
- *      The term grad(P) dot grad(phi) denotes the projection of an (attractive)
- *      force vector on the surface normal.  This force results from
- *      gradient of a potential field
- *      P(x,y) = -|grad(Gaussian sigma * I(x,y)|
- *      that attracts the contours to the image edges.  Beta controls the
- *      strength of this attraction.
+ * <p>The term grad(P) dot grad(phi) denotes the projection of an (attractive) force vector on the surface normal. This
+ * force results from gradient of a potential field P(x,y) = -|grad(Gaussian sigma * I(x,y)| that attracts the contours
+ * to the image edges. Beta controls the strength of this attraction.</p>
  *
- *      When the iterations are complete, the area inside the curve has negative
- *      phi values and the area outside the curve has positive phi values.
- *      Bitset a mask from the pixels with negative phi values and perform
- *      a mask to VOI conversion to obtain the output curve.
+ * <p>When the iterations are complete, the area inside the curve has negative phi values and the area outside the curve
+ * has positive phi values. Bitset a mask from the pixels with negative phi values and perform a mask to VOI conversion
+ * to obtain the output curve.</p>
  *
- *      Extensions to 3D are very straightforward except possibly for the 3D mean
- *      curvature.  Equation 6.36 on page 70 is used:
- *      mean curvature = ((phiyy + phizz)phix**2 + (phixx + phizz)phiy**2
- *                      + (phixx + phiyy)phiz**2 - 2(phix)(phiy)(phixy)
- *                      - 2(phix)(phiz)(phixz) -2(phiy)(phiz)(phiyz))/
- *                      (phix**2 + phiy**2 + phiz**2)**1.5
- *
+ * <p>Extensions to 3D are very straightforward except possibly for the 3D mean curvature. Equation 6.36 on page 70 is
+ * used: mean curvature = ((phiyy + phizz)phix**2 + (phixx + phizz)phiy**2 + (phixx + phiyy)phiz**2 -
+ * 2(phix)(phiy)(phixy) - 2(phix)(phiz)(phixz) -2(phiy)(phiz)(phiyz))/ (phix**2 + phiy**2 + phiz**2)**1.5</p>
  */
 public class AlgorithmLevelSet extends AlgorithmBase {
 
-    private final static int EXPAND = 1;
-    private final static int EXPAND_CONTRACT = 2;
-    private final static int CONTRACT = 3;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /**
-     *   Dimensionality of the kernel
-     */
-    private int[] kExtents;
+    /** DOCUMENT ME! */
+    private static final int EXPAND = 1;
 
-    /**
-     *   Standard deviations of the gaussian used to calculate the kernels
-     */
-    private float[] sigmas;
+    /** DOCUMENT ME! */
+    private static final int EXPAND_CONTRACT = 2;
 
-    // EXPAND, EXPAND_CONTRACT, or CONTRACT
-    private int movement;
+    /** DOCUMENT ME! */
+    private static final int CONTRACT = 3;
 
-    /**
-     *   Number of iterations of the diffusion
-     */
-    private int iterations;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**
-     *  Time step
-     *  The defalut is 0.05 for 2D and 0.025 for 3D.
-     */
+    /** Time step The defalut is 0.05 for 2D and 0.025 for 3D. */
     private float deltaT = 0.05f;
 
     /**
-     *  epsilon is used to smooth high curvature regions.  epsilon is between
-     *  0 and 1 with larger epsilon doing more smoothing
-     */
-    private float epsilon = 0.05f;
-
-    /**
-     *  edgeAttract is the ratio of the maximum value of the absolute value of the
-     *  edge attractive force to the maximum value of the absolute value of the
-     *  sum of the propagation and curvature forces
+     * edgeAttract is the ratio of the maximum value of the absolute value of the edge attractive force to the maximum
+     * value of the absolute value of the sum of the propagation and curvature forces.
      */
     private float edgeAttract = 20.0f;
 
     /**
-     *  If testIters > 0, check if the boundary is unchanged every testIters
-     *  iterations
+     * epsilon is used to smooth high curvature regions. epsilon is between 0 and 1 with larger epsilon doing more
+     * smoothing
      */
-    private int testIters = 100;
+    private float epsilon = 0.05f;
 
-    /**
-     *   Storage location of the first derivative of the Gaussian in the X direction
-     */
+    /** Storage location of the first derivative of the Gaussian in the X direction. */
     private float[] GxData;
 
-    /**
-     *   Storage location of the first derivative of the Gaussian in the Y direction
-     */
+    /** Storage location of the first derivative of the Gaussian in the Y direction. */
     private float[] GyData;
 
-    /**
-     *   Storage location of the first derivative of the Gaussian in the Z direction
-     */
+    /** Storage location of the first derivative of the Gaussian in the Z direction. */
     private float[] GzData;
 
+    /** Number of iterations of the diffusion. */
+    private int iterations;
+
+    /** Dimensionality of the kernel. */
+    private int[] kExtents;
+
+    /** EXPAND, EXPAND_CONTRACT, or CONTRACT. */
+    private int movement;
+
+    /** Standard deviations of the gaussian used to calculate the kernels. */
+    private float[] sigmas;
+
+    /** If testIters > 0, check if the boundary is unchanged every testIters iterations. */
+    private int testIters = 100;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *   LevelSet
-     *   @param srcImg      reference to the source image
-     *   @param sigmas      sigmas used to describe the gaussian that is
-     *                      used in the calculation of the gradient magnitude
-     *   @param movement    EXPAND, EXPAND_CONTRACT, or CONTRACT
-     *   @param iter        number of iterations (t) of the diffusion equation
-     *   @param deltaT      time step
-     *   @param epsilon     smoothing factor between 0 and 1 with higher values
-     *                      giving greater smoothing
-     *   @param edgeAttract the ratio of the maximum value of the absolute value
-     *                      of the edge attractive force to the maximum value of
-     *                      the absolute value of the sum of the propagation and
-     *                      curvature forces
-     *   @param testIters   If testIters > 0, check if the boundary is unchanged
-     *                      every testIters iterations
+     * LevelSet.
+     *
+     * @param  srcImg       reference to the source image
+     * @param  sigmas       sigmas used to describe the gaussian that is used in the calculation of the gradient
+     *                      magnitude
+     * @param  movement     EXPAND, EXPAND_CONTRACT, or CONTRACT
+     * @param  iter         number of iterations (t) of the diffusion equation
+     * @param  deltaT       time step
+     * @param  epsilon      smoothing factor between 0 and 1 with higher values giving greater smoothing
+     * @param  edgeAttract  the ratio of the maximum value of the absolute value of the edge attractive force to the
+     *                      maximum value of the absolute value of the sum of the propagation and curvature forces
+     * @param  testIters    If testIters > 0, check if the boundary is unchanged every testIters iterations
      */
-    public AlgorithmLevelSet( ModelImage srcImg, float[] sigmas, int movement,
-            int iter, float deltaT, float epsilon,
-            float edgeAttract, int testIters ) {
-        super( null, srcImg );
+    public AlgorithmLevelSet(ModelImage srcImg, float[] sigmas, int movement, int iter, float deltaT, float epsilon,
+                             float edgeAttract, int testIters) {
+        super(null, srcImg);
 
         this.sigmas = sigmas;
         this.movement = movement;
@@ -225,22 +160,18 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         this.edgeAttract = edgeAttract;
         this.testIters = testIters;
 
-        if ( srcImg.getNDims() == 2 ) {
+        if (srcImg.getNDims() == 2) {
             makeKernels2D();
-        } else if ( srcImg.getNDims() > 2 ) {
+        } else if (srcImg.getNDims() > 2) {
             makeKernels3D();
         }
     }
 
-    /**
-     *   finalize - sets class storages arrays to null so that System.gc() can
-     *              free the memory.
-     */
-    public void finalize() {
-        cleanUp();
-        super.finalize();
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * DOCUMENT ME!
+     */
     public void cleanUp() {
         GxData = null;
         GyData = null;
@@ -251,129 +182,33 @@ public class AlgorithmLevelSet extends AlgorithmBase {
     }
 
     /**
-     *   makeKernals2D - creates the derivative kernels used to calculate the gradient
-     *                   magnitude and kernel for the diffusion process.
+     * finalize - sets class storages arrays to null so that System.gc() can free the memory.
      */
-    private void makeKernels2D() {
-        int xkDim, ykDim;
-        int[] derivOrder = new int[2];
-
-        kExtents = new int[2];
-        derivOrder[0] = 1;
-        derivOrder[1] = 0;
-
-        xkDim = Math.round( 5 * sigmas[0] );
-        if ( xkDim % 2 == 0 ) {
-            xkDim++;
-        }
-        if ( xkDim < 3 ) {
-            xkDim = 3;
-        }
-        kExtents[0] = xkDim;
-
-        ykDim = Math.round( 5 * sigmas[1] );
-        if ( ykDim % 2 == 0 ) {
-            ykDim++;
-        }
-        if ( ykDim < 3 ) {
-            ykDim = 3;
-        }
-        kExtents[1] = ykDim;
-
-        GxData = new float[xkDim * ykDim];
-        GenerateGaussian Gx = new GenerateGaussian( GxData, kExtents, sigmas, derivOrder );
-
-        Gx.calc( false );
-
-        derivOrder[0] = 0;
-        derivOrder[1] = 1;
-        GyData = new float[xkDim * ykDim];
-        GenerateGaussian Gy = new GenerateGaussian( GyData, kExtents, sigmas, derivOrder );
-
-        Gy.calc( true );
+    public void finalize() {
+        cleanUp();
+        super.finalize();
     }
 
     /**
-     *   makeKernals3D - creates the derivative kernels used to calculate the gradient
-     *                   magnitude and kernel for the diffusion process.
-     */
-    private void makeKernels3D() {
-        int xkDim, ykDim, zkDim;
-        int[] derivOrder = new int[3];
-
-        kExtents = new int[3];
-        derivOrder[0] = 1;
-        derivOrder[1] = 0;
-        derivOrder[2] = 0;
-
-        xkDim = Math.round( 5 * sigmas[0] );
-        if ( xkDim % 2 == 0 ) {
-            xkDim++;
-        }
-        if ( xkDim < 3 ) {
-            xkDim = 3;
-        }
-        kExtents[0] = xkDim;
-
-        ykDim = Math.round( 5 * sigmas[1] );
-        if ( ykDim % 2 == 0 ) {
-            ykDim++;
-        }
-        if ( ykDim < 3 ) {
-            ykDim = 3;
-        }
-        kExtents[1] = ykDim;
-
-        zkDim = Math.round( 5 * sigmas[2] );
-        if ( zkDim % 2 == 0 ) {
-            zkDim++;
-        }
-        if ( zkDim < 3 ) {
-            zkDim = 3;
-        }
-        kExtents[2] = zkDim;
-
-        GxData = new float[xkDim * ykDim * zkDim];
-        GenerateGaussian Gx = new GenerateGaussian( GxData, kExtents, sigmas, derivOrder );
-
-        Gx.calc( false );
-
-        derivOrder[0] = 0;
-        derivOrder[1] = 1;
-        derivOrder[2] = 0;
-        GyData = new float[xkDim * ykDim * zkDim];
-        GenerateGaussian Gy = new GenerateGaussian( GyData, kExtents, sigmas, derivOrder );
-
-        Gy.calc( true );
-
-        derivOrder[0] = 0;
-        derivOrder[1] = 0;
-        derivOrder[2] = 1;
-        GzData = new float[xkDim * ykDim * zkDim];
-        GenerateGaussian Gz = new GenerateGaussian( GzData, kExtents, sigmas, derivOrder );
-
-        Gz.calc( true );
-    }
-
-    /**
-     *   starts the algorithm
+     * starts the algorithm.
      */
     public void runAlgorithm() {
-        if ( srcImage == null ) {
-            displayError( "Source Image is null" );
+
+        if (srcImage == null) {
+            displayError("Source Image is null");
+
             return;
         }
 
-        if ( srcImage.getNDims() == 2 ) {
+        if (srcImage.getNDims() == 2) {
             calc2D();
-        } else if ( srcImage.getNDims() > 2 ) {
+        } else if (srcImage.getNDims() > 2) {
             calc3D();
         }
     }
 
     /**
-     *   calc2D - Calculates level set from contours, propagates level set,
-     *            and obtains new contour voi from level set.
+     * calc2D - Calculates level set from contours, propagates level set, and obtains new contour voi from level set.
      */
     private void calc2D() {
 
@@ -430,32 +265,35 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             active = new boolean[length];
             boundaryX = new int[length];
             boundaryY = new int[length];
-            srcImage.exportData( 0, length, gBuffer ); // locks and releases lock
-            buildProgressBar( srcImage.getImageName(), "Evolving the level set ...", 0, 100 );
-        } catch ( IOException error ) {
+            srcImage.exportData(0, length, gBuffer); // locks and releases lock
+            buildProgressBar(srcImage.getImageName(), "Evolving the level set ...", 0, 100);
+        } catch (IOException error) {
             cleanUp();
             System.gc();
-            displayError( "Level set: Image(s) locked" );
-            setCompleted( false );
+            displayError("Level set: Image(s) locked");
+            setCompleted(false);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();
-            displayError( "Level set: Out of Memory" );
-            setCompleted( false );
+            displayError("Level set: Out of Memory");
+            setCompleted(false);
+
             return;
         }
 
         VOIs = srcImage.getVOIs();
         nVOI = VOIs.size();
 
-        for ( i = 0; i < nVOI; i++ ) {
-            if ( VOIs.VOIAt( i ).getCurveType() == VOI.CONTOUR ) {
+        for (i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 break;
             }
         }
 
-        contourVOI = VOIs.VOIAt( i );
+        contourVOI = VOIs.VOIAt(i);
 
         initProgressBar();
 
@@ -463,57 +301,64 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         maxGrad = 0.0f;
         minGrad = Float.MAX_VALUE;
-        for ( i = 0; i < length; i++ ) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve2DPt( i, imageExtents, gBuffer, kExtents, GxData );
-            iy = AlgorithmConvolver.convolve2DPt( i, imageExtents, gBuffer, kExtents, GyData );
-            pBuffer[i] = (float) Math.sqrt( ix * ix + iy * iy );
-            if ( pBuffer[i] > maxGrad ) {
+
+        for (i = 0; i < length; i++) { // calculate gradient magnitude
+            ix = AlgorithmConvolver.convolve2DPt(i, imageExtents, gBuffer, kExtents, GxData);
+            iy = AlgorithmConvolver.convolve2DPt(i, imageExtents, gBuffer, kExtents, GyData);
+            pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+
+            if (pBuffer[i] > maxGrad) {
                 maxGrad = pBuffer[i];
             }
-            if ( pBuffer[i] < minGrad ) {
+
+            if (pBuffer[i] < minGrad) {
                 minGrad = pBuffer[i];
             }
 
             // Normalize the gradient magnitude to go from 0 to 100
         }
-        if ( maxGrad > minGrad ) {
+
+        if (maxGrad > minGrad) {
             divisor = maxGrad - minGrad;
         } else {
             divisor = 1.0f;
         }
-        for ( i = 0; i < length; i++ ) {
-            pBuffer[i] = ( pBuffer[i] - minGrad ) * 100.0f / divisor;
+
+        for (i = 0; i < length; i++) {
+            pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
         }
 
-        for ( i = 0; i < length; i++ ) {
-            gBuffer[i] = 1 / ( 1 + pBuffer[i] );
+        for (i = 0; i < length; i++) {
+            gBuffer[i] = 1 / (1 + pBuffer[i]);
         }
 
-        if ( isProgressBarVisible() ) {
-            progressBar.updateValue( 2, activeImage );
+        if (isProgressBarVisible()) {
+            progressBar.updateValue(2, activeImage);
         }
 
         // Adjust beta after the first trial run thru.
         beta = 1.0f;
-        for ( i = xDim + 1; i < length - xDim - 1; i++ ) {
+
+        for (i = xDim + 1; i < (length - xDim - 1); i++) {
             xPos = i % xDim;
-            if ( ( xPos >= 1 ) && ( xPos < ( xDim - 1 ) ) ) {
-                uComp[i] = beta * ( pBuffer[i + 1] - pBuffer[i - 1] ) / 2.0f;
-                vComp[i] = beta * ( pBuffer[i + xDim] - pBuffer[i - xDim] ) / 2.0f;
+
+            if ((xPos >= 1) && (xPos < (xDim - 1))) {
+                uComp[i] = beta * (pBuffer[i + 1] - pBuffer[i - 1]) / 2.0f;
+                vComp[i] = beta * (pBuffer[i + xDim] - pBuffer[i - xDim]) / 2.0f;
             }
         }
 
         pBuffer = null;
         System.gc();
 
-        if ( isProgressBarVisible() ) {
-            progressBar.updateValue( 4, activeImage );
+        if (isProgressBarVisible()) {
+            progressBar.updateValue(4, activeImage);
         }
 
-        for ( i = 0; i < length && !threadStopped; i++ ) {
+        for (i = 0; (i < length) && !threadStopped; i++) {
             yPos = i / xDim;
             xPos = i % xDim;
-            phiImage[i] = contourVOI.slicePointToContour( 0, xPos, yPos );
+            phiImage[i] = contourVOI.slicePointToContour(0, xPos, yPos);
             phiNext[i] = phiImage[i];
             originalPhi[i] = phiImage[i];
         }
@@ -528,178 +373,200 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         // states: "Our experience indicates that a narrow band width of about
         // six grid points on either side of the zero level set is a reasonable
         // balance between re-initialization costs and update costs."
-        for ( i = 0; i < length; i++ ) {
+        for (i = 0; i < length; i++) {
             active[i] = true;
         }
-        if ( movement == CONTRACT ) {
-            for ( i = 0; i < length; i++ ) {
-                if ( phiImage[i] > 6.0 ) {
+
+        if (movement == CONTRACT) {
+
+            for (i = 0; i < length; i++) {
+
+                if (phiImage[i] > 6.0) {
                     active[i] = false;
                 }
             }
         } else { // EXPAND or EXPAND_CONTRACT
-            for ( i = 0; i < length; i++ ) {
-                if ( ( phiImage[i] > 6.0 ) || ( phiImage[i] < -6.0 ) ) {
+
+            for (i = 0; i < length; i++) {
+
+                if ((phiImage[i] > 6.0) || (phiImage[i] < -6.0)) {
                     active[i] = false;
                 }
             }
         }
 
-        if ( isProgressBarVisible() ) {
-            progressBar.updateValue( 6, activeImage );
+        if (isProgressBarVisible()) {
+            progressBar.updateValue(6, activeImage);
         }
 
         c13max = -Double.MAX_VALUE;
         c2max = -Double.MAX_VALUE;
+
         // On every iteration adjust beta to make |c2|max = edgeAttract*|c1+c3|max
         // so the attractive force predominates over the other 2 forces
         // Let beta = 1.0 for the first run of this equation.
-        for ( i = xDim + 1; i < length - xDim - 1 && !threadStopped; i++ ) {
-            if ( active[i] ) {
+        for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+
+            if (active[i]) {
                 xPos = i % xDim;
-                if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) ) {
+
+                if ((xPos >= 1) && (xPos < (xDim - 1))) {
                     dMinusX = phiImage[i] - phiImage[i - 1];
                     dPlusX = phiImage[i + 1] - phiImage[i];
                     dMinusY = phiImage[i] - phiImage[i - xDim];
                     dPlusY = phiImage[i + xDim] - phiImage[i];
-                    if ( ( movement == EXPAND ) || ( movement == EXPAND_CONTRACT ) ) {
-                        c1a = Math.max( dMinusX, 0 );
-                        c1b = Math.min( dPlusX, 0 );
-                        c1c = Math.max( dMinusY, 0 );
-                        c1d = Math.min( dPlusY, 0 );
-                        gradPlus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d );
+
+                    if ((movement == EXPAND) || (movement == EXPAND_CONTRACT)) {
+                        c1a = Math.max(dMinusX, 0);
+                        c1b = Math.min(dPlusX, 0);
+                        c1c = Math.max(dMinusY, 0);
+                        c1d = Math.min(dPlusY, 0);
+                        gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
                         c1 = -gBuffer[i] * gradPlus;
                     } else { // CONTRACT
-                        c1a = Math.max( dPlusX, 0 );
-                        c1b = Math.min( dMinusX, 0 );
-                        c1c = Math.max( dPlusY, 0 );
-                        c1d = Math.min( dMinusY, 0 );
-                        gradMinus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d );
+                        c1a = Math.max(dPlusX, 0);
+                        c1b = Math.min(dMinusX, 0);
+                        c1c = Math.max(dPlusY, 0);
+                        c1d = Math.min(dMinusY, 0);
+                        gradMinus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
                         c1 = gBuffer[i] * gradMinus;
                     }
-                    c2 = -( Math.max( uComp[i], 0 ) * dMinusX + Math.min( uComp[i], 0 ) * dPlusX
-                            + Math.max( vComp[i], 0 ) * dMinusY + Math.min( vComp[i], 0 ) * dPlusY );
 
-                    phix = ( phiImage[i + 1] - phiImage[i - 1] ) * 0.5;
-                    phiy = ( phiImage[i + xDim] - phiImage[i - xDim] ) * 0.5;
-                    phixx = phiImage[i + 1] - 2 * phiImage[i] + phiImage[i - 1];
-                    phiyy = phiImage[i + xDim] - 2 * phiImage[i] + phiImage[i - xDim];
-                    phixy = ( phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1]
-                            + phiImage[i - xDim - 1] )
-                            * 0.25;
+                    c2 = -((Math.max(uComp[i], 0) * dMinusX) + (Math.min(uComp[i], 0) * dPlusX) +
+                           (Math.max(vComp[i], 0) * dMinusY) + (Math.min(vComp[i], 0) * dPlusY));
+
+                    phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                    phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                    phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                    phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                    phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                             phiImage[i - xDim - 1]) * 0.25;
 
                     double phix2 = phix * phix;
                     double phiy2 = phiy * phiy;
 
                     denom = phix2 + phiy2;
-                    if ( denom > 0 ) {
-                        c3 = ( phixx * phiy2 - 2 * phiy * phix * phixy + phiyy * phix2 ) / denom;
+
+                    if (denom > 0) {
+                        c3 = ((phixx * phiy2) - (2 * phiy * phix * phixy) + (phiyy * phix2)) / denom;
                         c3 *= epsilon * gBuffer[i];
                     } else {
                         c3 = 0.0;
                     }
-                    if ( Math.abs( c1 + c3 ) > c13max ) {
-                        c13max = Math.abs( c1 + c3 );
+
+                    if (Math.abs(c1 + c3) > c13max) {
+                        c13max = Math.abs(c1 + c3);
                     }
-                    if ( Math.abs( c2 ) > c2max ) {
-                        c2max = Math.abs( c2 );
+
+                    if (Math.abs(c2) > c2max) {
+                        c2max = Math.abs(c2);
                     }
                 }
 
             }
         }
-        beta = (float) ( edgeAttract * c13max / c2max );
+
+        beta = (float) (edgeAttract * c13max / c2max);
 
         long startTime = System.currentTimeMillis();
 
-        for ( n = 0; n < iterations && !threadStopped && haveChanged; n++ ) {
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( 10 + Math.round( (float) n / ( iterations - 1 ) * 90 ), activeImage );
+        for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
+
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(10 + Math.round((float) n / (iterations - 1) * 90), activeImage);
             }
 
             c13max = -Double.MAX_VALUE;
             c2max = -Double.MAX_VALUE;
             boundaryLength = 0;
-            if ( checkIters == n ) {
+
+            if (checkIters == n) {
                 haveChanged = false;
                 checkIters2 = n;
             }
-            for ( i = xDim + 1; i < length - xDim - 1 && !threadStopped; i++ ) {
-                if ( active[i] ) {
+
+            for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+
+                if (active[i]) {
                     xPos = i % xDim;
-                    if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) ) {
+
+                    if ((xPos >= 1) && (xPos < (xDim - 1))) {
                         dMinusX = phiImage[i] - phiImage[i - 1];
                         dPlusX = phiImage[i + 1] - phiImage[i];
                         dMinusY = phiImage[i] - phiImage[i - xDim];
                         dPlusY = phiImage[i + xDim] - phiImage[i];
 
-                        if ( ( movement == EXPAND ) || ( movement == EXPAND_CONTRACT ) ) {
-                            c1a = Math.max( dMinusX, 0 );
-                            c1b = Math.min( dPlusX, 0 );
-                            c1c = Math.max( dMinusY, 0 );
-                            c1d = Math.min( dPlusY, 0 );
-                            gradPlus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d );
+                        if ((movement == EXPAND) || (movement == EXPAND_CONTRACT)) {
+                            c1a = Math.max(dMinusX, 0);
+                            c1b = Math.min(dPlusX, 0);
+                            c1c = Math.max(dMinusY, 0);
+                            c1d = Math.min(dPlusY, 0);
+                            gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
                             c1 = -gBuffer[i] * gradPlus;
                         } else { // CONTRACT
-                            c1a = Math.max( dPlusX, 0 );
-                            c1b = Math.min( dMinusX, 0 );
-                            c1c = Math.max( dPlusY, 0 );
-                            c1d = Math.min( dMinusY, 0 );
-                            gradMinus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d );
+                            c1a = Math.max(dPlusX, 0);
+                            c1b = Math.min(dMinusX, 0);
+                            c1c = Math.max(dPlusY, 0);
+                            c1d = Math.min(dMinusY, 0);
+                            gradMinus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
                             c1 = gBuffer[i] * gradMinus;
                         }
-                        c2 = -( Math.max( beta * uComp[i], 0 ) * dMinusX + Math.min( beta * uComp[i], 0 ) * dPlusX
-                                + Math.max( beta * vComp[i], 0 ) * dMinusY + Math.min( beta * vComp[i], 0 ) * dPlusY );
 
-                        phix = ( phiImage[i + 1] - phiImage[i - 1] ) * 0.5;
-                        phiy = ( phiImage[i + xDim] - phiImage[i - xDim] ) * 0.5;
-                        phixx = phiImage[i + 1] - 2 * phiImage[i] + phiImage[i - 1];
-                        phiyy = phiImage[i + xDim] - 2 * phiImage[i] + phiImage[i - xDim];
-                        phixy = ( phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1]
-                                + phiImage[i - xDim - 1] )
-                                * 0.25;
+                        c2 = -((Math.max(beta * uComp[i], 0) * dMinusX) + (Math.min(beta * uComp[i], 0) * dPlusX) +
+                               (Math.max(beta * vComp[i], 0) * dMinusY) + (Math.min(beta * vComp[i], 0) * dPlusY));
+
+                        phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                        phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                        phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                        phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                        phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                 phiImage[i - xDim - 1]) * 0.25;
 
                         double phix2 = phix * phix;
                         double phiy2 = phiy * phiy;
 
                         denom = phix2 + phiy2;
 
-                        if ( denom > 0 ) {
-                            c3 = ( phixx * phiy2 - 2 * phiy * phix * phixy + phiyy * phix2 ) / denom;
+                        if (denom > 0) {
+                            c3 = ((phixx * phiy2) - (2 * phiy * phix * phixy) + (phiyy * phix2)) / denom;
                             c3 *= epsilon * gBuffer[i];
                         } else {
                             c3 = 0.0;
                         }
 
-                        if ( Math.abs( c1 + c3 ) > c13max ) {
-                            c13max = Math.abs( c1 + c3 );
+                        if (Math.abs(c1 + c3) > c13max) {
+                            c13max = Math.abs(c1 + c3);
                         }
 
-                        if ( Math.abs( c2 ) > c2max ) {
-                            c2max = Math.abs( c2 );
+                        if (Math.abs(c2) > c2max) {
+                            c2max = Math.abs(c2);
                         }
 
-                        possiblePhi = phiImage[i] + deltaT * ( c1 + c2 + c3 );
-                        if ( ( movement == EXPAND ) && ( possiblePhi >= 0.0 ) && ( phiImage[i] < 0.0 ) ) {
+                        possiblePhi = phiImage[i] + (deltaT * (c1 + c2 + c3));
+
+                        if ((movement == EXPAND) && (possiblePhi >= 0.0) && (phiImage[i] < 0.0)) {
                             phiNext[i] = phiImage[i];
-                        } else if ( ( movement == CONTRACT ) && ( possiblePhi < 0.0 ) && ( phiImage[i] >= 0.0 ) ) {
+                        } else if ((movement == CONTRACT) && (possiblePhi < 0.0) && (phiImage[i] >= 0.0)) {
                             phiNext[i] = phiImage[i];
                         } else {
                             phiNext[i] = possiblePhi;
                         }
 
-                        if ( ( ( movement == EXPAND ) || ( movement == EXPAND_CONTRACT ) ) && ( phiNext[i] < 0.0 )
-                                && ( originalPhi[i] >= 4.0 ) ) {
+                        if (((movement == EXPAND) || (movement == EXPAND_CONTRACT)) && (phiNext[i] < 0.0) &&
+                                (originalPhi[i] >= 4.0)) {
                             reinitializePhi = true;
-                        } else if ( checkIters2 == n ) {
-                            if ( ( phiImage[i] < 0.0 )
-                                    && ( ( phiImage[i - 1] >= 0.0 ) || ( phiImage[i + 1] >= 0.0 )
-                                    || ( phiImage[i - xDim] >= 0.0 ) || ( phiImage[i + xDim] >= 0.0 ) ) ) {
+                        } else if (checkIters2 == n) {
+
+                            if ((phiImage[i] < 0.0) &&
+                                    ((phiImage[i - 1] >= 0.0) || (phiImage[i + 1] >= 0.0) ||
+                                         (phiImage[i - xDim] >= 0.0) || (phiImage[i + xDim] >= 0.0))) {
                                 yPos = i / xDim;
-                                if ( ( xPos != boundaryX[boundaryLength] ) || ( yPos != boundaryY[boundaryLength] ) ) {
+
+                                if ((xPos != boundaryX[boundaryLength]) || (yPos != boundaryY[boundaryLength])) {
                                     haveChanged = true;
                                     checkIters = n + testIters;
                                 }
+
                                 boundaryX[boundaryLength] = xPos;
                                 boundaryY[boundaryLength++] = yPos;
                             }
@@ -708,25 +575,30 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                 } // if (active[i])
             } // for (i = xDim + 1; i < length-xDim-1 && !threadStopped; i++)
 
-            beta = (float) ( edgeAttract * c13max / c2max );
+            beta = (float) (edgeAttract * c13max / c2max);
             tempBuffer = phiImage;
             phiImage = phiNext;
             phiNext = tempBuffer;
 
-            if ( reinitializePhi ) {
+            if (reinitializePhi) {
                 reinitializePhi = false;
-                if ( checkIters > 0 ) {
+
+                if (checkIters > 0) {
                     checkIters = n + testIters;
                 }
 
                 boundaryLength = 0;
-                for ( i = xDim + 1; i < length - xDim - 1 && !threadStopped; i++ ) {
-                    if ( active[i] ) {
+
+                for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+
+                    if (active[i]) {
                         xPos = i % xDim;
-                        if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) ) {
-                            if ( ( phiImage[i] < 0.0 )
-                                    && ( ( phiImage[i - 1] >= 0.0 ) || ( phiImage[i + 1] >= 0.0 )
-                                    || ( phiImage[i - xDim] >= 0.0 ) || ( phiImage[i + xDim] >= 0.0 ) ) ) {
+
+                        if ((xPos >= 1) && (xPos < (xDim - 1))) {
+
+                            if ((phiImage[i] < 0.0) &&
+                                    ((phiImage[i - 1] >= 0.0) || (phiImage[i + 1] >= 0.0) ||
+                                         (phiImage[i - xDim] >= 0.0) || (phiImage[i + xDim] >= 0.0))) {
                                 boundaryX[boundaryLength] = xPos;
                                 boundaryY[boundaryLength++] = i / xDim;
                             }
@@ -734,25 +606,30 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                     }
                 }
 
-                for ( i = 0; i < length && !threadStopped; i++ ) {
+                for (i = 0; (i < length) && !threadStopped; i++) {
                     yPos = i / xDim;
                     xPos = i % xDim;
                     minDistance = Double.MAX_VALUE;
-                    for ( j = 0; j < boundaryLength; j++ ) {
-                        distance = ( ( boundaryY[j] - yPos ) * ( boundaryY[j] - yPos )
-                                + ( boundaryX[j] - xPos ) * ( boundaryX[j] - xPos ) );
-                        if ( distance < minDistance ) {
+
+                    for (j = 0; j < boundaryLength; j++) {
+                        distance = (((boundaryY[j] - yPos) * (boundaryY[j] - yPos)) +
+                                    ((boundaryX[j] - xPos) * (boundaryX[j] - xPos)));
+
+                        if (distance < minDistance) {
                             minDistance = distance;
                         }
                     }
-                    if ( phiImage[i] < 0 ) {
-                        phiImage[i] = -Math.sqrt( minDistance );
+
+                    if (phiImage[i] < 0) {
+                        phiImage[i] = -Math.sqrt(minDistance);
                     } else {
-                        phiImage[i] = Math.sqrt( minDistance );
+                        phiImage[i] = Math.sqrt(minDistance);
                     }
+
                     phiNext[i] = phiImage[i];
                     originalPhi[i] = phiImage[i];
-                    if ( ( phiImage[i] > 6.0 ) || ( phiImage[i] < -6.0 ) ) {
+
+                    if ((phiImage[i] > 6.0) || (phiImage[i] < -6.0)) {
                         active[i] = false;
                     } else {
                         active[i] = true;
@@ -761,74 +638,80 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
                 c13max = -Double.MAX_VALUE;
                 c2max = -Double.MAX_VALUE;
+
                 // On every iteration adjust beta to make |c2|max = edgeAttract*|c1+c3|max
                 // so the attractive force predominates over the other 2 forces
-                for ( i = xDim + 1; i < length - xDim - 1 && !threadStopped; i++ ) {
-                    if ( active[i] ) {
+                for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+
+                    if (active[i]) {
                         xPos = i % xDim;
-                        if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) ) {
+
+                        if ((xPos >= 1) && (xPos < (xDim - 1))) {
                             dMinusX = phiImage[i] - phiImage[i - 1];
                             dPlusX = phiImage[i + 1] - phiImage[i];
                             dMinusY = phiImage[i] - phiImage[i - xDim];
                             dPlusY = phiImage[i + xDim] - phiImage[i];
 
-                            c1a = Math.max( dMinusX, 0 );
-                            c1b = Math.min( dPlusX, 0 );
-                            c1c = Math.max( dMinusY, 0 );
-                            c1d = Math.min( dPlusY, 0 );
-                            gradPlus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d );
+                            c1a = Math.max(dMinusX, 0);
+                            c1b = Math.min(dPlusX, 0);
+                            c1c = Math.max(dMinusY, 0);
+                            c1d = Math.min(dPlusY, 0);
+                            gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
                             c1 = -gBuffer[i] * gradPlus;
-                            c2 = -( Math.max( uComp[i], 0 ) * dMinusX + Math.min( uComp[i], 0 ) * dPlusX
-                                    + Math.max( vComp[i], 0 ) * dMinusY + Math.min( vComp[i], 0 ) * dPlusY );
+                            c2 = -((Math.max(uComp[i], 0) * dMinusX) + (Math.min(uComp[i], 0) * dPlusX) +
+                                   (Math.max(vComp[i], 0) * dMinusY) + (Math.min(vComp[i], 0) * dPlusY));
 
-                            phix = ( phiImage[i + 1] - phiImage[i - 1] ) * 0.5;
-                            phiy = ( phiImage[i + xDim] - phiImage[i - xDim] ) * 0.5;
-                            phixx = phiImage[i + 1] - 2 * phiImage[i] + phiImage[i - 1];
-                            phiyy = phiImage[i + xDim] - 2 * phiImage[i] + phiImage[i - xDim];
-                            phixy = ( phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1]
-                                    + phiImage[i - xDim - 1] )
-                                    * 0.25;
+                            phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                            phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                            phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                            phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                            phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                     phiImage[i - xDim - 1]) * 0.25;
 
                             double phix2 = phix * phix;
                             double phiy2 = phiy * phiy;
 
                             denom = phix2 + phiy2;
-                            denom = phix * phix + phiy * phiy;
-                            if ( denom > 0 ) {
-                                c3 = ( phixx * phiy2 - 2 * phiy * phix * phixy + phiyy * phix2 ) / denom;
+                            denom = (phix * phix) + (phiy * phiy);
+
+                            if (denom > 0) {
+                                c3 = ((phixx * phiy2) - (2 * phiy * phix * phixy) + (phiyy * phix2)) / denom;
                                 c3 *= epsilon * gBuffer[i];
                             } else {
                                 c3 = 0.0;
                             }
 
-                            if ( Math.abs( c1 + c3 ) > c13max ) {
-                                c13max = Math.abs( c1 + c3 );
+                            if (Math.abs(c1 + c3) > c13max) {
+                                c13max = Math.abs(c1 + c3);
                             }
-                            if ( Math.abs( c2 ) > c2max ) {
-                                c2max = Math.abs( c2 );
+
+                            if (Math.abs(c2) > c2max) {
+                                c2max = Math.abs(c2);
                             }
                         }
 
                     }
                 }
-                beta = (float) ( edgeAttract * c13max / c2max );
+
+                beta = (float) (edgeAttract * c13max / c2max);
 
             } // if (reinitializePhi)
         } // for(n = 0; n < iterations && !threadStopped && haveChanged; n++)
 
         long now = System.currentTimeMillis();
-        double elapsedTime = (double) ( now - startTime );
+        double elapsedTime = (double) (now - startTime);
 
-        System.out.println( "Algo levelset time = " + elapsedTime );
+        System.out.println("Algo levelset time = " + elapsedTime);
 
         phiNext = null;
         tempBuffer = null;
         System.gc();
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             disposeProgressBar();
-            setCompleted( false );
+            setCompleted(false);
             finalize();
+
             return;
         }
 
@@ -837,40 +720,41 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         nVOI = VOIs.size();
 
-        if ( nVOI == 0 ) {
+        if (nVOI == 0) {
             return;
         }
-        for ( i = ( nVOI - 1 ); i >= 0; i-- ) {
-            VOIs.removeElementAt( i );
+
+        for (i = (nVOI - 1); i >= 0; i--) {
+            VOIs.removeElementAt(i);
         }
 
         voiID = 0;
-        mask = new BitSet( length );
+        mask = new BitSet(length);
 
         // Note that must use phiImage[i] < 0.0 and not phiImage[i] <= 0.0
         // or the contour will expand even if phi does not change
-        for ( i = 0; i < length; i++ ) {
-            if ( phiImage[i] < 0.0 ) {
-                mask.set( i );
+        for (i = 0; i < length; i++) {
+
+            if (phiImage[i] < 0.0) {
+                mask.set(i);
             } else {
-                mask.clear( i );
+                mask.clear(i);
             }
         }
 
-        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint( srcImage, mask, xDim, yDim, zDim,
-                voiID );
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
+                                                                                     voiID);
 
-        algoPaintToVOI.setProgressBarVisible( false );
+        algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
         algoPaintToVOI = null;
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
     }
 
     /**
-     *   calc3D - Calculates level set from contours, propagates level set,
-     *            and obtains new contour voi from level set.
+     * calc3D - Calculates level set from contours, propagates level set, and obtains new contour voi from level set.
      */
     private void calc3D() {
         float beta; // controls attraction of contours to boundaries
@@ -932,32 +816,35 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             boundaryX = new int[length];
             boundaryY = new int[length];
             boundaryZ = new int[length];
-            srcImage.exportData( 0, length, gBuffer ); // locks and releases lock
-            buildProgressBar( srcImage.getImageName(), "Evolving the level set ...", 0, 100 );
-        } catch ( IOException error ) {
+            srcImage.exportData(0, length, gBuffer); // locks and releases lock
+            buildProgressBar(srcImage.getImageName(), "Evolving the level set ...", 0, 100);
+        } catch (IOException error) {
             cleanUp();
             System.gc();
-            displayError( "Level set: Image(s) locked" );
-            setCompleted( false );
+            displayError("Level set: Image(s) locked");
+            setCompleted(false);
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             cleanUp();
             System.gc();
-            displayError( "Level set: Out of Memory" );
-            setCompleted( false );
+            displayError("Level set: Out of Memory");
+            setCompleted(false);
+
             return;
         }
 
         VOIs = srcImage.getVOIs();
         nVOI = VOIs.size();
 
-        for ( i = 0; i < nVOI; i++ ) {
-            if ( VOIs.VOIAt( i ).getCurveType() == VOI.CONTOUR ) {
+        for (i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 break;
             }
         }
 
-        contourVOI = VOIs.VOIAt( i );
+        contourVOI = VOIs.VOIAt(i);
 
         initProgressBar();
 
@@ -965,61 +852,67 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         maxGrad = 0.0f;
         minGrad = Float.MAX_VALUE;
-        for ( i = 0; i < length; i++ ) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve3DPt( i, imageExtents, gBuffer, kExtents, GxData );
-            iy = AlgorithmConvolver.convolve3DPt( i, imageExtents, gBuffer, kExtents, GyData );
-            iz = AlgorithmConvolver.convolve3DPt( i, imageExtents, gBuffer, kExtents, GzData );
-            pBuffer[i] = (float) Math.sqrt( ix * ix + iy * iy + iz * iz );
-            if ( pBuffer[i] > maxGrad ) {
+
+        for (i = 0; i < length; i++) { // calculate gradient magnitude
+            ix = AlgorithmConvolver.convolve3DPt(i, imageExtents, gBuffer, kExtents, GxData);
+            iy = AlgorithmConvolver.convolve3DPt(i, imageExtents, gBuffer, kExtents, GyData);
+            iz = AlgorithmConvolver.convolve3DPt(i, imageExtents, gBuffer, kExtents, GzData);
+            pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy) + (iz * iz));
+
+            if (pBuffer[i] > maxGrad) {
                 maxGrad = pBuffer[i];
             }
-            if ( pBuffer[i] < minGrad ) {
+
+            if (pBuffer[i] < minGrad) {
                 minGrad = pBuffer[i];
             }
         }
 
         // Normalize the gradient magnitude to go from 0 to 100
-        if ( maxGrad > minGrad ) {
+        if (maxGrad > minGrad) {
             divisor = maxGrad - minGrad;
         } else {
             divisor = 1.0f;
         }
-        for ( i = 0; i < length; i++ ) {
-            pBuffer[i] = ( pBuffer[i] - minGrad ) * 100.0f / divisor;
+
+        for (i = 0; i < length; i++) {
+            pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
         }
 
-        for ( i = 0; i < length; i++ ) {
-            gBuffer[i] = 1 / ( 1 + pBuffer[i] );
+        for (i = 0; i < length; i++) {
+            gBuffer[i] = 1 / (1 + pBuffer[i]);
         }
 
-        if ( isProgressBarVisible() ) {
-            progressBar.updateValue( 2, activeImage );
+        if (isProgressBarVisible()) {
+            progressBar.updateValue(2, activeImage);
         }
 
         // Adjust beta after the first trial run thru.
         beta = 1.0f;
-        for ( i = sliceSize + xDim + 1; i < length - sliceSize - xDim - 1; i++ ) {
+
+        for (i = sliceSize + xDim + 1; i < (length - sliceSize - xDim - 1); i++) {
             xPos = i % xDim;
-            yPos = ( i % sliceSize ) / xDim;
-            if ( ( xPos >= 1 ) && ( xPos < ( xDim - 1 ) ) && ( yPos >= 1 ) && ( yPos < ( yDim - 1 ) ) ) {
-                uComp[i] = beta * ( pBuffer[i + 1] - pBuffer[i - 1] ) * 0.5f;
-                vComp[i] = beta * ( pBuffer[i + xDim] - pBuffer[i - xDim] ) * 0.5f;
-                wComp[i] = beta * ( pBuffer[i + sliceSize] - pBuffer[i - sliceSize] ) * 0.5f;
+            yPos = (i % sliceSize) / xDim;
+
+            if ((xPos >= 1) && (xPos < (xDim - 1)) && (yPos >= 1) && (yPos < (yDim - 1))) {
+                uComp[i] = beta * (pBuffer[i + 1] - pBuffer[i - 1]) * 0.5f;
+                vComp[i] = beta * (pBuffer[i + xDim] - pBuffer[i - xDim]) * 0.5f;
+                wComp[i] = beta * (pBuffer[i + sliceSize] - pBuffer[i - sliceSize]) * 0.5f;
             }
         }
 
         pBuffer = null;
         System.gc();
 
-        if ( isProgressBarVisible() ) {
-            progressBar.updateValue( 4, activeImage );
+        if (isProgressBarVisible()) {
+            progressBar.updateValue(4, activeImage);
         }
 
-        for ( i = 0; i < length && !threadStopped; i++ ) {
+        for (i = 0; (i < length) && !threadStopped; i++) {
             zPos = i / sliceSize;
-            yPos = ( i % sliceSize ) / xDim;
+            yPos = (i % sliceSize) / xDim;
             xPos = i % xDim;
-            phiImage[i] = contourVOI.pointToContour( xPos, yPos, zPos );
+            phiImage[i] = contourVOI.pointToContour(xPos, yPos, zPos);
             phiNext[i] = phiImage[i];
             originalPhi[i] = phiImage[i];
         }
@@ -1034,37 +927,45 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         // states: "Our experience indicates that a narrow band width of about
         // six grid points on either side of the zero level set is a reasonable
         // balance between re-initialization costs and update costs."
-        for ( i = 0; i < length; i++ ) {
+        for (i = 0; i < length; i++) {
             active[i] = true;
         }
-        if ( movement == CONTRACT ) {
-            for ( i = 0; i < length; i++ ) {
-                if ( phiImage[i] > 6.0 ) {
+
+        if (movement == CONTRACT) {
+
+            for (i = 0; i < length; i++) {
+
+                if (phiImage[i] > 6.0) {
                     active[i] = false;
                 }
             }
         } else { // EXPAND or EXPAND_CONTRACT
-            for ( i = 0; i < length; i++ ) {
-                if ( ( phiImage[i] > 6.0 ) || ( phiImage[i] < -6.0 ) ) {
+
+            for (i = 0; i < length; i++) {
+
+                if ((phiImage[i] > 6.0) || (phiImage[i] < -6.0)) {
                     active[i] = false;
                 }
             }
         }
 
-        if ( isProgressBarVisible() ) {
-            progressBar.updateValue( 6, activeImage );
+        if (isProgressBarVisible()) {
+            progressBar.updateValue(6, activeImage);
         }
 
         c13max = -Double.MAX_VALUE;
         c2max = -Double.MAX_VALUE;
+
         // On every iteration adjust beta to make |c2|max = edgeAttract*|c1+c3|max
         // so the attractive force predominates over the other 2 forces
         // Let beta = 1.0 for the first run of this equation.
-        for ( i = sliceSize + xDim + 1; i < length - sliceSize - xDim - 1 && !threadStopped; i++ ) {
-            if ( active[i] ) {
-                yPos = ( i % sliceSize ) / xDim;
+        for (i = sliceSize + xDim + 1; (i < (length - sliceSize - xDim - 1)) && !threadStopped; i++) {
+
+            if (active[i]) {
+                yPos = (i % sliceSize) / xDim;
                 xPos = i % xDim;
-                if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) && ( yPos >= 1 ) && ( yPos < yDim - 1 ) ) {
+
+                if ((xPos >= 1) && (xPos < (xDim - 1)) && (yPos >= 1) && (yPos < (yDim - 1))) {
                     dMinusX = phiImage[i] - phiImage[i - 1];
                     dPlusX = phiImage[i + 1] - phiImage[i];
                     dMinusY = phiImage[i] - phiImage[i - xDim];
@@ -1072,162 +973,179 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                     dMinusZ = phiImage[i] - phiImage[i - sliceSize];
                     dPlusZ = phiImage[i + sliceSize] - phiImage[i];
 
-                    if ( ( movement == EXPAND ) || ( movement == EXPAND_CONTRACT ) ) {
-                        c1a = Math.max( dMinusX, 0 );
-                        c1b = Math.min( dPlusX, 0 );
-                        c1c = Math.max( dMinusY, 0 );
-                        c1d = Math.min( dPlusY, 0 );
-                        c1e = Math.max( dMinusZ, 0 );
-                        c1f = Math.min( dPlusZ, 0 );
-                        gradPlus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d + c1e * c1e + c1f * c1f );
+                    if ((movement == EXPAND) || (movement == EXPAND_CONTRACT)) {
+                        c1a = Math.max(dMinusX, 0);
+                        c1b = Math.min(dPlusX, 0);
+                        c1c = Math.max(dMinusY, 0);
+                        c1d = Math.min(dPlusY, 0);
+                        c1e = Math.max(dMinusZ, 0);
+                        c1f = Math.min(dPlusZ, 0);
+                        gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d) + (c1e * c1e) +
+                                             (c1f * c1f));
                         c1 = -gBuffer[i] * gradPlus;
                     } else { // CONTRACT
-                        c1a = Math.max( dPlusX, 0 );
-                        c1b = Math.min( dMinusX, 0 );
-                        c1c = Math.max( dPlusY, 0 );
-                        c1d = Math.min( dMinusY, 0 );
-                        c1e = Math.max( dPlusZ, 0 );
-                        c1f = Math.min( dMinusZ, 0 );
-                        gradMinus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d + c1e * c1e + c1f * c1f );
+                        c1a = Math.max(dPlusX, 0);
+                        c1b = Math.min(dMinusX, 0);
+                        c1c = Math.max(dPlusY, 0);
+                        c1d = Math.min(dMinusY, 0);
+                        c1e = Math.max(dPlusZ, 0);
+                        c1f = Math.min(dMinusZ, 0);
+                        gradMinus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d) + (c1e * c1e) +
+                                              (c1f * c1f));
                         c1 = gBuffer[i] * gradMinus;
                     }
-                    c2 = -( Math.max( uComp[i], 0 ) * dMinusX + Math.min( uComp[i], 0 ) * dPlusX
-                            + Math.max( vComp[i], 0 ) * dMinusY + Math.min( vComp[i], 0 ) * dPlusY
-                            + Math.max( wComp[i], 0 ) * dMinusZ + Math.min( wComp[i], 0 ) * dPlusZ );
-                    phix = ( phiImage[i + 1] - phiImage[i - 1] ) * 0.5;
-                    phiy = ( phiImage[i + xDim] - phiImage[i - xDim] ) * 0.5;
-                    phiz = ( phiImage[i + sliceSize] - phiImage[i - sliceSize] ) * 0.5;
-                    phixx = phiImage[i + 1] - 2 * phiImage[i] + phiImage[i - 1];
-                    phiyy = phiImage[i + xDim] - 2 * phiImage[i] + phiImage[i - xDim];
-                    phizz = phiImage[i + sliceSize] - 2 * phiImage[i] + phiImage[i - sliceSize];
-                    phixy = ( phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1]
-                            + phiImage[i - xDim - 1] )
-                            * 0.25;
-                    phixz = ( phiImage[i + sliceSize + 1] - phiImage[i + sliceSize - 1] - phiImage[i - sliceSize + 1]
-                            + phiImage[i - sliceSize - 1] )
-                            * 0.25;
-                    phiyz = ( phiImage[i + sliceSize + xDim] - phiImage[i + sliceSize - xDim]
-                            - phiImage[i - sliceSize + xDim] + phiImage[i - sliceSize - xDim] )
-                            * 0.25;
-                    denom = phix * phix + phiy * phiy + phiz * phiz;
-                    if ( denom > 0 ) {
-                        c3 = ( ( phixx + phizz ) * phiy * phiy - 2 * phix * phiz * phixz
-                                + ( phiyy + phizz ) * phix * phix - 2 * phiy * phiz * phiyz
-                                + ( phixx + phiyy ) * phiz * phiz - 2 * phix * phiy * phixy )
-                                / denom;
+
+                    c2 = -((Math.max(uComp[i], 0) * dMinusX) + (Math.min(uComp[i], 0) * dPlusX) +
+                           (Math.max(vComp[i], 0) * dMinusY) + (Math.min(vComp[i], 0) * dPlusY) +
+                           (Math.max(wComp[i], 0) * dMinusZ) + (Math.min(wComp[i], 0) * dPlusZ));
+                    phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                    phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                    phiz = (phiImage[i + sliceSize] - phiImage[i - sliceSize]) * 0.5;
+                    phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                    phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                    phizz = phiImage[i + sliceSize] - (2 * phiImage[i]) + phiImage[i - sliceSize];
+                    phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                             phiImage[i - xDim - 1]) * 0.25;
+                    phixz = (phiImage[i + sliceSize + 1] - phiImage[i + sliceSize - 1] - phiImage[i - sliceSize + 1] +
+                             phiImage[i - sliceSize - 1]) * 0.25;
+                    phiyz = (phiImage[i + sliceSize + xDim] - phiImage[i + sliceSize - xDim] -
+                             phiImage[i - sliceSize + xDim] + phiImage[i - sliceSize - xDim]) * 0.25;
+                    denom = (phix * phix) + (phiy * phiy) + (phiz * phiz);
+
+                    if (denom > 0) {
+                        c3 = (((phixx + phizz) * phiy * phiy) - (2 * phix * phiz * phixz) +
+                              ((phiyy + phizz) * phix * phix) - (2 * phiy * phiz * phiyz) +
+                              ((phixx + phiyy) * phiz * phiz) - (2 * phix * phiy * phixy)) / denom;
                         c3 *= epsilon * gBuffer[i];
                     } else {
                         c3 = 0.0;
                     }
-                    if ( Math.abs( c1 + c3 ) > c13max ) {
-                        c13max = Math.abs( c1 + c3 );
+
+                    if (Math.abs(c1 + c3) > c13max) {
+                        c13max = Math.abs(c1 + c3);
                     }
-                    if ( Math.abs( c2 ) > c2max ) {
-                        c2max = Math.abs( c2 );
+
+                    if (Math.abs(c2) > c2max) {
+                        c2max = Math.abs(c2);
                     }
                 }
             }
         }
-        beta = (float) ( edgeAttract * c13max / c2max );
 
-        for ( n = 0; n < iterations && !threadStopped && haveChanged; n++ ) {
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( 10 + Math.round( (float) n / ( iterations - 1 ) * 90 ), activeImage );
+        beta = (float) (edgeAttract * c13max / c2max);
+
+        for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
+
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(10 + Math.round((float) n / (iterations - 1) * 90), activeImage);
             }
+
             c13max = -Double.MAX_VALUE;
             c2max = -Double.MAX_VALUE;
             boundaryLength = 0;
-            if ( checkIters == n ) {
+
+            if (checkIters == n) {
                 haveChanged = false;
                 checkIters2 = n;
             }
-            for ( i = sliceSize + xDim + 1; i < length - sliceSize - xDim - 1 && !threadStopped; i++ ) {
-                if ( active[i] ) {
-                    yPos = ( i % sliceSize ) / xDim;
+
+            for (i = sliceSize + xDim + 1; (i < (length - sliceSize - xDim - 1)) && !threadStopped; i++) {
+
+                if (active[i]) {
+                    yPos = (i % sliceSize) / xDim;
                     xPos = i % xDim;
-                    if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) && ( yPos >= 1 ) && ( yPos < yDim - 1 ) ) {
+
+                    if ((xPos >= 1) && (xPos < (xDim - 1)) && (yPos >= 1) && (yPos < (yDim - 1))) {
                         dMinusX = phiImage[i] - phiImage[i - 1];
                         dPlusX = phiImage[i + 1] - phiImage[i];
                         dMinusY = phiImage[i] - phiImage[i - xDim];
                         dPlusY = phiImage[i + xDim] - phiImage[i];
                         dMinusZ = phiImage[i] - phiImage[i - sliceSize];
                         dPlusZ = phiImage[i + sliceSize] - phiImage[i];
-                        if ( ( movement == EXPAND ) || ( movement == EXPAND_CONTRACT ) ) {
-                            c1a = Math.max( dMinusX, 0 );
-                            c1b = Math.min( dPlusX, 0 );
-                            c1c = Math.max( dMinusY, 0 );
-                            c1d = Math.min( dPlusY, 0 );
-                            c1e = Math.max( dMinusZ, 0 );
-                            c1f = Math.min( dPlusZ, 0 );
-                            gradPlus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d + c1e * c1e + c1f * c1f );
+
+                        if ((movement == EXPAND) || (movement == EXPAND_CONTRACT)) {
+                            c1a = Math.max(dMinusX, 0);
+                            c1b = Math.min(dPlusX, 0);
+                            c1c = Math.max(dMinusY, 0);
+                            c1d = Math.min(dPlusY, 0);
+                            c1e = Math.max(dMinusZ, 0);
+                            c1f = Math.min(dPlusZ, 0);
+                            gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d) + (c1e * c1e) +
+                                                 (c1f * c1f));
                             c1 = -gBuffer[i] * gradPlus;
                         } else { // CONTRACT
-                            c1a = Math.max( dPlusX, 0 );
-                            c1b = Math.min( dMinusX, 0 );
-                            c1c = Math.max( dPlusY, 0 );
-                            c1d = Math.min( dMinusY, 0 );
-                            c1e = Math.max( dPlusZ, 0 );
-                            c1f = Math.min( dMinusZ, 0 );
-                            gradMinus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d + c1e * c1e + c1f * c1f );
+                            c1a = Math.max(dPlusX, 0);
+                            c1b = Math.min(dMinusX, 0);
+                            c1c = Math.max(dPlusY, 0);
+                            c1d = Math.min(dMinusY, 0);
+                            c1e = Math.max(dPlusZ, 0);
+                            c1f = Math.min(dMinusZ, 0);
+                            gradMinus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d) + (c1e * c1e) +
+                                                  (c1f * c1f));
                             c1 = gBuffer[i] * gradMinus;
                         }
-                        c2 = -( Math.max( beta * uComp[i], 0 ) * dMinusX + Math.min( beta * uComp[i], 0 ) * dPlusX
-                                + Math.max( beta * vComp[i], 0 ) * dMinusY + Math.min( beta * vComp[i], 0 ) * dPlusY
-                                + Math.max( beta * wComp[i], 0 ) * dMinusZ + Math.min( beta * wComp[i], 0 ) * dPlusZ );
-                        phix = ( phiImage[i + 1] - phiImage[i - 1] ) * 0.5;
-                        phiy = ( phiImage[i + xDim] - phiImage[i - xDim] ) * 0.5;
-                        phiz = ( phiImage[i + sliceSize] - phiImage[i - sliceSize] ) * 0.5;
-                        phixx = phiImage[i + 1] - 2 * phiImage[i] + phiImage[i - 1];
-                        phiyy = phiImage[i + xDim] - 2 * phiImage[i] + phiImage[i - xDim];
-                        phizz = phiImage[i + sliceSize] - 2 * phiImage[i] + phiImage[i - sliceSize];
-                        phixy = ( phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1]
-                                + phiImage[i - xDim - 1] )
-                                * 0.25;
-                        phixz = ( phiImage[i + sliceSize + 1] - phiImage[i + sliceSize - 1]
-                                - phiImage[i - sliceSize + 1] + phiImage[i - sliceSize - 1] )
-                                * 0.25;
-                        phiyz = ( phiImage[i + sliceSize + xDim] - phiImage[i + sliceSize - xDim]
-                                - phiImage[i - sliceSize + xDim] + phiImage[i - sliceSize - xDim] )
-                                * 0.25;
-                        denom = phix * phix + phiy * phiy + phiz * phiz;
-                        if ( denom > 0 ) {
-                            c3 = ( ( phixx + phizz ) * phiy * phiy - 2 * phix * phiz * phixz
-                                    + ( phiyy + phizz ) * phix * phix - 2 * phiy * phiz * phiyz
-                                    + ( phixx + phiyy ) * phiz * phiz - 2 * phix * phiy * phixy )
-                                    / denom;
+
+                        c2 = -((Math.max(beta * uComp[i], 0) * dMinusX) + (Math.min(beta * uComp[i], 0) * dPlusX) +
+                               (Math.max(beta * vComp[i], 0) * dMinusY) + (Math.min(beta * vComp[i], 0) * dPlusY) +
+                               (Math.max(beta * wComp[i], 0) * dMinusZ) + (Math.min(beta * wComp[i], 0) * dPlusZ));
+                        phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                        phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                        phiz = (phiImage[i + sliceSize] - phiImage[i - sliceSize]) * 0.5;
+                        phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                        phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                        phizz = phiImage[i + sliceSize] - (2 * phiImage[i]) + phiImage[i - sliceSize];
+                        phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                 phiImage[i - xDim - 1]) * 0.25;
+                        phixz = (phiImage[i + sliceSize + 1] - phiImage[i + sliceSize - 1] -
+                                 phiImage[i - sliceSize + 1] + phiImage[i - sliceSize - 1]) * 0.25;
+                        phiyz = (phiImage[i + sliceSize + xDim] - phiImage[i + sliceSize - xDim] -
+                                 phiImage[i - sliceSize + xDim] + phiImage[i - sliceSize - xDim]) * 0.25;
+                        denom = (phix * phix) + (phiy * phiy) + (phiz * phiz);
+
+                        if (denom > 0) {
+                            c3 = (((phixx + phizz) * phiy * phiy) - (2 * phix * phiz * phixz) +
+                                  ((phiyy + phizz) * phix * phix) - (2 * phiy * phiz * phiyz) +
+                                  ((phixx + phiyy) * phiz * phiz) - (2 * phix * phiy * phixy)) / denom;
                             c3 *= epsilon * gBuffer[i];
                         } else {
                             c3 = 0.0;
                         }
-                        if ( Math.abs( c1 + c3 ) > c13max ) {
-                            c13max = Math.abs( c1 + c3 );
-                        }
-                        if ( Math.abs( c2 ) > c2max ) {
-                            c2max = Math.abs( c2 );
+
+                        if (Math.abs(c1 + c3) > c13max) {
+                            c13max = Math.abs(c1 + c3);
                         }
 
-                        possiblePhi = phiImage[i] + deltaT * ( c1 + c2 + c3 );
-                        if ( ( movement == EXPAND ) && ( possiblePhi >= 0.0 ) && ( phiImage[i] < 0.0 ) ) {
+                        if (Math.abs(c2) > c2max) {
+                            c2max = Math.abs(c2);
+                        }
+
+                        possiblePhi = phiImage[i] + (deltaT * (c1 + c2 + c3));
+
+                        if ((movement == EXPAND) && (possiblePhi >= 0.0) && (phiImage[i] < 0.0)) {
                             phiNext[i] = phiImage[i];
-                        } else if ( ( movement == CONTRACT ) && ( possiblePhi < 0.0 ) && ( phiImage[i] >= 0.0 ) ) {
+                        } else if ((movement == CONTRACT) && (possiblePhi < 0.0) && (phiImage[i] >= 0.0)) {
                             phiNext[i] = phiImage[i];
                         } else {
                             phiNext[i] = possiblePhi;
                         }
-                        if ( ( ( movement == EXPAND ) || ( movement == EXPAND_CONTRACT ) ) && ( phiNext[i] < 0.0 )
-                                && ( originalPhi[i] >= 4.0 ) ) {
+
+                        if (((movement == EXPAND) || (movement == EXPAND_CONTRACT)) && (phiNext[i] < 0.0) &&
+                                (originalPhi[i] >= 4.0)) {
                             reinitializePhi = true;
-                        } else if ( checkIters2 == n ) {
-                            if ( ( phiImage[i] < 0.0 )
-                                    && ( ( phiImage[i - 1] >= 0.0 ) || ( phiImage[i + 1] >= 0.0 )
-                                    || ( phiImage[i - xDim] >= 0.0 ) || ( phiImage[i + xDim] >= 0.0 )
-                                    || ( phiImage[i - sliceSize] >= 0.0 ) || ( phiImage[i + sliceSize] >= 0.0 ) ) ) {
+                        } else if (checkIters2 == n) {
+
+                            if ((phiImage[i] < 0.0) &&
+                                    ((phiImage[i - 1] >= 0.0) || (phiImage[i + 1] >= 0.0) ||
+                                         (phiImage[i - xDim] >= 0.0) || (phiImage[i + xDim] >= 0.0) ||
+                                         (phiImage[i - sliceSize] >= 0.0) || (phiImage[i + sliceSize] >= 0.0))) {
                                 zPos = i / sliceSize;
-                                if ( ( xPos != boundaryX[boundaryLength] ) || ( yPos != boundaryY[boundaryLength] )
-                                        || ( zPos != boundaryZ[boundaryLength] ) ) {
+
+                                if ((xPos != boundaryX[boundaryLength]) || (yPos != boundaryY[boundaryLength]) ||
+                                        (zPos != boundaryZ[boundaryLength])) {
                                     haveChanged = true;
                                     checkIters = n + testIters;
                                 }
+
                                 boundaryX[boundaryLength] = xPos;
                                 boundaryY[boundaryLength] = yPos;
                                 boundaryZ[boundaryLength++] = zPos;
@@ -1236,27 +1154,33 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                     } // if ((xPos >= 1) && (xPos < xDim - 1) &&
                 } // if (active[i])
             } // for (i = sliceSize+xDim+1; i < length-sliceSize-xDim-1 && !threadStopped; i++)
-            beta = (float) ( edgeAttract * c13max / c2max );
+
+            beta = (float) (edgeAttract * c13max / c2max);
             tempBuffer = phiImage;
             phiImage = phiNext;
             phiNext = tempBuffer;
 
-            if ( reinitializePhi ) {
+            if (reinitializePhi) {
                 reinitializePhi = false;
-                if ( checkIters > 0 ) {
+
+                if (checkIters > 0) {
                     checkIters = n + testIters;
                 }
 
                 boundaryLength = 0;
-                for ( i = sliceSize + xDim + 1; i < length - sliceSize - xDim - 1 && !threadStopped; i++ ) {
-                    if ( active[i] ) {
-                        yPos = ( i % sliceSize ) / xDim;
+
+                for (i = sliceSize + xDim + 1; (i < (length - sliceSize - xDim - 1)) && !threadStopped; i++) {
+
+                    if (active[i]) {
+                        yPos = (i % sliceSize) / xDim;
                         xPos = i % xDim;
-                        if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) && ( yPos >= 1 ) && ( yPos < yDim - 1 ) ) {
-                            if ( ( phiImage[i] < 0.0 )
-                                    && ( ( phiImage[i - 1] >= 0.0 ) || ( phiImage[i + 1] >= 0.0 )
-                                    || ( phiImage[i - xDim] >= 0.0 ) || ( phiImage[i + xDim] >= 0.0 )
-                                    || ( phiImage[i - sliceSize] >= 0.0 ) || ( phiImage[i + sliceSize] >= 0.0 ) ) ) {
+
+                        if ((xPos >= 1) && (xPos < (xDim - 1)) && (yPos >= 1) && (yPos < (yDim - 1))) {
+
+                            if ((phiImage[i] < 0.0) &&
+                                    ((phiImage[i - 1] >= 0.0) || (phiImage[i + 1] >= 0.0) ||
+                                         (phiImage[i - xDim] >= 0.0) || (phiImage[i + xDim] >= 0.0) ||
+                                         (phiImage[i - sliceSize] >= 0.0) || (phiImage[i + sliceSize] >= 0.0))) {
                                 boundaryX[boundaryLength] = xPos;
                                 boundaryY[boundaryLength] = yPos;
                                 boundaryZ[boundaryLength++] = i / sliceSize;
@@ -1265,27 +1189,32 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                     }
                 }
 
-                for ( i = 0; i < length && !threadStopped; i++ ) {
+                for (i = 0; (i < length) && !threadStopped; i++) {
                     zPos = i / sliceSize;
-                    yPos = ( i % sliceSize ) / xDim;
+                    yPos = (i % sliceSize) / xDim;
                     xPos = i % xDim;
                     minDistance = Double.MAX_VALUE;
-                    for ( j = 0; j < boundaryLength; j++ ) {
-                        distance = ( ( boundaryZ[j] - zPos ) * ( boundaryZ[j] - zPos )
-                                + ( boundaryY[j] - yPos ) * ( boundaryY[j] - yPos )
-                                + ( boundaryX[j] - xPos ) * ( boundaryX[j] - xPos ) );
-                        if ( distance < minDistance ) {
+
+                    for (j = 0; j < boundaryLength; j++) {
+                        distance = (((boundaryZ[j] - zPos) * (boundaryZ[j] - zPos)) +
+                                    ((boundaryY[j] - yPos) * (boundaryY[j] - yPos)) +
+                                    ((boundaryX[j] - xPos) * (boundaryX[j] - xPos)));
+
+                        if (distance < minDistance) {
                             minDistance = distance;
                         }
                     }
-                    if ( phiImage[i] < 0 ) {
-                        phiImage[i] = -Math.sqrt( minDistance );
+
+                    if (phiImage[i] < 0) {
+                        phiImage[i] = -Math.sqrt(minDistance);
                     } else {
-                        phiImage[i] = Math.sqrt( minDistance );
+                        phiImage[i] = Math.sqrt(minDistance);
                     }
+
                     phiNext[i] = phiImage[i];
                     originalPhi[i] = phiImage[i];
-                    if ( ( phiImage[i] > 6.0 ) || ( phiImage[i] < -6.0 ) ) {
+
+                    if ((phiImage[i] > 6.0) || (phiImage[i] < -6.0)) {
                         active[i] = false;
                     } else {
                         active[i] = true;
@@ -1297,64 +1226,67 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
                 // On every iteration adjust beta to make |c2|max = edgeAttract*|c1+c3|max
                 // so the attractive force predominates over the other 2 forces
-                for ( i = sliceSize + xDim + 1; i < length - sliceSize - xDim - 1 && !threadStopped; i++ ) {
-                    if ( active[i] ) {
-                        yPos = ( i % sliceSize ) / xDim;
+                for (i = sliceSize + xDim + 1; (i < (length - sliceSize - xDim - 1)) && !threadStopped; i++) {
+
+                    if (active[i]) {
+                        yPos = (i % sliceSize) / xDim;
                         xPos = i % xDim;
-                        if ( ( xPos >= 1 ) && ( xPos < xDim - 1 ) && ( yPos >= 1 ) && ( yPos < yDim - 1 ) ) {
+
+                        if ((xPos >= 1) && (xPos < (xDim - 1)) && (yPos >= 1) && (yPos < (yDim - 1))) {
                             dMinusX = phiImage[i] - phiImage[i - 1];
                             dPlusX = phiImage[i + 1] - phiImage[i];
                             dMinusY = phiImage[i] - phiImage[i - xDim];
                             dPlusY = phiImage[i + xDim] - phiImage[i];
                             dMinusZ = phiImage[i] - phiImage[i - sliceSize];
                             dPlusZ = phiImage[i + sliceSize] - phiImage[i];
-                            c1a = Math.max( dMinusX, 0 );
-                            c1b = Math.min( dPlusX, 0 );
-                            c1c = Math.max( dMinusY, 0 );
-                            c1d = Math.min( dPlusY, 0 );
-                            c1e = Math.max( dMinusZ, 0 );
-                            c1f = Math.min( dPlusZ, 0 );
-                            gradPlus = Math.sqrt( c1a * c1a + c1b * c1b + c1c * c1c + c1d * c1d + c1e * c1e + c1f * c1f );
+                            c1a = Math.max(dMinusX, 0);
+                            c1b = Math.min(dPlusX, 0);
+                            c1c = Math.max(dMinusY, 0);
+                            c1d = Math.min(dPlusY, 0);
+                            c1e = Math.max(dMinusZ, 0);
+                            c1f = Math.min(dPlusZ, 0);
+                            gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d) + (c1e * c1e) +
+                                                 (c1f * c1f));
                             c1 = -gBuffer[i] * gradPlus;
 
-                            c2 = -( Math.max( uComp[i], 0 ) * dMinusX + Math.min( uComp[i], 0 ) * dPlusX
-                                    + Math.max( vComp[i], 0 ) * dMinusY + Math.min( vComp[i], 0 ) * dPlusY
-                                    + Math.max( wComp[i], 0 ) * dMinusZ + Math.min( wComp[i], 0 ) * dPlusZ );
-                            phix = ( phiImage[i + 1] - phiImage[i - 1] ) * 0.5;
-                            phiy = ( phiImage[i + xDim] - phiImage[i - xDim] ) * 0.5;
-                            phiz = ( phiImage[i + sliceSize] - phiImage[i - sliceSize] ) * 0.5;
-                            phixx = phiImage[i + 1] - 2 * phiImage[i] + phiImage[i - 1];
-                            phiyy = phiImage[i + xDim] - 2 * phiImage[i] + phiImage[i - xDim];
-                            phizz = phiImage[i + sliceSize] - 2 * phiImage[i] + phiImage[i - sliceSize];
-                            phixy = ( phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1]
-                                    + phiImage[i - xDim - 1] )
-                                    * 0.25;
-                            phixz = ( phiImage[i + sliceSize + 1] - phiImage[i + sliceSize - 1]
-                                    - phiImage[i - sliceSize + 1] + phiImage[i - sliceSize - 1] )
-                                    * 0.25;
-                            phiyz = ( phiImage[i + sliceSize + xDim] - phiImage[i + sliceSize - xDim]
-                                    - phiImage[i - sliceSize + xDim] + phiImage[i - sliceSize - xDim] )
-                                    * 0.25;
-                            denom = phix * phix + phiy * phiy + phiz * phiz;
-                            if ( denom > 0 ) {
-                                c3 = ( ( phixx + phizz ) * phiy * phiy - 2 * phix * phiz * phixz
-                                        + ( phiyy + phizz ) * phix * phix - 2 * phiy * phiz * phiyz
-                                        + ( phixx + phiyy ) * phiz * phiz - 2 * phix * phiy * phixy )
-                                        / denom;
+                            c2 = -((Math.max(uComp[i], 0) * dMinusX) + (Math.min(uComp[i], 0) * dPlusX) +
+                                   (Math.max(vComp[i], 0) * dMinusY) + (Math.min(vComp[i], 0) * dPlusY) +
+                                   (Math.max(wComp[i], 0) * dMinusZ) + (Math.min(wComp[i], 0) * dPlusZ));
+                            phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                            phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                            phiz = (phiImage[i + sliceSize] - phiImage[i - sliceSize]) * 0.5;
+                            phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                            phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                            phizz = phiImage[i + sliceSize] - (2 * phiImage[i]) + phiImage[i - sliceSize];
+                            phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                     phiImage[i - xDim - 1]) * 0.25;
+                            phixz = (phiImage[i + sliceSize + 1] - phiImage[i + sliceSize - 1] -
+                                     phiImage[i - sliceSize + 1] + phiImage[i - sliceSize - 1]) * 0.25;
+                            phiyz = (phiImage[i + sliceSize + xDim] - phiImage[i + sliceSize - xDim] -
+                                     phiImage[i - sliceSize + xDim] + phiImage[i - sliceSize - xDim]) * 0.25;
+                            denom = (phix * phix) + (phiy * phiy) + (phiz * phiz);
+
+                            if (denom > 0) {
+                                c3 = (((phixx + phizz) * phiy * phiy) - (2 * phix * phiz * phixz) +
+                                      ((phiyy + phizz) * phix * phix) - (2 * phiy * phiz * phiyz) +
+                                      ((phixx + phiyy) * phiz * phiz) - (2 * phix * phiy * phixy)) / denom;
                                 c3 *= epsilon * gBuffer[i];
                             } else {
                                 c3 = 0.0;
                             }
-                            if ( Math.abs( c1 + c3 ) > c13max ) {
-                                c13max = Math.abs( c1 + c3 );
+
+                            if (Math.abs(c1 + c3) > c13max) {
+                                c13max = Math.abs(c1 + c3);
                             }
-                            if ( Math.abs( c2 ) > c2max ) {
-                                c2max = Math.abs( c2 );
+
+                            if (Math.abs(c2) > c2max) {
+                                c2max = Math.abs(c2);
                             }
                         }
                     }
                 }
-                beta = (float) ( edgeAttract * c13max / c2max );
+
+                beta = (float) (edgeAttract * c13max / c2max);
             } // if (reinitializePhi)
         } // for(n = 0; n < iterations && !threadStopped && haveChanged; n++)
 
@@ -1362,10 +1294,11 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         tempBuffer = null;
         System.gc();
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             disposeProgressBar();
-            setCompleted( false );
+            setCompleted(false);
             finalize();
+
             return;
         }
 
@@ -1373,32 +1306,160 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         VOIs = srcImage.getVOIs();
 
         nVOI = VOIs.size();
-        if ( nVOI == 0 ) {
+
+        if (nVOI == 0) {
             return;
         }
-        for ( i = ( nVOI - 1 ); i >= 0; i-- ) {
-            VOIs.removeElementAt( i );
+
+        for (i = (nVOI - 1); i >= 0; i--) {
+            VOIs.removeElementAt(i);
         }
 
         voiID = 0;
-        mask = new BitSet( length );
+        mask = new BitSet(length);
 
-        for ( i = 0; i < length; i++ ) {
-            if ( phiImage[i] < 0.0 ) {
-                mask.set( i );
+        for (i = 0; i < length; i++) {
+
+            if (phiImage[i] < 0.0) {
+                mask.set(i);
             } else {
-                mask.clear( i );
+                mask.clear(i);
             }
         }
 
-        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint( srcImage, mask, xDim, yDim, zDim,
-                voiID );
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
+                                                                                     voiID);
 
-        algoPaintToVOI.setProgressBarVisible( false );
+        algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
         algoPaintToVOI = null;
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
+    }
+
+    /**
+     * makeKernals2D - creates the derivative kernels used to calculate the gradient magnitude and kernel for the
+     * diffusion process.
+     */
+    private void makeKernels2D() {
+        int xkDim, ykDim;
+        int[] derivOrder = new int[2];
+
+        kExtents = new int[2];
+        derivOrder[0] = 1;
+        derivOrder[1] = 0;
+
+        xkDim = Math.round(5 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+
+        ykDim = Math.round(5 * sigmas[1]);
+
+        if ((ykDim % 2) == 0) {
+            ykDim++;
+        }
+
+        if (ykDim < 3) {
+            ykDim = 3;
+        }
+
+        kExtents[1] = ykDim;
+
+        GxData = new float[xkDim * ykDim];
+
+        GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
+
+        Gx.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 1;
+        GyData = new float[xkDim * ykDim];
+
+        GenerateGaussian Gy = new GenerateGaussian(GyData, kExtents, sigmas, derivOrder);
+
+        Gy.calc(true);
+    }
+
+    /**
+     * makeKernals3D - creates the derivative kernels used to calculate the gradient magnitude and kernel for the
+     * diffusion process.
+     */
+    private void makeKernels3D() {
+        int xkDim, ykDim, zkDim;
+        int[] derivOrder = new int[3];
+
+        kExtents = new int[3];
+        derivOrder[0] = 1;
+        derivOrder[1] = 0;
+        derivOrder[2] = 0;
+
+        xkDim = Math.round(5 * sigmas[0]);
+
+        if ((xkDim % 2) == 0) {
+            xkDim++;
+        }
+
+        if (xkDim < 3) {
+            xkDim = 3;
+        }
+
+        kExtents[0] = xkDim;
+
+        ykDim = Math.round(5 * sigmas[1]);
+
+        if ((ykDim % 2) == 0) {
+            ykDim++;
+        }
+
+        if (ykDim < 3) {
+            ykDim = 3;
+        }
+
+        kExtents[1] = ykDim;
+
+        zkDim = Math.round(5 * sigmas[2]);
+
+        if ((zkDim % 2) == 0) {
+            zkDim++;
+        }
+
+        if (zkDim < 3) {
+            zkDim = 3;
+        }
+
+        kExtents[2] = zkDim;
+
+        GxData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gx = new GenerateGaussian(GxData, kExtents, sigmas, derivOrder);
+
+        Gx.calc(false);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 1;
+        derivOrder[2] = 0;
+        GyData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gy = new GenerateGaussian(GyData, kExtents, sigmas, derivOrder);
+
+        Gy.calc(true);
+
+        derivOrder[0] = 0;
+        derivOrder[1] = 0;
+        derivOrder[2] = 1;
+        GzData = new float[xkDim * ykDim * zkDim];
+
+        GenerateGaussian Gz = new GenerateGaussian(GzData, kExtents, sigmas, derivOrder);
+
+        Gz.calc(true);
     }
 }

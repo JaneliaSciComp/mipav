@@ -1,48 +1,89 @@
 package gov.nih.mipav.view;
 
-import javax.swing.*;
 
-import java.io.*;
 import java.awt.*;
 
-public class VolumePositionFrame extends JFrame
-{
-    protected ViewJFrameTriImage parentFrame;
+import java.io.*;
 
-    public JLabel labelXPos = new JLabel("");
-    public JLabel labelYPos = new JLabel("");
-    public JLabel labelZPos = new JLabel("");
+import javax.swing.*;
 
-    public JLabel labelXTal = new JLabel("");
-    public JLabel labelYTal = new JLabel("");
-    public JLabel labelZTal = new JLabel("");
 
-    public JLabel scannerLabelX = new JLabel("");
-    public JLabel scannerLabelY = new JLabel("");
-    public JLabel scannerLabelZ = new JLabel("");
+/**
+ * DOCUMENT ME!
+ */
+public class VolumePositionFrame extends JFrame {
 
-    public JLabel labelXRef = new JLabel("");
-    public JLabel labelYRef = new JLabel("");
-    public JLabel labelZRef = new JLabel("");
-    
-    public JLabel talairachVoxelLabel = new JLabel("");
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 3115465399315063208L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     public JCheckBox chkShowTalairachGrid = new JCheckBox("Show talairach grid");
+
+    /** DOCUMENT ME! */
     public JCheckBox chkShowTalairachGridMarkers = new JCheckBox("Show talairach grid markers");
 
-    public VolumePositionFrame(ViewJFrameTriImage parentFrame)
-    {
+    /** DOCUMENT ME! */
+    public JLabel labelXPos = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelXRef = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelXTal = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelYPos = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelYRef = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelYTal = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelZPos = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelZRef = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel labelZTal = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel scannerLabelX = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel scannerLabelY = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel scannerLabelZ = new JLabel("");
+
+    /** DOCUMENT ME! */
+    public JLabel talairachVoxelLabel = new JLabel("");
+
+    /** DOCUMENT ME! */
+    protected ViewJFrameTriImage parentFrame;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new VolumePositionFrame object.
+     *
+     * @param  parentFrame  DOCUMENT ME!
+     */
+    public VolumePositionFrame(ViewJFrameTriImage parentFrame) {
         super("Coordinates window");
         this.parentFrame = parentFrame;
         setSize(250, 225);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
-        try
-        {
+        try {
             setIconImage(MipavUtil.getIconImage("3plane_16x16.gif"));
-        }
-        catch (FileNotFoundException fnfe)
-        {}
+        } catch (FileNotFoundException fnfe) { }
 
         MipavUtil.centerOnScreen(this);
 
@@ -50,47 +91,44 @@ public class VolumePositionFrame extends JFrame
         getContentPane().add(buildVolumePositionPanel());
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     * Sets the "Show talairach grid" checkbox. Also enables or
-     * disables the "Show talairach grid markers" checkbox
+     * Sets the "Show talairach grid" checkbox. Also enables or disables the "Show talairach grid markers" checkbox
      * based on this flag
-     * @param flag true to set the checkbox to 'selected'; false otherwise
+     *
+     * @param  flag  true to set the checkbox to 'selected'; false otherwise
      */
-    public void setShowTalairachGrid(boolean flag)
-    {
+    public void setShowTalairachGrid(boolean flag) {
         chkShowTalairachGrid.setSelected(flag);
         chkShowTalairachGridMarkers.setEnabled(flag);
     }
 
     /**
-     * Sets the "Show talairach grid markers" checkbox. 
-     * @param flag true to set the checkbox to 'selected'; flase otherwise
+     * Sets the "Show talairach grid markers" checkbox.
+     *
+     * @param  flag  true to set the checkbox to 'selected'; flase otherwise
      */
-    public void setShowTalairachGridMarkers(boolean flag)
-    {
+    public void setShowTalairachGridMarkers(boolean flag) {
         chkShowTalairachGridMarkers.setSelected(flag);
-    }
-    
-    /**
-     * Sets the text to display in the talairach voxel label. This text
-     * has a format corresponding to the talairach grid. Example:
-     * "AcL3" - an full explanation of what the text means is beyond the 
-     * scope of this comment.
-     * @param newLabelText the text to display in the talairach voxel
-     * label
-     */
-    public void setTalairachVoxelLabel(String newLabelText)
-    {
-    	talairachVoxelLabel.setText(newLabelText);
     }
 
     /**
-     * Builds the volume position panel, which is the main panel for 
-     * this component
-     * @return JPanel the JPanel that has been constructed
+     * Sets the text to display in the talairach voxel label. This text has a format corresponding to the talairach
+     * grid. Example: "AcL3" - an full explanation of what the text means is beyond the scope of this comment.
+     *
+     * @param  newLabelText  the text to display in the talairach voxel label
      */
-    protected JPanel buildVolumePositionPanel()
-    {
+    public void setTalairachVoxelLabel(String newLabelText) {
+        talairachVoxelLabel.setText(newLabelText);
+    }
+
+    /**
+     * Builds the volume position panel, which is the main panel for this component.
+     *
+     * @return  JPanel the JPanel that has been constructed
+     */
+    protected JPanel buildVolumePositionPanel() {
         JPanel volumePositionPanel = new JPanel();
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -125,6 +163,7 @@ public class VolumePositionFrame extends JFrame
 
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
+
         JPanel talairachPanel = new JPanel(gbLayout);
 
         chkShowTalairachGrid = new JCheckBox("Show Talairach grid");
@@ -176,7 +215,7 @@ public class VolumePositionFrame extends JFrame
         talairachSubPanel.add(new JLabel("Z: "), gbSubConstraints);
         gbSubConstraints.gridx = 1;
         talairachSubPanel.add(labelZTal, gbSubConstraints);
-        
+
         gbSubConstraints.gridx = GridBagConstraints.RELATIVE;
         gbSubConstraints.gridy = 4;
         talairachSubPanel.add(new JLabel("Talairach voxel: "), gbSubConstraints);
@@ -184,39 +223,34 @@ public class VolumePositionFrame extends JFrame
         talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
 
         float[] tCoord = new float[3];
-        parentFrame.getImageA().getScannerCoordLPS(parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[0] / 2,
-                               parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[1] / 2,
-                               parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[2] / 2, tCoord);
+        parentFrame.getImageA().getScannerCoordLPS(parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[0] /
+                                                       2,
+                                                   parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[1] /
+                                                       2,
+                                                   parentFrame.getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getExtents()[2] /
+                                                       2, tCoord);
 
-        if (tCoord[0] < 0)
-        {
+        if (tCoord[0] < 0) {
             scannerLabelX.setText("R: ");
-        }
-        else
-        {
+        } else {
             scannerLabelX.setText("L: ");
         }
 
-        if (tCoord[1] < 0)
-        {
+        if (tCoord[1] < 0) {
             scannerLabelY.setText("A: ");
-        }
-        else
-        {
+        } else {
             scannerLabelY.setText("P: ");
         }
 
-        if (tCoord[2] < 0)
-        {
+        if (tCoord[2] < 0) {
             scannerLabelZ.setText("I: ");
-        }
-        else
-        {
+        } else {
             scannerLabelZ.setText("S: ");
         }
 
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
+
         JPanel scannerPanel = new JPanel(gbLayout);
         scannerPanel.setBorder(BorderFactory.createTitledBorder("Scanner position"));
 

@@ -1,41 +1,90 @@
 package gov.nih.mipav.view;
 
+
 import java.awt.*;
 import java.awt.event.*;
+
 import javax.swing.*;
 
 
-public class ViewSelectableDoubleListPanel extends JPanel implements
-        ActionListener
-{
-    protected JTable leftTable;
-    protected JTable rightTable;
+/**
+ * DOCUMENT ME!
+ */
+public class ViewSelectableDoubleListPanel extends JPanel implements ActionListener {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -7066171606587907360L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     protected JButton btnAdd;
+
+    /** DOCUMENT ME! */
     protected JButton btnRemove;
 
-    protected GridBagLayout gbLayout;
+    /** DOCUMENT ME! */
     protected GridBagConstraints gbConstraints;
 
+    /** DOCUMENT ME! */
+    protected GridBagLayout gbLayout;
 
-    public ViewSelectableDoubleListPanel(JTable leftTable, JTable rightTable)
-    {
+    /** DOCUMENT ME! */
+    protected JTable leftTable;
+
+    /** DOCUMENT ME! */
+    protected JTable rightTable;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+
+    /**
+     * Creates a new ViewSelectableDoubleListPanel object.
+     *
+     * @param  leftTable   DOCUMENT ME!
+     * @param  rightTable  DOCUMENT ME!
+     */
+    public ViewSelectableDoubleListPanel(JTable leftTable, JTable rightTable) {
         this.leftTable = leftTable;
         this.rightTable = rightTable;
     }
 
-    public void setLeftTable(JTable leftTable)
-    {
-        this.leftTable = leftTable;
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void actionPerformed(ActionEvent event) {
+        /*
+         * String command = event.getActionCommand();
+         *
+         * if (command.equals("add")) { int [] selectedRows = leftTable.getSelectedRows();
+         *
+         * TableSorter rightTableSorter = (TableSorter) rightTable.getModel(); TableSorter leftTableSorter = (TableSorter)
+         * leftTable.getModel();
+         *
+         * SortingTableModel rightTableModel = (SortingTableModel) rightTableSorter.getTableModel(); SortingTableModel
+         * leftTableModel = (SortingTableModel) leftTableSorter.getTableModel();
+         *
+         * for (int i = 0; i < selectedRows.length; i++) {
+         * rightTableModel.addRow(leftTableModel.getRow(leftTableSorter.modelIndex(selectedRows[i]))); } } else if
+         * (command.equals("remove")) { int [] selectedRows = rightTable.getSelectedRows();
+         *
+         * TableSorter rightTableSorter = (TableSorter) rightTable.getModel(); SortingTableModel rightTableModel =
+         * (SortingTableModel) rightTableSorter.getTableModel();
+         *
+         * // todo: explain wtf is happening here for (int i = selectedRows.length - 1; i >= 0; i--) {
+         * rightTableModel.removeRow(rightTableSorter.modelIndex(selectedRows[i])); }}*/
     }
 
-    public void setRightTable(JTable rightTable)
-    {
-        this.rightTable = rightTable;
-    }
-
-    public void buildGUI()
-    {
+    /**
+     * DOCUMENT ME!
+     */
+    public void buildGUI() {
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
 
@@ -88,49 +137,40 @@ public class ViewSelectableDoubleListPanel extends JPanel implements
         btnRemove.addActionListener(this);
     }
 
-    public void actionPerformed(ActionEvent event)
-    {
-        /*
-        String command = event.getActionCommand();
-
-        if (command.equals("add"))
-        {
-            int [] selectedRows = leftTable.getSelectedRows();
-
-            TableSorter rightTableSorter = (TableSorter) rightTable.getModel();
-            TableSorter leftTableSorter = (TableSorter) leftTable.getModel();
-
-            SortingTableModel rightTableModel = (SortingTableModel) rightTableSorter.getTableModel();
-            SortingTableModel leftTableModel = (SortingTableModel) leftTableSorter.getTableModel();
-
-            for (int i = 0; i < selectedRows.length; i++)
-            {
-                rightTableModel.addRow(leftTableModel.getRow(leftTableSorter.modelIndex(selectedRows[i])));
-            }
-        }
-        else if (command.equals("remove"))
-        {
-            int [] selectedRows = rightTable.getSelectedRows();
-
-            TableSorter rightTableSorter = (TableSorter) rightTable.getModel();
-            SortingTableModel rightTableModel = (SortingTableModel) rightTableSorter.getTableModel();
-
-            // todo: explain wtf is happening here
-            for (int i = selectedRows.length - 1; i >= 0; i--)
-            {
-                rightTableModel.removeRow(rightTableSorter.modelIndex(selectedRows[i]));
-            }
-        }*/
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public JTable getLeftTable() {
+        return leftTable;
     }
 
-    public JTable getRightTable()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public JTable getRightTable() {
         return rightTable;
     }
 
-    public JTable getLeftTable()
-    {
-        return leftTable;
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  leftTable  DOCUMENT ME!
+     */
+    public void setLeftTable(JTable leftTable) {
+        this.leftTable = leftTable;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  rightTable  DOCUMENT ME!
+     */
+    public void setRightTable(JTable rightTable) {
+        this.rightTable = rightTable;
     }
 
 }

@@ -1,56 +1,57 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
 import java.io.*;
 
 
 /**
- *     Algorithm to run the remove T slices.
- *     Algorithm verifies the t-th slice should be in included in the destination
- *     image, as defined in the list, remove.  It copies the slice from the src img
- *     to a buffer, and then from the buffer into the destination img.  Copies the src
- *     file info to a buffer and makes it conform to the new img, then copies it into
- *     the dest file.
- *
- *
- *
+ * Algorithm to run the remove T slices. Algorithm verifies the t-th slice should be in included in the destination
+ * image, as defined in the list, remove. It copies the slice from the src img to a buffer, and then from the buffer
+ * into the destination img. Copies the src file info to a buffer and makes it conform to the new img, then copies it
+ * into the dest file.
  */
 
 public class AlgorithmRemoveTSlices extends AlgorithmBase {
 
-    /** List of slices to remove from source image.*/
-    private boolean[] remove;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** X dimension of the image.                  */
-    private int Xdim;
-
-    /**  Y dimension of the image.                 */
-    private int Ydim;
-
-    /** Z dimension of the image.                  */
-    private int Zdim;
-
-    /** Original T dimension of the image.         */
+    /** Original T dimension of the image. */
     private int oldTdim;
 
-    /** Area of a slice (Xdim * Ydim * Zdim)       */
+    /** List of slices to remove from source image. */
+    private boolean[] remove;
+
+    /** Area of a slice (Xdim * Ydim * Zdim). */
     private int volume;
 
+    /** X dimension of the image. */
+    private int Xdim;
+
+    /** Y dimension of the image. */
+    private int Ydim;
+
+    /** Z dimension of the image. */
+    private int Zdim;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *   import source and destination images into the class
-     *   @param  srcImage        source image (image to clip from)
-     *   @param  destImage       destination image (image to paste to)
-     *   @param  removeSlices    list of boolean indicating which slices in source should *not* be in the destination
+     * import source and destination images into the class.
      *
+     * @param  srcImage      source image (image to clip from)
+     * @param  destImage     destination image (image to paste to)
+     * @param  removeSlices  list of boolean indicating which slices in source should *not* be in the destination
      */
-    public AlgorithmRemoveTSlices( ModelImage srcImage, ModelImage destImage, boolean[] removeSlices ) {
-        super( destImage, srcImage );
+    public AlgorithmRemoveTSlices(ModelImage srcImage, ModelImage destImage, boolean[] removeSlices) {
+        super(destImage, srcImage);
         remove = removeSlices;
+
         // get local attributes from this.srcImage
         Xdim = srcImage.getExtents()[0];
         Ydim = srcImage.getExtents()[1];
@@ -59,33 +60,17 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         oldTdim = srcImage.getExtents()[3];
     }
 
-    /**
-     *   Constructs a string of the contruction parameters and
-     *   outputs the string to the messsage frame if the logging
-     *   procedure is turned on.
-     */
-    private void constructLog() {
-        String removeStr = new String();
-
-        for ( int i = 0; i < remove.length; i++ ) {
-            if ( remove[i] == true ) {
-                removeStr += ( " " + String.valueOf( i + 1 ) + ", " );
-            }
-        }
-
-        historyString = new String( "RemoveTSlices(" + removeStr + ")" + "\n" );
-
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     *   Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         super.finalize();
     }
 
     /**
-     *   Where algorithm calculates the final output
+     * Where algorithm calculates the final output.
      */
     public void runAlgorithm() {
         int z;
@@ -95,18 +80,21 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         constructLog();
 
         try {
-            if ( srcImage.isColorImage() ) {
+
+            if (srcImage.isColorImage()) {
                 imageBuffer = new float[4 * volume];
             } else {
                 imageBuffer = new float[volume];
             }
-            buildProgressBar( srcImage.getImageName(), "Removing Selected Time Slices...", 0, 100 );
-        } catch ( OutOfMemoryError e ) {
+
+            buildProgressBar(srcImage.getImageName(), "Removing Selected Time Slices...", 0, 100);
+        } catch (OutOfMemoryError e) {
             imageBuffer = null;
             System.gc();
-            displayError( "Algorithm Remove Time Slices reports: Out of memory" );
-            setCompleted( false );
+            displayError("Algorithm Remove Time Slices reports: Out of memory");
+            setCompleted(false);
             disposeProgressBar();
+
             return;
         }
 
@@ -114,42 +102,51 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         initProgressBar();
 
         T = 0; // start counting the slices of the destination image at the first slice.
-        for ( t = 0; t < oldTdim && !threadStopped; t++ ) { // for all slices in the old image
+
+        for (t = 0; (t < oldTdim) && !threadStopped; t++) { // for all slices in the old image
+
             // let user know something is happening by updating the progressbar
-            if ( isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) ( t ) / ( oldTdim - 1 ) * 100 ), activeImage );
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) (t) / (oldTdim - 1) * 100), activeImage);
             }
 
             // so long as the slice has not been marked for removal, copy it all over.
-            if ( !remove[t] ) {
+            if (!remove[t]) {
+
                 try {
+
                     // try copying the zth slice out of srcImage, making it the Zth in destImage
-                    if ( srcImage.isColorImage() ) {
-                        srcImage.exportData( t * 4 * volume, 4 * volume, imageBuffer );
-                        destImage.importData( T * 4 * volume, imageBuffer, false );
+                    if (srcImage.isColorImage()) {
+                        srcImage.exportData(t * 4 * volume, 4 * volume, imageBuffer);
+                        destImage.importData(T * 4 * volume, imageBuffer, false);
                     } else {
-                        srcImage.exportData( t * volume, volume, imageBuffer );
-                        destImage.importData( T * volume, imageBuffer, false );
+                        srcImage.exportData(t * volume, volume, imageBuffer);
+                        destImage.importData(T * volume, imageBuffer, false);
                     }
-                } catch ( IOException error ) {
-                    displayError( "Algorithm RemoveTSlices reports: Destination image already locked." );
-                    setCompleted( false );
+                } catch (IOException error) {
+                    displayError("Algorithm RemoveTSlices reports: Destination image already locked.");
+                    setCompleted(false);
+
                     return;
                 }
 
                 FileInfoBase fileInfoBuffer; // buffer of any old type
-                for ( z = 0; z < Zdim && !threadStopped; z++ ) {
-                    fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo( t * Zdim + z ).clone();
-                    fileInfoBuffer.setExtents( destImage.getExtents() );
-                    destImage.setFileInfo( fileInfoBuffer, T * Zdim + z );
+
+                for (z = 0; (z < Zdim) && !threadStopped; z++) {
+                    fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo((t * Zdim) + z).clone();
+                    fileInfoBuffer.setExtents(destImage.getExtents());
+                    destImage.setFileInfo(fileInfoBuffer, (T * Zdim) + z);
                 }
+
                 T++; // next time slice position in the new image.
             } // if (!remove[t])
             // else {do nothing; goto next t-slice;}
         } // for (t = 0; t < oldTdim; t++)
-        if ( threadStopped ) {
+
+        if (threadStopped) {
             imageBuffer = null;
             finalize();
+
             return;
         }
 
@@ -157,6 +154,24 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
 
         // Clean up and let the calling dialog know that algorithm did its job
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        String removeStr = new String();
+
+        for (int i = 0; i < remove.length; i++) {
+
+            if (remove[i] == true) {
+                removeStr += (" " + String.valueOf(i + 1) + ", ");
+            }
+        }
+
+        historyString = new String("RemoveTSlices(" + removeStr + ")" + "\n");
+
     }
 }

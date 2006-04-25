@@ -12,26 +12,28 @@ import gov.nih.mipav.view.*;
 
 
 /**
- * The class which starts up the Mipav application.
- * Also passes along the command line arguments to the UI.
+ * The class which starts up the Mipav application. Also passes along the command line arguments to the UI.
  */
 public class MipavMain {
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
      * Passes control to the main GUI in the Model, View and Controller arch.
      *
-     * @param args  array of command line arguments input as strings
+     * @param  args  array of command line arguments input as strings
      */
-    static public void main(String args[]) {
+    public static void main(String[] args) {
         System.setProperty("sun.awt.noerasebackground", "true");
 
         ViewUserInterface ui = ViewUserInterface.create(args);
 
-        if ( args != null && args.length > 1 ) {
+        if ((args != null) && (args.length > 1)) {
             ui.runCmdLine();
         }
 
 
-        if ( ui.isAppFrameVisible() && Preferences.is(Preferences.PREF_SHOW_SPLASH) ) {
+        if (ui.isAppFrameVisible() && Preferences.is(Preferences.PREF_SHOW_SPLASH)) {
             ui.showSplashGraphics();
         }
 

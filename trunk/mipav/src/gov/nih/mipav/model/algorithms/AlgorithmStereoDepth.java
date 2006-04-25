@@ -3,50 +3,59 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
+
+import java.awt.*;
 
 import java.io.*;
+
 import java.util.*;
-import java.awt.*;
 
 
 /**
-
+ * DOCUMENT ME!
  */
 public class AlgorithmStereoDepth extends AlgorithmBase {
 
-    private ModelImage leftImage;
-    private ModelImage rightImage;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** DOCUMENT ME! */
     private boolean isColorImage = false; // indicates the image being messed with is a colour image
 
-    /**
-     *   Constructor for  images in which depths are placed in destImage.
-     *   @param destImg      image model where result image is to stored
-     *   @param leftImage
-     *   @param rightImage
-     */
-    public AlgorithmStereoDepth( ModelImage destImg, ModelImage leftImage, ModelImage rightImage ) {
+    /** DOCUMENT ME! */
+    private ModelImage leftImage;
 
-        super( destImg, rightImage );
+    /** DOCUMENT ME! */
+    private ModelImage rightImage;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Constructor for images in which depths are placed in destImage.
+     *
+     * @param  destImg     image model where result image is to stored
+     * @param  leftImage   DOCUMENT ME!
+     * @param  rightImage  DOCUMENT ME!
+     */
+    public AlgorithmStereoDepth(ModelImage destImg, ModelImage leftImage, ModelImage rightImage) {
+
+        super(destImg, rightImage);
         this.leftImage = leftImage;
         this.rightImage = rightImage;
-        if ( leftImage.isColorImage() ) {
+
+        if (leftImage.isColorImage()) {
             isColorImage = true;
         }
     }
 
-    /**
-     * Constructs a string of the contruction parameters and outputs the
-     * string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String( "StereoDepth()\n" );
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /** Prepares this class for destruction. */
+    /**
+     * Prepares this class for destruction.
+     */
     public void finalize() {
         leftImage = null;
         rightImage = null;
@@ -54,15 +63,20 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
         super.finalize();
     }
 
-    /** starts the algorithm */
+    /**
+     * starts the algorithm.
+     */
     public void runAlgorithm() {
-        if ( leftImage == null ) {
-            displayError( "Left Image is null" );
+
+        if (leftImage == null) {
+            displayError("Left Image is null");
+
             return;
         }
 
-        if ( rightImage == null ) {
-            displayError( "Right Image is null" );
+        if (rightImage == null) {
+            displayError("Right Image is null");
+
             return;
         }
 
@@ -72,7 +86,92 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param  image        DOCUMENT ME!
+     * @param  resultImage  DOCUMENT ME!
+     */
+    public void updateFileInfo(ModelImage image, ModelImage resultImage) {
+        FileInfoBase[] fileInfo;
 
+        if (resultImage.getNDims() == 2) {
+            fileInfo = resultImage.getFileInfo();
+            fileInfo[0].setModality(image.getFileInfo()[0].getModality());
+            fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+
+            // fileInfo[0].setDataType(image.getFileInfo()[0].getDataType());
+            fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
+            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfo[0].setResolutions(image.getFileInfo()[0].getResolutions());
+            fileInfo[0].setExtents(resultImage.getExtents());
+            fileInfo[0].setMax(resultImage.getMax());
+            fileInfo[0].setMin(resultImage.getMin());
+            fileInfo[0].setImageOrientation(image.getImageOrientation());
+            fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
+            fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
+            fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+            fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  image        DOCUMENT ME!
+     * @param  resultImage  DOCUMENT ME!
+     */
+    public void updateSomeFileInfo(ModelImage image, ModelImage resultImage) {
+        FileInfoBase[] fileInfo;
+
+        if (resultImage.getNDims() == 2) {
+            fileInfo = resultImage.getFileInfo();
+            fileInfo[0].setModality(image.getFileInfo()[0].getModality());
+            fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+
+            // fileInfo[0].setDataType(image.getFileInfo()[0].getDataType());
+            fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
+            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfo[0].setResolutions(image.getFileInfo()[0].getResolutions());
+            fileInfo[0].setExtents(resultImage.getExtents());
+
+            // fileInfo[0].setMax(resultImage.getMax());
+            // fileInfo[0].setMin(resultImage.getMin());
+            fileInfo[0].setImageOrientation(image.getImageOrientation());
+            fileInfo[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation());
+            fileInfo[0].setOrigin(image.getFileInfo()[0].getOrigin());
+            fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+            fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
+        }
+    }
+
+    /**
+     * To create the standard progressBar. Stores in the class-global, progressBar
+     */
+    private void buildProgressBar() {
+
+        try {
+
+            if (pBarVisible == true) {
+                progressBar = new ViewJProgressBar(leftImage.getImageName(), "Stereo Depth ...", 0, 100, true, this,
+                                                   this);
+
+                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
+                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
+
+                progressBar.setLocation(xScreen / 2, yScreen / 2);
+                progressBar.setVisible(true);
+            }
+        } catch (NullPointerException npe) {
+
+            if (threadStopped) {
+                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                  Preferences.DEBUG_ALGORITHM);
+            }
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
      */
     private void calcStereoDepth() {
         int length;
@@ -110,241 +209,296 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
         try {
             leftBuffer = new float[length];
             rightBuffer = new float[length];
-        } catch ( OutOfMemoryError oome ) {
+        } catch (OutOfMemoryError oome) {
             leftBuffer = null;
             rightBuffer = null;
-            errorCleanUp( "Algorithm Stereo Depth: Out of memory", true );
+            errorCleanUp("Algorithm Stereo Depth: Out of memory", true);
+
             return;
         }
 
         try {
             this.buildProgressBar();
-        } catch ( NullPointerException npe ) {
-            if ( threadStopped ) {
-                Preferences.debug(
-                        "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM );
+        } catch (NullPointerException npe) {
+
+            if (threadStopped) {
+                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                                  Preferences.DEBUG_ALGORITHM);
             }
         }
 
-        leftBWImage = new ModelImage( ModelImage.FLOAT, leftImage.getExtents(), leftImage.getImageName() + "_changed",
-                leftImage.getUserInterface() );
+        leftBWImage = new ModelImage(ModelImage.FLOAT, leftImage.getExtents(), leftImage.getImageName() + "_changed",
+                                     leftImage.getUserInterface());
 
-        rightBWImage = new ModelImage( ModelImage.FLOAT, rightImage.getExtents(), rightImage.getImageName() + "_changed",
-                rightImage.getUserInterface() );
+        rightBWImage = new ModelImage(ModelImage.FLOAT, rightImage.getExtents(), rightImage.getImageName() + "_changed",
+                                      rightImage.getUserInterface());
 
-        if ( !isColorImage ) {
-
-            // Make algorithm
-            changeTypeAlgo = new AlgorithmChangeType( leftBWImage, leftImage, leftImage.getMin(), leftImage.getMax(),
-                    leftImage.getMin(), leftImage.getMax(), false );
-            changeTypeAlgo.setProgressBarVisible( false );
-            changeTypeAlgo.run();
-            updateFileInfo( leftImage, leftBWImage );
+        if (!isColorImage) {
 
             // Make algorithm
-            changeTypeAlgo = new AlgorithmChangeType( rightBWImage, rightImage, rightImage.getMin(), rightImage.getMax(),
-                    rightImage.getMin(), rightImage.getMax(), false );
-            changeTypeAlgo.setProgressBarVisible( false );
+            changeTypeAlgo = new AlgorithmChangeType(leftBWImage, leftImage, leftImage.getMin(), leftImage.getMax(),
+                                                     leftImage.getMin(), leftImage.getMax(), false);
+            changeTypeAlgo.setProgressBarVisible(false);
             changeTypeAlgo.run();
-            updateFileInfo( rightImage, rightBWImage );
+            updateFileInfo(leftImage, leftBWImage);
+
+            // Make algorithm
+            changeTypeAlgo = new AlgorithmChangeType(rightBWImage, rightImage, rightImage.getMin(), rightImage.getMax(),
+                                                     rightImage.getMin(), rightImage.getMax(), false);
+            changeTypeAlgo.setProgressBarVisible(false);
+            changeTypeAlgo.run();
+            updateFileInfo(rightImage, rightBWImage);
+
             try {
-                leftBWImage.exportData( 0, length, leftBuffer );
-            } catch ( IOException e ) {
+                leftBWImage.exportData(0, length, leftBuffer);
+            } catch (IOException e) {
                 leftBuffer = null;
-                errorCleanUp( "Algorithm Stereo Depth: IOException on leftBWImage.exportData", true );
-                return;
-            }
-            try {
-                rightBWImage.exportData( 0, length, rightBuffer );
-            } catch ( IOException e ) {
-                rightBuffer = null;
-                errorCleanUp( "Algorithm Stereo Depth: IOException on rightBWImage.exportData", true );
+                errorCleanUp("Algorithm Stereo Depth: IOException on leftBWImage.exportData", true);
+
                 return;
             }
 
-            for ( i = 0; i < length; i++ ) {
+            try {
+                rightBWImage.exportData(0, length, rightBuffer);
+            } catch (IOException e) {
+                rightBuffer = null;
+                errorCleanUp("Algorithm Stereo Depth: IOException on rightBWImage.exportData", true);
+
+                return;
+            }
+
+            for (i = 0; i < length; i++) {
                 leftBuffer[i] = 0.0f;
             }
-            for ( y = 0; y < yDim; y++ ) {
-                for ( x = 0; x < xDim; x++ ) {
-                    i = x + y * xDim;
-                    if ( ( x >= xDim / 2 - 50 ) && ( x <= xDim / 2 + 50 ) && ( y >= yDim - 101 ) ) {
-                        leftBuffer[i] = 50 + x - ( xDim / 2 - 50 ) + y - ( yDim - 101 );
+
+            for (y = 0; y < yDim; y++) {
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (y * xDim);
+
+                    if ((x >= ((xDim / 2) - 50)) && (x <= ((xDim / 2) + 50)) && (y >= (yDim - 101))) {
+                        leftBuffer[i] = 50 + x - ((xDim / 2) - 50) + y - (yDim - 101);
                     }
                 }
             }
 
-            for ( i = 0; i < length; i++ ) {
+            for (i = 0; i < length; i++) {
                 rightBuffer[i] = 0.0f;
             }
-            for ( y = 0; y < yDim; y++ ) {
-                for ( x = 0; x < xDim; x++ ) {
-                    i = x + y * xDim;
-                    if ( ( x >= xDim / 2 - 50 ) && ( x <= xDim / 2 + 50 ) && ( y >= 301 ) && ( y <= 401 ) ) {
-                        rightBuffer[i] = 50 + x - ( xDim / 2 - 50 ) + y - 301;
+
+            for (y = 0; y < yDim; y++) {
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (y * xDim);
+
+                    if ((x >= ((xDim / 2) - 50)) && (x <= ((xDim / 2) + 50)) && (y >= 301) && (y <= 401)) {
+                        rightBuffer[i] = 50 + x - ((xDim / 2) - 50) + y - 301;
                     }
                 }
             }
 
             try {
-                leftBWImage.importData( 0, leftBuffer, true );
-            } catch ( IOException e ) {
+                leftBWImage.importData(0, leftBuffer, true);
+            } catch (IOException e) {
                 leftBuffer = null;
-                errorCleanUp( "Algorithm StereoDepth: IOException on leftBWImage.importData", true );
+                errorCleanUp("Algorithm StereoDepth: IOException on leftBWImage.importData", true);
+
                 return;
             }
 
             try {
-                rightBWImage.importData( 0, rightBuffer, true );
-            } catch ( IOException e ) {
+                rightBWImage.importData(0, rightBuffer, true);
+            } catch (IOException e) {
                 rightBuffer = null;
-                errorCleanUp( "Algorithm StereoDepth: IOException on rightBWImage.importData", true );
+                errorCleanUp("Algorithm StereoDepth: IOException on rightBWImage.importData", true);
+
                 return;
             }
 
         } else { // color
+
             // convert color to black and white
             try {
                 colorBuffer = new float[4 * length];
-            } catch ( OutOfMemoryError e ) {
+            } catch (OutOfMemoryError e) {
                 colorBuffer = null;
-                errorCleanUp( "Algorithm Stereo Depth: OutOfMemoryError on creating colorBuffer", true );
+                errorCleanUp("Algorithm Stereo Depth: OutOfMemoryError on creating colorBuffer", true);
+
                 return;
             }
 
             try {
-                leftImage.exportData( 0, 4 * length, colorBuffer );
-            } catch ( IOException e ) {
+                leftImage.exportData(0, 4 * length, colorBuffer);
+            } catch (IOException e) {
                 colorBuffer = null;
-                errorCleanUp( "Algorithm Stereo Depth: IOException on leftImage.exportData", true );
+                errorCleanUp("Algorithm Stereo Depth: IOException on leftImage.exportData", true);
+
                 return;
             }
-            for ( i = 0; i < length; i++ ) {
-                leftBuffer[i] = ( colorBuffer[4 * i + 1] + colorBuffer[4 * i + 2] + colorBuffer[4 * i + 3] ) / 3.0f;
+
+            for (i = 0; i < length; i++) {
+                leftBuffer[i] = (colorBuffer[(4 * i) + 1] + colorBuffer[(4 * i) + 2] + colorBuffer[(4 * i) + 3]) / 3.0f;
             }
 
             try {
-                leftBWImage.importData( 0, leftBuffer, true );
-            } catch ( IOException e ) {
+                leftBWImage.importData(0, leftBuffer, true);
+            } catch (IOException e) {
                 leftBuffer = null;
-                errorCleanUp( "Algorithm StereoDepth: IOException on leftBWImage.importData", true );
+                errorCleanUp("Algorithm StereoDepth: IOException on leftBWImage.importData", true);
+
                 return;
             }
 
             try {
-                rightImage.exportData( 0, 4 * length, colorBuffer );
-            } catch ( IOException e ) {
+                rightImage.exportData(0, 4 * length, colorBuffer);
+            } catch (IOException e) {
                 colorBuffer = null;
-                errorCleanUp( "Algorithm Stereo Depth: IOException on rightImage.exportData", true );
+                errorCleanUp("Algorithm Stereo Depth: IOException on rightImage.exportData", true);
+
                 return;
             }
-            for ( i = 0; i < length; i++ ) {
-                rightBuffer[i] = ( colorBuffer[4 * i + 1] + colorBuffer[4 * i + 2] + colorBuffer[4 * i + 3] ) / 3.0f;
+
+            for (i = 0; i < length; i++) {
+                rightBuffer[i] = (colorBuffer[(4 * i) + 1] + colorBuffer[(4 * i) + 2] + colorBuffer[(4 * i) + 3]) /
+                                     3.0f;
             }
+
             try {
-                rightBWImage.importData( 0, rightBuffer, true );
-            } catch ( IOException e ) {
+                rightBWImage.importData(0, rightBuffer, true);
+            } catch (IOException e) {
                 rightBuffer = null;
-                errorCleanUp( "Algorithm StereoDepth: IOException on rightBWImage.importData", true );
+                errorCleanUp("Algorithm StereoDepth: IOException on rightBWImage.importData", true);
+
                 return;
             }
         }
+
         // Strip all pixels except those in a great circle
         // Find center of mass of left image
         num = 0;
         xCenter = 0.0f;
         yCenter = 0.0f;
-        for ( y = 0; y < yDim; y++ ) {
-            for ( x = 0; x < xDim; x++ ) {
-                i = x + y * xDim;
-                if ( leftBuffer[i] > threshold ) {
+
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                i = x + (y * xDim);
+
+                if (leftBuffer[i] > threshold) {
                     xCenter += x;
                     yCenter += y;
                     num++;
                 }
             }
         }
+
         xCenter /= num;
         yCenter /= num;
-        xCenInt = (int) ( xCenter + 0.5f );
-        yCenInt = (int) ( yCenter + 0.5f );
-        leftMask = new BitSet( length );
-        for ( i = 0; i < length; i++ ) {
-            leftMask.clear( i );
+        xCenInt = (int) (xCenter + 0.5f);
+        yCenInt = (int) (yCenter + 0.5f);
+        leftMask = new BitSet(length);
+
+        for (i = 0; i < length; i++) {
+            leftMask.clear(i);
         }
+
         doAgain = true;
-        leftMask.set( xCenInt + yCenInt * xDim );
+        leftMask.set(xCenInt + (yCenInt * xDim));
         leftBoundary = xDim - 1;
         rightBoundary = 0;
         topBoundary = yDim - 1;
         bottomBoundary = 0;
-        while ( doAgain ) {
+
+        while (doAgain) {
             doAgain = false;
-            for ( y = 0; y < yDim; y++ ) {
-                for ( x = 0; x < xDim; x++ ) {
-                    i = x + y * xDim;
-                    if ( ( leftBuffer[i] > threshold ) && ( !leftMask.get( i ) ) ) {
-                        if ( ( x >= 1 ) && ( leftMask.get( i - 1 ) ) ) {
-                            leftMask.set( i );
+
+            for (y = 0; y < yDim; y++) {
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (y * xDim);
+
+                    if ((leftBuffer[i] > threshold) && (!leftMask.get(i))) {
+
+                        if ((x >= 1) && (leftMask.get(i - 1))) {
+                            leftMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
-                        if ( ( x <= ( xDim - 2 ) ) && ( leftMask.get( i + 1 ) ) ) {
-                            leftMask.set( i );
+
+                        if ((x <= (xDim - 2)) && (leftMask.get(i + 1))) {
+                            leftMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
-                        if ( ( y >= 1 ) && ( leftMask.get( i - xDim ) ) ) {
-                            leftMask.set( i );
+
+                        if ((y >= 1) && (leftMask.get(i - xDim))) {
+                            leftMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
-                        if ( ( y <= ( yDim - 2 ) ) && ( leftMask.get( i + xDim ) ) ) {
-                            leftMask.set( i );
+
+                        if ((y <= (yDim - 2)) && (leftMask.get(i + xDim))) {
+                            leftMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
@@ -352,18 +506,23 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
                 } // for (x = 0; x < xDim; x++)
             } // for (y = 0; y < yDim; y++)
         } // while (doAgain)
-        xCenter = ( leftBoundary + rightBoundary ) / 2.0f;
-        yCenter = ( topBoundary + bottomBoundary ) / 2.0f;
-        radius = 0.5f * Math.min( rightBoundary - leftBoundary, bottomBoundary - topBoundary );
+
+        xCenter = (leftBoundary + rightBoundary) / 2.0f;
+        yCenter = (topBoundary + bottomBoundary) / 2.0f;
+        radius = 0.5f * Math.min(rightBoundary - leftBoundary, bottomBoundary - topBoundary);
         radsq = radius * radius;
-        for ( i = 0; i < length; i++ ) {
-            leftMask.clear( i );
+
+        for (i = 0; i < length; i++) {
+            leftMask.clear(i);
         }
-        for ( y = 0; y < yDim; y++ ) {
-            for ( x = 0; x < xDim; x++ ) {
-                distsq = ( x - xCenter ) * ( x - xCenter ) + ( y - yCenter ) * ( y - yCenter );
-                if ( distsq <= radsq ) {
-                    leftMask.set( x + y * xDim );
+
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                distsq = ((x - xCenter) * (x - xCenter)) + ((y - yCenter) * (y - yCenter));
+
+                if (distsq <= radsq) {
+                    leftMask.set(x + (y * xDim));
                 }
             }
         }
@@ -372,97 +531,127 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
         num = 0;
         xCenter = 0.0f;
         yCenter = 0.0f;
-        for ( y = 0; y < yDim; y++ ) {
-            for ( x = 0; x < xDim; x++ ) {
-                i = x + y * xDim;
-                if ( rightBuffer[i] > threshold ) {
+
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                i = x + (y * xDim);
+
+                if (rightBuffer[i] > threshold) {
                     xCenter += x;
                     yCenter += y;
                     num++;
                 }
             }
         }
+
         xCenter /= num;
         yCenter /= num;
-        xCenInt = (int) ( xCenter + 0.5f );
-        yCenInt = (int) ( yCenter + 0.5f );
-        rightMask = new BitSet( length );
-        for ( i = 0; i < length; i++ ) {
-            rightMask.clear( i );
+        xCenInt = (int) (xCenter + 0.5f);
+        yCenInt = (int) (yCenter + 0.5f);
+        rightMask = new BitSet(length);
+
+        for (i = 0; i < length; i++) {
+            rightMask.clear(i);
         }
+
         doAgain = true;
-        rightMask.set( xCenInt + yCenInt * xDim );
+        rightMask.set(xCenInt + (yCenInt * xDim));
         leftBoundary = xDim - 1;
         rightBoundary = 0;
         topBoundary = yDim - 1;
         bottomBoundary = 0;
-        while ( doAgain ) {
+
+        while (doAgain) {
             doAgain = false;
-            for ( y = 0; y < yDim; y++ ) {
-                for ( x = 0; x < xDim; x++ ) {
-                    i = x + y * xDim;
-                    if ( ( rightBuffer[i] > threshold ) && ( !rightMask.get( i ) ) ) {
-                        if ( ( x >= 1 ) && ( rightMask.get( i - 1 ) ) ) {
-                            rightMask.set( i );
+
+            for (y = 0; y < yDim; y++) {
+
+                for (x = 0; x < xDim; x++) {
+                    i = x + (y * xDim);
+
+                    if ((rightBuffer[i] > threshold) && (!rightMask.get(i))) {
+
+                        if ((x >= 1) && (rightMask.get(i - 1))) {
+                            rightMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
-                        if ( ( x <= ( xDim - 2 ) ) && ( rightMask.get( i + 1 ) ) ) {
-                            rightMask.set( i );
+
+                        if ((x <= (xDim - 2)) && (rightMask.get(i + 1))) {
+                            rightMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
-                        if ( ( y >= 1 ) && ( rightMask.get( i - xDim ) ) ) {
-                            rightMask.set( i );
+
+                        if ((y >= 1) && (rightMask.get(i - xDim))) {
+                            rightMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
-                        if ( ( y <= ( yDim - 2 ) ) && ( rightMask.get( i + xDim ) ) ) {
-                            rightMask.set( i );
+
+                        if ((y <= (yDim - 2)) && (rightMask.get(i + xDim))) {
+                            rightMask.set(i);
                             doAgain = true;
-                            if ( x > rightBoundary ) {
+
+                            if (x > rightBoundary) {
                                 rightBoundary = x;
                             }
-                            if ( x < leftBoundary ) {
+
+                            if (x < leftBoundary) {
                                 leftBoundary = x;
                             }
-                            if ( y > bottomBoundary ) {
+
+                            if (y > bottomBoundary) {
                                 bottomBoundary = y;
                             }
-                            if ( y < topBoundary ) {
+
+                            if (y < topBoundary) {
                                 topBoundary = y;
                             }
                         }
@@ -470,113 +659,89 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
                 } // for (x = 0; x < xDim; x++)
             } // for (y = 0; y < yDim; y++)
         } // while (doAgain)
-        xCenter = ( leftBoundary + rightBoundary ) / 2.0f;
-        yCenter = ( topBoundary + bottomBoundary ) / 2.0f;
-        radius = 0.5f * Math.min( rightBoundary - leftBoundary, bottomBoundary - topBoundary );
+
+        xCenter = (leftBoundary + rightBoundary) / 2.0f;
+        yCenter = (topBoundary + bottomBoundary) / 2.0f;
+        radius = 0.5f * Math.min(rightBoundary - leftBoundary, bottomBoundary - topBoundary);
         radsq = radius * radius;
-        for ( i = 0; i < length; i++ ) {
-            rightMask.clear( i );
+
+        for (i = 0; i < length; i++) {
+            rightMask.clear(i);
         }
-        for ( y = 0; y < yDim; y++ ) {
-            for ( x = 0; x < xDim; x++ ) {
-                distsq = ( x - xCenter ) * ( x - xCenter ) + ( y - yCenter ) * ( y - yCenter );
-                if ( distsq <= radsq ) {
-                    rightMask.set( x + y * xDim );
+
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                distsq = ((x - xCenter) * (x - xCenter)) + ((y - yCenter) * (y - yCenter));
+
+                if (distsq <= radsq) {
+                    rightMask.set(x + (y * xDim));
                 }
             }
         }
 
         // Register the right image to the left image
         /* leftRefImage = new ModelImage(ModelImage.FLOAT, leftImage.getExtents(),
-         leftImage.getImageName()+"_ref",
-         leftImage.getUserInterface());
-         for (i = 0; i < length; i++) {
-         if (leftMask.get(i)){
-         leftBuffer[i] = 1.0f;
-         }
-         else {
-         leftBuffer[i] = 0.0f;
-         }
-         }*/
+         * leftImage.getImageName()+"_ref", leftImage.getUserInterface()); for (i = 0; i < length; i++) { if
+         * (leftMask.get(i)){ leftBuffer[i] = 1.0f; } else { leftBuffer[i] = 0.0f; } }*/
 
         leftBoolean = new boolean[length];
-        for ( i = 0; i < length; i++ ) {
+
+        for (i = 0; i < length; i++) {
             leftBoolean[i] = false;
         }
-        for ( y = 0; y < yDim; y++ ) {
-            for ( x = 0; x < xDim; x++ ) {
-                i = x + y * xDim;
-                if ( ( x >= xDim / 2 - 50 ) && ( x <= xDim / 2 + 50 ) && ( y >= yDim - 101 ) ) {
+
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                i = x + (y * xDim);
+
+                if ((x >= ((xDim / 2) - 50)) && (x <= ((xDim / 2) + 50)) && (y >= (yDim - 101))) {
                     leftBoolean[i] = true;
                 }
             }
         }
 
         /* try {
-         leftRefImage.importData(0, leftBuffer, true);
-         }
-         catch(IOException e) {
-         leftBuffer = null;
-         errorCleanUp("Algorithm StereoDepth: IOException on leftRefImage.importData", true);
-         return;
-         }
-
-         updateSomeFileInfo(leftImage,leftRefImage);
-
-         rightRefImage = new ModelImage(ModelImage.FLOAT, rightImage.getExtents(),
-         rightImage.getImageName()+"_ref",
-         rightImage.getUserInterface());
-
-         for (i = 0; i < length; i++) {
-         if (rightMask.get(i)){
-         rightBuffer[i] = 1.0f;
-         }
-         else {
-         rightBuffer[i] = 0.0f;
-         }
-         }*/
+         * leftRefImage.importData(0, leftBuffer, true); } catch(IOException e) { leftBuffer = null;
+         * errorCleanUp("Algorithm StereoDepth: IOException on leftRefImage.importData", true); return; }
+         *
+         * updateSomeFileInfo(leftImage,leftRefImage);
+         *
+         * rightRefImage = new ModelImage(ModelImage.FLOAT, rightImage.getExtents(), rightImage.getImageName()+"_ref",
+         * rightImage.getUserInterface());
+         *
+         * for (i = 0; i < length; i++) { if (rightMask.get(i)){ rightBuffer[i] = 1.0f; } else { rightBuffer[i] = 0.0f; }
+         * }*/
 
         rightBoolean = new boolean[length];
-        for ( i = 0; i < length; i++ ) {
+
+        for (i = 0; i < length; i++) {
             rightBoolean[i] = false;
         }
-        for ( y = 0; y < yDim; y++ ) {
-            for ( x = 0; x < xDim; x++ ) {
-                i = x + y * xDim;
-                if ( ( x >= xDim / 2 - 50 ) && ( x <= xDim / 2 + 50 ) && ( y >= 301 ) && ( y <= 401 ) ) {
+
+        for (y = 0; y < yDim; y++) {
+
+            for (x = 0; x < xDim; x++) {
+                i = x + (y * xDim);
+
+                if ((x >= ((xDim / 2) - 50)) && (x <= ((xDim / 2) + 50)) && (y >= 301) && (y <= 401)) {
                     rightBoolean[i] = true;
                 }
             }
         }
 
         /* try {
-         rightRefImage.importData(0, rightBuffer, true);
-         }
-         catch(IOException e) {
-         rightBuffer = null;
-         errorCleanUp("Algorithm StereoDepth: IOException on rightRefImage.importData", true);
-         return;
-         }
-
-         updateSomeFileInfo(rightImage,rightRefImage);
-
-         try {
-         leftRefImage.importData(0, leftBuffer, true);
-         }
-         catch(IOException e) {
-         leftBuffer = null;
-         errorCleanUp("Algorithm Stereo Depth: IOException on leftRefImage.importData", true);
-         return;
-         }
-
-         try {
-         rightRefImage.importData(0, rightBuffer, true);
-         }
-         catch(IOException e) {
-         rightBuffer = null;
-         errorCleanUp("Algorithm Stereo Depth: IOException on rightRefImage.importData", true);
-         return;
-         }*/
+         * rightRefImage.importData(0, rightBuffer, true); } catch(IOException e) { rightBuffer = null;
+         * errorCleanUp("Algorithm StereoDepth: IOException on rightRefImage.importData", true); return; }
+         *
+         * updateSomeFileInfo(rightImage,rightRefImage);
+         *
+         * try { leftRefImage.importData(0, leftBuffer, true); } catch(IOException e) { leftBuffer = null;
+         * errorCleanUp("Algorithm Stereo Depth: IOException on leftRefImage.importData", true); return; }
+         *
+         * try { rightRefImage.importData(0, rightBuffer, true); } catch(IOException e) { rightBuffer = null;
+         * errorCleanUp("Algorithm Stereo Depth: IOException on rightRefImage.importData", true); return; }*/
 
         try {
 
@@ -600,132 +765,52 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
             float precision = 1.0e-10f;
             int iterations = 1000;
 
-            air = new AlgorithmRegAIR( destImage, leftBWImage, leftBoolean, rightBWImage, rightBoolean, transformation,
-                    interpolation, sourceThreshold, targetThreshold, sourceGaussX, sourceGaussY, sourceGaussZ,
-                    targetGaussX, targetGaussY, targetGaussZ, sourcePartitions, targetPartitions, costFxn,
-                    cubicInterpolation, interaction, precision, iterations );
-        } catch ( OutOfMemoryError e ) {
-            MipavUtil.displayError( "AlgorithmStereoDepth: unable to allocate enough memory" );
+            air = new AlgorithmRegAIR(destImage, leftBWImage, leftBoolean, rightBWImage, rightBoolean, transformation,
+                                      interpolation, sourceThreshold, targetThreshold, sourceGaussX, sourceGaussY,
+                                      sourceGaussZ, targetGaussX, targetGaussY, targetGaussZ, sourcePartitions,
+                                      targetPartitions, costFxn, cubicInterpolation, interaction, precision,
+                                      iterations);
+        } catch (OutOfMemoryError e) {
+            MipavUtil.displayError("AlgorithmStereoDepth: unable to allocate enough memory");
+
             return;
         }
-        air.setProgressBarVisible( false );
+
+        air.setProgressBarVisible(false);
         air.run();
 
         /* rigidReg = new AlgorithmRegOAR2D(leftBWImage, rightBWImage,leftRefImage, rightRefImage,
-         AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED_WGT, dof,
-         AlgorithmTransform.BILINEAR,
-         coarseBegin, coarseEnd, coarseRate,
-         fineBegin, fineEnd, fineRate);
-         rigidReg.setProgressBarVisible(false);
-         rigidReg.run();
-         int xdimA   = leftImage.getExtents()[0];
-         int ydimA   = leftImage.getExtents()[1];
-         float xresA = leftImage.getFileInfo(0).getResolutions()[0];
-         float yresA = leftImage.getFileInfo(0).getResolutions()[1];
-
-         AlgorithmTransform transform = null;
-         TransMatrix xfrm = rigidReg.getTransform();
-         double A[][] = xfrm.getMatrix();
-
-         for (i = 0; i < 3; i++) {
-         for (int j = 0; j < 3; j++) {
-         System.out.println("A["+i+"]["+j+"]= " + A[i][j]);
-         }
-         }
-
-         transform = new AlgorithmTransform(rightBWImage, rigidReg.getTransform(),
-         AlgorithmTransform.BILINEAR, xresA, yresA, xdimA, ydimA, false, false);
-
-
-         transform.run();
-         rightBWImage = transform.getTransformedImage();
-         try {
-         rightBWImage.exportData(0,length,rightBuffer);
-         }
-         catch (IOException e) {
-         rightBuffer = null;
-         errorCleanUp("Algorithm Stereo Depth: IOException on rightBWImage.exportData", true);
-         return;
-         }
-
-         try {
-         destImage.importData(0,rightBuffer,true);
-         }
-         catch(IOException e) {
-         rightBuffer = null;
-         errorCleanUp("Algorithm StereoDepth: IOException on destImage.importData", true);
-         return;
-         } */
+         * AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED_WGT, dof, AlgorithmTransform.BILINEAR, coarseBegin,
+         * coarseEnd, coarseRate, fineBegin, fineEnd, fineRate); rigidReg.setProgressBarVisible(false); rigidReg.run();
+         * int xdimA   = leftImage.getExtents()[0]; int ydimA   = leftImage.getExtents()[1]; float xresA =
+         * leftImage.getFileInfo(0).getResolutions()[0]; float yresA = leftImage.getFileInfo(0).getResolutions()[1];
+         *
+         * AlgorithmTransform transform = null; TransMatrix xfrm = rigidReg.getTransform(); double A[][] =
+         * xfrm.getMatrix();
+         *
+         * for (i = 0; i < 3; i++) { for (int j = 0; j < 3; j++) { System.out.println("A["+i+"]["+j+"]= " + A[i][j]); } }
+         *
+         * transform = new AlgorithmTransform(rightBWImage, rigidReg.getTransform(), AlgorithmTransform.BILINEAR, xresA,
+         * yresA, xdimA, ydimA, false, false);
+         *
+         *
+         * transform.run(); rightBWImage = transform.getTransformedImage(); try {
+         * rightBWImage.exportData(0,length,rightBuffer); } catch (IOException e) { rightBuffer = null;
+         * errorCleanUp("Algorithm Stereo Depth: IOException on rightBWImage.exportData", true); return; }
+         *
+         * try { destImage.importData(0,rightBuffer,true); } catch(IOException e) { rightBuffer = null;
+         * errorCleanUp("Algorithm StereoDepth: IOException on destImage.importData", true); return; } */
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
 
     }
 
     /**
-     *   To create the standard progressBar.
-     *   Stores in the class-global, progressBar
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
      */
-    private void buildProgressBar() {
-        try {
-            if ( pBarVisible == true ) {
-                progressBar = new ViewJProgressBar( leftImage.getImageName(), "Stereo Depth ...", 0, 100, true, this,
-                        this );
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-                progressBar.setLocation( xScreen / 2, yScreen / 2 );
-                progressBar.setVisible( true );
-            }
-        } catch ( NullPointerException npe ) {
-            if ( threadStopped ) {
-                Preferences.debug(
-                        "somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.", Preferences.DEBUG_ALGORITHM );
-            }
-        }
-    }
-
-    public void updateFileInfo( ModelImage image, ModelImage resultImage ) {
-        FileInfoBase[] fileInfo;
-
-        if ( resultImage.getNDims() == 2 ) {
-            fileInfo = resultImage.getFileInfo();
-            fileInfo[0].setModality( image.getFileInfo()[0].getModality() );
-            fileInfo[0].setFileDirectory( image.getFileInfo()[0].getFileDirectory() );
-            // fileInfo[0].setDataType(image.getFileInfo()[0].getDataType());
-            fileInfo[0].setEndianess( image.getFileInfo()[0].getEndianess() );
-            fileInfo[0].setUnitsOfMeasure( image.getFileInfo()[0].getUnitsOfMeasure() );
-            fileInfo[0].setResolutions( image.getFileInfo()[0].getResolutions() );
-            fileInfo[0].setExtents( resultImage.getExtents() );
-            fileInfo[0].setMax( resultImage.getMax() );
-            fileInfo[0].setMin( resultImage.getMin() );
-            fileInfo[0].setImageOrientation( image.getImageOrientation() );
-            fileInfo[0].setAxisOrientation( image.getFileInfo()[0].getAxisOrientation() );
-            fileInfo[0].setOrigin( image.getFileInfo()[0].getOrigin() );
-            fileInfo[0].setPixelPadValue( image.getFileInfo()[0].getPixelPadValue() );
-            fileInfo[0].setPhotometric( image.getFileInfo()[0].getPhotometric() );
-        }
-    }
-
-    public void updateSomeFileInfo( ModelImage image, ModelImage resultImage ) {
-        FileInfoBase[] fileInfo;
-
-        if ( resultImage.getNDims() == 2 ) {
-            fileInfo = resultImage.getFileInfo();
-            fileInfo[0].setModality( image.getFileInfo()[0].getModality() );
-            fileInfo[0].setFileDirectory( image.getFileInfo()[0].getFileDirectory() );
-            // fileInfo[0].setDataType(image.getFileInfo()[0].getDataType());
-            fileInfo[0].setEndianess( image.getFileInfo()[0].getEndianess() );
-            fileInfo[0].setUnitsOfMeasure( image.getFileInfo()[0].getUnitsOfMeasure() );
-            fileInfo[0].setResolutions( image.getFileInfo()[0].getResolutions() );
-            fileInfo[0].setExtents( resultImage.getExtents() );
-            // fileInfo[0].setMax(resultImage.getMax());
-            // fileInfo[0].setMin(resultImage.getMin());
-            fileInfo[0].setImageOrientation( image.getImageOrientation() );
-            fileInfo[0].setAxisOrientation( image.getFileInfo()[0].getAxisOrientation() );
-            fileInfo[0].setOrigin( image.getFileInfo()[0].getOrigin() );
-            fileInfo[0].setPixelPadValue( image.getFileInfo()[0].getPixelPadValue() );
-            fileInfo[0].setPhotometric( image.getFileInfo()[0].getPhotometric() );
-        }
+    private void constructLog() {
+        historyString = new String("StereoDepth()\n");
     }
 
 }

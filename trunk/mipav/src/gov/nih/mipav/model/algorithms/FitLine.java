@@ -1,35 +1,48 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.*;
 
 
-// y = mx + b;
-
+/**
+ * y = mx + b;.
+ */
 public class FitLine extends NLEngine {
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new FitLine object.
+     */
     public FitLine() {
+
         // 10 points, 2 parameters, and function type
-        super( 10, 2 );
+        super(10, 2);
 
         setupData();
     }
 
     /**
-     *   FitLine
-     *   @param  nPoints number of points in the function
+     * FitLine.
+     *
+     * @param  nPoints  number of points in the function
+     * @param  xData    DOCUMENT ME!
+     * @param  yData    DOCUMENT ME!
      */
-    public FitLine( int nPoints, float[] xData, float[] yData ) {
+    public FitLine(int nPoints, float[] xData, float[] yData) {
+
         // nPoints data points, 3 coefficients, and exponential fitting
-        super( nPoints, 2 );
+        super(nPoints, 2);
+
         int i;
 
         // ia[0] equals 0 for fixed c1; ia[0] is nonzero for fitting c1
         ia[0] = 1;
+
         // ia[1] equals 0 for fixed c2; ia[1] is nonzero for fitting c2
         ia[1] = 1;
 
-        for ( i = 0; i < nPoints; i++ ) {
+        for (i = 0; i < nPoints; i++) {
             xseries[i] = (double) xData[i];
             yseries[i] = (double) yData[i];
         }
@@ -38,19 +51,39 @@ public class FitLine extends NLEngine {
         gues[1] = -1; // slope
 
         stdv = 1;
-        for ( i = 0; i < nPoints; i++ ) {
+
+        for (i = 0; i < nPoints; i++) {
             sig[i] = stdv;
         }
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Fits line to function.
-     *   @param x1    The x value of the data point.
-     *   @param atry  The best guess parameter values.
-     *   @param dyda  The derivative values of y with respect to fitting parameters.
-     *   @return      The calculated y value.
+     * Display results of displaying linear fitting parameters.
      */
-    public double fitToFunction( double x1, double[] atry, double[] dyda ) {
+    public void dumpResults() {
+        Preferences.debug(" ******* Dump FitLine ********* \n");
+
+        Preferences.debug("Number of iterations: " + String.valueOf(kk) + "\n");
+        Preferences.debug("Chi-squared: " + String.valueOf(chisq) + "\n");
+        Preferences.debug("Final lamda: " + String.valueOf(flamda) + "\n");
+        Preferences.debug("a0 " + String.valueOf(a[0]) + " +/- " + String.valueOf(Math.sqrt(covar[0][0])) + "\n");
+        Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(covar[1][1])) + "\n\n");
+
+    }
+
+    /**
+     * Fits line to function.
+     *
+     * @param   x1    The x value of the data point.
+     * @param   atry  The best guess parameter values.
+     * @param   dyda  The derivative values of y with respect to fitting parameters.
+     *
+     * @return  The calculated y value.
+     */
+    public double fitToFunction(double x1, double[] atry, double[] dyda) {
+
         // called by mrqcof
         // mrqcof supplies x1 and atry[]
         // function returns partial derivatives dyda[] and the calculated ymod
@@ -61,21 +94,24 @@ public class FitLine extends NLEngine {
             ymod = atry[0] + fac;
             dyda[0] = 1; // a0 partial derivative (y intecept)
             dyda[1] = x1; // a1 partial derivative (slope)
-        } catch ( Exception e ) {
-            Preferences.debug( "function error: " + e.getMessage() );
+        } catch (Exception e) {
+            Preferences.debug("function error: " + e.getMessage());
         }
+
         return ymod;
     }
 
     /**
-     *   Sets up data to test fitting of exponential.
+     * Sets up data to test fitting of exponential.
      */
     private void setupData() {
         int i;
 
         stdv = 1;
+
         // ia[0] = 0 for fixed offset parameter; ia[0] is nonzero for fitting offset parameter
         ia[0] = 1;
+
         // ia[1] = 0 for fixed slope parameter; ia[1] is nonzero for fitting slope parameter
         ia[1] = 1;
         gues[0] = 1;
@@ -112,24 +148,9 @@ public class FitLine extends NLEngine {
         yseries[9] = 8.5;
 
         // Equal standard deviations are assigned to all 10 points
-        for ( i = 0; i < 10; i++ ) {
+        for (i = 0; i < 10; i++) {
             sig[i] = stdv;
         }
-
-    }
-
-    /**
-     *   Display results of displaying linear fitting parameters.
-     */
-    public void dumpResults() {
-        Preferences.debug( " ******* Dump FitLine ********* \n" );
-
-        Preferences.debug( "Number of iterations: " + String.valueOf( kk ) + "\n" );
-        Preferences.debug( "Chi-squared: " + String.valueOf( chisq ) + "\n" );
-        Preferences.debug( "Final lamda: " + String.valueOf( flamda ) + "\n" );
-        Preferences.debug( "a0 " + String.valueOf( a[0] ) + " +/- " + String.valueOf( Math.sqrt( covar[0][0] ) ) + "\n" );
-        Preferences.debug(
-                "a1 " + String.valueOf( a[1] ) + " +/- " + String.valueOf( Math.sqrt( covar[1][1] ) ) + "\n\n" );
 
     }
 }

@@ -1,71 +1,148 @@
 package gov.nih.mipav.view.dialogs;
 
+
 import gov.nih.mipav.view.*;
-import javax.swing.*;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
+
+import javax.swing.*;
+
 
 /**
-*   Simple dialog to choose the filter for the view image
-*   directory.
-*
-*   @author     Neva Cherniavsky
-*   @version    1.0 June 1, 2002
-*   @see        ViewImageFileFilter
-*   @see        ViewImageDirectory
-*/
+ * Simple dialog to choose the filter for the view image directory.
+ *
+ * @author   Neva Cherniavsky
+ * @version  1.0 June 1, 2002
+ * @see      ViewImageFileFilter
+ * @see      ViewImageDirectory
+ */
 public class JDialogFilterChoice extends JDialogBase {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 3198970819287117617L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private JCheckBox[] checkImages;
+
+    /** DOCUMENT ME! */
     private ViewImageFileFilter imageFilter;
-    private JCheckBox[]         checkImages;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-    *   Initializes the dialog.
-    *   @param parent   PArent frame of dialog.
-    */
+     * Initializes the dialog.
+     *
+     * @param  parent  PArent frame of dialog.
+     */
     public JDialogFilterChoice(Frame parent) {
         super(parent, true);
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-    *   Initializes the dialog and adds the GUI components.
-    */
+     * Sets the appropriate file filter when the "OK" button is pressed; otherwise disposes of the dialog.
+     *
+     * @param  e  Event that triggered this function.
+     */
+    public void actionPerformed(ActionEvent e) {
+        String command = e.getActionCommand();
+
+        if (command.equals("OK")) {
+            int count = 0;
+
+            for (int i = 0; i < checkImages.length; i++) {
+
+                if (checkImages[i].isSelected()) {
+                    count++;
+                }
+            }
+
+            String[] exts = new String[count];
+            count = 0;
+
+            for (int i = 0; i < checkImages.length; i++) {
+
+                if (checkImages[i].isSelected()) {
+                    exts[count++] = JDialogUnknownIO.getSuffixFromIndex(i);
+                }
+            }
+
+            imageFilter = new ViewImageFileFilter(exts);
+            dispose();
+        } else if (command.equals("Cancel")) {
+            cancelFlag = true;
+            dispose();
+        } else if (command.equals("Check")) {
+
+            for (int i = 0; i < checkImages.length; i++) {
+                checkImages[i].setSelected(true);
+            }
+        } else if (command.equals("Uncheck")) {
+
+            for (int i = 0; i < checkImages.length; i++) {
+                checkImages[i].setSelected(false);
+            }
+        }
+    }
+
+    /**
+     * Accessor that gets the file filter.
+     *
+     * @return  The file filter.
+     */
+    public ViewImageFileFilter getFilter() {
+        return imageFilter;
+    }
+
+    /**
+     * Initializes the dialog and adds the GUI components.
+     */
     private void init() {
         setTitle("Choose Image Filter");
 
         String[] names = JDialogUnknownIO.getTypeNames();
-        JPanel   panel = new JPanel(new GridLayout(names.length, 1));
-    	panel.setForeground(Color.white);
-    	panel.setBackground(Color.white);
+        JPanel panel = new JPanel(new GridLayout(names.length, 1));
+        panel.setForeground(Color.white);
+        panel.setBackground(Color.white);
 
 
         // set the filter type to the preferences saved filter
         int filter = 0;
+
         try {
             filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
-        }
-        catch (NumberFormatException nfe) {
+        } catch (NumberFormatException nfe) {
+
             // an invalid value was set in preferences -- so don't use it!
             filter = -1;
         }
+
         imageFilter = new ViewImageFileFilter(filter);
 
         checkImages = new JCheckBox[names.length];
+
         for (int i = 0; i < names.length; i++) {
             checkImages[i] = new JCheckBox(names[i]);
             checkImages[i].setFont(serif12);
             checkImages[i].setForeground(Color.black);
             checkImages[i].setBackground(Color.white);
+
             if (imageFilter.accept(JDialogUnknownIO.getSuffixFromIndex(i))) {
                 checkImages[i].setSelected(true);
             }
+
             panel.add(checkImages[i]);
         }
 
-        JScrollPane sp  = new JScrollPane(panel,
-		                                  JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                          JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        JScrollPane sp = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(sp);
         mainPanel.setBorder(buildTitledBorder("Choose types of images to display"));
@@ -85,7 +162,7 @@ public class JDialogFilterChoice extends JDialogBase {
         uncheckAll.addActionListener(this);
         uncheckAll.setActionCommand("Uncheck");
 
-        JPanel  checkPanel  = new JPanel();
+        JPanel checkPanel = new JPanel();
         checkPanel.add(checkAll);
         checkPanel.add(uncheckAll);
 
@@ -102,47 +179,4 @@ public class JDialogFilterChoice extends JDialogBase {
         pack();
         setVisible(true);
     }
-
-    /**
-    *   Sets the appropriate file filter when the "OK"
-    *   button is pressed; otherwise disposes of the dialog.
-    *   @param e    Event that triggered this function.
-    */
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-        if (command.equals("OK")) {
-            int count = 0;
-            for (int i=0; i<checkImages.length; i++) {
-                if (checkImages[i].isSelected()) {
-                    count++;
-                }
-            }
-
-            String[] exts = new String[count];
-            count = 0;
-            for (int i=0; i<checkImages.length; i++) {
-                if (checkImages[i].isSelected()) {
-                    exts[count++] = JDialogUnknownIO.getSuffixFromIndex(i);
-                }
-            }
-            imageFilter = new ViewImageFileFilter(exts);
-            dispose();
-        }
-        else if (command.equals("Cancel")) {
-            cancelFlag = true;
-            dispose();
-        }
-        else if (command.equals("Check")) {
-            for (int i=0; i<checkImages.length; i++) checkImages[i].setSelected(true);
-        }
-        else if (command.equals("Uncheck")) {
-            for (int i=0; i<checkImages.length; i++) checkImages[i].setSelected(false);
-        }
-    }
-
-    /**
-    *   Accessor that gets the file filter.
-    *   @return The file filter.
-    */
-    public ViewImageFileFilter getFilter() { return imageFilter; }
 }

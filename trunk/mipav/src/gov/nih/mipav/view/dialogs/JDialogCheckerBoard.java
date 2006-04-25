@@ -3,8 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.event.*;
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
 
 import javax.swing.*;
@@ -12,33 +13,59 @@ import javax.swing.event.*;
 
 
 /**
+ * Dialog to get the row and column numbers of checkerboard squares
  *
- *   Dialog to get the row and column numbers of
- *   checkerboard squares
- *
- *       @see        ViewJComponentEditImage
+ * @see  ViewJComponentEditImage
  */
-public class JDialogCheckerBoard extends JDialogBase
-    implements ChangeListener {
+public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
-    private ViewJComponentEditImage compImage;
-    private ViewJComponentRegistration regImage;
-    private boolean doReg = false;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private int maxRow;
-    private int maxColumn;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 4180573157937289440L;
 
-    private JCheckBox doCheckbox;
-    private JLabel labelColumnNumber, labelRowNumber;
-    private JTextField textRowNumber, textColumnNumber;
-    private JSlider slider, slider2;
-    private Hashtable labelTable, labelTable2;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private JButton closeButton;
 
+    /** DOCUMENT ME! */
+    private ViewJComponentEditImage compImage;
+
+    /** DOCUMENT ME! */
+    private JCheckBox doCheckbox;
+
+    /** DOCUMENT ME! */
+    private boolean doReg = false;
+
+    /** DOCUMENT ME! */
+    private JLabel labelColumnNumber, labelRowNumber;
+
+    /** DOCUMENT ME! */
+    private Hashtable labelTable, labelTable2;
+
+    /** DOCUMENT ME! */
+    private int maxColumn;
+
+    /** DOCUMENT ME! */
+    private int maxRow;
+
+    /** DOCUMENT ME! */
+    private ViewJComponentRegistration regImage;
+
+    /** DOCUMENT ME! */
+    private JSlider slider, slider2;
+
+    /** DOCUMENT ME! */
+    private JTextField textRowNumber, textColumnNumber;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *  Creates new dialog and sets up GUI components.
-     *  @param parent          Parent frame.
-     *  @param im              Source image.
+     * Creates new dialog and sets up GUI components.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  compImg         Source image.
      */
     public JDialogCheckerBoard(Frame theParentFrame, ViewJComponentEditImage compImg) {
         super(theParentFrame, false);
@@ -50,9 +77,10 @@ public class JDialogCheckerBoard extends JDialogBase
     }
 
     /**
-     *  Creates new dialog and sets up GUI components.
-     *  @param parent          Parent frame.
-     *  @param im              Source image.
+     * Creates new dialog and sets up GUI components.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  regImg          Source image.
      */
     public JDialogCheckerBoard(Frame theParentFrame, ViewJComponentRegistration regImg) {
         super(theParentFrame, false);
@@ -64,8 +92,110 @@ public class JDialogCheckerBoard extends JDialogBase
         setup();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *  Sets up the GUI components of the dialog.
+     * Sets parameters in ViewJComponentEditImage when Apply is pressed. Closes dialog box in response to both Apply and
+     * Cancel buttons.
+     *
+     * @param  event  Event that triggers function.
+     */
+    public void actionPerformed(ActionEvent event) {
+        int rowNumber, columnNumber;
+
+        String command = event.getActionCommand();
+        Object source = event.getSource();
+
+        if ((command.equals("OK")) || (command.equals("Close"))) {
+
+            if (doCheckbox.isSelected()) {
+                rowNumber = slider.getValue();
+                columnNumber = slider2.getValue();
+            } else { // no checkerboarding
+                rowNumber = -1;
+                columnNumber = -1;
+            }
+
+            if (doReg) {
+                regImage.setRowColumnCheckers(rowNumber, columnNumber);
+            } else {
+                compImage.setCheckerboard(rowNumber, columnNumber);
+                compImage.repaint();
+            }
+
+            if (command.equals("Close")) {
+
+                if (doReg) {
+                    regImage.checkerRegDialog = null;
+                } else {
+                    compImage.checkerDialog = null;
+                }
+
+                dispose();
+            }
+        } else if (command.equals("Cancel")) {
+
+            if (doReg == true) {
+                regImage.checkerRegDialog = null;
+            } else {
+                compImage.checkerDialog = null;
+            }
+
+            dispose();
+        } else if (source == doCheckbox) {
+
+            if (doCheckbox.isSelected()) {
+                slider.setEnabled(true);
+                slider2.setEnabled(true);
+                labelRowNumber.setEnabled(true);
+                labelColumnNumber.setEnabled(true);
+
+                for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                    ((JLabel) en.nextElement()).setEnabled(true);
+                }
+
+                for (Enumeration en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
+                    ((JLabel) en.nextElement()).setEnabled(true);
+                }
+            } else {
+                slider.setEnabled(false);
+                slider2.setEnabled(false);
+                labelRowNumber.setEnabled(false);
+                labelColumnNumber.setEnabled(false);
+
+                for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
+                    ((JLabel) en.nextElement()).setEnabled(false);
+                }
+
+                for (Enumeration en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
+                    ((JLabel) en.nextElement()).setEnabled(false);
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets values based on knob along slider.
+     *
+     * @param  e  Event that triggered this function.
+     */
+    public void stateChanged(ChangeEvent e) {
+        int rowNumber, columnNumber;
+        Object source = e.getSource();
+
+        if (source == slider) {
+            rowNumber = slider.getValue();
+            textRowNumber.setText(String.valueOf(rowNumber));
+        }
+
+        if (source == slider2) {
+            columnNumber = slider2.getValue();
+            textColumnNumber.setText(String.valueOf(columnNumber));
+        }
+    }
+
+    /**
+     * Sets up the GUI components of the dialog.
      */
     private void setup() {
         setForeground(Color.black);
@@ -169,91 +299,6 @@ public class JDialogCheckerBoard extends JDialogBase
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
-    }
-
-    /**
-     *    Sets values based on knob along slider.
-     *    @param ChangeEvent  Event that triggered this function.
-     */
-    public void stateChanged(ChangeEvent e) {
-        int rowNumber, columnNumber;
-        Object source = e.getSource();
-
-        if (source == slider) {
-            rowNumber = slider.getValue();
-            textRowNumber.setText(String.valueOf(rowNumber));
-        }
-        if (source == slider2) {
-            columnNumber = slider2.getValue();
-            textColumnNumber.setText(String.valueOf(columnNumber));
-        }
-    }
-
-    /**
-     *  Sets parameters in ViewJComponentEditImage when Apply is pressed.
-     *  Closes dialog box in response to both Apply and Cancel buttons.
-     *  @param event       Event that triggers function.
-     */
-    public void actionPerformed(ActionEvent event) {
-        int rowNumber, columnNumber;
-
-        String command = event.getActionCommand();
-        Object source = event.getSource();
-
-        if ((command.equals("OK")) || (command.equals("Close"))) {
-            if (doCheckbox.isSelected()) {
-                rowNumber = slider.getValue();
-                columnNumber = slider2.getValue();
-            } else { // no checkerboarding
-                rowNumber = -1;
-                columnNumber = -1;
-            }
-            if (doReg) {
-                regImage.setRowColumnCheckers(rowNumber, columnNumber);
-            } else {
-                compImage.setCheckerboard(rowNumber, columnNumber);
-                compImage.repaint();
-            }
-            if (command.equals("Close")) {
-                if (doReg) {
-                    regImage.checkerRegDialog = null;
-                } else {
-                    compImage.checkerDialog = null;
-                }
-                dispose();
-            }
-        } else if (command.equals("Cancel")) {
-            if (doReg == true) {
-                regImage.checkerRegDialog = null;
-            } else {
-                compImage.checkerDialog = null;
-            }
-            dispose();
-        } else if (source == doCheckbox) {
-            if (doCheckbox.isSelected()) {
-                slider.setEnabled(true);
-                slider2.setEnabled(true);
-                labelRowNumber.setEnabled(true);
-                labelColumnNumber.setEnabled(true);
-                for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(true);
-                }
-                for (Enumeration en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(true);
-                }
-            } else {
-                slider.setEnabled(false);
-                slider2.setEnabled(false);
-                labelRowNumber.setEnabled(false);
-                labelColumnNumber.setEnabled(false);
-                for (Enumeration en = slider.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(false);
-                }
-                for (Enumeration en = slider2.getLabelTable().elements(); en.hasMoreElements();) {
-                    ((JLabel) en.nextElement()).setEnabled(false);
-                }
-            }
-        }
     }
 
 }

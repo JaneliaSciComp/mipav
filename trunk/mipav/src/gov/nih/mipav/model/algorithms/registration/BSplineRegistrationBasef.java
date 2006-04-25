@@ -1,28 +1,43 @@
 package gov.nih.mipav.model.algorithms.registration;
 
+
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
+
 
 /**
  * This is a common base class for all BSpline-based registrations.
  */
 public class BSplineRegistrationBasef {
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Total number of samples in target, registered source, and error images. */
+    protected int m_iNumSamplesTrg;
+
+    /** DOCUMENT ME! */
+    protected ModelSimpleImage m_kImageSrc; // input source image
+
+    /** DOCUMENT ME! */
+    protected ModelSimpleImage m_kImageTrg; // input target image
+
+    /** Defines the cost measure for comparing the target image with the registered image. */
+    protected RegistrationMeasure m_kRegMeasure;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     * Create instance to be used for registration.  Creates the memory
-     * for the registered source image and the error image given the
-     * total number of samples in the image.
-     * @param kImageSrc ModelSimpleImage Input source image which contains
-     * properties and data values.  Must have either 2 or 3 dimensions
-     * where the number of dimensions matches that of the target image.
-     * @param kImageTrg ModelSimpleImage Input target image which contains
-     * properties and data values.  Must have either 2 or 3 dimensions
-     * where the number of dimensions matches that of the source image.
-     * @param kRegMeasure RegistrationMeasure Defines the cost measure
-     * for comparing the target image with the registered source image.
+     * Create instance to be used for registration. Creates the memory for the registered source image and the error
+     * image given the total number of samples in the image.
+     *
+     * @param  kImageSrc    ModelSimpleImage Input source image which contains properties and data values. Must have
+     *                      either 2 or 3 dimensions where the number of dimensions matches that of the target image.
+     * @param  kImageTrg    ModelSimpleImage Input target image which contains properties and data values. Must have
+     *                      either 2 or 3 dimensions where the number of dimensions matches that of the source image.
+     * @param  kRegMeasure  RegistrationMeasure Defines the cost measure for comparing the target image with the
+     *                      registered source image.
      */
-    protected BSplineRegistrationBasef(ModelSimpleImage kImageSrc,
-                                       ModelSimpleImage kImageTrg,
+    protected BSplineRegistrationBasef(ModelSimpleImage kImageSrc, ModelSimpleImage kImageTrg,
                                        RegistrationMeasure kRegMeasure) {
 
         // Save input parameters.
@@ -35,11 +50,14 @@ public class BSplineRegistrationBasef {
         kRegMeasure.setImages(kImageSrc, kImageTrg);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     * Cleanup memory
-     * @throws Throwable
+     * Cleanup memory.
+     *
+     * @throws  Throwable  DOCUMENT ME!
      */
-    public void finalize() throws Throwable  {
+    public void finalize() throws Throwable {
         m_kImageTrg = null;
         m_kImageSrc = null;
 
@@ -47,46 +65,41 @@ public class BSplineRegistrationBasef {
     }
 
     /**
-     * Return access to input target image data values which is the same
-     * as was passed to the constructor.
-     * @return ModelSimpleImage Image which contains properties and
-     * data values.
-     */
-    public ModelSimpleImage getImageTarget() {
-        return m_kImageTrg;
-    }
-
-    /**
-     * Return access to input source image data values which is the same
-     * as was passed to the constructor.
-     * @return ModelSimpleImage Image which contains properties and
-     * data values.
-     */
-    public ModelSimpleImage getImageSource() {
-        return m_kImageSrc;
-    }
-
-    /**
-     * Return the current error measure computeas the root mean
-     * squared error.
-     * @return double Current cummulative error measure between target
-     * and registered source.
+     * Return the current error measure computeas the root mean squared error.
+     *
+     * @return  double Current cummulative error measure between target and registered source.
      */
     public double getError() {
         return m_kRegMeasure.getError();
     }
 
     /**
-     * Create optimal placement of control points for each dimension
-     * which yields the identity mapping of the source image, i.e.,
-     * identity in that the output value to the Bspline function is
-     * the same as the input value.
-     * @param kBasis BSplineBasisDiscretef Input BSpline-basis
-     * for a single dimension.
-     * @return float[] Array of control point positions for this single
-     * dimension input B-spline basis These positions are in the [0,1] range
-     * and are monotonically increasing.  The size of this array is determined
-     * by the number of control points specified for the input BSpline basis.
+     * Return access to input source image data values which is the same as was passed to the constructor.
+     *
+     * @return  ModelSimpleImage Image which contains properties and data values.
+     */
+    public ModelSimpleImage getImageSource() {
+        return m_kImageSrc;
+    }
+
+    /**
+     * Return access to input target image data values which is the same as was passed to the constructor.
+     *
+     * @return  ModelSimpleImage Image which contains properties and data values.
+     */
+    public ModelSimpleImage getImageTarget() {
+        return m_kImageTrg;
+    }
+
+    /**
+     * Create optimal placement of control points for each dimension which yields the identity mapping of the source
+     * image, i.e., identity in that the output value to the Bspline function is the same as the input value.
+     *
+     * @param   kBasis  BSplineBasisDiscretef Input BSpline-basis for a single dimension.
+     *
+     * @return  float[] Array of control point positions for this single dimension input B-spline basis These positions
+     *          are in the [0,1] range and are monotonically increasing. The size of this array is determined by the
+     *          number of control points specified for the input BSpline basis.
      */
     protected float[] createIdentityMapControlPoints(BSplineBasisDiscretef kBasis) {
 
@@ -97,8 +110,9 @@ public class BSplineRegistrationBasef {
         // In the case of degree 1, evenly spacing the control points
         // always yields the identity map.
         if (1 == kBasis.getDegree()) {
+
             for (int i = 0; i < iNumControlPoints; i++) {
-                afControlPoint[i] = (float)i / (float)(iNumControlPoints-1);
+                afControlPoint[i] = (float) i / (float) (iNumControlPoints - 1);
             }
         }
 
@@ -124,16 +138,16 @@ public class BSplineRegistrationBasef {
             // entries by summing into them.
             Matrix kA = new Matrix(iNumControlPoints, iNumControlPoints, 0.0);
             Matrix kB = new Matrix(iNumControlPoints, 1, 0.0);
+
             for (int iSample = 0; iSample < iNumSamples; iSample++) {
-                float fT = iSample / (float)(iNumSamples-1);
+                float fT = iSample / (float) (iNumSamples - 1);
 
                 for (int iRow = 0; iRow < iNumControlPoints; iRow++) {
-                    double dBi = kB.get(iRow,0) + fT * kBasis.getD0(iRow, iSample);
+                    double dBi = kB.get(iRow, 0) + (fT * kBasis.getD0(iRow, iSample));
                     kB.set(iRow, 0, dBi);
 
                     for (int iCol = 0; iCol < iNumControlPoints; iCol++) {
-                        double dAij = kA.get(iRow,iCol) +
-                            kBasis.getD0(iRow, iSample) * kBasis.getD0(iCol, iSample);
+                        double dAij = kA.get(iRow, iCol) + (kBasis.getD0(iRow, iSample) * kBasis.getD0(iCol, iSample));
                         kA.set(iRow, iCol, dAij);
                     }
                 }
@@ -144,30 +158,16 @@ public class BSplineRegistrationBasef {
 
             // Copy the control point positions.
             for (int i = 0; i < iNumControlPoints; i++) {
-                afControlPoint[i] = (float)kX.get(i,0);
+                afControlPoint[i] = (float) kX.get(i, 0);
+
                 if (afControlPoint[i] < 0.0f) {
-                  afControlPoint[i] = 0.0f;
-                }
-                else if (afControlPoint[i] > 1.0f) {
-                  afControlPoint[i] = 1.0f;
+                    afControlPoint[i] = 0.0f;
+                } else if (afControlPoint[i] > 1.0f) {
+                    afControlPoint[i] = 1.0f;
                 }
             }
         }
 
         return afControlPoint;
     }
-
-    protected ModelSimpleImage m_kImageTrg; // input target image
-    protected ModelSimpleImage m_kImageSrc; // input source image
-
-    /**
-     * Defines the cost measure for comparing the target image with
-     * the registered image.
-     */
-    protected RegistrationMeasure m_kRegMeasure;
-
-    /**
-     * Total number of samples in target, registered source, and error images.
-     */
-    protected int m_iNumSamplesTrg;
 }
