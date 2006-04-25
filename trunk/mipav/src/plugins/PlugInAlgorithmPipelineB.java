@@ -3,6 +3,8 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.file.*;
 import java.io.*;
+import java.util.BitSet;
+
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmFuzzyCMeans;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
@@ -47,6 +49,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     private ModelImage destImageA = null;
     private ModelImage destImageB = null;
     private ModelImage destImage1 = null;
+    private ModelImage destImage2 = null;
     private ModelImage destImage3a = null;
     private ModelImage destImage3b = null;
     private ModelImage obMask = null;
@@ -54,16 +57,16 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     private ModelImage obMaskB = null;
     private ModelImage voiMask = null;
     private ModelImage fieldImage = null;
-    private ModelImage[] HardSeg1 = null;
-    private ModelImage[] HardSeg2 = null;
+    private ModelImage HardSeg = null;
+    private ModelImage FuzzySeg2[] = null;
+    
     
     private ModelImage tempImageOne = null;
     private ModelImage BoneID = null;
 
-    private int[] imgBuffer = null;
+    private float[] buffer = null;
     private int[] imgBuffer1 = null;
     private int[] imgBuffer2 = null;
-    private int[] imgBuffer3 = null;
     private int[] numObjects = null;
     private int[] boneObject = null;
 
@@ -90,12 +93,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     //  public static int FAT = 255;
     // public static int MUSCLE = 170;
 
-    public static int subcutfatCount = 0;
-    public static int fatCount = 0;
-    public static int muscleCount = 0;
-    public static int boneCount = 0;
-    public static int bone_marrowCount = 0;
-    public static int total_thighCount = 0;
+    public static int subcutfatCount, fatCount, muscleCount, boneCount, bone_marrowCount, total_thighCount, xDim, yDim, zDim, sliceSize, volSize;
 
     private AlgorithmFuzzyCMeans firstFuzz = null;
     private ViewUserInterface UI = ViewUserInterface.getReference();
@@ -117,78 +115,25 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         buildProgressBar("Pipeline_Segmentation", "Operating source images...", 0, 100);
         initProgressBar();
 
-        int xDim, yDim, zDim, sliceSize, aa, bb, cc;
+        int aa, bb, cc, i;
         float realpixelSize = 1;
 
         xDim = 1;
         yDim = 1;
         zDim = 1;
-        
-        HardSeg1 = new ModelImage[1];
-        FileInfoBase fileInfo1;
-        HardSeg2 = new ModelImage[1];
-        FileInfoBase fileInfo2;
-        
+      
         for (aa = 1; aa <= 2; aa++) {
             if (aa == 1) {
-            //	getVariables(destImageA);
-            	
-                xDim = destImageA.getExtents()[0];
-                yDim = destImageA.getExtents()[1];
-                if (destImageA.getNDims() == 3) {
-                    zDim = destImageA.getExtents()[2];
-                }
-                destImage1 = (ModelImage) destImageA.clone();
-                destImage1.setVOIs(destImageA.getVOIs());
-                obMask = (ModelImage) obMaskA.clone();
-                fieldImage = new ModelImage(destImageA.getType(), destImageA.getExtents(), "fieldImage", destImageA.getUserInterface());
-                HardSeg1[0] = new ModelImage(ModelStorageBase.UBYTE, destImageA.getExtents(), "Hard-Fuzzy_seg1", destImageA.getUserInterface());
-				fileInfo1 = HardSeg1[0].getFileInfo()[0];
-				fileInfo1.setResolutions(destImageA.getFileInfo()[0].getResolutions());
-				fileInfo1.setUnitsOfMeasure(destImageA.getFileInfo()[0].getUnitsOfMeasure());
-				HardSeg1[0].setFileInfo(fileInfo1, 0);
-				HardSeg2[0] = new ModelImage(ModelStorageBase.UBYTE, destImageA.getExtents(), "Hard-Fuzzy_seg2", destImageA.getUserInterface());
-				fileInfo2 = HardSeg2[0].getFileInfo()[0];
-				fileInfo2.setResolutions(destImageA.getFileInfo()[0].getResolutions());
-				fileInfo2.setUnitsOfMeasure(destImageA.getFileInfo()[0].getUnitsOfMeasure());
-				HardSeg2[0].setFileInfo(fileInfo2, 0);
-				
-				destImage3a = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3a", destImageA.getUserInterface());
-                destImage3b = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3b", destImageA.getUserInterface());
+            	getVariables(destImageA, obMaskA);            	
             } else if (aa == 2) {
-            	
-            	
-            	
-                xDim = destImageB.getExtents()[0];
-                yDim = destImageB.getExtents()[1];
-                if (destImageB.getNDims() == 3) {
-                    zDim = destImageB.getExtents()[2];
-                }
-                destImage1 = (ModelImage) destImageB.clone();
-                destImage1.setVOIs(destImageB.getVOIs());
-                obMask = (ModelImage) obMaskB.clone();
-                fieldImage = new ModelImage(destImageB.getType(), destImageB.getExtents(), "fieldImage", destImageB.getUserInterface());
-                HardSeg1[0] = new ModelImage(ModelStorageBase.UBYTE, destImageB.getExtents(), "Hard-Fuzzy" + "_seg2", destImageB.getUserInterface());
-				fileInfo1 = HardSeg1[0].getFileInfo()[0];
-				fileInfo1.setResolutions(destImageB.getFileInfo()[0].getResolutions());
-				fileInfo1.setUnitsOfMeasure(destImageB.getFileInfo()[0].getUnitsOfMeasure());
-				HardSeg1[0].setFileInfo(fileInfo1, 0);
-				HardSeg2[0] = new ModelImage(ModelStorageBase.UBYTE,destImageB.getExtents(), "Hard-Fuzzy_seg2",destImageB.getUserInterface());
-				fileInfo2 = HardSeg2[0].getFileInfo()[0];
-				fileInfo2.setResolutions(destImageB.getFileInfo()[0].getResolutions());
-				fileInfo2.setUnitsOfMeasure(destImageB.getFileInfo()[0].getUnitsOfMeasure());
-				HardSeg2[0].setFileInfo(fileInfo2, 0);
-
-                destImage3a = new ModelImage(destImageB.getType(), destImageB.getExtents(), "destImage3a", destImageB.getUserInterface());
-                destImage3b = new ModelImage(destImageB.getType(), destImageB.getExtents(), "destImage3b", destImageB.getUserInterface());
+            	getVariables(destImageB, obMaskB);
             }
             
             sliceSize = xDim * yDim;
-            imgBuffer = new int[sliceSize];
+            volSize = xDim * yDim * zDim;
+            buffer = new float[volSize];
             imgBuffer1 = new int[sliceSize];
             imgBuffer2 = new int[sliceSize];
-            imgBuffer3 = new int[sliceSize];
-            
             numObjects = new int[zDim];
             boneObject= new int[zDim];
             
@@ -204,32 +149,38 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                         
             //STEP 2: N3 inside VOI 
             progressBar.setMessage("Taking N3 inside VOI");
-            N3(destImage1);
+            destImage2 = N3(destImage1);												
             progressBar.updateValue(50 * (aa - 1) + 30, activeImage);			
             
             
             //STEP 3: FUZZY CMEANS-WHOLE IMAGE
             progressBar.setMessage("Taking Fuzzy-C over Entire Image");	
-            HardFuzzy(HardSeg1, destImage1, 3);
+            //convert(destImage1, obMask, destImage2, 0, 0);              ShowImage(destImage1,"wholecrop");
+            HardSeg = HardFuzzy(destImage2, 3);            				//ShowImage(HardSeg,"hardseg1");		
             progressBar.updateValue(50 * (aa - 1) + 33, activeImage);     		
             
             
             //STEP 4: FUZZY CMEANS- INSIDE MUSCLE BUNDLE
             progressBar.setMessage("Taking Fuzzy-C inside Muscle Bundle");
-            convert(destImage1, voiMask, destImage1, 0, 0);  //crop
-            HardFuzzy(HardSeg2, destImage1, 4);
+            //convert(destImage2, voiMask, destImage2, 0, 0);  //crop
+            FuzzySeg2 = SoftFuzzy(destImage2, 3);
             progressBar.updateValue(50 * (aa - 1) + 37, activeImage);      		
-            destImage1.disposeLocal();            destImage1 = null;
+            destImage2.disposeLocal();            destImage2 = null;
+
+            for(i=0;i<3;i++){
+     //       	ShowImage(FuzzySeg2[i], "FuzzySeg2["+i+"]");
+            }
             
- 
-            //STEP 5: Relabeling both segmented images (subcutaneous fat and background) 
-            progressBar.setMessage("Labeling Subcutaneous Fat/ Background");
-            basicRelabeling(destImage3a, destImage3b, voiMask, obMask, HardSeg1[0], HardSeg2[0]);
-            progressBar.updateValue(50 * (aa - 1) + 39, activeImage);
+            //STEP 4a:  90% multiplying fat fuzzy'd image, combine with remaining
+            //destImage3b = processFat(FuzzySeg2[0],FuzzySeg2[1],FuzzySeg2[2],FuzzySeg2[3]);
+            destImage3b = processFat(FuzzySeg2[0],FuzzySeg2[1],FuzzySeg2[2]);
+  //          ShowImage(destImage3b, "processed fat image");
+
             
             //---------destImage3a PROCESSING--------------
             //STEP 6: Isolating bone
             progressBar.setMessage("Isolating Bone");
+            convert(destImage3a, voiMask, HardSeg, 0, BACKGROUND_NEW);
             BoneID = isolatingBone(destImage3a, BACKGROUND);            					
             progressBar.updateValue(50 * (aa - 1) + 41, activeImage);
             
@@ -253,51 +204,53 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	        //---------destImage3b PROCESSING--------------                
             //STEP 9: inside bundle CLEANUP 
 	        progressBar.setMessage("Converting Inside Black Noise");
-	        cleanUp(destImage3b, FAT, MUSCLE, 200*zDim/20);            
+	        cleanUp(destImage3b, FAT, MUSCLE, 300*zDim/20);            
             progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
- 
+            
+    //        ShowImage(destImage3b, "bundle cleanedup fat image"); 
+            
             voiMask.disposeLocal();            voiMask = null;
             obMask.disposeLocal();            obMask = null;
 
             
             //--------------- STEP10: bringing two pieces together --------------
             progressBar.setMessage("Recreating Result Image");
-            mergeImages(destImage3b, destImage3a, destImage3b);            
+            mergeImages(destImage3b, destImage3a, destImage3b);           
             
             //-------------- STEP 11: last marrow cleanup --------------------------------
             progressBar.setMessage("Tissue Type Counts/Volumes");
             for (bb = 0; bb < zDim; bb++) {
                 try {
-                    destImage3b.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer[cc] == BONE_MARROW){ 
-                        	if(imgBuffer[cc-1]==MUSCLE){
-                        		imgBuffer[cc-1]=BONE_MARROW;
+                    destImage3b.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+                    for (cc = 0; cc < imgBuffer1.length; cc++) {
+                        if (imgBuffer1[cc] == BONE_MARROW){ 
+                        	if(imgBuffer1[cc-1]==MUSCLE){
+                        		imgBuffer1[cc-1]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc+1]==MUSCLE){
-                        		imgBuffer[cc+1]=BONE_MARROW;
+                        	else if(imgBuffer1[cc+1]==MUSCLE){
+                        		imgBuffer1[cc+1]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc+xDim]==MUSCLE){
-                        		imgBuffer[cc+xDim]=BONE_MARROW;
+                        	else if(imgBuffer1[cc+xDim]==MUSCLE){
+                        		imgBuffer1[cc+xDim]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc-xDim]==MUSCLE){
-                        		imgBuffer[cc-xDim]=BONE_MARROW;
+                        	else if(imgBuffer1[cc-xDim]==MUSCLE){
+                        		imgBuffer1[cc-xDim]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc-1]==FAT){
-                        		imgBuffer[cc-1]=BONE_MARROW;
+                        	else if(imgBuffer1[cc-1]==FAT){
+                        		imgBuffer1[cc-1]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc+1]==FAT){
-                        		imgBuffer[cc+1]=BONE_MARROW;
+                        	else if(imgBuffer1[cc+1]==FAT){
+                        		imgBuffer1[cc+1]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc+xDim]==FAT){
-                        		imgBuffer[cc+xDim]=BONE_MARROW;
+                        	else if(imgBuffer1[cc+xDim]==FAT){
+                        		imgBuffer1[cc+xDim]=BONE_MARROW;
                         	}
-                        	else if(imgBuffer[cc-xDim]==FAT){
-                        		imgBuffer[cc-xDim]=BONE_MARROW;
+                        	else if(imgBuffer1[cc-xDim]==FAT){
+                        		imgBuffer1[cc-xDim]=BONE_MARROW;
                         	}
                         }
                     }
-                    destImage3b.importData((bb * imgBuffer.length), imgBuffer1, false);
+                    destImage3b.importData((bb * imgBuffer1.length), imgBuffer1, false);
                 } catch (IOException ex) {
                     System.err.println(
                             "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
@@ -311,30 +264,38 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
             
             //------------------STEP12: counting tissue types -------------------
+            subcutfatCount = 0;
+            fatCount = 0;
+            muscleCount = 0;
+            boneCount = 0;
+            bone_marrowCount = 0;
+            total_thighCount = 0;
+            AVGsubcutfatCount, AVGfatCount, AVGmuscleCount,AVGmuscleCount, AVGbone_marrowCount, AVGtotal_thighCount  = 0;
             for (bb = 0; bb < zDim; bb++) {
                 try {
-                    destImage3b.exportData((bb * imgBuffer.length),
-                                           imgBuffer.length, imgBuffer);
-                    for (cc = 0; cc < imgBuffer.length; cc++) {
-                        if (imgBuffer[cc] == SUB_CUT_FAT) {
+                    destImage3b.exportData((bb * imgBuffer1.length),
+                                           imgBuffer1.length, imgBuffer1);
+                    for (cc = 0; cc < imgBuffer1.length; cc++) {
+                        if (imgBuffer1[cc] == SUB_CUT_FAT) {
+                        	
                             subcutfatCount++;
                             total_thighCount++;
-                        } else if (imgBuffer[cc] == FAT) {
+                        } else if (imgBuffer1[cc] == FAT) {
                             fatCount++;
                             total_thighCount++;
-                        } else if (imgBuffer[cc] == MUSCLE) {
+                        } else if (imgBuffer1[cc] == MUSCLE) {
                             muscleCount++;
                             total_thighCount++;
-                        } else if (imgBuffer[cc] == BONE) {
+                        } else if (imgBuffer1[cc] == BONE) {
                             boneCount++;
                             total_thighCount++;
-                        } else if (imgBuffer[cc] == BONE_MARROW) {
+                        } else if (imgBuffer1[cc] == BONE_MARROW) {
                             bone_marrowCount++;
                             total_thighCount++;
                         }
                     }
-                    destImage3b.importData((bb * imgBuffer.length),
-                                           imgBuffer, false);
+                    destImage3b.importData((bb * imgBuffer1.length),
+                                           imgBuffer1, false);
                 } catch (IOException ex) {
                     System.err.println(
                             "error exporting data from srcImage in AlgorithmPipeline2");
@@ -349,32 +310,36 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                 realpixelSize = pixelSize;
                 UI.getMessageFrame().append("Segmented Images - Results:  " +
                                             PlugInAlgorithmPipeline.patientID,
-                                            "Right thigh \n");
+                                            "\n \nRight thigh ");
             } else {
                 destImageB = (ModelImage) destImage3b.clone();
                 destImageB.calcMinMax();
-                UI.getMessageFrame().append("Segmented Images - Results:  " +
-                                            PlugInAlgorithmPipeline.patientID,
-                                            "Left thigh \n");
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "\n \nLeft thigh ");
             }
 
-            UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "COUNTS: \t subcutaneousFAT= " + subcutfatCount + ", \n \t interstitialFAT= " + fatCount +
-                                        ", \n \t MUSCLE= " + muscleCount + ", \n \t BONE= " + boneCount + ", \n \t BONE_MARROW= " + bone_marrowCount +
-                                        ", \n \t TOTAL THIGH= " + total_thighCount + "\n \n VOLUME: (cubic Millimeters) \n \t subcutaneousFAT= " +
-                                        subcutfatCount * realpixelSize + ", \n \t interstitialFAT= " + fatCount * realpixelSize + ", \n \t MUSCLE= " +
-                                        muscleCount * realpixelSize + ", \n \t BONE= " + boneCount * realpixelSize + ",\n \t BONE_MARROW= " +
-                                        bone_marrowCount * realpixelSize + ",\n \t TOTAL THIGH= " + total_thighCount * realpixelSize + "\n \n");
-
-            UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "INTENSITIES: \n \t subcutaneousFAT= " +
-                                        SUB_CUT_FAT + ", \n \t interstitialFAT= " + FAT + ", \n \t MUSCLE= " + MUSCLE + ", \n \t BONE= " + BONE +
-                                        ", \n \t BONE_MARROW= " + BONE_MARROW + "\n \n");
+            UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "Volume: (cubic Millimeters) \n \n" +
+            		"CLASS \t \tVOLUME \t \t AVG INTENSITY \n" +
+            		"subcutaneousFAT \t" + subcutfatCount * realpixelSize + "\n"+ 
+            		"interstitialFAT \t" + fatCount * realpixelSize + "\n" +
+            		"MUSCLE \t \t" + muscleCount * realpixelSize + "\n"+
+            		"BONE \t \t" + boneCount * realpixelSize + "\n"+
+            		"BONE_MARROW \t" + bone_marrowCount * realpixelSize + "\n"+
+            		"TOTAL THIGH \t" + total_thighCount * realpixelSize + "\n \n");
 
             destImage3b.disposeLocal();
             destImage3b = null;
 
             progressBar.updateValue(50 * (aa - 1) + 50, activeImage);
+            
+            
 
         }
+        UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "INTENSITIES \n " +
+        		"subcutaneousFAT \t" + SUB_CUT_FAT + "\n"+ 
+        		"interstitialFAT \t" + FAT + "\n"+
+        		"MUSCLE \t \t" + MUSCLE + "\n"+
+        		"BONE \t \t " + BONE + "\n"+
+        		"BONE_MARROW \t" + BONE_MARROW + "\n \n");
         System.out.println("thigh cleanup done --destImage");
         setCompleted(true);
         disposeProgressBar();
@@ -388,64 +353,76 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	return destImage1.generateBinaryImage(false, false);
     }
     
-    public void N3(ModelImage destImage1){
+    public ModelImage N3(ModelImage destImage1){
+    	ModelImage destImage2 = null;
+    	destImage2 = new ModelImage(destImage1.getType(), destImage1.getExtents(),
+    			"destImage2", destImage1.getUserInterface());
 	    AlgorithmIHN3Correction ihn3Algo1 = null;
-	    ihn3Algo1 = new AlgorithmIHN3Correction(destImage1, fieldImage,destImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, false, false, false);
+	    ihn3Algo1 = new AlgorithmIHN3Correction(destImage2, fieldImage,destImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, false, false, false);
 	    ihn3Algo1.setProgressBarVisible(false);
 	    ihn3Algo1.run();
 	    progressBar.setMessage("Taking Fuzzy-C Means over entire image");
 	
 	    ihn3Algo1.finalize();            ihn3Algo1 = null;
 	    fieldImage.disposeLocal();            fieldImage = null;
+	    
+	    return destImage2;
     }
     
-    public ModelImage HardFuzzy(ModelImage[] HardSeg, ModelImage srcImage, int nClasses){
-    	//centroid method
+
+    public ModelImage[] SoftFuzzy(ModelImage srcImage, int nClasses){
     	float centroid_array[] = new float[nClasses];
-        int i, bb, cc;
-        int zDim = 0;
-    	if (srcImage.getNDims() == 3) {
-            zDim = srcImage.getExtents()[2];
+    	try {
+        	srcImage.exportData(0, volSize, buffer);
+        } catch (IOException ex) {
+            System.err.println("error exporting data from srcImage in AlgorithmPipeline2");
         }
-        float percentSoFar = 0;
-        float count = 0;
-        int totalCount = 0;
-    	for (bb = 0; bb < zDim; bb++) {
-            try {
-            	srcImage.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-                    for (i = 0; i < imgBuffer.length; i++) {
-                        totalCount += imgBuffer[i];
-                    }
-            } catch (IOException ex) {
-                System.err.println("error exporting data from srcImage in AlgorithmPipeline2");
-            }
-        }
-    	cc = 1;
-    	for (bb = 0; bb < zDim; bb++) {
-    		if(cc<nClasses){
-	            try {
-	            	srcImage.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-	                    for (i = 0; i < imgBuffer.length; i++) {
-	                        count+= imgBuffer[i];
-	                        percentSoFar =  count / totalCount;
-	                        if ( percentSoFar >= (float)(cc / (nClasses + 1))) {
-		                        centroid_array[cc - 1] = (float)(i+(bb*imgBuffer.length));
-		                        cc++;
-	                        }
-	                    }
-	            } catch (IOException ex) {
-	                System.err.println(
-	                        "error exporting data from srcImage in AlgorithmPipeline2");
-	            }
-    		}
+    	getCentroid(centroid_array, srcImage, nClasses);    	
+    	
+        ModelImage FuzzySeg[] = new ModelImage[nClasses];
+        FileInfoBase fileInfo1;
+        int i;
+        for(i=0;i<nClasses;i++){
+        FuzzySeg[i] = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "Hard-Fuzzy_seg", srcImage.getUserInterface());
+		fileInfo1 = FuzzySeg[i].getFileInfo()[i];
+		fileInfo1.setResolutions(srcImage.getFileInfo()[i].getResolutions());
+		fileInfo1.setUnitsOfMeasure(srcImage.getFileInfo()[i].getUnitsOfMeasure());
+		FuzzySeg[i].setFileInfo(fileInfo1, i);
         }
 
+        firstFuzz = null;        
+        firstFuzz = new AlgorithmFuzzyCMeans(FuzzySeg, srcImage, nClasses,
+                4, 1, 2, 2.0f, 20000, 200000, false,
+                AlgorithmFuzzyCMeans.FUZZY_ONLY, false,
+                0.0f, 200, 0.01f, true);
         
+        firstFuzz.setCentroids(centroid_array);
+        firstFuzz.setProgressBarVisible(false);
+        firstFuzz.run();
+        firstFuzz.finalize();
         firstFuzz = null;
+
+        return FuzzySeg;
+        }
+
+    public ModelImage HardFuzzy(ModelImage srcImage, int nClasses){
+    	//centroid method
+    	float centroid_array[] = new float[nClasses];
+    	getCentroid(centroid_array, srcImage, nClasses);
+    	
+        ModelImage HardSeg[] = new ModelImage[1];
+        FileInfoBase fileInfo1;
+        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg", srcImage.getUserInterface());
+		fileInfo1 = HardSeg[0].getFileInfo()[0];
+		fileInfo1.setResolutions(srcImage.getFileInfo()[0].getResolutions());
+		fileInfo1.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+		HardSeg[0].setFileInfo(fileInfo1, 0);
+
         firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses,
                                              4, 1, 2, 2.0f, 20000, 200000, false,
                                              AlgorithmFuzzyCMeans.HARD_ONLY, false,
                                              0.0f, 200, 0.01f, true);
+
         firstFuzz.setCentroids(centroid_array);
         firstFuzz.setProgressBarVisible(false);
         firstFuzz.run();
@@ -455,53 +432,19 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         return HardSeg[0];
         }
     
-    
-    public void basicRelabeling(ModelImage destImageA,ModelImage destImageB,
-    	ModelImage voiMask, ModelImage obMask, ModelImage srcImageA,ModelImage srcImageB){
-
-        convert(destImageA, voiMask, srcImageA, 0, BACKGROUND_NEW);
-        
-        convert(destImageB, obMask, srcImageB, 0, BACKGROUND_NEW);
-        cleanBtwn(destImageB, destImageB, voiMask, obMask, SUB_CUT_FAT);
-        
-        convert(destImageB, destImageB, destImageB, BACKGROUND_2, FAT);
-        convert(destImageB, destImageB, destImageB, FAT_2_A, FAT);
-        convert(destImageB, destImageB, destImageB, FAT_2_B, FAT);
-        convert(destImageB, destImageB, destImageB, MUSCLE_2, MUSCLE);
-                
-        srcImageA.disposeLocal(); srcImageA = null;
-        srcImageB.disposeLocal(); srcImageB = null;
-    }
-    
-
-    public void cleanBtwn(ModelImage destImage, ModelImage srcImage, ModelImage voiMask, ModelImage obMask, int intensity){
-    	//take difference between obMask and voiMask = btwnMask
-    	//whenever btwnMask = 1, convert to 'intensity'
-    	int bb, cc;
-		int zDim = 0;
-		if (srcImage.getNDims() == 3) {
-			System.out.println("zDim of srcImage: "+srcImage.getExtents()[2]);
-            zDim = srcImage.getExtents()[2];
-        }
-    	for (bb = 0; bb < zDim; bb++) {
-	        try {
-	        	srcImage.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer1);
-	            obMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer2);
-	            voiMask.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer3);
-	            for (cc = 0; cc < imgBuffer.length; cc++) {
-	                //clean subcutaneous FAT (on bundle fuzzy'd image used to segment muscle)
-	                if (imgBuffer2[cc] == 1 && imgBuffer3[cc] == 0) {
-	                    imgBuffer1[cc] = intensity;
-	                }
-	            }
-	            destImage.importData((bb * imgBuffer.length), imgBuffer1, false); //processed bundle fuzzied image
-	        } catch (IOException ex) {
-	            System.err.println( "error exporting data from destImageA in AlgorithmPipeline2");
-	        }
-	    }
-	    progressBar.setMessage("Between "+voiMask+" and "+obMask+", labeled "+intensity+
-	    		". Input: "+srcImage+". Output:"+destImage);
-    }
+	public void getCentroid(float[] centroid_array, ModelImage srcImage, int nClasses){
+		int dd;
+		srcImage.calcMinMax();
+		double min = srcImage.getMin();
+		double max = srcImage.getMax();
+		System.out.println("min:"+min);
+		System.out.println("max:"+max);
+    	for(dd=1;dd<(nClasses+1);dd++){
+    		centroid_array[dd-1]=(float)(dd*max/(nClasses+1));
+    		System.out.println("old centroid_array["+dd+"-1] = "+centroid_array[dd-1]);
+    	}
+    	System.out.println("");
+	}
     
     
     public ModelImage isolatingBone(ModelImage srcImage, int BoneIntensity){
@@ -516,6 +459,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         
         IDObjects(BoneID, zDim*1000/20, zDim*30000/20);
         Open6(BoneID);
+        Dilate6(BoneID);
         Close24(BoneID);
         IDObjects(BoneID, zDim*1000/20, zDim*30000/20);        //ShowImage(BoneID, "thresholded IDobjected opened closed idobjected --");
 
@@ -524,11 +468,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         	numObjects[bb] = 0;
         	boneObject[bb] = 1;
             try {
-                BoneID.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
+                BoneID.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
                 //get numObjects per Slice
-                for (cc = 0; cc < imgBuffer.length; cc++) {
-                    if (imgBuffer[cc]>numObjects[bb]) {
-                        numObjects[bb] = imgBuffer[cc];		//numObjects contains slice maximum.
+                for (cc = 0; cc < imgBuffer1.length; cc++) {
+                    if (imgBuffer1[cc]>numObjects[bb]) {
+                        numObjects[bb] = imgBuffer1[cc];		//numObjects contains slice maximum.
                     }
                 }                
                 //initialize centroid variables (for particular slice)
@@ -544,7 +488,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                     for (x = 0; x < xDim; x++) {
                         for (y = 0; y < yDim; y++) {
                             i = x + y * xDim;
-                            if (imgBuffer[i] == cc) {
+                            if (imgBuffer1[i] == cc) {
 							   centroidX[cc-1] = centroidX[cc-1] + x;
 							   centroidY[cc-1] = centroidY[cc-1] + y;
 							   n++;
@@ -568,15 +512,15 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                 for (x = 0; x < xDim; x++) {
                     for (y = 0; y < yDim; y++) {
                         i = x + y * xDim;
-                        if (imgBuffer[i] == boneObject[bb]) {
-                            imgBuffer[i] = 1;
+                        if (imgBuffer1[i] == boneObject[bb]) {
+                            imgBuffer1[i] = 1;
                         }
                         else{
-                        	imgBuffer[i]=0;
+                        	imgBuffer1[i]=0;
                         }
                     }
                 }
-                BoneID.importData((bb * imgBuffer.length), imgBuffer, false);
+                BoneID.importData((bb * imgBuffer1.length), imgBuffer1, false);
             } catch (IOException ex) {
                 System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
             }
@@ -594,8 +538,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         }
 	   for (bb = 0; bb < zDim; bb++) {
 	           try {
-	               destImage3a.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
-	               BoneID.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
+	               destImage3a.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+	               BoneID.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer2);
 	               for (y = 0; y < yDim; y++) {
 	        	       xmax = 0;
 	        	       xmin = 0;
@@ -618,16 +562,16 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                           }
 	                           if(xmin<xmax){
 	                               for(cc=xmin;cc<xmax;cc++){
-	                               	imgBuffer[i+cc]=BONE_MARROW;
+	                               	imgBuffer1[i+cc]=BONE_MARROW;
 	                               }
 	                           }
 	                       }
-	                       if(imgBuffer2[i]==1 && imgBuffer[i]!=BONE){
-	                    	   imgBuffer[i]=BONE_MARROW;
+	                       if(imgBuffer2[i]==1 && imgBuffer1[i]!=BONE){
+	                    	   imgBuffer1[i]=BONE_MARROW;
 	                       }
 	                   }
 	               }
-	               destImage3a.importData((bb * imgBuffer.length),imgBuffer, false);
+	               destImage3a.importData((bb * imgBuffer1.length),imgBuffer1, false);
 	           }
 	           catch (IOException ex) {
 	           System.err.println("error exporting bone marrow data from destImageA in AlgorithmPipeline2");
@@ -668,6 +612,56 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		tempImageOne.disposeLocal();            tempImageOne = null;
     }    
     
+    
+//    public ModelImage processFat(ModelImage fatImage0, ModelImage fatImage1, ModelImage fatImage2, ModelImage fatImage3){
+    public ModelImage processFat(ModelImage fatImage0, ModelImage fatImage1, ModelImage fatImage2){
+    	ModelImage fatImage = null;
+    	fatImage = new ModelImage(fatImage1.getType(), fatImage1.getExtents(),
+    			"fatImage", fatImage1.getUserInterface());
+    	float imgBuffer[] = null;
+    	imgBuffer = new float[sliceSize];
+    	int bb, cc;
+		int zDim = 0;
+    	if (fatImage1.getNDims() == 3) {
+            zDim = fatImage1.getExtents()[2];
+        }
+    	
+		for (bb = 0; bb < zDim; bb++) {
+		    try {
+		    	fatImage2.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
+		        for (cc = 0; cc < imgBuffer.length; cc++) {
+		        	imgBuffer[cc]=(float)(imgBuffer[cc]*0.7);
+		        }
+		        fatImage2.importData((bb * imgBuffer.length), imgBuffer, false);
+		    } catch (IOException ex) {
+		        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
+		    }
+		}
+		fatImage0 = threshold1(fatImage0, (float)(0.5*fatImage2.getMax()), (float)fatImage0.getMax());
+	//	ShowImage(fatImage0, "fatImage0 processed");
+		fatImage2 = threshold1(fatImage2, (float)(0.2*fatImage2.getMax()), (float)fatImage2.getMax());
+	//	ShowImage(fatImage2, "fatImage2 processed");
+		//fatImage3 = threshold1(fatImage3, (float)(0.8*fatImage3.getMax()), (float)fatImage3.getMax());
+		//ShowImage(fatImage3, "fatImage3 processed");
+
+		convert(fatImage, voiMask, fatImage, 1, MUSCLE);
+//		ShowImage(fatImage, "inside all muscle");
+		convert(fatImage, fatImage0, fatImage, 1, FAT);
+//		convert(fatImage, fatImage0, fatImage, 1, FAT);
+	//	ShowImage(fatImage, "processed1");
+		convert(fatImage, fatImage2, fatImage, 1, FAT);
+	//	ShowImage(fatImage, "processed2");
+//		convert(fatImage, fatImage3, fatImage, 1, FAT);
+	//	ShowImage(fatImage, "fat processed fatImage");
+		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
+		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);
+	//	ShowImage(fatImage, "fully processed fatImage");
+
+		
+		return fatImage;
+		
+    }
+    
     public void convert(ModelImage destImage, ModelImage tempImageOne, ModelImage srcImage, int tempIntensity, int newIntensity){
     	//whenever tempImageOne = tempIntensity, srcImage converted to newIntensity
     	int bb, cc;
@@ -677,14 +671,14 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         }
 		for (bb = 0; bb < zDim; bb++) {
 		    try {
-		    	srcImage.exportData((bb * imgBuffer.length), imgBuffer.length, imgBuffer);
+		    	srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
 		        tempImageOne.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
-		        for (cc = 0; cc < imgBuffer.length; cc++) {
+		        for (cc = 0; cc < imgBuffer1.length; cc++) {
 		            if (imgBuffer2[cc] == tempIntensity) { 
-		                imgBuffer[cc] = newIntensity; 
+		                imgBuffer1[cc] = newIntensity; 
 		            }
 		        }
-		        destImage.importData((bb * imgBuffer.length), imgBuffer, false);
+		        destImage.importData((bb * imgBuffer1.length), imgBuffer1, false);
 		    } catch (IOException ex) {
 		        System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP5 black to muscle");
 		    }
@@ -706,8 +700,20 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	    MorphFILL.run();
 	}
 	
-    public ModelImage threshold(ModelImage threshSourceImg, int intensity) {
+    public ModelImage threshold(ModelImage threshSourceImg, float intensity) {
         float thresh[] = {intensity-5, intensity+5};
+    	ModelImage resultImage = null;
+    	resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(),
+    			"threshResultImg", threshSourceImg.getUserInterface());
+        AlgorithmThresholdDual threshAlgo = null;
+        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, true, true, true);
+        threshAlgo.setProgressBarVisible(false);
+        threshAlgo.run();
+        return resultImage;
+    }
+    
+    public ModelImage threshold1(ModelImage threshSourceImg, float intensity1, float intensity2) {
+    	float thresh[] = {intensity1, intensity2};
     	ModelImage resultImage = null;
     	resultImage = new ModelImage(threshSourceImg.getType(), threshSourceImg.getExtents(),
     			"threshResultImg", threshSourceImg.getUserInterface());
@@ -752,6 +758,20 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         cloneImg.setImageName(Name);
         new ViewJFrameImage(cloneImg);
 	}
+	
+    public void getVariables(ModelImage destImageA, ModelImage obMaskA){
+        xDim = destImageA.getExtents()[0];
+        yDim = destImageA.getExtents()[1];
+        if (destImageA.getNDims() == 3) {
+            zDim = destImageA.getExtents()[2];
+        }
+        destImage1 = (ModelImage) destImageA.clone();
+        destImage1.setVOIs(destImageA.getVOIs());
+        obMask = (ModelImage) obMaskA.clone();
+        fieldImage = new ModelImage(destImageA.getType(), destImageA.getExtents(), "fieldImage", destImageA.getUserInterface());
+		destImage3a = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3a", destImageA.getUserInterface());
+        destImage3b = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3b", destImageA.getUserInterface());
+    }
 
     public ModelImage getResultImageA() {
         return this.destImageA;
@@ -768,7 +788,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     }
 
     public void disposeLocal() {
-        imgBuffer = null;
+        imgBuffer1 = null;
         
         if (obMaskA != null)
         {
