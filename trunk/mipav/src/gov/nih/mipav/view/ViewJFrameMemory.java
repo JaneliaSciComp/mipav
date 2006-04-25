@@ -1,58 +1,86 @@
 package gov.nih.mipav.view;
 
+
 import java.awt.*;
 import java.awt.event.*;
-import java.io.FileNotFoundException;
-import javax.swing.*;
-import javax.swing.event.*;
 
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
+import java.io.*;
+
+import javax.swing.*;
+import javax.swing.border.*;
+import javax.swing.event.*;
 
 
 /**
-*	Contains a seperatly running thread which checks the currently used and available
-*   memory.  This frame will display that information several different ways:
-*   <ul>
-*   <li>in a text-area displaying memory used in K, total memory available to the JVM in K,
-*       and the relative used amount in per-cent.</li>
-*	<li>in a bar-chart that resembles a graphic equaliser on a stereo.</li>
-*   <li>in line-graph providing history information.</li>
-*   </ul>
-*	The memory usage is sampled at a rate which is user-specified.  The frame will allow the user to
-*	adjust how frequently the memory size will be sampled.  For efficiency, no sampling
-*	will occur if the frame has been minimized.
-*	<p>
-*	The memory frame provides direct user access to the function Runtime.getRuntime.gc() via a
-*	"Garbage Collector" button.
-*
-*		@version    0.2 16 June 2001
-*       @author     David Parsons
-*		@author     Matthew J. McAuliffe, Ph.D.
-*
-*/
-public class ViewJFrameMemory extends JFrame
-    implements  ActionListener,
-                ChangeListener
-{
+ * Contains a seperatly running thread which checks the currently used and available memory. This frame will display
+ * that information several different ways:
+ *
+ * <ul>
+ *   <li>in a text-area displaying memory used in K, total memory available to the JVM in K, and the relative used
+ *     amount in per-cent.</li>
+ *   <li>in a bar-chart that resembles a graphic equaliser on a stereo.</li>
+ *   <li>in line-graph providing history information.</li>
+ * </ul>
+ *
+ * The memory usage is sampled at a rate which is user-specified. The frame will allow the user to adjust how frequently
+ * the memory size will be sampled. For efficiency, no sampling will occur if the frame has been minimized.
+ *
+ * <p>The memory frame provides direct user access to the function Runtime.getRuntime.gc() via a "Garbage Collector"
+ * button.</p>
+ *
+ * @version  0.2 16 June 2001
+ * @author   David Parsons
+ * @author   Matthew J. McAuliffe, Ph.D.
+ */
+public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeListener {
 
-    private boolean     paused = false;     // don't sample memory when true
-    private JButton     pauseButton;
-    private JButton     callGCbutton;
-    private JTextField  sampleRate;         // user control over memory sampling period
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    // test notification of memory used
-    private JLabel      used;
-    private JLabel      total;
-    private JLabel      percentUsed;
-    // thread
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -8863264033308071151L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private BarMeter bm;
+
+    /** DOCUMENT ME! */
+    private JButton callGCbutton;
+
+    /** DOCUMENT ME! */
+    private LineMeter lm;
+
+    /** DOCUMENT ME! */
+    private JButton pauseButton;
+
+    /** DOCUMENT ME! */
+    private boolean paused = false; // don't sample memory when true
+
+    /** DOCUMENT ME! */
+    private JLabel percentUsed;
+
+    /** DOCUMENT ME! */
+    private JTextField sampleRate; // user control over memory sampling period
+
+    /** thread. */
     private MemoryMonitor surf;
 
-    private BarMeter    bm;
-    private LineMeter   lm;
+    /** DOCUMENT ME! */
+    private JLabel total;
+
+    /** DOCUMENT ME! */
     private ViewUserInterface UI;
 
-    /** Constructor */
+    /** test notification of memory used. */
+    private JLabel used;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Constructor.
+     *
+     * @param  _UI  DOCUMENT ME!
+     */
     public ViewJFrameMemory(ViewUserInterface _UI) {
         super();
         UI = _UI;
@@ -60,34 +88,39 @@ public class ViewJFrameMemory extends JFrame
 
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch ( FileNotFoundException error ) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() + ">.  Check that this file is available.\n");
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage() +
+                               ">.  Check that this file is available.\n");
         }
 
         // don't waste time or cycles checking memory when the window isn't
         // visible:
         this.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent we) {
-                surf.stop();
-                dispose();
-            }
-            public void windowIconified(WindowEvent we) {
-                paused = false;
-                pauseButton.doClick();
-            }
-            public void windowDeiconified(WindowEvent we) {
-                paused = true;
-                pauseButton.doClick();
-            }
-        });
+                public void windowClosing(WindowEvent we) {
+                    surf.stop();
+                    dispose();
+                }
+
+                public void windowIconified(WindowEvent we) {
+                    paused = false;
+                    pauseButton.doClick();
+                }
+
+                public void windowDeiconified(WindowEvent we) {
+                    paused = true;
+                    pauseButton.doClick();
+                }
+            });
         this.getContentPane().setLayout(new BorderLayout());
 
 
         TitledBorder border;
 
         JPanel userPanel = new JPanel(new BorderLayout());
-            // panel is titled & etched
+
+        // panel is titled & etched
         JPanel setupPanel = new JPanel(new BorderLayout());
         border = new TitledBorder("Sampling");
         border.setTitleColor(Color.black);
@@ -106,14 +139,15 @@ public class ViewJFrameMemory extends JFrame
         labelSampleRate.setFont(MipavUtil.font12);
         labelSampleRate.setBackground(Color.black);
         samplePanel.add(labelSampleRate);
-        samplePanel.add(Box.createHorizontalStrut(10));     // add spacing
-        sampleRate = new JTextField("1000");                // add user input field
-        makeNumericsOnly(sampleRate);  // we cannot yet call MipavUtil here....
+        samplePanel.add(Box.createHorizontalStrut(10)); // add spacing
+        sampleRate = new JTextField("1000"); // add user input field
+        makeNumericsOnly(sampleRate); // we cannot yet call MipavUtil here....
         sampleRate.setColumns(5);
         sampleRate.setHorizontalAlignment(JTextField.RIGHT);
         sampleRate.addActionListener(this);
         samplePanel.add(sampleRate);
-        JLabel ms = new JLabel("ms");                       // add sample rate unit
+
+        JLabel ms = new JLabel("ms"); // add sample rate unit
         ms.setFont(MipavUtil.font12);
         ms.setBackground(Color.black);
         samplePanel.add(ms);
@@ -121,11 +155,11 @@ public class ViewJFrameMemory extends JFrame
 
         userPanel.add(setupPanel, BorderLayout.NORTH);
 
-            // panel gets a grid layout
+        // panel gets a grid layout
         GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
-        gbc.insets = new Insets(2, 4, 2, 4);   // component width = minwidth + (2ipadx)
+        gbc.insets = new Insets(2, 4, 2, 4); // component width = minwidth + (2ipadx)
 
         JPanel dataPanel = new JPanel();
         dataPanel.setLayout(gbl);
@@ -136,11 +170,11 @@ public class ViewJFrameMemory extends JFrame
         dataPanel.setBorder(border);
 
 
-        long inUse = ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory())/1024);
-        long tot   = (Runtime.getRuntime().totalMemory()/1024);
+        long inUse = ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
+        long tot = (Runtime.getRuntime().totalMemory() / 1024);
 
-        JLabel k    = new JLabel("K");      // units for memory usage
-        JLabel K    = new JLabel("K");
+        JLabel k = new JLabel("K"); // units for memory usage
+        JLabel K = new JLabel("K");
         JLabel cent = new JLabel("%");
         k.setFont(MipavUtil.font12);
         K.setFont(MipavUtil.font12);
@@ -154,7 +188,7 @@ public class ViewJFrameMemory extends JFrame
         gbl.setConstraints(usedLabel, gbc);
         dataPanel.add(usedLabel);
 
-        used = new JLabel(Long.toString(inUse));  // inUse (k) =
+        used = new JLabel(Long.toString(inUse)); // inUse (k) =
         used.setFont(MipavUtil.font12);
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
@@ -177,32 +211,32 @@ public class ViewJFrameMemory extends JFrame
         total.setFont(MipavUtil.font12);
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-		gbl.setConstraints(total, gbc);
+        gbl.setConstraints(total, gbc);
         dataPanel.add(total);
 
-		gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
-		gbl.setConstraints(K, gbc);
+        gbl.setConstraints(K, gbc);
         dataPanel.add(K);
 
 
         JLabel percentLabel = new JLabel("Percent Used:");
         percentLabel.setFont(MipavUtil.font12);
-		gbc.gridwidth = 2;
+        gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
-		gbl.setConstraints(percentLabel, gbc);
+        gbl.setConstraints(percentLabel, gbc);
         dataPanel.add(percentLabel);
 
-        percentUsed = new JLabel(Integer.toString(Math.round((float)(inUse)/tot*100)) );
+        percentUsed = new JLabel(Integer.toString(Math.round((float) (inUse) / tot * 100)));
         percentUsed.setFont(MipavUtil.font12);
-		gbc.gridwidth = 1;
+        gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.EAST;
-		gbl.setConstraints(percentUsed, gbc);
+        gbl.setConstraints(percentUsed, gbc);
         dataPanel.add(percentUsed);
 
-		gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
-		gbl.setConstraints(cent, gbc);
+        gbl.setConstraints(cent, gbc);
         dataPanel.add(cent);
 
         userPanel.add(dataPanel, BorderLayout.CENTER);
@@ -251,202 +285,269 @@ public class ViewJFrameMemory extends JFrame
         callGCbutton.requestFocus();
     }
 
-    /**
-     *  Shows the frame with the memory
-     */
-    public synchronized void setVisible(boolean flag)
-    {
-        setLocation(50, 50);
-        super.setVisible(flag);
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
+    // ************************************************************************
+    // **************************** Action Events *****************************
+    // ************************************************************************
 
     /**
-    *   Takes a txt field, and forces the textfield to accept
-    *   numbers, backspace and delete-key entries.
-    *   <p>also tells the pauseButton to click.
-     * <p> This method should be checked periodically to see if there is a good
-     * way to ensure that the action within can be superceded by the
-     * functionality in MipavUtil.makeNumericsOnly().
-    */
-    protected void makeNumericsOnly(JTextField txt)
-    {
-        txt.addKeyListener(new KeyAdapter() {  // make the field
-            public void keyTyped(KeyEvent evt) {     // not accept letters
-                JTextField t = (JTextField) evt.getComponent();
-                char ch = evt.getKeyChar();
-                if (ch == KeyEvent.VK_ENTER) { // make sure the enter key acts as clicking OK
-                    //Component c = t.getNextFocusableComponent();
-                }
-                else if (   ((ch < '0') || (ch > '9')) &&
-                            ((ch != KeyEvent.VK_DELETE) &&
-                            (ch != KeyEvent.VK_BACK_SPACE)))
-                {
-                    // if is the case that ch is outside the bounds of a number
-                    // AND it is the case that ch is neither a BS or a DE,
-                    // then...
-                    // key is not a digit or a deletion char
-                    evt.consume();
-                }
-                else {
-                    paused = false;
-                    pauseButton.doClick();
-                }
-            }
-        });
-    }
-
-    //************************************************************************
-    //**************************** Action Events *****************************
-    //************************************************************************
-
-    /**
-     *  Calls various methods based on the user's actions
-     *  @param event      event that triggered function
+     * Calls various methods based on the user's actions.
+     *
+     * @param  event  event that triggered function
      */
     public void actionPerformed(ActionEvent event) {
-   	    Object source = event.getSource();
+        Object source = event.getSource();
 
         if (source == pauseButton) {
-             if (paused) { // if already paused.... change the sample rate, and unpause
+
+            if (paused) { // if already paused.... change the sample rate, and unpause
                 surf.start();
                 lm.setSampleRate(Integer.parseInt((sampleRate).getText()));
                 lm.start();
                 paused = false;
                 pauseButton.setText("Pause");
                 validate();
-            }
-            else {  // not paused?  stop checking the memory, doing updates and tell user
+            } else { // not paused?  stop checking the memory, doing updates and tell user
                 surf.stop();
                 lm.stop();
                 paused = true;
                 pauseButton.setText("Resume");
                 validate();
             }
-        }
-        else if (source == sampleRate) {}
-        else if (source == callGCbutton) {  //call the garbage collector
+        } else if (source == sampleRate) { }
+        else if (source == callGCbutton) { // call the garbage collector
             Runtime.getRuntime().gc();
-            //Runtime.getRuntime().runFinalization();
-             if (paused) {
-                surf.stop();        // should update the display & memory values
+            // Runtime.getRuntime().runFinalization();
+            if (paused) {
+                surf.stop(); // should update the display & memory values
                 validate();
                 repaint();
             }
-            if (UI.isScriptRecording())
-            	UI.getScriptDialog().append("CollectGarbage\n");
+
+            if (UI.isScriptRecording()) {
+                UI.getScriptDialog().append("CollectGarbage\n");
+            }
         }
     }
-	//************************************************************************
-    //**************************** Change Events *****************************
-    //************************************************************************
+    // ************************************************************************
+    // **************************** Change Events *****************************
+    // ************************************************************************
 
-	/**
-	*  Calls various methods based on the changes in the memory panel
-	*  @param event      event that triggered function
-	*/
+    /**
+     * Shows the frame with the memory.
+     *
+     * @param  flag  DOCUMENT ME!
+     */
+    public synchronized void setVisible(boolean flag) {
+        setLocation(50, 50);
+        super.setVisible(flag);
+    }
+
+    /**
+     * Calls various methods based on the changes in the memory panel.
+     *
+     * @param  event  event that triggered function
+     */
     public void stateChanged(ChangeEvent event) {
-   	    Object source = event.getSource();
-   	    MemoryMonitor mem = (MemoryMonitor) source;
+        Object source = event.getSource();
+        MemoryMonitor mem = (MemoryMonitor) source;
 
-   	    long inUse  = mem.getUsed()/1024;
-   	    long tot    = mem.getTotal()/1024;
+        long inUse = mem.getUsed() / 1024;
+        long tot = mem.getTotal() / 1024;
 
-   	    used.setText(Long.toString(inUse));
-   	    total.setText(Long.toString(tot));
-   	    percentUsed.setText(Integer.toString(Math.round((float)(inUse)/tot*100)));
+        used.setText(Long.toString(inUse));
+        total.setText(Long.toString(tot));
+        percentUsed.setText(Integer.toString(Math.round((float) (inUse) / tot * 100)));
 
-   	    bm.setAmplitude(Math.round((float)(inUse)/tot*100));
-   	    bm.repaint();
-   	    lm.setAmplitude((float)(inUse)/tot);
-   	}
+        bm.setAmplitude(Math.round((float) (inUse) / tot * 100));
+        bm.repaint();
+        lm.setAmplitude((float) (inUse) / tot);
+    }
 
-   /**
-    * Tracks Memory allocated & used, and notifies anybody who is interested
-    *   in finding out about it.
-    */
-    public class MemoryMonitor      implements Runnable,
-                                               FocusListener {
 
-        private volatile Thread thread;
+    /**
+     * Takes a txt field, and forces the textfield to accept numbers, backspace and delete-key entries.
+     *
+     * <p>also tells the pauseButton to click.</p>
+     *
+     * <p>This method should be checked periodically to see if there is a good way to ensure that the action within can
+     * be superceded by the functionality in MipavUtil.makeNumericsOnly().</p>
+     *
+     * @param  txt  DOCUMENT ME!
+     */
+    protected void makeNumericsOnly(JTextField txt) {
+        txt.addKeyListener(new KeyAdapter() { // make the field
+                public void keyTyped(KeyEvent evt) { // not accept letters
 
-        private long sleepAmount = 1000;
-        private Runtime r = Runtime.getRuntime();
-        private float usedMemory, freeMemory, totalMemory;
-        private int percentage;
-        private int counterGC;
+                    JTextField t = (JTextField) evt.getComponent();
+                    char ch = evt.getKeyChar();
 
-        private EventListenerList listenerList;
+                    if (ch == KeyEvent.VK_ENTER) { // make sure the enter key acts as clicking OK
+
+                        // Component c = t.getNextFocusableComponent();
+                    } else if (((ch < '0') || (ch > '9')) &&
+                                   ((ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE))) {
+
+                        // if is the case that ch is outside the bounds of a number
+                        // AND it is the case that ch is neither a BS or a DE,
+                        // then...
+                        // key is not a digit or a deletion char
+                        evt.consume();
+                    } else {
+                        paused = false;
+                        pauseButton.doClick();
+                    }
+                }
+            });
+    }
+
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * Tracks Memory allocated & used, and notifies anybody who is interested in finding out about it.
+     */
+    public class MemoryMonitor implements Runnable, FocusListener {
+
+        /** DOCUMENT ME! */
         private ChangeEvent changeEvent;
 
-        /** Constructor.  Creates the list for listeners */
+        /** DOCUMENT ME! */
+        private int counterGC;
+
+        /** DOCUMENT ME! */
+        private EventListenerList listenerList;
+
+        /** DOCUMENT ME! */
+        private int percentage;
+
+        /** DOCUMENT ME! */
+        private Runtime r = Runtime.getRuntime();
+
+        /** DOCUMENT ME! */
+        private long sleepAmount = 1000;
+
+        /** DOCUMENT ME! */
+        private volatile Thread thread;
+
+        /** DOCUMENT ME! */
+        private float usedMemory, freeMemory, totalMemory;
+
+        /**
+         * Constructor. Creates the list for listeners
+         */
         public MemoryMonitor() {
             listenerList = new EventListenerList();
         }
 
-        /** The amount of used memory the thread found
-        *   @return used memory in bytes
-        */
-        public long getUsed() {
-            return (long)(usedMemory);
+
+        // ****************** change listener support
+        /**
+         * add a memory change listener.
+         *
+         * @param  l  DOCUMENT ME!
+         */
+        public void addMemoryChangeListener(ChangeListener l) {
+            (listenerList).add(ChangeListener.class, l);
         }
 
-        /** The amount of free memory the thread found
-        *   @return free memory in bytes
-        */
+
+        // **************
+        // FOCUS LISTENER
+        /**
+         * focus gained.
+         *
+         * @param  fe  DOCUMENT ME!
+         */
+        public void focusGained(FocusEvent fe) { }
+
+        /**
+         * when focus is lost the source is assumed to be a JTextField, and it sets the sample period.
+         *
+         * @param  fe  DOCUMENT ME!
+         */
+        public void focusLost(FocusEvent fe) {
+            Object source = fe.getSource();
+
+            if (!fe.isTemporary()) {
+
+                if (source instanceof JTextField) {
+                    sleepAmount = Long.parseLong(((JTextField) source).getText());
+                }
+            }
+        }
+
+        /**
+         * The amount of free memory the thread found.
+         *
+         * @return  free memory in bytes
+         */
         public long getFree() {
-            return (long)(freeMemory);
+            return (long) (freeMemory);
         }
 
-        /** The amount of total memory the thread found
-        *   @return total memory allocated by the JVM in bytes
-        */
-        public long getTotal() {
-            return (long)totalMemory;
-        }
-
-        /** The percentage of used memory to total memory the thread found
-        *   @return percent of used memory to total memeory in %
-        */
+        /**
+         * The percentage of used memory to total memory the thread found.
+         *
+         * @return  percent of used memory to total memeory in %
+         */
         public int getPercentage() {
             return percentage;
         }
 
-        /** Start the thread as a minimum priority thread */
-        public void start() {
-            thread = new Thread(this);
-            thread.setPriority(Thread.MIN_PRIORITY);
-            thread.setName("MemoryMonitor");
-            thread.start();
+        /**
+         * The amount of total memory the thread found.
+         *
+         * @return  total memory allocated by the JVM in bytes
+         */
+        public long getTotal() {
+            return (long) totalMemory;
+        }
+
+        /**
+         * The amount of used memory the thread found.
+         *
+         * @return  used memory in bytes
+         */
+        public long getUsed() {
+            return (long) (usedMemory);
+        }
+
+        /**
+         * removes the change listener.
+         *
+         * @param  l  DOCUMENT ME!
+         */
+        public void removeMemoryChangeListener(ChangeListener l) {
+            (listenerList).remove(ChangeListener.class, l);
         }
 
 
-        /** kill the thread  */
-        public void stop() {
-            thread = null;
-        }
-
-
-        /** when the thread wakes up, it collects information from
-        *   the runtime on current memory status.  It then notifies
-        *   all listeners.
-        */
+        /**
+         * when the thread wakes up, it collects information from the runtime on current memory status. It then notifies
+         * all listeners.
+         */
         public void run() {
             Thread me = Thread.currentThread();
-            while (thread == me){
+
+            while (thread == me) {
                 totalMemory = (float) r.totalMemory();
-                freeMemory  = (float) r.freeMemory();
-                usedMemory  = (float) totalMemory - freeMemory; // % used, that is
-                percentage  = (int)(usedMemory/totalMemory * 100 + 0.5f);
-                fireMemoryChanged();        // too many and this thread is selfish
+                freeMemory = (float) r.freeMemory();
+                usedMemory = (float) totalMemory - freeMemory; // % used, that is
+                percentage = (int) ((usedMemory / totalMemory * 100) + 0.5f);
+                fireMemoryChanged(); // too many and this thread is selfish
+
                 try {
                     thread.sleep(sleepAmount);
-                } catch (InterruptedException e) { break; }
+                } catch (InterruptedException e) {
+                    break;
+                }
 
                 // Because display process chews-up memory. Go call the garbage collector
                 // every 90 calls to this process (if timer = 1000ms) then gc gets called
                 // every 1.5 minutes.
                 counterGC++;
+
                 if (counterGC == 90) {
                     counterGC = 0;
                     System.gc();
@@ -456,51 +557,45 @@ public class ViewJFrameMemory extends JFrame
             thread = null;
         }
 
-
-        // **************
-        // FOCUS LISTENER
-        /** focus gained  */
-        public void focusGained(FocusEvent fe) {}
-        /** when focus is lost the source is assumed to be a JTextField, and it
-        *   sets the sample period.
-        */
-        public void focusLost(FocusEvent fe) {
-            Object source = fe.getSource();
-            if (!fe.isTemporary()) {
-                if (source instanceof JTextField) {
-                    sleepAmount = Long.parseLong(((JTextField)source).getText());
-                }
-            }
-        }
-
-
-        //****************** change listener support
         /**
-        *  add a memory change listener
-        */
-        public void addMemoryChangeListener(ChangeListener l) {
-            (listenerList).add(ChangeListener.class, l);
+         * Start the thread as a minimum priority thread.
+         */
+        public void start() {
+            thread = new Thread(this);
+            thread.setPriority(Thread.MIN_PRIORITY);
+            thread.setName("MemoryMonitor");
+            thread.start();
         }
 
-        /**   removes the change listener */
-        public void removeMemoryChangeListener(ChangeListener l) {
-            (listenerList).remove(ChangeListener.class, l);
+
+        /**
+         * kill the thread.
+         */
+        public void stop() {
+            thread = null;
         }
-            // Notify all listeners that have registered interest for
-            // notification on this event type.  The event instance
-            // is lazily created using the parameters passed into
-            // the fire method.
+
+        /**
+         * Notify all listeners that have registered interest for notification on this event type. The event instance is
+         * lazily created using the parameters passed into the fire method.
+         */
         protected void fireMemoryChanged() {
-                // Guaranteed to return a non-null array
+
+            // Guaranteed to return a non-null array
             Object[] listeners = (listenerList).getListenerList();
-                // Process the listeners last to first, notifying
-                // those that are interested in this event
-            for (int i = listeners.length-2; i>=0; i-=2) {
+
+            // Process the listeners last to first, notifying
+            // those that are interested in this event
+            for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
                 if (listeners[i] == ChangeListener.class) {
-                        // Lazily create the event:
-                    if (changeEvent == null)
+
+                    // Lazily create the event:
+                    if (changeEvent == null) {
                         changeEvent = new ChangeEvent(this);
-                    ((ChangeListener)listeners[i+1]).stateChanged(changeEvent);
+                    }
+
+                    ((ChangeListener) listeners[i + 1]).stateChanged(changeEvent);
 
                 }
             }

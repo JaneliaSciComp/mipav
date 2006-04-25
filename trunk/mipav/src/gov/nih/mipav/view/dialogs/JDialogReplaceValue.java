@@ -1,52 +1,93 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.structures.*;
 
-import java.awt.event.*;
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
+
 import javax.swing.*;
 
+
 /**
- * Dialog which replaces all occurances of one value in an image with another value.  The value replaced
- * may be NaN, -Inf, Inf, or a real number.  The replacement value must be a real number.
+ * Dialog which replaces all occurances of one value in an image with another value. The value replaced may be NaN,
+ * -Inf, Inf, or a real number. The replacement value must be a real number.
  */
-public class JDialogReplaceValue
-    extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogReplaceValue extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
 
-    private ModelImage image; // source image
-    private	ModelImage		resultImage = null;   // result image
-    private ViewUserInterface userInterface;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -4321343995269931526L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private AlgorithmReplaceValue algoReplace;
 
-    private JRadioButton userDefinedButton;
-    private JRadioButton setChoiceButton;
-
-    private JRadioButton newImage;
-    private JRadioButton replaceImage;
-
-    private JComboBox setChoiceBox;
-    private JTextField userDefinedField;
-
-    private JTextField outputField;
-
+    /** DOCUMENT ME! */
     private int displayLoc;
 
+    /** DOCUMENT ME! */
+    private ModelImage image; // source image
+
+    /** DOCUMENT ME! */
     private double inputVal = 0;
+
+    /** DOCUMENT ME! */
+    private JRadioButton newImage;
+
+    /** DOCUMENT ME! */
+    private JTextField outputField;
+
+    /** DOCUMENT ME! */
     private double outputVal = 0;
 
+    /** DOCUMENT ME! */
+    private String rangeString;
+
+    /** DOCUMENT ME! */
     private Vector rangesVector = new Vector();
 
-    private String rangeString;
+    /** DOCUMENT ME! */
+    private JRadioButton replaceImage;
+
+    /** DOCUMENT ME! */
+    private ModelImage resultImage = null; // result image
+
+    /** DOCUMENT ME! */
+    private JComboBox setChoiceBox;
+
+    /** DOCUMENT ME! */
+    private JRadioButton setChoiceButton;
+
+    /** DOCUMENT ME! */
+    private JRadioButton userDefinedButton;
+
+    /** DOCUMENT ME! */
+    private JTextField userDefinedField;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Empty constructor used for running scripts.
+     */
+    public JDialogReplaceValue() { }
 
     /**
      * Construct the replace value dialog window and wait for user action.
-     * @param frame  the window this dialog is attached to
-     * @param img    the image to process
+     *
+     * @param  frame  the window this dialog is attached to
+     * @param  img    the image to process
      */
     public JDialogReplaceValue(Frame frame, ModelImage img) {
         super(frame, false);
@@ -57,10 +98,217 @@ public class JDialogReplaceValue
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     * Empty constructor used for running scripts
+     * Invoked when an action occurs.
+     *
+     * @param  e  ActionEvent
+     *
+     * @todo   Implement this java.awt.event.ActionListener method
      */
-    public JDialogReplaceValue() { }
+    public void actionPerformed(ActionEvent e) {
+        String cmd = e.getActionCommand();
+
+        if (cmd.equals("OK")) {
+
+            if (setVariables()) {
+                callAlgorithm();
+            }
+        } else if (cmd.equals("Cancel")) {
+            dispose();
+        } else if (cmd.equals("Help")) {
+            MipavUtil.showHelp("10068");
+        }
+    }
+
+    /**
+     * If the destination image is not null, put in frame.
+     *
+     * @param  algo  AlgorithmBase algorithm that was performed
+     */
+    public void algorithmPerformed(AlgorithmBase algo) {
+
+        if (algo instanceof AlgorithmReplaceValue) {
+
+            if (algo.isCompleted()) {
+
+                if (displayLoc == NEW) {
+
+                    try {
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    } catch (OutOfMemoryError error) {
+                        MipavUtil.displayError("Out of memory: unable to open new frame");
+                    }
+                } else {
+                    image.notifyImageDisplayListeners(null, true);
+                }
+
+                insertScriptLine(algo);
+            }
+
+        }
+
+        this.dispose();
+    }
+
+    /**
+     * Records the dialog information for scripting.
+     *
+     * @param  algo  AlgorithmBase completed algorithm
+     */
+    public void insertScriptLine(AlgorithmBase algo) {
+
+        if (algo.isCompleted()) {
+
+            if (userInterface.isScriptRecording()) {
+
+                // check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
+
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
+                    }
+                }
+
+                userInterface.getScriptDialog().append("ReplaceValue " +
+                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
+                                                       " ");
+
+                if (displayLoc == NEW) {
+                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
+                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
+                                                           " ");
+                } else {
+                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
+                                                           " ");
+                }
+
+                userInterface.getScriptDialog().append(displayLoc + " ");
+
+                if (setChoiceButton.isSelected()) {
+                    userInterface.getScriptDialog().append("true " + inputVal + " ");
+                } else {
+                    rangeString = rangeString.replace(' ', '_');
+                    userInterface.getScriptDialog().append("false " + rangeString + " ");
+                }
+
+                userInterface.getScriptDialog().append(outputVal + "\n");
+            }
+        }
+
+    }
+
+    /**
+     * Handle selection changes to the user defined value/preset radio buttons.
+     *
+     * @param  event  the event to handle
+     */
+    public void itemStateChanged(ItemEvent event) {
+
+        if (userDefinedButton.isSelected()) {
+            userDefinedField.setEnabled(true);
+            setChoiceBox.setEnabled(false);
+        } else {
+            setChoiceBox.setEnabled(true);
+            userDefinedField.setEnabled(false);
+        }
+
+    }
+
+    /**
+     * Runs the algorithm from a script.
+     *
+     * @param   parser  AlgorithmScriptParser the parser to run the script from
+     *
+     * @throws  IllegalArgumentException  DOCUMENT ME!
+     */
+    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
+        String srcImageKey = null;
+        String destImageKey = null;
+
+        try {
+            srcImageKey = parser.getNextString();
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        ModelImage im = parser.getImage(srcImageKey);
+
+        image = im;
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        // the result image
+        try {
+            destImageKey = parser.getNextString();
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        try {
+            this.displayLoc = parser.getNextInteger();
+
+            boolean doPreset = parser.getNextBoolean();
+
+            if (doPreset) {
+                this.inputVal = parser.getNextDouble();
+                rangesVector.addElement(new Values(inputVal));
+            } else {
+                rangeString = parser.getNextString();
+                rangeString = rangeString.replace('_', ' ');
+                parseRanges();
+            }
+
+            this.outputVal = parser.getNextDouble();
+
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        setActiveImage(parser.isActiveImage());
+        setSeparateThread(false);
+        callAlgorithm();
+
+        if (!srcImageKey.equals(destImageKey)) {
+            parser.putVariable(destImageKey, resultImage.getImageName());
+        }
+
+    }
+
+    /**
+     * Calls the algorithm.
+     */
+    private void callAlgorithm() {
+        setVisible(false);
+
+        if (displayLoc == NEW) {
+            resultImage = (ModelImage) image.clone();
+            resultImage.setImageName(image.getImageName() + "_replace_val");
+            algoReplace = new AlgorithmReplaceValue(resultImage, image, rangesVector, outputVal);
+        } else {
+            algoReplace = new AlgorithmReplaceValue(null, image, rangesVector, outputVal);
+        }
+
+        algoReplace.addListener(this);
+
+        if (runInSeparateThread) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (algoReplace.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+            algoReplace.setActiveImage(isActiveImage);
+
+            if (!userInterface.isAppFrameVisible()) {
+                algoReplace.setProgressBarVisible(false);
+            }
+
+            algoReplace.run();
+        }
+
+    }
 
     /**
      * Set up the dialog GUI.
@@ -70,6 +318,7 @@ public class JDialogReplaceValue
         JPanel mainPanel = new JPanel();
 
         mainPanel.setLayout(new GridBagLayout());
+
         GridBagConstraints gbc = new GridBagConstraints();
         mainPanel.setBorder(buildTitledBorder("Identify initial value to be changed"));
 
@@ -84,16 +333,16 @@ public class JDialogReplaceValue
         group.add(setChoiceButton);
 
         userDefinedButton.addItemListener(this);
-        //setChoiceButton.addItemListener(this);
+        // setChoiceButton.addItemListener(this);
 
-        String[] choices = new String[] {
-            "NaN", "\u221E", "-\u221E" };
+        String[] choices = new String[] { "NaN", "\u221E", "-\u221E" };
         setChoiceBox = new JComboBox(choices);
         setChoiceBox.setFont(MipavUtil.font12);
 
         userDefinedField = new JTextField(9);
         userDefinedField.setToolTipText("e.g.: 5.23, (100.2)-(200.95), (-23.4)-(-4.59)");
-        //MipavUtil.makeNumericsOnly(userDefinedField, true, true);
+
+        // MipavUtil.makeNumericsOnly(userDefinedField, true, true);
         userDefinedField.setEnabled(false);
 
         gbc.anchor = GridBagConstraints.WEST;
@@ -142,8 +391,7 @@ public class JDialogReplaceValue
 
         if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
             replaceImage.setEnabled(true);
-        }
-        else {
+        } else {
             replaceImage.setEnabled(false);
         }
 
@@ -165,174 +413,9 @@ public class JDialogReplaceValue
     }
 
     /**
-     * Handle selection changes to the user defined value/preset radio buttons.
-     * @param event  the event to handle
-     */
-    public void itemStateChanged(ItemEvent event) {
-        if (userDefinedButton.isSelected()) {
-            userDefinedField.setEnabled(true);
-            setChoiceBox.setEnabled(false);
-        }
-        else {
-            setChoiceBox.setEnabled(true);
-            userDefinedField.setEnabled(false);
-        }
-
-    }
-
-    /**
-     * Records the dialog information for scripting
-     * @param algo AlgorithmBase completed algorithm
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-        if (algo.isCompleted()) {
-        if (userInterface.isScriptRecording()) {
-            //check to see if the match image is already in the ImgTable
-            if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-                if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                    userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                }
-            }
-
-            userInterface.getScriptDialog().append("ReplaceValue " +
-                userInterface.getScriptDialog().getVar(image.getImageName()) +  " ");
-
-            if (displayLoc == NEW) {
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.
-                                                   getScriptDialog().getVar(resultImage.getImageName()) + " ");
-            } else {
-                userInterface.getScriptDialog().append(userInterface.
-                                                   getScriptDialog().getVar(image.getImageName()) + " ");
-            }
-
-            userInterface.getScriptDialog().append(displayLoc + " ");
-
-            if (setChoiceButton.isSelected()) {
-                userInterface.getScriptDialog().append("true " + inputVal + " ");
-            } else {
-                rangeString = rangeString.replace(' ', '_');
-                userInterface.getScriptDialog().append("false " + rangeString + " ");
-            }
-
-            userInterface.getScriptDialog().append(outputVal + "\n");
-        }
-    }
-
-    }
-
-    /**
-     * Runs the algorithm from a script
-     * @param parser AlgorithmScriptParser the parser to run the script from
-     * @throws IllegalArgumentException
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            this.displayLoc = parser.getNextInteger();
-
-            boolean doPreset = parser.getNextBoolean();
-            if (doPreset) {
-               this.inputVal = parser.getNextDouble();
-               rangesVector.addElement(new Values(inputVal));
-            } else {
-                rangeString = parser.getNextString();
-                rangeString = rangeString.replace('_',' ');
-                parseRanges();
-            }
-
-            this.outputVal = parser.getNextDouble();
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setActiveImage(parser.isActiveImage());
-        setSeparateThread(false);
-        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, resultImage.getImageName());
-        }
-
-    }
-
-    /**
-     * Invoked when an action occurs.
+     * DOCUMENT ME!
      *
-     * @param e ActionEvent
-     * @todo Implement this java.awt.event.ActionListener method
-     */
-    public void actionPerformed(ActionEvent e) {
-        String cmd = e.getActionCommand();
-
-        if (cmd.equals("OK")) {
-            if (setVariables()) {
-                callAlgorithm();
-            }
-        } else if (cmd.equals("Cancel")) {
-            dispose();
-        }
-        else if (cmd.equals("Help")) {
-            MipavUtil.showHelp("10068");
-        }
-    }
-
-    /**
-     * Sets up the algorithm's parameters
-     */
-    private boolean setVariables() {
-        if (replaceImage.isSelected()) displayLoc = REPLACE;
-        else if (newImage.isSelected()) displayLoc = NEW;
-
-        outputVal = Double.parseDouble(outputField.getText());
-
-        if (setChoiceButton.isSelected()) {
-            switch (setChoiceBox.getSelectedIndex()) {
-                case 0:
-                    inputVal = Double.NaN;
-                    break;
-                case 1:
-                    inputVal = Double.POSITIVE_INFINITY;
-                    break;
-                case 2:
-                    inputVal = Double.NEGATIVE_INFINITY;
-                    break;
-            }
-            rangesVector.addElement(new Values(inputVal));
-        }
-        else {
-            rangeString = userDefinedField.getText();
-          return parseRanges();
-            //inputVal = Double.parseDouble(userDefinedField.getText());
-        }
-
-
-        return true;
-    }
-
-    /**
-     *
-     * @return boolean
+     * @return  boolean
      */
     private boolean parseRanges() {
         boolean okay = true;
@@ -350,10 +433,10 @@ public class JDialogReplaceValue
         String firstHalf;
         String secondHalf;
 
-        while(tok.hasMoreTokens()) {
+        while (tok.hasMoreTokens()) {
             range = tok.nextToken();
 
-            //might just be a single value
+            // might just be a single value
             try {
                 firstVal = Double.parseDouble(range);
                 rangesVector.addElement(new Values(firstVal));
@@ -362,16 +445,18 @@ public class JDialogReplaceValue
 
                 try {
                     range = range.trim();
-                    //now see if it is a range
+
+                    // now see if it is a range
                     idx = range.indexOf(")");
 
                     firstHalf = range.substring(1, idx);
-                    //System.err.println("first half: " + firstHalf);
+                    // System.err.println("first half: " + firstHalf);
 
                     firstVal = Double.parseDouble(firstHalf);
 
-                    secondHalf = range.substring(range.lastIndexOf("(") + 1, range.lastIndexOf(")") );
-                    //System.err.println("second half: " + secondHalf);
+                    secondHalf = range.substring(range.lastIndexOf("(") + 1, range.lastIndexOf(")"));
+
+                    // System.err.println("second half: " + secondHalf);
                     secondVal = Double.parseDouble(secondHalf);
 
                     if (firstVal >= secondVal) {
@@ -384,6 +469,7 @@ public class JDialogReplaceValue
                     MipavUtil.displayWarning("Incorrectly formatted value/range:\n" +
                                              "e.g.: 5.23, (100.2)-(200.95), (-23.4)-(-4.59)");
                     userDefinedField.requestFocus();
+
                     return false;
                 }
 
@@ -396,71 +482,80 @@ public class JDialogReplaceValue
     }
 
     /**
-     * Calls the algorithm
+     * Sets up the algorithm's parameters.
+     *
+     * @return  DOCUMENT ME!
      */
-    private void callAlgorithm() {
-        setVisible(false);
+    private boolean setVariables() {
 
-        if (displayLoc == NEW) {
-            resultImage = (ModelImage) image.clone();
-            resultImage.setImageName(image.getImageName() + "_replace_val");
-            algoReplace = new AlgorithmReplaceValue(resultImage, image, rangesVector, outputVal);
-        }
-        else {
-            algoReplace = new AlgorithmReplaceValue(null, image, rangesVector, outputVal);
-        }
-        algoReplace.addListener(this);
-        if (runInSeparateThread) {
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (algoReplace.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        }
-        else {
-            algoReplace.setActiveImage(isActiveImage);
-            if (!userInterface.isAppFrameVisible()) {
-                algoReplace.setProgressBarVisible(false);
-            }
-            algoReplace.run();
+        if (replaceImage.isSelected()) {
+            displayLoc = REPLACE;
+        } else if (newImage.isSelected()) {
+            displayLoc = NEW;
         }
 
+        outputVal = Double.parseDouble(outputField.getText());
+
+        if (setChoiceButton.isSelected()) {
+
+            switch (setChoiceBox.getSelectedIndex()) {
+
+                case 0:
+                    inputVal = Double.NaN;
+                    break;
+
+                case 1:
+                    inputVal = Double.POSITIVE_INFINITY;
+                    break;
+
+                case 2:
+                    inputVal = Double.NEGATIVE_INFINITY;
+                    break;
+            }
+
+            rangesVector.addElement(new Values(inputVal));
+        } else {
+            rangeString = userDefinedField.getText();
+
+            return parseRanges();
+            // inputVal = Double.parseDouble(userDefinedField.getText());
+        }
+
+
+        return true;
     }
+
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * If the destination image is not null, put in frame
-     * @param algo AlgorithmBase algorithm that was performed
+     * DOCUMENT ME!
      */
-    public void algorithmPerformed(AlgorithmBase algo) {
-        if ( algo instanceof AlgorithmReplaceValue) {
-            if (algo.isCompleted()) {
-                if (displayLoc == NEW) {
-                    try {
-                        new ViewJFrameImage(resultImage, null, new Dimension(610,200));
-                    }
-                    catch (OutOfMemoryError error){
-                        MipavUtil.displayError("Out of memory: unable to open new frame");
-                    }
-                }
-                else {
-                    image.notifyImageDisplayListeners( null, true );
-                }
-
-                insertScriptLine(algo);
-            }
-
-        }
-        this.dispose();
-    }
-
     public class Values {
-        public boolean isRange = false;
+
+        /** DOCUMENT ME! */
         public double firstVal;
+
+        /** DOCUMENT ME! */
+        public boolean isRange = false;
+
+        /** DOCUMENT ME! */
         public double secondVal;
 
+        /**
+         * Creates a new Values object.
+         *
+         * @param  single  DOCUMENT ME!
+         */
         public Values(double single) {
             this.firstVal = single;
         }
 
+        /**
+         * Creates a new Values object.
+         *
+         * @param  first   DOCUMENT ME!
+         * @param  second  DOCUMENT ME!
+         */
         public Values(double first, double second) {
             this.firstVal = first;
             this.secondVal = second;

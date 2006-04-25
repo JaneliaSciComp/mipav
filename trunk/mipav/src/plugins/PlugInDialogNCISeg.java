@@ -1,50 +1,68 @@
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import javax.swing.*;
-import java.awt.event.*;
 import java.awt.*;
+import java.awt.event.*;
+
+import javax.swing.*;
+
 
 /**
  * NCI segmentation dialog.
  */
 public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterface {
 
-    private PlugInAlgorithmNCISeg nciAlgo;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    private ModelImage imageA = null; // source image
-
-    private ModelImage resultImage = null;
-
-    private ViewUserInterface userInterface;
-
-    private JLabel threshLabelB = null;
-
-    private JLabel threshLabelA = null;
-
-    private JTextField thresholdFieldA = null;
-
-    private JTextField thresholdFieldB = null;
-
+    /** DOCUMENT ME! */
     private JRadioButton blueButton = null;
 
+    /** DOCUMENT ME! */
     private JRadioButton brownButton = null;
 
-    private float threshold = 50f;
-
+    /** DOCUMENT ME! */
     private float diffThreshold = 25f;
 
+    /** DOCUMENT ME! */
     private boolean doBrown = false;
+
+    /** DOCUMENT ME! */
+    private ModelImage imageA = null; // source image
+
+    /** DOCUMENT ME! */
+    private PlugInAlgorithmNCISeg nciAlgo;
+
+    /** DOCUMENT ME! */
+    private ModelImage resultImage = null;
+
+    /** DOCUMENT ME! */
+    private JLabel threshLabelA = null;
+
+    /** DOCUMENT ME! */
+    private JLabel threshLabelB = null;
+
+    /** DOCUMENT ME! */
+    private float threshold = 50f;
+
+    /** DOCUMENT ME! */
+    private JTextField thresholdFieldA = null;
+
+    /** DOCUMENT ME! */
+    private JTextField thresholdFieldB = null;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Sets variables needed to call algorithm.
-     * 
-     * @param theParentFrame
-     *            Parent frame
-     * @param imA
-     *            Source image
+     *
+     * @param  theParentFrame  Parent frame
+     * @param  imA             Source image
      */
     public PlugInDialogNCISeg(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
@@ -55,14 +73,11 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * Used primarily for the script to store variables and run the algorithm.
-     * No actual dialog will appear but the set up info and result image will be
-     * stored here.
-     * 
-     * @param UI
-     *            The user interface, needed to create the image frame.
-     * @param imA
-     *            Source image.
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  UI   The user interface, needed to create the image frame.
+     * @param  imA  Source image.
      */
     public PlugInDialogNCISeg(ViewUserInterface UI, ModelImage imA) {
         super();
@@ -71,16 +86,18 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     * 
-     * @param event
-     *            Event that triggers function.
+     *
+     * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
         if (event.getSource().equals(brownButton) || event.getSource().equals(blueButton)) {
+
             if (brownButton.isSelected()) {
                 doBrown = true;
                 thresholdFieldA.setText("50.0");
@@ -93,11 +110,36 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("OK")) {
+
             if (setVariables()) {
                 callAlgorithm();
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        }
+    }
+
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
+
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
+     * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+        imageA.clearMask();
+
+        if (algorithm instanceof PlugInAlgorithmNCISeg) {
+
+            if (nciAlgo.isCompleted() == true) {
+                // The algorithm has completed and produced a new image to be
+                // displayed.
+
+                new ViewJFrameImage(resultImage);
+            }
         }
     }
 
@@ -111,7 +153,7 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
         try {
 
             resultImage = new ModelImage(ModelImage.FLOAT, imageA.getExtents(), (imageA.getImageName() + "_NCI_Seg"),
-                    userInterface);
+                                         userInterface);
 
             // Make algorithm
             nciAlgo = new PlugInAlgorithmNCISeg(resultImage, imageA, doBrown, threshold, diffThreshold);
@@ -123,10 +165,12 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             nciAlgo.addListener(this);
+
             // Hide dialog
             setVisible(false);
 
             if (runInSeparateThread) {
+
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
                 if (nciAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -140,10 +184,14 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
 
             System.gc();
             MipavUtil.displayError("Dialog RGB to Gray: unable to allocate enough memory");
+
             return;
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     */
     private void init() {
         setTitle("NCI Segmentation");
 
@@ -162,6 +210,7 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
 
         JPanel calcPanel = new JPanel();
         calcPanel.setLayout(new GridBagLayout());
+
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.weightx = 1.0;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
@@ -220,12 +269,18 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
         setVisible(true);
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     private boolean setVariables() {
 
         try {
             threshold = Float.parseFloat(thresholdFieldA.getText());
         } catch (Exception e) {
             MipavUtil.displayError("Threshold must be between 0.0 and 255.0");
+
             return false;
         }
 
@@ -233,33 +288,10 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
             diffThreshold = Float.parseFloat(thresholdFieldB.getText());
         } catch (Exception e) {
             MipavUtil.displayError("Difference threshold must be between 0.0 and 255.0");
+
             return false;
         }
+
         return true;
-    }
-
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-
-    /**
-     * This method is required if the AlgorithmPerformed interface is
-     * implemented. It is called by the algorithms when it has completed or
-     * failed to to complete, so that the dialog can be display the result image
-     * and/or clean up.
-     * 
-     * @param algorithm
-     *            Algorithm that caused the event.
-     */
-    public void algorithmPerformed(AlgorithmBase algorithm) {
-        imageA.clearMask();
-        if (algorithm instanceof PlugInAlgorithmNCISeg) {
-            if (nciAlgo.isCompleted() == true) {
-                // The algorithm has completed and produced a new image to be
-                // displayed.
-
-                new ViewJFrameImage(resultImage);
-            }
-        }
     }
 }

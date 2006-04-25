@@ -4,93 +4,82 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
+
 import java.io.*;
 
 
 /**
- *      Simple algorithm that converts an RGB image to a single greyscale image.
+ * Simple algorithm that converts an RGB image to a single greyscale image.
  *
- *      User can specify red, green, and blue scaling factors
- *      Default is equal weighting
- *      new gray value = ( R + G + B) / 3 if no threshold averaging;
- *      if thresholdAverage is true, only average values above trheshold
+ * <p>User can specify red, green, and blue scaling factors Default is equal weighting new gray value = ( R + G + B) / 3
+ * if no threshold averaging; if thresholdAverage is true, only average values above trheshold</p>
  *
+ * <p>The standard for computer graphics is > Y = 0.299*R + 0.587*G + 0.114*B > > That assumes both Y and RGB are in the
+ * range 0:255 > > BT.601 calls for Y to be limited to 16:235, if you want > that multiply the constants by 219/255 and
+ * add 16 to Y.</p>
  *
- *      The standard for computer graphics is
- *      > Y = 0.299*R + 0.587*G + 0.114*B
- *      >
- *      > That assumes both Y and RGB are in the range 0:255
- *      >
- *      > BT.601 calls for Y to be limited to 16:235, if you want
- *      > that multiply the constants by 219/255 and add 16 to Y.
+ * <p>Yes, but Y is not pure luminance, the other components it might be PbPr, CbCr carry color information that affect
+ * perceived brightness.</p>
  *
- *      Yes, but Y is not pure luminance, the other components
- *      it might be PbPr, CbCr carry color information that affect
- *      perceived brightness.
- *
- *
- *		@version 1.0 Dec 30, 1999
- *		@author Matthew J. McAuliffe, Ph.D.
+ * @version  1.0 Dec 30, 1999
+ * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class AlgorithmRGBtoGray extends AlgorithmBase {
 
-    /**
-     * Weighting values for the red, green, and blue channels. Default all channels = 0.33333
-     */
-    private float redValue = 1.0f / 3.0f, greenValue = 1.0f / 3.0f, blueValue = 1.0f / 3.0f;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**
-     * This value equal one third (0.3333333).
-     */
-    private float thirdValue = 1.0f / 3.0f;
-
-    /**
-     * If true only average values above threshold
-     */
-    private boolean thresholdAverage = false;
-
-    /**
-     * Only average values above threshold
-     */
-    private float threshold = 0.0f;
-
-    /**
-     * If true indicates that the result image is an average of the three channels. Default is false
-     */
+    /** If true indicates that the result image is an average of the three channels. Default is false */
     private boolean intensityAverage = false;
 
+    /** Weighting values for the red, green, and blue channels. Default all channels = 0.33333 */
+    private float redValue = 1.0f / 3.0f, greenValue = 1.0f / 3.0f, blueValue = 1.0f / 3.0f;
+
+    /** This value equal one third (0.3333333). */
+    private float thirdValue = 1.0f / 3.0f;
+
+    /** Only average values above threshold. */
+    private float threshold = 0.0f;
+
+    /** If true only average values above threshold. */
+    private boolean thresholdAverage = false;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *   @param destImg   image model where result image is to stored
-     *   @param srcImg    source image model
+     * Creates a new AlgorithmRGBtoGray object.
+     *
+     * @param  srcImg  source image model
      */
-    public AlgorithmRGBtoGray( ModelImage destImg, ModelImage srcImg ) {
-        super( destImg, srcImg );
+    public AlgorithmRGBtoGray(ModelImage srcImg) {
+        super(null, srcImg);
     }
 
     /**
-     *   @param srcImg  source image model
+     * Creates a new AlgorithmRGBtoGray object.
+     *
+     * @param  destImg  image model where result image is to stored
+     * @param  srcImg   source image model
      */
-    public AlgorithmRGBtoGray( ModelImage srcImg ) {
-        super( null, srcImg );
+    public AlgorithmRGBtoGray(ModelImage destImg, ModelImage srcImg) {
+        super(destImg, srcImg);
     }
 
-
     /**
-     *   @param destImg           image model where result image is to stored
-     *   @param srcImg            source image model
-     *   @param redValue          weighting of the red channel
-     *   @param greenValue        weighting of the green channel
-     *   @param blueValue         weighting of the blue channel
-     *   @param thresholdAverage  if true only average values above threshold
-     *   @param threshold
-     *   @param intensityAverage
+     * Creates a new AlgorithmRGBtoGray object.
+     *
+     * @param  srcImg            source image model
+     * @param  redValue          weighting of the red channel
+     * @param  greenValue        weighting of the green channel
+     * @param  blueValue         weighting of the blue channel
+     * @param  thresholdAverage  if true only average values above threshold
+     * @param  threshold         DOCUMENT ME!
+     * @param  intensityAverage  DOCUMENT ME!
      */
-    public AlgorithmRGBtoGray( ModelImage destImg, ModelImage srcImg,
-            float redValue, float greenValue, float blueValue,
-            boolean thresholdAverage, float threshold,
-            boolean intensityAverage ) {
-        super( destImg, srcImg );
+    public AlgorithmRGBtoGray(ModelImage srcImg, float redValue, float greenValue, float blueValue,
+                              boolean thresholdAverage, float threshold, boolean intensityAverage) {
+        super(null, srcImg);
         this.redValue = redValue;
         this.greenValue = greenValue;
         this.blueValue = blueValue;
@@ -99,20 +88,22 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         this.intensityAverage = intensityAverage;
     }
 
+
     /**
-     *   @param srcImg            source image model
-     *   @param redValue          weighting of the red channel
-     *   @param greenValue        weighting of the green channel
-     *   @param blueValue         weighting of the blue channel
-     *   @param thresholdAverage  if true only average values above threshold
-     *   @param threshold
-     *   @param intensityAverage
+     * Creates a new AlgorithmRGBtoGray object.
+     *
+     * @param  destImg           image model where result image is to stored
+     * @param  srcImg            source image model
+     * @param  redValue          weighting of the red channel
+     * @param  greenValue        weighting of the green channel
+     * @param  blueValue         weighting of the blue channel
+     * @param  thresholdAverage  if true only average values above threshold
+     * @param  threshold         DOCUMENT ME!
+     * @param  intensityAverage  DOCUMENT ME!
      */
-    public AlgorithmRGBtoGray( ModelImage srcImg,
-            float redValue, float greenValue, float blueValue,
-            boolean thresholdAverage, float threshold,
-            boolean intensityAverage ) {
-        super( null, srcImg );
+    public AlgorithmRGBtoGray(ModelImage destImg, ModelImage srcImg, float redValue, float greenValue, float blueValue,
+                              boolean thresholdAverage, float threshold, boolean intensityAverage) {
+        super(destImg, srcImg);
         this.redValue = redValue;
         this.greenValue = greenValue;
         this.blueValue = blueValue;
@@ -121,9 +112,10 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         this.intensityAverage = intensityAverage;
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     *   Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         destImage = null;
@@ -132,46 +124,42 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
     }
 
     /**
-     *   Constructs a string of the construction parameters and outputs the
-     *   string to the messsage frame if the logging procedure is turned on.
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
-    private void constructLog() {
-        historyString = new String(
-                "RGB to Gray(" + String.valueOf( redValue ) + ", " + String.valueOf( greenValue ) + ", "
-                + String.valueOf( blueValue ) + String.valueOf( thresholdAverage ) + String.valueOf( threshold )
-                + String.valueOf( intensityAverage ) + ")\n" );
-
-    }
-
     public ModelImage getSrcImage() {
-      return srcImage;
+        return srcImage;
     }
 
     /**
-     *   Starts the program
+     * Starts the program.
      */
     public void runAlgorithm() {
-        if ( srcImage == null ) {
-            displayError( "RGBtoGray.run(): Source image is null" );
+
+        if (srcImage == null) {
+            displayError("RGBtoGray.run(): Source image is null");
+
             return;
         }
 
-        if ( srcImage.isColorImage() == false ) {
-            displayError( "RGBtoGray.run(): Source Image is not a RGB type" );
+        if (srcImage.isColorImage() == false) {
+            displayError("RGBtoGray.run(): Source Image is not a RGB type");
+
             return;
         }
 
         constructLog();
+
         if (destImage == null) {
-          calcStoreInPlace();
-        }
-        else {
-          calcStoreInDest();
+            calcStoreInPlace();
+        } else {
+            calcStoreInDest();
         }
     }
 
     /**
-     *   Calculates the gray scale image.
+     * Calculates the gray scale image.
      */
     private void calcStoreInDest() {
 
@@ -197,42 +185,45 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         float averageG = 0.0f;
         float averageB = 0.0f;
 
-        if ( srcImage.getType() == ModelImage.ARGB_FLOAT ) {
+        if (srcImage.getType() == ModelImage.ARGB_FLOAT) {
             doFloat = true;
         } else {
             doFloat = false;
         }
+
         try {
             lengthIn = 4 * srcImage.getSliceSize();
             lengthOut = srcImage.getSliceSize();
             buffer = new float[lengthIn];
             bufferDest = new float[lengthOut];
-            buildProgressBar( srcImage.getImageName(), "RGB to GRAY ...", 0, 100 );
-        } catch ( OutOfMemoryError e ) {
+            buildProgressBar(srcImage.getImageName(), "RGB to GRAY ...", 0, 100);
+        } catch (OutOfMemoryError e) {
             buffer = null;
             bufferDest = null;
             System.gc();
-            displayError( "Algorithm RGBtoGray reports: Out of memory when creating image buffer" );
-            setCompleted( false );
+            displayError("Algorithm RGBtoGray reports: Out of memory when creating image buffer");
+            setCompleted(false);
+
             return;
         }
 
         initProgressBar();
 
         int mod = lengthIn / 20;
-        if ( srcImage.getNDims() == 5 ) {
+
+        if (srcImage.getNDims() == 5) {
             f = srcImage.getExtents()[4];
         } else {
             f = 1;
         }
 
-        if ( srcImage.getNDims() >= 4 ) {
+        if (srcImage.getNDims() >= 4) {
             t = srcImage.getExtents()[3];
         } else {
             t = 1;
         }
 
-        if ( srcImage.getNDims() >= 3 ) {
+        if (srcImage.getNDims() >= 3) {
             z = srcImage.getExtents()[2];
         } else {
             z = 1;
@@ -240,183 +231,205 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
         totalLength = f * t * z * lengthIn;
 
-        if ( intensityAverage ) {
+        if (intensityAverage) {
+
             // get of max R, G, and B for remap
             max = (float) srcImage.getMaxR();
-            if ( srcImage.getMaxG() > max ) {
+
+            if (srcImage.getMaxG() > max) {
                 max = (float) srcImage.getMaxG();
             }
-            if ( srcImage.getMaxB() > max ) {
+
+            if (srcImage.getMaxB() > max) {
                 max = (float) srcImage.getMaxB();
             }
 
             // determine the remap factor to scale the max up to 255 (higher contrast)
             remapFactor = 255.0f / max;
 
-            //MipavUtil.displayError("Max intensity is " + max + " and Remap Factor is " + remapFactor);
+            // MipavUtil.displayError("Max intensity is " + max + " and Remap Factor is " + remapFactor);
 
             // Run through the loop once to get Sums of Voxel Intensities for RGB
-            for ( m = 0; m < f && !threadStopped; m++ ) {
-                for ( k = 0; k < t && !threadStopped; k++ ) {
-                    for ( j = 0; j < z && !threadStopped; j++ ) {
+            for (m = 0; (m < f) && !threadStopped; m++) {
+
+                for (k = 0; (k < t) && !threadStopped; k++) {
+
+                    for (j = 0; (j < z) && !threadStopped; j++) {
 
                         try {
-                            offsetIn = m * t * z * lengthIn + k * z * lengthIn + j * lengthIn;
-                            offsetOut = m * t * z * lengthOut + k * z * lengthOut + j * lengthOut;
-                            srcImage.exportData( offsetIn, lengthIn, buffer ); // locks and releases lock
-                        } catch ( IOException error ) {
+                            offsetIn = (m * t * z * lengthIn) + (k * z * lengthIn) + (j * lengthIn);
+                            offsetOut = (m * t * z * lengthOut) + (k * z * lengthOut) + (j * lengthOut);
+                            srcImage.exportData(offsetIn, lengthIn, buffer); // locks and releases lock
+                        } catch (IOException error) {
                             buffer = null;
                             bufferDest = null;
-                            displayError( "Algorithm RGBtoGray : Input Image(s) locked" );
-                            setCompleted( false );
+                            displayError("Algorithm RGBtoGray : Input Image(s) locked");
+                            setCompleted(false);
+
                             return;
                         }
 
-                        for ( i = 0, id = 0; i < lengthIn && !threadStopped; i += 4, id++ ) {
+                        for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
 
                             numVoxels++;
                             redSum += buffer[i + 1];
                             greenSum += buffer[i + 2];
                             blueSum += buffer[i + 3];
                         } // end z
-                    }  //end j
-                }  //end t
-            } //end f
+                    } // end j
+                } // end t
+            } // end f
 
-            //Calculate Voxel Intensity Averages
+            // Calculate Voxel Intensity Averages
             averageR = redSum / numVoxels;
             averageG = greenSum / numVoxels;
             averageB = blueSum / numVoxels;
 
-            //MipavUtil.displayError("AverageR = " + averageR + ", AverageG = " +
-            //                       averageG + ", AverageB = " + averageB);
+            // MipavUtil.displayError("AverageR = " + averageR + ", AverageG = " +
+            // averageG + ", AverageB = " + averageB);
 
         }
 
-        for ( m = 0; m < f && !threadStopped; m++ ) {
-            for ( k = 0; k < t && !threadStopped; k++ ) {
-                for ( j = 0; j < z && !threadStopped; j++ ) {
+        for (m = 0; (m < f) && !threadStopped; m++) {
+
+            for (k = 0; (k < t) && !threadStopped; k++) {
+
+                for (j = 0; (j < z) && !threadStopped; j++) {
 
                     try {
-                        offsetIn = m * t * z * lengthIn + k * z * lengthIn + j * lengthIn;
-                        offsetOut = m * t * z * lengthOut + k * z * lengthOut + j * lengthOut;
-                        srcImage.exportData( offsetIn, lengthIn, buffer ); // locks and releases lock
-                    } catch ( IOException error ) {
+                        offsetIn = (m * t * z * lengthIn) + (k * z * lengthIn) + (j * lengthIn);
+                        offsetOut = (m * t * z * lengthOut) + (k * z * lengthOut) + (j * lengthOut);
+                        srcImage.exportData(offsetIn, lengthIn, buffer); // locks and releases lock
+                    } catch (IOException error) {
                         buffer = null;
                         bufferDest = null;
-                        displayError( "Algorithm RGBtoGray : Input Image(s) locked" );
-                        setCompleted( false );
+                        displayError("Algorithm RGBtoGray : Input Image(s) locked");
+                        setCompleted(false);
+
                         return;
                     }
 
-                    for ( i = 0, id = 0; i < lengthIn && !threadStopped; i += 4, id++ ) {
-                        if ( i % mod == 0 && isProgressBarVisible() ) {
-                            progressBar.updateValue( Math.round( (float) ( i + offsetIn ) / ( totalLength - 1 ) * 100 ),
-                                    activeImage );
+                    for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
+
+                        if (((i % mod) == 0) && isProgressBarVisible()) {
+                            progressBar.updateValue(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100),
+                                                    activeImage);
                         }
-                        if ( thresholdAverage ) {
+
+                        if (thresholdAverage) {
                             p = 0;
                             sum = 0.0f;
-                            if ( buffer[i + 1] > threshold ) {
+
+                            if (buffer[i + 1] > threshold) {
                                 p++;
                                 sum = buffer[i + 1];
                             }
-                            if ( buffer[i + 2] > threshold ) {
+
+                            if (buffer[i + 2] > threshold) {
                                 p++;
                                 sum += buffer[i + 2];
                             }
-                            if ( buffer[i + 3] > threshold ) {
+
+                            if (buffer[i + 3] > threshold) {
                                 p++;
                                 sum += buffer[i + 3];
                             }
 
-                            if ( p == 0 ) {
+                            if (p == 0) {
                                 bufferDest[id] = 0;
-                            } else if ( p == 1 ) {
+                            } else if (p == 1) {
                                 bufferDest[id] = sum;
-                            } else if ( p == 2 ) {
+                            } else if (p == 2) {
                                 bufferDest[id] = 0.5f * sum;
                             } else { // p == 3
                                 bufferDest[id] = thirdValue * sum;
                             }
-                            if ( doFloat ) {
-                                bufferDest[id] = Math.round( bufferDest[id] );
+
+                            if (doFloat) {
+                                bufferDest[id] = Math.round(bufferDest[id]);
                             }
                         } // if (thresholdAverage)
-                        else if ( intensityAverage ) {
+                        else if (intensityAverage) {
                             p = 0;
                             sum = 0.0f;
 
-                            if ( averageR > 2.0f ) {
+                            if (averageR > 2.0f) {
                                 p++;
                                 sum = buffer[i + 1] * remapFactor;
                             }
-                            if ( averageG > 2.0f ) {
+
+                            if (averageG > 2.0f) {
                                 p++;
                                 sum += buffer[i + 2] * remapFactor;
                             }
-                            if ( averageB > 2.0f ) {
+
+                            if (averageB > 2.0f) {
                                 p++;
                                 sum += buffer[i + 3] * remapFactor;
                             }
 
-                            if ( p == 0 ) {
+                            if (p == 0) {
                                 bufferDest[id] = 0;
-                            } else if ( p == 1 ) {
+                            } else if (p == 1) {
                                 bufferDest[id] = sum;
-                            } else if ( p == 2 ) {
+                            } else if (p == 2) {
                                 bufferDest[id] = 0.5f * sum;
                             } else { // p == 3
                                 bufferDest[id] = thirdValue * sum;
                             }
-                            if ( doFloat ) {
-                                bufferDest[id] = Math.round( bufferDest[id] );
+
+                            if (doFloat) {
+                                bufferDest[id] = Math.round(bufferDest[id]);
                             }
                         } // if (averageIntensity)
                         else { // no thresholdAverage
-                            if ( doFloat ) {
-                                bufferDest[id] = redValue * buffer[i + 1] + greenValue * buffer[i + 2]
-                                        + blueValue * buffer[i + 3];
+
+                            if (doFloat) {
+                                bufferDest[id] = (redValue * buffer[i + 1]) + (greenValue * buffer[i + 2]) +
+                                                 (blueValue * buffer[i + 3]);
                             } else {
-                                bufferDest[id] = Math.round(
-                                        redValue * buffer[i + 1] + greenValue * buffer[i + 2]
-                                        + blueValue * buffer[i + 3] );
+                                bufferDest[id] = Math.round((redValue * buffer[i + 1]) + (greenValue * buffer[i + 2]) +
+                                                            (blueValue * buffer[i + 3]));
                             }
                         } // else no threshold average
                     }
-                    if ( threadStopped ) {
+
+                    if (threadStopped) {
                         buffer = null;
                         bufferDest = null;
                         finalize();
+
                         return;
                     }
 
                     try {
-                        destImage.importData( offsetOut, bufferDest, false );
-                    } catch ( IOException error ) {
-                        displayError( "Algorithm RGBtoGray: Output Image(s) locked" );
-                        setCompleted( false );
+                        destImage.importData(offsetOut, bufferDest, false);
+                    } catch (IOException error) {
+                        displayError("Algorithm RGBtoGray: Output Image(s) locked");
+                        setCompleted(false);
                         disposeProgressBar();
+
                         return;
                     }
                 }
             } // t loop
         } // f loop
-        if ( threadStopped ) {
+
+        if (threadStopped) {
             buffer = null;
             bufferDest = null;
             finalize();
+
             return;
         }
 
         destImage.calcMinMax();
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
     }
 
     /**
-     *   Calculates the gray scale image.
-     *   Must use getSrcImage() after running this routine
+     * Calculates the gray scale image. Must use getSrcImage() after running this routine
      */
     private void calcStoreInPlace() {
 
@@ -437,11 +450,11 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         float greenSum = 0.0f;
         float blueSum = 0.0f;
         int bwType;
-        int [] extents;
+        int[] extents;
         int sliceSize;
         String imageName;
         ViewUserInterface userInterface;
-        FileInfoBase fInfoBase[] = null;
+        FileInfoBase[] fInfoBase = null;
 
         float averageR = 0.0f;
         float averageG = 0.0f;
@@ -454,26 +467,26 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         imageName = srcImage.getImageName();
         userInterface = srcImage.getUserInterface();
 
-        if ( srcImage.getNDims() == 5 ) {
+        if (srcImage.getNDims() == 5) {
             f = extents[4];
         } else {
             f = 1;
         }
 
-        if ( srcImage.getNDims() >= 4 ) {
+        if (srcImage.getNDims() >= 4) {
             t = extents[3];
         } else {
             t = 1;
         }
 
-        if ( srcImage.getNDims() >= 3 ) {
+        if (srcImage.getNDims() >= 3) {
             z = extents[2];
         } else {
             z = 1;
         }
 
 
-        if ( srcImage.getType() == ModelImage.ARGB_FLOAT ) {
+        if (srcImage.getType() == ModelImage.ARGB_FLOAT) {
             doFloat = true;
         } else {
             doFloat = false;
@@ -482,65 +495,69 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         try {
             lengthIn = 4 * f * t * z * sliceSize;
             buffer = new float[lengthIn];
-            buildProgressBar( srcImage.getImageName(), "RGB to GRAY ...", 0, 100 );
-        } catch ( OutOfMemoryError e ) {
+            buildProgressBar(srcImage.getImageName(), "RGB to GRAY ...", 0, 100);
+        } catch (OutOfMemoryError e) {
             buffer = null;
             System.gc();
-            displayError( "Algorithm RGBtoGray reports: Out of memory when creating image buffer" );
-            setCompleted( false );
+            displayError("Algorithm RGBtoGray reports: Out of memory when creating image buffer");
+            setCompleted(false);
+
             return;
         }
 
         try {
-          srcImage.exportData(0, lengthIn, buffer);
-        }
-        catch ( IOException error ) {
-          buffer = null;
-          displayError("Algorithm RGBtoGray : Input Image(s) locked");
-          setCompleted(false);
-          return;
+            srcImage.exportData(0, lengthIn, buffer);
+        } catch (IOException error) {
+            buffer = null;
+            displayError("Algorithm RGBtoGray : Input Image(s) locked");
+            setCompleted(false);
+
+            return;
         }
 
         if (srcImage.getType() == ModelStorageBase.ARGB) {
-          bwType = ModelStorageBase.UBYTE;
-        }
-        else if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
-          bwType = ModelStorageBase.USHORT;
-        }
-        else {
-          bwType = ModelStorageBase.FLOAT;
+            bwType = ModelStorageBase.UBYTE;
+        } else if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            bwType = ModelStorageBase.USHORT;
+        } else {
+            bwType = ModelStorageBase.FLOAT;
         }
 
         // get of max R, G, and B for remap
         max = (float) srcImage.getMaxR();
-        if ( srcImage.getMaxG() > max ) {
+
+        if (srcImage.getMaxG() > max) {
             max = (float) srcImage.getMaxG();
         }
-        if ( srcImage.getMaxB() > max ) {
+
+        if (srcImage.getMaxB() > max) {
             max = (float) srcImage.getMaxB();
         }
 
-
         fInfoBase = new FileInfoBase[f * t * z];
-        for (n = 0; n < srcImage.getFileInfo().length; n++ ) {
-            fInfoBase[n] = (FileInfoBase) ( srcImage.getFileInfo( n ).clone() );
-            fInfoBase[n].setDataType(bwType );
+
+        for (n = 0; n < srcImage.getFileInfo().length; n++) {
+            fInfoBase[n] = (FileInfoBase) (srcImage.getFileInfo(n).clone());
+            fInfoBase[n].setDataType(bwType);
         }
-        if ( srcImage.getParentFrame() != null) {
-          srcImage.getParentFrame().close();
+
+        if (srcImage.getParentFrame() != null) {
+            srcImage.getParentFrame().close();
         }
+
         srcImage.disposeLocal();
         srcImage = null;
 
         try {
             lengthOut = f * t * z * sliceSize;
             bufferDest = new float[lengthOut];
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             buffer = null;
             bufferDest = null;
             System.gc();
-            displayError( "Algorithm RGBtoGray reports: Out of memory when creating image buffer" );
-            setCompleted( false );
+            displayError("Algorithm RGBtoGray reports: Out of memory when creating image buffer");
+            setCompleted(false);
+
             return;
         }
 
@@ -549,18 +566,18 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
         totalLength = f * t * z * lengthIn;
 
-        if ( intensityAverage ) {
+        if (intensityAverage) {
 
 
             // determine the remap factor to scale the max up to 255 (higher contrast)
             remapFactor = 255.0f / max;
 
-            //MipavUtil.displayError("Max intensity is " + max + " and Remap Factor is " + remapFactor);
+            // MipavUtil.displayError("Max intensity is " + max + " and Remap Factor is " + remapFactor);
 
             // Run through the loop once to get Sums of Voxel Intensities for RGB
 
 
-            for ( i = 0; i < lengthIn && !threadStopped; i += 4) {
+            for (i = 0; (i < lengthIn) && !threadStopped; i += 4) {
 
                 numVoxels++;
                 redSum += buffer[i + 1];
@@ -569,123 +586,147 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
             } // for ( i = 0; i < lengthIn && !threadStopped; i += 4)
 
 
-            //Calculate Voxel Intensity Averages
+            // Calculate Voxel Intensity Averages
             averageR = redSum / numVoxels;
             averageG = greenSum / numVoxels;
             averageB = blueSum / numVoxels;
 
-            //MipavUtil.displayError("AverageR = " + averageR + ", AverageG = " +
-            //                       averageG + ", AverageB = " + averageB);
+            // MipavUtil.displayError("AverageR = " + averageR + ", AverageG = " +
+            // averageG + ", AverageB = " + averageB);
 
         } // if (intensityAverage)
 
-        for ( i = 0, id = 0; i < lengthIn && !threadStopped; i += 4, id++ ) {
-            if ( i % mod == 0 && isProgressBarVisible() ) {
-                progressBar.updateValue( Math.round( (float) ( i) / ( totalLength - 1 ) * 100 ),
-                        activeImage );
+        for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
+
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) (i) / (totalLength - 1) * 100), activeImage);
             }
-            if ( thresholdAverage ) {
+
+            if (thresholdAverage) {
                 p = 0;
                 sum = 0.0f;
-                if ( buffer[i + 1] > threshold ) {
+
+                if (buffer[i + 1] > threshold) {
                     p++;
                     sum = buffer[i + 1];
                 }
-                if ( buffer[i + 2] > threshold ) {
+
+                if (buffer[i + 2] > threshold) {
                     p++;
                     sum += buffer[i + 2];
                 }
-                if ( buffer[i + 3] > threshold ) {
+
+                if (buffer[i + 3] > threshold) {
                     p++;
                     sum += buffer[i + 3];
                 }
 
-                if ( p == 0 ) {
+                if (p == 0) {
                     bufferDest[id] = 0;
-                } else if ( p == 1 ) {
+                } else if (p == 1) {
                     bufferDest[id] = sum;
-                } else if ( p == 2 ) {
+                } else if (p == 2) {
                     bufferDest[id] = 0.5f * sum;
                 } else { // p == 3
                     bufferDest[id] = thirdValue * sum;
                 }
-                if ( doFloat ) {
-                    bufferDest[id] = Math.round( bufferDest[id] );
+
+                if (doFloat) {
+                    bufferDest[id] = Math.round(bufferDest[id]);
                 }
             } // if (thresholdAverage)
-            else if ( intensityAverage ) {
+            else if (intensityAverage) {
                 p = 0;
                 sum = 0.0f;
 
-                if ( averageR > 2.0f ) {
+                if (averageR > 2.0f) {
                     p++;
                     sum = buffer[i + 1] * remapFactor;
                 }
-                if ( averageG > 2.0f ) {
+
+                if (averageG > 2.0f) {
                     p++;
                     sum += buffer[i + 2] * remapFactor;
                 }
-                if ( averageB > 2.0f ) {
+
+                if (averageB > 2.0f) {
                     p++;
                     sum += buffer[i + 3] * remapFactor;
                 }
 
-                if ( p == 0 ) {
+                if (p == 0) {
                     bufferDest[id] = 0;
-                } else if ( p == 1 ) {
+                } else if (p == 1) {
                     bufferDest[id] = sum;
-                } else if ( p == 2 ) {
+                } else if (p == 2) {
                     bufferDest[id] = 0.5f * sum;
                 } else { // p == 3
                     bufferDest[id] = thirdValue * sum;
                 }
-                if ( doFloat ) {
-                    bufferDest[id] = Math.round( bufferDest[id] );
+
+                if (doFloat) {
+                    bufferDest[id] = Math.round(bufferDest[id]);
                 }
             } // if (averageIntensity)
             else { // no thresholdAverage
-                if ( doFloat ) {
-                    bufferDest[id] = redValue * buffer[i + 1] + greenValue * buffer[i + 2]
-                            + blueValue * buffer[i + 3];
+
+                if (doFloat) {
+                    bufferDest[id] = (redValue * buffer[i + 1]) + (greenValue * buffer[i + 2]) +
+                                     (blueValue * buffer[i + 3]);
                 } else {
-                    bufferDest[id] = Math.round(
-                            redValue * buffer[i + 1] + greenValue * buffer[i + 2]
-                            + blueValue * buffer[i + 3] );
+                    bufferDest[id] = Math.round((redValue * buffer[i + 1]) + (greenValue * buffer[i + 2]) +
+                                                (blueValue * buffer[i + 3]));
                 }
             } // else no threshold average
         }
-        if ( threadStopped ) {
+
+        if (threadStopped) {
             buffer = null;
             bufferDest = null;
             finalize();
+
             return;
         }
 
         buffer = null;
 
         srcImage = new ModelImage(bwType, extents, imageName, userInterface);
+
         for (n = 0; n < srcImage.getFileInfo().length; n++) {
-          srcImage.setFileInfo(fInfoBase[n], n);
+            srcImage.setFileInfo(fInfoBase[n], n);
         }
 
         try {
             srcImage.importData(0, bufferDest, true);
-        } catch ( IOException error ) {
-            displayError( "Algorithm RGBtoGray: Output Image(s) locked" );
-            setCompleted( false );
+        } catch (IOException error) {
+            displayError("Algorithm RGBtoGray: Output Image(s) locked");
+            setCompleted(false);
             disposeProgressBar();
+
             return;
         }
 
-        if ( threadStopped ) {
+        if (threadStopped) {
             buffer = null;
             bufferDest = null;
             finalize();
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
+        setCompleted(true);
+    }
+
+    /**
+     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        historyString = new String("RGB to Gray(" + String.valueOf(redValue) + ", " + String.valueOf(greenValue) +
+                                   ", " + String.valueOf(blueValue) + String.valueOf(thresholdAverage) +
+                                   String.valueOf(threshold) + String.valueOf(intensityAverage) + ")\n");
+
     }
 
 

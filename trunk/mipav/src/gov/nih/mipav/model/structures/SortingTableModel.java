@@ -1,72 +1,120 @@
 package gov.nih.mipav.model.structures;
 
+
 import java.util.*;
+
 import javax.swing.table.*;
 
-public class SortingTableModel extends DefaultTableModel
-{
+
+/**
+ * DOCUMENT ME!
+ */
+public class SortingTableModel extends DefaultTableModel {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -1782879801334035117L;
+
+    /** DOCUMENT ME! */
     public static final String EMPTY_CELL = "";
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private Hashtable htColumnClass;
 
-    public SortingTableModel()
-    {
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new SortingTableModel object.
+     */
+    public SortingTableModel() {
         super();
 
         htColumnClass = new Hashtable();
     }
 
-    public Vector getRow(int rowNumber)
-    {
-        Vector row = new Vector();
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-        for (int i = 0; i < getColumnCount(); i++)
-        {
-            row.addElement(getValueAt(rowNumber, i));
-        }
-
-        return row;
-    }
-
-    public Vector getColumnNames()
-    {
-        Vector columnNames = new Vector();
-
-        for (int i = 0; i < getColumnCount(); i++)
-        {
-            columnNames.addElement(getColumnName(i));
-        }
-
-        return columnNames;
-    }
-
-    public boolean isCellEditable(int row, int col)
-    {
-        return false;
-    }
-
-    public void removeAllRows()
-    {
-        for (int i = getRowCount() - 1; i >= 0; i--)
-        {
-            removeRow(i);
-        }
-    }
-
-    public Class getColumnClass(int columnIndex)
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   columnIndex  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public Class getColumnClass(int columnIndex) {
         Class classObj = (Class) htColumnClass.get(new Integer(columnIndex));
 
-        if (classObj == null)
-        {
+        if (classObj == null) {
             return new String().getClass();
         }
 
         return classObj;
     }
 
-    public void setColumnClass(Class classType, int columnIndex)
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public Vector getColumnNames() {
+        Vector columnNames = new Vector();
+
+        for (int i = 0; i < getColumnCount(); i++) {
+            columnNames.addElement(getColumnName(i));
+        }
+
+        return columnNames;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   rowNumber  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public Vector getRow(int rowNumber) {
+        Vector row = new Vector();
+
+        for (int i = 0; i < getColumnCount(); i++) {
+            row.addElement(getValueAt(rowNumber, i));
+        }
+
+        return row;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   row  DOCUMENT ME!
+     * @param   col  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean isCellEditable(int row, int col) {
+        return false;
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void removeAllRows() {
+
+        for (int i = getRowCount() - 1; i >= 0; i--) {
+            removeRow(i);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  classType    DOCUMENT ME!
+     * @param  columnIndex  DOCUMENT ME!
+     */
+    public void setColumnClass(Class classType, int columnIndex) {
         htColumnClass.put(new Integer(columnIndex), classType);
     }
 }

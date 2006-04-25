@@ -1,11 +1,13 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
-import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.model.algorithms.*;
-import java.io.IOException;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.JDialogReplaceValue.*;
+
 import java.util.*;
+
 
 /**
  * <p>Title: AlgorithmReplaceValue</p>
@@ -14,34 +16,43 @@ import java.util.*;
  *
  * <p>Copyright: Copyright (c) 2004</p>
  *
- * <p>Company: </p>
+ * <p>Company:</p>
  *
- * @author not attributable
- * @version 1.0
+ * @author   not attributable
+ * @version  1.0
  */
-public class AlgorithmReplaceValue
-    extends AlgorithmBase {
+public class AlgorithmReplaceValue extends AlgorithmBase {
 
-    private double inputVal;
-    private double outputVal;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** DOCUMENT ME! */
     private int colorFactor = 1;
 
+    /** DOCUMENT ME! */
     private Vector inputRanges = null;
 
+    /** DOCUMENT ME! */
+    private double inputVal;
+
+    /** DOCUMENT ME! */
+    private double outputVal;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     * Default contructor
-     * @param destImage ModelImage destination image
-     * @param srcImage ModelImage source image
-     * @param input double input value to replace
-     * @param output double value to replace with
+     * Default contructor.
+     *
+     * @param  destImage  ModelImage destination image
+     * @param  srcImage   ModelImage source image
+     * @param  input      double input value to replace
+     * @param  output     double value to replace with
      */
     public AlgorithmReplaceValue(ModelImage destImage, ModelImage srcImage, Vector input, double output) {
         super(destImage, srcImage);
 
-        //this.inputVal = input;
+        // this.inputVal = input;
         this.outputVal = output;
-        //System.out.println(" input = " + input );
+        // System.out.println(" input = " + input );
 
         inputRanges = input;
 
@@ -51,13 +62,25 @@ public class AlgorithmReplaceValue
 
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Gets the result image.
+     *
+     * @return  ModelImage result image
+     */
+    public ModelImage getResultImage() {
+        return this.destImage;
+    }
+
 
     /**
      * Actually runs the algorithm.
      *
-     * @todo Implement this gov.nih.mipav.model.algorithms.AlgorithmBase method
+     * @todo  Implement this gov.nih.mipav.model.algorithms.AlgorithmBase method
      */
     public void runAlgorithm() {
+
         if (this.destImage == null) {
             calcStoreInPlace();
         } else {
@@ -67,15 +90,109 @@ public class AlgorithmReplaceValue
     }
 
     /**
-     * Gets the result image
-     * @return ModelImage result image
+     * Replace the values and store into a new image.
      */
-    public ModelImage getResultImage() {
-        return this.destImage;
+    private void calcStoreInDest() {
+
+        int length;
+        double[] buffer;
+        int z = 1;
+        int t = 1;
+
+        int volume = 0;
+
+        length = srcImage.getSliceSize() * colorFactor;
+        buffer = new double[length];
+
+        int counter = 0;
+
+        if (srcImage.getExtents().length > 2) {
+            z = srcImage.getExtents()[2];
+        }
+
+        if (srcImage.getExtents().length > 3) {
+            t = srcImage.getExtents()[3];
+            volume = length * z;
+        }
+
+
+        int mod = (length * t * z) / 10; // mod is 10 percent of total length
+
+        int tIndex;
+        int zIndex;
+
+        int buffIndex;
+
+        int start;
+
+        buildProgressBar(srcImage.getImageName(), "Replacing values...", 0, 100);
+        initProgressBar();
+
+
+        int len = inputRanges.size();
+        int rangeCounter = 0;
+
+        Values values = null;
+
+
+        for (tIndex = 0; tIndex < t; tIndex++) {
+
+            for (zIndex = 0; zIndex < z; zIndex++) {
+                start = (tIndex * volume) + (zIndex * length);
+
+                try {
+                    srcImage.exportData(start, length, buffer);
+
+                    for (buffIndex = 0; buffIndex < length; buffIndex++) {
+
+                        if ((counter % mod) == 0) {
+                            progressBar.updateValue(Math.round((float) counter / ((length * t * z) - 1) * 100),
+                                                    activeImage);
+                        }
+
+                        for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
+                            values = (Values) inputRanges.elementAt(rangeCounter);
+
+                            if (values.isRange) {
+
+                                if ((buffer[buffIndex] >= values.firstVal) && (buffer[buffIndex] <= values.secondVal)) {
+                                    buffer[buffIndex] = outputVal;
+                                }
+                            } else {
+
+                                if (buffer[buffIndex] == values.firstVal) {
+                                    buffer[buffIndex] = outputVal;
+                                } else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
+                                    buffer[buffIndex] = outputVal;
+                                } else if ((buffer[buffIndex] == Double.POSITIVE_INFINITY) &&
+                                               (values.firstVal == Double.POSITIVE_INFINITY)) {
+                                    buffer[buffIndex] = outputVal;
+                                } else if ((buffer[buffIndex] == Double.NEGATIVE_INFINITY) &&
+                                               (values.firstVal == Double.NEGATIVE_INFINITY)) {
+                                    buffer[buffIndex] = outputVal;
+                                }
+
+                            }
+                        }
+
+                        counter++;
+                    }
+
+                    destImage.importData(start, buffer, false);
+
+                } catch (Exception e) { }
+            }
+
+        }
+
+        destImage.calcMinMax();
+
+        disposeProgressBar();
+        setCompleted(true);
     }
 
     /**
-     * Replace the values in place
+     * Replace the values in place.
      */
     private void calcStoreInPlace() {
         int length;
@@ -106,10 +223,10 @@ public class AlgorithmReplaceValue
 
         int start;
 
-        buildProgressBar( srcImage.getImageName(), "Replacing values...", 0, 100 );
+        buildProgressBar(srcImage.getImageName(), "Replacing values...", 0, 100);
         initProgressBar();
 
-        int mod = (length * t * z)/ 10; // mod is 10 percent of total length
+        int mod = (length * t * z) / 10; // mod is 10 percent of total length
 
         int counter = 0;
 
@@ -123,36 +240,37 @@ public class AlgorithmReplaceValue
             for (zIndex = 0; zIndex < z; zIndex++) {
 
 
-                start = tIndex * volume + zIndex * length;
+                start = (tIndex * volume) + (zIndex * length);
+
                 try {
                     srcImage.exportData(start, length, buffer);
 
                     for (buffIndex = 0; buffIndex < length; buffIndex++) {
 
-                        if (counter % mod == 0) {
-                            progressBar.updateValue(Math.round( (float) counter / ( (length * t * z) - 1) * 100), activeImage);
+                        if ((counter % mod) == 0) {
+                            progressBar.updateValue(Math.round((float) counter / ((length * t * z) - 1) * 100),
+                                                    activeImage);
                         }
 
                         for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
-                            values = (Values)inputRanges.elementAt(rangeCounter);
+                            values = (Values) inputRanges.elementAt(rangeCounter);
+
                             if (values.isRange) {
-                                if (buffer[buffIndex] >= values.firstVal &&
-                                    buffer[buffIndex] <= values.secondVal) {
+
+                                if ((buffer[buffIndex] >= values.firstVal) && (buffer[buffIndex] <= values.secondVal)) {
                                     buffer[buffIndex] = outputVal;
                                 }
                             } else {
+
                                 if (buffer[buffIndex] == values.firstVal) {
                                     buffer[buffIndex] = outputVal;
-                                }
-                                else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
+                                } else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
                                     buffer[buffIndex] = outputVal;
-                                }
-                                else if (buffer[buffIndex] == Double.POSITIVE_INFINITY &&
-                                         values.firstVal == Double.POSITIVE_INFINITY) {
+                                } else if ((buffer[buffIndex] == Double.POSITIVE_INFINITY) &&
+                                               (values.firstVal == Double.POSITIVE_INFINITY)) {
                                     buffer[buffIndex] = outputVal;
-                                }
-                                else if (buffer[buffIndex] == Double.NEGATIVE_INFINITY &&
-                                         values.firstVal == Double.NEGATIVE_INFINITY) {
+                                } else if ((buffer[buffIndex] == Double.NEGATIVE_INFINITY) &&
+                                               (values.firstVal == Double.NEGATIVE_INFINITY)) {
                                     buffer[buffIndex] = outputVal;
                                 }
 
@@ -161,120 +279,18 @@ public class AlgorithmReplaceValue
 
                         counter++;
                     }
+
                     srcImage.importData(start, buffer, false);
 
-                } catch (Exception e) {
-
-                }
+                } catch (Exception e) { }
             }
         }
+
         srcImage.calcMinMax();
 
         disposeProgressBar();
-        setCompleted( true );
-
-    }
-
-    /**
-     * Replace the values and store into a new image
-     */
-    private void calcStoreInDest() {
-
-        int length;
-        double[] buffer;
-        int z = 1;
-        int t = 1;
-
-        int volume = 0;
-
-        length = srcImage.getSliceSize() * colorFactor;
-        buffer = new double[length];
-
-        int counter = 0;
-
-        if (srcImage.getExtents().length > 2) {
-            z = srcImage.getExtents()[2];
-        }
-
-        if (srcImage.getExtents().length > 3) {
-            t = srcImage.getExtents()[3];
-            volume = length * z;
-        }
-
-
-        int mod = (length * t * z)/ 10; // mod is 10 percent of total length
-
-        int tIndex;
-        int zIndex;
-
-        int buffIndex;
-
-        int start;
-
-        buildProgressBar( srcImage.getImageName(), "Replacing values...", 0, 100 );
-        initProgressBar();
-
-
-        int len = inputRanges.size();
-        int rangeCounter = 0;
-
-        Values values = null;
-
-
-        for (tIndex = 0; tIndex < t; tIndex++) {
-
-            for (zIndex = 0; zIndex < z; zIndex++) {
-                start = tIndex * volume + zIndex * length;
-                try {
-                    srcImage.exportData(start, length, buffer);
-
-                    for (buffIndex = 0; buffIndex < length; buffIndex++) {
-
-                        if (counter % mod == 0) {
-                            progressBar.updateValue( Math.round( (float) counter / ( (length*t*z) - 1 ) * 100 ), activeImage );
-                        }
-
-                        for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
-                            values = (Values)inputRanges.elementAt(rangeCounter);
-                            if (values.isRange) {
-                                if (buffer[buffIndex] >= values.firstVal &&
-                                    buffer[buffIndex] <= values.secondVal) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-                            } else {
-                                if (buffer[buffIndex] == values.firstVal) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-                                else if (Double.isNaN(buffer[buffIndex]) && Double.isNaN(values.firstVal)) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-                                else if (buffer[buffIndex] == Double.POSITIVE_INFINITY &&
-                                         values.firstVal == Double.POSITIVE_INFINITY) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-                                else if (buffer[buffIndex] == Double.NEGATIVE_INFINITY &&
-                                         values.firstVal == Double.NEGATIVE_INFINITY) {
-                                    buffer[buffIndex] = outputVal;
-                                }
-
-                            }
-                        }
-
-
-                        counter++;
-                    }
-                    destImage.importData(start, buffer, false);
-
-                } catch (Exception e) {
-
-                }
-            }
-
-        }
-        destImage.calcMinMax();
-
-        disposeProgressBar();
         setCompleted(true);
+
     }
 
 }

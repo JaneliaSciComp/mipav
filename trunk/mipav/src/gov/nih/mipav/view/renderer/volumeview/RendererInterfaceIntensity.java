@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.volumeview;
 
+
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -10,38 +11,39 @@ import java.awt.Frame.*;
  * An interface to be used to intensity-based Renderer implementations.
  */
 
-public interface RendererInterfaceIntensity
-{
+public interface RendererInterfaceIntensity {
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Specify the input volume to use for rendering.
-     * The image data stored in order of slice indices,
-     *   each slice stored in row-major order.  That is, slice z=0 is
-     *   stored first, slice z=1 is stored next, and so on.  In slice z=0,
-     *   the y=0 row is stored first, the y=1 row is stored next, and so on.
-     * @param acImageB byte[] Array of byte intensity values for volume.
-     * @param acImageA byte[] Array of byte alpha values for volume.
+     * Return indication as to whether or not the input image data has been specified yet.
+     *
+     * @return  boolean True if the input image data has been specified.
      */
-    public void setInput(byte[] acImageB, byte[] acImageA);
+    boolean hasInputData();
 
     /**
-     * Return indication as to whether or not the input image data has been
-     * specified yet.
-     * @return boolean True if the input image data has been specified.
+     * Return indication as to whether or not a LUT to use for mapping input intensity values to colors has been
+     * specified.
+     *
+     * @return  boolean True if such a LUT has been defined.
      */
-    public boolean hasInputData();
+    boolean hasInputMap();
 
     /**
-     * Specify the lookup table to use for mapping input intensity
-     * values to colors.
-     * @param kMap Look up table for mapping the intensity values to colors.
+     * Specify the input volume to use for rendering. The image data stored in order of slice indices, each slice stored
+     * in row-major order. That is, slice z=0 is stored first, slice z=1 is stored next, and so on. In slice z=0, the
+     * y=0 row is stored first, the y=1 row is stored next, and so on.
+     *
+     * @param  acImageB  byte[] Array of byte intensity values for volume.
+     * @param  acImageA  byte[] Array of byte alpha values for volume.
      */
-    public void setInputMap(RendererMapIntensity kMap);
+    void setInput(byte[] acImageB, byte[] acImageA);
 
     /**
-     * Return indication as to whether or not a LUT to use for mapping
-     * input intensity values to colors has been specified.
-     * @return boolean True if such a LUT has been defined.
+     * Specify the lookup table to use for mapping input intensity values to colors.
+     *
+     * @param  kMap  Look up table for mapping the intensity values to colors.
      */
-    public boolean hasInputMap();
+    void setInputMap(RendererMapIntensity kMap);
 }

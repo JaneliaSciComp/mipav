@@ -1,104 +1,102 @@
 package gov.nih.mipav.model.file;
 
-import gov.nih.mipav.model.structures.ModelSerialCloneable;
-import java.util.Vector;
-import java.util.Enumeration;
 
+import gov.nih.mipav.model.structures.*;
+
+import java.util.*;
 
 
 /**
- *   This is a class for reading in a DICOM sequence tag.  For more information about
- *   the DICOM sequence tag see the DICOM standard, Part 5, Section 7.5.
- *   <P>The sequence tag is encoded as follows:
- *   <OL>
- *   <LI>A group and element tag indicating that this is a sequence, followed by
- *   a length.  The group and element tag are stored in the regular FileInfoDicom
- *   object.  The length is stored there and also here.  Often a sequence will have
- *   an undefined length, which is defined in FileDicom.
- *   <LI>A series of item tags.  Each item tag is read in, the length of the entire item
- *   is stored, and the item is read in.  The item is simply a series of DICOM tags with data
- *   in them.  That information is stored in the class DicomItem.
- *   <LI>A tag indicating the end of the sequence.
- *   </UL>
- *   <P>Given this encoding, the DicomSQ structure is set up as a Vector.  The length
- *   variable is the length of the sequence as given in the header and NOT the length
- *   of the Vector.  The Vector is a series of DicomItems.  In the DicomItems the important
- *   data tag information is stored.
+ * This is a class for reading in a DICOM sequence tag. For more information about the DICOM sequence tag see the DICOM
+ * standard, Part 5, Section 7.5.
  *
- *   @author Neva Cherniavsky
- *   @see    FileDicomItem
- *   @see    FileDicom
- *   @see    FileInfoDicom
+ * <P>The sequence tag is encoded as follows:</P>
+ *
+ * <OL>
+ *   <LI>A group and element tag indicating that this is a sequence, followed by a length. The group and element tag are
+ *     stored in the regular FileInfoDicom object. The length is stored there and also here. Often a sequence will have
+ *     an undefined length, which is defined in FileDicom.</LI>
+ *   <LI>A series of item tags. Each item tag is read in, the length of the entire item is stored, and the item is read
+ *     in. The item is simply a series of DICOM tags with data in them. That information is stored in the class
+ *     DicomItem.</LI>
+ *   <LI>A tag indicating the end of the sequence.
+ *
+ *     <P>Given this encoding, the DicomSQ structure is set up as a Vector. The length variable is the length of the
+ *     sequence as given in the header and NOT the length of the Vector. The Vector is a series of DicomItems. In the
+ *     DicomItems the important data tag information is stored.</P>
+ *   </LI>
+ * </OL>
+ *
+ * @author  Neva Cherniavsky
+ * @see     FileDicomItem
+ * @see     FileDicom
+ * @see     FileInfoDicom
  */
 public class FileDicomSQ extends ModelSerialCloneable {
 
-    /** Sequences are composed of items (DICOM items) and store in a vector object */
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -6705966363824982534L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Sequences are composed of items (DICOM items) and store in a vector object. */
     private Vector sequence;
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *   Creates a new DicomSQ object with initial length.
+     * Creates a new DicomSQ object with initial length.
      */
     public FileDicomSQ() {
-        sequence = new Vector(10,5);
+        sequence = new Vector(10, 5);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     *   Prepares this class for cleanup
-     */
-    public void finalize() {
-        if (sequence != null) sequence.removeAllElements();
-        sequence = null;
-
-        try {super.finalize();}
-        catch (Throwable er){}
-    }
-
-    /**
-     *   Add an item to the sequence vector
-     *   @param item item to add
+     * Add an item to the sequence vector.
+     *
+     * @param  item  item to add
      */
     public final void addItem(FileDicomItem item) {
         sequence.addElement(item);
     }
 
+
     /**
-     *   Gets the specified item from the sequence vector
-     *   @param index index in the vector
+     * Prepares this class for cleanup.
      */
-    public final FileDicomItem getItem(int index) {
-        return (FileDicomItem)sequence.elementAt(index);
+    public void finalize() {
+
+        if (sequence != null) {
+            sequence.removeAllElements();
+        }
+
+        sequence = null;
+
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
     }
 
     /**
-     *   Gets the length of the sequence vector
-     *   @return the sequence length
-     */
-    public final int getSequenceLength() {
-        return sequence.size();
-    }
-
-    /**
-     *   Gets the length as read in by the header (possibly undefined).
-     *   @return the length of the sequence as read in by the header
-     */
-    public final int getLength() {
-        return getDataLength();
-    }
-
-    /** Returns the size of the data held in this sequence in number of bytes,
-     * including the number of bytes required to delimit each item.
-     * @return the size of the data held in this sequence in number of bytes.
+     * Returns the size of the data held in this sequence in number of bytes, including the number of bytes required to
+     * delimit each item.
+     *
+     * @return  the size of the data held in this sequence in number of bytes.
      */
     public int getDataLength() {
         int datasize = 0;
 
-        for (int i=0; i < sequence.size(); i++) {
+        for (int i = 0; i < sequence.size(); i++) {
+
             // item start delimiter: FE FF 00 E0 00 00 00 00 (item start)
             datasize += 8;
 
             // call the item's version of this method for each item:
-            for (int j=0; j < sequence.size(); j++) {
+            for (int j = 0; j < sequence.size(); j++) {
                 datasize += ((FileDicomItem) sequence.get(j)).getLength();
             }
 
@@ -111,27 +109,60 @@ public class FileDicomSQ extends ModelSerialCloneable {
     }
 
     /**
-     * Gets a series of Strings that are the human readable version of the
-     * data.
-     * @return a Vector that contains the human readable form of the sequence
-     * data
+     * Gets the specified item from the sequence vector.
+     *
+     * @param   index  index in the vector
+     *
+     * @return  DOCUMENT ME!
+     */
+    public final FileDicomItem getItem(int index) {
+        return (FileDicomItem) sequence.elementAt(index);
+    }
+
+    /**
+     * Gets the length as read in by the header (possibly undefined).
+     *
+     * @return  the length of the sequence as read in by the header
+     */
+    public final int getLength() {
+        return getDataLength();
+    }
+
+    /**
+     * Gets a series of Strings that are the human readable version of the data.
+     *
+     * @return  a Vector that contains the human readable form of the sequence data
      */
     public Vector getSequenceDisplay() {
 
         Vector display = new Vector();
-        for (int i=0; i < sequence.size(); i++) {
+
+        for (int i = 0; i < sequence.size(); i++) {
+
             // call the item's version of this method.
             Vector itemDisplay = getItem(i).getItemDisplay();
-            for (Enumeration e=itemDisplay.elements(); e.hasMoreElements(); ) {
+
+            for (Enumeration e = itemDisplay.elements(); e.hasMoreElements();) {
                 display.addElement(e.nextElement());
             }
         }
+
         return display;
     }
 
     /**
+     * Gets the length of the sequence vector.
+     *
+     * @return  the sequence length
+     */
+    public final int getSequenceLength() {
+        return sequence.size();
+    }
+
+    /**
      * returns the word "Sequence".
-     * @return "Sequence"
+     *
+     * @return  "Sequence"
      */
     public String toString() {
         return "Sequence";

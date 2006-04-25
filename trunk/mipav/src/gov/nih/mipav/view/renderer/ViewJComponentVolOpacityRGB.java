@@ -1,30 +1,46 @@
 package gov.nih.mipav.view.renderer;
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
+
 import gov.nih.mipav.*;
 
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+
 import java.io.*;
-import java.util.Arrays;
+
+import java.util.*;
+
 
 /**
- *   This class extends the ViewJComponentVolOpacityBase class and used to coordinate
- *   how a histogram and LUT for an image are to be displayed to the screen.
- *   For display purposes, this component has a LUT Model.
+ * This class extends the ViewJComponentVolOpacityBase class and used to coordinate how a histogram and LUT for an image
+ * are to be displayed to the screen. For display purposes, this component has a LUT Model.
  *
- *		@version    0.1 Aug 1, 1997
- *		@author     Matthew J. McAuliffe, Ph.D. (primary)
+ * @version  0.1 Aug 1, 1997
+ * @author   Matthew J. McAuliffe, Ph.D. (primary)
  */
-public class ViewJComponentVolOpacityRGB
-    extends ViewJComponentVolOpacityBase {
+public class ViewJComponentVolOpacityRGB extends ViewJComponentVolOpacityBase {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 1208349901510241151L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private int[] lutIndexBuffer;
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *   Creates a Histogram RGB component.
-     *   @param _histoFrame        Frame where histogram is to be displayed
-     *   @param _image             image of the displayed histogram
+     * Creates a Histogram RGB component.
+     *
+     * @param  opacityPanel  Frame where histogram is to be displayed
+     * @param  _histo        DOCUMENT ME!
+     * @param  _image        image of the displayed histogram
      */
     public ViewJComponentVolOpacityRGB(JPanelVolOpacityRGB opacityPanel, ModelHistogram _histo, ModelImage _image) {
         super(opacityPanel, _histo, _image, new Dimension(450, 375));
@@ -36,24 +52,61 @@ public class ViewJComponentVolOpacityRGB
         linearMode();
     }
 
-    /**
-     * Set the image min, max values.
-     */
-    private void setupMinMax() {
-        if (image.getType() == ModelStorageBase.ARGB) {
-            min = 0;
-            max = 255;
-        }
-        else {
-            min = (float) image.getMinR();
-            max = (float) image.getMaxR();
-        }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-        range = max - min;
+    /**
+     * Sets variables to null and gets rid of frame.
+     */
+    public void dispose() {
+        super.dispose();
     }
 
     /**
-     *   Clean up some resources!
+     * Get the transfer function.
+     *
+     * @return  TransferFunction trans function
+     */
+    public TransferFunction getActiveTransferFunction() {
+        return transferFunction;
+    }
+
+    /**
+     * Get the transfer function.
+     *
+     * @param   channel  int channel flag.
+     *
+     * @return  TransferFunction trans function
+     */
+    public TransferFunction getTransferFunction(int channel) {
+        return transferFunction;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void showHistogram(ModelLUT lut) {
+
+        if (histogram == null) {
+            return;
+        }
+
+        try { // get histogram
+            histogram.exportData(stRange, histogramBuffer.length, histogramBuffer);
+        } catch (IOException error) {
+            Preferences.debug("IOException: ComponentHistoRGB.show");
+            error.printStackTrace();
+
+            return;
+        }
+
+        showRGB();
+        repaint();
+    }
+
+    /**
+     * Clean up some resources!
+     *
+     * @throws  Throwable  DOCUMENT ME!
      */
     protected void finalize() throws Throwable {
         dispose();
@@ -61,31 +114,19 @@ public class ViewJComponentVolOpacityRGB
     }
 
     /**
-     *   Sets variables to null and gets rid of frame
+     * Set the image min, max values.
      */
-    public void dispose() {
-        super.dispose();
-    }
+    private void setupMinMax() {
 
-    /**
-     * {@inheritDoc}
-     */
-    public void showHistogram(ModelLUT lut) {
-        if (histogram == null) {
-            return;
+        if (image.getType() == ModelStorageBase.ARGB) {
+            min = 0;
+            max = 255;
+        } else {
+            min = (float) image.getMinR();
+            max = (float) image.getMaxR();
         }
 
-        try { // get histogram
-            histogram.exportData(stRange, histogramBuffer.length, histogramBuffer);
-        }
-        catch (IOException error) {
-            Preferences.debug("IOException: ComponentHistoRGB.show");
-            error.printStackTrace();
-            return;
-        }
-
-        showRGB();
-        repaint();
+        range = max - min;
     }
 
     /**
@@ -100,10 +141,10 @@ public class ViewJComponentVolOpacityRGB
         int offset;
 
         if (lutIndexBuffer == null) {
+
             try {
                 lutIndexBuffer = new int[256]; // will always be 256
-            }
-            catch (OutOfMemoryError error) {
+            } catch (OutOfMemoryError error) {
                 System.gc();
                 Preferences.debug("Out of memory: ComponentHistoRGB.show");
             }
@@ -112,24 +153,24 @@ public class ViewJComponentVolOpacityRGB
         // create a red LUT for the red mode, a green LUT for the green mode, and
         // a blue LUT for the blue mode
         if (mode == RED) {
+
             for (int i = 0; i < 256; i++) {
-                lutIndexBuffer[i] = 255 << 24 | i << 16;
+                lutIndexBuffer[i] = (255 << 24) | (i << 16);
             }
-        }
-        else if (mode == GREEN) {
+        } else if (mode == GREEN) {
+
             for (int i = 0; i < 256; i++) {
-                lutIndexBuffer[i] = 255 << 24 | i << 8;
+                lutIndexBuffer[i] = (255 << 24) | (i << 8);
             }
-        }
-        else if (mode == BLUE) {
+        } else if (mode == BLUE) {
+
             for (int i = 0; i < 256; i++) {
-                lutIndexBuffer[i] = 255 << 24 | i;
+                lutIndexBuffer[i] = (255 << 24) | i;
             }
-        }
-        else
-        {
+        } else {
+
             for (int i = 0; i < 256; i++) {
-                lutIndexBuffer[i] = 255 << 24 | i << 16 | i << 8 | i;
+                lutIndexBuffer[i] = (255 << 24) | (i << 16) | (i << 8) | i;
             }
         }
 
@@ -141,20 +182,23 @@ public class ViewJComponentVolOpacityRGB
 
         // find histogram max normalized to the width of the display component
         histogramMax = -9999;
+
         for (int i = 0; i < dim.width; i++) {
-            for ( sum = 0, k =  i*samples; k < (i+1)*samples; k++ ) {
-                if (  k < histogramBuffer.length ) {
+
+            for (sum = 0, k = i * samples; k < ((i + 1) * samples); k++) {
+
+                if (k < histogramBuffer.length) {
                     sum += histogramBuffer[k];
                 }
             }
 
-            if ( sum > histogramMax ) {
+            if (sum > histogramMax) {
                 histogramMax = sum;
             }
         }
 
         if (logFlag == true) {
-            histogramMaxLog = Math.log( histogramMax);
+            histogramMaxLog = Math.log(histogramMax);
         }
 
         // Builds special buffer by remapping the data in the LUT range
@@ -164,22 +208,25 @@ public class ViewJComponentVolOpacityRGB
         for (int i = 0; i < dim.width; i++) {
 
             // if histogram width and component width are not the same then correct
-            for ( sum = 0, k = i *  samples; k < (i+1)*samples; k++ ) {
-                if (   k < histogramBuffer.length ) {
+            for (sum = 0, k = i * samples; k < ((i + 1) * samples); k++) {
+
+                if (k < histogramBuffer.length) {
                     sum += histogramBuffer[k];
                 }
             }
 
-            if ( logFlag == true ) {
-                if ( sum >= 1.0 ) {
-                    end = MipavMath.round ( ( dim.height - 1 ) * Math.log(( sum ) ) / histogramMaxLog );
+            if (logFlag == true) {
+
+                if (sum >= 1.0) {
+                    end = MipavMath.round((dim.height - 1) * Math.log((sum)) / histogramMaxLog);
                 } else {
                     end = 0;
                 }
             } else {
-                end = MipavMath.round  ( ( dim.height - 1 ) * ( sum / histogramMax ) );
+                end = MipavMath.round((dim.height - 1) * (sum / histogramMax));
             }
-            if ( end == 0 && sum > 0 ) {
+
+            if ((end == 0) && (sum > 0)) {
                 end = 1;
             }
 
@@ -188,9 +235,10 @@ public class ViewJComponentVolOpacityRGB
             index = MipavMath.round(transferFunction.getRemappedValue(iNew, 256));
 
             // build histogram image
-            offset = dim.width * (dim.height - 1) + i;
+            offset = (dim.width * (dim.height - 1)) + i;
+
             for (j = 0; j < end; j++) {
-                pixBuffer[offset - j * dim.width] = lutIndexBuffer[index];
+                pixBuffer[offset - (j * dim.width)] = lutIndexBuffer[index];
             }
         }
 
@@ -198,24 +246,4 @@ public class ViewJComponentVolOpacityRGB
         paintComponent(getGraphics());
     }
 
-    /**
-     * Get the transfer function.
-     * @return TransferFunction trans function
-     */
-    public TransferFunction getActiveTransferFunction()
-    {
-        return transferFunction;
-    }
-
-    /**
-     * Get the transfer function
-     * @param channel int channel flag.
-     * @return TransferFunction  trans function
-     */
-    public TransferFunction getTransferFunction(int channel)
-    {
-        return transferFunction;
-    }
-
 }
-

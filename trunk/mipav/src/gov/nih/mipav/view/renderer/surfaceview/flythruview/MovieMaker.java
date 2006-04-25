@@ -1,141 +1,175 @@
 package gov.nih.mipav.view.renderer.surfaceview.flythruview;
 
+
+import java.awt.*;
+
 import java.io.*;
-import java.awt.Dimension;
-import java.awt.Image;
 
 import javax.media.*;
 import javax.media.control.*;
-import javax.media.protocol.*;
-import javax.media.protocol.DataSource;
 import javax.media.datasink.*;
-import javax.media.format.VideoFormat;
-import javax.media.util.ImageToBuffer;
+import javax.media.format.*;
+import javax.media.protocol.*;
+import javax.media.protocol.*;
+import javax.media.util.*;
 
 
 /**
- * This class creates AVIs (.avi) out of a list of JPEG files or out
- * of an array of java.awt.Image objects.
+ * This class creates AVIs (.avi) out of a list of JPEG files or out of an array of java.awt.Image objects.
  */
-public class MovieMaker
-    implements ControllerListener, DataSinkListener {
+public class MovieMaker implements ControllerListener, DataSinkListener {
 
-    /** Synchonization control variables. */
-    private final Object waitSync = new Object();
-    private final Object waitFileSync = new Object();
-    private boolean stateTransitionOK = true;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private boolean fileDone = false;
-    private boolean fileSuccess = true;
 
-    /** Video processor reference. */
-    private final Processor processor;
+    /** DOCUMENT ME! */
+    private boolean fileSuccess = true;
 
     /** Media locator for the output file. */
     private final MediaLocator outML;
 
-    /**
-     * Constructor.
-     * @param width          frame width
-     * @param height         frame height
-     * @param frameRate      frame rate
-     * @param outputFile     AVI output file
-     * @param jpegFiles      jpeg images list.
-     * @throws Exception
-     */
-    public MovieMaker( int width, int height, int frameRate, File outputFile, File[] jpegFiles )
-        throws Exception {
-        this( outputFile, new ImageDataSource( width, height, frameRate, jpegFiles ) );
-    }
+    /** Video processor reference. */
+    private final Processor processor;
 
-    /**
-     * Constructor
-     * @param width         frame width
-     * @param height        frame height
-     * @param frameRate     frame rate
-     * @param outputFile    AVI output file
-     * @param images        source images list.
-     * @throws Exception
-     */
-    public MovieMaker( int width, int height, int frameRate, File outputFile, Image[] images )
-        throws Exception {
-        this( outputFile, new ImageDataSource( width, height, frameRate, images ) );
-    }
+    /** DOCUMENT ME! */
+    private boolean stateTransitionOK = true;
+
+    /** DOCUMENT ME! */
+    private final Object waitFileSync = new Object();
+
+    /** Synchonization control variables. */
+    private final Object waitSync = new Object();
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor.
-     * @param outputFile     AVI output file.
-     * @param ids            jpegs image data source.
-     * @throws Exception
+     *
+     * @param   width       frame width
+     * @param   height      frame height
+     * @param   frameRate   frame rate
+     * @param   outputFile  AVI output file
+     * @param   jpegFiles   jpeg images list.
+     *
+     * @throws  Exception  DOCUMENT ME!
      */
-    private MovieMaker( File outputFile, ImageDataSource ids )
-        throws Exception {
-        this.processor = createProcessor( outputFile, ids );
-        this.outML = new MediaLocator( outputFile.toURI().toURL() );
+    public MovieMaker(int width, int height, int frameRate, File outputFile, File[] jpegFiles) throws Exception {
+        this(outputFile, new ImageDataSource(width, height, frameRate, jpegFiles));
     }
 
     /**
-     * Create video processor from the given source image files and output file.
-     * @param outputFile  output file
-     * @param ids ImageDataSource   jpeg images file source.
-     * @throws Exception
-     * @return Processor  the created vedio processor.
+     * Constructor.
+     *
+     * @param   width       frame width
+     * @param   height      frame height
+     * @param   frameRate   frame rate
+     * @param   outputFile  AVI output file
+     * @param   images      source images list.
+     *
+     * @throws  Exception  DOCUMENT ME!
      */
-    private Processor createProcessor( File outputFile, ImageDataSource ids )
-        throws Exception {
-        // System.out.println( "- create processor for the image datasource ..." );
-        Processor p = Manager.createProcessor( ids );
+    public MovieMaker(int width, int height, int frameRate, File outputFile, Image[] images) throws Exception {
+        this(outputFile, new ImageDataSource(width, height, frameRate, images));
+    }
 
-        p.addControllerListener( this );
+    /**
+     * Constructor.
+     *
+     * @param   outputFile  AVI output file.
+     * @param   ids         jpegs image data source.
+     *
+     * @throws  Exception  DOCUMENT ME!
+     */
+    private MovieMaker(File outputFile, ImageDataSource ids) throws Exception {
+        this.processor = createProcessor(outputFile, ids);
+        this.outML = new MediaLocator(outputFile.toURI().toURL());
+    }
 
-        // Put the Processor into configured state so we can set
-        // some processing options on the processor.
-        p.configure();
-        if ( !waitForState( p, p.Configured ) ) {
-            throw new IOException( "Failed to configure the processor." );
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Controller Listener.
+     *
+     * @param  evt  controller event.
+     */
+    public void controllerUpdate(ControllerEvent evt) {
+
+        if ((evt instanceof ConfigureCompleteEvent) || (evt instanceof RealizeCompleteEvent) ||
+                (evt instanceof PrefetchCompleteEvent)) {
+
+            synchronized (waitSync) {
+                stateTransitionOK = true;
+                waitSync.notifyAll();
+            }
+        } else if (evt instanceof ResourceUnavailableEvent) {
+
+            synchronized (waitSync) {
+                stateTransitionOK = false;
+                waitSync.notifyAll();
+            }
+        } else if (evt instanceof EndOfMediaEvent) {
+            evt.getSourceController().stop();
+            evt.getSourceController().close();
         }
+    }
 
-        if ( outputFile.getName().toLowerCase().endsWith( ".mov" ) ) {
-            // Set the output content descriptor to QuickTime.
-            p.setContentDescriptor( new ContentDescriptor( FileTypeDescriptor.QUICKTIME ) );
-        } else if ( outputFile.getName().toLowerCase().endsWith( ".avi" ) ) {
-            // Set the output content descriptor to AVI (MSVIDEO).
-            p.setContentDescriptor( new ContentDescriptor( FileTypeDescriptor.MSVIDEO ) );
-        } else {
-            throw new IllegalArgumentException( "unsupported file extension: " + outputFile.getName() );
+    /**
+     * Event handler for the file writer.
+     *
+     * @param  evt  DOCUMENT ME!
+     */
+    public void dataSinkUpdate(DataSinkEvent evt) {
+
+        if (evt instanceof EndOfStreamEvent) {
+
+            synchronized (waitFileSync) {
+                fileDone = true;
+                waitFileSync.notifyAll();
+            }
+        } else if (evt instanceof DataSinkErrorEvent) {
+
+            synchronized (waitFileSync) {
+                fileDone = true;
+                fileSuccess = false;
+                waitFileSync.notifyAll();
+            }
         }
-        return p;
     }
 
     /**
      * Method actually does the transcoding from JPeg images file to AVI.
-     * @throws Exception
+     *
+     * @throws  Exception  DOCUMENT ME!
      */
-    public void makeMovie()
-        throws Exception {
+    public void makeMovie() throws Exception {
+
         // Query for the processor for supported formats.
         // Then set it on the processor.
         TrackControl[] tcs = processor.getTrackControls();
         Format[] f = tcs[0].getSupportedFormats();
 
-        if ( f == null || f.length == 0 ) {
-            throw new Exception( "The mux does not support the input format: " + tcs[0].getFormat() );
+        if ((f == null) || (f.length == 0)) {
+            throw new Exception("The mux does not support the input format: " + tcs[0].getFormat());
         }
 
-        tcs[0].setFormat( f[0] );
+        tcs[0].setFormat(f[0]);
 
         processor.realize();
-        if ( !waitForState( processor, Processor.Realized ) ) {
-            throw new Exception( "Failed to realize the processor." );
+
+        if (!waitForState(processor, Processor.Realized)) {
+            throw new Exception("Failed to realize the processor.");
         }
 
         // Now, we'll need to create a DataSink.
-        DataSink dsink = createDataSink( processor, outML );
+        DataSink dsink = createDataSink(processor, outML);
 
-        if ( dsink == null ) {
-            throw new Exception( "Failed to create a DataSink for the given output MediaLocator: " + outML );
+        if (dsink == null) {
+            throw new Exception("Failed to create a DataSink for the given output MediaLocator: " + outML);
         }
 
-        dsink.addDataSinkListener( this );
+        dsink.addDataSinkListener(this);
         fileDone = false;
 
         // OK, we can now start the actual transcoding.
@@ -147,24 +181,31 @@ public class MovieMaker
 
         // Cleanup.
         dsink.close();
-        processor.removeControllerListener( this );
+        processor.removeControllerListener(this);
 
         // System.out.println( "...done processing." );
     }
 
     /**
      * Create the DataSink.
+     *
+     * @param   p      DOCUMENT ME!
+     * @param   outML  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException          DOCUMENT ME!
+     * @throws  NoDataSinkException  DOCUMENT ME!
      */
-    private static DataSink createDataSink( Processor p, MediaLocator outML )
-        throws IOException, NoDataSinkException {
+    private static DataSink createDataSink(Processor p, MediaLocator outML) throws IOException, NoDataSinkException {
         DataSource ds = p.getDataOutput();
 
-        if ( ds == null ) {
-            throw new IOException( "processor does not have an output DataSource" );
+        if (ds == null) {
+            throw new IOException("processor does not have an output DataSource");
         }
 
         // System.out.println( "- create DataSink for: " + outML );
-        DataSink dsink = Manager.createDataSink( ds, outML );
+        DataSink dsink = Manager.createDataSink(ds, outML);
 
         dsink.open();
 
@@ -172,72 +213,250 @@ public class MovieMaker
     }
 
     /**
-     * Block until the processor has transitioned to the given state.
-     * Return false if the transition failed.
-     * @param  Processor reference.
-     * @param  State processor transcoding state.
+     * Create video processor from the given source image files and output file.
+     *
+     * @param   outputFile  output file
+     * @param   ids         ImageDataSource jpeg images file source.
+     *
+     * @throws  Exception                 DOCUMENT ME!
+     * @throws  IOException               DOCUMENT ME!
+     * @throws  IllegalArgumentException  DOCUMENT ME!
+     *
+     * @return  Processor the created vedio processor.
      */
-    private boolean waitForState( Processor p, int state )
-        throws InterruptedException {
-        synchronized ( waitSync ) {
-            while ( p.getState() < state && stateTransitionOK ) {
-                waitSync.wait();
-            }
-        }
-        return stateTransitionOK;
-    }
+    private Processor createProcessor(File outputFile, ImageDataSource ids) throws Exception {
 
-    /**
-     * Controller Listener.
-     * @param evt   controller event.
-     */
-    public void controllerUpdate( ControllerEvent evt ) {
-        if ( evt instanceof ConfigureCompleteEvent || evt instanceof RealizeCompleteEvent
-                || evt instanceof PrefetchCompleteEvent ) {
-            synchronized ( waitSync ) {
-                stateTransitionOK = true;
-                waitSync.notifyAll();
-            }
-        } else if ( evt instanceof ResourceUnavailableEvent ) {
-            synchronized ( waitSync ) {
-                stateTransitionOK = false;
-                waitSync.notifyAll();
-            }
-        } else if ( evt instanceof EndOfMediaEvent ) {
-            evt.getSourceController().stop();
-            evt.getSourceController().close();
+        // System.out.println( "- create processor for the image datasource ..." );
+        Processor p = Manager.createProcessor(ids);
+
+        p.addControllerListener(this);
+
+        // Put the Processor into configured state so we can set
+        // some processing options on the processor.
+        p.configure();
+
+        if (!waitForState(p, p.Configured)) {
+            throw new IOException("Failed to configure the processor.");
         }
+
+        if (outputFile.getName().toLowerCase().endsWith(".mov")) {
+
+            // Set the output content descriptor to QuickTime.
+            p.setContentDescriptor(new ContentDescriptor(FileTypeDescriptor.QUICKTIME));
+        } else if (outputFile.getName().toLowerCase().endsWith(".avi")) {
+
+            // Set the output content descriptor to AVI (MSVIDEO).
+            p.setContentDescriptor(new ContentDescriptor(FileTypeDescriptor.MSVIDEO));
+        } else {
+            throw new IllegalArgumentException("unsupported file extension: " + outputFile.getName());
+        }
+
+        return p;
     }
 
     /**
      * Block until file writing is done.
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  InterruptedException  DOCUMENT ME!
      */
-    private boolean waitForFileDone()
-        throws InterruptedException {
-        synchronized ( waitFileSync ) {
-            while ( !fileDone ) {
+    private boolean waitForFileDone() throws InterruptedException {
+
+        synchronized (waitFileSync) {
+
+            while (!fileDone) {
                 waitFileSync.wait();
             }
         }
+
         return fileSuccess;
     }
 
     /**
-     * Event handler for the file writer.
+     * Block until the processor has transitioned to the given state. Return false if the transition failed.
+     *
+     * @param   p      reference.
+     * @param   state  processor transcoding state.
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  InterruptedException  DOCUMENT ME!
      */
-    public void dataSinkUpdate( DataSinkEvent evt ) {
+    private boolean waitForState(Processor p, int state) throws InterruptedException {
 
-        if ( evt instanceof EndOfStreamEvent ) {
-            synchronized ( waitFileSync ) {
-                fileDone = true;
-                waitFileSync.notifyAll();
+        synchronized (waitSync) {
+
+            while ((p.getState() < state) && stateTransitionOK) {
+                waitSync.wait();
             }
-        } else if ( evt instanceof DataSinkErrorEvent ) {
-            synchronized ( waitFileSync ) {
-                fileDone = true;
-                fileSuccess = false;
-                waitFileSync.notifyAll();
+        }
+
+        return stateTransitionOK;
+    }
+
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * The java.awt.Image-based source stream to go along with ImageDataSource. Not sure yet if this class works.
+     */
+    private static class AWTImageSourceStream implements PullBufferStream {
+
+        /** DOCUMENT ME! */
+        private boolean ended = false;
+
+        /** DOCUMENT ME! */
+        private final Image[] images;
+
+        /** DOCUMENT ME! */
+        private int nextImage = 0; // index of the next image to be read.
+
+        /** Bug fix from Forums - next one line. */
+        private long seqNo = 0;
+
+        /** DOCUMENT ME! */
+        private final VideoFormat videoFormat;
+
+        /** DOCUMENT ME! */
+        private final int width, height;
+
+        /**
+         * Creates a new AWTImageSourceStream object.
+         *
+         * @param  width      DOCUMENT ME!
+         * @param  height     DOCUMENT ME!
+         * @param  frameRate  DOCUMENT ME!
+         * @param  images     DOCUMENT ME!
+         */
+        public AWTImageSourceStream(int width, int height, int frameRate, Image[] images) {
+            this.width = width;
+            this.height = height;
+            this.images = images;
+
+            // not sure if this is correct, especially the VideoFormat value
+            this.videoFormat = new VideoFormat(VideoFormat.RGB, new Dimension(width, height), Format.NOT_SPECIFIED,
+                                               Format.byteArray, (float) frameRate);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public boolean endOfStream() {
+            return ended;
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public ContentDescriptor getContentDescriptor() {
+            return new ContentDescriptor(ContentDescriptor.RAW);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public long getContentLength() {
+            return LENGTH_UNKNOWN;
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   type  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Object getControl(String type) {
+            return null;
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Object[] getControls() {
+            return new Object[0];
+        }
+
+        /**
+         * Return the format of each video frame.
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Format getFormat() {
+            return videoFormat;
+        }
+
+        /**
+         * This is called from the Processor to read a frame worth of video data.
+         *
+         * @param   buf  DOCUMENT ME!
+         *
+         * @throws  IOException       DOCUMENT ME!
+         * @throws  RuntimeException  DOCUMENT ME!
+         */
+        public void read(final Buffer buf) throws IOException {
+
+            try {
+
+                // Check if we've finished all the frames.
+                if (nextImage >= images.length) {
+
+                    // We are done. Set EndOfMedia.
+                    // System.out.println( "Done reading all images." );
+                    buf.setEOM(true);
+                    buf.setOffset(0);
+                    buf.setLength(0);
+                    ended = true;
+
+                    return;
+                }
+
+                Image image = images[nextImage];
+
+                nextImage++;
+
+                // Open a random access file for the next image.
+                // RandomAccessFile raFile = new RandomAccessFile(imageFile, "r");
+                Buffer myBuffer = ImageToBuffer.createBuffer(image, videoFormat.getFrameRate());
+
+                buf.copy(myBuffer);
+
+                // Bug fix for AVI files from Forums ( next 3 lines).
+                long time = (long) (seqNo * (1000 / videoFormat.getFrameRate()) * 1000000);
+
+                buf.setTimeStamp(time);
+                buf.setSequenceNumber(seqNo++);
+
+                // buf.setOffset(0);
+                // buf.setLength((int)raFile.length());
+                // buf.setFormat(videoFormat);
+                // buf.setFlags(buf.getFlags() | buf.FLAG_KEY_FRAME);
+
+            } catch (Exception e) {
+
+                // it's important to print the stack trace here because the
+                // sun class that calls this method silently ignores
+                // any Exceptions that get thrown
+                e.printStackTrace();
+                throw new RuntimeException(e);
             }
+        }
+
+        /**
+         * We should never need to block assuming data are read from files.
+         *
+         * @return  DOCUMENT ME!
+         */
+        public boolean willReadBlock() {
+            return false;
         }
     }
 
@@ -248,121 +467,245 @@ public class MovieMaker
 
 
     /**
-     * A DataSource to read from a list of JPEG image files or
-     * java.awt.Images, and
-     * turn that into a stream of JMF buffers.
-     * The DataSource is not seekable or positionable.
+     * A DataSource to read from a list of JPEG image files or java.awt.Images, and turn that into a stream of JMF
+     * buffers. The DataSource is not seekable or positionable.
      */
     private static class ImageDataSource extends PullBufferDataSource {
+
+        /** DOCUMENT ME! */
         private final Time durTime;
 
+        /** DOCUMENT ME! */
         private final PullBufferStream[] streams = new JpegSourceStream[1];
 
         /**
-         * Constructor for creating movies out of jpegs
+         * Constructor for creating movies out of jpegs.
+         *
+         * @param  width      DOCUMENT ME!
+         * @param  height     DOCUMENT ME!
+         * @param  frameRate  DOCUMENT ME!
+         * @param  jpegFiles  DOCUMENT ME!
          */
-        ImageDataSource( int width, int height, int frameRate, File[] jpegFiles ) {
-            streams[0] = new JpegSourceStream( width, height, frameRate, jpegFiles );
-            this.durTime = new Time( jpegFiles.length / frameRate );
+        ImageDataSource(int width, int height, int frameRate, File[] jpegFiles) {
+            streams[0] = new JpegSourceStream(width, height, frameRate, jpegFiles);
+            this.durTime = new Time(jpegFiles.length / frameRate);
         }
 
         /**
-         * Constructor for creating movies out of Images
-         * NOTE - this is all done IN MEMORY, so you'd better have enough
+         * Constructor for creating movies out of Images NOTE - this is all done IN MEMORY, so you'd better have enough.
+         *
+         * @param  width      DOCUMENT ME!
+         * @param  height     DOCUMENT ME!
+         * @param  frameRate  DOCUMENT ME!
+         * @param  images     DOCUMENT ME!
          */
-        ImageDataSource( int width, int height, int frameRate, Image[] images ) {
-            streams[0] = new AWTImageSourceStream( width, height, frameRate, images );
-            this.durTime = new Time( images.length / frameRate );
-        }
-
-        public void setLocator( MediaLocator source ) {}
-
-        public MediaLocator getLocator() {
-            return null;
+        ImageDataSource(int width, int height, int frameRate, Image[] images) {
+            streams[0] = new AWTImageSourceStream(width, height, frameRate, images);
+            this.durTime = new Time(images.length / frameRate);
         }
 
         /**
-         * Content type is of RAW since we are sending buffers of video
-         * frames without a container format.
+         * DOCUMENT ME!
+         */
+        public void connect() { }
+
+        /**
+         * DOCUMENT ME!
+         */
+        public void disconnect() { }
+
+        /**
+         * Content type is of RAW since we are sending buffers of video frames without a container format.
+         *
+         * @return  DOCUMENT ME!
          */
         public String getContentType() {
             return ContentDescriptor.RAW;
         }
 
-        public void connect() {}
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   type  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Object getControl(String type) {
+            return null;
+        }
 
-        public void disconnect() {}
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Object[] getControls() {
+            return new Object[0];
+        }
 
-        public void start() {}
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Time getDuration() {
+            return durTime;
+        }
 
-        public void stop() {}
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public MediaLocator getLocator() {
+            return null;
+        }
 
         /**
          * Return the ImageSourceStreams.
+         *
+         * @return  DOCUMENT ME!
          */
         public PullBufferStream[] getStreams() {
             return streams;
         }
 
-        public Time getDuration() {
-            return durTime;
-        }
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  source  DOCUMENT ME!
+         */
+        public void setLocator(MediaLocator source) { }
 
-        public Object[] getControls() {
-            return new Object[0];
-        }
+        /**
+         * DOCUMENT ME!
+         */
+        public void start() { }
 
-        public Object getControl( String type ) {
-            return null;
-        }
+        /**
+         * DOCUMENT ME!
+         */
+        public void stop() { }
     }
 
 
     /**
      * The jpeg-based source stream to go along with ImageDataSource.
      */
-    private static class JpegSourceStream
-        implements PullBufferStream {
+    private static class JpegSourceStream implements PullBufferStream {
 
-        private final File[] jpegFiles;
-        private final int width, height;
-        private final VideoFormat videoFormat;
-
-        private int nextImage = 0; // index of the next image to be read.
-        private boolean ended = false;
-        // Bug fix from Forums - next one line
+        /** Bug fix from Forums - next one line. */
         long seqNo = 0;
 
-        public JpegSourceStream( int width, int height, int frameRate, File[] jpegFiles ) {
+        /** DOCUMENT ME! */
+        private boolean ended = false;
+
+        /** DOCUMENT ME! */
+        private final File[] jpegFiles;
+
+        /** DOCUMENT ME! */
+        private int nextImage = 0; // index of the next image to be read.
+
+        /** DOCUMENT ME! */
+        private final VideoFormat videoFormat;
+
+        /** DOCUMENT ME! */
+        private final int width, height;
+
+        /**
+         * Creates a new JpegSourceStream object.
+         *
+         * @param  width      DOCUMENT ME!
+         * @param  height     DOCUMENT ME!
+         * @param  frameRate  DOCUMENT ME!
+         * @param  jpegFiles  DOCUMENT ME!
+         */
+        public JpegSourceStream(int width, int height, int frameRate, File[] jpegFiles) {
             this.width = width;
             this.height = height;
             this.jpegFiles = jpegFiles;
 
-            this.videoFormat = new VideoFormat( VideoFormat.JPEG, new Dimension( width, height ), Format.NOT_SPECIFIED,
-                    Format.byteArray, (float) frameRate );
+            this.videoFormat = new VideoFormat(VideoFormat.JPEG, new Dimension(width, height), Format.NOT_SPECIFIED,
+                                               Format.byteArray, (float) frameRate);
         }
 
         /**
-         * We should never need to block assuming data are read from files.
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
          */
-        public boolean willReadBlock() {
-            return false;
+        public boolean endOfStream() {
+            return ended;
         }
 
         /**
-         * This is called from the Processor to read a frame worth
-         * of video data.
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
          */
-        public void read( final Buffer buf ) {
+        public ContentDescriptor getContentDescriptor() {
+            return new ContentDescriptor(ContentDescriptor.RAW);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public long getContentLength() {
+            return LENGTH_UNKNOWN;
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   type  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Object getControl(String type) {
+            return null;
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Object[] getControls() {
+            return new Object[0];
+        }
+
+        /**
+         * Return the format of each video frame. That will be JPEG.
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Format getFormat() {
+            return videoFormat;
+        }
+
+        /**
+         * This is called from the Processor to read a frame worth of video data.
+         *
+         * @param   buf  DOCUMENT ME!
+         *
+         * @throws  RuntimeException  DOCUMENT ME!
+         */
+        public void read(final Buffer buf) {
+
             try {
+
                 // Check if we've finished all the frames.
-                if ( nextImage >= jpegFiles.length ) {
+                if (nextImage >= jpegFiles.length) {
+
                     // We are done. Set EndOfMedia.
                     // System.out.println( "Done reading all images." );
-                    buf.setEOM( true );
-                    buf.setOffset( 0 );
-                    buf.setLength( 0 );
+                    buf.setEOM(true);
+                    buf.setOffset(0);
+                    buf.setLength(0);
                     ended = true;
+
                     return;
                 }
 
@@ -373,179 +716,53 @@ public class MovieMaker
                 // System.out.println( " - reading image file: " + imageFile );
 
                 // Open a random access file for the next image.
-                RandomAccessFile raFile = new RandomAccessFile( imageFile, "r" );
+                RandomAccessFile raFile = new RandomAccessFile(imageFile, "r");
 
                 byte[] data = (byte[]) buf.getData();
 
                 // Check to see the given buffer is big enough for the frame.
-                if ( data == null || data.length < raFile.length() ) {
+                if ((data == null) || (data.length < raFile.length())) {
+
                     // allocate larger buffer
                     data = new byte[(int) raFile.length()];
-                    buf.setData( data );
+                    buf.setData(data);
                 }
 
                 // Read the entire JPEG image from the file.
-                raFile.readFully( data, 0, (int) raFile.length() );
+                raFile.readFully(data, 0, (int) raFile.length());
 
                 // System.out.println( " read " + raFile.length() + " bytes." );
 
                 // Bug fix for AVI files from Forums ( next 3 lines).
-                long time = (long) ( seqNo * ( 1000 / videoFormat.getFrameRate() ) * 1000000 );
+                long time = (long) (seqNo * (1000 / videoFormat.getFrameRate()) * 1000000);
 
-                buf.setTimeStamp( time );
-                buf.setSequenceNumber( seqNo++ );
+                buf.setTimeStamp(time);
+                buf.setSequenceNumber(seqNo++);
 
-                buf.setOffset( 0 );
-                buf.setLength( (int) raFile.length() );
-                buf.setFormat( videoFormat );
-                buf.setFlags( buf.getFlags() | buf.FLAG_KEY_FRAME );
+                buf.setOffset(0);
+                buf.setLength((int) raFile.length());
+                buf.setFormat(videoFormat);
+                buf.setFlags(buf.getFlags() | buf.FLAG_KEY_FRAME);
 
                 // Close the random access file.
                 raFile.close();
-            } catch ( Exception e ) {
+            } catch (Exception e) {
+
                 // it's important to print the stack trace here because the
                 // sun class that calls this method silently ignores
                 // any IOExceptions that get thrown
                 e.printStackTrace();
-                throw new RuntimeException( e );
+                throw new RuntimeException(e);
             }
-        }
-
-        /**
-         * Return the format of each video frame. That will be JPEG.
-         */
-        public Format getFormat() {
-            return videoFormat;
-        }
-
-        public ContentDescriptor getContentDescriptor() {
-            return new ContentDescriptor( ContentDescriptor.RAW );
-        }
-
-        public long getContentLength() {
-            return LENGTH_UNKNOWN;
-        }
-
-        public boolean endOfStream() {
-            return ended;
-        }
-
-        public Object[] getControls() {
-            return new Object[0];
-        }
-
-        public Object getControl( String type ) {
-            return null;
-        }
-    }
-
-
-    /**
-     * The java.awt.Image-based source stream to go along with ImageDataSource.
-     * Not sure yet if this class works.
-     */
-    private static class AWTImageSourceStream
-        implements PullBufferStream {
-
-        private final Image[] images;
-        private final int width, height;
-        private final VideoFormat videoFormat;
-
-        private int nextImage = 0; // index of the next image to be read.
-        private boolean ended = false;
-        // Bug fix from Forums - next one line
-        private long seqNo = 0;
-
-        public AWTImageSourceStream( int width, int height, int frameRate, Image[] images ) {
-            this.width = width;
-            this.height = height;
-            this.images = images;
-
-            // not sure if this is correct, especially the VideoFormat value
-            this.videoFormat = new VideoFormat( VideoFormat.RGB, new Dimension( width, height ), Format.NOT_SPECIFIED,
-                    Format.byteArray, (float) frameRate );
         }
 
         /**
          * We should never need to block assuming data are read from files.
+         *
+         * @return  DOCUMENT ME!
          */
         public boolean willReadBlock() {
             return false;
-        }
-
-        /**
-         * This is called from the Processor to read a frame worth
-         * of video data.
-         */
-        public void read( final Buffer buf )
-            throws IOException {
-            try {
-                // Check if we've finished all the frames.
-                if ( nextImage >= images.length ) {
-                    // We are done. Set EndOfMedia.
-                    // System.out.println( "Done reading all images." );
-                    buf.setEOM( true );
-                    buf.setOffset( 0 );
-                    buf.setLength( 0 );
-                    ended = true;
-                    return;
-                }
-
-                Image image = images[nextImage];
-
-                nextImage++;
-
-                // Open a random access file for the next image.
-                // RandomAccessFile raFile = new RandomAccessFile(imageFile, "r");
-                Buffer myBuffer = ImageToBuffer.createBuffer( image, videoFormat.getFrameRate() );
-
-                buf.copy( myBuffer );
-
-                // Bug fix for AVI files from Forums ( next 3 lines).
-                long time = (long) ( seqNo * ( 1000 / videoFormat.getFrameRate() ) * 1000000 );
-
-                buf.setTimeStamp( time );
-                buf.setSequenceNumber( seqNo++ );
-
-                // buf.setOffset(0);
-                // buf.setLength((int)raFile.length());
-                // buf.setFormat(videoFormat);
-                // buf.setFlags(buf.getFlags() | buf.FLAG_KEY_FRAME);
-
-            } catch ( Exception e ) {
-                // it's important to print the stack trace here because the
-                // sun class that calls this method silently ignores
-                // any Exceptions that get thrown
-                e.printStackTrace();
-                throw new RuntimeException( e );
-            }
-        }
-
-        /**
-         * Return the format of each video frame.
-         */
-        public Format getFormat() {
-            return videoFormat;
-        }
-
-        public ContentDescriptor getContentDescriptor() {
-            return new ContentDescriptor( ContentDescriptor.RAW );
-        }
-
-        public long getContentLength() {
-            return LENGTH_UNKNOWN;
-        }
-
-        public boolean endOfStream() {
-            return ended;
-        }
-
-        public Object[] getControls() {
-            return new Object[0];
-        }
-
-        public Object getControl( String type ) {
-            return null;
         }
     }
 }

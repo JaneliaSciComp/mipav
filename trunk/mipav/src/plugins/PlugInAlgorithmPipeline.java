@@ -1,44 +1,30 @@
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.view.*;
-
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.*;
+
 import java.io.*;
-import gov.nih.mipav.view.ViewUserInterface;
-
-import gov.nih.mipav.model.algorithms.AlgorithmFuzzyCMeans;
-
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmCrop;
-
-import java.io.*;
-import gov.nih.mipav.model.file.FileInfoBase;
 
 
 /**
- * <p>Title: </p>
- * <p>Description: </p>
- * <p>Copyright: Copyright (c) 2004</p>
- * <p>Company: </p>
- * @author not attributable
- * @version 1.0
+ * <p>Title:</p>
  *
- * The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored
- * by the National Institutes of Health, that will help us better understand how
- * to prevent and treat knee osteoarthritis, one of the most common causes of
- * disability in adults.  It is a four-year study and will recruit men and women
- * aged 45 and above at high risk for developing symptomatic knee osteoarthritis.
- * Osteoarthritis causes more health problems and medical expenses than any other
- * form of arthritis. Symptoms of osteoarthritis can range from stiffness and mild
- * pain to severe joint pain and even disability.
- The OAI cohort will be 5000 participants with clinically significant knee OA or at
- high risk for developing incident OA and obtain the appropriate images and
- bio-specimens needed for investigation and validation of OA biomarkers.  The large
- number of images that results from the OAI is a major obstacle to overcome.  Manual
- image segmentation is laborious and subject to inter and intra-observer variability
- when performing volumetric analysis.  Therefore, BIRSS has started a multistage segmentation
- and quantification technique to automatically or semi-automatically process the entire cohort.
+ * <p>Description:</p>
+ *
+ * <p>Copyright: Copyright (c) 2004</p>
+ *
+ * <p>Company:</p>
+ *
+ * @author   not attributable
+ * @version  1.0
+ *
+ *           <p>The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored by the National Institutes of Health, that will help us better understand how to prevent and treat knee osteoarthritis, one of the most common causes of disability in adults. It is a four-year study and will recruit men and women aged 45 and above at high risk for developing symptomatic knee osteoarthritis. Osteoarthritis causes more health problems and medical expenses than any other form of arthritis. Symptoms of osteoarthritis can range from stiffness and mild pain to severe joint pain and even disability. The OAI cohort will be 5000 participants with clinically significant knee OA or at high risk for developing incident OA and obtain the appropriate images and bio-specimens needed for investigation and validation of OA biomarkers. The large number of images that results from the OAI is a major obstacle to overcome. Manual image segmentation is laborious and subject to inter and intra-observer variability when performing volumetric analysis. Therefore, BIRSS has started a multistage segmentation and quantification technique to automatically or semi-automatically process the entire cohort.</p>
  */
 
 
@@ -98,40 +84,78 @@ Binary mask (‘voiMask’) created from input muscle bundle VOI. Contours of ‘voiMa
                  on 4-class segmented muscle bundle.
  */
 
-public class PlugInAlgorithmPipeline
-    extends AlgorithmBase {
+public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
-    private ModelImage srcImage = null;
-    private ModelImage destImageA = null;
-    private ModelImage destImageB = null;
-    private ModelImage destImage1 = null;
-    private ModelImage[] HardSeg = null;
-    private ModelImage obMask = null;
-    private ModelImage obMaskA = null;
-    private ModelImage obMaskB = null;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private int[] imgBuffer = null;
-    private int[] imgBuffer1 = null;
-    private int[] imgBuffer2 = null;
-    private float[] centroid_array = null;
-
-    //hardSeg intensities (3 class segmentation)
+    /** hardSeg intensities (3 class segmentation). */
     public static int BACKGROUND = 85;
+
+    /** DOCUMENT ME! */
     public static int MUSCLE = 170;
+
+    /** DOCUMENT ME! */
     public static int FAT = 255;
 
+    /** DOCUMENT ME! */
     public static String patientID;
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private float[] centroid_array = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage destImage1 = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage destImageA = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage destImageB = null;
+
+    /** DOCUMENT ME! */
     private AlgorithmFuzzyCMeans firstFuzz = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage[] HardSeg = null;
+
+    /** DOCUMENT ME! */
+    private int[] imgBuffer = null;
+
+    /** DOCUMENT ME! */
+    private int[] imgBuffer1 = null;
+
+    /** DOCUMENT ME! */
+    private int[] imgBuffer2 = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage obMask = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage obMaskA = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage obMaskB = null;
+
+    /** DOCUMENT ME! */
+    private ModelImage srcImage = null;
+
+    /** DOCUMENT ME! */
     private ViewUserInterface UI = ViewUserInterface.getReference();
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Default constructor
-     * @param srcImage the source image
+     * Default constructor.
+     *
+     * @param  destImageA  DOCUMENT ME!
+     * @param  destImageB  DOCUMENT ME!
+     * @param  obMaskA     DOCUMENT ME!
+     * @param  obMaskB     DOCUMENT ME!
+     * @param  srcImage    the source image
      */
-    public PlugInAlgorithmPipeline(ModelImage destImageA, ModelImage destImageB,
-                                   ModelImage obMaskA, ModelImage obMaskB,
+    public PlugInAlgorithmPipeline(ModelImage destImageA, ModelImage destImageB, ModelImage obMaskA, ModelImage obMaskB,
                                    ModelImage srcImage) {
         super(null, srcImage);
         this.srcImage = srcImage;
@@ -141,19 +165,84 @@ public class PlugInAlgorithmPipeline
         this.obMaskB = obMaskB;
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void disposeLocal() {
+        imgBuffer = null;
+
+
+        obMask.disposeLocal();
+        destImage1.disposeLocal();
+
+        obMask = null;
+        destImage1 = null;
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void finalize() {
+        disposeLocal();
+        super.finalize();
+        progressBar.dispose();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage getMaskA() {
+        return this.obMaskA;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage getMaskB() {
+        return this.obMaskB;
+    }
+
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage getResultImageA() {
+        return this.destImageA;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage getResultImageB() {
+        return this.destImageB;
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
     public void runAlgorithm() {
 
         buildProgressBar("Pipeline_Crop", "Initializing...", 0, 100);
         initProgressBar();
 
 
-
-            try {
-            	patientID = (String) ( (FileDicomTag) ( (FileInfoDicom) srcImage.getFileInfo( 0 ) ).getEntry( "0010,0020" ) ).getValue(
-                        false );
-                System.err.println("patient id is: " + patientID);
-            } catch ( Exception ex ) {//do nothing
-            }
+        try {
+            patientID = (String) ((FileDicomTag) ((FileInfoDicom) srcImage.getFileInfo(0)).getEntry("0010,0020"))
+                            .getValue(false);
+            System.err.println("patient id is: " + patientID);
+        } catch (Exception ex) { // do nothing
+        }
 
 
         int i, j, x, y, xx, yy;
@@ -175,25 +264,23 @@ public class PlugInAlgorithmPipeline
 
         destImage1 = new ModelImage(srcImage.getType(), srcImage.getExtents(), "destImage1",
                                     srcImage.getUserInterface());
-        obMask = new ModelImage(srcImage.getType(), srcImage.getExtents(), "obMask",
-                                srcImage.getUserInterface());
+        obMask = new ModelImage(srcImage.getType(), srcImage.getExtents(), "obMask", srcImage.getUserInterface());
 
 
+        //-------------------------------------------------------------------------------------------
+        //----------------------START STAGE 1:  THIGH SEPARATION-------------------------------------
+        //-------------------------------------------------------------------------------------------
 
 
-//-------------------------------------------------------------------------------------------
-//----------------------START STAGE 1:  THIGH SEPARATION-------------------------------------
-//-------------------------------------------------------------------------------------------
-
-
-        //--------------- STEP 1: Obtaining Background Mask --------------------
-        //A) FUZZY SEGMENTATION
+        // --------------- STEP 1: Obtaining Background Mask --------------------
+        // A) FUZZY SEGMENTATION
         progressBar.updateValue(5, activeImage);
         progressBar.setMessage("Obtaining Background Mask");
         HardSeg = new ModelImage[1];
+
         FileInfoBase fileInfo;
-        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
-                                    "Hard-Fuzzy" + "_seg", srcImage.getUserInterface());
+        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy" + "_seg",
+                                    srcImage.getUserInterface());
         fileInfo = HardSeg[0].getFileInfo()[0];
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -205,96 +292,116 @@ public class PlugInAlgorithmPipeline
 
         int nClasses = 3;
         centroid_array = new float[nClasses];
+
         for (i = 0; i < nClasses; i++) {
-            centroid_array[i] = (float) (min + (max - min) * (i + 1) / (nClasses + 1));
+            centroid_array[i] = (float) (min + ((max - min) * (i + 1) / (nClasses + 1)));
         }
 
         firstFuzz = null;
-        firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses, 4,
-                                             1, 2, 2.0f, 20000, 200000, false, AlgorithmFuzzyCMeans.HARD_ONLY,
-                                             false, 0.0f, 200, 0.01f, true);
+        firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses, 4, 1, 2, 2.0f, 20000, 200000, false,
+                                             AlgorithmFuzzyCMeans.HARD_ONLY, false, 0.0f, 200, 0.01f, true);
         firstFuzz.setCentroids(centroid_array);
         firstFuzz.setProgressBarVisible(false);
         firstFuzz.run();
 
 
-
         firstFuzz.finalize();
         firstFuzz = null;
 
-        //B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
+        // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
         for (j = 0; j < z; j++) {
-            try {
-              progressBar.updateValue(Math.round(10+30*j/z), activeImage);
-                HardSeg[0].exportData( (j * imgBuffer.length), imgBuffer.length, imgBuffer);
-                obMask.exportData( (j * imgBuffer.length), imgBuffer.length, imgBuffer1);
 
-                //setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
+            try {
+                progressBar.updateValue(Math.round(10 + (30 * j / z)), activeImage);
+                HardSeg[0].exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
+                obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
+
+                // setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
                 for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer1[i] = 1;
                     imgBuffer2[i] = 1;
                 }
+
                 x = 0;
+
                 for (y = 0; y < yDim; y++) {
-                    i = x + y * xDim;
+                    i = x + (y * xDim);
+
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
+
                 x = xDim - 1;
+
                 for (y = 0; y < yDim; y++) {
-                    i = x + y * xDim;
+                    i = x + (y * xDim);
+
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
+
                 y = 0;
+
                 for (x = 0; x < xDim; x++) {
-                    i = x + y * xDim;
+                    i = x + (y * xDim);
+
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
+
                 y = yDim - 1;
+
                 for (x = 0; x < xDim; x++) {
-                    i = x + y * xDim;
+                    i = x + (y * xDim);
+
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
-//              setProgressBarVisible(false);
-                //setting BACKGROUND imgBuffers 4-connected to 1 of original boundary, as background.
+
+                //              setProgressBarVisible(false);
+                // setting BACKGROUND imgBuffers 4-connected to 1 of original boundary, as background.
                 do {
                     BACKGROUNDFound = 0;
+
                     for (y = 0; y < yDim; y++) {
+
                         for (x = 0; x < xDim; x++) {
-                            i = x + y * xDim;
+                            i = x + (y * xDim);
+
                             if (imgBuffer1[i] == 0) {
-                                //checks left nearest neighbor
-                                if ( (x != 0) && (imgBuffer[i - 1] == BACKGROUND) && (imgBuffer1[i - 1] == 1)) {
+
+                                // checks left nearest neighbor
+                                if ((x != 0) && (imgBuffer[i - 1] == BACKGROUND) && (imgBuffer1[i - 1] == 1)) {
                                     imgBuffer1[i - 1] = 0;
                                     imgBuffer2[i - 1] = 0;
                                     BACKGROUNDFound++;
                                 }
-                                //right nearest neighbor
-                                if ( (x != xDim - 1) && (imgBuffer[i + 1] == BACKGROUND) && (imgBuffer1[i + 1] == 1)) {
+
+                                // right nearest neighbor
+                                if ((x != (xDim - 1)) && (imgBuffer[i + 1] == BACKGROUND) && (imgBuffer1[i + 1] == 1)) {
                                     imgBuffer1[i + 1] = 0;
                                     imgBuffer2[i + 1] = 0;
                                     BACKGROUNDFound++;
                                 }
-                                //top
-                                if ( (y != 0) && (imgBuffer[i - xDim] == BACKGROUND) && (imgBuffer1[i - xDim] == 1)) {
+
+                                // top
+                                if ((y != 0) && (imgBuffer[i - xDim] == BACKGROUND) && (imgBuffer1[i - xDim] == 1)) {
                                     imgBuffer1[i - xDim] = 0;
                                     imgBuffer2[i - xDim] = 0;
                                     BACKGROUNDFound++;
                                 }
-                                //bottom
-                                if ( (y != yDim - 1) && (imgBuffer[i + xDim] == BACKGROUND) &&
-                                    (imgBuffer1[i + xDim] == 1)) {
+
+                                // bottom
+                                if ((y != (yDim - 1)) && (imgBuffer[i + xDim] == BACKGROUND) &&
+                                        (imgBuffer1[i + xDim] == 1)) {
                                     imgBuffer1[i + xDim] = 0;
                                     imgBuffer2[i + xDim] = 0;
                                     BACKGROUNDFound++;
@@ -302,19 +409,24 @@ public class PlugInAlgorithmPipeline
                             }
                         }
                     }
-                }
-                while (BACKGROUNDFound > 0);
+                } while (BACKGROUNDFound > 0);
 
-                //convert gray imgBuffer with outer BACKGROUND imgBuffer in its 5x5 neighborhood, into BACKGROUND
-                for (y = 2; y < yDim - 2; y++) {
-                    for (x = 2; x < xDim - 2; x++) {
-                        i = x + y * xDim;
+                // convert gray imgBuffer with outer BACKGROUND imgBuffer in its 5x5 neighborhood, into BACKGROUND
+                for (y = 2; y < (yDim - 2); y++) {
+
+                    for (x = 2; x < (xDim - 2); x++) {
+                        i = x + (y * xDim);
+
                         if (imgBuffer[i] == MUSCLE) {
-                            //check 5x5 neighborhood
-                            if (x != 0 && y != 0 && x != xDim - 1 && y != yDim - 1) {
+
+                            // check 5x5 neighborhood
+                            if ((x != 0) && (y != 0) && (x != (xDim - 1)) && (y != (yDim - 1))) {
+
                                 for (yy = -2; yy <= 2; yy++) {
+
                                     for (xx = -2; xx <= 2; xx++) {
-                                        if (imgBuffer1[i + xx + yy * xDim] == 0) {
+
+                                        if (imgBuffer1[i + xx + (yy * xDim)] == 0) {
                                             imgBuffer[i] = BACKGROUND;
                                             imgBuffer2[i] = 0;
                                         }
@@ -324,9 +436,9 @@ public class PlugInAlgorithmPipeline
                         }
                     }
                 }
-                obMask.importData( (j * imgBuffer.length), imgBuffer2, false);
-            }
-            catch (IOException ex) {
+
+                obMask.importData((j * imgBuffer.length), imgBuffer2, false);
+            } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline");
             }
         }
@@ -335,14 +447,16 @@ public class PlugInAlgorithmPipeline
         HardSeg[0] = null;
 
 
-//        System.out.println("outer boundary mask obtained --obMask");
-//        obMask.calcMinMax();
-//        new ViewJFrameImage(obMask);
+        //        System.out.println("outer boundary mask obtained --obMask");
+        //        obMask.calcMinMax();
+        //        new ViewJFrameImage(obMask);
 
-        //---------------------- STEP 3: ISN IMAGE------------------------------
+        // ---------------------- STEP 3: ISN IMAGE------------------------------
         progressBar.updateValue(40, activeImage);
-        if(z>1){
+
+        if (z > 1) {
             progressBar.setMessage("Passing 3D image through ISN");
+
             PlugInAlgorithmISN isnAlgo = null;
             isnAlgo = new PlugInAlgorithmISN(destImage1, srcImage);
             isnAlgo.setProgressBarVisible(false);
@@ -352,14 +466,15 @@ public class PlugInAlgorithmPipeline
             isnAlgo = null;
         }
 
-//        destImage1.calcMinMax();
-//        destImage1.setImageName("ISN'd input");
-//        new ViewJFrameImage(destImage1);
+        //        destImage1.calcMinMax();
+        //        destImage1.setImageName("ISN'd input");
+        //        new ViewJFrameImage(destImage1);
 
-        //----------------------STEP 4: THIGH SEPARATION -----------------------
+        // ----------------------STEP 4: THIGH SEPARATION -----------------------
 
         progressBar.setMessage("Doing Thigh Segmentation");
-        //CROP VOI
+
+        // CROP VOI
         int[] xbound = new int[2];
         int[] ybound = new int[2];
         int[] zbound = new int[2];
@@ -381,23 +496,32 @@ public class PlugInAlgorithmPipeline
         x11 = xbound1[1];
 
         for (j = 0; j < z; j++) {
-            try {
-                progressBar.updateValue(Math.round(40+30*j/z), activeImage);
 
-                obMask.exportData( (j * imgBuffer.length), imgBuffer.length, imgBuffer);
-                for (y = 5; y < yDim - 5; y++) {
-                    for (x = 2; x < xDim - 2; x++) {
-                        i = x + y * xDim;
-                        //both legs, top y
-                        if (imgBuffer[i - 2 * xDim] == 0 && imgBuffer[i - xDim] == 0 && imgBuffer[i] == 1 &&
-                            imgBuffer[i + xDim] == 1 && imgBuffer[i + 2 * xDim] == 1 && imgBuffer[i + 5 * xDim] == 1) {
+            try {
+                progressBar.updateValue(Math.round(40 + (30 * j / z)), activeImage);
+
+                obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
+
+                for (y = 5; y < (yDim - 5); y++) {
+
+                    for (x = 2; x < (xDim - 2); x++) {
+                        i = x + (y * xDim);
+
+                        // both legs, top y
+                        if ((imgBuffer[i - (2 * xDim)] == 0) && (imgBuffer[i - xDim] == 0) && (imgBuffer[i] == 1) &&
+                                (imgBuffer[i + xDim] == 1) && (imgBuffer[i + (2 * xDim)] == 1) &&
+                                (imgBuffer[i + (5 * xDim)] == 1)) {
+
                             if (y < ybound[0]) {
                                 ybound[0] = y;
                             }
                         }
-                        //both legs, bottom y
-                        if (imgBuffer[i + 2 * xDim] == 0 && imgBuffer[i + xDim] == 0 && imgBuffer[i] == 1 &&
-                            imgBuffer[i - xDim] == 1 && imgBuffer[i - 2 * xDim] == 1 && imgBuffer[i - 5 * xDim] == 1) {
+
+                        // both legs, bottom y
+                        if ((imgBuffer[i + (2 * xDim)] == 0) && (imgBuffer[i + xDim] == 0) && (imgBuffer[i] == 1) &&
+                                (imgBuffer[i - xDim] == 1) && (imgBuffer[i - (2 * xDim)] == 1) &&
+                                (imgBuffer[i - (5 * xDim)] == 1)) {
+
                             if (y > ybound[1]) {
                                 ybound[1] = y;
                             }
@@ -406,25 +530,31 @@ public class PlugInAlgorithmPipeline
                 }
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-                    //left leg, left x
+
+                    // left leg, left x
                     for (x = 5; x < x0; x++) {
-                        i = x + y * xDim;
-                        if (imgBuffer[i - 2] == 0 && imgBuffer[i - 1] == 0 && imgBuffer[i] == 1 &&
-                            imgBuffer[i + 1] == 1 && imgBuffer[i + 2] == 1 && imgBuffer[i + 5] == 1) {
+                        i = x + (y * xDim);
+
+                        if ((imgBuffer[i - 2] == 0) && (imgBuffer[i - 1] == 0) && (imgBuffer[i] == 1) &&
+                                (imgBuffer[i + 1] == 1) && (imgBuffer[i + 2] == 1) && (imgBuffer[i + 5] == 1)) {
+
                             if (x < xbound[0]) {
                                 xbound[0] = x;
                             }
                         }
                     }
                 }
+
                 for (y = ybound[0]; y < ybound[1]; y++) {
-                    for (x = x11; x < xDim - 5; x++) {
-                        i = x + y * xDim;
-                        //right leg, right x
-                        if (imgBuffer[i + 3] == 0 && imgBuffer[i + 4] == 0 &&
-                            imgBuffer[i + 5] == 0 && imgBuffer[i + 2] == 0 && imgBuffer[i + 1] == 0 &&
-                            imgBuffer[i] == 1 &&
-                            imgBuffer[i - 1] == 1 && imgBuffer[i - 2] == 1 && imgBuffer[i - 5] == 1) {
+
+                    for (x = x11; x < (xDim - 5); x++) {
+                        i = x + (y * xDim);
+
+                        // right leg, right x
+                        if ((imgBuffer[i + 3] == 0) && (imgBuffer[i + 4] == 0) && (imgBuffer[i + 5] == 0) &&
+                                (imgBuffer[i + 2] == 0) && (imgBuffer[i + 1] == 0) && (imgBuffer[i] == 1) &&
+                                (imgBuffer[i - 1] == 1) && (imgBuffer[i - 2] == 1) && (imgBuffer[i - 5] == 1)) {
+
                             if (x > xbound1[1]) {
                                 xbound1[1] = x;
                             }
@@ -433,26 +563,31 @@ public class PlugInAlgorithmPipeline
                 }
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-                    for (x = xbound[0]; x < xDim / 2; x++) {
-                        i = x + y * xDim;
-                        //left leg, right x
-                        if (imgBuffer[i - 5] == 1 && imgBuffer[i - 2] == 1 && imgBuffer[i - 1] == 1 &&
-                            imgBuffer[i] == 0 &&
-                            imgBuffer[i + 1] == 0 && imgBuffer[i + 2] == 0 && imgBuffer[i + 3] == 0 &&
-                            imgBuffer[i + 4] == 0 &&
-                            imgBuffer[i + 5] == 0) {
+
+                    for (x = xbound[0]; x < (xDim / 2); x++) {
+                        i = x + (y * xDim);
+
+                        // left leg, right x
+                        if ((imgBuffer[i - 5] == 1) && (imgBuffer[i - 2] == 1) && (imgBuffer[i - 1] == 1) &&
+                                (imgBuffer[i] == 0) && (imgBuffer[i + 1] == 0) && (imgBuffer[i + 2] == 0) &&
+                                (imgBuffer[i + 3] == 0) && (imgBuffer[i + 4] == 0) && (imgBuffer[i + 5] == 0)) {
+
                             if (x > xbound[1]) {
                                 xbound[1] = x;
                             }
                         }
                     }
                 }
+
                 for (y = ybound[0]; y < ybound[1]; y++) {
+
                     for (x = xbound[1]; x < xbound1[1]; x++) {
-                        i = x + y * xDim;
-                        //right leg, left x
-                        if (imgBuffer[i - 2] == 0 && imgBuffer[i - 1] == 0 && imgBuffer[i] == 1 &&
-                            imgBuffer[i + 1] == 1 && imgBuffer[i + 2] == 1 && imgBuffer[i + 5] == 1) {
+                        i = x + (y * xDim);
+
+                        // right leg, left x
+                        if ((imgBuffer[i - 2] == 0) && (imgBuffer[i - 1] == 0) && (imgBuffer[i] == 1) &&
+                                (imgBuffer[i + 1] == 1) && (imgBuffer[i + 2] == 1) && (imgBuffer[i + 5] == 1)) {
+
                             if (x < xbound1[0]) {
                                 xbound1[0] = x;
                             }
@@ -460,9 +595,8 @@ public class PlugInAlgorithmPipeline
                     }
                 }
 
-                obMask.importData( (j * imgBuffer.length), imgBuffer, false);
-            }
-            catch (IOException ex) {
+                obMask.importData((j * imgBuffer.length), imgBuffer, false);
+            } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline2");
             }
         }
@@ -482,10 +616,8 @@ public class PlugInAlgorithmPipeline
         obMaskA = new ModelImage(srcImage.getType(), extentA, "obMaskA", srcImage.getUserInterface());
         obMaskB = new ModelImage(srcImage.getType(), extentB, "obMaskB", srcImage.getUserInterface());
 
-        destImageA = new ModelImage(srcImage.getType(), extentA,
-                                    ("cropped right leg"));
-        destImageB = new ModelImage(srcImage.getType(), extentB,
-                                    ("cropped left leg"));
+        destImageA = new ModelImage(srcImage.getType(), extentA, ("cropped right leg"));
+        destImageB = new ModelImage(srcImage.getType(), extentB, ("cropped left leg"));
 
 
         AlgorithmCrop algorithmVOICrop1 = null;
@@ -499,8 +631,7 @@ public class PlugInAlgorithmPipeline
         progressBar.updateValue(85, activeImage);
 
 
-
-//        System.out.println("used obMask voi to crop ISN'd imageA");
+        //        System.out.println("used obMask voi to crop ISN'd imageA");
 
         AlgorithmCrop algorithmVOICrop2 = null;
         algorithmVOICrop2 = new AlgorithmCrop(destImageB, destImage1, 0, xbound1, ybound, zbound);
@@ -512,7 +643,7 @@ public class PlugInAlgorithmPipeline
         destImageB.calcMinMax();
         progressBar.updateValue(90, activeImage);
 
-//        System.out.println("used obMask voi to crop ISN'd imageB");
+        //        System.out.println("used obMask voi to crop ISN'd imageB");
 
         AlgorithmCrop algorithmVOICrop3 = null;
         algorithmVOICrop3 = new AlgorithmCrop(obMaskA, obMask, 0, xbound, ybound, zbound);
@@ -523,7 +654,7 @@ public class PlugInAlgorithmPipeline
 
         obMaskA.calcMinMax();
         progressBar.updateValue(95, activeImage);
-//        System.out.println("used obMask voi to crop ISN'd imageA");
+        //        System.out.println("used obMask voi to crop ISN'd imageA");
 
         AlgorithmCrop algorithmVOICrop4 = null;
         algorithmVOICrop4 = new AlgorithmCrop(obMaskB, obMask, 0, xbound1, ybound, zbound);
@@ -534,45 +665,10 @@ public class PlugInAlgorithmPipeline
 
         obMaskB.calcMinMax();
         progressBar.updateValue(100, activeImage);
-        //set the first part to being done, and return to the listening dialog
+
+        // set the first part to being done, and return to the listening dialog
         setCompleted(true);
         finalize();
         disposeProgressBar();
-    }
-
-
-
-    public ModelImage getResultImageA() {
-        return this.destImageA;
-    }
-
-    public ModelImage getResultImageB() {
-        return this.destImageB;
-    }
-
-    public ModelImage getMaskA() {
-        return this.obMaskA;
-    }
-
-    public ModelImage getMaskB() {
-        return this.obMaskB;
-    }
-
-    public void finalize() {
-        disposeLocal();
-        super.finalize();
-        progressBar.dispose();
-    }
-
-    public void disposeLocal() {
-        imgBuffer = null;
-
-
-        obMask.disposeLocal();
-        destImage1.disposeLocal();
-
-        obMask = null;
-        destImage1 = null;
-
     }
 }

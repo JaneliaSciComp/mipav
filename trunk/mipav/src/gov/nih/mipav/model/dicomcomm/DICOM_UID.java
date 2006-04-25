@@ -1,85 +1,113 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-
 /**
-*   DICOM_UID
-*
-*/
+ * DICOM_UID.
+ */
 public class DICOM_UID {
-    
-    private String seriesInstanceUID  = " ";
-    private String SOPInstanceUID     = " ";
-    private String studyInstanceUID   = " ";
-    
-    
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private String seriesInstanceUID = " ";
+
+    /** DOCUMENT ME! */
+    private String SOPInstanceUID = " ";
+
+    /** DOCUMENT ME! */
+    private String studyInstanceUID = " ";
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-    *
-    * @param studyUID  the study instance UID
-    */
+     * Creates a new DICOM_UID object.
+     *
+     * @param  studyUID  the study instance UID
+     */
     public DICOM_UID(String studyUID) {
-        studyInstanceUID  = studyUID;
+        studyInstanceUID = studyUID;
     }
-    
+
     /**
-    *
-    * @param seriesUID the series instance UID
-    * @param studyUID  the study instance UID
-    */
+     * Creates a new DICOM_UID object.
+     *
+     * @param  seriesUID  the series instance UID
+     * @param  studyUID   the study instance UID
+     */
     public DICOM_UID(String seriesUID, String studyUID) {
         seriesInstanceUID = seriesUID;
-        studyInstanceUID  = studyUID;  
+        studyInstanceUID = studyUID;
     }
-   
+
     /**
-    *
-    * @param seriesUID the series instance UID
-    * @param SOP_UID   the SOP instance UID
-    * @param studyUID  the study instance UID
-    */
+     * Creates a new DICOM_UID object.
+     *
+     * @param  seriesUID  the series instance UID
+     * @param  SOP_UID    the SOP instance UID
+     * @param  studyUID   the study instance UID
+     */
     public DICOM_UID(String seriesUID, String SOP_UID, String studyUID) {
         seriesInstanceUID = seriesUID;
-        SOPInstanceUID    = SOP_UID;
-        studyInstanceUID  = studyUID;   
+        SOPInstanceUID = SOP_UID;
+        studyInstanceUID = studyUID;
     }
-    
-    
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-    * Gets the Series Instance UID 
-    * @return the series instance UID
-    */
-    public String getSeriesInstanceUID() { return seriesInstanceUID; }
-    
+     * Gets the Series Instance UID.
+     *
+     * @return  the series instance UID
+     */
+    public String getSeriesInstanceUID() {
+        return seriesInstanceUID;
+    }
+
     /**
-    * Gets  the SOP Instance UID
-    * @return the SOP instance UID
-    */
-    public String getSOPInstanceUID()    { return SOPInstanceUID;    }    
-    
+     * Gets the SOP Instance UID.
+     *
+     * @return  the SOP instance UID
+     */
+    public String getSOPInstanceUID() {
+        return SOPInstanceUID;
+    }
+
     /**
-    * gets the Study Instance UID 
-    * @return the study instance UID
-    */
-    public String getStudyInstanceUID()  { return studyInstanceUID;  }
-    
-    
+     * gets the Study Instance UID.
+     *
+     * @return  the study instance UID
+     */
+    public String getStudyInstanceUID() {
+        return studyInstanceUID;
+    }
+
+
     /**
-    * Sets Series Instance UID
-    * @param seriesUID - the series instance UID
-    */
-    public void setSeriesInstanceUID(String seriesUID) { seriesInstanceUID = seriesUID; }
-    
+     * Sets Series Instance UID.
+     *
+     * @param  seriesUID  - the series instance UID
+     */
+    public void setSeriesInstanceUID(String seriesUID) {
+        seriesInstanceUID = seriesUID;
+    }
+
     /**
-    * Sets SOP Instance UID  
-    * @param SOP_UID    the SOP instance UID
-    */
-    public void setSOPInstanceUID(String SOP_UID)      {  SOPInstanceUID   = SOP_UID; }
-    
+     * Sets SOP Instance UID.
+     *
+     * @param  SOP_UID  the SOP instance UID
+     */
+    public void setSOPInstanceUID(String SOP_UID) {
+        SOPInstanceUID = SOP_UID;
+    }
+
     /**
-    *   Sets Study Instance UID   
-    *   @param studyUID the study instance UID
-    */
-    public void setStudyInstanceUID(String studyUID)   { studyInstanceUID  = studyUID; }
-    
+     * Sets Study Instance UID.
+     *
+     * @param  studyUID  the study instance UID
+     */
+    public void setStudyInstanceUID(String studyUID) {
+        studyInstanceUID = studyUID;
+    }
+
 
 }

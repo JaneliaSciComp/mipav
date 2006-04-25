@@ -1,107 +1,121 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
+
 import gov.nih.mipav.model.file.*;
 
-import java.util.*;
-import java.awt.event.*;
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+import java.awt.event.*;
+
+import java.util.*;
+
 import javax.swing.*;
 
 
 /**
- *
  * <p>Title: JDialogOverlay</p>
+ *
  * <p>Description: dialog for choosing 16 overlays (dicom tags or image attributes)</p>
+ *
  * <p>Copyright: Copyright (c) 2003</p>
- * <p>Company: </p>
- * @author benny the link
- * @stardate 1.0adf152345-alpha-gamma
+ *
+ * <p>Company:</p>
+ *
+ * @author    benny the link
+ * @stardate  1.0adf152345-alpha-gamma
  */
-public class JDialogOverlay
-    extends JDialogBase {
+public class JDialogOverlay extends JDialogBase {
 
-    private boolean isDicom = true;
-    private ViewUserInterface userInterface;
-    private String[] borderTitles = {
-        "Upper left corner",
-        "Upper right corner", "Lower left corner", "Lower right corner"};
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private String[] overlayValues = new String[16];
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -2470981064995748425L;
 
-    private String[] overlayNames = new String[16];
-
-    private JButton[] buttonArray = new JButton[16];
-
-    private JTextField [] nameArray = new JTextField[16];
-
-    private Hashtable dicomTable = null;
-
-    private JDialogChooseOverlay tagDialog;
-
-    private String headerString = null;
-
-    /** blank overlay string */
+    /** blank overlay string. */
     public static String BLANK_OVERLAY = " [Blank Overlay] ";
 
-    /** attribute string (for image attributes) */
+    /** attribute string (for image attributes). */
     public static String[] attribStr = {
-        "Dimension 0",
-        "Dimension 1",
-        "Dimension 2",
-        "Dimension 3",
-        "Type",
-        "Min",
-        "Max",
-        "Orientation",
-        "Axis X Orientation",
-        "Axis Y Orientation",
-        "Axis Z Orientation",
-        "Pixel resolution 0",
-        "Pixel resolution 1",
-        "Pixel resolution 2",
-        "Pixel resolution 3",
-        "Slice spacing",
-        "Origin 0",
-        "Origin 1",
-        "Origin 2",
-        "Origin 3",
-        "Endianess",
-        "Transform ID"};
+        "Dimension 0", "Dimension 1", "Dimension 2", "Dimension 3", "Type", "Min", "Max", "Orientation",
+        "Axis X Orientation", "Axis Y Orientation", "Axis Z Orientation", "Pixel resolution 0", "Pixel resolution 1",
+        "Pixel resolution 2", "Pixel resolution 3", "Slice spacing", "Origin 0", "Origin 1", "Origin 2", "Origin 3",
+        "Endianess", "Transform ID"
+    };
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private String[] borderTitles = {
+        "Upper left corner", "Upper right corner", "Lower left corner", "Lower right corner"
+    };
+
+    /** DOCUMENT ME! */
+    private JButton[] buttonArray = new JButton[16];
+
+    /** DOCUMENT ME! */
+    private Hashtable dicomTable = null;
+
+    /** DOCUMENT ME! */
+    private String headerString = null;
+
+    /** DOCUMENT ME! */
+    private boolean isDicom = true;
+
+    /** DOCUMENT ME! */
+    private JTextField[] nameArray = new JTextField[16];
+
+    /** DOCUMENT ME! */
+    private String[] overlayNames = new String[16];
+
+    /** DOCUMENT ME! */
+    private String[] overlayValues = new String[16];
+
+    /** DOCUMENT ME! */
+    private JDialogChooseOverlay tagDialog;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * constructor to be called from ViewJFrameImage
-     * @param theParentFrame Frame the parent frame
-     * @param isDicom boolean is the image dicom
+     * constructor to be called from ViewJFrameImage.
+     *
+     * @param  theParentFrame  Frame the parent frame
+     * @param  isDicom         boolean is the image dicom
+     * @param  headerStr       DOCUMENT ME!
      */
     public JDialogOverlay(Frame theParentFrame, boolean isDicom, String headerStr) {
         super(theParentFrame, false);
 
         this.isDicom = isDicom;
-        userInterface = ( (ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         this.headerString = headerStr;
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
      * performed an action!
-     * @param e ActionEvent
+     *
+     * @param  e  ActionEvent
      */
     public void actionPerformed(ActionEvent e) {
 
         if (e.getSource().equals(OKButton)) {
             String val;
+
             for (int i = 0; i < 16; i++) {
                 val = buttonArray[i].getText();
-                if ( val.equals(BLANK_OVERLAY) ) {
+
+                if (val.equals(BLANK_OVERLAY)) {
                     overlayValues[i] = new String("-");
-                }
-                else if ( !isDicom ) {
+                } else if (!isDicom) {
                     overlayValues[i] = new String(val);
-                }
-                else {
-                    overlayValues[i] = new String(val.substring(1, val.length()-1));
+                } else {
+                    overlayValues[i] = new String(val.substring(1, val.length() - 1));
                 }
             }
 
@@ -114,22 +128,25 @@ public class JDialogOverlay
             Preferences.setOverlayNames(isDicom, overlayNames);
 
             if (parentFrame instanceof ViewJFrameImage) {
-                ((ViewJFrameImage)parentFrame).updateImages();
+                ((ViewJFrameImage) parentFrame).updateImages();
             }
+
             setVisible(false);
             dispose();
-        }
-        else if (e.getSource().equals(cancelButton)) {
+        } else if (e.getSource().equals(cancelButton)) {
             setVisible(false);
             dispose();
-        }
-        else {
+        } else {
+
             for (int i = 0; i < 16; i++) {
+
                 if (e.getSource().equals(buttonArray[i])) {
+
                     if (headerString != null) {
                         overlayValues[i] = new String(headerString);
                         buttonArray[i].setText("(" + overlayValues[i] + ")");
                         headerString = null;
+
                         if (isDicom) {
                             FileDicomKey tagKey = new FileDicomKey(overlayValues[i]);
 
@@ -141,6 +158,7 @@ public class JDialogOverlay
                         tagDialog.setName(nameArray[i]);
                         tagDialog.setVisible(true);
                     }
+
                     break;
                 }
             }
@@ -148,23 +166,75 @@ public class JDialogOverlay
     }
 
     /**
-     * cleanup on closing
-     * @param event WindowEvent
+     * cleanup on closing.
+     *
+     * @param  event  WindowEvent
      */
     public void windowClosing(WindowEvent event) {
+
         if (tagDialog != null) {
             tagDialog.dispose();
         }
+
         dispose();
     }
 
     /**
-     * initialize the dialog
+     * builds each quadrant panel that has 4 buttons.
+     *
+     * @param   quadrant  int (0-4)
+     *
+     * @return  JPanel
+     */
+    private JPanel buildPanel(int quadrant) {
+        JPanel panel = new JPanel();
+
+        panel.setBorder(buildTitledBorder(borderTitles[quadrant]));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        panel.setLayout(new GridBagLayout());
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.insets = new Insets(10, 10, 10, 10);
+
+        // create the buttons and add them to the panel
+        int start = quadrant * 4;
+        int end = start + 4;
+
+        for (int i = start; i < end; i++) {
+            gbc.gridx = 0;
+            gbc.fill = gbc.VERTICAL;
+            gbc.weightx = 0;
+            gbc.weighty = 1;
+            buttonArray[i] = new JButton();
+            buttonArray[i].setFont(MipavUtil.font12);
+            buttonArray[i].addActionListener(this);
+            buttonArray[i].setHorizontalAlignment(JButton.LEFT);
+            panel.add(buttonArray[i], gbc);
+
+            gbc.weightx = 1;
+            gbc.fill = gbc.BOTH;
+            nameArray[i] = new JTextField(7);
+            nameArray[i].setFont(MipavUtil.font12);
+
+            gbc.gridx++;
+            panel.add(nameArray[i], gbc);
+
+            gbc.gridy++;
+        }
+
+        return panel;
+    }
+
+    /**
+     * initialize the dialog.
      */
     private void init() {
 
 
         String title = "Overlay Options";
+
         if (isDicom) {
             title = "DICOM " + title;
             dicomTable = DICOMDictionaryBuilder.getDicomTagTable();
@@ -198,53 +268,7 @@ public class JDialogOverlay
     }
 
     /**
-     * builds each quadrant panel that has 4 buttons
-     * @param quadrant int (0-4)
-     * @return JPanel
-     */
-    private JPanel buildPanel(int quadrant) {
-        JPanel panel = new JPanel();
-
-        panel.setBorder(buildTitledBorder(borderTitles[quadrant]));
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        panel.setLayout(new GridBagLayout());
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(10, 10, 10, 10);
-
-        //create the buttons and add them to the panel
-        int start = quadrant * 4;
-        int end = start + 4;
-
-        for (int i = start; i < end; i++) {
-            gbc.gridx = 0;
-            gbc.fill = gbc.VERTICAL;
-            gbc.weightx = 0;
-            gbc.weighty = 1;
-            buttonArray[i] = new JButton();
-            buttonArray[i].setFont(MipavUtil.font12);
-            buttonArray[i].addActionListener(this);
-            buttonArray[i].setHorizontalAlignment(JButton.LEFT);
-            panel.add(buttonArray[i], gbc);
-
-            gbc.weightx = 1;
-            gbc.fill = gbc.BOTH;
-            nameArray[i] = new JTextField(7);
-            nameArray[i].setFont(MipavUtil.font12);
-
-            gbc.gridx++;
-            panel.add(nameArray[i], gbc);
-
-            gbc.gridy++;
-        }
-
-        return panel;
-    }
-
-    /**
-     * Sets the text for the overlay buttons (dicom or image attrib)
+     * Sets the text for the overlay buttons (dicom or image attrib).
      */
     private void setOverlayButtons() {
 
@@ -253,22 +277,21 @@ public class JDialogOverlay
         overlayNames = Preferences.getOverlayNames(isDicom);
 
         for (int i = 0; i < 16; i++) {
-            if (overlayValues[i] == null ||
-                overlayValues[i].equals("-")) {
+
+            if ((overlayValues[i] == null) || overlayValues[i].equals("-")) {
                 buttonArray[i].setText(BLANK_OVERLAY);
 
-            }
-            else {
+            } else {
+
                 if (isDicom) {
                     buttonArray[i].setText("(" + overlayValues[i] + ")");
                     nameArray[i].setText(overlayNames[i]);
-                    //FileDicomKey tagKey = new FileDicomKey(overlayValues[i]);
+                    // FileDicomKey tagKey = new FileDicomKey(overlayValues[i]);
 
-                    //FileDicomTag tag = (FileDicomTag) (dicomTable.get(tagKey));
-                    //nameArray[i].setText(tag.getName());
+                    // FileDicomTag tag = (FileDicomTag) (dicomTable.get(tagKey));
+                    // nameArray[i].setText(tag.getName());
 
-                }
-                else {
+                } else {
                     buttonArray[i].setText(overlayValues[i]);
                     nameArray[i].setText(overlayNames[i]);
                 }
@@ -276,111 +299,109 @@ public class JDialogOverlay
         }
     }
 
-    /**
-     * <p>Title: JDialogDICOMTags </p>
-     * <p>Description: Class for selecting any dicom tag from the dicom dictionary (if dicom)
-     *  or image attributes (if not dicom)</p>
-     * <p>Copyright: Copyright (c) 2003</p>
-     * <p>Company: </p>
-     * @author not attributable
-     * @version 1.0
-     */
-    private class JDialogChooseOverlay
-        extends JDialogBase {
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
 
-        private JScrollPane scrollPane;
+    /**
+     * <p>Title: JDialogDICOMTags</p>
+     *
+     * <p>Description: Class for selecting any dicom tag from the dicom dictionary (if dicom) or image attributes (if
+     * not dicom)</p>
+     *
+     * <p>Copyright: Copyright (c) 2003</p>
+     *
+     * <p>Company:</p>
+     *
+     * @author   not attributable
+     * @version  1.0
+     */
+    private class JDialogChooseOverlay extends JDialogBase {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 2690526125316423716L;
+
+        /** DOCUMENT ME! */
         private JButton currentButton;
+
+        /** DOCUMENT ME! */
         private JTextField currentName;
+
+        /** DOCUMENT ME! */
         private ViewTableModel model;
+
+        /** DOCUMENT ME! */
+        private JScrollPane scrollPane;
+
+        /** DOCUMENT ME! */
         private JTable table;
 
+        /**
+         * Creates a new JDialogChooseOverlay object.
+         *
+         * @param  parentFrame  DOCUMENT ME!
+         */
         public JDialogChooseOverlay(Frame parentFrame) {
             super(parentFrame, true);
             init();
         }
 
         /**
-         * the usual stuff
-         * @param e ActionEvent
+         * the usual stuff.
+         *
+         * @param  e  ActionEvent
          */
         public void actionPerformed(ActionEvent e) {
             String ac = e.getActionCommand();
 
             if (ac.equals("OK")) {
                 setVisible(false);
+
                 int[] rows = table.getSelectedRows();
 
                 if (isDicom) {
-                    currentButton.setText( (String) model.getValueAt(rows[0], 0));
+                    currentButton.setText((String) model.getValueAt(rows[0], 0));
                     currentName.setText((String) model.getValueAt(rows[0], 1));
-                    //currentButton.setText(currentButton.getText() + (String) model.getValueAt(rows[0], 1));
-                }
-                else {
-                    currentButton.setText( (String) model.getValueAt(rows[0], 0));
+                    // currentButton.setText(currentButton.getText() + (String) model.getValueAt(rows[0], 1));
+                } else {
+                    currentButton.setText((String) model.getValueAt(rows[0], 0));
                     currentName.setText((String) model.getValueAt(rows[0], 0));
                 }
+
                 table.clearSelection();
-            }
-            else if (ac.equals("Cancel")) {
+            } else if (ac.equals("Cancel")) {
                 setVisible(false);
                 table.clearSelection();
             }
         }
 
         /**
-         * sets the button that will have its name updated when OK is clicked
-         * @param button JButton
+         * sets the button that will have its name updated when OK is clicked.
+         *
+         * @param  button  JButton
          */
         public void setButton(JButton button) {
             this.currentButton = button;
         }
 
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  field  DOCUMENT ME!
+         */
         public void setName(JTextField field) {
             this.currentName = field;
         }
 
         /**
-         * Do nothing on window close so we dont have to rebuild the dicom list
-         * @param event WindowEvent
+         * Do nothing on window close so we dont have to rebuild the dicom list.
+         *
+         * @param  event  WindowEvent
          */
         public void windowClosing(WindowEvent event) {
             setVisible(false);
         }
 
         /**
-         * initialize the dialog
-         */
-        private void init() {
-            if (isDicom) {
-                setTitle("Select DICOM tag for overlay");
-            }
-            else {
-                setTitle("Choose attribute");
-            }
-            buildTable();
-            scrollPane = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-            scrollPane.getVerticalScrollBar().setUnitIncrement(14);
-
-            JPanel buttonPanel = new JPanel();
-            buildOKButton();
-            buttonPanel.add(OKButton);
-            buildCancelButton();
-            buttonPanel.add(cancelButton);
-
-            this.getContentPane().add(scrollPane, BorderLayout.CENTER);
-            this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-            pack();
-            if (isDicom) {
-                this.setSize(350, 500);
-            }
-            else {
-                this.setSize(175, 450);
-            }
-        }
-
-        /**
-         * Build the table to be used in the dialog (dicom or image attributes)
+         * Build the table to be used in the dialog (dicom or image attributes).
          */
         private void buildTable() {
 
@@ -406,32 +427,71 @@ public class JDialogOverlay
                 table.getColumn("Name").setMinWidth(160);
                 table.getColumn("Name").setMaxWidth(500);
 
-                model.addRow(new String[] {BLANK_OVERLAY, ""});
+                model.addRow(new String[] { BLANK_OVERLAY, "" });
 
                 while (e.hasMoreElements()) {
                     key = (FileDicomKey) e.nextElement();
                     tag = (FileDicomTag) dicomTable.get(key);
+
                     if (tag != null) {
-                        model.addRow(new String[] {"(" + key.getGroup() + "," + key.getElement() + ")", tag.getName()});
+                        model.addRow(new String[] { "(" + key.getGroup() + "," + key.getElement() + ")", tag.getName() });
                     }
                 }
+
                 JDialogFileInfoDICOM.sort(model, 0, false, false);
-            }
-            else {
+            } else {
                 model.addColumn("Image Attribute");
+
                 for (int i = 0; i < attribStr.length; i++) {
-                    model.addRow(new String[] {attribStr[i]});
+                    model.addRow(new String[] { attribStr[i] });
                 }
             }
 
         }
 
-        // class that will sort the table when header is clicked
-        private class HeaderListener
-            implements MouseListener {
+        /**
+         * initialize the dialog.
+         */
+        private void init() {
+
+            if (isDicom) {
+                setTitle("Select DICOM tag for overlay");
+            } else {
+                setTitle("Choose attribute");
+            }
+
+            buildTable();
+            scrollPane = new JScrollPane(table, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                         JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+            scrollPane.getVerticalScrollBar().setUnitIncrement(14);
+
+            JPanel buttonPanel = new JPanel();
+            buildOKButton();
+            buttonPanel.add(OKButton);
+            buildCancelButton();
+            buttonPanel.add(cancelButton);
+
+            this.getContentPane().add(scrollPane, BorderLayout.CENTER);
+            this.getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+            pack();
+
+            if (isDicom) {
+                this.setSize(350, 500);
+            } else {
+                this.setSize(175, 450);
+            }
+        }
+
+        /**
+         * class that will sort the table when header is clicked.
+         */
+        private class HeaderListener implements MouseListener {
+
             /**
-             *  When the user clicks on a header, sorts the column.
-             *  @param e       event that triggered this method
+             * When the user clicks on a header, sorts the column.
+             *
+             * @param  e  event that triggered this method
              */
 
             public void mouseClicked(MouseEvent e) {
@@ -441,29 +501,54 @@ public class JDialogOverlay
 
                 if (source.equals(table.getTableHeader())) {
                     col = table.columnAtPoint(p);
-                    if (col == 2)return;
-                    if (e.isShiftDown())
+
+                    if (col == 2) {
+                        return;
+                    }
+
+                    if (e.isShiftDown()) {
                         JDialogFileInfoDICOM.sort(model, col, true, false);
-                    else
+                    } else {
                         JDialogFileInfoDICOM.sort(model, col, false, false);
+                    }
                 }
             }
 
-            /** Unchanged */
-            public void mouseDragged(MouseEvent e) {}
+            /**
+             * Unchanged.
+             *
+             * @param  e  DOCUMENT ME!
+             */
+            public void mouseDragged(MouseEvent e) { }
 
-            /** Unchanged */
-            public void mouseReleased(MouseEvent e) {}
+            /**
+             * Unchanged.
+             *
+             * @param  e  DOCUMENT ME!
+             */
+            public void mouseEntered(MouseEvent e) { }
 
-            /** Unchanged */
-            public void mouseExited(MouseEvent e) {}
+            /**
+             * Unchanged.
+             *
+             * @param  e  DOCUMENT ME!
+             */
+            public void mouseExited(MouseEvent e) { }
 
-            /** Unchanged */
-            public void mouseEntered(MouseEvent e) {}
+            /**
+             * Unchanged.
+             *
+             * @param  e  DOCUMENT ME!
+             */
+            public void mousePressed(MouseEvent e) { }
 
-            /** Unchanged */
-            public void mousePressed(MouseEvent e) {}
+            /**
+             * Unchanged.
+             *
+             * @param  e  DOCUMENT ME!
+             */
+            public void mouseReleased(MouseEvent e) { }
         }
-    };
+    }
 
 }

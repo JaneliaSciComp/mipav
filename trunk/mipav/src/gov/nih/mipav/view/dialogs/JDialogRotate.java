@@ -1,363 +1,408 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.structures.*;
 
-import java.awt.event.*;
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
 
+
 /**
- *   Dialog to call the image rotate. This dialog will not be
- *   visible because it does not require user input at this time. It
- *   was made a dialog object because it may in the future require
- *   user input and to be consistent with the dialog/algorithm
- *   paradigm.  Replaces image.
+ * Dialog to call the image rotate. This dialog will not be visible because it does not require user input at this time.
+ * It was made a dialog object because it may in the future require user input and to be consistent with the
+ * dialog/algorithm paradigm. Replaces image.
  *
- *		@version    1.0 July 26, 2000
- *		@author     Harman J. Singh
- *
+ * @version  1.0 July 26, 2000
+ * @author   Harman J. Singh
  */
-public class JDialogRotate
-    extends JDialogBase
-    implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRotate extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
 
-  private AlgorithmRotate rotateAlgo;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-  /** Source image for algorithm. */
-  private ModelImage image = null;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 8408959889101739488L;
 
-  /** Result image after algorithm has completed. */
-  private ModelImage resultImage = null;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-  /** User interface pointer. */
-  private ViewUserInterface userInterface;
+    /** DOCUMENT ME! */
+    private boolean doClose = true;
 
-  /** Rotation axis. */
-  private int rotateAxis;
+    /** Source image for algorithm. */
+    private ModelImage image = null;
 
-  /** Needed to set frames to locked. */
-  private String titles[];
+    /** Result image after algorithm has completed. */
+    private ModelImage resultImage = null;
 
-  private boolean doClose = true;
+    /** DOCUMENT ME! */
+    private AlgorithmRotate rotateAlgo;
 
-  /**
-   *  Sets up variables but does not show dialog.
-   *  @param theParentFrame  Parent frame.
-   *  @param im              Source image.
-   *  @param rotateAxis      Axis which image is to be rotated.
-   */
-  public JDialogRotate(Frame theParentFrame, ModelImage im, int rotateAxis) {
-    super(theParentFrame, true);
+    /** Rotation axis. */
+    private int rotateAxis;
 
-    setForeground(Color.black);
-    this.rotateAxis = rotateAxis;
-    image = im;
-    userInterface = ( (ViewJFrameBase) parentFrame).getUserInterface();
-  }
+    /** Needed to set frames to locked. */
+    private String[] titles;
 
-  /**
-   *	Sets the appropriate variables.  Does not actually create a dialog that is visible
-   *	because no user input is necessary at present.  This constructor is used by the script
-   *	parser because it doesn't have the parent frame.
-   *	@param ui       		User interface.
-   *	@param im           	Source image.
-   *	@param rotateAxis     	Axis which image is to be rotated.
-   */
-  public JDialogRotate(ViewUserInterface ui, ModelImage im, int rotateAxis) {
-    super();
+    /** User interface pointer. */
+    private ViewUserInterface userInterface;
 
-    setForeground(Color.black);
-    parentFrame = im.getParentFrame();
-    this.rotateAxis = rotateAxis;
-    image = im;
-    this.userInterface = ui;
-    doClose = false;
-    userInterface.regFrame(image.getParentFrame());
-  }
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
-  /**
-   * Empty constructor needed for dynamic instantiation (used during scripting).
-   */
-  public JDialogRotate() {}
+    /**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+    public JDialogRotate() { }
 
-  /**
-   * Run this algorithm from a script.
-   * @param parser the script parser we get the state from
-   * @throws IllegalArgumentException if there is something wrong with the arguments in the script
-   */
-  public void scriptRun (AlgorithmScriptParser parser) throws IllegalArgumentException {
-      String srcImageKey = null;
-      String destImageKey = null;
+    /**
+     * Sets up variables but does not show dialog.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  im              Source image.
+     * @param  rotateAxis      Axis which image is to be rotated.
+     */
+    public JDialogRotate(Frame theParentFrame, ModelImage im, int rotateAxis) {
+        super(theParentFrame, true);
 
-      try {
-          srcImageKey = parser.getNextString();
-      } catch (Exception e) {
-          throw new IllegalArgumentException();
-      }
-      ModelImage im = parser.getImage(srcImageKey);
-
-      setForeground(Color.black);
-      doClose = false;
-      image = im;
-      userInterface = image.getUserInterface();
-      parentFrame = image.getParentFrame();
-
-      userInterface.regFrame(image.getParentFrame());
-
-      // the result image
-      try {
-          destImageKey = parser.getNextString();
-      } catch (Exception e) {
-          throw new IllegalArgumentException();
-      }
-
-      try {
-          String axisn = parser.getNextString();
-          int axis;
-          if (axisn.equals("X+"))
-              axis = AlgorithmRotate.X_AXIS_PLUS;
-          else if (axisn.equals("X-"))
-              axis = AlgorithmRotate.X_AXIS_MINUS;
-          else if (axisn.equals("Y+"))
-              axis = AlgorithmRotate.Y_AXIS_PLUS;
-          else if (axisn.equals("Y-"))
-              axis = AlgorithmRotate.Y_AXIS_MINUS;
-          else if (axisn.equals("Z+"))
-              axis = AlgorithmRotate.Z_AXIS_PLUS;
-          else if (axisn.equals("Z-"))
-              axis = AlgorithmRotate.Z_AXIS_MINUS;
-          else
-              throw new Exception("Illegal axis parameter: " + axisn);
-
-          rotateAxis = axis;
-      } catch (Exception e) {
-          throw new IllegalArgumentException(e.getMessage());
-      }
-
-      setActiveImage(parser.isActiveImage());
-      setSeparateThread(false);
-      callAlgorithm();
-      if (!srcImageKey.equals(destImageKey)) {
-          parser.putVariable(destImageKey, getResultImage().getImageName());
-      }
-  }
-
-  /**
-   * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-   * @param algo the algorithm to make an entry for
-   */
-  public void insertScriptLine (AlgorithmBase algo) {
-      if (algo.isCompleted()) {
-          if (userInterface.isScriptRecording()) {
-              //check to see if the match image is already in the ImgTable
-              if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-                  if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                      userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                  }
-              }
-
-              userInterface.getScriptDialog().append("Rotate " +
-                                                     userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                     " ");
-              userInterface.getScriptDialog().putVar(resultImage.getImageName());
-              String axis;
-              switch (rotateAxis) {
-              case AlgorithmRotate.X_AXIS_PLUS:
-                  axis = "X+";
-                  break;
-              case AlgorithmRotate.X_AXIS_MINUS:
-                  axis = "X-";
-                  break;
-              case AlgorithmRotate.Y_AXIS_PLUS:
-                  axis = "Y+";
-                  break;
-              case AlgorithmRotate.Y_AXIS_MINUS:
-                  axis = "Y-";
-                  break;
-              case AlgorithmRotate.Z_AXIS_MINUS:
-                  axis = "Z-";
-                  break;
-              case AlgorithmRotate.Z_AXIS_PLUS:
-              default:
-                  axis = "Z+";
-                  break;
-              }
-              userInterface.getScriptDialog().append(userInterface.
-                                                     getScriptDialog().getVar(resultImage.getImageName()) + " " +
-                                                     axis + "\n");
-          }
-      }
-  }
-
-  /**
-   *  Accessor that returns the image.
-   *  @return          The result image.
-   */
-  public ModelImage getResultImage() {
-    return resultImage;
-  }
-
-  /**
-   *	Only called by the script parser; runs the algorithm.
-   *	@param event       Event that triggers function.
-   */
-  public void actionPerformed(ActionEvent event) {
-    String command = event.getActionCommand();
-  }
-
-  /**
-   *	Calls the algorithm.
-   */
-  public void callAlgorithm() {
-
-    try {
-      // Make algorithm
-      rotateAlgo = new AlgorithmRotate(image, rotateAxis);
-      // This is very important. Adding this object as a listener allows the algorithm to
-      // notify this object when it has completed of failed. See algorithm performed event.
-      // This is made possible by implementing AlgorithmedPerformed interface
-      rotateAlgo.addListener(this);
-      // Hide dialog
-      setVisible(false);
-
-      // These next lines set the titles in all frames where the source image is displayed to
-      // "locked - " image name so as to indicate that the image is now read/write locked!
-      // The image frames are disabled and then unregisted from the userinterface until the
-      // algorithm has completed.
-      Vector imageFrames = image.getImageFrameVector();
-      titles = new String[imageFrames.size()];
-      for (int i = 0; i < imageFrames.size(); i++) {
-        titles[i] = ( (ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-        ( (ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " +
-            titles[i]);
-        ( (ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-        userInterface.unregisterFrame( (Frame) (imageFrames.elementAt(i)));
-      }
-
-      if (runInSeparateThread) {
-        // Start the thread as a low priority because we wish to still have user interface work fast.
-        if (rotateAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-          MipavUtil.displayError("A thread is already running on this object");
-        }
-      }
-      else {
-        rotateAlgo.setActiveImage(isActiveImage);
-        if (!userInterface.isAppFrameVisible()) {
-          rotateAlgo.setProgressBarVisible(false);
-        }
-        rotateAlgo.run();
-      }
+        setForeground(Color.black);
+        this.rotateAxis = rotateAxis;
+        image = im;
+        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
     }
-    catch (OutOfMemoryError x) {
-      System.gc();
-      MipavUtil.displayError("Dialog Rotate: unable to allocate enough memory");
-      return;
+
+    /**
+     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
+     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
+     *
+     * @param  ui          User interface.
+     * @param  im          Source image.
+     * @param  rotateAxis  Axis which image is to be rotated.
+     */
+    public JDialogRotate(ViewUserInterface ui, ModelImage im, int rotateAxis) {
+        super();
+
+        setForeground(Color.black);
+        parentFrame = im.getParentFrame();
+        this.rotateAxis = rotateAxis;
+        image = im;
+        this.userInterface = ui;
+        doClose = false;
+        userInterface.regFrame(image.getParentFrame());
     }
-  }
 
-  //************************************************************************
-   //************************** Algorithm Events ****************************
-    //************************************************************************
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-     /**
-      *	This method is required if the AlgorithmPerformed
-      *	interface is implemented. It is called by the
-      *	algorithms when it has completed or failed to
-      *	to complete, so that the dialog can display
-      *	the result image and/or clean up.
-      *   @param algorithm   Algorithm that caused the event.
-      */
-     public void algorithmPerformed(AlgorithmBase algorithm) {
-       ViewJFrameImage imageFrame = null;
-       if (algorithm instanceof AlgorithmRotate) {
-         if (rotateAlgo.isCompleted() == true) {
-           // These next lines set the titles in all frames where the source image is displayed to
-           // image name so as to indicate that the image is now unlocked!
-           // The image frames are enabled and then registed to the userinterface.
-           resultImage = rotateAlgo.returnImage();
+    /**
+     * Only called by the script parser; runs the algorithm.
+     *
+     * @param  event  Event that triggers function.
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+    }
 
-           Vector imageFrames = image.getImageFrameVector();
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
 
-           for (int i = 0; i < imageFrames.size(); i++) {
-             ( (Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-             ( (Frame) (imageFrames.elementAt(i))).setEnabled(true);
-             if ( ( (Frame) (imageFrames.elementAt(i))) != parentFrame &&
-                 parentFrame != null) {
-               userInterface.registerFrame( (Frame) (imageFrames.elementAt(i)));
-             }
-           }
+    /**
+     * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
+     * it has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
+     *
+     * @param  algorithm  Algorithm that caused the event.
+     */
+    public void algorithmPerformed(AlgorithmBase algorithm) {
+        ViewJFrameImage imageFrame = null;
 
-           Point pt;
-           if (parentFrame != null)
-             pt = ( (ViewJFrameBase) parentFrame).getLocation();
-           else
-             pt = new Point(Toolkit.getDefaultToolkit().getScreenSize().width /
-                            2,
-                            Toolkit.getDefaultToolkit().getScreenSize().height /
-                            2);
+        if (algorithm instanceof AlgorithmRotate) {
 
-           imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(pt.x, pt.y));
+            if (rotateAlgo.isCompleted() == true) {
 
-           // Not so sure about this.
-           if (image.getLightBoxFrame() != null) {
-             ViewJFrameLightBox lightBoxFrame;
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                resultImage = rotateAlgo.returnImage();
 
-             try {
-               pt = image.getLightBoxFrame().getLocation();
-               image.getLightBoxFrame().close();
-               lightBoxFrame = new ViewJFrameLightBox(imageFrame, "LightBox",
-                   resultImage, imageFrame.getComponentImage().getLUTa(),
-                   imageFrame.getComponentImage().getImageB(),
-                   imageFrame.getComponentImage().getLUTb(),
-                   imageFrame.getComponentImage().getResolutionX(),
-                   imageFrame.getComponentImage().getResolutionY(),
-                   new Dimension(pt.x, pt.y), imageFrame.getControls());
-             }
-             catch (OutOfMemoryError error) {
-               MipavUtil.displayError("Out of memory: unable to open new frame");
-             }
-           }
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                Point pt;
+
+                if (parentFrame != null) {
+                    pt = ((ViewJFrameBase) parentFrame).getLocation();
+                } else {
+                    pt = new Point(Toolkit.getDefaultToolkit().getScreenSize().width / 2,
+                                   Toolkit.getDefaultToolkit().getScreenSize().height / 2);
+                }
+
+                imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(pt.x, pt.y));
+
+                // Not so sure about this.
+                if (image.getLightBoxFrame() != null) {
+                    ViewJFrameLightBox lightBoxFrame;
+
+                    try {
+                        pt = image.getLightBoxFrame().getLocation();
+                        image.getLightBoxFrame().close();
+                        lightBoxFrame = new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
+                                                               imageFrame.getComponentImage().getLUTa(),
+                                                               imageFrame.getComponentImage().getImageB(),
+                                                               imageFrame.getComponentImage().getLUTb(),
+                                                               imageFrame.getComponentImage().getResolutionX(),
+                                                               imageFrame.getComponentImage().getResolutionY(),
+                                                               new Dimension(pt.x, pt.y), imageFrame.getControls());
+                    } catch (OutOfMemoryError error) {
+                        MipavUtil.displayError("Out of memory: unable to open new frame");
+                    }
+                }
 
 
-         }
-         else {
-           // These next lines set the titles in all frames where the source image is displayed to
-           // image name so as to indicate that the image is now unlocked!
-           // The image frames are enabled and then registered to the userinterface.
-           Vector imageFrames = image.getImageFrameVector();
-           for (int i = 0; i < imageFrames.size(); i++) {
-             ( (Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-             ( (Frame) (imageFrames.elementAt(i))).setEnabled(true);
-             if ( ( (Frame) (imageFrames.elementAt(i))) != parentFrame) {
-               userInterface.registerFrame( (Frame) (imageFrames.elementAt(i)));
-             }
-           }
-           if (parentFrame != null)
-             userInterface.registerFrame(parentFrame);
-           image.notifyImageDisplayListeners(null, true);
-         }
+            } else {
 
-         if (rotateAlgo.isCompleted() == true) {
-           insertScriptLine(algorithm);
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registered to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
 
-           if (doClose && !userInterface.isScriptRecording()) {
-               if (parentFrame != null) {
-                   ((ViewJFrameBase)parentFrame).getUserInterface().unregisterFrame(parentFrame);
-                   ( (ViewJFrameBase) parentFrame).close();
-               }
-               else {
-                  ( (ViewJFrameImage) image.getParentFrame()).close();
-               }
-           } // if (doClose)
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-         } // if (rotateAlgo.isCompleted() == true)
-       }
-       System.gc();
-       rotateAlgo.finalize();
-       rotateAlgo = null;
-     }
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            }
+
+            if (rotateAlgo.isCompleted() == true) {
+                insertScriptLine(algorithm);
+
+                if (doClose && !userInterface.isScriptRecording()) {
+
+                    if (parentFrame != null) {
+                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
+                        ((ViewJFrameBase) parentFrame).close();
+                    } else {
+                        ((ViewJFrameImage) image.getParentFrame()).close();
+                    }
+                } // if (doClose)
+
+            } // if (rotateAlgo.isCompleted() == true)
+        }
+
+        System.gc();
+        rotateAlgo.finalize();
+        rotateAlgo = null;
+    }
+
+    /**
+     * Calls the algorithm.
+     */
+    public void callAlgorithm() {
+
+        try {
+
+            // Make algorithm
+            rotateAlgo = new AlgorithmRotate(image, rotateAxis);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            rotateAlgo.addListener(this);
+
+            // Hide dialog
+            setVisible(false);
+
+            // These next lines set the titles in all frames where the source image is displayed to
+            // "locked - " image name so as to indicate that the image is now read/write locked!
+            // The image frames are disabled and then unregisted from the userinterface until the
+            // algorithm has completed.
+            Vector imageFrames = image.getImageFrameVector();
+            titles = new String[imageFrames.size()];
+
+            for (int i = 0; i < imageFrames.size(); i++) {
+                titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+            }
+
+            if (runInSeparateThread) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (rotateAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                rotateAlgo.setActiveImage(isActiveImage);
+
+                if (!userInterface.isAppFrameVisible()) {
+                    rotateAlgo.setProgressBarVisible(false);
+                }
+
+                rotateAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("Dialog Rotate: unable to allocate enough memory");
+
+            return;
+        }
+    }
+
+    /**
+     * Accessor that returns the image.
+     *
+     * @return  The result image.
+     */
+    public ModelImage getResultImage() {
+        return resultImage;
+    }
+
+    /**
+     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
+     *
+     * @param  algo  the algorithm to make an entry for
+     */
+    public void insertScriptLine(AlgorithmBase algo) {
+
+        if (algo.isCompleted()) {
+
+            if (userInterface.isScriptRecording()) {
+
+                // check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
+
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
+                    }
+                }
+
+                userInterface.getScriptDialog().append("Rotate " +
+                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
+                                                       " ");
+                userInterface.getScriptDialog().putVar(resultImage.getImageName());
+
+                String axis;
+
+                switch (rotateAxis) {
+
+                    case AlgorithmRotate.X_AXIS_PLUS:
+                        axis = "X+";
+                        break;
+
+                    case AlgorithmRotate.X_AXIS_MINUS:
+                        axis = "X-";
+                        break;
+
+                    case AlgorithmRotate.Y_AXIS_PLUS:
+                        axis = "Y+";
+                        break;
+
+                    case AlgorithmRotate.Y_AXIS_MINUS:
+                        axis = "Y-";
+                        break;
+
+                    case AlgorithmRotate.Z_AXIS_MINUS:
+                        axis = "Z-";
+                        break;
+
+                    case AlgorithmRotate.Z_AXIS_PLUS:
+                    default:
+                        axis = "Z+";
+                        break;
+                }
+
+                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
+                                                       " " + axis + "\n");
+            }
+        }
+    }
+
+    /**
+     * Run this algorithm from a script.
+     *
+     * @param   parser  the script parser we get the state from
+     *
+     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     */
+    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
+        String srcImageKey = null;
+        String destImageKey = null;
+
+        try {
+            srcImageKey = parser.getNextString();
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        ModelImage im = parser.getImage(srcImageKey);
+
+        setForeground(Color.black);
+        doClose = false;
+        image = im;
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        userInterface.regFrame(image.getParentFrame());
+
+        // the result image
+        try {
+            destImageKey = parser.getNextString();
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        try {
+            String axisn = parser.getNextString();
+            int axis;
+
+            if (axisn.equals("X+")) {
+                axis = AlgorithmRotate.X_AXIS_PLUS;
+            } else if (axisn.equals("X-")) {
+                axis = AlgorithmRotate.X_AXIS_MINUS;
+            } else if (axisn.equals("Y+")) {
+                axis = AlgorithmRotate.Y_AXIS_PLUS;
+            } else if (axisn.equals("Y-")) {
+                axis = AlgorithmRotate.Y_AXIS_MINUS;
+            } else if (axisn.equals("Z+")) {
+                axis = AlgorithmRotate.Z_AXIS_PLUS;
+            } else if (axisn.equals("Z-")) {
+                axis = AlgorithmRotate.Z_AXIS_MINUS;
+            } else {
+                throw new Exception("Illegal axis parameter: " + axisn);
+            }
+
+            rotateAxis = axis;
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+        setActiveImage(parser.isActiveImage());
+        setSeparateThread(false);
+        callAlgorithm();
+
+        if (!srcImageKey.equals(destImageKey)) {
+            parser.putVariable(destImageKey, getResultImage().getImageName());
+        }
+    }
 
 }

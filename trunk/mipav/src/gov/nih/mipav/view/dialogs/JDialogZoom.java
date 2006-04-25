@@ -1,101 +1,265 @@
 package gov.nih.mipav.view.dialogs;
 
+
 import gov.nih.mipav.view.*;
 
-import java.awt.event.*;
 import java.awt.*;
+import java.awt.event.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 
+
 /**
-*   This is a custom swing dialog that sets variables for zooming in and out.
-*
-*
-*		@version    1.1 May 3, 1999
-*		@author     Neva Cherniavsky
-*       @author     Matthew McAuliffe, Ph.D.
-*/
+ * This is a custom swing dialog that sets variables for zooming in and out.
+ *
+ * @version  1.1 May 3, 1999
+ * @author   Neva Cherniavsky
+ * @author   Matthew McAuliffe, Ph.D.
+ */
 
 public class JDialogZoom extends JDialogBase implements ChangeListener, WindowListener {
 
-    private ViewJComponentEditImage   componentImage;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private JSlider       magSlider;
-    private JLabel        current;
-    private JRadioButton  nearest;
-    private JRadioButton  bilinear;
-    private JRadioButton  cubic;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 5271517126304850595L;
 
-    private int           max;
-    private int           min;
-
+    /** DOCUMENT ME! */
     private static final long MAX_MAGNIFICATION = 64000000;
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private JRadioButton bilinear;
+
+    /** DOCUMENT ME! */
+    private ViewJComponentEditImage componentImage;
+
+    /** DOCUMENT ME! */
+    private JRadioButton cubic;
+
+    /** DOCUMENT ME! */
+    private JLabel current;
+
+    /** DOCUMENT ME! */
+    private JSlider magSlider;
+
+    /** DOCUMENT ME! */
+    private int max;
+
+    /** DOCUMENT ME! */
+    private int min;
+
+    /** DOCUMENT ME! */
+    private JRadioButton nearest;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-    *   Creates new zoom dialog.
-    *   @param parent   Parent frame
-    *   @param im       Image component of the image model
-    *   @param initZoom Initial zoom
-    */
-	public JDialogZoom(Frame parent, ViewJComponentEditImage im, float initZoom) {
-		super(parent, false);
+     * Creates new zoom dialog.
+     *
+     * @param  parent    Parent frame
+     * @param  im        Image component of the image model
+     * @param  initZoom  Initial zoom
+     */
+    public JDialogZoom(Frame parent, ViewJComponentEditImage im, float initZoom) {
+        super(parent, false);
 
         parentFrame = parent;
         componentImage = im;
         init(initZoom);
     }
 
-    private void init(float initZoom) {
-		setTitle(((ViewJFrameImage)parentFrame).getTitle());
-        max = 3200;
-        min = 25;
-		if (componentImage.getZoomX()*100 > max) {
-		    max = (int)(componentImage.getZoomX()*100);
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Closes dialog box when the OK button is pressed and sets zoom.
+     *
+     * @param  event  Event that triggers this function
+     */
+    public void actionPerformed(ActionEvent event) {
+        Object source = event.getSource();
+
+        if (source == OKButton) {
+
+            if (nearest.isSelected()) {
+                componentImage.setInterpolationMode(componentImage.NEAREST);
+            } else if (bilinear.isSelected()) {
+                componentImage.setInterpolationMode(componentImage.BILINEAR);
+            }
+
+            int zoom = magSlider.getValue();
+            ((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f);
+        } else if (source == cancelButton) {
+            ((ViewJFrameImage) parentFrame).setZoomDialogNull();
+            dispose();
+        }
+    }
+
+    /**
+     * Sets values based on knob along slider.
+     *
+     * @param  e  event that triggered this function
+     */
+    public void stateChanged(ChangeEvent e) {
+        Object source = e.getSource();
+
+        if (source == magSlider) {
+            current.setText(String.valueOf(magSlider.getValue() / (float) 100));
+            magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
+        }
+    }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowActivated(WindowEvent event) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowClosed(WindowEvent event) { }
+
+    /**
+     * Calls dispose.
+     *
+     * @param  event  Event that triggered function
+     */
+    public void windowClosing(WindowEvent event) {
+        ((ViewJFrameImage) parentFrame).setZoomDialogNull();
+        dispose();
+    }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowDeactivated(WindowEvent event) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowDeiconified(WindowEvent event) { }
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowIconified(WindowEvent event) { }
+
+    // ************************************************************************
+    // **************************** Window Events *****************************
+    // ************************************************************************
+
+    /**
+     * Unchanged.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowOpened(WindowEvent event) { }
+
+    /**
+     * Finds the maximum allowable magnification for the image.
+     *
+     * @return  maximum possible magnification without running out of memory
+     */
+    private int findMax() {
+        Runtime rt = Runtime.getRuntime();
+        long freeMemory = rt.freeMemory();
+        int xDim = componentImage.getImageA().getExtents()[0];
+        int yDim = componentImage.getImageA().getExtents()[1];
+        float zoom = componentImage.getZoomX();
+
+        long used = (long) (xDim * zoom * yDim * zoom * 8);
+        freeMemory = freeMemory + used;
+
+        if (freeMemory > MAX_MAGNIFICATION) {
+            freeMemory = MAX_MAGNIFICATION;
         }
 
-        magSlider = new JSlider(JSlider.HORIZONTAL, min, max, (int)(componentImage.getZoomX()*100));
+        double max = freeMemory / (xDim * yDim * 8);
 
-        magSlider.setMajorTickSpacing((max-min)/5);
+        return (int) (Math.sqrt(max) * 100);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  initZoom  DOCUMENT ME!
+     */
+    private void init(float initZoom) {
+        setTitle(((ViewJFrameImage) parentFrame).getTitle());
+        max = 3200;
+        min = 25;
+
+        if ((componentImage.getZoomX() * 100) > max) {
+            max = (int) (componentImage.getZoomX() * 100);
+        }
+
+        magSlider = new JSlider(JSlider.HORIZONTAL, min, max, (int) (componentImage.getZoomX() * 100));
+
+        magSlider.setMajorTickSpacing((max - min) / 5);
         magSlider.setPaintTicks(true);
         magSlider.setEnabled(true);
-        magSlider.setValue(Math.round(100*initZoom));
+        magSlider.setValue(Math.round(100 * initZoom));
         magSlider.addChangeListener(this);
 
-        JLabel maximum = new JLabel(String.valueOf(max/100f));
+        JLabel maximum = new JLabel(String.valueOf(max / 100f));
         maximum.setForeground(Color.black);
         maximum.setFont(serif12);
 
-        current = new JLabel(String.valueOf(magSlider.getValue()/100.0f));
+        current = new JLabel(String.valueOf(magSlider.getValue() / 100.0f));
         current.setForeground(Color.black);
         current.setFont(serif12B);
 
-        JLabel minimum = new JLabel(String.valueOf(min/100f));
+        JLabel minimum = new JLabel(String.valueOf(min / 100f));
         minimum.setForeground(Color.black);
         minimum.setFont(serif12);
 
-    	JPanel              sliderPanel = new JPanel(new GridBagLayout());
-    	GridBagConstraints  gbc         = new GridBagConstraints();
+        JPanel sliderPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
 
-    	gbc.gridx   = 0; gbc.gridy      = 0;      gbc.gridwidth = 3;
-    	gbc.weightx = 1; gbc.gridheight = 1;      gbc.fill      = gbc.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.gridheight = 1;
+        gbc.fill = gbc.HORIZONTAL;
 
-    	sliderPanel.add(magSlider, gbc);
+        sliderPanel.add(magSlider, gbc);
 
-    	gbc.gridx   = 0; gbc.gridy  = 1;          gbc.gridwidth = 1;
-    	gbc.weightx = 0; gbc.anchor = gbc.WEST;   gbc.fill      = gbc.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.anchor = gbc.WEST;
+        gbc.fill = gbc.NONE;
 
-    	sliderPanel.add(minimum, gbc);
+        sliderPanel.add(minimum, gbc);
 
-    	gbc.gridx = 1;   gbc.anchor = gbc.CENTER; gbc.weightx   = .5;
+        gbc.gridx = 1;
+        gbc.anchor = gbc.CENTER;
+        gbc.weightx = .5;
 
-    	sliderPanel.add(current, gbc);
+        sliderPanel.add(current, gbc);
 
-    	gbc.gridx = 2;   gbc.anchor = gbc.EAST;   gbc.weightx   = 0;
+        gbc.gridx = 2;
+        gbc.anchor = gbc.EAST;
+        gbc.weightx = 0;
 
-    	sliderPanel.add(maximum, gbc);
+        sliderPanel.add(maximum, gbc);
         sliderPanel.setBorder(buildTitledBorder("Magnification"));
 
-	    JPanel radioPanel = new JPanel(new GridBagLayout());
+        JPanel radioPanel = new JPanel(new GridBagLayout());
         radioPanel.setBorder(buildTitledBorder("Interpolation"));
 
         ButtonGroup radioGroup = new ButtonGroup();
@@ -112,145 +276,47 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         cubic.setFont(serif12);
         cubic.setEnabled(false);
         radioGroup.add(cubic);
-        switch(componentImage.getInterpMode()) {
-            case ViewJComponentBase.NEAREST:  nearest.setSelected(true);
-                                 break;
-            case ViewJComponentBase.BILINEAR: bilinear.setSelected(true);
-                                 break;
+
+        switch (componentImage.getInterpMode()) {
+
+            case ViewJComponentBase.NEAREST:
+                nearest.setSelected(true);
+                break;
+
+            case ViewJComponentBase.BILINEAR:
+                bilinear.setSelected(true);
+                break;
         }
 
-	    gbc.gridx = 0; gbc.gridy = 0; gbc.anchor = gbc.WEST; gbc.weightx = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = gbc.WEST;
+        gbc.weightx = 1;
         radioPanel.add(nearest, gbc);
         gbc.gridy = 1;
         radioPanel.add(bilinear, gbc);
         gbc.gridy = 2;
         radioPanel.add(cubic, gbc);
 
-	    JPanel buttonPanel = new JPanel();
+        JPanel buttonPanel = new JPanel();
         buildOKButton();
         OKButton.setText("Apply");
-	    buildCancelButton();
-	    cancelButton.setText("Close");
+        buildCancelButton();
+        cancelButton.setText("Close");
         buttonPanel.add(OKButton);
-	    buttonPanel.add(cancelButton);
+        buttonPanel.add(cancelButton);
 
-	    JPanel mainPanel = new JPanel(new BorderLayout());
-	    mainPanel.add(sliderPanel);
-	    mainPanel.add(radioPanel, BorderLayout.EAST);
-	    mainPanel.setBorder(BorderFactory.createEmptyBorder(5,5,5,5));
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(sliderPanel);
+        mainPanel.add(radioPanel, BorderLayout.EAST);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
-		setVisible(true);
+        setVisible(true);
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
-	}
-
-   /**
-   *    Closes dialog box when the OK button is pressed and sets zoom.
-   *    @param event  Event that triggers this function
-   */
-   public void actionPerformed(ActionEvent event) {
-   	    Object source = event.getSource();
-        if ( source == OKButton ) {
-
-            if (nearest.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.NEAREST);
-            }
-            else if (bilinear.isSelected()) {
-                componentImage.setInterpolationMode(componentImage.BILINEAR);
-            }
-
-            int zoom = magSlider.getValue();
-            ((ViewJFrameImage)parentFrame).updateFrame(zoom/100.0f ,zoom/100.0f);
-        }
-        else if ( source == cancelButton ) {
-            ((ViewJFrameImage)parentFrame).setZoomDialogNull();
-            dispose();
-        }
-   }
-
-   /**
-   *    Sets values based on knob along slider
-   *    @param ChangeEvent  event that triggered this function
-   */
-   public void stateChanged(ChangeEvent e){
-        Object source = e.getSource();
-
-        if (source == magSlider){
-            current.setText(String.valueOf(magSlider.getValue()/(float)100));
-            magSlider.setValue( (int)(magSlider.getValue()/(float)100 + 0.5)*100 );
-        }
-   }
-
-    /**
-    *   Finds the maximum allowable magnification for the image.
-    *   @return   maximum possible magnification without running out of memory
-    */
-    private int findMax(){
-		Runtime rt = Runtime.getRuntime();
-        long freeMemory = rt.freeMemory();
-        int     xDim = componentImage.getImageA().getExtents()[0];
-        int     yDim = componentImage.getImageA().getExtents()[1];
-        float   zoom = componentImage.getZoomX();
-
-        long used = (long)(xDim * zoom * yDim * zoom * 8);
-        freeMemory = freeMemory + used;
-        if (freeMemory > MAX_MAGNIFICATION) freeMemory = MAX_MAGNIFICATION;
-
-        double max = freeMemory/( xDim * yDim * 8);
-        return (int)(Math.sqrt(max)*100);
     }
-
-    //************************************************************************
-    //**************************** Window Events *****************************
-    //************************************************************************
-
-    /**
-    *   Unchanged
-    */
-  	public void windowOpened(WindowEvent	event){
-
-	}
-
-    /**
-    *   Calls dispose
-    *   @param event    Event that triggered function
-    */
-	public void windowClosing(WindowEvent	event){
-		((ViewJFrameImage)parentFrame).setZoomDialogNull();
-        dispose();
-	}
-
-    /**
-    *   Unchanged
-    */
-	public void windowClosed(WindowEvent	event){
-	}
-
-    /**
-    *   Unchanged
-    */
-	public void windowIconified(WindowEvent event){
-	}
-
-    /**
-    *   Unchanged
-    */
-	public void windowDeiconified(WindowEvent event){
-	}
-
-    /**
-    *   Unchanged
-    */
-	public void windowActivated(WindowEvent	event){
-	}
-
-    /**
-    *   Unchanged
-    */
-	public void windowDeactivated(WindowEvent event){
-	}
 
 }

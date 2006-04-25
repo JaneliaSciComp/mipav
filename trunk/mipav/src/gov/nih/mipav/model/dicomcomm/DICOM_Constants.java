@@ -1,185 +1,437 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-
-
+/**
+ * DOCUMENT ME!
+ */
 public class DICOM_Constants {
 
-    public  static final int    MAXSUBLENGTH            = 32000;
-    public  static final int    PROTOCOLVERSION         = 1;
-    public  static final String UID_ApplicationContext  = "1.2.840.10008.3.1.1.1";
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    public static final int MAXSUBLENGTH = 32000;
+
+    /** DOCUMENT ME! */
+    public static final int PROTOCOLVERSION = 1;
+
+    /** DOCUMENT ME! */
+    public static final String UID_ApplicationContext = "1.2.840.10008.3.1.1.1";
+
+    /** SOP Class UIDs ... */
+    public static final String UID_Verification = "1.2.840.10008.1.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_CRStorage = "1.2.840.10008.5.1.4.1.1.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_CTStorage = "1.2.840.10008.5.1.4.1.1.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_OldUSMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3"; // retired 1998
+
+    /** DOCUMENT ME! */
+    public static final String UID_USMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_MRStorage = "1.2.840.10008.5.1.4.1.1.4";
+
+    /** DOCUMENT ME! */
+    public static final String UID_OldNMStorage = "1.2.840.10008.5.1.4.1.1.5";
+
+    /** DOCUMENT ME! */
+    public static final String UID_OldUSStorage = "1.2.840.10008.5.1.4.1.1.6"; // retired 1998
+
+    /** DOCUMENT ME! */
+    public static final String UID_USStorage = "1.2.840.10008.5.1.4.1.1.6.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_SCStorage = "1.2.840.10008.5.1.4.1.1.7";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StandaloneOverlayStorage = "1.2.840.10008.5.1.4.1.1.8";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StandaloneCurveStorage = "1.2.840.10008.5.1.4.1.1.9";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StandaloneModalityLUTStorage = "1.2.840.10008.5.1.4.1.1.10";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StandaloneVOILUTStorage = "1.2.840.10008.5.1.4.1.1.11";
+
+    /** DOCUMENT ME! */
+    public static final String UID_XRayAngioStorage = "1.2.840.10008.5.1.4.1.1.12.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_XRayFluoroStorage = "1.2.840.10008.5.1.4.1.1.12.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_NMStorage = "1.2.840.10008.5.1.4.1.1.20";
+
+    /** DOCUMENT ME! */
+    public static final String UID_PetStorage = "1.2.840.10008.5.1.4.1.1.128";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StandalonePetCurve = "1.2.840.10008.5.1.4.1.1.129";
+
+    /** DOCUMENT ME! */
+    public static final String UID_GECTStorage = "1.2.840.113619.4.3"; // Need to add above convertUIDToString - Matt
+                                                                       // 11/2003
+
+    /** DOCUMENT ME! */
+    public static final String UID_GEMRStorage = "1.2.840.113619.4.2"; // Need to add above convertUIDToString
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTImageStorage = "1.2.840.10008.5.1.4.1.1.481.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTDoseStorage = "1.2.840.10008.5.1.4.1.1.481.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTStructureSetStorage = "1.2.840.10008.5.1.4.1.1.481.3";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTBeamsTreatmentRecordStorage = "1.2.840.10008.5.1.4.1.1.481.4";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTPlanStorage = "1.2.840.10008.5.1.4.1.1.481.5";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTBrachyTreatmentRecordStorage = "1.2.840.10008.5.1.4.1.1.481.6";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RTTreatmentSummaryRecordStorage = "1.2.840.10008.5.1.4.1.1.481.7";
+
+    /** DOCUMENT ME! */
+    public static final String UID_PatientRootQuery = "1.2.840.10008.5.1.4.1.2.1.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_PatientRootRetrieve = "1.2.840.10008.5.1.4.1.2.1.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_PatientStudyOnlyQuery = "1.2.840.10008.5.1.4.1.2.3.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_PatientStudyOnlyRetrieve = "1.2.840.10008.5.1.4.1.2.3.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StudyRootQuery = "1.2.840.10008.5.1.4.1.2.2.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_StudyRootRetrieve = "1.2.840.10008.5.1.4.1.2.2.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferLITTLEENDIAN = "1.2.840.10008.1.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferLITTLEENDIANEXPLICIT = "1.2.840.10008.1.2.1";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferBIGENDIANEXPLICIT = "1.2.840.10008.1.2.2";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGBASELINEPROCESS1 = "1.2.840.10008.1.2.4.50";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGEXTENDEDPROC2AND4 = "1.2.840.10008.1.2.4.51";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGEXTENDEDPROC3AND5 = "1.2.840.10008.1.2.4.52";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGSPECTRALPROC6AND8 = "1.2.840.10008.1.2.4.53";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGSPECTRALPROC7AND9 = "1.2.840.10008.1.2.4.54";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGFULLPROGRESSPROC10AND12 = "1.2.840.10008.1.2.4.55";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGFULLPROGRESSPROC11AND13 = "1.2.840.10008.1.2.4.56";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGLOSSLESSPROC14 = "1.2.840.10008.1.2.4.57";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGLOSSLESSPROC15 = "1.2.840.10008.1.2.4.58";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGEXTENDEDPROC16AND18 = "1.2.840.10008.1.2.4.59";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGEXTENDEDPROC17AND19 = "1.2.840.10008.1.2.4.60";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGSPECTRALPROC20AND22 = "1.2.840.10008.1.2.4.61";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGSPECTRALPROC21AND23 = "1.2.840.10008.1.2.4.62";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGFULLPROGRESSPROC24AND26 = "1.2.840.10008.1.2.4.63";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGFULLPROGRESSPROC25AND27 = "1.2.840.10008.1.2.4.64";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGLOSSLESSPROC28 = "1.2.840.10008.1.2.4.65";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGLOSSLESSPROC29 = "1.2.840.10008.1.2.4.66";
+
+    /** DOCUMENT ME! */
+    public static final String UID_TransferJPEGLOSSLESSPROCFIRSTORDERREDICT = "1.2.840.10008.1.2.4.70";
+
+    /** DOCUMENT ME! */
+    public static final String UID_RLE_Compression = "1.2.840.10008.1.2.5";
+
+
+    /** DOCUMENT ME! */
+    public static final int DSTYPE_DATAPRESENT = 0x0000; // anything but 0x0101
+
+    /** DOCUMENT ME! */
+    public static final int DSTYPE_NODATAPRESENT = 0x0101;
+
+    /** read/write file types... */
+    public static final int FILETYPE_ACRNEMA_VR_DUMP = 1;
+
+    /** DOCUMENT ME! */
+    public static final int FILETYPE_DICOM_CHAPTER_10_IMPLICIT = 2;
+
+    /** DOCUMENT ME! */
+    public static final int FILETYPE_DICOM_CHAPTER_10_EXPLICIT = 3;
+
+
+    /** DOCUMENT ME! */
+    private static final int STATUS_OK = 0x0000;
+
+    /** DOCUMENT ME! */
+    private static final int STATUS_WARNING = 0xb000;
+
+    /** DOCUMENT ME! */
+    private static final int STATUS_CANCELLED = 0xfe00;
+
+    /** DOCUMENT ME! */
+    private static final int STATUS_PENDING = 0xff00;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_ERRORFIRST = STATUS_OK + 1;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_ERRORLAST = STATUS_PENDING - 1;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_STORE_FAILED = 0xc001;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_FIND_OBJECTNOTFOUND = 0xc002;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_NODESTINATION = 0xc003;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_NULLDESTINATION = 0xc004;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_UNKNOWNDESTINATION = 0xc005;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_OBJECTNOTFOUND = 0xc006;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_NOCONTACTDEST = 0xc007;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_ECHO_SUCCESS = 0x0000;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_STORE_SUCCESS = 0x0000;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_FIND_SUCCESS = 0x0000;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_FIND_SUCCESSNORESULTS = 0x0000;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_FIND_PENDING = STATUS_PENDING;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_CANCELLED = STATUS_CANCELLED;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_FIND_PENDINGWARNING = 0xff01;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_SUCCESS = 0x0000;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_PENDING = STATUS_PENDING;
+
+    /** DOCUMENT ME! */
+    public static final int STATUS_MOVE_WARNING = STATUS_WARNING;
+
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_BOGUS = 0x0000;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CStoreRQ = 0x0001;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CFindRQ = 0x0020;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CMoveRQ = 0x0021;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CEchoRQ = 0x0030;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CMoveCancelRQ = 0x0FFF;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CFindCancelRQ = 0x0FFF;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CStoreRSP = 0x8001;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CFindRSP = 0x8020;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CMoveRSP = 0x8021;
+
+    /** DOCUMENT ME! */
+    public static final int COMMAND_CEchoRSP = 0x8030;
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-    *   Converts a transfer syntax UID (i.e. "1.2.840.10008.5.1.4.1.1.1") to a more
-    *   understandable string form( i.e. CRStorage )
-    *   @param UID  UID to be converted
-    *   @return     the convert UID string.
-    */
-    public static String convertUIDToString( String UID ) {
-
-        if     ( UID.equals( UID_Verification ))                     return( new String ("Verification" ));
-        else if( UID.equals( UID_CRStorage ))                        return( new String ("CRStorage"    ));
-        else if( UID.equals( UID_CTStorage))                         return( new String ("CTStorage"    ));
-        else if( UID.equals( UID_MRStorage))                         return( new String ("MRStorage"    ));
-        else if( UID.equals( UID_SCStorage))                         return( new String ("SecondaryCaptureStorage"    ));
-        else if( UID.equals( UID_USMultiframeStorage  ))             return( new String ("USMultiframeStorage" ));
-        else if( UID.equals( UID_USStorage  ))                       return( new String ("UltraSoundStorage" ));
-        else if( UID.equals( UID_NMStorage  ))                       return( new String ("NuclearMedicineStorage" ));
-        else if( UID.equals( UID_OldUSStorage  ))                    return( new String ("OldUltraSoundStorage" ));
-        else if( UID.equals( UID_OldUSMultiframeStorage  ))          return( new String ("OldUSMultiframeStorage" ));
-        else if( UID.equals( UID_OldNMStorage ))                     return( new String ("OldNMStorage" ));
-        else if( UID.equals( UID_StandaloneOverlayStorage ))         return( new String ("StandaloneOverlayStorage" ));
-        else if( UID.equals( UID_StandaloneCurveStorage ))           return( new String ("StandaloneCurveStorage" ));
-        else if( UID.equals( UID_StandaloneModalityLUTStorage ))     return( new String ("StandaloneModalityLUTStorage" ));
-        else if( UID.equals( UID_StandaloneVOILUTStorage ))          return( new String ("StandaloneVOILUTStorage" ));
-        else if( UID.equals( UID_XRayFluoroStorage ))                return( new String ("XRayFluoroStorage" ));
-        else if( UID.equals( UID_XRayAngioStorage ))                 return( new String ("XRayAngioStorage" ));
-        else if( UID.equals( UID_PetStorage ))                       return( new String ("PetStorage" ));
-        else if( UID.equals( UID_StandalonePetCurve ))               return( new String ("StandalonePetCurve" ));
-        else if( UID.equals( UID_PatientRootQuery ))                 return( new String ("PatientRootQuery" ));
-        else if( UID.equals( UID_PatientRootRetrieve ))              return( new String ("PatientRootRetrieve" ));
-        else if( UID.equals( UID_PatientStudyOnlyQuery ))            return( new String ("PatientStudyOnlyQuery" ));
-        else if( UID.equals( UID_PatientStudyOnlyRetrieve ))         return( new String ("PatientStudyOnlyRetrieve" ));
-        else if( UID.equals( UID_StudyRootQuery ))                   return( new String ("StudyRootQuery" ));
-        else if( UID.equals( UID_StudyRootRetrieve ))                return( new String ("StudyRootRetrieve" ));
-        else if( UID.equals( UID_RTImageStorage ))                   return( new String ("RTImageStorage" ));
-        else if( UID.equals( UID_RTDoseStorage ))                    return( new String ("RTDoseStorage" ));
-        else if( UID.equals( UID_RTStructureSetStorage ))            return( new String ("RTStructureSetStorage" ));
-        else if( UID.equals( UID_RTBeamsTreatmentRecordStorage ))    return( new String ("RTBeamsTreatmentRecordStorage" ));
-        else if( UID.equals( UID_RTPlanStorage ))                    return( new String ("RTPlanStorage" ));
-        else if( UID.equals( UID_RTBrachyTreatmentRecordStorage ))   return( new String ("RTBrachyTreatmentRecordStorage" ));
-        else if( UID.equals( UID_RTTreatmentSummaryRecordStorage ))  return( new String ("RTTreatmentSummaryRecordStorage" ));
-        return( new String("Unknown") );
-    }
-
-    // SOP Class UIDs ...
-    public  static final String UID_Verification                             = "1.2.840.10008.1.1";
-    public  static final String UID_CRStorage                                = "1.2.840.10008.5.1.4.1.1.1";
-    public  static final String UID_CTStorage                                = "1.2.840.10008.5.1.4.1.1.2";
-    public  static final String UID_OldUSMultiframeStorage                   = "1.2.840.10008.5.1.4.1.1.3";   // retired 1998
-    public  static final String UID_USMultiframeStorage                      = "1.2.840.10008.5.1.4.1.1.3.1";
-    public  static final String UID_MRStorage                                = "1.2.840.10008.5.1.4.1.1.4";
-    public  static final String UID_OldNMStorage                             = "1.2.840.10008.5.1.4.1.1.5";
-    public  static final String UID_OldUSStorage                             = "1.2.840.10008.5.1.4.1.1.6";   // retired 1998
-    public  static final String UID_USStorage                                = "1.2.840.10008.5.1.4.1.1.6.1";
-    public  static final String UID_SCStorage                                = "1.2.840.10008.5.1.4.1.1.7";
-    public  static final String UID_StandaloneOverlayStorage                 = "1.2.840.10008.5.1.4.1.1.8";
-    public  static final String UID_StandaloneCurveStorage                   = "1.2.840.10008.5.1.4.1.1.9";
-    public  static final String UID_StandaloneModalityLUTStorage             = "1.2.840.10008.5.1.4.1.1.10";
-    public  static final String UID_StandaloneVOILUTStorage                  = "1.2.840.10008.5.1.4.1.1.11";
-    public  static final String UID_XRayAngioStorage                         = "1.2.840.10008.5.1.4.1.1.12.1";
-    public  static final String UID_XRayFluoroStorage                        = "1.2.840.10008.5.1.4.1.1.12.2";
-    public  static final String UID_NMStorage                                = "1.2.840.10008.5.1.4.1.1.20";
-    public  static final String UID_PetStorage                               = "1.2.840.10008.5.1.4.1.1.128";
-    public  static final String UID_StandalonePetCurve                       = "1.2.840.10008.5.1.4.1.1.129";
-    public  static final String UID_GECTStorage                              = "1.2.840.113619.4.3"; // Need to add above convertUIDToString - Matt 11/2003
-    public  static final String UID_GEMRStorage                              = "1.2.840.113619.4.2"; // Need to add above convertUIDToString
-
-    public  static final String UID_RTImageStorage                           = "1.2.840.10008.5.1.4.1.1.481.1";
-    public  static final String UID_RTDoseStorage                            = "1.2.840.10008.5.1.4.1.1.481.2";
-    public  static final String UID_RTStructureSetStorage                    = "1.2.840.10008.5.1.4.1.1.481.3";
-    public  static final String UID_RTBeamsTreatmentRecordStorage            = "1.2.840.10008.5.1.4.1.1.481.4";
-    public  static final String UID_RTPlanStorage                            = "1.2.840.10008.5.1.4.1.1.481.5";
-    public  static final String UID_RTBrachyTreatmentRecordStorage           = "1.2.840.10008.5.1.4.1.1.481.6";
-    public  static final String UID_RTTreatmentSummaryRecordStorage          = "1.2.840.10008.5.1.4.1.1.481.7";
-
-    public  static final String UID_PatientRootQuery                         = "1.2.840.10008.5.1.4.1.2.1.1";
-    public  static final String UID_PatientRootRetrieve                      = "1.2.840.10008.5.1.4.1.2.1.2";
-    public  static final String UID_PatientStudyOnlyQuery                    = "1.2.840.10008.5.1.4.1.2.3.1";
-    public  static final String UID_PatientStudyOnlyRetrieve                 = "1.2.840.10008.5.1.4.1.2.3.2";
-    public  static final String UID_StudyRootQuery                           = "1.2.840.10008.5.1.4.1.2.2.1";
-    public  static final String UID_StudyRootRetrieve                        = "1.2.840.10008.5.1.4.1.2.2.2";
-
-    public  static final String UID_TransferLITTLEENDIAN                     = "1.2.840.10008.1.2";
-    public  static final String UID_TransferLITTLEENDIANEXPLICIT             = "1.2.840.10008.1.2.1";
-    public  static final String UID_TransferBIGENDIANEXPLICIT                = "1.2.840.10008.1.2.2";
-    public  static final String UID_TransferJPEGBASELINEPROCESS1             = "1.2.840.10008.1.2.4.50";
-    public  static final String UID_TransferJPEGEXTENDEDPROC2AND4            = "1.2.840.10008.1.2.4.51";
-    public  static final String UID_TransferJPEGEXTENDEDPROC3AND5            = "1.2.840.10008.1.2.4.52";
-    public  static final String UID_TransferJPEGSPECTRALPROC6AND8            = "1.2.840.10008.1.2.4.53";
-    public  static final String UID_TransferJPEGSPECTRALPROC7AND9            = "1.2.840.10008.1.2.4.54";
-    public  static final String UID_TransferJPEGFULLPROGRESSPROC10AND12      = "1.2.840.10008.1.2.4.55";
-    public  static final String UID_TransferJPEGFULLPROGRESSPROC11AND13      = "1.2.840.10008.1.2.4.56";
-    public  static final String UID_TransferJPEGLOSSLESSPROC14               = "1.2.840.10008.1.2.4.57";
-    public  static final String UID_TransferJPEGLOSSLESSPROC15               = "1.2.840.10008.1.2.4.58";
-    public  static final String UID_TransferJPEGEXTENDEDPROC16AND18          = "1.2.840.10008.1.2.4.59";
-    public  static final String UID_TransferJPEGEXTENDEDPROC17AND19          = "1.2.840.10008.1.2.4.60";
-    public  static final String UID_TransferJPEGSPECTRALPROC20AND22          = "1.2.840.10008.1.2.4.61";
-    public  static final String UID_TransferJPEGSPECTRALPROC21AND23          = "1.2.840.10008.1.2.4.62";
-    public  static final String UID_TransferJPEGFULLPROGRESSPROC24AND26      = "1.2.840.10008.1.2.4.63";
-    public  static final String UID_TransferJPEGFULLPROGRESSPROC25AND27      = "1.2.840.10008.1.2.4.64";
-    public  static final String UID_TransferJPEGLOSSLESSPROC28               = "1.2.840.10008.1.2.4.65";
-    public  static final String UID_TransferJPEGLOSSLESSPROC29               = "1.2.840.10008.1.2.4.66";
-    public  static final String UID_TransferJPEGLOSSLESSPROCFIRSTORDERREDICT = "1.2.840.10008.1.2.4.70";
-    public  static final String UID_RLE_Compression                          = "1.2.840.10008.1.2.5";
-
-
-
-    public  static final int    DSTYPE_DATAPRESENT                 = 0x0000; // anything but 0x0101
-    public  static final int    DSTYPE_NODATAPRESENT               = 0x0101;
-
-    // read/write file types...
-    public  static final int    FILETYPE_ACRNEMA_VR_DUMP           = 1;
-    public  static final int    FILETYPE_DICOM_CHAPTER_10_IMPLICIT = 2;
-    public  static final int    FILETYPE_DICOM_CHAPTER_10_EXPLICIT = 3;
-
-
-    private static final int    STATUS_OK                          = 0x0000;
-    private static final int    STATUS_WARNING                     = 0xb000;
-    private static final int    STATUS_CANCELLED                   = 0xfe00;
-    private static final int    STATUS_PENDING                     = 0xff00;
-
-    public  static final int    STATUS_ERRORFIRST                  = STATUS_OK + 1;
-    public  static final int    STATUS_ERRORLAST                   = STATUS_PENDING - 1;
-
-    public  static final int    STATUS_STORE_FAILED                = 0xc001;
-    public  static final int    STATUS_FIND_OBJECTNOTFOUND         = 0xc002;
-    public  static final int    STATUS_MOVE_NODESTINATION          = 0xc003;
-    public  static final int    STATUS_MOVE_NULLDESTINATION        = 0xc004;
-    public  static final int    STATUS_MOVE_UNKNOWNDESTINATION     = 0xc005;
-    public  static final int    STATUS_MOVE_OBJECTNOTFOUND         = 0xc006;
-    public  static final int    STATUS_MOVE_NOCONTACTDEST          = 0xc007;
-
-    public  static final int    STATUS_ECHO_SUCCESS                = 0x0000;
-    public  static final int    STATUS_STORE_SUCCESS               = 0x0000;
-    public  static final int    STATUS_FIND_SUCCESS                = 0x0000;
-    public  static final int    STATUS_FIND_SUCCESSNORESULTS       = 0x0000;
-    public  static final int    STATUS_FIND_PENDING                = STATUS_PENDING;
-    public  static final int    STATUS_MOVE_CANCELLED              = STATUS_CANCELLED;
-    public  static final int    STATUS_FIND_PENDINGWARNING         = 0xff01;
-    public  static final int    STATUS_MOVE_SUCCESS                = 0x0000;
-    public  static final int    STATUS_MOVE_PENDING                = STATUS_PENDING;
-    public  static final int    STATUS_MOVE_WARNING                = STATUS_WARNING;
-
-    public static String convertCommandToString( int command ) {
+     * DOCUMENT ME!
+     *
+     * @param   command  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static String convertCommandToString(int command) {
 
         switch (command) {
-            case COMMAND_BOGUS:         return( new String ("Unknown" ));
-            case COMMAND_CStoreRQ:      return( new String ("CStoreRQ" ));
-            case COMMAND_CFindRQ:       return( new String ("CFindRQ" ));
-            case COMMAND_CMoveRQ:       return( new String ("CMoveRQ" ));
-            case COMMAND_CEchoRQ:       return( new String ("CEchoRQ" ));
-            case COMMAND_CMoveCancelRQ: return( new String ("CancelRQ" ));
-            case COMMAND_CStoreRSP:     return( new String ("CStoreRSP" ));
-            case COMMAND_CFindRSP:      return( new String ("CFindRSP" ));
-            case COMMAND_CMoveRSP:      return( new String ("CMoveRSP" ));
-            case COMMAND_CEchoRSP:      return( new String ("CEchoRSP" ));
-            default: return( new String("Unknown") );
+
+            case COMMAND_BOGUS:
+                return (new String("Unknown"));
+
+            case COMMAND_CStoreRQ:
+                return (new String("CStoreRQ"));
+
+            case COMMAND_CFindRQ:
+                return (new String("CFindRQ"));
+
+            case COMMAND_CMoveRQ:
+                return (new String("CMoveRQ"));
+
+            case COMMAND_CEchoRQ:
+                return (new String("CEchoRQ"));
+
+            case COMMAND_CMoveCancelRQ:
+                return (new String("CancelRQ"));
+
+            case COMMAND_CStoreRSP:
+                return (new String("CStoreRSP"));
+
+            case COMMAND_CFindRSP:
+                return (new String("CFindRSP"));
+
+            case COMMAND_CMoveRSP:
+                return (new String("CMoveRSP"));
+
+            case COMMAND_CEchoRSP:
+                return (new String("CEchoRSP"));
+
+            default:
+                return (new String("Unknown"));
         }
     }
 
+    /**
+     * Converts a transfer syntax UID (i.e. "1.2.840.10008.5.1.4.1.1.1") to a more understandable string form( i.e.
+     * CRStorage )
+     *
+     * @param   UID  UID to be converted
+     *
+     * @return  the convert UID string.
+     */
+    public static String convertUIDToString(String UID) {
 
-    public  static final int    COMMAND_BOGUS                      = 0x0000;
-    public  static final int    COMMAND_CStoreRQ                   = 0x0001;
-    public  static final int    COMMAND_CFindRQ                    = 0x0020;
-    public  static final int    COMMAND_CMoveRQ                    = 0x0021;
-    public  static final int    COMMAND_CEchoRQ                    = 0x0030;
-    public  static final int    COMMAND_CMoveCancelRQ              = 0x0FFF;
-    public  static final int    COMMAND_CFindCancelRQ              = 0x0FFF;
-    public  static final int    COMMAND_CStoreRSP                  = 0x8001;
-    public  static final int    COMMAND_CFindRSP                   = 0x8020;
-    public  static final int    COMMAND_CMoveRSP                   = 0x8021;
-    public  static final int    COMMAND_CEchoRSP                   = 0x8030;
+        if (UID.equals(UID_Verification)) {
+            return (new String("Verification"));
+        } else if (UID.equals(UID_CRStorage)) {
+            return (new String("CRStorage"));
+        } else if (UID.equals(UID_CTStorage)) {
+            return (new String("CTStorage"));
+        } else if (UID.equals(UID_MRStorage)) {
+            return (new String("MRStorage"));
+        } else if (UID.equals(UID_SCStorage)) {
+            return (new String("SecondaryCaptureStorage"));
+        } else if (UID.equals(UID_USMultiframeStorage)) {
+            return (new String("USMultiframeStorage"));
+        } else if (UID.equals(UID_USStorage)) {
+            return (new String("UltraSoundStorage"));
+        } else if (UID.equals(UID_NMStorage)) {
+            return (new String("NuclearMedicineStorage"));
+        } else if (UID.equals(UID_OldUSStorage)) {
+            return (new String("OldUltraSoundStorage"));
+        } else if (UID.equals(UID_OldUSMultiframeStorage)) {
+            return (new String("OldUSMultiframeStorage"));
+        } else if (UID.equals(UID_OldNMStorage)) {
+            return (new String("OldNMStorage"));
+        } else if (UID.equals(UID_StandaloneOverlayStorage)) {
+            return (new String("StandaloneOverlayStorage"));
+        } else if (UID.equals(UID_StandaloneCurveStorage)) {
+            return (new String("StandaloneCurveStorage"));
+        } else if (UID.equals(UID_StandaloneModalityLUTStorage)) {
+            return (new String("StandaloneModalityLUTStorage"));
+        } else if (UID.equals(UID_StandaloneVOILUTStorage)) {
+            return (new String("StandaloneVOILUTStorage"));
+        } else if (UID.equals(UID_XRayFluoroStorage)) {
+            return (new String("XRayFluoroStorage"));
+        } else if (UID.equals(UID_XRayAngioStorage)) {
+            return (new String("XRayAngioStorage"));
+        } else if (UID.equals(UID_PetStorage)) {
+            return (new String("PetStorage"));
+        } else if (UID.equals(UID_StandalonePetCurve)) {
+            return (new String("StandalonePetCurve"));
+        } else if (UID.equals(UID_PatientRootQuery)) {
+            return (new String("PatientRootQuery"));
+        } else if (UID.equals(UID_PatientRootRetrieve)) {
+            return (new String("PatientRootRetrieve"));
+        } else if (UID.equals(UID_PatientStudyOnlyQuery)) {
+            return (new String("PatientStudyOnlyQuery"));
+        } else if (UID.equals(UID_PatientStudyOnlyRetrieve)) {
+            return (new String("PatientStudyOnlyRetrieve"));
+        } else if (UID.equals(UID_StudyRootQuery)) {
+            return (new String("StudyRootQuery"));
+        } else if (UID.equals(UID_StudyRootRetrieve)) {
+            return (new String("StudyRootRetrieve"));
+        } else if (UID.equals(UID_RTImageStorage)) {
+            return (new String("RTImageStorage"));
+        } else if (UID.equals(UID_RTDoseStorage)) {
+            return (new String("RTDoseStorage"));
+        } else if (UID.equals(UID_RTStructureSetStorage)) {
+            return (new String("RTStructureSetStorage"));
+        } else if (UID.equals(UID_RTBeamsTreatmentRecordStorage)) {
+            return (new String("RTBeamsTreatmentRecordStorage"));
+        } else if (UID.equals(UID_RTPlanStorage)) {
+            return (new String("RTPlanStorage"));
+        } else if (UID.equals(UID_RTBrachyTreatmentRecordStorage)) {
+            return (new String("RTBrachyTreatmentRecordStorage"));
+        } else if (UID.equals(UID_RTTreatmentSummaryRecordStorage)) {
+            return (new String("RTTreatmentSummaryRecordStorage"));
+        }
+
+        return (new String("Unknown"));
+    }
 
 
 }

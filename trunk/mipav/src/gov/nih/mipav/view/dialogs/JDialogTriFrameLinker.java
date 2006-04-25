@@ -1,42 +1,74 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
+
 import gov.nih.mipav.model.structures.*;
 
-import java.awt.event.*;
+import gov.nih.mipav.view.*;
+
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
 
 import javax.swing.*;
 
+
 /**
- *   Dialog to get user input, then call the algorithm.  The user has the
- *   option to generate a new image or replace the source image. In addition the user
- *   can indicate if you wishes to have the algorithm applied to whole image or to the
- *   VOI regions. In should be noted, that the algorithms are executed in their own
- *   thread.
+ * Dialog to get user input, then call the algorithm. The user has the option to generate a new image or replace the
+ * source image. In addition the user can indicate if you wishes to have the algorithm applied to whole image or to the
+ * VOI regions. In should be noted, that the algorithms are executed in their own thread.
  *
- *		@version    0.9 Oct 10, 2002
- *		@author     Matthew J. McAuliffe, Ph.D.
- *
+ * @version  0.9 Oct 10, 2002
+ * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogTriFrameLinker extends JDialogBase
-{
-    private ModelImage imageA; // source image
-    private ModelImage imageB;
-    private ViewUserInterface userInterface;
+public class JDialogTriFrameLinker extends JDialogBase {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -4546169496119216251L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private JComboBox comboBoxImage;
+
+    /** DOCUMENT ME! */
     private ViewJFrameTriImage frameB;
 
-    private JComboBox comboBoxImage;
+    /** DOCUMENT ME! */
+    private ModelImage imageA; // source image
+
+    /** DOCUMENT ME! */
+    private ModelImage imageB;
+
+    /** DOCUMENT ME! */
     private JButton linkButton;
 
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *  Creates new image calculator dialog and displays.
-     *  @param theParentFrame  Parent frame.
-     *  @param im              Source image.
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  im  Source image.
      */
-    public JDialogTriFrameLinker(Frame theParentFrame, ModelImage im)
-    {
+    public JDialogTriFrameLinker(ModelImage im) {
+        super();
+        userInterface = ViewUserInterface.getReference();
+        imageA = im;
+    }
+
+    /**
+     * Creates new image calculator dialog and displays.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  im              Source image.
+     */
+    public JDialogTriFrameLinker(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         imageA = im;
         userInterface = ViewUserInterface.getReference();
@@ -44,34 +76,98 @@ public class JDialogTriFrameLinker extends JDialogBase
     }
 
     /**
-     *	@deprecated. Use this(ModelImage) instead
-     *   Used primarily for the script to store variables and run the algorithm.  No
-     *	actual dialog will appear but the set up info and result image will be stored here.
-     *	@param UI   The user interface, needed to create the image frame.
-     *	@param im	Source image.
+     * Creates a new JDialogTriFrameLinker object.
+     *
+     * @deprecated  Use this(ModelImage) instead Used primarily for the script to store variables and run the algorithm.
+     *              No actual dialog will appear but the set up info and result image will be stored here.
+     *
+     * @param        UI  The user interface, needed to create the image frame.
+     * @param        im  Source image.
      */
-    public JDialogTriFrameLinker(ViewUserInterface UI, ModelImage im)
-    {
+    public JDialogTriFrameLinker(ViewUserInterface UI, ModelImage im) {
         this(im);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Used primarily for the script to store variables and run the algorithm.  No
-     *	actual dialog will appear but the set up info and result image will be stored here.
-     *	@param im	Source image.
+     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     *
+     * @param  event  event that triggers function
      */
-    public JDialogTriFrameLinker(ModelImage im)
-    {
-        super();
-        userInterface = ViewUserInterface.getReference();
-        imageA = im;
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+        Object source = event.getSource();
+
+        if (command.equals("Link")) {
+            String selectedName = (String) comboBoxImage.getSelectedItem();
+            imageB = userInterface.getRegisteredImageByName(selectedName);
+            frameB = imageB.getTriImageFrame();
+
+            ((ViewJFrameBase) (parentFrame)).setLinkedTriFrame(frameB);
+
+        } else if (command.equals("Cancel")) {
+            ((ViewJFrameBase) (parentFrame)).setLinkedTriFrame(null);
+            dispose();
+        }
     }
 
     /**
-     *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+     * windowClosing - calls close.
+     *
+     * @param  event  event that triggered function
      */
-    private void init()
-    {
+    public void windowClosing(WindowEvent event) {
+        ((ViewJFrameBase) (parentFrame)).setLinkedTriFrame(null);
+        super.windowClosing(event);
+    }
+
+    /**
+     * Builds a list of images to operate on from the template image.
+     */
+    private void buildComboBoxImage() {
+        boolean sameDims = true;
+
+        comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+
+        Enumeration names = userInterface.getRegisteredImageNames();
+
+        // Add images from user interface that have the same exact dimensionality
+        // Guaranteed to have at least one unique potential image B, because it's
+        // tested for in ViewJFrameImage before this dialog is created.
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            sameDims = true;
+
+            if (!imageA.getImageName().equals(name)) {
+                ModelImage img = userInterface.getRegisteredImageByName(name);
+
+                if (img.getTriImageFrame() != null) {
+
+                    if (imageA.getNDims() == img.getNDims()) {
+
+                        for (int j = 0; j < imageA.getNDims(); j++) {
+
+                            if (imageA.getExtents()[j] != img.getExtents()[j]) {
+                                sameDims = false;
+                            }
+                        }
+
+                        if (sameDims == true) {
+                            comboBoxImage.addItem(name);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+     */
+    private void init() {
         setForeground(Color.black);
         setTitle("Image Frame Linker");
 
@@ -136,87 +232,6 @@ public class JDialogTriFrameLinker extends JDialogBase
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
-    }
-
-    /**
-     *   Builds a list of images to operate on from the template image.
-     */
-    private void buildComboBoxImage()
-    {
-        boolean sameDims = true;
-
-        comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
-
-        Enumeration names = userInterface.getRegisteredImageNames();
-
-        // Add images from user interface that have the same exact dimensionality
-        // Guaranteed to have at least one unique potential image B, because it's
-        // tested for in ViewJFrameImage before this dialog is created.
-        while (names.hasMoreElements())
-        {
-            String name = (String) names.nextElement();
-            sameDims = true;
-            if (!imageA.getImageName().equals(name))
-            {
-                ModelImage img = userInterface.getRegisteredImageByName(name);
-                if (img.getTriImageFrame() != null)
-                {
-                    if (imageA.getNDims() == img.getNDims())
-                    {
-                        for (int j = 0; j < imageA.getNDims(); j++)
-                        {
-                            if (imageA.getExtents()[j] != img.getExtents()[j])
-                            {
-                                sameDims = false;
-                            }
-                        }
-                        if (sameDims == true)
-                        {
-                            comboBoxImage.addItem(name);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-
-    /**
-     *  Closes dialog box when the OK button is pressed and
-     *  calls the algorithm.
-     *  @param event       event that triggers function
-     */
-    public void actionPerformed(ActionEvent event)
-    {
-        String command = event.getActionCommand();
-        Object source = event.getSource();
-
-        if (command.equals("Link"))
-        {
-            String selectedName = (String) comboBoxImage.getSelectedItem();
-            imageB = userInterface.getRegisteredImageByName(selectedName);
-            frameB = imageB.getTriImageFrame();
-
-            ( (ViewJFrameBase) (parentFrame)).setLinkedTriFrame(frameB);
-
-        }
-        else if (command.equals("Cancel"))
-        {
-            ( (ViewJFrameBase) (parentFrame)).setLinkedTriFrame(null);
-            dispose();
-        }
-    }
-
-    /**
-     *  windowClosing - calls close
-     *  @param event    event that triggered function
-     */
-    public void windowClosing(WindowEvent event)
-    {
-        ( (ViewJFrameBase) (parentFrame)).setLinkedTriFrame(null);
-        super.windowClosing(event);
     }
 
 }

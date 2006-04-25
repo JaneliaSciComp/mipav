@@ -1,30 +1,60 @@
 package gov.nih.mipav.view.dialogs;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import javax.swing.*;
 
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
-        ActionListener
-{
-    protected ViewJFrameDICOMParser parentFrame;
+import gov.nih.mipav.view.*;
 
+import java.awt.*;
+import java.awt.event.*;
+
+import java.util.*;
+
+import javax.swing.*;
+
+
+/**
+ * DOCUMENT ME!
+ */
+public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements ActionListener {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 5883528252352616682L;
+
+    /** DOCUMENT ME! */
     protected static String APPLY = "Apply";
+
+    /** DOCUMENT ME! */
     protected static String CLOSE = "Close";
+
+    /** DOCUMENT ME! */
     protected static String REMEMBER = "Remember this configuration";
+
+    /** DOCUMENT ME! */
     public static String CUSTOM = "non-native";
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     protected ViewSelectableDoubleListPanel listPanel;
 
+    /** DOCUMENT ME! */
+    protected ViewJFrameDICOMParser parentFrame;
+
+    /** DOCUMENT ME! */
     protected JTable rightTable;
 
-    public JDialogSelectDICOMColumnHeaders(ViewJFrameDICOMParser parentFrame)
-    {
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new JDialogSelectDICOMColumnHeaders object.
+     *
+     * @param  parentFrame  DOCUMENT ME!
+     */
+    public JDialogSelectDICOMColumnHeaders(ViewJFrameDICOMParser parentFrame) {
         super(parentFrame, true);
 
         setTitle("Configure DICOM columns");
@@ -42,8 +72,49 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
         setVisible(true);
     }
 
-    protected JPanel buildInterface()
-    {
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+
+        if (command.equals(APPLY)) {
+            parentFrame.setHeaderConfiguration(rightTable);
+            parentFrame.reloadRows();
+        } else if (command.equals(CLOSE)) {
+            dispose();
+        } else if (command.equals(REMEMBER)) {
+            TableSorter tableSorter = (TableSorter) rightTable.getModel();
+            SortingTableModel tableModel = (SortingTableModel) tableSorter.getTableModel();
+
+            Vector configuredColumnsVector = new Vector();
+
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                Vector row = tableModel.getRow(i);
+
+                configuredColumnsVector.addElement(row.elementAt(1)); // index 1 is the index of the column name in the
+                                                                      // table
+            }
+
+            boolean success = Preferences.setDICOMBrowserTableConfiguration(configuredColumnsVector);
+
+            if (success) {
+                MipavUtil.displayInfo("Configuration saved.");
+            }
+            // Preferences class will display error message in case of error
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildInterface() {
         JPanel mainPanel = new JPanel(new BorderLayout());
 
         mainPanel.add(buildMainPanel(), BorderLayout.CENTER);
@@ -54,8 +125,12 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
     }
 
 
-    protected JPanel buildMainPanel()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildMainPanel() {
         Vector columnNames = parentFrame.getColumnNames();
 
         SortingTableModel rightTableModel = new SortingTableModel();
@@ -71,18 +146,14 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
         rightTable.getColumn("Key").setMinWidth(0);
         rightTable.getColumn("Key").setMaxWidth(0);
 
-        for (int i = 0; i < columnNames.size(); i++)
-        {
+        for (int i = 0; i < columnNames.size(); i++) {
             Vector newRow = new Vector();
 
             String keyStr = DICOMDictionaryBuilder.getKeyFromTagName((String) columnNames.elementAt(i));
 
-            if (keyStr == null)
-            {
+            if (keyStr == null) {
                 newRow.addElement(CUSTOM);
-            }
-            else
-            {
+            } else {
                 newRow.addElement(keyStr);
             }
 
@@ -94,6 +165,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
         SortingTableModel leftTableModel = new SortingTableModel();
 
         tableSorter = new TableSorter(leftTableModel);
+
         JTable leftTable = new JTable(tableSorter);
         tableSorter.setTableHeader(leftTable.getTableHeader());
 
@@ -127,8 +199,12 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
         return mainPanel;
     }
 
-    protected JPanel buildOKCancelPanel()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected JPanel buildOKCancelPanel() {
         JButton btnApply = new JButton(APPLY);
         btnApply.addActionListener(this);
         btnApply.setActionCommand(APPLY);
@@ -163,50 +239,16 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements
         return subPanel;
     }
 
-    public void actionPerformed(ActionEvent event)
-    {
-        String command = event.getActionCommand();
-
-        if (command.equals(APPLY))
-        {
-            parentFrame.setHeaderConfiguration(rightTable);
-            parentFrame.reloadRows();
-        }
-        else if (command.equals(CLOSE))
-        {
-            dispose();
-        }
-        else if (command.equals(REMEMBER))
-        {
-            TableSorter tableSorter = (TableSorter) rightTable.getModel();
-            SortingTableModel tableModel = (SortingTableModel) tableSorter.getTableModel();
-
-            Vector configuredColumnsVector = new Vector();
-
-            for (int i = 0; i < tableModel.getRowCount(); i++)
-            {
-                Vector row = tableModel.getRow(i);
-
-                configuredColumnsVector.addElement(row.elementAt(1)); // index 1 is the index of the column name in the table
-            }
-
-            boolean success = Preferences.setDICOMBrowserTableConfiguration(configuredColumnsVector);
-
-            if (success)
-            {
-                MipavUtil.displayInfo("Configuration saved.");
-            }
-            // Preferences class will display error message in case of error
-        }
-    }
-
-    protected Vector getNiceDICOMTags()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected Vector getNiceDICOMTags() {
         Hashtable tagsTable = DICOMDictionaryBuilder.getDicomTagTable();
         Vector tagsVector = new Vector(tagsTable.values());
 
-        for (int i = 0; i < tagsVector.size(); i++)
-        {
+        for (int i = 0; i < tagsVector.size(); i++) {
             FileDicomTag fileDICOMTag = (FileDicomTag) tagsVector.elementAt(i);
 
             tagsVector.setElementAt(fileDICOMTag.getName(), i);

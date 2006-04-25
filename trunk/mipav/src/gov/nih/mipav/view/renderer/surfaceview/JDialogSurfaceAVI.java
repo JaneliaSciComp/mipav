@@ -1,161 +1,180 @@
 package gov.nih.mipav.view.renderer.surfaceview;
 
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-import javax.swing.*;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
+
+import javax.swing.*;
+
 
 /**
- *  Dialog that gets input needed for saving the 3D rendering motions
- *	to an AVI file.  User can enter subsample and frame rate.
+ * Dialog that gets input needed for saving the 3D rendering motions to an AVI file. User can enter subsample and frame
+ * rate.
  *
- *		@version    0.1 Oct 2001
- *      @author  Neva Cherniavsky
- *      @see JDialogMouseRecorder
+ * @version  0.1 Oct 2001
+ * @author   Neva Cherniavsky
+ * @see      JDialogMouseRecorder
  */
-public class JDialogSurfaceAVI
-    extends JDialogBase {
+public class JDialogSurfaceAVI extends JDialogBase {
 
-  /** Text field for the frame rate per second. */
-  private JTextField rateBox;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-  /**
-   * Sub sampel combo box.
-   */
-  private JComboBox subSampleCBox;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -475364340269669481L;
 
-  /** Subsample flag. */
-  private int subSample;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-  /** Frame rate per second. */
-  private double rate;
+    /** Frame rate per second. */
+    private double rate;
 
-  /**
-   * Constructor to create surface AVI dialog.
-   * @param theParentFrame  parent frame reference
-   */
-  public JDialogSurfaceAVI(Frame theParentFrame) {
-    super(theParentFrame, true);
-    init();
-  }
+    /** Text field for the frame rate per second. */
+    private JTextField rateBox;
 
-  /**
-   *	Sets up the GUI (panels, buttons, etc) and displays it on the screen.
-   */
-  private void init() {
-    setForeground(Color.black);
-    setTitle("Set AVI options");
+    /** Subsample flag. */
+    private int subSample;
 
-    JLabel subSampleLabel = new JLabel("Subsample image");
-    subSampleLabel.setFont(MipavUtil.font12);
-    subSampleLabel.setForeground(Color.black);
+    /** Sub sampel combo box. */
+    private JComboBox subSampleCBox;
 
-    subSampleCBox = new JComboBox();
-    subSampleCBox.setFont(MipavUtil.font12);
-    subSampleCBox.setToolTipText("Subsample by");
-    subSampleCBox.addItem("1");
-    subSampleCBox.addItem("2");
-    subSampleCBox.addItem("3");
-    subSampleCBox.addItem("4");
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    JPanel subSamplePanel = new JPanel();
-    subSamplePanel.add(subSampleLabel);
-    subSamplePanel.add(subSampleCBox);
-
-    JLabel rateLabel = new JLabel("Frame rate");
-    rateLabel.setFont(MipavUtil.font12);
-    rateLabel.setForeground(Color.black);
-
-    rateBox = new JTextField("21", 3);
-
-    JLabel rate2Label = new JLabel("frames per second");
-    rate2Label.setFont(MipavUtil.font12);
-    rate2Label.setForeground(Color.black);
-
-    JPanel ratePanel = new JPanel();
-    ratePanel.add(rateLabel);
-    ratePanel.add(rateBox);
-    ratePanel.add(rate2Label);
-
-    JPanel topPanel = new JPanel();
-    topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
-    topPanel.add(subSamplePanel);
-    topPanel.add(ratePanel);
-    topPanel.setBorder(buildTitledBorder("AVI options"));
-
-    JPanel buttonPanel = new JPanel();
-
-    OKButton = buildOKButton();
-    cancelButton = buildCancelButton();
-    buttonPanel.add(OKButton);
-    buttonPanel.add(cancelButton);
-
-    JPanel mainPanel = new JPanel();
-    mainPanel.setLayout(new BorderLayout());
-    mainPanel.add(topPanel, BorderLayout.CENTER);
-    mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-    getContentPane().add(mainPanel);
-    pack();
-    setVisible(true);
-  }
-
-  /**
-   *	Accessor that sets the frame rate.
-   *	@param rate		Frame rate to set.
-   */
-  public void setFrameRate(double rate) {
-    this.rate = rate;
-  }
-
-  /**
-   *	Accessor that sets the subsample size.
-   *	@param type		The subsample size.
-   */
-  public void setSubSample(int type) {
-    subSample = type;
-  }
-
-  /**
-   *	Accessor that gets the frame rate.
-   *	@return	The frame rate.
-   */
-  public double getFrameRate() {
-    return rate;
-  }
-
-  /**
-   *	Accessor that gets the subsample size.
-   *	@return	The subsample size.
-   */
-  public int getSubSample() {
-    return subSample;
-  }
-
-  /**
-   *	Takes the following actions:
-   *	<ul>
-   *	<li>OK Button		- gets the frame rate from the text box and the subsample parameter
-   *						from the combo boxes</li>
-   *	<li>Cancel Button	- closes the dialog without doing anything</li>
-   *	</ul>
-   *	@param event  Event that triggers function.
-   */
-  public void actionPerformed(ActionEvent event) {
-    String command = event.getActionCommand();
-
-    if (command.equals("OK")) {
-      if (testParameter(rateBox.getText(), 0, 100)) {
-        rate = Double.valueOf(rateBox.getText()).doubleValue();
-      }
-      subSample = Integer.valueOf( (String) subSampleCBox.getSelectedItem()).intValue();
-      dispose();
+    /**
+     * Constructor to create surface AVI dialog.
+     *
+     * @param  theParentFrame  parent frame reference
+     */
+    public JDialogSurfaceAVI(Frame theParentFrame) {
+        super(theParentFrame, true);
+        init();
     }
-    else if (command.equals("Cancel")) {
-      cancelFlag = true;
-      dispose();
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Takes the following actions:
+     *
+     * <ul>
+     *   <li>OK Button - gets the frame rate from the text box and the subsample parameter from the combo boxes</li>
+     *   <li>Cancel Button - closes the dialog without doing anything</li>
+     * </ul>
+     *
+     * @param  event  Event that triggers function.
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+
+        if (command.equals("OK")) {
+
+            if (testParameter(rateBox.getText(), 0, 100)) {
+                rate = Double.valueOf(rateBox.getText()).doubleValue();
+            }
+
+            subSample = Integer.valueOf((String) subSampleCBox.getSelectedItem()).intValue();
+            dispose();
+        } else if (command.equals("Cancel")) {
+            cancelFlag = true;
+            dispose();
+        }
     }
-  }
+
+    /**
+     * Accessor that gets the frame rate.
+     *
+     * @return  The frame rate.
+     */
+    public double getFrameRate() {
+        return rate;
+    }
+
+    /**
+     * Accessor that gets the subsample size.
+     *
+     * @return  The subsample size.
+     */
+    public int getSubSample() {
+        return subSample;
+    }
+
+    /**
+     * Accessor that sets the frame rate.
+     *
+     * @param  rate  Frame rate to set.
+     */
+    public void setFrameRate(double rate) {
+        this.rate = rate;
+    }
+
+    /**
+     * Accessor that sets the subsample size.
+     *
+     * @param  type  The subsample size.
+     */
+    public void setSubSample(int type) {
+        subSample = type;
+    }
+
+    /**
+     * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
+     */
+    private void init() {
+        setForeground(Color.black);
+        setTitle("Set AVI options");
+
+        JLabel subSampleLabel = new JLabel("Subsample image");
+        subSampleLabel.setFont(MipavUtil.font12);
+        subSampleLabel.setForeground(Color.black);
+
+        subSampleCBox = new JComboBox();
+        subSampleCBox.setFont(MipavUtil.font12);
+        subSampleCBox.setToolTipText("Subsample by");
+        subSampleCBox.addItem("1");
+        subSampleCBox.addItem("2");
+        subSampleCBox.addItem("3");
+        subSampleCBox.addItem("4");
+
+        JPanel subSamplePanel = new JPanel();
+        subSamplePanel.add(subSampleLabel);
+        subSamplePanel.add(subSampleCBox);
+
+        JLabel rateLabel = new JLabel("Frame rate");
+        rateLabel.setFont(MipavUtil.font12);
+        rateLabel.setForeground(Color.black);
+
+        rateBox = new JTextField("21", 3);
+
+        JLabel rate2Label = new JLabel("frames per second");
+        rate2Label.setFont(MipavUtil.font12);
+        rate2Label.setForeground(Color.black);
+
+        JPanel ratePanel = new JPanel();
+        ratePanel.add(rateLabel);
+        ratePanel.add(rateBox);
+        ratePanel.add(rate2Label);
+
+        JPanel topPanel = new JPanel();
+        topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
+        topPanel.add(subSamplePanel);
+        topPanel.add(ratePanel);
+        topPanel.setBorder(buildTitledBorder("AVI options"));
+
+        JPanel buttonPanel = new JPanel();
+
+        OKButton = buildOKButton();
+        cancelButton = buildCancelButton();
+        buttonPanel.add(OKButton);
+        buttonPanel.add(cancelButton);
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(topPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        getContentPane().add(mainPanel);
+        pack();
+        setVisible(true);
+    }
 
 }

@@ -1,58 +1,144 @@
 package gov.nih.mipav.view.dialogs;
 
-import java.awt.*;
-import javax.swing.*;
-import java.awt.event.*;
-import java.util.*;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import java.util.*;
+
+import javax.swing.*;
 
 
 /**
- * <p>Title: </p>
+ * <p>Title:</p>
  *
- * <p>Description: </p>
+ * <p>Description:</p>
  *
  * <p>Copyright: Copyright (c) 2004</p>
  *
- * <p>Company: </p>
+ * <p>Company:</p>
  *
- * @author not attributable
- * @version 1.0
+ * @author   not attributable
+ * @version  1.0
  */
-public class JDialogReplaceSlice
-    extends JDialogBase
-    implements AlgorithmInterface {
+public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private ViewUserInterface userInterface;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -4522782534141992295L;
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private ModelImage image;
-    private ModelImage sliceImage = null;
 
+    /** DOCUMENT ME! */
     private JComboBox sliceBox;
+
+    /** DOCUMENT ME! */
     private JTextField sliceField;
 
+    /** DOCUMENT ME! */
+    private ModelImage sliceImage = null;
+
+    /** DOCUMENT ME! */
     private int sliceNum;
 
-    public JDialogReplaceSlice( Frame theParentFrame, ModelImage im) {
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new JDialogReplaceSlice object.
+     *
+     * @param  theParentFrame  DOCUMENT ME!
+     * @param  im              DOCUMENT ME!
+     */
+    public JDialogReplaceSlice(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-    image = im; // set the image from the arguments to an image in this class
-    userInterface = ( (ViewJFrameBase) (parentFrame)).getUserInterface();
-    setTitle("Replace slice");
+        image = im; // set the image from the arguments to an image in this class
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        setTitle("Replace slice");
 
-    if (im.getExtents().length != 3) {
-        MipavUtil.displayError("Source image must be 3D");
-        dispose();
-        return;
+        if (im.getExtents().length != 3) {
+            MipavUtil.displayError("Source image must be 3D");
+            dispose();
+
+            return;
+        }
+
+        init();
+
     }
 
-    init();
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Invoked when an action occurs.
+     *
+     * @param  event  ActionEvent
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+        Object source = event.getSource();
+
+        if (command.equals("OK")) {
+
+            if (setVariables()) {
+                callAlgorithm();
+            }
+        } else if (command.equals("Cancel")) {
+            dispose();
+        }
 
     }
 
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  algo  DOCUMENT ME!
+     */
+    public void algorithmPerformed(AlgorithmBase algo) {
+
+        if (algo.isCompleted()) {
+
+            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
+                Preferences.debug("\nHave replaced slice " + sliceNum + " on ");
+                Preferences.debug(image.getImageName() + " with ");
+                Preferences.debug(sliceImage.getImageName() + "\n");
+            } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
+
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    private void callAlgorithm() {
+
+        sliceImage = userInterface.getRegisteredImageByName((String) sliceBox.getSelectedItem());
+
+        AlgorithmReplaceSlice algo = new AlgorithmReplaceSlice(image, sliceImage, sliceNum - 1);
+
+        algo.addListener(this);
+
+        setVisible(false);
+        algo.run();
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
     private void init() {
 
 
@@ -62,9 +148,9 @@ public class JDialogReplaceSlice
 
         Vector sliceItems = new Vector();
 
-        int [] imageExtents = image.getExtents();
+        int[] imageExtents = image.getExtents();
 
-        int [] currentExtents = null;
+        int[] currentExtents = null;
 
         ModelImage currentImage = null;
 
@@ -73,9 +159,9 @@ public class JDialogReplaceSlice
             currentImage = (ModelImage) e.nextElement();
 
             currentExtents = currentImage.getExtents();
-            if (currentExtents.length == 2 &&
-                currentExtents[0] == imageExtents[0] &&
-                currentExtents[1] == imageExtents[1]) {
+
+            if ((currentExtents.length == 2) && (currentExtents[0] == imageExtents[0]) &&
+                    (currentExtents[1] == imageExtents[1])) {
 
                 sliceItems.addElement(new String(currentImage.getImageName()));
             }
@@ -85,6 +171,7 @@ public class JDialogReplaceSlice
         if (sliceItems.isEmpty()) {
             MipavUtil.displayError("No valid images open for replace slice");
             dispose();
+
             return;
         }
 
@@ -132,66 +219,28 @@ public class JDialogReplaceSlice
 
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     private boolean setVariables() {
 
         try {
             sliceNum = Integer.parseInt(sliceField.getText());
         } catch (Exception ex) {
             MipavUtil.displayError("Enter a slice number to replace");
+
             return false;
         }
 
-        if (sliceNum > image.getExtents()[2] ||
-            sliceNum < 1) {
+        if ((sliceNum > image.getExtents()[2]) || (sliceNum < 1)) {
             MipavUtil.displayError("Slice number must be between 1 and " + (image.getExtents()[2]));
+
             return false;
         }
 
         return true;
-    }
-
-    private void callAlgorithm() {
-
-        sliceImage = userInterface.getRegisteredImageByName((String)sliceBox.getSelectedItem());
-
-        AlgorithmReplaceSlice algo = new AlgorithmReplaceSlice(image, sliceImage, sliceNum - 1);
-
-        algo.addListener(this);
-
-        setVisible(false);
-        algo.run();
-    }
-
-    /**
-     * Invoked when an action occurs.
-     *
-     * @param event ActionEvent
-     */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-        Object source = event.getSource();
-
-        if (command.equals("OK")) {
-            if (setVariables()) {
-                callAlgorithm();
-            }
-        }
-        else if (command.equals("Cancel")) {
-            dispose();
-        }
-
-    }
-
-
-    public void algorithmPerformed(AlgorithmBase algo) {
-        if (algo.isCompleted()) {
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-             Preferences.debug("\nHave replaced slice " + sliceNum + " on ");
-             Preferences.debug(image.getImageName() + " with ");
-             Preferences.debug(sliceImage.getImageName() + "\n");
-         } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
-
-        }
     }
 
 }

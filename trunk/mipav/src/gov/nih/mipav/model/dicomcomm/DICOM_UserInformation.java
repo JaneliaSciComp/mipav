@@ -1,74 +1,98 @@
 package gov.nih.mipav.model.dicomcomm;
 
 
-import java.util.Vector;
+import java.util.*;
+
 
 /**
- * DICOM User Information PDU Item Type (part 8 section 9.3)
+ * DICOM User Information PDU Item Type (part 8 section 9.3).
  */
 public class DICOM_UserInformation extends DICOM_PDUItemType {
 
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    public DICOM_AsyncOpWindowSubItem aSyncSubItem = null; // new DICOM_AsyncOpWindowSubItem();
+
+    /** DOCUMENT ME! */
+    public DICOM_PDUItemType implementationClass = new DICOM_PDUItemType(PDUTYPE_ImplementationClass);
+
+    /** DOCUMENT ME! */
+    public DICOM_PDUItemType implementationVersion = new DICOM_PDUItemType(PDUTYPE_ImplementationVersion);
+
+    /** DOCUMENT ME! */
+    public DICOM_MaximumSubLength maxSubLength = new DICOM_MaximumSubLength();
+
+    /** public DICOM_SCPSCURoleSelect SCPSCURole = null; //new DICOM_SCPSCURoleSelect();. */
+    public Vector SCPSCURoleVector = new Vector();
+
+    /** DOCUMENT ME! */
     private int userInfoSize = 0;
-    public DICOM_PDUItemType      implementationClass   = new DICOM_PDUItemType(PDUTYPE_ImplementationClass);
-    public DICOM_PDUItemType      implementationVersion = new DICOM_PDUItemType(PDUTYPE_ImplementationVersion);
-    //public DICOM_SCPSCURoleSelect SCPSCURole            = null; //new DICOM_SCPSCURoleSelect();
-    public Vector SCPSCURoleVector                      = new Vector();
-    public DICOM_AsyncOpWindowSubItem aSyncSubItem      = null; //new DICOM_AsyncOpWindowSubItem();
-    public DICOM_MaximumSubLength maxSubLength          = new DICOM_MaximumSubLength();
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-    *   Constructs a DICOM user information object. This object extends the DICOM_PDUItemType
-    *
-    */
+     * Constructs a DICOM user information object. This object extends the DICOM_PDUItemType
+     */
     public DICOM_UserInformation() {
         super(PDUTYPE_UserInformation);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-    * Calculates the PDU item type size
-    * @return the size =  parent size  + userInfoSize
-    */
-    public int calcSize() { return( super.calcSize() ); }
+     * Calculates the PDU item type size.
+     *
+     * @return  the size = parent size + userInfoSize
+     */
+    public int calcSize() {
+        return (super.calcSize());
+    }
 
     /**
-    *   Accessor that returns the length in bytes
-    *   @return     item length
-    */
+     * Accessor that returns the length in bytes.
+     *
+     * @return  item length
+     */
     public int length() {
         int length;
 
-        length  = implementationClass.calcSize();
+        length = implementationClass.calcSize();
         length += implementationVersion.calcSize();
         length += maxSubLength.calcSize();
 
         for (int i = 0; i < SCPSCURoleVector.size(); i++) {
-            length += ((DICOM_SCPSCURoleSelect)(SCPSCURoleVector.elementAt(i))).calcSize();
+            length += ((DICOM_SCPSCURoleSelect) (SCPSCURoleVector.elementAt(i))).calcSize();
         }
 
-        if ( aSyncSubItem != null ) {
+        if (aSyncSubItem != null) {
             length += aSyncSubItem.calcSize();
         }
 
         length += userInfoSize;
 
-        return(length);
+        return (length);
     }
 
     /**
-    * Reads the body of the user information packet
-    * @param connection  the connection to read from
-    * @exception throw DICOM_Exception if problem occurs
-    */
+     * Reads the body of the user information packet.
+     *
+     * @param      connection  the connection to read from
+     *
+     * @exception  DICOM_Exception  DICOM_Exception if problem occurs
+     */
     public void readBody(DICOM_Comms connection) throws DICOM_Exception {
-        int count    = length;
+        int count = length;
 
         userInfoSize = 0;
-        while(count > 0) {
 
-            //Preferences.debug(DICOM_Util.timeStamper() +  " DICOM_UserInformation.readBody: count = " + length + " \n");
+        while (count > 0) {
 
-            switch(connection.peekFirstByte()) {
+            // Preferences.debug(DICOM_Util.timeStamper() +  " DICOM_UserInformation.readBody: count = " + length + "
+            // \n");
+
+            switch (connection.peekFirstByte()) {
+
                 case PDUTYPE_ImplementationClass:
                     implementationClass.read(connection);
                     count = count - implementationClass.calcSize();
@@ -85,6 +109,7 @@ public class DICOM_UserInformation extends DICOM_PDUItemType {
                     break;
 
                 case PDUTYPE_SCPSCURoleSelect:
+
                     // Not sure how this info is used. Kodak's Auto Rads send an array of them).
                     DICOM_SCPSCURoleSelect SCPSCURole = new DICOM_SCPSCURoleSelect();
                     SCPSCURole.read(connection);
@@ -93,14 +118,15 @@ public class DICOM_UserInformation extends DICOM_PDUItemType {
                     break;
 
                 case PDUTYPE_AsyncOpWindowSubItem:
+
                     // Not supported and is optional - however it is read in.
-                    aSyncSubItem      = new DICOM_AsyncOpWindowSubItem();
+                    aSyncSubItem = new DICOM_AsyncOpWindowSubItem();
                     aSyncSubItem.read(connection);
                     count = count - aSyncSubItem.calcSize();
                     break;
 
                 default:
-                    connection.readBytes(count-1);
+                    connection.readBytes(count - 1);
                     userInfoSize = count;
                     throw new DICOM_Exception("DICOMError: Error reading user info.");
             }
@@ -109,12 +135,14 @@ public class DICOM_UserInformation extends DICOM_PDUItemType {
 
 
     /**
-    * Writes the body of the user information
-    * @param connection the connection to write to
-    * @exception throw DICOM_Exception if problem occurs
-    */
+     * Writes the body of the user information.
+     *
+     * @param      connection  the connection to write to
+     *
+     * @exception  DICOM_Exception  DICOM_Exception if problem occurs
+     */
     public void writeBody(DICOM_Comms connection) throws DICOM_Exception {
-        maxSubLength.write(connection );
+        maxSubLength.write(connection);
         implementationClass.write(connection);
         implementationVersion.write(connection);
     }

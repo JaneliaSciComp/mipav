@@ -1,72 +1,67 @@
 package gov.nih.mipav.model.file;
 
+
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
-import java.net.*;
+import org.apache.xerces.jaxp.*;
+
+import org.xml.sax.*;
+import org.xml.sax.helpers.*;
+
 import java.io.*;
+
+import java.net.*;
 
 // JAXP packages
 import javax.xml.parsers.*;
-import org.xml.sax.*;
-import org.xml.sax.helpers.*;
-import org.apache.xerces.jaxp.SAXParserImpl;
 
+
+/**
+ * DOCUMENT ME!
+ */
 public class FileOME extends FileBase {
-    /**
-     * The W3C XML schema.
-     */
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** The W3C XML schema. */
     private static final String W3C_XML_SCHEMA = "http://www.w3.org/2001/XMLSchema";
 
-    /**
-     * The image to read or write.
-     */
-    private ModelImage image;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**
-     * The image's lut.
-     */
-    private ModelLUT LUT;
+    /** The directory where the xml header and raw image data file are located. */
+    private String fileDir;
 
-    /**
-     * Whether the image has a lut already.  One is generated if this variable is false.
-     */
-    private boolean usesLUT = false;
+    /** The info for the image file. */
+    private FileInfoOME fileInfo;
 
-    /**
-     * The name of the raw image data file.
-     */
-    private String imageFileName;
-
-    /**
-     * The name of the xml image header file.
-     */
+    /** The name of the xml image header file. */
     private String fileName;
 
-    /**
-     * The directory where the xml header and raw image data file are located.
-     */
-    private String fileDir;
-    
-    /**
-     * Whether to show a progress bar while processing the file.
-     */
+    /** The image to read or write. */
+    private ModelImage image;
+
+    /** The name of the raw image data file. */
+    private String imageFileName;
+
+    /** The image's lut. */
+    private ModelLUT LUT;
+
+    /** Whether to show a progress bar while processing the file. */
     private boolean showProgress;
 
-    /**
-     * The info for the image file.
-     */
-    private FileInfoOME fileInfo;
+    /** Whether the image has a lut already. One is generated if this variable is false. */
+    private boolean usesLUT = false;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs new file object.
-     * 
-     * @param fName
-     *            File name.
-     * @param fDir
-     *            File directory.
-     * @param show
-     *            Flag for showing the progress bar.
+     *
+     * @param  fName  File name.
+     * @param  fDir   File directory.
+     * @param  show   Flag for showing the progress bar.
      */
     public FileOME(String fName, String fDir, boolean show) {
         fileName = fName;
@@ -75,30 +70,109 @@ public class FileOME extends FileBase {
         fileInfo = new FileInfoOME(fName, fDir, FileBase.XML);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     * Reads an XML image file by reading the XML header then making a FileRaw
-     * to read the image for all filenames in the file list. Only the one file
-     * directory (currently) supported.
-     * 
-     * @exception IOException if there is an error reading the file
-     * @exception OutOfMemoryError if there is not enough memory available to read in the image
-     * @return The image.
-     * @see FileRaw
+     * Read the image XML header.
+     *
+     * @param   headerFileName  the header file name
+     * @param   headerFileDir   the directory the header file is in
+     *
+     * @return  true if successful, false otherwise
+     *
+     * @throws  IOException  if there is an error reading the header file from disk
+     */
+    public boolean readHeader(String headerFileName, String headerFileDir) throws IOException {
+
+        fileInfo.setHeaderFileName(headerFileName);
+
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+
+        spf.setNamespaceAware(true);
+
+        spf.setValidating(true);
+
+        try {
+
+            // Create a JAXP SAXParser
+            SAXParser saxParser = spf.newSAXParser();
+
+            // Validation part 2a: set the schema language if necessary
+            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+
+            // Validation part 2b: Set the schema source, if any. See the JAXP
+            // 1.2 maintenance update specification for more complex usages of
+            // this feature.
+            URL xsdURL = getClass().getClassLoader().getResource("ome.xsd");
+
+            if (xsdURL == null) {
+                MipavUtil.displayError("Unable to find OME XML schema.");
+
+                return false;
+            }
+
+            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+
+            // Get the encapsulated SAX XMLReader
+            XMLReader xmlReader = saxParser.getXMLReader();
+
+            // Set the ContentHandler of the XMLReader
+            xmlReader.setContentHandler(new MyXMLHandler());
+
+            // Set an ErrorHandler before parsing
+            xmlReader.setErrorHandler(new XMLErrorHandler());
+
+            // Tell the XMLReader to parse the XML document
+            xmlReader.parse(MipavUtil.convertToFileURL(headerFileDir + headerFileName));
+
+            if (LUT != null) {
+
+                if (!usesLUT) {
+                    LUT.makeLUT(256);
+                }
+
+                LUT.makeIndexedLUT(null);
+            }
+
+        } catch (Exception error) {
+            MipavUtil.displayError("Error: " + error.getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Reads an XML image file by reading the XML header then making a FileRaw to read the image for all filenames in
+     * the file list. Only the one file directory (currently) supported.
+     *
+     * @exception  IOException       if there is an error reading the file
+     * @exception  OutOfMemoryError  if there is not enough memory available to read in the image
+     *
+     * @return     The image.
+     *
+     * @see        FileRaw
      */
     public ModelImage readImage() throws IOException, OutOfMemoryError {
         fileInfo = new FileInfoOME(fileName, fileDir, FileBase.XML);
+
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException("XML file error"));
         }
 
         int[] extents = null;
+
         try {
 
             extents = new int[fileInfo.getExtents().length];
+
             for (int i = 0; i < extents.length; i++) {
                 extents[i] = fileInfo.getExtents()[i];
             }
-            image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] }, fileInfo.getFileName());
+
+            image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
+                                   fileInfo.getFileName());
 
         } catch (OutOfMemoryError error) {
             throw (error);
@@ -107,21 +181,29 @@ public class FileOME extends FileBase {
         image.setMatrix(fileInfo.getMatrix());
 
         try { // Construct a FileRaw to actually read the image.
+
             FileRaw rawFile;
+
             // imageFileName was parsed from the "image".xml file.
             rawFile = new FileRaw(fileDir + imageFileName, fileInfo, showProgress, FileBase.READ);
+
             int offset = 0;
 
             rawFile.readImage(image, offset);
-            FileInfoOME nFileInfos[];
+
+            FileInfoOME[] nFileInfos;
+
             if (fileInfo.getExtents().length > 2) { // Set file info
+
                 int length = fileInfo.getExtents()[2];
 
-                if (fileInfo.getExtents().length == 4)
+                if (fileInfo.getExtents().length == 4) {
                     length *= fileInfo.getExtents()[3];
+                }
 
-                if (fileInfo.getExtents().length == 5)
+                if (fileInfo.getExtents().length == 5) {
                     length *= fileInfo.getExtents()[4];
+                }
 
                 nFileInfos = new FileInfoOME[length];
 
@@ -144,103 +226,156 @@ public class FileOME extends FileBase {
         return image;
     }
 
-    /**
-     * Read the image XML header.
-     * @param headerFileName  the header file name
-     * @param headerFileDir         the directory the header file is in
-     * @return true if successful, false otherwise
-     * @throws IOException if there is an error reading the header file from disk
-     */
-    public boolean readHeader(String headerFileName, String headerFileDir) throws IOException {
-
-        fileInfo.setHeaderFileName(headerFileName);
-        SAXParserFactory spf = SAXParserFactory.newInstance();
-
-        spf.setNamespaceAware(true);
-
-        spf.setValidating(true);
-
-        try {
-            // Create a JAXP SAXParser
-            SAXParser saxParser = spf.newSAXParser();
-            // Validation part 2a: set the schema language if necessary
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
-
-            // Validation part 2b: Set the schema source, if any. See the JAXP
-            // 1.2 maintenance update specification for more complex usages of
-            // this feature.
-            URL xsdURL = getClass().getClassLoader().getResource("ome.xsd");
-            if (xsdURL == null) {
-                MipavUtil.displayError("Unable to find OME XML schema.");
-                return false;
-            }
-
-            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
-
-            // Get the encapsulated SAX XMLReader
-            XMLReader xmlReader = saxParser.getXMLReader();
-
-            // Set the ContentHandler of the XMLReader
-            xmlReader.setContentHandler(new MyXMLHandler());
-
-            // Set an ErrorHandler before parsing
-            xmlReader.setErrorHandler(new XMLErrorHandler());
-
-            // Tell the XMLReader to parse the XML document
-            xmlReader.parse(MipavUtil.convertToFileURL(headerFileDir + headerFileName));
-
-            if (LUT != null) {
-                if (!usesLUT)
-                    LUT.makeLUT(256);
-                LUT.makeIndexedLUT(null);
-            }
-
-        }
-
-        catch (Exception error) {
-            MipavUtil.displayError("Error: " + error.getMessage());
-            return false;
-        }
-
-        return true;
-    }
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * Private class used by the parser to parse the XML file
+     * Private class used by the parser to parse the XML file.
      */
     private class MyXMLHandler extends DefaultHandler {
-        /**
-         * The current XML tag we are parsing.
-         */
-        String currentKey;
-        
-        /**
-         * The parent XML tag of the element we are currently parsing.
-         */
-        String superKey;
 
-        /**
-         * The data for the current element being parsed.
-         */
+        /** The current XML tag we are parsing. */
+        String currentKey;
+
+        /** The data for the current element being parsed. */
         String elementBuffer = new String("");
 
-        /**
-         * The image transformation matrix.
-         */
+        /** The image transformation matrix. */
         TransMatrix matrix;
+
+        /** The parent XML tag of the element we are currently parsing. */
+        String superKey;
 
         /**
          * Create a handler to fill out the image info in the parent class from the xml header data.
          */
-        public MyXMLHandler() {}
+        public MyXMLHandler() { }
+
+        /**
+         * Text data callback from parser. If the parser is not validating, this method can report whitespace. We ignore
+         * strings that are entirely whitespace.
+         *
+         * @param  ch      Character array
+         * @param  start   Start of data in array.
+         * @param  length  Length of data in array.
+         */
+        public void characters(char[] ch, int start, int length) {
+            String s = new String(ch, start, length);
+
+            if (s.trim().length() != 0) {
+                elementBuffer += s;
+            }
+        }
+
+        /**
+         * Handle the end of the XML document. Does nothing.
+         *
+         * @throws  SAXException  if there is a parser error
+         */
+        public void endDocument() throws SAXException { }
+
+        /**
+         * Parser calls this when the end tag of each element is reached. Data collected in the elementbuffer is
+         * generally saved to the image info.
+         *
+         * @param   namespaceURI  the namespace (not used)
+         * @param   localName     the current tag we are parsing (not used)
+         * @param   qName         ? (not used)
+         *
+         * @throws  SAXException  if there is a problem with the parser
+         */
+        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+
+            if (currentKey.equals("Include")) {
+                fileInfo.getOME().getCurrentInclude().setIncludeString(elementBuffer);
+            } else if (currentKey.equals("Description")) {
+
+                if (superKey.equals("Project")) {
+                    fileInfo.getOME().getCurrentProject().setDescription(elementBuffer);
+                } else if (superKey.equals("Dataset")) {
+                    fileInfo.getOME().getCurrentDataset().setDescription(elementBuffer);
+                } else if (superKey.equals("Experiment")) {
+                    fileInfo.getOME().getCurrentExperiment().setDescription(elementBuffer);
+                } else if (superKey.equals("Screen")) {
+                    fileInfo.getOME().getCurrentScreen().setDescription(elementBuffer);
+                } else if (superKey.equals("Image")) {
+                    fileInfo.getOME().getCurrentImage().setDescription(elementBuffer);
+                }
+            } else if (currentKey.equals("FirstName")) {
+
+                if (superKey.equals("Experimenter")) {
+                    fileInfo.getOME().getCurrentExperimenter().setFirstName(elementBuffer);
+                } else if (superKey.equals("Leader")) {
+                    fileInfo.getOME().getCurrentGroup().setLeaderFirstName(elementBuffer);
+                } else if (superKey.equals("Contact")) {
+                    fileInfo.getOME().getCurrentGroup().setContactFirstName(elementBuffer);
+                }
+            } else if (currentKey.equals("LastName")) {
+
+                if (superKey.equals("Experimenter")) {
+                    fileInfo.getOME().getCurrentExperimenter().setLastName(elementBuffer);
+                } else if (superKey.equals("Leader")) {
+                    fileInfo.getOME().getCurrentGroup().setLeaderLastName(elementBuffer);
+                } else if (superKey.equals("Contact")) {
+                    fileInfo.getOME().getCurrentGroup().setContactLastName(elementBuffer);
+                }
+
+            } else if (currentKey.equals("email")) {
+
+                if (superKey.equals("Experimenter")) {
+                    fileInfo.getOME().getCurrentExperimenter().setEmail(elementBuffer);
+                } else if (superKey.equals("Leader")) {
+                    fileInfo.getOME().getCurrentGroup().setLeaderEmail(elementBuffer);
+                } else if (superKey.equals("Contact")) {
+                    fileInfo.getOME().getCurrentGroup().setContactEmail(elementBuffer);
+                }
+
+            } else if (currentKey.equals("Institution")) {
+
+                if (superKey.equals("Experimenter")) {
+                    fileInfo.getOME().getCurrentExperimenter().setInstitution(elementBuffer);
+                } else if (superKey.equals("Leader")) {
+                    fileInfo.getOME().getCurrentGroup().setLeaderInstitution(elementBuffer);
+                } else if (superKey.equals("Contact")) {
+                    fileInfo.getOME().getCurrentGroup().setContactInstitution(elementBuffer);
+                }
+
+            } else if (currentKey.equals("OMEName")) {
+
+                if (superKey.equals("Experimenter")) {
+                    fileInfo.getOME().getCurrentExperimenter().setOMEName(elementBuffer);
+                }
+            } else if (currentKey.equals("LensNA")) {
+                fileInfo.getOME().getCurrentInstrument().getCurrentObjective().setLensNA(new Float(elementBuffer));
+            } else if (currentKey.equals("Magnification")) {
+                fileInfo.getOME().getCurrentInstrument().getCurrentObjective().setMagnification(new Float(elementBuffer));
+            } else if (currentKey.equals("CreationDate")) {
+                fileInfo.getOME().getCurrentImage().setCreationDate(elementBuffer);
+            } else if (currentKey.equals("Sample")) {
+                fileInfo.getOME().getCurrentImage().getPlateInfo().setSampleNumber(new Integer(elementBuffer));
+            } else if (currentKey.equals("Well")) {
+                fileInfo.getOME().getCurrentImage().getPlateInfo().setWellString(elementBuffer);
+            }
+
+        }
+
+        /**
+         * Handle any skipped entities by writing them out to the debug window.
+         *
+         * @param  name  the skipped entity
+         */
+        public void skippedEntity(String name) {
+            Preferences.debug("OME: skipped entity: " + name + "\n", Preferences.DEBUG_FILEIO);
+        }
 
         /**
          * Parser calls this for each element in a document.
-         * @param namespaceURI   the namespace (not used)
-         * @param localName      the current tag we are parsing
-         * @param qName          ? (not used)
-         * @param atts           attributes for the current tag
-         * @throws SAXException  if there is a problem with the parser
+         *
+         * @param   namespaceURI  the namespace (not used)
+         * @param   localName     the current tag we are parsing
+         * @param   qName         ? (not used)
+         * @param   atts          attributes for the current tag
+         *
+         * @throws  SAXException  if there is a problem with the parser
          */
         public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
                 throws SAXException {
@@ -248,6 +383,7 @@ public class FileOME extends FileBase {
             currentKey = localName;
 
             if (currentKey.equals("OME")) {
+
                 // create the OME object
                 fileInfo.setOME(fileInfo.createOME());
             } else if (currentKey.equals("Include")) {
@@ -256,10 +392,11 @@ public class FileOME extends FileBase {
                 URI href = null;
 
                 documentID = new Integer(atts.getValue("DocumentID"));
+
                 try {
                     href = new URI(atts.getValue("href"));
                 } catch (java.net.URISyntaxException e) {
-                    Preferences.debug("OME: " + e + "\n", Preferences.DEBUG_FILEIO );
+                    Preferences.debug("OME: " + e + "\n", Preferences.DEBUG_FILEIO);
                 }
 
                 sha1 = atts.getValue("SHA1");
@@ -296,6 +433,7 @@ public class FileOME extends FileBase {
                 Integer groupID;
 
                 groupID = new Integer(atts.getValue("GroupID"));
+
                 if (superKey.equals("Project")) {
                     fileInfo.getOME().getCurrentProject().setGroupRef(groupID);
                 } else if (superKey.equals("Dataset")) {
@@ -312,6 +450,7 @@ public class FileOME extends FileBase {
 
                 name = atts.getValue("Name");
                 datasetID = new Integer(atts.getValue("DatasetID"));
+
                 try {
                     locked = new Boolean(atts.getValue("Locked"));
                 } catch (NullPointerException e) {
@@ -409,36 +548,45 @@ public class FileOME extends FileBase {
 
                 String temp = null;
                 temp = atts.getValue("Wavelength");
+
                 if (temp != null) {
                     wavelength = new Integer(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("FrequencyDoubled");
+
                 if (temp != null) {
                     fd = new Boolean(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Tunable");
+
                 if (temp != null) {
                     tunable = new Boolean(temp);
                     temp = null;
                 }
+
                 pulse = atts.getValue("Pulse");
 
                 temp = atts.getValue("Power");
+
                 if (temp != null) {
                     power = new Float(temp);
                 }
 
                 fileInfo.getOME().getCurrentInstrument().getCurrentLightSource().setLaser(type, medium, wavelength, fd,
-                        tunable, pulse, power);
+                                                                                          tunable, pulse, power);
             } else if (currentKey.equals("Pump")) {
                 Integer ref = null, id;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
                     ref = new Integer(temp);
                 }
+
                 id = new Integer(atts.getValue("LightSourceID"));
 
                 fileInfo.getOME().getCurrentInstrument().getCurrentLightSource().getLaser().setPump(ref, id);
@@ -447,7 +595,9 @@ public class FileOME extends FileBase {
                 Float power = null;
 
                 type = atts.getValue("Type");
+
                 String temp = atts.getValue("Power");
+
                 if (temp != null) {
                     power = new Float(temp);
                 }
@@ -458,7 +608,9 @@ public class FileOME extends FileBase {
                 Float power = null;
 
                 type = atts.getValue("Type");
+
                 String temp = atts.getValue("Power");
+
                 if (temp != null) {
                     power = new Float(temp);
                 }
@@ -474,19 +626,25 @@ public class FileOME extends FileBase {
                 sn = atts.getValue("SerialNumber");
 
                 String temp = atts.getValue("Gain");
+
                 if (temp != null) {
                     gain = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Voltage");
+
                 if (temp != null) {
                     voltage = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Offset");
+
                 if (temp != null) {
                     offset = new Float(temp);
                 }
+
                 id = new Integer(atts.getValue("DetectorID"));
                 type = atts.getValue("Type");
 
@@ -566,6 +724,7 @@ public class FileOME extends FileBase {
                 sha1 = atts.getValue("SHA1");
 
                 String temp = atts.getValue("Offset");
+
                 if (temp != null) {
                     offset = new Integer(temp);
                 }
@@ -573,18 +732,19 @@ public class FileOME extends FileBase {
                 try {
                     href = new URI(atts.getValue("href"));
                 } catch (java.net.URISyntaxException e) {
-                    Preferences.debug("OME: " + e + "\n", Preferences.DEBUG_FILEIO );
+                    Preferences.debug("OME: " + e + "\n", Preferences.DEBUG_FILEIO);
                 }
 
                 if (superKey.equals("OTF")) {
                     fileInfo.getOME().getCurrentInstrument().getCurrentOTF().setBinExternal(compression, sha1, offset,
-                            href);
+                                                                                            href);
                 } else if (superKey.equals("Data")) {
                     fileInfo.getOME().getCurrentImage().getData().setBinExternal(compression, sha1, offset, href);
                 }
             } else if (currentKey.equals("Bin:BinData")) {
+
                 // what do we do?
-                Preferences.debug("OME: Got a Bin:BinData\n", Preferences.DEBUG_FILEIO );
+                Preferences.debug("OME: Got a Bin:BinData\n", Preferences.DEBUG_FILEIO);
             } else if (currentKey.equals("Image")) {
                 String guid, imageType, name;
                 Integer sizeX, sizeY, sizeZ, numChannels, numTimes, waveStart = null, waveIncrement = null;
@@ -603,37 +763,46 @@ public class FileOME extends FileBase {
 
                 String temp = null;
                 temp = atts.getValue("PixelSizeZ");
+
                 if (temp != null) {
                     pixelSizeZ = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("TimeIncrement");
+
                 if (temp != null) {
                     timeIncrement = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("WaveStart");
+
                 if (temp != null) {
                     waveStart = new Integer(atts.getValue(temp));
                     temp = null;
                 }
+
                 temp = atts.getValue("WaveIncrement");
+
                 if (temp != null) {
                     waveIncrement = new Integer(temp);
                 }
 
                 // Create the image object
                 fileInfo.getOME().addImage(guid, imageType, name, sizeX, sizeY, sizeZ, numChannels, numTimes,
-                        pixelSizeX, pixelSizeY, pixelSizeZ, timeIncrement, waveStart, waveIncrement);
+                                           pixelSizeX, pixelSizeY, pixelSizeZ, timeIncrement, waveStart, waveIncrement);
                 superKey = currentKey;
             } else if (currentKey.equals("ExperimentRef")) {
                 Integer docRef = null;
                 String expID;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
                     docRef = new Integer(atts.getValue(temp));
                 }
+
                 expID = atts.getValue("ExperimentID");
 
                 fileInfo.getOME().getCurrentImage().setExperimentRef(docRef, expID);
@@ -653,30 +822,39 @@ public class FileOME extends FileBase {
                 Integer docRef = null, instID, objID;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
                     docRef = new Integer(temp);
                 }
+
                 instID = new Integer(atts.getValue("InstrumentID"));
                 objID = new Integer(atts.getValue("ObjectiveID"));
             } else if (currentKey.equals("ImagingEnvironment")) {
                 Float temperature = null, ap = null, hum = null, CO2 = null;
 
                 String temp = atts.getValue("Temperature");
+
                 if (temp != null) {
                     temperature = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("AirPressure");
+
                 if (temp != null) {
                     ap = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Humidity");
+
                 if (temp != null) {
                     hum = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("CO2Percent");
+
                 if (temp != null) {
                     CO2 = new Float(temp);
                 }
@@ -689,13 +867,16 @@ public class FileOME extends FileBase {
                 String mimeType;
 
                 String temp = atts.getValue("href");
+
                 if (temp != null) {
+
                     try {
                         fileInfo.getOME().getCurrentImage().setThumbnail(new URI(temp));
                     } catch (Exception e) {
-                        Preferences.debug("OME: " + e + "\n", Preferences.DEBUG_FILEIO );
+                        Preferences.debug("OME: " + e + "\n", Preferences.DEBUG_FILEIO);
                     }
                 }
+
                 mimeType = atts.getValue("MIMEtype");
                 fileInfo.getOME().getCurrentImage().setMIMEType(mimeType);
             } else if (currentKey.equals("ChannelInfo")) {
@@ -704,69 +885,87 @@ public class FileOME extends FileBase {
                 Float ndFilter = null;
 
                 name = atts.getValue("Name");
+
                 String temp = atts.getValue("SamplesPerPixel");
+
                 if (temp != null) {
                     spp = new Integer(temp);
                     temp = null;
                 }
+
                 illType = atts.getValue("IlluminationType");
                 temp = atts.getValue("PinHoleSize");
+
                 if (temp != null) {
                     phs = new Integer(temp);
                     temp = null;
                 }
+
                 photoInt = atts.getValue("PhotometricInterpretation");
                 mode = atts.getValue("Mode");
                 contrastMethod = atts.getValue("ContrastMethod");
                 temp = atts.getValue("ExWave");
+
                 if (temp != null) {
                     exWave = new Integer(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("EmWave");
+
                 if (temp != null) {
                     emWave = new Integer(temp);
                     temp = null;
                 }
+
                 fluor = atts.getValue("Fluor");
                 temp = atts.getValue("NDfilter");
+
                 if (temp != null) {
                     ndFilter = new Float(temp);
                 }
 
                 fileInfo.getOME().getCurrentImage().addChannelInfo(name, spp, illType, phs, photoInt, mode,
-                        contrastMethod, exWave, emWave, fluor, ndFilter);
+                                                                   contrastMethod, exWave, emWave, fluor, ndFilter);
             } else if (currentKey.equals("LightSourceRef")) {
                 Integer docRef = null, lightSourceID, wavelength = null;
                 String auxTech;
                 Float atten = null;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
                     docRef = new Integer(temp);
                     temp = null;
                 }
+
                 lightSourceID = new Integer(atts.getValue("LightSourceID"));
                 auxTech = atts.getValue("AuxTechnique");
                 temp = atts.getValue("Attenuation");
+
                 if (temp != null) {
                     atten = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Wavelength");
+
                 if (temp != null) {
                     wavelength = new Integer(temp);
                 }
 
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().addLightSourceRef(docRef, lightSourceID,
-                        auxTech, atten, wavelength);
+                                                                                              auxTech, atten,
+                                                                                              wavelength);
             } else if (currentKey.equals("OTFRef")) {
                 Integer docRef = null, otfID;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
                     docRef = new Integer(temp);
                 }
+
                 otfID = new Integer(atts.getValue("OTFID"));
 
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setOTFRefDocumentRef(docRef);
@@ -776,19 +975,23 @@ public class FileOME extends FileBase {
                 Float offset = null, gain = null;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefDocumentRef(
-                            new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefDocumentRef(new Integer(temp));
                     temp = null;
                 }
+
                 id = new Integer(atts.getValue("DetectorID"));
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefDetectorID(id);
                 temp = atts.getValue("Offset");
+
                 if (temp != null) {
                     fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefOffset(new Float(temp));
                     temp = null;
                 }
+
                 temp = atts.getValue("Gain");
+
                 if (temp != null) {
                     fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setDetectorRefGain(new Float(temp));
                 }
@@ -796,10 +999,11 @@ public class FileOME extends FileBase {
                 Integer filterID;
 
                 String temp = atts.getValue("DocumentRef");
+
                 if (temp != null) {
-                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setFilterRefDocumentRef(
-                            new Integer(temp));
+                    fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setFilterRefDocumentRef(new Integer(temp));
                 }
+
                 filterID = new Integer(atts.getValue("FilterID"));
                 fileInfo.getOME().getCurrentImage().getCurrentChannelInfo().setFilterRefFilterID(filterID);
             } else if (currentKey.equals("ChannelComponent")) {
@@ -814,6 +1018,7 @@ public class FileOME extends FileBase {
                 Float zoom = null;
 
                 String temp = atts.getValue("Zoom");
+
                 if (temp != null) {
                     zoom = new Float(temp);
                 }
@@ -828,6 +1033,7 @@ public class FileOME extends FileBase {
                 wl = new Integer(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
+
                 if (temp != null) {
                     gamma = new Float(temp);
                 }
@@ -845,6 +1051,7 @@ public class FileOME extends FileBase {
                 wl = new Integer(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
+
                 if (temp != null) {
                     gamma = new Float(temp);
                 }
@@ -862,6 +1069,7 @@ public class FileOME extends FileBase {
                 wl = new Integer(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
+
                 if (temp != null) {
                     gamma = new Float(temp);
                 }
@@ -880,9 +1088,11 @@ public class FileOME extends FileBase {
                 wl = new Integer(atts.getValue("WhiteLevel"));
 
                 String temp = atts.getValue("Gamma");
+
                 if (temp != null) {
                     gamma = new Float(temp);
                 }
+
                 cm = atts.getValue("ColorMap");
 
                 fileInfo.getOME().getCurrentImage().getDisplayOptions().setGreyChannelNumber(cn);
@@ -892,21 +1102,27 @@ public class FileOME extends FileBase {
                 fileInfo.getOME().getCurrentImage().getDisplayOptions().setGreyColorMap(cm);
             } else if (currentKey.equals("Projection")) {
                 String temp = atts.getValue("Zstart");
+
                 if (temp != null) {
                     fileInfo.getOME().getCurrentImage().getDisplayOptions().setZStart(new Integer(temp));
                     temp = null;
                 }
+
                 temp = atts.getValue("Zstop");
+
                 if (temp != null) {
                     fileInfo.getOME().getCurrentImage().getDisplayOptions().setZStop(new Integer(temp));
                 }
             } else if (currentKey.equals("Time")) {
                 String temp = atts.getValue("Tstart");
+
                 if (temp != null) {
                     fileInfo.getOME().getCurrentImage().getDisplayOptions().setTStart(new Integer(temp));
                     temp = null;
                 }
+
                 temp = atts.getValue("Tstop");
+
                 if (temp != null) {
                     fileInfo.getOME().getCurrentImage().getDisplayOptions().setTStop(new Integer(temp));
                 }
@@ -916,17 +1132,22 @@ public class FileOME extends FileBase {
 
                 x0 = new Integer(atts.getValue("X0"));
                 y0 = new Integer(atts.getValue("Y0"));
+
                 String temp = atts.getValue("Z0");
+
                 if (temp != null) {
                     z0 = new Integer(temp);
                     temp = null;
                 }
+
                 x1 = new Integer(atts.getValue("X1"));
                 y1 = new Integer(atts.getValue("Y1"));
                 temp = atts.getValue("Z1");
+
                 if (temp != null) {
                     z1 = new Integer(temp);
                 }
+
                 t0 = atts.getValue("T0");
                 t1 = atts.getValue("T1");
 
@@ -936,17 +1157,23 @@ public class FileOME extends FileBase {
                 Float x = null, y = null, z = null;
 
                 name = atts.getValue("Name");
+
                 String temp = atts.getValue("X");
+
                 if (temp != null) {
                     x = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Y");
+
                 if (temp != null) {
                     y = new Float(temp);
                     temp = null;
                 }
+
                 temp = atts.getValue("Z");
+
                 if (temp != null) {
                     z = new Float(temp);
                 }
@@ -984,115 +1211,6 @@ public class FileOME extends FileBase {
 
             // clear the element buffer
             elementBuffer = "";
-        }
-
-        /**
-         * Parser calls this when the end tag of each element is reached.  Data collected in the elementbuffer is generally saved to the image info.
-         * @param namespaceURI   the namespace (not used)
-         * @param localName      the current tag we are parsing (not used)
-         * @param qName          ? (not used)
-         * @throws SAXException  if there is a problem with the parser
-         */
-        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
-            if (currentKey.equals("Include")) {
-                fileInfo.getOME().getCurrentInclude().setIncludeString(elementBuffer);
-            } else if (currentKey.equals("Description")) {
-                if (superKey.equals("Project")) {
-                    fileInfo.getOME().getCurrentProject().setDescription(elementBuffer);
-                } else if (superKey.equals("Dataset")) {
-                    fileInfo.getOME().getCurrentDataset().setDescription(elementBuffer);
-                } else if (superKey.equals("Experiment")) {
-                    fileInfo.getOME().getCurrentExperiment().setDescription(elementBuffer);
-                } else if (superKey.equals("Screen")) {
-                    fileInfo.getOME().getCurrentScreen().setDescription(elementBuffer);
-                } else if (superKey.equals("Image")) {
-                    fileInfo.getOME().getCurrentImage().setDescription(elementBuffer);
-                }
-            } else if (currentKey.equals("FirstName")) {
-                if (superKey.equals("Experimenter")) {
-                    fileInfo.getOME().getCurrentExperimenter().setFirstName(elementBuffer);
-                } else if (superKey.equals("Leader")) {
-                    fileInfo.getOME().getCurrentGroup().setLeaderFirstName(elementBuffer);
-                } else if (superKey.equals("Contact")) {
-                    fileInfo.getOME().getCurrentGroup().setContactFirstName(elementBuffer);
-                }
-            } else if (currentKey.equals("LastName")) {
-                if (superKey.equals("Experimenter")) {
-                    fileInfo.getOME().getCurrentExperimenter().setLastName(elementBuffer);
-                } else if (superKey.equals("Leader")) {
-                    fileInfo.getOME().getCurrentGroup().setLeaderLastName(elementBuffer);
-                } else if (superKey.equals("Contact")) {
-                    fileInfo.getOME().getCurrentGroup().setContactLastName(elementBuffer);
-                }
-
-            } else if (currentKey.equals("email")) {
-                if (superKey.equals("Experimenter")) {
-                    fileInfo.getOME().getCurrentExperimenter().setEmail(elementBuffer);
-                } else if (superKey.equals("Leader")) {
-                    fileInfo.getOME().getCurrentGroup().setLeaderEmail(elementBuffer);
-                } else if (superKey.equals("Contact")) {
-                    fileInfo.getOME().getCurrentGroup().setContactEmail(elementBuffer);
-                }
-
-            } else if (currentKey.equals("Institution")) {
-                if (superKey.equals("Experimenter")) {
-                    fileInfo.getOME().getCurrentExperimenter().setInstitution(elementBuffer);
-                } else if (superKey.equals("Leader")) {
-                    fileInfo.getOME().getCurrentGroup().setLeaderInstitution(elementBuffer);
-                } else if (superKey.equals("Contact")) {
-                    fileInfo.getOME().getCurrentGroup().setContactInstitution(elementBuffer);
-                }
-
-            } else if (currentKey.equals("OMEName")) {
-                if (superKey.equals("Experimenter")) {
-                    fileInfo.getOME().getCurrentExperimenter().setOMEName(elementBuffer);
-                }
-            } else if (currentKey.equals("LensNA")) {
-                fileInfo.getOME().getCurrentInstrument().getCurrentObjective().setLensNA(new Float(elementBuffer));
-            } else if (currentKey.equals("Magnification")) {
-                fileInfo.getOME().getCurrentInstrument().getCurrentObjective().setMagnification(
-                        new Float(elementBuffer));
-            } else if (currentKey.equals("CreationDate")) {
-                fileInfo.getOME().getCurrentImage().setCreationDate(elementBuffer);
-            } else if (currentKey.equals("Sample")) {
-                fileInfo.getOME().getCurrentImage().getPlateInfo().setSampleNumber(new Integer(elementBuffer));
-            } else if (currentKey.equals("Well")) {
-                fileInfo.getOME().getCurrentImage().getPlateInfo().setWellString(elementBuffer);
-            }
-
-        }
-
-        /**
-         * Text data callback from parser. If the parser is not validating, this
-         * method can report whitespace. We ignore strings that are entirely
-         * whitespace.
-         * 
-         * @param ch
-         *            Character array
-         * @param start
-         *            Start of data in array.
-         * @param length
-         *            Length of data in array.
-         */
-        public void characters(char ch[], int start, int length) {
-            String s = new String(ch, start, length);
-            if (s.trim().length() != 0) {
-                elementBuffer += s;
-            }
-        }
-
-        /**
-         * Handle the end of the XML document.  Does nothing.
-         * @throws SAXException if there is a parser error
-         */
-        public void endDocument() throws SAXException {}
-
-        /**
-         * Handle any skipped entities by writing them out to the debug window.
-         * @param name  the skipped entity
-         */
-        public void skippedEntity(String name) {
-            Preferences.debug("OME: skipped entity: " + name + "\n", Preferences.DEBUG_FILEIO);
         }
     }
 }

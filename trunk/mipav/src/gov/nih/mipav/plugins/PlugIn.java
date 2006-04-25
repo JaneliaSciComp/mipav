@@ -1,6 +1,7 @@
 package gov.nih.mipav.plugins;
 
 
-public interface PlugIn {
-
-}
+/**
+ * DOCUMENT ME!
+ */
+public interface PlugIn { }

@@ -1,3 +1,7 @@
 package gov.nih.mipav.view.dialogs;
-public class JDialogDualTriImageTransformation {
-}
+
+
+/**
+ * DOCUMENT ME!
+ */
+public class JDialogDualTriImageTransformation { }

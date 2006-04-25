@@ -1,95 +1,178 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
+
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 
-import java.awt.event.*;
 import java.awt.*;
+import java.awt.event.*;
+
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.tree.*;
-import javax.swing.event.*;
 import javax.swing.border.*;
+import javax.swing.event.*;
+import javax.swing.tree.*;
+
 
 /**
+ * DOCUMENT ME!
  *
- *		@version    1.1 June 15, 1999
- *		@author     Matthew J. McAuliffe, Ph.D.
+ * @version  1.1 June 15, 1999
+ * @author   Matthew J. McAuliffe, Ph.D.
  *
- *       $Logfile: /mipav/src/gov/nih/mipav/view/dialogs/JDialogVOIStats.java $
- *       $Revision: 56 $
- *       $Date: 2/17/06 6:20p $
+ *           <p>$Logfile: /mipav/src/gov/nih/mipav/view/dialogs/JDialogVOIStats.java $ $Revision: 56 $ $Date: 2/17/06
+ *           6:20p $</p>
  */
-public class JDialogVOIStats extends JDialogBase implements ItemListener,
-        ChangeListener,
-        FocusListener,
-        UpdateVOISelectionListener,
-        TreeSelectionListener {
+public class JDialogVOIStats extends JDialogBase
+        implements ItemListener, ChangeListener, FocusListener, UpdateVOISelectionListener, TreeSelectionListener {
 
-    private JButton calcButton;
-    private JButton applyButton;
-    private JButton colorButton;
-    private JTextField VOIName;
-    private JCheckBox checkboxBoundingBox;
-    private JCheckBox checkboxAdditiveOrSubtractive;
-    private JCheckBox checkboxIncludeForProcessing;
-    private JCheckBox checkboxBoundary;
-    private JPanel statsPanel;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    private JCheckBox checkboxExclude;
-    private JTextField textMin;
-    private JTextField textMax;
-    private JLabel labelMin;
-    private JLabel labelMax;
-    private JSlider opacitySlider;
-    private JLabel current;
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 6712097076888589561L;
 
-    private VOI voi;
-    private ModelImage image;
-    private JPanelStatisticsList listPanel;
-    private AlgorithmVOIProps algoVOI;
-
-    private JTextField seedValueTF;
-    private short seedValue;
-
-    private ViewJColorChooser colorChooser;
-    private Color colorVOI;
-
-    private JTree voiTree;
-    private DefaultTreeModel voiModel;
-
-    private JScrollPane voiTreePane;
-    private JScrollPane voiContourPane;
-    private JTextArea contourTextArea;
-
-    private DefaultMutableTreeNode root;
-
-    private boolean treeSelectionChange = false;
-
+    /** DOCUMENT ME! */
     private static Icon ICON_POLYGON = MipavUtil.getIcon("polygon.gif");
+
+    /** DOCUMENT ME! */
     private static Icon ICON_POLYLINE = MipavUtil.getIcon("polyline.gif");
+
+    /** DOCUMENT ME! */
     private static Icon ICON_POINT = MipavUtil.getIcon("pointROI.gif");
+
+    /** DOCUMENT ME! */
     private static Icon ICON_LINE = MipavUtil.getIcon("linear.gif");
+
+    /** DOCUMENT ME! */
     private static Icon ICON_MEDICAL_FRAME = MipavUtil.getIcon("med_frame.gif");
+
+    /** DOCUMENT ME! */
     private static Icon ICON_PROTRACTOR = MipavUtil.getIcon("protractor.gif");
 
-    private boolean frameFollowsSelection = true;
+    /** DOCUMENT ME! */
+    private static Color background = new Color(100, 100, 100);
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private AlgorithmVOIProps algoVOI;
+
+    /** DOCUMENT ME! */
+    private JButton applyButton;
+
+    /** DOCUMENT ME! */
+    private JButton calcButton;
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkboxAdditiveOrSubtractive;
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkboxBoundary;
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkboxBoundingBox;
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkboxExclude;
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkboxIncludeForProcessing;
+
+    /** DOCUMENT ME! */
+    private JButton colorButton;
+
+    /** DOCUMENT ME! */
+    private ViewJColorChooser colorChooser;
+
+    /** DOCUMENT ME! */
+    private Color colorVOI;
+
+    /** DOCUMENT ME! */
+    private JTextArea contourTextArea;
+
+    /** DOCUMENT ME! */
+    private JLabel current;
+
+    /** DOCUMENT ME! */
     private JCheckBox followVOISelectionBox = null;
+
+    /** DOCUMENT ME! */
     private Border frameBorder = null;
 
+    /** DOCUMENT ME! */
+    private boolean frameFollowsSelection = true;
+
+    /** DOCUMENT ME! */
+    private ModelImage image;
+
+    /** DOCUMENT ME! */
+    private JLabel labelMax;
+
+    /** DOCUMENT ME! */
+    private JLabel labelMin;
+
+    /** DOCUMENT ME! */
+    private JPanelStatisticsList listPanel;
+
+    /** DOCUMENT ME! */
+    private JSlider opacitySlider;
+
+    /** DOCUMENT ME! */
     private VOITreePopup popup = null;
 
-    private static Color background = new Color(100,100,100);
+    /** DOCUMENT ME! */
+    private DefaultMutableTreeNode root;
 
-    /** Constructor for the JDialogVOIStats.
-     *   <p>
-     *   this class ought to listen for
-     *   VOI updates, but we are having it
-     *   implemented elsewhere.
+    /** DOCUMENT ME! */
+    private short seedValue;
+
+    /** DOCUMENT ME! */
+    private JTextField seedValueTF;
+
+    /** DOCUMENT ME! */
+    private JPanel statsPanel;
+
+    /** DOCUMENT ME! */
+    private JTextField textMax;
+
+    /** DOCUMENT ME! */
+    private JTextField textMin;
+
+    /** DOCUMENT ME! */
+    private boolean treeSelectionChange = false;
+
+    /** DOCUMENT ME! */
+    private VOI voi;
+
+    /** DOCUMENT ME! */
+    private JScrollPane voiContourPane;
+
+    /** DOCUMENT ME! */
+    private DefaultTreeModel voiModel;
+
+    /** DOCUMENT ME! */
+    private JTextField VOIName;
+
+    /** DOCUMENT ME! */
+    private JTree voiTree;
+
+    /** DOCUMENT ME! */
+    private JScrollPane voiTreePane;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Constructor for the JDialogVOIStats.
+     *
+     * <p>this class ought to listen for VOI updates, but we are having it implemented elsewhere.</p>
+     *
+     * @param  theParentFrame  DOCUMENT ME!
+     * @param  img             DOCUMENT ME!
+     * @param  _voi            DOCUMENT ME!
      */
     public JDialogVOIStats(Frame theParentFrame, ModelImage img, VOI _voi) {
         super(theParentFrame, false);
@@ -99,14 +182,694 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Sets up GUI components - buttons, checkboxes, sliders, etc.
+     * Applies changes to VOI when "Apply" is pressed; closes when "Cancel" is pressed; and calculates statistics and
+     * outputs them to the message frame when "Calculate" is pressed. Also brings up a color chooser when the color
+     * button is pressed.
+     *
+     * @param  event  Event that triggers this function
+     */
+    public void actionPerformed(ActionEvent event) {
+        Object source = event.getSource();
+        String tmpStr;
+        int xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
+        int yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
+        String unitsString = null;
+
+        if (source == colorButton) {
+            colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", new OkColorListener(),
+                                                 new CancelListener());
+        } else if (source == followVOISelectionBox) {
+            frameFollowsSelection = followVOISelectionBox.isSelected();
+        } else if (source == applyButton) {
+            ViewVOIVector vectorVOI = image.getVOIs();
+            ViewVOIVector newVOIVector;
+            int[] temp;
+            int j = 0, location = -1;
+            String name = "";
+            boolean changedName = false;
+
+            tmpStr = seedValueTF.getText();
+
+            if (testParameter(tmpStr, 0, 32000)) {
+                seedValue = Short.valueOf(tmpStr).shortValue();
+                voi.setWatershedID(seedValue);
+            }
+
+            try {
+                newVOIVector = new ViewVOIVector();
+                temp = new int[100];
+            } catch (OutOfMemoryError error) {
+                MipavUtil.displayError("Out of memory: JDialogVOIStats.actionPerformed");
+
+                return;
+            }
+
+            for (int i = 0; i < vectorVOI.size(); i++) {
+
+                if (((VOI) vectorVOI.elementAt(i)).getName().equals(VOIName.getText()) &&
+                        !((VOI) vectorVOI.elementAt(i)).equals(voi)) {
+                    newVOIVector.addElement(vectorVOI.elementAt(i));
+                    temp[j++] = i;
+                    name = VOIName.getText();
+                    changedName = true;
+                }
+
+                if (((VOI) vectorVOI.elementAt(i)).equals(voi)) {
+                    location = i;
+                }
+            }
+
+            voi.setName(VOIName.getText());
+
+            if (checkboxBoundingBox.isSelected() == true) {
+                voi.setBoundingBoxFlag(true);
+            } else {
+                voi.setBoundingBoxFlag(false);
+            }
+
+            if (checkboxAdditiveOrSubtractive.isSelected() == true) {
+                voi.setPolarity(VOI.ADDITIVE);
+            } else {
+                voi.setPolarity(VOI.SUBTRACTIVE);
+            }
+
+            if (checkboxIncludeForProcessing.isSelected() == true) {
+                voi.setProcess(true);
+            } else {
+                voi.setProcess(false);
+            }
+
+            if (checkboxBoundary.isSelected() == true) {
+                voi.setDisplayMode(VOI.BOUNDARY);
+            } else {
+                voi.setDisplayMode(VOI.SOLID);
+            }
+
+            voi.setColor(colorVOI);
+
+            if ((parentFrame != null) && (parentFrame instanceof ViewJFrameImage)) {
+                ((ViewJFrameImage) parentFrame).getControls().setVOIColor(colorVOI);
+            }
+
+            if ((j != 0) && (location != -1)) {
+
+                newVOIVector.addElement(voi);
+                temp[j++] = location;
+
+                int[] where = new int[j];
+
+                for (int i = 0; i < j; i++) {
+                    where[i] = temp[i];
+                }
+
+                image.groupVOIs(newVOIVector, where, name);
+
+                Vector VOIs = image.getVOIs();
+                updateVOI((VOI) (VOIs.elementAt(VOIs.size() - 1)), image);
+            } else {
+                updateVOI(voi, image);
+            }
+
+            updateTree();
+            image.notifyImageDisplayListeners(null, true);
+        } else if (source == calcButton) {
+
+            if (textMin.isEnabled()) {
+                String tempStr = textMin.getText();
+
+                if (testParameter(tempStr, -10000000, 10000000)) {
+                    voi.setMinimumIgnore(Float.valueOf(tempStr).floatValue());
+                } else {
+                    textMin.requestFocus();
+                    textMin.selectAll();
+
+                    return;
+                }
+
+                tempStr = textMax.getText();
+
+                if (testParameter(tempStr, -10000000, 10000000)) {
+                    voi.setMaximumIgnore(Float.valueOf(tempStr).floatValue());
+                } else {
+                    textMax.requestFocus();
+                    textMax.selectAll();
+
+                    return;
+                }
+            } else {
+                voi.setMinimumIgnore(Float.MAX_VALUE);
+                voi.setMaximumIgnore(Float.MIN_VALUE);
+            }
+
+            voi.setStatisticList(listPanel.getViewList());
+
+            // only loading the image works because we have been changing
+            // the thing held BY the image.
+            algoVOI = new AlgorithmVOIProps(image);
+            algoVOI.setActiveImage(false);
+
+            if (!((ViewJFrameImage) (parentFrame)).getUserInterface().isAppFrameVisible()) {
+                algoVOI.setProgressBarVisible(false);
+            }
+
+            algoVOI.run();
+
+            if (!algoVOI.isCompleted()) {
+                MipavUtil.displayError("Please make sure VOI is selected.");
+
+                return;
+            }
+
+            ViewUserInterface UI = ((ViewJFrameImage) (parentFrame)).getUserInterface();
+            UI.setDataText("\n -----------------------------------------------------------------------------\n");
+
+            // UI.setDataText("Image:     " + image.getFileInfo(0).getFileName() + "\n");
+            UI.setDataText("Image:     " + image.getImageName() + "\n");
+            UI.setDataText("VOI  :     " + voi.getName() + "\n");
+
+            int measure;
+            String str = new String();
+
+            /*
+             *           if ( image.isColorImage() ) { if (algoVOI.getMaxIntensityRed() > algoVOI.getMinIntensityRed())
+             * { UI.setDataText("  Red min: " + algoVOI.getMinIntensityRed() + " \t\tRed max: " +
+             * algoVOI.getMaxIntensityRed() + "\n"); } if (algoVOI.getMaxIntensityGreen() >
+             * algoVOI.getMinIntensityGreen()) {     UI.setDataText("  Green min: " + algoVOI.getMinIntensityGreen() + "
+             * \tGreen max: " +  algoVOI.getMaxIntensityGreen() + "\n"); } if (algoVOI.getMaxIntensityBlue() >
+             * algoVOI.getMinIntensityBlue()) {     UI.setDataText("  Blue min: " + algoVOI.getMinIntensityBlue() + "
+             * \t\tBlue max: " + algoVOI.getMaxIntensityBlue() + "\n"); }          }          else { if
+             * (algoVOI.getMaxIntensity() > algoVOI.getMinIntensity()) {     UI.setDataText("  Min: " +
+             * algoVOI.getMinIntensity() + " \t\tMax: " + algoVOI.getMaxIntensity() + "\n"); }          }
+             */
+
+            // Only if selected
+            ViewList[] statsList = voi.getStatisticList();
+
+            for (int i = 0; i < statsList.length; i++) {
+
+                if (statsList[i].getState() == true) {
+
+                    if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[0])) {
+                        UI.setDataText("  No. of Voxels                \t= " + algoVOI.getNVoxels() + "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[1])) {
+
+                        // might want to double check to ensure all three units are the same if not display a tag
+                        str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                        UI.setDataText("  Volume                       \t= " + algoVOI.getVolume() + "   " + str +
+                                       "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[2])) {
+
+                        // might want to double check to ensure all three units are the same if not display a tag
+                        str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                        UI.setDataText("  Area                         \t= " + algoVOI.getArea() + "   " + str + "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[3])) {
+                        str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.getFileInfo(0).getUnitsOfMeasure(0));
+                        UI.setDataText("  Perimeter                         \t= " + algoVOI.getPerimeter() + "   " +
+                                       str + "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[4])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Red min:   \t\t= " + algoVOI.getMinIntensityRed() + "\n");
+
+                            UI.setDataText("  Green min: \t\t= " + algoVOI.getMinIntensityGreen() + "\n");
+
+                            UI.setDataText("  Blue min: \t\t= " + algoVOI.getMinIntensityBlue() + "\n");
+                        } else {
+                            UI.setDataText("  Min: \t\t= " + algoVOI.getMinIntensity() + "\n");
+                        }
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[5])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Red max:   \t\t= " + algoVOI.getMaxIntensityRed() + "\n");
+
+                            UI.setDataText("  Green max: \t\t= " + algoVOI.getMaxIntensityGreen() + "\n");
+
+                            UI.setDataText("  Blue max:  \t\t= " + algoVOI.getMaxIntensityBlue() + "\n");
+                        } else {
+                            UI.setDataText("  Max: \t\t= " + algoVOI.getMaxIntensity() + "\n");
+                        }
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[6])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Average voxel intensity      \t= " + algoVOI.getAvgIntenR() + " R, " +
+                                           algoVOI.getAvgIntenG() + " G, " + algoVOI.getAvgIntenB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Average voxel intensity      \t= " + algoVOI.getAvgInten() + "\n");
+                        }
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[7])) {
+
+                        if (image.isColorImage()) {
+                            UI.setDataText("  Std. dev. of voxel intensity \t= " + algoVOI.getStdDevR() + " R, " +
+                                           algoVOI.getStdDevG() + " G, " + algoVOI.getStdDevB() + " B, " + "\n");
+                        } else {
+                            UI.setDataText("  Std. dev. of voxel intensity \t= " + algoVOI.getStdDev() + "\n");
+                        }
+                    } else if (statsList[i].getString().equalsIgnoreCase(algoVOI.makeStatisticListDescriptions()[8])) {
+                        UI.setDataText("  Center of Mass               \t= " + algoVOI.getCenterOfMass() + "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[9])) {
+                        UI.setDataText("  Principal axis (only 2D)     \t= " + algoVOI.getPrincipalAxis() +
+                                       "  degrees\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[10])) {
+                        UI.setDataText("  Eccentricity (only 2D)       \t= " + algoVOI.getEccentricity() + "\n");
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[11])) {
+
+                        if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+                        }
+
+                        if (unitsString != null) {
+                            UI.setDataText("  Major axis length (only 2D)   \t= " + algoVOI.getMajorAxis() + " " +
+                                           unitsString + "\n");
+                        } else {
+                            UI.setDataText("  Major axis length (only 2D)     \t= " + algoVOI.getMajorAxis() + "\n");
+                        }
+                    } else if (statsList[i].getString().equals(algoVOI.makeStatisticListDescriptions()[12])) {
+
+                        if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
+                        }
+
+                        if (unitsString != null) {
+                            UI.setDataText("  Minor axis length (only 2D)   \t= " + algoVOI.getMinorAxis() + " " +
+                                           unitsString + "\n");
+                        } else {
+                            UI.setDataText("  Minor axis length (only 2D)     \t= " + algoVOI.getMinorAxis() + "\n");
+                        }
+                    }
+                }
+            }
+        } else if (source == checkboxExclude) {
+            boolean flag = checkboxExclude.isSelected();
+            labelMax.setEnabled(flag);
+            labelMin.setEnabled(flag);
+            textMin.setEnabled(flag);
+            textMax.setEnabled(flag);
+        } else if (source == cancelButton) {
+            cancelFlag = true;
+            setVisible(false);
+        }
+    }
+
+
+    // *******************************************************************
+    // ************************* Focus Events ****************************
+    // *******************************************************************
+
+    /**
+     * Test the seed value and if appropriate, sets it.
+     *
+     * @param  event  Event that triggered function.
+     */
+    public void focusLost(FocusEvent event) {
+
+        String tmpStr = seedValueTF.getText();
+
+        if (testParameter(tmpStr, 0, 32000)) {
+            seedValue = Short.valueOf(tmpStr).shortValue();
+            voi.setWatershedID(seedValue);
+        }
+
+    }
+
+    // *******************************************************************
+    // ************************* Item Events ****************************
+    // *******************************************************************
+
+    /**
+     * Sets opacity slider to enabled or disabled depending on boundary checkbox.
+     *
+     * @param  event  Event that cause the method to fire
+     */
+    public void itemStateChanged(ItemEvent event) {
+        Object source = event.getSource();
+
+        if (source == checkboxBoundary) {
+
+            if (checkboxBoundary.isSelected()) {
+                opacitySlider.setEnabled(false);
+            } else {
+                opacitySlider.setEnabled(true);
+            }
+        }
+    }
+
+    /**
+     * responds to the volume of interest (<code>VOI</code>) change events.
+     *
+     * <p>This method calls <code>updateVOI</code> using the <code>UpdateVOIEvent</code> changed <code>VOI</code>, and
+     * retrieves the activeImage out of the current image's frame.</p>
+     *
+     * @see  UpdateVOIEvent
+     * @see  #updateVOI
+     * @see  ViewJFrameBase#getActiveImage
+     */
+    public void selectionChanged(UpdateVOIEvent newVOIselection) {
+
+        if (newVOIselection == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: new selection null");
+
+            return;
+        } else if (image == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image is null");
+
+            return;
+        } else if (image.getParentFrame() == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image parentFrame() is null");
+
+            return;
+        } else if (image.getParentFrame().getComponentImage() == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage is null");
+
+            return;
+        } else if (image.getParentFrame().getComponentImage().getActiveImage() == null) {
+            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage().getActiveImage() is null");
+
+            return;
+        }
+
+        updateVOI(newVOIselection.getChangedVolumeOfInterest(),
+                  image.getParentFrame().getComponentImage().getActiveImage());
+        updateTree();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  visible  DOCUMENT ME!
+     */
+    public void setVisible(boolean visible) {
+
+        if ((popup == null) && visible) {
+            popup = new VOITreePopup();
+            voiTree.addMouseListener(popup);
+        }
+
+        super.setVisible(visible);
+
+        if (visible) {
+            updateTree();
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void showColorChooser() {
+        colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", new OkColorListener(),
+                                             new CancelListener());
+    }
+
+    // *******************************************************************
+    // ************************* Change Events ****************************
+    // *******************************************************************
+
+    /**
+     * Sets values based on knob along slider.
+     *
+     * @param  e  Event that triggered this function
+     */
+    public void stateChanged(ChangeEvent e) {
+        Object source = e.getSource();
+
+        if (source == opacitySlider) {
+            current.setText(String.valueOf(opacitySlider.getValue() / (float) 100));
+
+            if (voi != null) {
+                voi.setOpacity(opacitySlider.getValue() / (float) 100);
+            }
+        }
+    }
+
+    /**
+     * Updates the dialog based on the VOI passed in.
+     *
+     * @param  _voi  VOI whose properties we want to calculate.
+     * @param  img   Image where voi is to be updated
+     */
+    public void updateVOI(VOI _voi, ModelImage img) {
+
+        voi = _voi;
+        image = img;
+
+        if (voi != null) {
+
+            if (voi.getBoundingBoxFlag() == true) {
+                checkboxBoundingBox.setSelected(true);
+            } else {
+                checkboxBoundingBox.setSelected(false);
+            }
+
+            if (voi.getPolarity() == voi.ADDITIVE) {
+                checkboxAdditiveOrSubtractive.setSelected(true);
+            } else {
+                checkboxAdditiveOrSubtractive.setSelected(false);
+            }
+
+            checkboxIncludeForProcessing.setSelected(voi.getProcess());
+
+            if (voi.getDisplayMode() == VOI.BOUNDARY) {
+                checkboxBoundary.setSelected(true);
+                opacitySlider.setEnabled(false);
+            } else {
+                checkboxBoundary.setSelected(false);
+                opacitySlider.setEnabled(true);
+            }
+
+            // VOIName.setBackground(voi.getColor());
+            colorButton.setBackground(voi.getColor());
+            colorVOI = voi.getColor();
+
+            seedValueTF.setText(String.valueOf(voi.getWatershedID()));
+
+            VOIName.setText(voi.getName());
+            setTitle("VOI Statistics - " + voi.getUID());
+
+            // turn things on/off depending on if a PolyLine is selected
+            if (voi.getCurveType() == VOI.POLYLINE) {
+                listPanel.setCheckBoxesDisabled();
+                calcButton.setEnabled(false);
+
+                if (checkboxExclude.isSelected()) {
+                    textMin.setEnabled(false);
+                    textMax.setEnabled(false);
+                }
+
+                checkboxExclude.setEnabled(false);
+                seedValueTF.setEnabled(false);
+            } else {
+                checkboxExclude.setEnabled(true);
+
+                if (checkboxExclude.isSelected()) {
+                    textMin.setEnabled(true);
+                    textMax.setEnabled(true);
+                }
+
+                seedValueTF.setEnabled(true);
+                calcButton.setEnabled(true);
+
+                // on the asssumption that the image is a 3d image, this will work
+                try {
+                    listPanel.setSliceCount(img.getExtents()[2]);
+                } catch (ArrayIndexOutOfBoundsException aioobe) {
+
+                    // otherwise, this must be a 2d image.
+                    listPanel.setSliceCount(1);
+                } finally {
+
+                    listPanel.setCheckBoxesEnabled();
+                }
+            }
+        }
+
+        validate();
+    }
+
+
+    /**
+     * Updates the ViewJFrameImage when a VOI/contour is selected.
+     *
+     * @param  e  TreeSelectionEvent
+     */
+    public void valueChanged(TreeSelectionEvent e) {
+        TreePath leadPath = e.getNewLeadSelectionPath();
+
+        if (leadPath != null) {
+            Object[] leadObjects = leadPath.getPath();
+            int curveIndex = 0;
+
+            if (leadObjects[leadObjects.length - 1] instanceof VOINode) {
+                VOIBase leadBase = ((VOINode) leadObjects[leadObjects.length - 1]).getVOI();
+                VOI leadVOI = ((VOIGroupNode)
+                                   ((VOIFrameNode) ((VOINode) leadObjects[leadObjects.length - 1]).getParent())
+                                       .getParent()).getVOIgroup();
+
+                // find the frame where this is located
+                Vector[] curves = leadVOI.getCurves();
+
+                for (curveIndex = 0; curveIndex < curves.length; curveIndex++) {
+
+                    if (curves[curveIndex].contains(leadBase)) {
+                        break;
+                    }
+                }
+
+                if (frameFollowsSelection && (image.getNDims() > 2)) {
+                    ((ViewJFrameImage) parentFrame).setSlice(curveIndex);
+                }
+
+                updateContourPane(leadBase);
+
+            } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
+                curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
+
+                if (frameFollowsSelection && (image.getNDims() > 2)) {
+                    ((ViewJFrameImage) parentFrame).setSlice(curveIndex);
+                }
+            }
+
+        }
+
+        // look for all selection paths
+        TreePath[] tPaths = voiTree.getSelectionPaths();
+
+        if ((tPaths != null) && (tPaths.length > 0)) {
+
+            // System.err.println("Length of paths: " + tPaths.length);
+
+            TreePath currentPath = null;
+
+            Object[] currentObjects = null;
+
+            VOI currentVOI = null;
+
+            Vector selectedVector = new Vector();
+
+            for (int i = 0; i < tPaths.length; i++) {
+                currentPath = tPaths[i];
+
+                currentObjects = currentPath.getPath();
+
+                for (int y = 0; y < currentObjects.length; y++) {
+
+                    // do nothing for root...
+
+                    if (currentObjects[y] instanceof VOIGroupNode) {
+                        currentVOI = ((VOIGroupNode) currentObjects[y]).getVOIgroup();
+
+                        if (!selectedVector.contains(currentObjects[y])) {
+                            selectedVector.addElement(currentObjects[y]);
+                        }
+
+                    } else if (currentObjects[y] instanceof VOINode) {
+
+                        if (!selectedVector.contains(((VOINode) currentObjects[y]).getParent())) {
+
+                            selectedVector.addElement(((VOINode) currentObjects[y]).getParent());
+                        }
+
+                        selectedVector.addElement(currentObjects[y]);
+                    }
+
+                }
+            }
+
+            // make un-selected VOI nodes inactive
+            Enumeration en = root.children();
+            Enumeration frameEnum = null;
+            Enumeration nodeChildren = null;
+
+            VOIGroupNode groupNode = null;
+            TreeNode tempNode = null;
+            VOINode voiNode = null;
+
+            while (en.hasMoreElements()) {
+                groupNode = (VOIGroupNode) en.nextElement();
+
+                groupNode.getVOIgroup().setActive(selectedVector.contains(groupNode));
+
+                frameEnum = groupNode.children();
+
+                while (frameEnum.hasMoreElements()) {
+                    tempNode = (TreeNode) frameEnum.nextElement();
+
+                    if (tempNode instanceof VOIFrameNode) {
+                        nodeChildren = tempNode.children();
+
+                        while (nodeChildren.hasMoreElements()) {
+                            voiNode = (VOINode) nodeChildren.nextElement();
+
+                            voiNode.getVOI().setActive(selectedVector.contains(voiNode));
+                        }
+                    }
+                }
+            }
+
+            treeSelectionChange = true;
+            ((ViewJFrameImage) parentFrame).getComponentImage().fireVOISelectionChange(currentVOI, null);
+            image.notifyImageDisplayListeners();
+            // System.err.println("notifying of change");
+        }
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    private void buildVOIContourPane() {
+        contourTextArea = new JTextArea();
+        contourTextArea.setFont(MipavUtil.font10);
+        contourTextArea.setEditable(false);
+
+        voiContourPane = new JScrollPane(contourTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    private void buildVOITree() {
+
+        ViewVOIVector VOIs = image.getVOIs();
+
+        root = new DefaultMutableTreeNode(image.getImageName());
+        voiModel = new DefaultTreeModel(root);
+
+        Enumeration e = VOIs.elements();
+
+        VOI currentVOI = null;
+
+        int index = 0;
+
+        while (e.hasMoreElements()) {
+            currentVOI = (VOI) e.nextElement();
+            voiModel.insertNodeInto(new VOIGroupNode(currentVOI), root, index);
+            index++;
+        }
+
+        voiTree = new JTree(voiModel);
+        voiTree.setCellRenderer(new VOITreeRenderer());
+
+        voiTree.setFont(MipavUtil.font12);
+        voiTree.addTreeSelectionListener(this);
+
+
+        voiTreePane = new JScrollPane(voiTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+                                      JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+
+    }
+
+    /**
+     * Sets up GUI components - buttons, checkboxes, sliders, etc.
      */
     private void init() {
-        //setTitle("VOI Statistics");
-        frameBorder = BorderFactory.createCompoundBorder(BorderFactory.
-                createRaisedBevelBorder(),
-                BorderFactory.createLoweredBevelBorder());
+
+        // setTitle("VOI Statistics");
+        frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
+                                                         BorderFactory.createLoweredBevelBorder());
 
         JLabel labelName = new JLabel("Name of VOI:");
         labelName.setFont(serif12);
@@ -126,7 +889,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
         JPanel namePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(5,5,5,5);
+        gbc.insets = new Insets(5, 5, 5, 5);
         gbc.anchor = gbc.WEST;
         gbc.weightx = 0;
         gbc.weighty = 0;
@@ -151,13 +914,12 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gbc.weighty = 1;
         namePanel.add(colorButton, gbc);
 
-        gbc.insets = new Insets(0,0,0,0);
+        gbc.insets = new Insets(0, 0, 0, 0);
 
         checkboxBoundingBox = new JCheckBox("Show contour bounding box");
         checkboxBoundingBox.setFont(serif12);
 
-        checkboxAdditiveOrSubtractive = new JCheckBox(
-                "Use additive polarity for VOI");
+        checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
         checkboxAdditiveOrSubtractive.setFont(serif12);
 
         checkboxIncludeForProcessing = new JCheckBox("Include for processing");
@@ -241,13 +1003,15 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         panelVOIProps.add(checkboxPanel, gbc);
         gbc.gridy = 2;
         gbc.weighty = 1;
-        gbc.anchor = gbc.NORTH; //gbc.fill = gbc.BOTH;
+        gbc.anchor = gbc.NORTH; // gbc.fill = gbc.BOTH;
         panelVOIProps.add(sliderPanel, gbc);
 
         listPanel = new JPanelStatisticsList();
+
         try {
             listPanel.setSliceCount(image.getExtents()[2]);
         } catch (ArrayIndexOutOfBoundsException aioobe) {
+
             // otherwise, this must be a 2d image.
             listPanel.setSliceCount(1);
         } finally {
@@ -320,7 +1084,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         cancelButton = buildCancelButton();
         cancelButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
-        //build the VOI tree
+        // build the VOI tree
         buildVOITree();
         buildVOIContourPane();
 
@@ -330,7 +1094,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         mainTreePanel.setBorder(buildTitledBorder("VOI Tree"));
 
         gb.anchor = gb.CENTER;
-        gb.gridx = 0; gbc.gridy = 0;
+        gb.gridx = 0;
+        gbc.gridy = 0;
         gb.weightx = 1.0;
         gb.weighty = 1.0;
         gb.fill = gbc.BOTH;
@@ -394,55 +1159,20 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         mainDialogPanel.add(rightPanel, gb);
 
 
-     //   mainDialogPanel.setLayout(new BorderLayout());
-     //   mainDialogPanel.add(leftPanel, BorderLayout.WEST);
-     //   mainDialogPanel.add(rightPanel);
+        // mainDialogPanel.setLayout(new BorderLayout());
+        // mainDialogPanel.add(leftPanel, BorderLayout.WEST);
+        // mainDialogPanel.add(rightPanel);
         mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         getContentPane().add(mainDialogPanel);
         pack();
 
     }
 
-    private void buildVOIContourPane() {
-        contourTextArea = new JTextArea();
-        contourTextArea.setFont(MipavUtil.font10);
-        contourTextArea.setEditable(false);
-
-        voiContourPane = new JScrollPane(contourTextArea, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-
-    }
-
-    private void buildVOITree() {
-
-        ViewVOIVector VOIs = image.getVOIs();
-
-        root = new DefaultMutableTreeNode(image.getImageName());
-        voiModel = new DefaultTreeModel(root);
-
-        Enumeration e = VOIs.elements();
-
-        VOI currentVOI = null;
-
-        int index = 0;
-        while (e.hasMoreElements()) {
-            currentVOI = (VOI) e.nextElement();
-            voiModel.insertNodeInto(new VOIGroupNode(currentVOI), root, index);
-            index++;
-        }
-
-        voiTree = new JTree(voiModel);
-        voiTree.setCellRenderer(new VOITreeRenderer());
-
-        voiTree.setFont(MipavUtil.font12);
-        voiTree.addTreeSelectionListener(this);
-
-
-        voiTreePane = new JScrollPane(voiTree, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                                         JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-
-    }
-
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  leadBase  DOCUMENT ME!
+     */
     private void updateContourPane(VOIBase leadBase) {
 
         int i = 0;
@@ -451,51 +1181,53 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         contourTextArea.append("contour name: " + leadBase.getLabel() + "\n");
         contourTextArea.append("number of points: " + leadBase.size() + "\n");
 
-        String [] positions = null;
+        String[] positions = null;
         FileInfoBase fInfo = null;
         Point3Df currentPt = null;
         int currentX, currentY, currentZ;
-        if (image.getFileInfo(0).getOrigin()[0] != 0 ||
-            image.getFileInfo(0).getOrigin()[1] != 0 ||
-            image.getFileInfo(0).getOrigin()[2] != 0) {
 
-            for (i = 0; i < size; i++){
-                currentPt = (Point3Df)leadBase.elementAt(i);
-                currentX = (int)currentPt.x;
-                currentY = (int)currentPt.y;
-                currentZ = (int)currentPt.z;
+        if ((image.getFileInfo(0).getOrigin()[0] != 0) || (image.getFileInfo(0).getOrigin()[1] != 0) ||
+                (image.getFileInfo(0).getOrigin()[2] != 0)) {
+
+            for (i = 0; i < size; i++) {
+                currentPt = (Point3Df) leadBase.elementAt(i);
+                currentX = (int) currentPt.x;
+                currentY = (int) currentPt.y;
+                currentZ = (int) currentPt.z;
 
 
-                fInfo = image.getFileInfo( (int)currentPt.z);
-                positions = ((ViewJFrameImage) parentFrame).getComponentImage().
-                            setScannerPosition(fInfo, (int)currentPt.x, (int)currentPt.z, (int)currentPt.z);
+                fInfo = image.getFileInfo((int) currentPt.z);
+                positions = ((ViewJFrameImage) parentFrame).getComponentImage().setScannerPosition(fInfo,
+                                                                                                   (int) currentPt.x,
+                                                                                                   (int) currentPt.z,
+                                                                                                   (int) currentPt.z);
 
                 if (positions != null) {
+
                     for (i = 0; i < size; i++) {
                         currentPt = (Point3Df) leadBase.elementAt(i);
                         currentX = (int) currentPt.x;
                         currentY = (int) currentPt.y;
                         currentZ = (int) currentPt.z;
 
-                        contourTextArea.append(" X: " + String.valueOf(currentX + 1) +
-                                               " Y: " + String.valueOf(currentY + 1) +
-                                               " Z: " + String.valueOf(currentZ + 1) +
-                                               "  Position: " + positions[0] +
-                                               " " + positions[1] + " " + positions[2] + "\n");
-
+                        contourTextArea.append(" X: " + String.valueOf(currentX + 1) + " Y: " +
+                                               String.valueOf(currentY + 1) + " Z: " + String.valueOf(currentZ + 1) +
+                                               "  Position: " + positions[0] + " " + positions[1] + " " + positions[2] +
+                                               "\n");
 
 
                     }
                 } else {
-                    for (i = 0; i < size; i++) {
-                        currentPt = (Point3Df)leadBase.elementAt(i);
-                        currentX = (int)currentPt.x;
-                        currentY = (int)currentPt.y;
-                        currentZ = (int)currentPt.z;
 
-                        contourTextArea.append(" X: " + String.valueOf(currentX + 1) +
-                                               " Y: " + String.valueOf(currentY + 1) +
-                                               " Z: " + String.valueOf(currentZ + 1) + "\n");
+                    for (i = 0; i < size; i++) {
+                        currentPt = (Point3Df) leadBase.elementAt(i);
+                        currentX = (int) currentPt.x;
+                        currentY = (int) currentPt.y;
+                        currentZ = (int) currentPt.z;
+
+                        contourTextArea.append(" X: " + String.valueOf(currentX + 1) + " Y: " +
+                                               String.valueOf(currentY + 1) + " Z: " + String.valueOf(currentZ + 1) +
+                                               "\n");
                     }
                 }
 
@@ -503,38 +1235,42 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         } else {
 
             for (i = 0; i < size; i++) {
-                currentPt = (Point3Df)leadBase.elementAt(i);
-                currentX = (int)currentPt.x;
-                currentY = (int)currentPt.y;
-                currentZ = (int)currentPt.z;
+                currentPt = (Point3Df) leadBase.elementAt(i);
+                currentX = (int) currentPt.x;
+                currentY = (int) currentPt.y;
+                currentZ = (int) currentPt.z;
 
-                contourTextArea.append(" X: " + String.valueOf(currentX + 1) +
-                                       " Y: " + String.valueOf(currentY + 1) +
+                contourTextArea.append(" X: " + String.valueOf(currentX + 1) + " Y: " + String.valueOf(currentY + 1) +
                                        " Z: " + String.valueOf(currentZ + 1) + "\n");
             }
 
         }
 
 
-    //    for (i = 0; i < leadBase.size(); i++) {
-      //      contourTextArea.append("\t");
-    //    }
+        // for (i = 0; i < leadBase.size(); i++) {
+        // contourTextArea.append("\t");
+        // }
 
         contourTextArea.setCaretPosition(0);
 
-        //System.err.println(contourTextArea.getText());
+        // System.err.println(contourTextArea.getText());
     }
 
+    /**
+     * DOCUMENT ME!
+     */
     private void updateTree() {
 
         if (treeSelectionChange) {
             treeSelectionChange = false;
+
             return;
         }
 
         if (this.isVisible()) {
 
             root.removeAllChildren();
+
             ViewVOIVector VOIs = image.getVOIs();
             Enumeration e = VOIs.elements();
 
@@ -557,55 +1293,54 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
             TreeNode tempNode = null;
 
-            //iterate through all VOIs
+            // iterate through all VOIs
             while (e.hasMoreElements()) {
                 tempVOI = (VOI) e.nextElement();
 
-                //create VOI group node (for VOI)
+                // create VOI group node (for VOI)
                 currentNode = new VOIGroupNode(tempVOI);
 
-                //check to see if the current VOI is the VOI shown in this dialog
+                // check to see if the current VOI is the VOI shown in this dialog
                 // or if the VOI isActive (can have multiple selections on tree)
                 if (tempVOI.isActive()) {
 
-                    //add a new tree path so the VOI node is selected
-                    treePaths.addElement(new TreePath(new Object[] {root,
-                            currentNode}));
+                    // add a new tree path so the VOI node is selected
+                    treePaths.addElement(new TreePath(new Object[] { root, currentNode }));
 
                     curves = tempVOI.getCurves();
 
-                    //look through curves to find which of the VOI's VOIBases (contours etc)
+                    // look through curves to find which of the VOI's VOIBases (contours etc)
                     // are active
                     for (index = 0; index < curves.length; index++) {
 
-                        //iterate through Vector for VOIBases
+                        // iterate through Vector for VOIBases
                         voiEnum = curves[index].elements();
+
                         while (voiEnum.hasMoreElements()) {
                             voiBase = (VOIBase) voiEnum.nextElement();
 
-                            //check to see if the VOIBase is active
+                            // check to see if the VOIBase is active
                             if (voiBase.isActive()) {
 
                                 voiFrameEnum = currentNode.children();
+
                                 while (voiFrameEnum.hasMoreElements()) {
 
-                                    tempNode = (TreeNode) voiFrameEnum.
-                                               nextElement();
+                                    tempNode = (TreeNode) voiFrameEnum.nextElement();
+
                                     if (tempNode instanceof VOIFrameNode) {
 
                                         voiNodeEnum = tempNode.children();
 
-                                        //find the child that matches this selected contour
+                                        // find the child that matches this selected contour
                                         while (voiNodeEnum.hasMoreElements()) {
-                                            currentVOINode = (VOINode)
-                                                    voiNodeEnum.nextElement();
-                                            if (currentVOINode.getVOI().equals(
-                                                    voiBase)) {
-                                                treePaths.addElement(new
-                                                        TreePath(new Object[] {
-                                                        root, currentNode,
-                                                        tempNode,
-                                                        currentVOINode}));
+                                            currentVOINode = (VOINode) voiNodeEnum.nextElement();
+
+                                            if (currentVOINode.getVOI().equals(voiBase)) {
+                                                treePaths.addElement(new TreePath(new Object[] {
+                                                                                      root, currentNode, tempNode,
+                                                                                      currentVOINode
+                                                                                  }));
                                             }
                                         }
 
@@ -633,650 +1368,36 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             } else {
                 voiTree.setSelectionPath(new TreePath(root));
             }
+
             voiTreePane.validate();
         }
 
     }
 
-    public void setVisible(boolean visible) {
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
 
-        if (popup == null && visible) {
-            popup = new VOITreePopup();
-            voiTree.addMouseListener(popup);
-        }
+    /**
+     * Does nothing.
+     */
+    class CancelListener implements ActionListener {
 
-        super.setVisible(visible);
-        if (visible) {
-            updateTree();
-        }
+        /**
+         * Does nothing.
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void actionPerformed(ActionEvent e) { }
     }
 
     /**
-     *   Updates the dialog based on the VOI passed in.
-     *   @param _voi VOI whose properties we want to calculate.
-     *   @param img  Image where voi is to be updated
-     */
-    public void updateVOI(VOI _voi, ModelImage img) {
-
-        voi = _voi;
-        image = img;
-
-        if (voi != null) {
-
-            if (voi.getBoundingBoxFlag() == true) {
-                checkboxBoundingBox.setSelected(true);
-            } else {
-                checkboxBoundingBox.setSelected(false);
-            }
-
-            if (voi.getPolarity() == voi.ADDITIVE) {
-                checkboxAdditiveOrSubtractive.setSelected(true);
-            } else {
-                checkboxAdditiveOrSubtractive.setSelected(false);
-            }
-            checkboxIncludeForProcessing.setSelected(voi.getProcess());
-
-            if (voi.getDisplayMode() == VOI.BOUNDARY) {
-                checkboxBoundary.setSelected(true);
-                opacitySlider.setEnabled(false);
-            } else {
-                checkboxBoundary.setSelected(false);
-                opacitySlider.setEnabled(true);
-            }
-
-            //VOIName.setBackground(voi.getColor());
-            colorButton.setBackground(voi.getColor());
-            colorVOI = voi.getColor();
-
-            seedValueTF.setText(String.valueOf(voi.getWatershedID()));
-
-            VOIName.setText(voi.getName());
-            setTitle("VOI Statistics - " + voi.getUID());
-
-            //turn things on/off depending on if a PolyLine is selected
-            if (voi.getCurveType() == VOI.POLYLINE) {
-                listPanel.setCheckBoxesDisabled();
-                calcButton.setEnabled(false);
-                if (checkboxExclude.isSelected()) {
-                    textMin.setEnabled(false);
-                    textMax.setEnabled(false);
-                }
-                checkboxExclude.setEnabled(false);
-                seedValueTF.setEnabled(false);
-            } else {
-                checkboxExclude.setEnabled(true);
-                if (checkboxExclude.isSelected()) {
-                    textMin.setEnabled(true);
-                    textMax.setEnabled(true);
-                }
-                seedValueTF.setEnabled(true);
-                calcButton.setEnabled(true);
-                // on the asssumption that the image is a 3d image, this will work
-                try {
-                    listPanel.setSliceCount(img.getExtents()[2]);
-                } catch (ArrayIndexOutOfBoundsException aioobe) {
-                    // otherwise, this must be a 2d image.
-                    listPanel.setSliceCount(1);
-                } finally {
-
-                    listPanel.setCheckBoxesEnabled();
-                }
-            }
-        }
-        validate();
-    }
-
-    /**
-     *   Applies changes to VOI when "Apply" is pressed; closes when
-     *   "Cancel" is pressed; and calculates statistics and outputs them
-     *   to the message frame when "Calculate" is pressed.  Also brings
-     *   up a color chooser when the color button is pressed.
-     *   @param event    Event that triggers this function
-     */
-    public void actionPerformed(ActionEvent event) {
-        Object source = event.getSource();
-        String tmpStr;
-        int xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
-        int yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
-        String unitsString = null;
-
-        if (source == colorButton) {
-            colorChooser = new ViewJColorChooser(new Frame(),
-                                                 "Pick VOI color",
-                                                 new OkColorListener(),
-                                                 new CancelListener());
-        } else if (source == followVOISelectionBox) {
-            frameFollowsSelection = followVOISelectionBox.isSelected();
-        } else if (source == applyButton) {
-            ViewVOIVector vectorVOI = image.getVOIs();
-            ViewVOIVector newVOIVector;
-            int temp[];
-            int j = 0, location = -1;
-            String name = "";
-            boolean changedName = false;
-
-            tmpStr = seedValueTF.getText();
-            if (testParameter(tmpStr, 0, 32000)) {
-                seedValue = Short.valueOf(tmpStr).shortValue();
-                voi.setWatershedID(seedValue);
-            }
-
-            try {
-                newVOIVector = new ViewVOIVector();
-                temp = new int[100];
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError(
-                        "Out of memory: JDialogVOIStats.actionPerformed");
-                return;
-            }
-
-            for (int i = 0; i < vectorVOI.size(); i++) {
-                if (((VOI) vectorVOI.elementAt(i)).getName().equals(VOIName.
-                        getText()) &&
-                    !((VOI) vectorVOI.elementAt(i)).equals(voi)) {
-                    newVOIVector.addElement(vectorVOI.elementAt(i));
-                    temp[j++] = i;
-                    name = VOIName.getText();
-                    changedName = true;
-                }
-                if (((VOI) vectorVOI.elementAt(i)).equals(voi)) {
-                    location = i;
-                }
-            }
-            voi.setName(VOIName.getText());
-
-            if (checkboxBoundingBox.isSelected() == true) {
-                voi.setBoundingBoxFlag(true);
-            } else {
-                voi.setBoundingBoxFlag(false);
-            }
-
-            if (checkboxAdditiveOrSubtractive.isSelected() == true) {
-                voi.setPolarity(VOI.ADDITIVE);
-            } else {
-                voi.setPolarity(VOI.SUBTRACTIVE);
-            }
-
-            if (checkboxIncludeForProcessing.isSelected() == true) {
-                voi.setProcess(true);
-            } else {
-                voi.setProcess(false);
-            }
-
-            if (checkboxBoundary.isSelected() == true) {
-                voi.setDisplayMode(VOI.BOUNDARY);
-            } else {
-                voi.setDisplayMode(VOI.SOLID);
-            }
-
-            voi.setColor(colorVOI);
-            if (parentFrame != null && parentFrame instanceof ViewJFrameImage) {
-                ((ViewJFrameImage) parentFrame).getControls().setVOIColor(colorVOI);
-            }
-            if (j != 0 && location != -1) {
-
-                newVOIVector.addElement(voi);
-                temp[j++] = location;
-
-                int where[] = new int[j];
-                for (int i = 0; i < j; i++)
-                    where[i] = temp[i];
-                image.groupVOIs(newVOIVector, where, name);
-                Vector VOIs = image.getVOIs();
-                updateVOI((VOI) (VOIs.elementAt(VOIs.size() - 1)), image);
-            } else {
-                updateVOI(voi, image);
-            }
-            updateTree();
-            image.notifyImageDisplayListeners(null, true);
-        } else if (source == calcButton) {
-            if (textMin.isEnabled()) {
-                String tempStr = textMin.getText();
-                if (testParameter(tempStr, -10000000, 10000000)) {
-                    voi.setMinimumIgnore(Float.valueOf(tempStr).floatValue());
-                } else {
-                    textMin.requestFocus();
-                    textMin.selectAll();
-                    return;
-                }
-                tempStr = textMax.getText();
-                if (testParameter(tempStr, -10000000, 10000000)) {
-                    voi.setMaximumIgnore(Float.valueOf(tempStr).floatValue());
-                } else {
-                    textMax.requestFocus();
-                    textMax.selectAll();
-                    return;
-                }
-            } else {
-                voi.setMinimumIgnore(Float.MAX_VALUE);
-                voi.setMaximumIgnore(Float.MIN_VALUE);
-            }
-
-            voi.setStatisticList(listPanel.getViewList());
-            // only loading the image works because we have been changing
-            // the thing held BY the image.
-            algoVOI = new AlgorithmVOIProps(image);
-            algoVOI.setActiveImage(false);
-            if (!((ViewJFrameImage) (parentFrame)).getUserInterface().
-                isAppFrameVisible()) {
-                algoVOI.setProgressBarVisible(false);
-            }
-            algoVOI.run();
-            if (!algoVOI.isCompleted()) {
-                MipavUtil.displayError("Please make sure VOI is selected.");
-                return;
-            }
-            ViewUserInterface UI = ((ViewJFrameImage) (parentFrame)).
-                                   getUserInterface();
-            UI.setDataText("\n -----------------------------------------------------------------------------\n");
-            //UI.setDataText("Image:     " + image.getFileInfo(0).getFileName() + "\n");
-            UI.setDataText("Image:     " + image.getImageName() + "\n");
-            UI.setDataText("VOI  :     " + voi.getName() + "\n");
-            int measure;
-            String str = new String();
-
-            /*
-                         if ( image.isColorImage() ) {
-             if (algoVOI.getMaxIntensityRed() > algoVOI.getMinIntensityRed()) {
-             UI.setDataText("  Red min: " + algoVOI.getMinIntensityRed() + " \t\tRed max: " +
-                 algoVOI.getMaxIntensityRed() + "\n");
-                }
-             if (algoVOI.getMaxIntensityGreen() > algoVOI.getMinIntensityGreen()) {
-                    UI.setDataText("  Green min: " + algoVOI.getMinIntensityGreen() + " \tGreen max: " +
-                 algoVOI.getMaxIntensityGreen() + "\n");
-                }
-             if (algoVOI.getMaxIntensityBlue() > algoVOI.getMinIntensityBlue()) {
-                    UI.setDataText("  Blue min: " + algoVOI.getMinIntensityBlue() + " \t\tBlue max: " + algoVOI.getMaxIntensityBlue() + "\n");
-                }
-                         }
-                         else {
-                if (algoVOI.getMaxIntensity() > algoVOI.getMinIntensity()) {
-                    UI.setDataText("  Min: " + algoVOI.getMinIntensity() + " \t\tMax: " + algoVOI.getMaxIntensity() + "\n");
-                }
-                         }
-             */
-
-            //Only if selected
-            ViewList statsList[] = voi.getStatisticList();
-            for (int i = 0; i < statsList.length; i++) {
-                if (statsList[i].getState() == true) {
-                    if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[0])) {
-                        UI.setDataText("  No. of Voxels                \t= " +
-                                       algoVOI.getNVoxels() + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[1])) {
-                        //might want to double check to ensure all three units are the same if not display a tag
-                        str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-                        UI.setDataText("  Volume                       \t= " +
-                                       algoVOI.getVolume() + "   " +
-                                       str + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[2])) {
-                        //might want to double check to ensure all three units are the same if not display a tag
-                        str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
-                        UI.setDataText("  Area                         \t= " +
-                                       algoVOI.getArea() + "   " +
-                                       str + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[3])) {
-                        str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.
-                                getFileInfo(0).getUnitsOfMeasure(0));
-                        UI.setDataText(
-                                "  Perimeter                         \t= " +
-                                algoVOI.getPerimeter() + "   " + str + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[4])) {
-                        if (image.isColorImage()) {
-                            UI.setDataText("  Red min:   \t\t= " +
-                                           algoVOI.getMinIntensityRed() +
-                                           "\n");
-
-                            UI.setDataText("  Green min: \t\t= " +
-                                           algoVOI.getMinIntensityGreen() +
-                                           "\n");
-
-                            UI.setDataText("  Blue min: \t\t= " +
-                                           algoVOI.getMinIntensityBlue() +
-                                           "\n");
-                        } else {
-                            UI.setDataText("  Min: \t\t= " +
-                                           algoVOI.getMinIntensity() + "\n");
-                        }
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[5])) {
-                        if (image.isColorImage()) {
-                            UI.setDataText("  Red max:   \t\t= " +
-                                           algoVOI.getMaxIntensityRed() +
-                                           "\n");
-
-                            UI.setDataText("  Green max: \t\t= " +
-                                           algoVOI.getMaxIntensityGreen() +
-                                           "\n");
-
-                            UI.setDataText("  Blue max:  \t\t= " +
-                                           algoVOI.getMaxIntensityBlue() + "\n");
-                        } else {
-                            UI.setDataText("  Max: \t\t= " +
-                                           algoVOI.getMaxIntensity() + "\n");
-                        }
-                    }
-
-                    else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[6])) {
-                        if (image.isColorImage()) {
-                            UI.setDataText(
-                                    "  Average voxel intensity      \t= " +
-                                    algoVOI.getAvgIntenR() + " R, " +
-                                    algoVOI.getAvgIntenG() + " G, " +
-                                    algoVOI.getAvgIntenB() + " B, " + "\n");
-                        } else {
-                            UI.setDataText(
-                                    "  Average voxel intensity      \t= " +
-                                    algoVOI.getAvgInten() + "\n");
-                        }
-                    } else if (statsList[i].getString().equalsIgnoreCase(
-                            algoVOI.
-                            makeStatisticListDescriptions()[7])) {
-                        if (image.isColorImage()) {
-                            UI.setDataText(
-                                    "  Std. dev. of voxel intensity \t= " +
-                                    algoVOI.getStdDevR() + " R, " +
-                                    algoVOI.getStdDevG() + " G, " +
-                                    algoVOI.getStdDevB() + " B, " + "\n");
-                        } else {
-                            UI.setDataText(
-                                    "  Std. dev. of voxel intensity \t= " +
-                                    algoVOI.getStdDev() + "\n");
-                        }
-                    } else if (statsList[i].getString().equalsIgnoreCase(
-                            algoVOI.
-                            makeStatisticListDescriptions()[8])) {
-                        UI.setDataText("  Center of Mass               \t= " +
-                                       algoVOI.getCenterOfMass() + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[9])) {
-                        UI.setDataText("  Principal axis (only 2D)     \t= " +
-                                       algoVOI.getPrincipalAxis() +
-                                       "  degrees\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[10])) {
-                        UI.setDataText("  Eccentricity (only 2D)       \t= " +
-                                       algoVOI.getEccentricity() + "\n");
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[11])) {
-                        if ((xUnits == yUnits) &&
-                            (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                            unitsString = FileInfoBase.getUnitsOfMeasureStr(
-                                    xUnits);
-                        }
-                        if (unitsString != null) {
-                            UI.setDataText(
-                                    "  Major axis length (only 2D)   \t= " +
-                                    algoVOI.getMajorAxis() +
-                                    " " + unitsString + "\n");
-                        } else {
-                            UI.setDataText(
-                                    "  Major axis length (only 2D)     \t= " +
-                                    algoVOI.getMajorAxis() + "\n");
-                        }
-                    } else if (statsList[i].getString().equals(algoVOI.
-                            makeStatisticListDescriptions()[12])) {
-                        if ((xUnits == yUnits) &&
-                            (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                            unitsString = FileInfoBase.getUnitsOfMeasureStr(
-                                    xUnits);
-                        }
-                        if (unitsString != null) {
-                            UI.setDataText(
-                                    "  Minor axis length (only 2D)   \t= " +
-                                    algoVOI.getMinorAxis() +
-                                    " " + unitsString + "\n");
-                        } else {
-                            UI.setDataText(
-                                    "  Minor axis length (only 2D)     \t= " +
-                                    algoVOI.getMinorAxis() + "\n");
-                        }
-                    }
-                }
-            }
-        } else if (source == checkboxExclude) {
-            boolean flag = checkboxExclude.isSelected();
-            labelMax.setEnabled(flag);
-            labelMin.setEnabled(flag);
-            textMin.setEnabled(flag);
-            textMax.setEnabled(flag);
-        } else if (source == cancelButton) {
-            cancelFlag = true;
-            setVisible(false);
-        }
-    }
-
-    //*******************************************************************
-     //************************* Item Events ****************************
-      //*******************************************************************
-
-       /**
-        *   Sets opacity slider to enabled or disabled depending on
-        *   boundary checkbox.
-        *   @param event    Event that cause the method to fire
-        */
-       public void itemStateChanged(ItemEvent event) {
-           Object source = event.getSource();
-
-           if (source == checkboxBoundary) {
-               if (checkboxBoundary.isSelected()) {
-                   opacitySlider.setEnabled(false);
-               } else {
-                   opacitySlider.setEnabled(true);
-               }
-           }
-       }
-
-    public void showColorChooser() {
-        colorChooser = new ViewJColorChooser(new Frame(),
-                                             "Pick VOI color",
-                                             new OkColorListener(),
-                                             new CancelListener());
-    }
-
-    //*******************************************************************
-     //************************* Change Events ****************************
-      //*******************************************************************
-
-       /**
-        *    Sets values based on knob along slider
-        *    @param e    Event that triggered this function
-        */
-       public void stateChanged(ChangeEvent e) {
-           Object source = e.getSource();
-
-           if (source == opacitySlider) {
-               current.setText(String.valueOf(opacitySlider.getValue() /
-                                              (float) 100));
-               if (voi != null) {
-                   voi.setOpacity(opacitySlider.getValue() / (float) 100);
-               }
-           }
-       }
-
-
-    /**
-     * Updates the ViewJFrameImage when a VOI/contour is selected
-     * @param e TreeSelectionEvent
-     */
-    public void valueChanged(TreeSelectionEvent e) {
-        TreePath leadPath = e.getNewLeadSelectionPath();
-        if (leadPath != null) {
-            Object[] leadObjects = leadPath.getPath();
-            int curveIndex = 0;
-            if (leadObjects[leadObjects.length - 1] instanceof VOINode) {
-                VOIBase leadBase = ((VOINode) leadObjects[leadObjects.
-                                    length - 1]).getVOI();
-                VOI leadVOI = ((VOIGroupNode) ((VOIFrameNode) ((VOINode)
-                        leadObjects[
-                        leadObjects.length - 1]).getParent()).getParent()).
-                              getVOIgroup();
-
-                //find the frame where this is located
-                Vector[] curves = leadVOI.getCurves();
-
-                for (curveIndex = 0; curveIndex < curves.length; curveIndex++) {
-                    if (curves[curveIndex].contains(leadBase)) {
-                        break;
-                    }
-                }
-
-                if (frameFollowsSelection && image.getNDims() > 2) {
-                    ((ViewJFrameImage) parentFrame).setSlice(curveIndex);
-                }
-                updateContourPane(leadBase);
-
-            } else if (leadObjects[leadObjects.length -
-                       1] instanceof VOIFrameNode) {
-                curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length -
-                              1]).getFrameNumber();
-                if (frameFollowsSelection && image.getNDims() > 2) {
-                    ((ViewJFrameImage) parentFrame).setSlice(curveIndex);
-                }
-            }
-
-        }
-        //look for all selection paths
-        TreePath[] tPaths = voiTree.getSelectionPaths();
-
-        if (tPaths != null &&
-            tPaths.length > 0) {
-
-            // System.err.println("Length of paths: " + tPaths.length);
-
-            TreePath currentPath = null;
-
-            Object[] currentObjects = null;
-
-            VOI currentVOI = null;
-
-            Vector selectedVector = new Vector();
-
-            for (int i = 0; i < tPaths.length; i++) {
-                currentPath = tPaths[i];
-
-                currentObjects = currentPath.getPath();
-
-                for (int y = 0; y < currentObjects.length; y++) {
-
-                    //do nothing for root...
-
-                    if (currentObjects[y] instanceof VOIGroupNode) {
-                        currentVOI = ((VOIGroupNode) currentObjects[y]).
-                                     getVOIgroup();
-
-                        if (!selectedVector.contains(currentObjects[y])) {
-                            selectedVector.addElement(currentObjects[y]);
-                        }
-
-                    } else if (currentObjects[y] instanceof VOINode) {
-
-                        if (!selectedVector.contains(((VOINode) currentObjects[
-                                y]).getParent())) {
-
-                            selectedVector.addElement(((VOINode) currentObjects[
-                                    y]).getParent());
-                        }
-
-                        selectedVector.addElement(currentObjects[y]);
-                    }
-
-                }
-            }
-
-            //make un-selected VOI nodes inactive
-            Enumeration en = root.children();
-            Enumeration frameEnum = null;
-            Enumeration nodeChildren = null;
-
-            VOIGroupNode groupNode = null;
-            TreeNode tempNode = null;
-            VOINode voiNode = null;
-
-            while (en.hasMoreElements()) {
-                groupNode = (VOIGroupNode) en.nextElement();
-
-                groupNode.getVOIgroup().setActive(selectedVector.contains(
-                        groupNode));
-
-                frameEnum = groupNode.children();
-                while (frameEnum.hasMoreElements()) {
-                    tempNode = (TreeNode) frameEnum.nextElement();
-                    if (tempNode instanceof VOIFrameNode) {
-                        nodeChildren = tempNode.children();
-
-                        while (nodeChildren.hasMoreElements()) {
-                            voiNode = (VOINode) nodeChildren.nextElement();
-
-                            voiNode.getVOI().setActive(selectedVector.contains(
-                                    voiNode));
-                        }
-                    }
-                }
-            }
-
-            treeSelectionChange = true;
-            ((ViewJFrameImage) parentFrame).getComponentImage().
-                    fireVOISelectionChange(currentVOI, null);
-            image.notifyImageDisplayListeners();
-            //System.err.println("notifying of change");
-        }
-
-    }
-
-    /** responds to the volume of interest
-     *   (<code>VOI</code>) change events.
-     *   <p>
-     *   This method calls <code>updateVOI</code>
-     *   using the <code>UpdateVOIEvent</code>
-     *   changed <code>VOI</code>, and retrieves
-     *   the activeImage out of the current image's
-     *   frame.
-     *
-     *   @see UpdateVOIEvent
-     *   @see #updateVOI
-     *   @see ViewJFrameBase#getActiveImage
-     */
-    public void selectionChanged(UpdateVOIEvent newVOIselection) {
-
-        if (newVOIselection == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: new selection null");
-            return;
-        } else if (image == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image is null");
-            return;
-        } else if (image.getParentFrame() == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image parentFrame() is null");
-            return;
-        } else if (image.getParentFrame().getComponentImage() == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage is null");
-            return;
-        } else if (image.getParentFrame().getComponentImage().getActiveImage() == null) {
-            System.err.println("JDialogVOIStats.selectionChanged: image parentframe componentImage().getActiveImage() is null");
-            return;
-        }
-
-        updateVOI(newVOIselection.getChangedVolumeOfInterest(),
-                  image.getParentFrame().getComponentImage().getActiveImage());
-        updateTree();
-    }
-
-    /**
-     *    Pick up the selected color and call method to change the VOI color
-     *
+     * Pick up the selected color and call method to change the VOI color.
      */
     class OkColorListener implements ActionListener {
 
         /**
-         *   Get color from chooser and set button
-         *   and VOI color.
-         *   @param e    Event that triggered function.
+         * Get color from chooser and set button and VOI color.
+         *
+         * @param  e  Event that triggered function.
          */
         public void actionPerformed(ActionEvent e) {
             Color color = colorChooser.getColor();
@@ -1285,242 +1406,246 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         }
     }
 
-
     /**
-     *    Does nothing.
+     * DOCUMENT ME!
      */
-    class CancelListener implements ActionListener {
+    private class VOITreePopup extends JPanel implements ActionListener, PopupMenuListener, MouseListener {
 
-        /**
-         *   Does nothing.
-         */
-        public void actionPerformed(ActionEvent e) {
-        }
-    }
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 1872683562360020109L;
 
-
-    //*******************************************************************
-     //************************* Focus Events ****************************
-      //*******************************************************************
-
-       /**
-        *   Test the seed value and if appropriate, sets it.
-        *   @param event    Event that triggered function.
-        */
-       public void focusLost(FocusEvent event) {
-
-           String tmpStr = seedValueTF.getText();
-           if (testParameter(tmpStr, 0, 32000)) {
-               seedValue = Short.valueOf(tmpStr).shortValue();
-               voi.setWatershedID(seedValue);
-           }
-
-       }
-
-    private class VOITreePopup extends JPanel implements ActionListener,
-            PopupMenuListener, MouseListener {
-
-        private JPopupMenu voiPopup;
-        private JMenuItem itemShowGraph;
-        private JMenuItem itemShowPAAIDialog;
-        private JCheckBoxMenuItem itemShowVOIName;
-        private JMenu propSubMenu;
-
-        private JMenu orderSubMenu;
+        /** DOCUMENT ME! */
         private JMenu contourOrderSubMenu;
+
+        /** DOCUMENT ME! */
         private JMenu editSubMenu;
+
+        /** DOCUMENT ME! */
         private JMenu graphSubMenu;
-        private JMenuItem itemClose;
+
+        /** DOCUMENT ME! */
         private JMenu groupSubMenu;
 
+        /** DOCUMENT ME! */
+        private JMenuItem itemClose;
+
+        /** DOCUMENT ME! */
+        private JMenuItem itemShowGraph;
+
+        /** DOCUMENT ME! */
+        private JMenuItem itemShowPAAIDialog;
+
+        /** DOCUMENT ME! */
+        private JCheckBoxMenuItem itemShowVOIName;
+
+        /** DOCUMENT ME! */
+        private JMenu orderSubMenu;
+
+        /** DOCUMENT ME! */
+        private JMenu propSubMenu;
+
+        /** DOCUMENT ME! */
+        private JPopupMenu voiPopup;
+
+        /**
+         * Creates a new VOITreePopup object.
+         */
         public VOITreePopup() {
 
             try {
                 voiPopup = new JPopupMenu();
 
                 orderSubMenu = ViewMenuBuilder.buildMenu("VOI Order", 0, false);
-                contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order",
-                        0, false);
+                contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, false);
                 editSubMenu = ViewMenuBuilder.buildMenu("Edit", 0, false);
                 propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, false);
-                itemShowGraph = ViewMenuBuilder.buildMenuItem("Show VOI Graph",
-                        "ShowGraph", 0, (ViewJFrameImage) parentFrame, null, false);
-                itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem(
-                        "Point area average intensities", "ShowPAIIDialog", 0, (ViewJFrameImage) parentFrame, null, false);
-                itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem(
-                        "Show VOI name", "ShowName", (ViewJFrameImage) parentFrame,
-                        Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
+                itemShowGraph = ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0,
+                                                              (ViewJFrameImage) parentFrame, null, false);
+                itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem("Point area average intensities", "ShowPAIIDialog",
+                                                                   0, (ViewJFrameImage) parentFrame, null, false);
+                itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName",
+                                                                        (ViewJFrameImage) parentFrame,
+                                                                        Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
 
                 graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, false);
-                itemClose = ViewMenuBuilder.buildMenuItem("Close VOI (polyline->polygon)","closeVOI",0,
+                itemClose = ViewMenuBuilder.buildMenuItem("Close VOI (polyline->polygon)", "closeVOI", 0,
                                                           (ViewJFrameImage) parentFrame, null, false);
 
                 groupSubMenu = ViewMenuBuilder.buildMenu("Group", 0, false);
 
             } catch (OutOfMemoryError error) {
                 System.gc();
-                MipavUtil.displayError(
-                        "Out of memory: VOITreePopup Constructor");
+                MipavUtil.displayError("Out of memory: VOITreePopup Constructor");
+
                 return;
             }
 
-            //Graph Submenu
-            graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity","boundaryIntensity", 0,
-                    (ViewJFrameImage) parentFrame, null, false));
+            // Graph Submenu
+            graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0,
+                                                           (ViewJFrameImage) parentFrame, null, false));
 
-            if( ((ViewJFrameImage) parentFrame).getActiveImage().getNDims() == 3 ||
-                ((ViewJFrameImage) parentFrame).getActiveImage().getNDims() == 4) {
-                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Total Intensity","totalIntensity", 0, this, null, false));
-                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Average Intensity","avgIntensity", 0, this, null, false));
-                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Total Intensity with Threshold","totalIntensityThreshold", 0, this, null, false));
-                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Average Intensity with Threshold","avgIntensityThreshold", 0, this, null, false));
+            if ((((ViewJFrameImage) parentFrame).getActiveImage().getNDims() == 3) ||
+                    (((ViewJFrameImage) parentFrame).getActiveImage().getNDims() == 4)) {
+                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Total Intensity", "totalIntensity", 0, this, null,
+                                                               false));
+                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Average Intensity", "avgIntensity", 0, this, null,
+                                                               false));
+                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Total Intensity with Threshold",
+                                                               "totalIntensityThreshold", 0, this, null, false));
+                graphSubMenu.add(ViewMenuBuilder.buildMenuItem("2.5D Average Intensity with Threshold",
+                                                               "avgIntensityThreshold", 0, this, null, false));
             }
 
-            //Grouping menu
-            groupSubMenu.add(ViewMenuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0,
-                    (ViewJFrameImage)parentFrame, null, false));
+            // Grouping menu
+            groupSubMenu.add(ViewMenuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0, (ViewJFrameImage)
+                                                               parentFrame, null, false));
             groupSubMenu.add(ViewMenuBuilder.buildMenuItem("Ungroup VOIs", "UngroupVOIs", 0,
-                    (ViewJFrameImage)parentFrame, null, false));
+                                                           (ViewJFrameImage) parentFrame, null, false));
 
 
-            //Order submenu
-            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI to Front",
-                    "BringToFront", 0, (ViewJFrameImage) parentFrame,
-                    "front.gif", true));
-            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI to Back",
-                    "SendToBack", 0, (ViewJFrameImage) parentFrame, "back.gif", true));
-            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI Forward",
-                    "BringForward", 0, (ViewJFrameImage) parentFrame,
-                    "forward.gif", true));
-            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI Backward",
-                    "SendBackward", 0, (ViewJFrameImage) parentFrame,
-                    "backward.gif", true));
+            // Order submenu
+            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI to Front", "BringToFront", 0,
+                                                           (ViewJFrameImage) parentFrame, "front.gif", true));
+            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI to Back", "SendToBack", 0,
+                                                           (ViewJFrameImage) parentFrame, "back.gif", true));
+            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring VOI Forward", "BringForward", 0,
+                                                           (ViewJFrameImage) parentFrame, "forward.gif", true));
+            orderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send VOI Backward", "SendBackward", 0,
+                                                           (ViewJFrameImage) parentFrame, "backward.gif", true));
 
-            //Contour order submenu
-            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(
-                    "Bring Contour to Front", "BringContourToFront", 0,
-                    (ViewJFrameImage) parentFrame,
-                    "front.gif", true));
-            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(
-                    "Send Contour to Back", "SendContourToBack", 0,
-                    (ViewJFrameImage) parentFrame,
-                    "back.gif", true));
-            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(
-                    "Bring Contour Forward", "BringContourForward", 0,
-                    (ViewJFrameImage) parentFrame,
-                    "forward.gif", true));
-            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem(
-                    "Send Contour Backward", "SendContourBackward", 0,
-                    (ViewJFrameImage) parentFrame,
-                    "backward.gif", true));
+            // Contour order submenu
+            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring Contour to Front", "BringContourToFront", 0,
+                                                                  (ViewJFrameImage) parentFrame, "front.gif", true));
+            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send Contour to Back", "SendContourToBack", 0,
+                                                                  (ViewJFrameImage) parentFrame, "back.gif", true));
+            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Bring Contour Forward", "BringContourForward", 0,
+                                                                  (ViewJFrameImage) parentFrame, "forward.gif", true));
+            contourOrderSubMenu.add(ViewMenuBuilder.buildMenuItem("Send Contour Backward", "SendContourBackward", 0,
+                                                                  (ViewJFrameImage) parentFrame, "backward.gif", true));
 
-            //Edit submenu
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Delete", "deleteVOI",
-                    0, (ViewJFrameImage) parentFrame, "delete.gif", true));
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Cut", "cutVOI", 0,
-                    (ViewJFrameImage) parentFrame,
-                    "cutpaint.gif", true));
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Copy", "copyVOI", 0,
-                    (ViewJFrameImage) parentFrame,
-                    "copypaint.gif", true));
-            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Paste", "pasteVOI",
-                    0, (ViewJFrameImage) parentFrame, "pastepaint.gif", true));
+            // Edit submenu
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Delete", "deleteVOI", 0, (ViewJFrameImage) parentFrame,
+                                                          "delete.gif", true));
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Cut", "cutVOI", 0, (ViewJFrameImage) parentFrame,
+                                                          "cutpaint.gif", true));
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Copy", "copyVOI", 0, (ViewJFrameImage) parentFrame,
+                                                          "copypaint.gif", true));
+            editSubMenu.add(ViewMenuBuilder.buildMenuItem("Paste", "pasteVOI", 0, (ViewJFrameImage) parentFrame,
+                                                          "pastepaint.gif", true));
 
-            //propagate submenu
-            propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Next Slice",
-                    "PropVOIUp", 0, (ViewJFrameImage) parentFrame,
-                    "voipropu.gif", true));
-            propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice",
-                    "PropVOIDown", 0, (ViewJFrameImage) parentFrame,
-                    "voipropd.gif", true));
-            propSubMenu.add(ViewMenuBuilder.buildMenuItem("To All Slices",
-                    "PropVOIAll", 0, (ViewJFrameImage) parentFrame, null, true));
+            // propagate submenu
+            propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Next Slice", "PropVOIUp", 0,
+                                                          (ViewJFrameImage) parentFrame, "voipropu.gif", true));
+            propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice", "PropVOIDown", 0,
+                                                          (ViewJFrameImage) parentFrame, "voipropd.gif", true));
+            propSubMenu.add(ViewMenuBuilder.buildMenuItem("To All Slices", "PropVOIAll", 0,
+                                                          (ViewJFrameImage) parentFrame, null, true));
         }
 
-        public void actionPerformed(ActionEvent e) {
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  e  DOCUMENT ME!
+         */
+        public void actionPerformed(ActionEvent e) { }
 
-        }
-
-        public void mousePressed(MouseEvent event) {
-            checkPopup(event);
-        }
-
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
         public void mouseClicked(MouseEvent event) {
             checkPopup(event);
         }
 
-        public void mouseEntered(MouseEvent event) {}
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
+        public void mouseEntered(MouseEvent event) { }
 
-        public void mouseExited(MouseEvent event) {}
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
+        public void mouseExited(MouseEvent event) { }
 
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
+        public void mousePressed(MouseEvent event) {
+            checkPopup(event);
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
         public void mouseReleased(MouseEvent event) {
             checkPopup(event);
         }
 
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
+        public void popupMenuCanceled(PopupMenuEvent event) {
+            // Preferences.debug("Popup menu will be visible!");
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
+        public void popupMenuWillBecomeInvisible(PopupMenuEvent event) {
+            // Preferences.debug("Popup menu will be invisible!");
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
+        public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
+            // Preferences.debug("Popup menu will be visible!");
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  event  DOCUMENT ME!
+         */
         private void checkPopup(MouseEvent event) {
+
             if (event.isPopupTrigger()) {
 
                 int voiGrouping = getSelectedGrouping();
+
                 if (voiGrouping != -1) {
                     // itemShowVOIName.setSelected(Preferences.is(Preferences.
-                    //         PREF_SHOW_VOI_NAME));
+                    // PREF_SHOW_VOI_NAME));
 
                     initToVOIType(voiGrouping);
 
                     voiPopup.show(voiTree, event.getX(), event.getY());
                 } else {
-                    System.err.println(
-                            "VOIs are of different types, select only like-contours...");
+                    System.err.println("VOIs are of different types, select only like-contours...");
                 }
             }
         }
 
-        public void popupMenuWillBecomeVisible(PopupMenuEvent event) {
-            //  Preferences.debug("Popup menu will be visible!");
-        }
-
-        public void popupMenuWillBecomeInvisible(PopupMenuEvent event) {
-            //    Preferences.debug("Popup menu will be invisible!");
-        }
-
-        public void popupMenuCanceled(PopupMenuEvent event) {
-            //  Preferences.debug("Popup menu will be visible!");
-        }
-
-        private void initToVOIType(int type) {
-            switch (type) {
-
-            case VOI.CONTOUR:
-                voiPopup.removeAll();
-                voiPopup.add(groupSubMenu);
-                voiPopup.addSeparator();
-                voiPopup.add(orderSubMenu);
-                voiPopup.add(contourOrderSubMenu);
-                voiPopup.add(editSubMenu);
-                voiPopup.add(propSubMenu);
-                voiPopup.add(itemShowVOIName);
-                break;
-            case VOI.POLYLINE:
-                voiPopup.removeAll();
-                voiPopup.add(groupSubMenu);
-                voiPopup.addSeparator();
-                voiPopup.add(orderSubMenu);
-                voiPopup.add(contourOrderSubMenu);
-                voiPopup.add(editSubMenu);
-                voiPopup.add(propSubMenu);
-                voiPopup.add(itemShowVOIName);
-                voiPopup.add(itemClose);
-                break;
-            case VOI.POINT:
-                voiPopup.removeAll();
-                voiPopup.add(groupSubMenu);
-                voiPopup.addSeparator();
-                voiPopup.add(itemShowVOIName);
-
-
-            }
-        }
-
+        /**
+         * DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
         private int getSelectedGrouping() {
 
             int numOpenContours = 0;
@@ -1535,7 +1660,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
             int type = 0;
 
-            if (tPaths != null && tPaths.length > 0) {
+            if ((tPaths != null) && (tPaths.length > 0)) {
 
                 for (int idx = 0; idx < tPaths.length; idx++) {
 
@@ -1544,14 +1669,11 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
                     if (currentObjects != null) {
 
-                        //look at the final object in path of current TreePath
-                        //  to see if it is a VOINode
-                        if (currentObjects[currentObjects.length -
-                            1] instanceof VOINode) {
+                        // look at the final object in path of current TreePath
+                        // to see if it is a VOINode
+                        if (currentObjects[currentObjects.length - 1] instanceof VOINode) {
 
-                            currentVOIBase = ((VOINode) currentObjects[
-                                              currentObjects.length - 1]).
-                                             getVOI();
+                            currentVOIBase = ((VOINode) currentObjects[currentObjects.length - 1]).getVOI();
 
                             if (currentVOIBase instanceof VOIContour) {
 
@@ -1571,19 +1693,17 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                                 type = VOI.LINE;
                             }
 
-                        } //otherwise check to see if a VOIGroupNode is selected
-
-                        else if (currentObjects[currentObjects.length -
-                                 1] instanceof VOIGroupNode) {
-                            //do something
+                        } // otherwise check to see if a VOIGroupNode is selected
+                        else if (currentObjects[currentObjects.length - 1] instanceof VOIGroupNode) {
+                            // do something
                         }
                     }
                 }
             }
-            //      System.err.println("Num open contours: " + numOpenContours);
-            //      System.err.println("Num closed contours: " + numClosedContours);
-            //      System.err.println("Num pts: " + numPoints);
-            //      System.err.println("Num lines: " + numLines);
+            // System.err.println("Num open contours: " + numOpenContours);
+            // System.err.println("Num closed contours: " + numClosedContours);
+            // System.err.println("Num pts: " + numPoints);
+            // System.err.println("Num lines: " + numLines);
 
 
             int numDiff = 0;
@@ -1591,12 +1711,15 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             if (numOpenContours > 0) {
                 numDiff++;
             }
+
             if (numClosedContours > 0) {
                 numDiff++;
             }
+
             if (numPoints > 0) {
                 numDiff++;
             }
+
             if (numLines > 0) {
                 numDiff++;
             }
@@ -1607,23 +1730,76 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
             return type;
         }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  type  DOCUMENT ME!
+         */
+        private void initToVOIType(int type) {
+
+            switch (type) {
+
+                case VOI.CONTOUR:
+                    voiPopup.removeAll();
+                    voiPopup.add(groupSubMenu);
+                    voiPopup.addSeparator();
+                    voiPopup.add(orderSubMenu);
+                    voiPopup.add(contourOrderSubMenu);
+                    voiPopup.add(editSubMenu);
+                    voiPopup.add(propSubMenu);
+                    voiPopup.add(itemShowVOIName);
+                    break;
+
+                case VOI.POLYLINE:
+                    voiPopup.removeAll();
+                    voiPopup.add(groupSubMenu);
+                    voiPopup.addSeparator();
+                    voiPopup.add(orderSubMenu);
+                    voiPopup.add(contourOrderSubMenu);
+                    voiPopup.add(editSubMenu);
+                    voiPopup.add(propSubMenu);
+                    voiPopup.add(itemShowVOIName);
+                    voiPopup.add(itemClose);
+                    break;
+
+                case VOI.POINT:
+                    voiPopup.removeAll();
+                    voiPopup.add(groupSubMenu);
+                    voiPopup.addSeparator();
+                    voiPopup.add(itemShowVOIName);
+
+
+            }
+        }
     }
 
 
+    /**
+     * DOCUMENT ME!
+     */
     private class VOITreeRenderer extends DefaultTreeCellRenderer {
 
-        public Component getTreeCellRendererComponent(
-                JTree tree,
-                Object value,
-                boolean sel,
-                boolean expanded,
-                boolean leaf,
-                int row,
-                boolean hasFocus) {
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 941508793507222123L;
 
-            super.getTreeCellRendererComponent(tree, value, sel,
-                                               expanded, leaf, row,
-                                               hasFocus);
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   tree      DOCUMENT ME!
+         * @param   value     DOCUMENT ME!
+         * @param   sel       DOCUMENT ME!
+         * @param   expanded  DOCUMENT ME!
+         * @param   leaf      DOCUMENT ME!
+         * @param   row       DOCUMENT ME!
+         * @param   hasFocus  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded,
+                                                      boolean leaf, int row, boolean hasFocus) {
+
+            super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
             if (value instanceof VOIGroupNode) {
                 setForeground(((VOIGroupNode) value).getVOIgroup().getColor());
@@ -1632,32 +1808,40 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 setBackgroundSelectionColor(Color.black);
 
                 setIcon(null);
+
                 int type = ((VOIGroupNode) value).getVOIgroup().getCurveType();
 
                 switch (type) {
-                case VOI.POLYLINE:
-                    setIcon(ICON_POLYLINE);
-                    break;
-                case VOI.CONTOUR:
-                    setIcon(ICON_POLYGON);
-                    break;
-                case VOI.LINE:
-                    setIcon(ICON_LINE);
-                    break;
-                case VOI.POINT:
-                    setIcon(ICON_POINT);
-                    break;
-                case VOI.PROTRACTOR:
-                    setIcon(ICON_PROTRACTOR);
-                    break;
-                default:
-                    setIcon(null);
+
+                    case VOI.POLYLINE:
+                        setIcon(ICON_POLYLINE);
+                        break;
+
+                    case VOI.CONTOUR:
+                        setIcon(ICON_POLYGON);
+                        break;
+
+                    case VOI.LINE:
+                        setIcon(ICON_LINE);
+                        break;
+
+                    case VOI.POINT:
+                        setIcon(ICON_POINT);
+                        break;
+
+                    case VOI.PROTRACTOR:
+                        setIcon(ICON_PROTRACTOR);
+                        break;
+
+                    default:
+                        setIcon(null);
                 }
+
                 setBorder(null);
                 setFont(MipavUtil.font12);
             } else if (value instanceof VOIFrameNode) {
                 // setForeground(((VOIGroupNode) ((TreeNode) value).getParent()).
-                //               getVOIgroup().getColor());
+                // getVOIgroup().getColor());
 
                 setForeground(Color.BLACK);
 
@@ -1670,9 +1854,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
             } else if (value instanceof VOINode) {
 
-                setForeground(((VOIGroupNode) (((VOIFrameNode) ((VOINode) value).
-                                                getParent()).getParent())).
-                              getVOIgroup().getColor());
+                setForeground(((VOIGroupNode) (((VOIFrameNode) ((VOINode) value).getParent()).getParent()))
+                                  .getVOIgroup().getColor());
 
                 setBackgroundNonSelectionColor(background);
                 setBackgroundSelectionColor(Color.BLACK);
@@ -1680,7 +1863,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 setBorder(null);
                 setFont(MipavUtil.font12);
             } else {
-                //setForeground(Color.white);
+                // setForeground(Color.white);
 
 
                 this.setTextNonSelectionColor(Color.BLACK);
@@ -1691,8 +1874,9 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 setIcon(ICON_MEDICAL_FRAME);
                 setFont(MipavUtil.font12);
                 setBorder(null);
-                //setIcon(null);
+                // setIcon(null);
             }
+
             return this;
         }
     }

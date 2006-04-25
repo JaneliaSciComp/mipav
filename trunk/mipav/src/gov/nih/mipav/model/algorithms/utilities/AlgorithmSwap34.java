@@ -2,30 +2,36 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
-import gov.nih.mipav.model.file.*;
 
 import java.io.*;
 
 
 /**
- *      Swaps third and fourth dimensions in 4D dataset.  The current image is deleted and
- *      a new one with swapped third and fourth dimensions is created.
+ * Swaps third and fourth dimensions in 4D dataset. The current image is deleted and a new one with swapped third and
+ * fourth dimensions is created.
  */
 public class AlgorithmSwap34 extends AlgorithmBase {
 
-    /**
-     *   Constructs new algorithm and sets source.
-     *   @param srcImg   source image model
-     */
-    public AlgorithmSwap34( ModelImage srcImg ) {
-        super( null, srcImg );
-    }
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     *   Prepares this class for destruction.
+     * Constructs new algorithm and sets source.
+     *
+     * @param  srcImg  source image model
+     */
+    public AlgorithmSwap34(ModelImage srcImg) {
+        super(null, srcImg);
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Prepares this class for destruction.
      */
     public void finalize() {
         srcImage = null;
@@ -33,29 +39,39 @@ public class AlgorithmSwap34 extends AlgorithmBase {
     }
 
     /**
-     *   Constructs a string of the contruction parameters and
-     *   outputs the string to the messsage frame if the logging
-     *   procedure is turned on.
+     * Returns result image.
+     *
+     * @return  destImage
      */
-    private void constructLog() {
-        historyString = new String( "Swap34()\n" );
+    public ModelImage getResultImage() {
+        return destImage;
     }
 
     /**
-     *   Starts the program.
+     * Starts the program.
      */
     public void runAlgorithm() {
-        if ( srcImage == null ) {
-            displayError( "Source Image is null" );
+
+        if (srcImage == null) {
+            displayError("Source Image is null");
+
             return;
         }
+
         constructLog();
         swap34();
     }
 
     /**
-     *   Swaps the image third and fourth dimensions and replaces the source image
-     *   with the swapped dimension image.
+     * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        historyString = new String("Swap34()\n");
+    }
+
+    /**
+     * Swaps the image third and fourth dimensions and replaces the source image with the swapped dimension image.
      */
     private void swap34() {
 
@@ -69,7 +85,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         int tDim = srcImage.getExtents()[3];
         int sliceSize;
         int colorFactor;
-        FileInfoBase fileInfo[], fileInfoR[];
+        FileInfoBase[] fileInfo, fileInfoR;
         int[] extents;
         int[] units;
         float[] resolutions;
@@ -93,7 +109,8 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         int transformID;
 
         try {
-            if ( srcImage.isColorImage() ) {
+
+            if (srcImage.isColorImage()) {
                 colorFactor = 4;
             } else {
                 colorFactor = 1;
@@ -103,14 +120,15 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             length = colorFactor * xDim * yDim * zDim * tDim;
             buffer = new float[length];
             resultBuffer = new float[length];
-            buildProgressBar( srcImage.getImageName(), "Swapping Dimensions 3-4 ...", 0, 100 );
-        } catch ( OutOfMemoryError e ) {
+            buildProgressBar(srcImage.getImageName(), "Swapping Dimensions 3-4 ...", 0, 100);
+        } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
             System.gc();
-            displayError( "AlgorithmSwap34: Out of memory" );
-            setCompleted( false );
+            displayError("AlgorithmSwap34: Out of memory");
+            setCompleted(false);
             disposeProgressBar();
+
             return;
         }
 
@@ -118,34 +136,40 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         initProgressBar();
 
         try {
-            srcImage.exportData( 0, length, buffer );
-        } catch ( IOException error ) {
-            displayError( "AlgorithmSwap34: Image locked" );
+            srcImage.exportData(0, length, buffer);
+        } catch (IOException error) {
+            displayError("AlgorithmSwap34: Image locked");
             buffer = null;
             resultBuffer = null;
-            setCompleted( false );
+            setCompleted(false);
             disposeProgressBar();
+
             return;
         }
 
         // The third and fourth dimensions are swapped in going from buffer to resultBuffer.
         // xy iterates through the first and second dimensions in one combined step.
-        for ( t = 0; t < tDim && !threadStopped; t++ ) {
-            for ( z = 0; z < zDim && !threadStopped; z++ ) {
-                for ( xy = 0; xy < sliceSize && !threadStopped; xy++ ) {
-                    index = ( t * zDim * sliceSize + z * sliceSize + xy );
-                    if ( index % mod == 0 && isProgressBarVisible() ) {
-                        progressBar.updateValue( Math.round( (float) ( index ) / ( length - 1 ) * 100 ), activeImage );
+        for (t = 0; (t < tDim) && !threadStopped; t++) {
+
+            for (z = 0; (z < zDim) && !threadStopped; z++) {
+
+                for (xy = 0; (xy < sliceSize) && !threadStopped; xy++) {
+                    index = ((t * zDim * sliceSize) + (z * sliceSize) + xy);
+
+                    if (((index % mod) == 0) && isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (index) / (length - 1) * 100), activeImage);
                     }
 
-                    resultBuffer[z * tDim * sliceSize + t * sliceSize + xy] = buffer[index];
+                    resultBuffer[(z * tDim * sliceSize) + (t * sliceSize) + xy] = buffer[index];
                 }
             }
         }
-        if ( threadStopped ) {
+
+        if (threadStopped) {
             buffer = null;
             resultBuffer = null;
             finalize();
+
             return;
         }
 
@@ -177,64 +201,61 @@ public class AlgorithmSwap34 extends AlgorithmBase {
 
         transformID = fileInfo[0].getTransformID();
 
-        String name = JDialogBase.makeImageName( srcImage.getImageName(), "_result" );
+        String name = JDialogBase.makeImageName(srcImage.getImageName(), "_result");
 
         srcImage = null;
-        destImage = new ModelImage( bufferType, extents, name, ui );
+        destImage = new ModelImage(bufferType, extents, name, ui);
         fileInfoR = destImage.getFileInfo();
-        for ( int i = 0; i < zDim * tDim; i++ ) {
+
+        for (int i = 0; i < (zDim * tDim); i++) {
             startLocs = fileInfo[i].getOrigin();
             tempf = startLocs[2];
             startLocs[2] = startLocs[3];
             startLocs[3] = tempf;
-            fileInfoR[i].setOrigin( startLocs );
-            fileInfoR[i].setImageOrientation( imageOrientation );
-            fileInfoR[i].setAxisOrientation( axis );
-            fileInfoR[i].setModality( modality );
-            fileInfoR[i].setFileDirectory( fileDir );
-            fileInfoR[i].setDataType( dataType );
-            fileInfoR[i].setEndianess( endianess );
-            fileInfoR[i].setUnitsOfMeasure( units );
-            fileInfoR[i].setResolutions( resolutions );
-            fileInfoR[i].setSliceSpacing( sliceSpacing );
-            fileInfoR[i].setExtents( extents );
-            fileInfoR[i].setMax( max );
-            fileInfoR[i].setMin( min );
-            fileInfoR[i].setPixelPadValue( pixelPadValue );
-            fileInfoR[i].setPhotometric( photometric );
+            fileInfoR[i].setOrigin(startLocs);
+            fileInfoR[i].setImageOrientation(imageOrientation);
+            fileInfoR[i].setAxisOrientation(axis);
+            fileInfoR[i].setModality(modality);
+            fileInfoR[i].setFileDirectory(fileDir);
+            fileInfoR[i].setDataType(dataType);
+            fileInfoR[i].setEndianess(endianess);
+            fileInfoR[i].setUnitsOfMeasure(units);
+            fileInfoR[i].setResolutions(resolutions);
+            fileInfoR[i].setSliceSpacing(sliceSpacing);
+            fileInfoR[i].setExtents(extents);
+            fileInfoR[i].setMax(max);
+            fileInfoR[i].setMin(min);
+            fileInfoR[i].setPixelPadValue(pixelPadValue);
+            fileInfoR[i].setPhotometric(photometric);
             fileInfoR[i].setTransformID(transformID);
-            if ( fileInfoR[i] instanceof FileInfoXML ) {
-                ( (FileInfoImageXML) ( fileInfoR[i] ) ).setMatrix( xfrm );
+
+            if (fileInfoR[i] instanceof FileInfoXML) {
+                ((FileInfoImageXML) (fileInfoR[i])).setMatrix(xfrm);
             }
 
         }
 
-        destImage.setMatrix( xfrm );
+        destImage.setMatrix(xfrm);
+
         try {
-            destImage.importData( 0, resultBuffer, true );
-        } catch ( IOException error ) {
-            displayError( "AlgorithmSwap34: Image(s) locked" );
-            setCompleted( false );
+            destImage.importData(0, resultBuffer, true);
+        } catch (IOException error) {
+            displayError("AlgorithmSwap34: Image(s) locked");
+            setCompleted(false);
             disposeProgressBar();
+
             return;
-        } catch ( OutOfMemoryError e ) {
+        } catch (OutOfMemoryError e) {
             System.gc();
-            displayError( "AlgorithmSwap34: Out of memory" );
-            setCompleted( false );
+            displayError("AlgorithmSwap34: Out of memory");
+            setCompleted(false);
             disposeProgressBar();
+
             return;
         }
 
         disposeProgressBar();
-        setCompleted( true );
-    }
-
-    /**
-     *    Returns result image.
-     *    @return destImage
-     */
-    public ModelImage getResultImage() {
-        return destImage;
+        setCompleted(true);
     }
 
 }

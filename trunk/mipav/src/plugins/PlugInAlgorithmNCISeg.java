@@ -1,45 +1,57 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.FileInfoBase;
 
 import java.util.*;
 
+
 /**
- *
  * <p>Title: PlugInAlgorithmNCISeg</p>
  *
- * <p>Description: Finds "browness" in image
- * using two threshold values</p>
+ * <p>Description: Finds "browness" in image using two threshold values</p>
  *
  * <p>Copyright: Copyright (c) 2004</p>
  *
- * <p>Company: </p>
+ * <p>Company:</p>
  *
- * @author not attributable
- * @version 1.0
+ * @author   not attributable
+ * @version  1.0
  */
-public class PlugInAlgorithmNCISeg
-    extends AlgorithmBase {
+public class PlugInAlgorithmNCISeg extends AlgorithmBase {
 
-    private float[] srcBuffer = null;
-    private float[] destBuffer = null;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    private float threshold;
-    private float diffThreshold;
-
-    boolean doMask = false;
-
+    /** DOCUMENT ME! */
     boolean doBrown = false;
 
+    /** DOCUMENT ME! */
+    boolean doMask = false;
+
+    /** DOCUMENT ME! */
+    private float[] destBuffer = null;
+
+    /** DOCUMENT ME! */
+    private float diffThreshold;
+
+    /** DOCUMENT ME! */
+    private float[] srcBuffer = null;
+
+    /** DOCUMENT ME! */
+    private float threshold;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     * Constructor for blue or brown quantification
-     * @param destImg ModelImage
-     * @param srcImg ModelImage
-     * @param thres float threshold value for inverse blue
-     * @param diff_thres float threshold value for difference btwn inverse blue and inverse r/g channels
+     * Constructor for blue or brown quantification.
+     *
+     * @param  destImg     ModelImage
+     * @param  srcImg      ModelImage
+     * @param  doBrown     DOCUMENT ME!
+     * @param  thres       float threshold value for inverse blue
+     * @param  diff_thres  float threshold value for difference btwn inverse blue and inverse r/g channels
      */
-    public PlugInAlgorithmNCISeg(ModelImage destImg, ModelImage srcImg, boolean doBrown,
-                                 float thres, float diff_thres) {
+    public PlugInAlgorithmNCISeg(ModelImage destImg, ModelImage srcImg, boolean doBrown, float thres,
+                                 float diff_thres) {
         this.srcImage = srcImg;
         this.destImage = destImg;
         this.threshold = thres;
@@ -47,8 +59,10 @@ public class PlugInAlgorithmNCISeg
         this.doBrown = doBrown;
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-     *   Prepares this class for destruction
+     * Prepares this class for destruction.
      */
     public void finalize() {
         destImage = null;
@@ -57,32 +71,29 @@ public class PlugInAlgorithmNCISeg
     }
 
     /**
-     *   Constructs a string of the contruction parameters and out puts the
-     *   string to the messsage frame if the logging procedure is turned on.
-     */
-    private void constructLog() {
-        historyString = new String("NCI Segmentation()\n");
-    }
-
-    /**
-     *   Starts the program
+     * Starts the program.
      */
     public void runAlgorithm() {
 
-        if (srcImage == null && destImage == null) {
-            displayError(
-                "NCI Segmentation.run(): Source  and/or Destination image is null");
+        if ((srcImage == null) && (destImage == null)) {
+            displayError("NCI Segmentation.run(): Source  and/or Destination image is null");
+
             return;
         }
+
         if (srcImage.isColorImage() == false) {
             displayError("NCI Segmentation.run(): Source Image is not a RGB type");
+
             return;
         }
 
         int numVOIs = srcImage.getVOIs().size();
+
         for (int i = 0; i < numVOIs; i++) {
+
             if (srcImage.getVOIs().VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 doMask = true;
+
                 break;
             }
         }
@@ -92,6 +103,7 @@ public class PlugInAlgorithmNCISeg
     }
 
     /**
+     * DOCUMENT ME!
      */
     private void calcStoreInDest() {
         BitSet mask = null;
@@ -107,9 +119,8 @@ public class PlugInAlgorithmNCISeg
 
         try {
             srcImage.exportData(0, srcLength, srcBuffer);
-        }
-        catch (Exception ex) {
-            //do somethng
+        } catch (Exception ex) {
+            // do somethng
         }
 
         if (doMask) {
@@ -128,47 +139,45 @@ public class PlugInAlgorithmNCISeg
         float green = 0f;
         double totalBlue = 0;
 
-        //run through the srcBuffer
+        // run through the srcBuffer
         for (int i = 0; i < srcLength; i += 4) {
 
             if (!doMask || mask.get(i / 4)) {
 
                 if (doBrown) {
-                    //see if the blue channel (inversed) is greater than a threshold
+
+                    // see if the blue channel (inversed) is greater than a threshold
                     blueInverse = 255f - srcBuffer[i + 3];
+
                     if (blueInverse > threshold) {
-                        //make sure the red and green channels are not significantly greater than the blue channel
+
+                        // make sure the red and green channels are not significantly greater than the blue channel
                         redInverse = 255f - srcBuffer[i + 1];
                         greenInverse = 255f - srcBuffer[i + 2];
 
-                        if ( (redInverse - blueInverse > diffThreshold) ||
-                            (greenInverse - blueInverse > diffThreshold)) {
-                            //don't count this pixel/value
+                        if (((redInverse - blueInverse) > diffThreshold) ||
+                                ((greenInverse - blueInverse) > diffThreshold)) {
+
+                            // don't count this pixel/value
                             destBuffer[i / 4] = 0;
-                        }
-                        else {
+                        } else {
                             counter++;
                             destBuffer[i / 4] = blueInverse - threshold;
                             totalBrowness += (blueInverse - threshold);
                         }
-                    }
-                    else {
+                    } else {
                         destBuffer[i / 4] = 0;
                     }
                 } else {
-                    //looking for blue instead
+                    // looking for blue instead
 
-                    red = srcBuffer[i+1];
-                    green = srcBuffer[i+2];
-                    blue = srcBuffer[i+3];
+                    red = srcBuffer[i + 1];
+                    green = srcBuffer[i + 2];
+                    blue = srcBuffer[i + 3];
 
-                    if (blue > threshold &&
-                        red > threshold &&
-                        green > threshold) {
+                    if ((blue > threshold) && (red > threshold) && (green > threshold)) {
                         destBuffer[i / 4] = 0;
-                    }
-                    else if (blue - red > diffThreshold &&
-                        blue - green > diffThreshold) {
+                    } else if (((blue - red) > diffThreshold) && ((blue - green) > diffThreshold)) {
                         counter++;
                         destBuffer[i / 4] = (blue - red) + (blue - green);
                         totalBlue += destBuffer[i / 4];
@@ -177,21 +186,21 @@ public class PlugInAlgorithmNCISeg
                     }
 
                 }
-            }
-            else {
+            } else {
                 destBuffer[i / 4] = 0;
             }
         }
 
         try {
             destImage.importData(0, destBuffer, true);
-        }
-        catch (Exception ex) {
+        } catch (Exception ex) {
             System.err.println("blah");
         }
 
         double average = 0;
+
         if (counter > 0) {
+
             if (doBrown) {
                 average = totalBrowness / counter;
             } else {
@@ -201,31 +210,33 @@ public class PlugInAlgorithmNCISeg
 
         double area = 0;
 
-        area = (srcImage.getFileInfo(0).getResolutions()[0] *
-                srcImage.getFileInfo(0).getResolutions()[1] *
-                counter);
+        area = (srcImage.getFileInfo(0).getResolutions()[0] * srcImage.getFileInfo(0).getResolutions()[1] * counter);
 
         System.err.println("Number of pixels included: " + counter);
         System.err.println("Area: " + area + " " +
                            FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)) +
                            "^2");
+
         if (doBrown) {
             System.err.println("Total brown: " + totalBrowness);
         } else {
             System.err.println("Total blue: " + totalBlue);
         }
+
         System.err.println("Average: " + average);
 
         srcImage.getUserInterface().setDataText("Image name: " + srcImage.getImageName() + "\n");
         srcImage.getUserInterface().setDataText("\tNumber of pixels included: " + counter + "\n");
         srcImage.getUserInterface().setDataText("\tArea: " + area + " " +
-                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).
-            getUnitsOfMeasure(0)) + "^2\n");
+                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(srcImage.getFileInfo(0).getUnitsOfMeasure(0)) +
+                                                "^2\n");
+
         if (doBrown) {
             srcImage.getUserInterface().setDataText("\tTotal brown: " + totalBrowness + "\n");
         } else {
             srcImage.getUserInterface().setDataText("\tTotal blue: " + totalBlue + "\n");
         }
+
         srcImage.getUserInterface().setDataText("\tAverage: " + average + "\n");
 
 
@@ -235,5 +246,13 @@ public class PlugInAlgorithmNCISeg
         srcBuffer = null;
 
         setCompleted(true);
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+        historyString = new String("NCI Segmentation()\n");
     }
 }

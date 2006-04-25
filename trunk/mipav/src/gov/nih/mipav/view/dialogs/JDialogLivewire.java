@@ -1,40 +1,99 @@
 package gov.nih.mipav.view.dialogs;
 
+
 import gov.nih.mipav.view.*;
-import javax.swing.*;
+
 import java.awt.*;
-import java.awt.event.ActionEvent;
+import java.awt.event.*;
+
+import javax.swing.*;
+
 
 /**
-*   Simple dialog to choose which cost function to use
-*   for the live wire.
-*   @author     Neva Cherniavsky
-*   @version    1.0
-*   @see        RubberbandLivewire
-*/
+ * Simple dialog to choose which cost function to use for the live wire.
+ *
+ * @author   Neva Cherniavsky
+ * @version  1.0
+ * @see      RubberbandLivewire
+ */
 public class JDialogLivewire extends JDialogBase {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -5986380794955471822L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private JRadioButton radioGradient;
-    private JRadioButton radioMedial;
+
+    /** DOCUMENT ME! */
     private JRadioButton radioIntensity;
 
-    private int          selection = 0;
+    /** DOCUMENT ME! */
+    private JRadioButton radioMedial;
+
+    /** DOCUMENT ME! */
+    private int selection = 0;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-    *   Creates dialog for choosing cost function
-    *   for live wire.
-    */
+     * Creates dialog for choosing cost function for live wire.
+     *
+     * @param  parent  DOCUMENT ME!
+     */
     public JDialogLivewire(Frame parent) {
         super(parent, true);
         init();
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
     /**
-    *   Initialized GUI components and displays dialog.
-    */
+     * Sets the selection based on which radio button is selected. If dialog is cancelled, sets the cancelFlag to <code>
+     * true</code>.
+     *
+     * @param  e  Event that triggered function.
+     */
+    public void actionPerformed(ActionEvent e) {
+        String command = e.getActionCommand();
+
+        if (command.equals("OK")) {
+
+            if (radioGradient.isSelected()) {
+                selection = RubberbandLivewire.GRADIENT_MAG;
+            } else if (radioMedial.isSelected()) {
+                selection = RubberbandLivewire.MEDIALNESS;
+            } else if (radioIntensity.isSelected()) {
+                selection = RubberbandLivewire.INTENSITY;
+            }
+
+            dispose();
+        } else if (command.equals("Cancel")) {
+            cancelFlag = true;
+            dispose();
+        }
+
+    }
+
+    /**
+     * Accessor that returns the selected cost function.
+     *
+     * @return  Cost function selection.
+     */
+    public int getSelection() {
+        return selection;
+    }
+
+    /**
+     * Initialized GUI components and displays dialog.
+     */
     private void init() {
         setTitle("Live wire cost function");
-        JPanel mainPanel = new JPanel(new GridLayout(3,1));
+
+        JPanel mainPanel = new JPanel(new GridLayout(3, 1));
         mainPanel.setBorder(buildTitledBorder("Choose cost function for live wire"));
 
         ButtonGroup group = new ButtonGroup();
@@ -68,42 +127,6 @@ public class JDialogLivewire extends JDialogBase {
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
-    }
-
-    /**
-    *   Sets the selection based on which radio
-    *   button is selected.  If dialog is cancelled,
-    *   sets the cancelFlag to <code>true</code>.
-    *   @param e    Event that triggered function.
-    */
-    public void actionPerformed(ActionEvent e) {
-        String command = e.getActionCommand();
-
-        if (command.equals("OK")) {
-            if (radioGradient.isSelected()) {
-                selection = RubberbandLivewire.GRADIENT_MAG;
-            }
-            else if (radioMedial.isSelected()) {
-                selection = RubberbandLivewire.MEDIALNESS;
-            }
-            else if (radioIntensity.isSelected()) {
-                selection = RubberbandLivewire.INTENSITY;
-            }
-            dispose();
-        }
-        else if (command.equals("Cancel")) {
-            cancelFlag = true;
-            dispose();
-        }
-
-    }
-
-    /**
-    *   Accessor that returns the selected cost function.
-    *   @return Cost function selection.
-    */
-    public int getSelection() {
-        return selection;
     }
 
 }

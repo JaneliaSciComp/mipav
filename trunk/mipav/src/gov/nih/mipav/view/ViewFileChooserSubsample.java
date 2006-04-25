@@ -1,21 +1,47 @@
 package gov.nih.mipav.view;
 
+
 import java.awt.*;
+
 import javax.swing.*;
 
-public class ViewFileChooserSubsample extends JFileChooser
-{
-    protected JTextField txtResampleHeight;
-    protected JTextField txtResampleWidth;
+
+/**
+ * DOCUMENT ME!
+ */
+public class ViewFileChooserSubsample extends JFileChooser {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -5946259539592286508L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     protected JCheckBox chkSave;
 
-    public ViewFileChooserSubsample()
-    {
+    /** DOCUMENT ME! */
+    protected JTextField txtResampleHeight;
+
+    /** DOCUMENT ME! */
+    protected JTextField txtResampleWidth;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ViewFileChooserSubsample object.
+     */
+    public ViewFileChooserSubsample() {
         this(null);
     }
 
-    public ViewFileChooserSubsample(String defaultPath)
-    {
+    /**
+     * Creates a new ViewFileChooserSubsample object.
+     *
+     * @param  defaultPath  DOCUMENT ME!
+     */
+    public ViewFileChooserSubsample(String defaultPath) {
         super(defaultPath);
 
         setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -23,51 +49,68 @@ public class ViewFileChooserSubsample extends JFileChooser
         setAccessory(buildGUI());
     }
 
-    public Dimension getSubsampleDimension() throws NumberFormatException
-    {
-        return new Dimension(Integer.parseInt(txtResampleWidth.getText()),
-                             Integer.parseInt(txtResampleHeight.getText()));
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    public boolean saveDimensions()
-    {
-        return chkSave.isSelected();
-    }
+    /**
+     * DOCUMENT ME!
+     */
+    public void approveSelection() {
 
-    public void approveSelection()
-    {
-        if (dimensionsOK())
-        {
+        if (dimensionsOK()) {
             super.approveSelection();
-        }
-        else
-        {
+        } else {
             MipavUtil.displayError("Cannot subsample this image because the subsampling dimensions are invalid.");
         }
     }
 
-    protected boolean dimensionsOK()
-    {
-        try
-        {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  NumberFormatException  DOCUMENT ME!
+     */
+    public Dimension getSubsampleDimension() throws NumberFormatException {
+        return new Dimension(Integer.parseInt(txtResampleWidth.getText()),
+                             Integer.parseInt(txtResampleHeight.getText()));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean saveDimensions() {
+        return chkSave.isSelected();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    protected boolean dimensionsOK() {
+
+        try {
             int height = Integer.parseInt(txtResampleHeight.getText());
             int width = Integer.parseInt(txtResampleWidth.getText());
 
-            if (height < 1 || width < 1)
-            {
+            if ((height < 1) || (width < 1)) {
                 return false;
             }
 
             return true;
-        }
-        catch (NumberFormatException nfe)
-        {
+        } catch (NumberFormatException nfe) {
             return false;
         }
     }
 
-    private JPanel buildGUI()
-    {
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private JPanel buildGUI() {
         setDialogTitle("Choose multifile to subsample");
 
         JPanel northPanel = new JPanel();
@@ -86,8 +129,8 @@ public class ViewFileChooserSubsample extends JFileChooser
         txtResampleWidth = new JTextField(5);
 
         Dimension defaultDimensions = Preferences.getSubsampleDimensions();
-        if (defaultDimensions != null)
-        {
+
+        if (defaultDimensions != null) {
             txtResampleHeight.setText(String.valueOf(defaultDimensions.height));
             txtResampleWidth.setText(String.valueOf(defaultDimensions.width));
         }

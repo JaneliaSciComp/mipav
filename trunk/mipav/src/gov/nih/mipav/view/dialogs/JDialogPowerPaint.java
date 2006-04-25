@@ -1,167 +1,2609 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
+
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.*;
 
-import java.awt.event.*;
 import java.awt.*;
-import java.util.*;
+import java.awt.event.*;
+
 import java.io.*;
+
+import java.util.*;
 
 import javax.swing.*;
 
 
 /**
+ * Dialog box for the paint power tools: morphology operations, object delete, etc.
  *
- *   Dialog box for the paint power tools: morphology operations, object delete, etc.
- *
- *
- *	@version    May 2005
- *	@author     Pierre-Louis Bazin
- *   @see        JDialogBase
- *   @see        AlgorithmInterface
- *
- *
+ * @version  May 2005
+ * @author   Pierre-Louis Bazin
+ * @see      JDialogBase
+ * @see      AlgorithmInterface
  */
-public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener
-{
-    private ModelImage image; // source image
-    private ModelImage resultImage = null; // result image
+public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener {
 
-    private final static int MaxObject = 500000;
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    // parameters
-    private int regionGrowDim = 3;
-    private int backgroundDim = 2;
-    private int backgroundsDim = 2;
-    private int rmObjDim = 2;
-    private int rmObjsDim = 2;
-    private float structureSize = 5.0f;
-    private String[] connectTypes =
-        {"6/18", "6/26", "18/6", "26/6"};
-    private String connectType = "6/26";
-    private String[] structureTypes =
-        {"ball", "diamond"};
-    private String structureType = "ball";
-    private String[] dimTypes =
-        {"3D", "2.5D", "2D", "-triplanar-", "2.5D(XY)", "2.5D(XZ)", "2.5D(YZ)", "2D(XY)", "2D(XZ)", "2D(YZ)"};
-    private String erodeDimType = "3D";
-    private String dilateDimType = "3D";
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 6175130808453006120L;
 
-    // internal objects
-    private BitSet previous; // previous mask
-    private BitSet se2xy, se2yz, se2xz, se3; // structuring elements
-    private int nx, ny, nz; // image dimensions
-    private int c2x, c2y, c2z; // sturucturing element dimensions (2D)
-    private int c3x, c3y, c3z; // sturucturing element dimensions (3D)
+    /** DOCUMENT ME! */
+    private static final int MaxObject = 500000;
+
+    /** DOCUMENT ME! */
     private static int NONE = 0;
+
+    /** DOCUMENT ME! */
     private static int BACKGROUND = 1;
+
+    /** DOCUMENT ME! */
     private static int ALLBACKGROUNDS = 2;
+
+    /** DOCUMENT ME! */
     private static int REMOVE = 3;
+
+    /** DOCUMENT ME! */
     private static int REMOVEALL = 4;
+
+    /** DOCUMENT ME! */
     private static int GROWREGION = 5;
-    private int getMouseInput = NONE;
+
+    /** DOCUMENT ME! */
     private static int XY = ViewJComponentBase.AXIAL;
+
+    /** DOCUMENT ME! */
     private static int XZ = ViewJComponentBase.CORONAL;
+
+    /** DOCUMENT ME! */
     private static int ZY = ViewJComponentBase.SAGITTAL;
-    private int sliceDir = XY;
 
-    // autosave elements
+    /** autosave elements. */
     private static int delay = 10;
-    private PaintAutoSave save;
-    private java.util.Timer saver;
 
-    // dialog elements
-    private JPanel mainPanel;
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    private JPanel objectPanel;
-    private JButton buttonGrowRegion;
-    private JButton buttonFillBackground;
-    private JButton buttonFillBackgrounds;
-    private JButton buttonRmObject;
-    private JButton buttonRmObjects;
-    private JComboBox comboConnectType;
-    private JLabel labelConnectType;
-    private JLabel labelO2D;
-    private JLabel labelO3D;
-    private JComboBox comboErodeDimType;
-    private JComboBox comboDilateDimType;
-    private JRadioButton radioGrowRegion2D;
-    private JRadioButton radioGrowRegion3D;
-    private JRadioButton radioBackground2D;
-    private JRadioButton radioBackground3D;
-    private JRadioButton radioBackgrounds2D;
-    private JRadioButton radioBackgrounds3D;
-    private JRadioButton radioObject2D;
-    private JRadioButton radioObject3D;
-    private JRadioButton radioObjects2D;
-    private JRadioButton radioObjects3D;
-    private ButtonGroup groupGrowRegion;
-    private ButtonGroup groupBackground;
-    private ButtonGroup groupBackgrounds;
-    private ButtonGroup groupObject;
-    private ButtonGroup groupObjects;
+    /** DOCUMENT ME! */
+    private int backgroundDim = 2;
 
-    private JPanel morphoPanel;
+    /** DOCUMENT ME! */
+    private int backgroundsDim = 2;
+
+    /** DOCUMENT ME! */
+    private JPanel botPanel;
+
+    /** DOCUMENT ME! */
     private JButton buttonDilate;
+
+    /** DOCUMENT ME! */
     private JButton buttonErode;
-    private JLabel labelStructuring;
-    private JTextField textStructuring;
-    private JComboBox comboStructureType;
-    private JLabel labelStructureType;
-    private JPanel movePanel;
 
-    private JCheckBox checkWheel;
-    private JCheckBox checkSave;
-    private JTextField textSave;
-
-    private JPanel exportPanel;
-    private JButton buttonExportToVOI;
-    private JButton buttonImportFromVOI;
+    /** DOCUMENT ME! */
     private JButton buttonExportToMask;
+
+    /** DOCUMENT ME! */
+    private JButton buttonExportToVOI;
+
+    /** DOCUMENT ME! */
+    private JButton buttonFillBackground;
+
+    /** DOCUMENT ME! */
+    private JButton buttonFillBackgrounds;
+
+    /** DOCUMENT ME! */
+    private JButton buttonGrowRegion;
+
+    /** DOCUMENT ME! */
     private JButton buttonImportFromMask;
 
+    /** DOCUMENT ME! */
+    private JButton buttonImportFromVOI;
+
+    /** DOCUMENT ME! */
     private JButton buttonRevert;
+
+    /** DOCUMENT ME! */
+    private JButton buttonRmObject;
+
+    /** DOCUMENT ME! */
+    private JButton buttonRmObjects;
+
+    /** DOCUMENT ME! */
     private JButton buttonShowAdvancedPaintControls;
 
-    private JPanel botPanel;
+    /** DOCUMENT ME! */
+    private int c2x, c2y, c2z; // sturucturing element dimensions (2D)
+
+    /** DOCUMENT ME! */
+    private int c3x, c3y, c3z; // sturucturing element dimensions (3D)
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkSave;
+
+    /** DOCUMENT ME! */
+    private JCheckBox checkWheel;
+
+    /** DOCUMENT ME! */
+    private JComboBox comboConnectType;
+
+    /** DOCUMENT ME! */
+    private JComboBox comboDilateDimType;
+
+    /** DOCUMENT ME! */
+    private JComboBox comboErodeDimType;
+
+    /** DOCUMENT ME! */
+    private JComboBox comboStructureType;
+
+    /** DOCUMENT ME! */
+    private String connectType = "6/26";
+
+    /** DOCUMENT ME! */
+    private String[] connectTypes = { "6/18", "6/26", "18/6", "26/6" };
+
+    /** DOCUMENT ME! */
+    private String dilateDimType = "3D";
+
+    /** DOCUMENT ME! */
+    private String[] dimTypes = {
+        "3D", "2.5D", "2D", "-triplanar-", "2.5D(XY)", "2.5D(XZ)", "2.5D(YZ)", "2D(XY)", "2D(XZ)", "2D(YZ)"
+    };
+
+    /** DOCUMENT ME! */
+    private String erodeDimType = "3D";
+
+    /** DOCUMENT ME! */
+    private JPanel exportPanel;
+
+    /** DOCUMENT ME! */
+    private int getMouseInput = NONE;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup groupBackground;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup groupBackgrounds;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup groupGrowRegion;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup groupObject;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup groupObjects;
+
+    /** DOCUMENT ME! */
+    private ModelImage image; // source image
+
+    /** DOCUMENT ME! */
+    private JLabel labelConnectType;
+
+    /** DOCUMENT ME! */
+    private JLabel labelO2D;
+
+    /** DOCUMENT ME! */
+    private JLabel labelO3D;
+
+    /** DOCUMENT ME! */
+    private JLabel labelStructureType;
+
+    /** DOCUMENT ME! */
+    private JLabel labelStructuring;
+
+    /** dialog elements. */
+    private JPanel mainPanel;
+
+    /** DOCUMENT ME! */
+    private JPanel morphoPanel;
+
+    /** DOCUMENT ME! */
+    private JPanel movePanel;
+
+    /** DOCUMENT ME! */
     private JDialogMultiPaint multiPaintDialog;
 
+    /** DOCUMENT ME! */
+    private int nx, ny, nz; // image dimensions
+
+    /** DOCUMENT ME! */
+    private JPanel objectPanel;
+
+    /** internal objects. */
+    private BitSet previous; // previous mask
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioBackground2D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioBackground3D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioBackgrounds2D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioBackgrounds3D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioGrowRegion2D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioGrowRegion3D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioObject2D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioObject3D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioObjects2D;
+
+    /** DOCUMENT ME! */
+    private JRadioButton radioObjects3D;
+
+    /** parameters. */
+    private int regionGrowDim = 3;
+
+    /** DOCUMENT ME! */
+    private ModelImage resultImage = null; // result image
+
+    /** DOCUMENT ME! */
+    private int rmObjDim = 2;
+
+    /** DOCUMENT ME! */
+    private int rmObjsDim = 2;
+
+    /** DOCUMENT ME! */
+    private PaintAutoSave save;
+
+    /** DOCUMENT ME! */
+    private java.util.Timer saver;
+
+    /** DOCUMENT ME! */
+    private BitSet se2xy, se2yz, se2xz, se3; // structuring elements
+
+    /** DOCUMENT ME! */
+    private int sliceDir = XY;
+
+    /** DOCUMENT ME! */
+    private float structureSize = 5.0f;
+
+    /** DOCUMENT ME! */
+    private String structureType = "ball";
+
+    /** DOCUMENT ME! */
+    private String[] structureTypes = { "ball", "diamond" };
+
+    /** DOCUMENT ME! */
+    private JTextField textSave;
+
+    /** DOCUMENT ME! */
+    private JTextField textStructuring;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     /**
-     *  Creates dialog for plugin.
-     *  @param parent          Parent frame.
-     *  @param im              Source image.
+     * Creates dialog for plugin.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  im              Source image.
      */
-    public JDialogPowerPaint(Frame theParentFrame, ModelImage im)
-    {
+    public JDialogPowerPaint(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        
+
         image = im;
         init();
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    // ************************************************************************
+    // ************************** Event Processing ****************************
+    // ************************************************************************
+
+    /**
+     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     *
+     * @param  event  Event that triggers function.
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+
+        // reset the button texts
+        buttonGrowRegion.setText("Grow Region");
+        buttonFillBackground.setText("Fill Background");
+        buttonFillBackgrounds.setText("Fill All Background");
+        buttonRmObject.setText("Remove Object");
+        buttonRmObjects.setText("Remove All Objects");
+
+        if ((command.equals("GrowRegion")) || (command.equals("Background")) || (command.equals("Backgrounds")) ||
+                (command.equals("RmObject")) || (command.equals("RmObjects"))) {
+
+            // listen to mouse motion in the original image
+            image.getParentFrame().getComponentImage().addMouseListener(this);
+
+            // check for the triplanar image
+            if (image.getTriImageFrame() != null) {
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
+            }
+        }
+
+        if (command.equals("Close")) {
+            dispose();
+        } else if (command.equals("Help")) {
+            // MipavUtil.showHelp("10027");
+        } else if (command.equals("GrowRegion")) {
+
+            if (getMouseInput != GROWREGION) {
+                buttonGrowRegion.setText("click to grow");
+                getMouseInput = GROWREGION;
+            } else {
+                getMouseInput = NONE;
+            }
+        } else if (command.equals("Background")) {
+
+            if (getMouseInput != BACKGROUND) {
+                buttonFillBackground.setText("click to remove");
+                getMouseInput = BACKGROUND;
+            } else {
+                getMouseInput = NONE;
+            }
+        } else if (command.equals("Backgrounds")) {
+
+            if (getMouseInput != ALLBACKGROUNDS) {
+                buttonFillBackgrounds.setText("click to keep");
+                getMouseInput = ALLBACKGROUNDS;
+            } else {
+                getMouseInput = NONE;
+            }
+        } else if (command.equals("RmObject")) {
+
+            if (getMouseInput != REMOVE) {
+                buttonRmObject.setText("click to remove");
+                getMouseInput = REMOVE;
+            } else {
+                getMouseInput = NONE;
+            }
+        } else if (command.equals("RmObjects")) {
+
+            if (getMouseInput != REMOVEALL) {
+                buttonRmObjects.setText("click to keep");
+                getMouseInput = REMOVEALL;
+            } else {
+                getMouseInput = NONE;
+            }
+        } else if (command.equals("Dilate")) {
+            dilateImage();
+        } else if (command.equals("Erode")) {
+            erodeImage();
+        } else if (command.equals("PropagUp")) {
+            propagateUp();
+        } else if (command.equals("PropagDown")) {
+            propagateDown();
+        } else if (command.equals("PropagAll")) {
+            propagateAll();
+        } else if (command.equals("ExportToVOI")) {
+            exportToVOI();
+        } else if (command.equals("ImportFromVOI")) {
+            importFromVOI();
+        } else if (command.equals("ExportToMask")) {
+            exportToMask();
+        } else if (command.equals("ImportFromMask")) {
+            importFromMask();
+        } else if (command.equals("Revert")) {
+            revertImage();
+        } else if (command.equals("Wheel")) {
+
+            if ((checkWheel.isSelected()) && (image.getTriImageFrame() != null)) {
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseWheelListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseWheelListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseWheelListener(this);
+            } else if (image.getTriImageFrame() != null) {
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseWheelListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseWheelListener(this);
+                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseWheelListener(this);
+            } else {
+                checkWheel.setSelected(false);
+            }
+        } else if (command.equals("Autosave")) {
+
+            if (checkSave.isSelected()) {
+
+                // start the auto-save option
+                delay = Integer.valueOf(textSave.getText()).intValue();
+                save = new PaintAutoSave(image);
+                saver = new java.util.Timer();
+                saver.schedule(save, new Date(), delay * 60 * 1000);
+            } else {
+
+                // stop the auto-save option
+                saver.cancel();
+                save = null;
+                saver = null;
+            }
+        } else if (command.equals("show advanced")) {
+
+            if (multiPaintDialog == null) {
+                multiPaintDialog = new JDialogMultiPaint(parentFrame, image);
+            } else {
+                MipavUtil.centerOnScreen(multiPaintDialog);
+                multiPaintDialog.setVisible(true);
+            }
+        }
+    }
+
+    /**
+     * Accessor that returns the image.
+     *
+     * @return  The result image.
+     */
+    public ModelImage getResultImage() {
+        return resultImage;
+    }
+
+    /**
+     * Listening to mouse events when updating paint.
+     *
+     * @param  mouseEvent  MouseEvent
+     */
+    public void mouseClicked(MouseEvent mouseEvent) {
+        int xS = 0, yS = 0, zS = 0;
+
+        if (getMouseInput == NONE) {
+            return;
+        }
+
+        if (mouseEvent.getComponent().equals(image.getParentFrame().getComponentImage())) {
+
+            // get the point coordinates : image frame
+            xS = Math.round((mouseEvent.getX() /
+                                 (image.getParentFrame().getComponentImage().getZoomX() *
+                                      image.getParentFrame().getComponentImage().getResolutionX())) - 0.5f); // zoomed x.  Used as cursor
+            yS = Math.round((mouseEvent.getY() /
+                                 (image.getParentFrame().getComponentImage().getZoomY() *
+                                      image.getParentFrame().getComponentImage().getResolutionY())) - 0.5f); // zoomed y.  Used as cursor
+            zS = image.getParentFrame().getComponentImage().getSlice();
+            sliceDir = XY;
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))) {
+
+            // triplanar image : XY panel
+            xS = Math.round((mouseEvent.getX() /
+                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomX() *
+                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionX())) -
+                            0.5f); // zoomed x.  Used as cursor
+            yS = Math.round((mouseEvent.getY() /
+                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomY() *
+                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY())) -
+                            0.5f); // zoomed y.  Used as cursor
+            zS = image.getTriImageFrame().getAxialComponentSlice();
+
+            Point3D pt = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
+                             .getVolumePosition(xS, yS, zS);
+            xS = pt.x;
+            yS = pt.y;
+            zS = pt.z;
+            sliceDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
+                           .getOriginalOrientation();
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
+
+            // triplanar image : XZ panel
+            xS = Math.round((mouseEvent.getX() /
+                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomX() *
+                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionX())) -
+                            0.5f); // zoomed x.  Used as cursor
+            yS = Math.round((mouseEvent.getY() /
+                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
+                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())) -
+                            0.5f); // zoomed y.  Used as cursor
+            zS = image.getTriImageFrame().getCoronalComponentSlice();
+
+            Point3D pt = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))
+                             .getVolumePosition(xS, yS, zS);
+            xS = pt.x;
+            yS = pt.y;
+            zS = pt.z;
+            sliceDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))
+                           .getOriginalOrientation();
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
+
+            // triplanar image : ZY panel
+            xS = Math.round((mouseEvent.getX() /
+                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomX() *
+                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionX())) -
+                            0.5f); // zoomed x.  Used as cursor
+            yS = Math.round((mouseEvent.getY() /
+                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomY() *
+                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY())) -
+                            0.5f); // zoomed y.  Used as cursor
+            zS = image.getTriImageFrame().getSagittalComponentSlice();
+
+            Point3D pt = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))
+                             .getVolumePosition(xS, yS, zS);
+            xS = pt.x;
+            yS = pt.y;
+            zS = pt.z;
+            sliceDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))
+                           .getOriginalOrientation();
+        }
+
+        Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
+
+        // Check for validity
+        if ((xS < 0) || (xS >= nx) || (yS < 0) || (yS >= ny) || (zS < 0) || (zS >= nz)) {
+            return;
+        }
+
+        // remove the listeners
+        image.getParentFrame().getComponentImage().removeMouseListener(this);
+
+        if (image.getTriImageFrame() != null) {
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
+        }
+
+        if (getMouseInput == GROWREGION) {
+            buttonGrowRegion.setText("growing...");
+            buttonGrowRegion.repaint();
+            growRegion(xS, yS, zS);
+            buttonGrowRegion.setText("Grow Region");
+        } else if (getMouseInput == BACKGROUND) {
+            buttonFillBackground.setText("filling...");
+            buttonFillBackground.repaint();
+            fillBackground(xS, yS, zS);
+            buttonFillBackground.setText("Fill Background");
+        } else if (getMouseInput == ALLBACKGROUNDS) {
+            buttonFillBackgrounds.setText("filling...");
+            buttonFillBackgrounds.repaint();
+            fillAllBackgrounds(xS, yS, zS);
+            buttonFillBackgrounds.setText("Fill All Background");
+        } else if (getMouseInput == REMOVE) {
+            buttonRmObject.setText("removing...");
+            buttonRmObject.repaint();
+            removeObject(xS, yS, zS);
+            buttonRmObject.setText("Remove Object");
+        } else if (getMouseInput == REMOVEALL) {
+            buttonRmObjects.setText("removing...");
+            buttonRmObjects.repaint();
+            removeAllObjects(xS, yS, zS);
+            buttonRmObjects.setText("Remove All Objects");
+        }
+
+        // release the mouse
+        getMouseInput = NONE;
+
+        return;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  mouseEvent  DOCUMENT ME!
+     */
+    public void mouseEntered(MouseEvent mouseEvent) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  mouseEvent  DOCUMENT ME!
+     */
+    public void mouseExited(MouseEvent mouseEvent) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  mouseEvent  DOCUMENT ME!
+     */
+    public void mousePressed(MouseEvent mouseEvent) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  mouseEvent  DOCUMENT ME!
+     */
+    public void mouseReleased(MouseEvent mouseEvent) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  mouseEvent  DOCUMENT ME!
+     */
+    public void mouseWheelMoved(MouseWheelEvent mouseEvent) {
+
+        if (image.getTriImageFrame() == null) {
+            return;
+        }
+
+        // find the position
+        if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))) {
+
+            // triplanar image : XY panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice(), tri.getCoronalComponentSlice(),
+                          tri.getAxialComponentSlice() + mouseEvent.getWheelRotation());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
+
+            // triplanar image : XZ panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice(),
+                          tri.getCoronalComponentSlice() + mouseEvent.getWheelRotation(), tri.getAxialComponentSlice());
+            tri.updateImages(true);
+        } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
+
+            // triplanar image : ZY panel
+            ViewJFrameTriImage tri = image.getTriImageFrame();
+            tri.setSlices(tri.getSagittalComponentSlice() + mouseEvent.getWheelRotation(),
+                          tri.getCoronalComponentSlice(), tri.getAxialComponentSlice());
+            tri.updateImages(true);
+        }
+
+    }
+
+    /**
+     * 3D images: 18-neighborhood.
+     *
+     * @param   img  DOCUMENT ME!
+     * @param   nx   DOCUMENT ME!
+     * @param   ny   DOCUMENT ME!
+     * @param   nz   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[][][] connected18Object3D(boolean[][][] img, int nx, int ny, int nz) {
+        int Nlabel = 0;
+        int[][][] label = new int[nx][ny][nz];
+        int[] lb = new int[MaxObject];
+        int lbMin;
+        int x, y, z, i, j, k, l, c;
+        int Nlb;
+        int[] connect = new int[18];
+        int Nconnect;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+                    label[x][y][z] = 0;
+                }
+            }
+        }
+
+        lb[0] = 0;
+        Nlabel = 1;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+
+                    if (img[x][y][z]) {
+
+                        // object point: neighbors ?
+                        Nconnect = 0;
+
+                        for (i = -1; i <= 1; i++) {
+
+                            for (j = -1; j <= 1; j++) {
+
+                                for (k = -1; k <= 1; k++) {
+
+                                    if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny) &&
+                                            ((z + k) >= 0) && ((z + k) < nz)) {
+
+                                        if (((i * i) + (j * j) + (k * k)) < 3) {
+
+                                            if (label[x + i][y + j][z + k] > 0) {
+                                                connect[Nconnect] = lb[label[x + i][y + j][z + k]];
+                                                Nconnect++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // if connected values, find the smallest lb label and attribute it
+                        // to all others (-> join labels)
+                        if (Nconnect > 0) {
+
+                            // printf("c:%d",Nconnect);
+                            lbMin = lb[connect[0]];
+
+                            for (l = 1; l < Nconnect; l++) {
+                                lbMin = Math.min(lbMin, lb[connect[l]]);
+                            }
+
+                            for (l = 0; l < Nconnect; l++) {
+                                lb[connect[l]] = lbMin;
+                            }
+
+                            label[x][y][z] = lbMin;
+                        } else {
+
+                            // new, unconnected region
+                            label[x][y][z] = Nlabel;
+                            lb[Nlabel] = Nlabel;
+
+                            // printf("l:%d", Nlabel);
+                            Nlabel++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // only one level of labels
+        for (k = 1; k < Nlabel; k++) {
+            c = k;
+
+            while (lb[c] != c) {
+                c = lb[c];
+            }
+
+            lb[k] = c;
+        }
+
+        // count the valid labels and rearrange labels to have regular increment
+        Nlb = 0;
+
+        int[] lb2 = new int[Nlabel];
+        lb2[0] = 0;
+
+        for (k = 1; k < Nlabel; k++) {
+
+            if (lb[k] == k) {
+                Nlb++;
+                lb2[k] = Nlb;
+            }
+        }
+
+        // copy on label image
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+                    label[x][y][z] = lb2[lb[label[x][y][z]]];
+                }
+            }
+        }
+
+        // clean up
+        lb = null;
+        lb2 = null;
+        connect = null;
+
+        return label;
+    }
+
+    /**
+     * 3D images: 26-neighborhood.
+     *
+     * @param   img  DOCUMENT ME!
+     * @param   nx   DOCUMENT ME!
+     * @param   ny   DOCUMENT ME!
+     * @param   nz   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[][][] connected26Object3D(boolean[][][] img, int nx, int ny, int nz) {
+        int Nlabel = 0;
+        int[][][] label = new int[nx][ny][nz];
+        int[] lb = new int[MaxObject];
+        int lbMin;
+        int x, y, z, i, j, k, l, c;
+        int Nlb;
+        int[] connect = new int[26];
+        int Nconnect;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+                    label[x][y][z] = 0;
+                }
+            }
+        }
+
+        lb[0] = 0;
+        Nlabel = 1;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+
+                    if (img[x][y][z]) {
+
+                        // object point: neighbors ?
+                        Nconnect = 0;
+
+                        for (i = -1; i <= 1; i++) {
+
+                            for (j = -1; j <= 1; j++) {
+
+                                for (k = -1; k <= 1; k++) {
+
+                                    if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny) &&
+                                            ((z + k) >= 0) && ((z + k) < nz)) {
+
+                                        if (label[x + i][y + j][z + k] > 0) {
+                                            connect[Nconnect] = lb[label[x + i][y + j][z + k]];
+                                            Nconnect++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // if connected values, find the smallest lb label and attribute it
+                        // to all others (-> join labels)
+                        if (Nconnect > 0) {
+
+                            // printf("c:%d",Nconnect);
+                            lbMin = lb[connect[0]];
+
+                            for (l = 1; l < Nconnect; l++) {
+                                lbMin = Math.min(lbMin, lb[connect[l]]);
+                            }
+
+                            for (l = 0; l < Nconnect; l++) {
+                                lb[connect[l]] = lbMin;
+                            }
+
+                            label[x][y][z] = lbMin;
+                        } else {
+
+                            // new, unconnected region
+                            label[x][y][z] = Nlabel;
+                            lb[Nlabel] = Nlabel;
+
+                            // printf("l:%d", Nlabel);
+                            Nlabel++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // only one level of labels
+        for (k = 1; k < Nlabel; k++) {
+            c = k;
+
+            while (lb[c] != c) {
+                c = lb[c];
+            }
+
+            lb[k] = c;
+        }
+
+        // count the valid labels and rearrange labels to have regular increment
+        Nlb = 0;
+
+        int[] lb2 = new int[Nlabel];
+        lb2[0] = 0;
+
+        for (k = 1; k < Nlabel; k++) {
+
+            if (lb[k] == k) {
+                Nlb++;
+                lb2[k] = Nlb;
+            }
+        }
+
+        // copy on label image
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+                    label[x][y][z] = lb2[lb[label[x][y][z]]];
+                }
+            }
+        }
+
+        // clean up
+        lb = null;
+        lb2 = null;
+        connect = null;
+
+        return label;
+    }
+
+    /**
+     * 2D images: 4-connectivity.
+     *
+     * @param   img  DOCUMENT ME!
+     * @param   nx   DOCUMENT ME!
+     * @param   ny   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[][] connected4Object2D(boolean[][] img, int nx, int ny) {
+        int Nlabel;
+        int[][] label = new int[nx][ny];
+        int[] lb = new int[MaxObject];
+        int lbMin;
+        int x, y, c, i, j, k;
+        int Nlb;
+        int[] connect = new int[4];
+        int Nconnect;
+
+        // the input is a 3x3 binary image (0 out, 1 in)
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+                label[x][y] = 0;
+            }
+        }
+
+        lb[0] = 0;
+        Nlabel = 1;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                if (img[x][y]) {
+
+                    // object point: neighbors ?
+                    Nconnect = 0;
+
+                    for (i = -1; i <= 1; i++) {
+
+                        for (j = -1; j <= 1; j++) {
+
+                            if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny)) {
+
+                                if (((i * i) + (j * j)) < 2) {
+
+                                    if (label[x + i][y + j] > 0) {
+                                        connect[Nconnect] = lb[label[x + i][y + j]];
+                                        Nconnect++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // if connected values, find the smallest lb label and attribute it
+                    // to all others (-> join labels)
+                    if (Nconnect > 0) {
+                        lbMin = lb[connect[0]];
+
+                        for (k = 1; k < Nconnect; k++) {
+                            lbMin = Math.min(lbMin, lb[connect[k]]);
+                        }
+
+                        for (k = 0; k < Nconnect; k++) {
+                            lb[connect[k]] = lbMin;
+                        }
+
+                        label[x][y] = lbMin;
+                    } else {
+
+                        // new, unconnected region
+                        label[x][y] = Nlabel;
+                        lb[Nlabel] = Nlabel;
+                        Nlabel++;
+                    }
+                }
+            }
+        }
+
+        // only one level of labels
+        for (k = 1; k < Nlabel; k++) {
+            c = k;
+
+            while (lb[c] != c) {
+                c = lb[c];
+            }
+
+            lb[k] = c;
+        }
+
+        // count the valid labels and rearrange labels to have regular increment
+        Nlb = 0;
+
+        int[] lb2 = new int[Nlabel];
+        lb2[0] = 0;
+
+        for (k = 1; k < Nlabel; k++) {
+
+            if (lb[k] == k) {
+                Nlb++;
+                lb2[k] = Nlb;
+            }
+        }
+
+        // copy on label image
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+                label[x][y] = lb2[lb[label[x][y]]];
+            }
+        }
+
+        // clean up
+        lb = null;
+        lb2 = null;
+        connect = null;
+
+        return label;
+    }
+
+    /**
+     * 3D images: 6-neighborhood.
+     *
+     * @param   img  DOCUMENT ME!
+     * @param   nx   DOCUMENT ME!
+     * @param   ny   DOCUMENT ME!
+     * @param   nz   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[][][] connected6Object3D(boolean[][][] img, int nx, int ny, int nz) {
+        int Nlabel = 0;
+        int[][][] label = new int[nx][ny][nz];
+        int[] lb = new int[MaxObject];
+        int lbMin;
+        int x, y, z, i, j, k, l, c;
+        int Nlb;
+        int[] connect = new int[6];
+        int Nconnect;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+                    label[x][y][z] = 0;
+                }
+            }
+        }
+
+        lb[0] = 0;
+        Nlabel = 1;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+
+                    if (img[x][y][z]) {
+
+                        // object point: neighbors ?
+                        Nconnect = 0;
+
+                        for (i = -1; i <= 1; i++) {
+
+                            for (j = -1; j <= 1; j++) {
+
+                                for (k = -1; k <= 1; k++) {
+
+                                    if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny) &&
+                                            ((z + k) >= 0) && ((z + k) < nz)) {
+
+                                        if (((i * i) + (j * j) + (k * k)) < 2) {
+
+                                            if (label[x + i][y + j][z + k] > 0) {
+                                                connect[Nconnect] = lb[label[x + i][y + j][z + k]];
+                                                Nconnect++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // if connected values, find the smallest lb label and attribute it
+                        // to all others (-> join labels)
+                        if (Nconnect > 0) {
+
+                            // printf("c:%d",Nconnect);
+                            lbMin = lb[connect[0]];
+
+                            for (l = 1; l < Nconnect; l++) {
+                                lbMin = Math.min(lbMin, lb[connect[l]]);
+                            }
+
+                            for (l = 0; l < Nconnect; l++) {
+                                lb[connect[l]] = lbMin;
+                            }
+
+                            label[x][y][z] = lbMin;
+                        } else {
+
+                            // new, unconnected region
+                            label[x][y][z] = Nlabel;
+                            lb[Nlabel] = Nlabel;
+
+                            // printf("l:%d", Nlabel);
+                            Nlabel++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // only one level of labels
+        for (k = 1; k < Nlabel; k++) {
+            c = k;
+
+            while (lb[c] != c) {
+                c = lb[c];
+            }
+
+            lb[k] = c;
+        }
+
+        // count the valid labels and rearrange labels to have regular increment
+        Nlb = 0;
+
+        int[] lb2 = new int[Nlabel];
+        lb2[0] = 0;
+
+        for (k = 1; k < Nlabel; k++) {
+
+            if (lb[k] == k) {
+                Nlb++;
+                lb2[k] = Nlb;
+            }
+        }
+
+        // copy on label image
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                for (z = 0; z < nz; z++) {
+                    label[x][y][z] = lb2[lb[label[x][y][z]]];
+                }
+            }
+        }
+
+        // clean up
+        lb = null;
+        lb2 = null;
+        connect = null;
+
+        return label;
+    }
+
+    /**
+     * 2D images: 8-neighborhood.
+     *
+     * @param   img  DOCUMENT ME!
+     * @param   nx   DOCUMENT ME!
+     * @param   ny   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[][] connected8Object2D(boolean[][] img, int nx, int ny) {
+        int Nlabel;
+        int[][] label = new int[nx][ny];
+        int[] lb = new int[MaxObject];
+        int lbMin;
+        int x, y, c, i, j, k;
+        int Nlb;
+        int[] connect = new int[4];
+        int Nconnect;
+
+        // the input is a 3x3 binary image (0 out, 1 in)
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+                label[x][y] = 0;
+            }
+        }
+
+        lb[0] = 0;
+        Nlabel = 1;
+
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+
+                if (img[x][y]) {
+
+                    // object point: neighbors ?
+                    // object point: neighbors ?
+                    Nconnect = 0;
+
+                    for (i = -1; i <= 1; i++) {
+
+                        for (j = -1; j <= 1; j++) {
+
+                            if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny)) {
+
+                                if (((i * i) + (j * j)) < 3) {
+
+                                    if (label[x + i][y + j] > 0) {
+                                        connect[Nconnect] = lb[label[x + i][y + j]];
+                                        Nconnect++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // if connected values, find the smallest lb label and attribute it
+                    // to all others (-> join labels)
+                    if (Nconnect > 0) {
+                        lbMin = lb[connect[0]];
+
+                        for (k = 1; k < Nconnect; k++) {
+                            lbMin = Math.min(lbMin, lb[connect[k]]);
+                        }
+
+                        for (k = 0; k < Nconnect; k++) {
+                            lb[connect[k]] = lbMin;
+                        }
+
+                        label[x][y] = lbMin;
+                    } else {
+
+                        // new, unconnected region
+                        label[x][y] = Nlabel;
+                        lb[Nlabel] = Nlabel;
+                        Nlabel++;
+                    }
+                }
+            }
+        }
+
+        // only one level of labels
+        for (k = 1; k < Nlabel; k++) {
+            c = k;
+
+            while (lb[c] != c) {
+                c = lb[c];
+            }
+
+            lb[k] = c;
+        }
+
+        // count the valid labels and rearrange labels to have regular increment
+        Nlb = 0;
+
+        int[] lb2 = new int[Nlabel];
+        lb2[0] = 0;
+
+        for (k = 1; k < Nlabel; k++) {
+
+            if (lb[k] == k) {
+                Nlb++;
+                lb2[k] = Nlb;
+            }
+        }
+
+        // copy on label image
+        for (x = 0; x < nx; x++) {
+
+            for (y = 0; y < ny; y++) {
+                label[x][y] = lb2[lb[label[x][y]]];
+            }
+        }
+
+        // clean up
+        lb = null;
+        lb2 = null;
+        connect = null;
+
+        return label;
+    }
+
+    /**
+     * make the structuring element for morphology.
+     */
+    private void createStructuringElement2D() {
+        float rx, ry, rz;
+        int dmx, dmy, dmz;
+
+        // build the structuring element for erosion and dilatation
+        // along the three dimensions
+        rx = image.getFileInfo()[0].getResolutions()[0];
+        ry = image.getFileInfo()[0].getResolutions()[1];
+        rz = image.getFileInfo()[0].getResolutions()[2];
+
+        // ideally: use a spherical ball of radius seSize
+        dmx = (int) Math.floor(structureSize / rx);
+        dmy = (int) Math.floor(structureSize / ry);
+        dmz = (int) Math.floor(structureSize / rz);
+
+        if ((dmx % 2) == 0) {
+            dmx++;
+        }
+
+        if ((dmy % 2) == 0) {
+            dmy++;
+        }
+
+        if ((dmz % 2) == 0) {
+            dmz++;
+        }
+
+        c2x = (dmx - 1) / 2;
+        c2y = (dmy - 1) / 2;
+        c2z = (dmz - 1) / 2;
+
+        se2xy = new BitSet(dmx * dmy);
+        se2xz = new BitSet(dmx * dmz);
+        se2yz = new BitSet(dmx * dmy);
+
+        if (structureType.equals("ball")) {
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmy; j++) {
+
+                    if ((((i - c2x) * (i - c2x) * rx * rx) + ((j - c2y) * (j - c2y) * ry * ry)) <
+                            (0.25f * structureSize * structureSize)) {
+                        se2xy.set(i + (dmx * j), true);
+                    } else {
+                        se2xy.set(i + (dmx * j), false);
+                    }
+                }
+            }
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmz; j++) {
+
+                    if ((((i - c2x) * (i - c2x) * rx * rx) + ((j - c2z) * (j - c2z) * rz * rz)) <
+                            (0.25f * structureSize * structureSize)) {
+                        se2xz.set(i + (dmx * j), true);
+                    } else {
+                        se2xz.set(i + (dmx * j), false);
+                    }
+                }
+            }
+
+            for (int i = 0; i < dmy; i++) {
+
+                for (int j = 0; j < dmz; j++) {
+
+                    if ((((i - c2y) * (i - c2y) * ry * ry) + ((j - c2z) * (j - c2z) * rz * rz)) <
+                            (0.25f * structureSize * structureSize)) {
+                        se2yz.set(i + (dmy * j), true);
+                    } else {
+                        se2yz.set(i + (dmy * j), false);
+                    }
+                }
+            }
+        } else if (structureType.equals("diamond")) {
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmy; j++) {
+
+                    if (((Math.abs(i - c2x) * rx) + (Math.abs(j - c2y) * ry)) < (0.5f * structureSize)) {
+                        se2xy.set(i + (dmx * j), true);
+                    } else {
+                        se2xy.set(i + (dmx * j), false);
+                    }
+                }
+            }
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmz; j++) {
+
+                    if (((Math.abs(i - c2x) * rx) + (Math.abs(j - c2z) * rz)) < (0.5f * structureSize)) {
+                        se2xz.set(i + (dmx * j), true);
+                    } else {
+                        se2xz.set(i + (dmx * j), false);
+                    }
+                }
+            }
+
+            for (int i = 0; i < dmy; i++) {
+
+                for (int j = 0; j < dmz; j++) {
+
+                    if (((Math.abs(i - c2y) * ry) + (Math.abs(j - c2z) * rz)) < (0.5f * structureSize)) {
+                        se2yz.set(i + (dmy * j), true);
+                    } else {
+                        se2yz.set(i + (dmy * j), false);
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * make the structuring element for morphology.
+     */
+    private void createStructuringElement3D() {
+        float rx, ry, rz;
+        int dmx, dmy, dmz;
+
+        // build the structuring element for erosion and dilatation
+        // different ones for different resolutions ?
+        rx = image.getFileInfo()[0].getResolutions()[0];
+        ry = image.getFileInfo()[0].getResolutions()[1];
+        rz = image.getFileInfo()[0].getResolutions()[2];
+
+        // ideally: use a spherical ball of radius seSize
+        dmx = (int) Math.floor(structureSize / rx);
+        dmy = (int) Math.floor(structureSize / ry);
+        dmz = (int) Math.floor(structureSize / rz);
+
+        if ((dmx % 2) == 0) {
+            dmx++;
+        }
+
+        if ((dmy % 2) == 0) {
+            dmy++;
+        }
+
+        if ((dmz % 2) == 0) {
+            dmz++;
+        }
+
+        c3x = (dmx - 1) / 2;
+        c3y = (dmy - 1) / 2;
+        c3z = (dmz - 1) / 2;
+
+        se3 = new BitSet(dmx * dmy * dmz);
+
+        if (structureType.equals("ball")) {
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmy; j++) {
+
+                    for (int k = 0; k < dmz; k++) {
+
+                        if ((((i - c3x) * (i - c3x) * rx * rx) + ((j - c3y) * (j - c3y) * ry * ry) +
+                                 ((k - c3z) * (k - c3z) * rz * rz)) < (0.25f * structureSize * structureSize)) {
+                            se3.set(i + (dmx * j) + (dmx * dmy * k), true);
+                        } else {
+                            se3.set(i + (dmx * j) + (dmx * dmy * k), false);
+                        }
+                    }
+                }
+            }
+        } else if (structureType.equals("diamond")) {
+
+            for (int i = 0; i < dmx; i++) {
+
+                for (int j = 0; j < dmy; j++) {
+
+                    for (int k = 0; k < dmz; k++) {
+
+                        if (((Math.abs(i - c3x) * rx) + (Math.abs(j - c3y) * ry) + (Math.abs(k - c3z) * rz)) <
+                                (0.5f * structureSize)) {
+                            se3.set(i + (dmx * j) + (dmx * dmy * k), true);
+                        } else {
+                            se3.set(i + (dmx * j) + (dmx * dmy * k), false);
+                        }
+                    }
+                }
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * dilation.
+     */
+    private void dilateImage() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("paint mask not found");
+
+            return;
+        }
+
+        // save it to previous
+        previous = (BitSet) obj.clone();
+
+        // create morphology mask if needed
+        String tmpStr = textStructuring.getText();
+        float size = 0.0f;
+
+        if (testParameter(tmpStr, 0.0, 100.0)) {
+            size = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textStructuring.requestFocus();
+            textStructuring.selectAll();
+
+            return;
+        }
+
+        String shape = (String) comboStructureType.getSelectedItem();
+
+        if ((size != structureSize) || (shape != structureType)) {
+            structureSize = size;
+            structureType = shape;
+            createStructuringElement2D();
+            createStructuringElement3D();
+        }
+
+        // get the dimension
+        String dilateType = (String) comboDilateDimType.getSelectedItem();
+
+        // dilation
+        if (dilateType.equals("3D")) {
+            obj = dilateObject(obj, nx, ny, nz, se3, c3x, c3y, c3z);
+        } else if (dilateType.equals("2.5D")) {
+            obj = dilateObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
+        } else if (dilateType.equals("2.5D(XY)")) {
+            obj = dilateObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
+        } else if (dilateType.equals("2.5D(XZ)")) {
+            obj = dilateObject(obj, nx, ny, nz, se2xz, c2x, 0, c2z);
+        } else if (dilateType.equals("2.5D(YZ)")) {
+            obj = dilateObject(obj, nx, ny, nz, se2yz, 0, c2y, c2z);
+        } else if (dilateType.equals("2D")) {
+
+            // extract slice
+            int zS = image.getParentFrame().getComponentImage().getSlice();
+            int nxnyzS = nx * ny * zS;
+            int nxnyzSp = nx * ny * (zS + 1);
+            BitSet img = new BitSet(nx * ny);
+
+            for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                     index = obj.nextSetBit(index + 1)) {
+                img.set(index - nxnyzS, true);
+            }
+
+            // dilate
+            img = dilateObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
+
+            // copy the result
+            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1)) {
+
+                if (img.get(index)) {
+                    obj.set(index + nxnyzS, true);
+                }
+            }
+        } else if (dilateType.equals("2D(XY)")) {
+
+            // extract slice
+            int zS = image.getTriImageFrame().getAxialComponentSlice();
+            int nxnyzS = nx * ny * zS;
+            int nxnyzSp = nx * ny * (zS + 1);
+            BitSet img = new BitSet(nx * ny);
+
+            for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                     index = obj.nextSetBit(index + 1)) {
+                img.set(index - nxnyzS, true);
+            }
+
+            // dilate
+            img = dilateObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
+
+            // copy the result
+            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1)) {
+
+                if (img.get(index)) {
+                    obj.set(index + nxnyzS, true);
+                }
+            }
+        } else if (dilateType.equals("2D(XZ)")) {
+
+            // extract slice
+            int yS = image.getTriImageFrame().getCoronalComponentSlice();
+            BitSet img = new BitSet(nx * nz);
+            int nxny = nx * ny;
+            int x, z;
+
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                if (yS == ((index % nxny) / nx)) {
+                    x = ((index % nxny) % nx);
+                    z = index / nxny;
+                    img.set(x + (nx * z), true);
+                }
+            }
+
+            // dilate
+            img = dilateObject(img, nx, nz, 1, se2xz, c2x, c2z, 0);
+
+            // copy the result
+            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1)) {
+                x = index % nx;
+                z = index / nx;
+                obj.set(x + (nx * yS) + (nxny * z), true);
+            }
+        } else if (dilateType.equals("2D(YZ)")) {
+
+            // extract slice
+            int xS = image.getTriImageFrame().getSagittalComponentSlice();
+            BitSet img = new BitSet(nx * ny);
+            int nxny = nx * ny;
+            int y, z;
+
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                if (xS == ((index % nxny) % nx)) {
+                    y = (index % nxny) / nx;
+                    z = index / nxny;
+                    img.set(y + (ny * z), true);
+                }
+            }
+
+            // dilate
+            img = dilateObject(img, ny, nz, 1, se2yz, c2y, c2z, 0);
+
+            // copy the result
+            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1)) {
+                y = index % ny;
+                z = index / ny;
+                obj.set(xS + (nx * y) + (nxny * z), true);
+            }
+        }
+
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * dilate binary object with a custom kernel using the BitSet structure with indexing convention index = x + nx*y +
+     * nx*ny*z.
+     *
+     * @param   img   DOCUMENT ME!
+     * @param   nx    DOCUMENT ME!
+     * @param   ny    DOCUMENT ME!
+     * @param   nz    DOCUMENT ME!
+     * @param   mask  DOCUMENT ME!
+     * @param   dx    DOCUMENT ME!
+     * @param   dy    DOCUMENT ME!
+     * @param   dz    DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private BitSet dilateObject(BitSet img, int nx, int ny, int nz, BitSet mask, int dx, int dy, int dz) {
+        BitSet dilated = new BitSet(nx * ny * nz);
+        int ndx = (2 * dx) + 1;
+        int ndxndy = ndx * ((2 * dy) + 1);
+        int nxny = nx * ny;
+        int x, y, z;
+
+        // dx,dy,dz describe the structuring element ( x+/-dx, y+/-dy, z+/-dz )
+        for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1)) {
+            z = index / nxny;
+            y = (index % nxny) / nx;
+            x = ((index % nxny) % nx);
+
+            for (int i = -dx; i <= dx; i++) {
+
+                for (int j = -dy; j <= dy; j++) {
+
+                    for (int k = -dz; k <= dz; k++) {
+
+                        if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny) && ((z + k) >= 0) &&
+                                ((z + k) < nz)) {
+
+                            if ((mask.get(i + dx + (ndx * (j + dy)) + (ndxndy * (k + dz))))) {
+                                dilated.set(x + i + (nx * (y + j)) + (nxny * (z + k)));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return dilated;
+    }
+
+    /**
+     * erosion.
+     */
+    private void erodeImage() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("paint mask not found");
+
+            return;
+        }
+
+        // save it to previous
+        previous = (BitSet) obj.clone();
+
+        // create morphology mask if needed
+        String tmpStr = textStructuring.getText();
+        float size = 0.0f;
+
+        if (testParameter(tmpStr, 0.0, 100.0)) {
+            size = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textStructuring.requestFocus();
+            textStructuring.selectAll();
+
+            return;
+        }
+
+        String shape = (String) comboStructureType.getSelectedItem();
+
+        if ((size != structureSize) || (shape != structureType)) {
+            structureSize = size;
+            structureType = shape;
+            createStructuringElement2D();
+            createStructuringElement3D();
+        }
+
+        // get the dimension
+        String erodeType = (String) comboErodeDimType.getSelectedItem();
+
+        // erosion
+        if (erodeType.equals("3D")) {
+            obj = erodeObject(obj, nx, ny, nz, se3, c3x, c3y, c3z);
+        } else if (erodeType.equals("2.5D")) {
+            obj = erodeObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
+        } else if (erodeType.equals("2.5D(XY)")) {
+            obj = erodeObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
+        } else if (erodeType.equals("2.5D(XZ)")) {
+            obj = erodeObject(obj, nx, ny, nz, se2xz, c2x, 0, c2z);
+        } else if (erodeType.equals("2.5D(YZ)")) {
+            obj = erodeObject(obj, nx, ny, nz, se2yz, 0, c2y, c2z);
+        } else if (erodeType.equals("2D")) {
+
+            // extract slice
+            int zS = image.getParentFrame().getComponentImage().getSlice();
+            int nxnyzS = nx * ny * zS;
+            int nxnyzSp = nx * ny * (zS + 1);
+            BitSet img = new BitSet(nx * ny);
+
+            for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                     index = obj.nextSetBit(index + 1)) {
+                img.set(index - nxnyzS, true);
+            }
+
+            // erode
+            img = erodeObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
+
+            // copy the result
+            for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                     index = obj.nextSetBit(index + 1)) {
+
+                if (!img.get(index - nxnyzS)) {
+                    obj.set(index, false);
+                }
+            }
+        } else if (erodeType.equals("2D(XY)")) {
+
+            // extract slice
+            int zS = image.getTriImageFrame().getAxialComponentSlice();
+            int nxnyzS = nx * ny * zS;
+            int nxnyzSp = nx * ny * (zS + 1);
+            BitSet img = new BitSet(nx * ny);
+
+            for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                     index = obj.nextSetBit(index + 1)) {
+                img.set(index - nxnyzS, true);
+            }
+
+            // erode
+            img = erodeObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
+
+            // copy the result
+            for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                     index = obj.nextSetBit(index + 1)) {
+
+                if (!img.get(index - nxnyzS)) {
+                    obj.set(index, false);
+                }
+            }
+        } else if (erodeType.equals("2D(XZ)")) {
+
+            // extract slice
+            int yS = image.getTriImageFrame().getCoronalComponentSlice();
+            BitSet img = new BitSet(nx * nz);
+            int nxny = nx * ny;
+            int x, z;
+
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                if (yS == ((index % nxny) / nx)) {
+                    x = ((index % nxny) % nx);
+                    z = index / nxny;
+                    img.set(x + (nx * z), true);
+                }
+            }
+
+            // erode
+            img = erodeObject(img, nx, nz, 1, se2xz, c2x, c2z, 0);
+
+            // copy the result
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                if (yS == ((index % nxny) / nx)) {
+                    x = ((index % nxny) % nx);
+                    z = index / nxny;
+
+                    if (!img.get(x + (nx * z))) {
+                        obj.set(index, false);
+                    }
+                }
+            }
+        } else if (erodeType.equals("2D(YZ)")) {
+
+            // extract slice
+            int xS = image.getTriImageFrame().getSagittalComponentSlice();
+            BitSet img = new BitSet(nx * ny);
+            int nxny = nx * ny;
+            int y, z;
+
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                if (xS == ((index % nxny) % nx)) {
+                    y = (index % nxny) / nx;
+                    z = index / nxny;
+                    img.set(y + (ny * z), true);
+                }
+            }
+
+            // erode
+            img = erodeObject(img, ny, nz, 1, se2yz, c2y, c2z, 0);
+
+            // copy the result
+            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1)) {
+
+                if (xS == ((index % nxny) % nx)) {
+                    y = (index % nxny) / nx;
+                    z = index / nxny;
+
+                    if (!img.get(y + (ny * z))) {
+                        obj.set(index, false);
+                    }
+                }
+            }
+        }
+
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * erode binary object with a custom kernel using the BitSet structure with indexing convention index = x + nx*y +
+     * nx*ny*z.
+     *
+     * @param   img   DOCUMENT ME!
+     * @param   nx    DOCUMENT ME!
+     * @param   ny    DOCUMENT ME!
+     * @param   nz    DOCUMENT ME!
+     * @param   mask  DOCUMENT ME!
+     * @param   dx    DOCUMENT ME!
+     * @param   dy    DOCUMENT ME!
+     * @param   dz    DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private BitSet erodeObject(BitSet img, int nx, int ny, int nz, BitSet mask, int dx, int dy, int dz) {
+        BitSet eroded = new BitSet(nx * ny * nz);
+        int ndx = (2 * dx) + 1;
+        int ndxndy = ndx * ((2 * dy) + 1);
+        int nxny = nx * ny;
+        int x, y, z;
+
+        // dx,dy,dz describe the structuring element ( x+/-dx, y+/-dy, z+/-dz )
+        for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1)) {
+            z = index / nxny;
+            y = (index % nxny) / nx;
+            x = ((index % nxny) % nx);
+            eroded.set(index, true);
+
+            for (int i = -dx; i <= dx; i++) {
+
+                for (int j = -dy; j <= dy; j++) {
+
+                    for (int k = -dz; k <= dz; k++) {
+
+                        if (((x + i) >= 0) && ((x + i) < nx) && ((y + j) >= 0) && ((y + j) < ny) && ((z + k) >= 0) &&
+                                ((z + k) < nz)) {
+
+                            if ((mask.get(i + dx + (ndx * (j + dy)) + (ndxndy * (k + dz)))) &&
+                                    (!img.get(x + i + (nx * (y + j)) + (nxny * (z + k))))) {
+                                eroded.set(index, false);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return eroded;
+    }
+
+    /**
+     * export to Mask.
+     */
+    private void exportToMask() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("Error: image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
+            return;
+        }
+
+        // select the ID: if not new, update the mask
+        if (image.getParentFrame().getImageB() == null) {
+
+            // create the mask image
+            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "NewMask"));
+        }
+
+        // record selected image; set to image B
+        ModelImage active = image.getParentFrame().getActiveImage();
+        image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
+
+        // call the paint to mask program
+        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "CommitPaint"));
+
+        // reset the active image
+        if (!active.equals(image.getParentFrame().getActiveImage())) {
+            image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
+        }
+
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * export to VOI.
+     */
+    private void exportToVOI() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("Error: image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
+            return;
+        }
+
+        // call the paint to VOI program
+        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "PaintToVOI"));
+
+        // clear the mask
+        obj.clear();
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * background filling algorithm.
+     *
+     * @param  xS  DOCUMENT ME!
+     * @param  yS  DOCUMENT ME!
+     * @param  zS  DOCUMENT ME!
+     */
+    private void fillAllBackgrounds(int xS, int yS, int zS) {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("paint mask not found");
+
+            return;
+        }
+
+        // save it to previous
+        previous = (BitSet) obj.clone();
+
+        // get parameters
+        connectType = (String) comboConnectType.getSelectedItem();
+
+        if (radioBackgrounds3D.isSelected()) {
+            backgroundsDim = 3;
+        } else {
+            backgroundsDim = 2;
+        }
+
+        // find main object
+        if ((backgroundsDim == 2) && (sliceDir == XY)) {
+            int[][] label;
+
+            // extract the slice and invert
+            boolean[][] img = new boolean[nx][ny];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[x][y] = (!obj.get(x + (nx * y) + (nx * ny * zS)));
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected8Object2D(img, nx, ny);
+            } else {
+                label = connected4Object2D(img, nx, ny);
+            }
+
+            // remove all but the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[x][y] != label[xS][yS]) {
+                        obj.set(x + (nx * y) + (nx * ny * zS), true);
+                    }
+                }
+            }
+        } else if ((backgroundsDim == 2) && (sliceDir == XZ)) {
+            int[][] label;
+
+            // extract the slice and invert
+            boolean[][] img = new boolean[nx][nz];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+                    img[x][z] = (!obj.get(x + (nx * yS) + (nx * ny * z)));
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected8Object2D(img, nx, nz);
+            } else {
+                label = connected4Object2D(img, nx, nz);
+            }
+
+            // remove all but the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+
+                    if (label[x][z] != label[xS][zS]) {
+                        obj.set(x + (nx * yS) + (nx * ny * z), true);
+                    }
+                }
+            }
+        } else if ((backgroundsDim == 2) && (sliceDir == ZY)) {
+            int[][] label;
+
+            // extract the slice and invert
+            boolean[][] img = new boolean[nz][ny];
+
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[z][y] = (!obj.get(xS + (nx * y) + (nx * ny * z)));
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected8Object2D(img, nz, ny);
+            } else {
+                label = connected4Object2D(img, nz, ny);
+            }
+
+            // remove all but the selected background
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[z][y] != label[zS][yS]) {
+                        obj.set(xS + (nx * y) + (nx * ny * z), true);
+                    }
+                }
+            }
+        } else {
+            int[][][] label;
+
+            // extract the mask and invert
+            boolean[][][] img = new boolean[nx][ny][nz];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+                        img[x][y][z] = (!obj.get(x + (nx * y) + (nx * ny * z)));
+                    }
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26")) {
+                label = connected26Object3D(img, nx, ny, nz);
+            } else if (connectType.equals("6/18")) {
+                label = connected18Object3D(img, nx, ny, nz);
+            } else {
+                label = connected6Object3D(img, nx, ny, nz);
+            }
+
+            // remove all but the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+
+                        if (label[x][y][z] != label[xS][yS][zS]) {
+                            obj.set(x + (nx * y) + (nx * ny * z), true);
+                        }
+                    }
+                }
+            }
+        }
+
+        refreshImagePaint(image, obj);
+    }
+
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
+
+    /**
+     * background filling algorithm.
+     *
+     * @param  xS  DOCUMENT ME!
+     * @param  yS  DOCUMENT ME!
+     * @param  zS  DOCUMENT ME!
+     */
+    private void fillBackground(int xS, int yS, int zS) {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("paint mask not found");
+
+            return;
+        }
+
+        // save it to previous
+        previous = (BitSet) obj.clone();
+
+        // get parameters
+        connectType = (String) comboConnectType.getSelectedItem();
+
+        if (radioBackground3D.isSelected()) {
+            backgroundDim = 3;
+        } else {
+            backgroundDim = 2;
+        }
+
+        // find main object
+        if ((backgroundDim == 2) && (sliceDir == XY)) {
+            int[][] label;
+
+            // extract the slice and invert
+            boolean[][] img = new boolean[nx][ny];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[x][y] = (!obj.get(x + (nx * y) + (nx * ny * zS)));
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected8Object2D(img, nx, ny);
+            } else {
+                label = connected4Object2D(img, nx, ny);
+            }
+
+            // remove the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[x][y] == label[xS][yS]) {
+                        obj.set(x + (nx * y) + (nx * ny * zS), true);
+                    }
+                }
+            }
+        } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
+            int[][] label;
+
+            // extract the slice and invert
+            boolean[][] img = new boolean[nx][nz];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+                    img[x][z] = (!obj.get(x + (nx * yS) + (nx * ny * z)));
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected8Object2D(img, nx, nz);
+            } else {
+                label = connected4Object2D(img, nx, nz);
+            }
+
+            // remove the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+
+                    if (label[x][z] == label[xS][zS]) {
+                        obj.set(x + (nx * yS) + (nx * ny * z), true);
+                    }
+                }
+            }
+        } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
+            int[][] label;
+
+            // extract the slice and invert
+            boolean[][] img = new boolean[nz][ny];
+
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[z][y] = (!obj.get(xS + (nx * y) + (nx * ny * z)));
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected8Object2D(img, nz, ny);
+            } else {
+                label = connected4Object2D(img, nz, ny);
+            }
+
+            // remove the selected background
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[z][y] == label[zS][yS]) {
+                        obj.set(xS + (nx * y) + (nx * ny * z), true);
+                    }
+                }
+            }
+        } else {
+            int[][][] label;
+
+            // extract the mask and invert
+            boolean[][][] img = new boolean[nx][ny][nz];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+                        img[x][y][z] = (!obj.get(x + (nx * y) + (nx * ny * z)));
+                    }
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26")) {
+                label = connected26Object3D(img, nx, ny, nz);
+            } else if (connectType.equals("6/18")) {
+                label = connected18Object3D(img, nx, ny, nz);
+            } else {
+                label = connected6Object3D(img, nx, ny, nz);
+            }
+
+            // remove the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+
+                        if (label[x][y][z] == label[xS][yS][zS]) {
+                            obj.set(x + (nx * y) + (nx * ny * z), true);
+                        }
+                    }
+                }
+            }
+        }
+
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * region growing algorithm.
+     *
+     * @param  xS  DOCUMENT ME!
+     * @param  yS  DOCUMENT ME!
+     * @param  zS  DOCUMENT ME!
+     */
+    private void growRegion(int xS, int yS, int zS) {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("paint mask not found");
+
+            return;
+        }
+
+        // save it to previous
+        previous = (BitSet) obj.clone();
+
+        // get parameters
+        connectType = (String) comboConnectType.getSelectedItem();
+
+        if (radioGrowRegion3D.isSelected()) {
+            regionGrowDim = 3;
+        } else {
+            regionGrowDim = 2;
+        }
+
+        float imgValue = image.get(xS, yS, zS).floatValue();
+
+        // find main object
+        if ((regionGrowDim == 2) && (sliceDir == XY)) {
+            int[][] label;
+
+            // find potential regions
+            boolean[][] img = new boolean[nx][ny];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[x][y] = (image.get(x, y, zS).floatValue() == imgValue);
+                }
+            }
+
+            // connected components
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected4Object2D(img, nx, ny);
+            } else {
+                label = connected8Object2D(img, nx, ny);
+            }
+
+            // add to the paint mask
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[x][y] == label[xS][yS]) {
+                        obj.set(x + (nx * y) + (nx * ny * zS), true);
+                    }
+                }
+            }
+        } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
+            int[][] label;
+
+            // extract the slice
+            boolean[][] img = new boolean[nx][nz];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+                    img[x][z] = (image.get(x, yS, z).floatValue() == imgValue);
+                }
+            }
+
+            // connected components
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected4Object2D(img, nx, nz);
+            } else {
+                label = connected8Object2D(img, nx, nz);
+            }
+
+            // add to paint
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+
+                    if (label[x][z] == label[xS][zS]) {
+                        obj.set(x + (nx * yS) + (nx * ny * z), true);
+                    }
+                }
+            }
+        } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
+            int[][] label;
+
+            // extract the slice
+            boolean[][] img = new boolean[nz][ny];
+
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[z][y] = (image.get(xS, y, z).floatValue() == imgValue);
+                }
+            }
+
+            // connected components
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected4Object2D(img, nz, ny);
+            } else {
+                label = connected8Object2D(img, nz, ny);
+            }
+
+            // remove the selected background
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[z][y] == label[zS][yS]) {
+                        obj.set(xS + (nx * y) + (nx * ny * z), true);
+                    }
+                }
+            }
+        } else {
+            int[][][] label;
+
+            // extract the mask and invert
+            boolean[][][] img = new boolean[nx][ny][nz];
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+                        img[x][y][z] = (image.get(x, y, z).floatValue() == imgValue);
+                    }
+                }
+            }
+
+            // connected components on background
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
+                label = connected6Object3D(img, nx, ny, nz);
+            } else if (connectType.equals("18/6")) {
+                label = connected18Object3D(img, nx, ny, nz);
+            } else {
+                label = connected26Object3D(img, nx, ny, nz);
+            }
+
+            // remove the selected background
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+
+                        if (label[x][y][z] == label[xS][yS][zS]) {
+                            obj.set(x + (nx * y) + (nx * ny * z), true);
+                        }
+                    }
+                }
+            }
+        }
+
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * import from Mask.
+     */
+    private void importFromMask() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("Error: image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
+            return;
+        }
+
+        // call the paint to mask program
+        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToPaint"));
+
+        refreshImagePaint(image, obj);
+    }
+
+    /**
+     * import from VOI.
+     */
+    private void importFromVOI() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("Error: image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
+            return;
+        }
+
+        // call the VOI to paint program
+        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "PaintMask"));
+
+        // remove the VOI
+        image.getParentFrame().getComponentImage().deleteSelectedContours();
     }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
-    private void init()
-    {
+    private void init() {
         setForeground(Color.black);
         setTitle("Paint Power Tools");
 
         // global parameters
         nx = image.getExtents()[0];
         ny = image.getExtents()[1];
-        if (image.getNDims() < 3)
-        {
+
+        if (image.getNDims() < 3) {
             nz = 1;
-        }
-        else
-        {
+        } else {
             nz = image.getExtents()[2];
         }
+
         createStructuringElement2D();
         createStructuringElement3D();
 
@@ -230,60 +2672,50 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         groupGrowRegion = new ButtonGroup();
         groupGrowRegion.add(radioGrowRegion2D);
         groupGrowRegion.add(radioGrowRegion3D);
-        if (regionGrowDim == 2)
-        {
+
+        if (regionGrowDim == 2) {
             radioGrowRegion2D.setSelected(true);
-        }
-        else
-        {
+        } else {
             radioGrowRegion3D.setSelected(true);
         }
 
         groupBackground = new ButtonGroup();
         groupBackground.add(radioBackground2D);
         groupBackground.add(radioBackground3D);
-        if (backgroundDim == 2)
-        {
+
+        if (backgroundDim == 2) {
             radioBackground2D.setSelected(true);
-        }
-        else
-        {
+        } else {
             radioBackground3D.setSelected(true);
         }
 
         groupBackgrounds = new ButtonGroup();
         groupBackgrounds.add(radioBackgrounds2D);
         groupBackgrounds.add(radioBackgrounds3D);
-        if (backgroundsDim == 2)
-        {
+
+        if (backgroundsDim == 2) {
             radioBackgrounds2D.setSelected(true);
-        }
-        else
-        {
+        } else {
             radioBackgrounds3D.setSelected(true);
         }
 
         groupObject = new ButtonGroup();
         groupObject.add(radioObject2D);
         groupObject.add(radioObject3D);
-        if (rmObjDim == 2)
-        {
+
+        if (rmObjDim == 2) {
             radioObject2D.setSelected(true);
-        }
-        else
-        {
+        } else {
             radioObject3D.setSelected(true);
         }
 
         groupObjects = new ButtonGroup();
         groupObjects.add(radioObjects2D);
         groupObjects.add(radioObjects3D);
-        if (rmObjsDim == 2)
-        {
+
+        if (rmObjsDim == 2) {
             radioObjects2D.setSelected(true);
-        }
-        else
-        {
+        } else {
             radioObjects3D.setSelected(true);
         }
 
@@ -369,7 +2801,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonRevert.addActionListener(this);
         buttonRevert.setActionCommand("Revert");
         buttonRevert.setFont(serif12);
-        
+
         buttonShowAdvancedPaintControls = new JButton("Show advanced paint controls");
         buttonShowAdvancedPaintControls.addActionListener(this);
         buttonShowAdvancedPaintControls.setActionCommand("show advanced");
@@ -591,7 +3023,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         botPanel = new JPanel();
         botPanel.add(buildCloseButton());
-        //botPanel.add(buildHelpButton());
+        // botPanel.add(buildHelpButton());
 
         getContentPane().add(mainPanel);
         getContentPane().add(botPanel, BorderLayout.SOUTH);
@@ -603,591 +3035,183 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     } // end init()
 
     /**
-     *  Accessor that returns the image.
-     *  @return          The result image.
+     * propagate to all slices.
      */
-    public ModelImage getResultImage()
-    {
-        return resultImage;
-    }
+    private void propagateAll() {
 
-    //************************************************************************
-     //************************** Event Processing ****************************
-      //************************************************************************
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("Error: image not found");
 
-       /**
-        *  Closes dialog box when the OK button is pressed and calls the algorithm.
-        *  @param event       Event that triggers function.
-        */
-       public void actionPerformed(ActionEvent event)
-       {
-           String command = event.getActionCommand();
-
-           // reset the button texts
-           buttonGrowRegion.setText("Grow Region");
-           buttonFillBackground.setText("Fill Background");
-           buttonFillBackgrounds.setText("Fill All Background");
-           buttonRmObject.setText("Remove Object");
-           buttonRmObjects.setText("Remove All Objects");
-
-           if ( (command.equals("GrowRegion"))
-               || (command.equals("Background"))
-               || (command.equals("Backgrounds"))
-               || (command.equals("RmObject"))
-               || (command.equals("RmObjects")))
-           {
-               // listen to mouse motion in the original image
-               image.getParentFrame().getComponentImage().addMouseListener(this);
-               // check for the triplanar image
-               if (image.getTriImageFrame() != null)
-               {
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseListener(this);
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseListener(this);
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseListener(this);
-               }
-           }
-
-           if (command.equals("Close"))
-           {
-               dispose();
-           }
-           else if (command.equals("Help"))
-           {
-               //MipavUtil.showHelp("10027");
-           }
-           else if (command.equals("GrowRegion"))
-           {
-               if (getMouseInput != GROWREGION)
-               {
-                   buttonGrowRegion.setText("click to grow");
-                   getMouseInput = GROWREGION;
-               }
-               else
-               {
-                   getMouseInput = NONE;
-               }
-           }
-           else if (command.equals("Background"))
-           {
-               if (getMouseInput != BACKGROUND)
-               {
-                   buttonFillBackground.setText("click to remove");
-                   getMouseInput = BACKGROUND;
-               }
-               else
-               {
-                   getMouseInput = NONE;
-               }
-           }
-           else if (command.equals("Backgrounds"))
-           {
-               if (getMouseInput != ALLBACKGROUNDS)
-               {
-                   buttonFillBackgrounds.setText("click to keep");
-                   getMouseInput = ALLBACKGROUNDS;
-               }
-               else
-               {
-                   getMouseInput = NONE;
-               }
-           }
-           else if (command.equals("RmObject"))
-           {
-               if (getMouseInput != REMOVE)
-               {
-                   buttonRmObject.setText("click to remove");
-                   getMouseInput = REMOVE;
-               }
-               else
-               {
-                   getMouseInput = NONE;
-               }
-           }
-           else if (command.equals("RmObjects"))
-           {
-               if (getMouseInput != REMOVEALL)
-               {
-                   buttonRmObjects.setText("click to keep");
-                   getMouseInput = REMOVEALL;
-               }
-               else
-               {
-                   getMouseInput = NONE;
-               }
-           }
-           else if (command.equals("Dilate"))
-           {
-               dilateImage();
-           }
-           else if (command.equals("Erode"))
-           {
-               erodeImage();
-           }
-           else if (command.equals("PropagUp"))
-           {
-               propagateUp();
-           }
-           else if (command.equals("PropagDown"))
-           {
-               propagateDown();
-           }
-           else if (command.equals("PropagAll"))
-           {
-               propagateAll();
-           }
-           else if (command.equals("ExportToVOI"))
-           {
-               exportToVOI();
-           }
-           else if (command.equals("ImportFromVOI"))
-           {
-               importFromVOI();
-           }
-           else if (command.equals("ExportToMask"))
-           {
-               exportToMask();
-           }
-           else if (command.equals("ImportFromMask"))
-           {
-               importFromMask();
-           }
-           else if (command.equals("Revert"))
-           {
-               revertImage();
-           }
-           else if (command.equals("Wheel"))
-           {
-               if ( (checkWheel.isSelected()) && (image.getTriImageFrame() != null))
-               {
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).addMouseWheelListener(this);
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).addMouseWheelListener(this);
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).addMouseWheelListener(this);
-               }
-               else if (image.getTriImageFrame() != null)
-               {
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseWheelListener(this);
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseWheelListener(this);
-                   image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseWheelListener(this);
-               }
-               else
-               {
-                   checkWheel.setSelected(false);
-               }
-           }
-           else if (command.equals("Autosave"))
-           {
-               if (checkSave.isSelected())
-               {
-                   // start the auto-save option
-                   delay = Integer.valueOf(textSave.getText()).intValue();
-                   save = new PaintAutoSave(image);
-                   saver = new java.util.Timer();
-                   saver.schedule(save, new Date(), delay * 60 * 1000);
-               }
-               else
-               {
-                   // stop the auto-save option
-                   saver.cancel();
-                   save = null;
-                   saver = null;
-               }
-           }
-           else if (command.equals("show advanced"))
-           {
-        	   if (multiPaintDialog == null)
-        	   {
-        		   multiPaintDialog = new JDialogMultiPaint(parentFrame, image);
-        	   }
-        	   else
-        	   {
-        		   MipavUtil.centerOnScreen(multiPaintDialog);
-        		   multiPaintDialog.setVisible(true);
-        	   }
-           }
-       }
-
-    /**
-     * Listening to mouse events when updating paint
-     * @param mouseEvent MouseEvent
-     */
-    public void mouseClicked(MouseEvent mouseEvent)
-    {
-        int xS = 0, yS = 0, zS = 0;
-
-        if (getMouseInput == NONE)
-        {
             return;
         }
 
-        if (mouseEvent.getComponent().equals(image.getParentFrame().getComponentImage()))
-        {
-            // get the point coordinates : image frame
-            xS = Math.round(mouseEvent.getX() /
-                            (image.getParentFrame().getComponentImage().getZoomX() *
-                             image.getParentFrame().getComponentImage().getResolutionX()) - 0.5f); // zoomed x.  Used as cursor
-            yS = Math.round(mouseEvent.getY() /
-                            (image.getParentFrame().getComponentImage().getZoomY() *
-                             image.getParentFrame().getComponentImage().getResolutionY()) - 0.5f); // zoomed y.  Used as cursor
-            zS = image.getParentFrame().getComponentImage().getSlice();
-            sliceDir = XY;
-        }
-        else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A)))
-        {
-            // triplanar image : XY panel
-            xS = Math.round(mouseEvent.getX() /
-                            (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomX() *
-                             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionX()) - 0.5f); // zoomed x.  Used as cursor
-            yS = Math.round(mouseEvent.getY() /
-                            (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomY() *
-                             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY()) - 0.5f); // zoomed y.  Used as cursor
-            zS = image.getTriImageFrame().getAxialComponentSlice();
-            Point3D pt = ( (ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A)).getVolumePosition(
-                xS, yS, zS);
-            xS = pt.x;
-            yS = pt.y;
-            zS = pt.z;
-            sliceDir = ( (ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A)).
-                getOriginalOrientation();
-        }
-        else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)))
-        {
-            // triplanar image : XZ panel
-            xS = Math.round(mouseEvent.getX() /
-                            (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomX() *
-                             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionX()) - 0.5f); // zoomed x.  Used as cursor
-            yS = Math.round(mouseEvent.getY() /
-                            (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
-                             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY()) - 0.5f); // zoomed y.  Used as cursor
-            zS = image.getTriImageFrame().getCoronalComponentSlice();
-            Point3D pt = ( (ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)).getVolumePosition(
-                xS, yS, zS);
-            xS = pt.x;
-            yS = pt.y;
-            zS = pt.z;
-            sliceDir = ( (ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)).
-                getOriginalOrientation();
-        }
-        else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)))
-        {
-            // triplanar image : ZY panel
-            xS = Math.round(mouseEvent.getX() /
-                            (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomX() *
-                             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionX()) - 0.5f); // zoomed x.  Used as cursor
-            yS = Math.round(mouseEvent.getY() /
-                            (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomY() *
-                             image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY()) - 0.5f); // zoomed y.  Used as cursor
-            zS = image.getTriImageFrame().getSagittalComponentSlice();
-            Point3D pt = ( (ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)).getVolumePosition(
-                xS, yS, zS);
-            xS = pt.x;
-            yS = pt.y;
-            zS = pt.z;
-            sliceDir = ( (ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)).
-                getOriginalOrientation();
-        }
-        Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
-        // Check for validity
-        if (xS < 0 || xS >= nx || yS < 0 || yS >= ny || zS < 0 || zS >= nz)
-        {
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
             return;
         }
 
-        // remove the listeners
-        image.getParentFrame().getComponentImage().removeMouseListener(this);
-        if (image.getTriImageFrame() != null)
-        {
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).removeMouseListener(this);
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).removeMouseListener(this);
-            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).removeMouseListener(this);
-        }
+        // extract slice
+        int zS = image.getParentFrame().getComponentImage().getSlice();
+        int nxny = nx * ny;
+        int nxnyzS = nxny * zS;
+        int nxnyzSp = nxnyzS + nxny;
+        int indx;
 
-        if (getMouseInput == GROWREGION)
-        {
-            buttonGrowRegion.setText("growing...");
-            buttonGrowRegion.repaint();
-            growRegion(xS, yS, zS);
-            buttonGrowRegion.setText("Grow Region");
+        // copy the paint mask one slice down
+        for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                 index = obj.nextSetBit(index + 1)) {
+            indx = index % nxny;
+
+            for (int i = 0; i < nz; i++) {
+                obj.set(indx + (i * nxny), true);
+            }
         }
-        else if (getMouseInput == BACKGROUND)
-        {
-            buttonFillBackground.setText("filling...");
-            buttonFillBackground.repaint();
-            fillBackground(xS, yS, zS);
-            buttonFillBackground.setText("Fill Background");
-        }
-        else if (getMouseInput == ALLBACKGROUNDS)
-        {
-            buttonFillBackgrounds.setText("filling...");
-            buttonFillBackgrounds.repaint();
-            fillAllBackgrounds(xS, yS, zS);
-            buttonFillBackgrounds.setText("Fill All Background");
-        }
-        else if (getMouseInput == REMOVE)
-        {
-            buttonRmObject.setText("removing...");
-            buttonRmObject.repaint();
-            removeObject(xS, yS, zS);
-            buttonRmObject.setText("Remove Object");
-        }
-        else if (getMouseInput == REMOVEALL)
-        {
-            buttonRmObjects.setText("removing...");
-            buttonRmObjects.repaint();
-            removeAllObjects(xS, yS, zS);
-            buttonRmObjects.setText("Remove All Objects");
-        }
-        // release the mouse
-        getMouseInput = NONE;
 
         return;
     }
 
-    public void mouseReleased(MouseEvent mouseEvent)
-    {}
+    /**
+     * propagate to the next slice.
+     */
+    private void propagateDown() {
 
-    public void mousePressed(MouseEvent mouseEvent)
-    {}
-
-    public void mouseEntered(MouseEvent mouseEvent)
-    {}
-
-    public void mouseExited(MouseEvent mouseEvent)
-    {}
-
-    public void mouseWheelMoved(MouseWheelEvent mouseEvent)
-    {
-        if (image.getTriImageFrame() == null)
-        {
-            return;
-        }
-        // find the position
-        if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A)))
-        {
-            // triplanar image : XY panel
-            ViewJFrameTriImage tri = image.getTriImageFrame();
-            tri.setSlices(tri.getSagittalComponentSlice(),
-                          tri.getCoronalComponentSlice(),
-                          tri.getAxialComponentSlice() + mouseEvent.getWheelRotation());
-            tri.updateImages(true);
-        }
-        else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A)))
-        {
-            // triplanar image : XZ panel
-            ViewJFrameTriImage tri = image.getTriImageFrame();
-            tri.setSlices(tri.getSagittalComponentSlice(),
-                          tri.getCoronalComponentSlice() + mouseEvent.getWheelRotation(),
-                          tri.getAxialComponentSlice());
-            tri.updateImages(true);
-        }
-        else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A)))
-        {
-            // triplanar image : ZY panel
-            ViewJFrameTriImage tri = image.getTriImageFrame();
-            tri.setSlices(tri.getSagittalComponentSlice() + mouseEvent.getWheelRotation(),
-                          tri.getCoronalComponentSlice(),
-                          tri.getAxialComponentSlice());
-            tri.updateImages(true);
-        }
-
-    }
-
-    //************************************************************************
-     //************************** Algorithm Events ****************************
-      //************************************************************************
-
-       /** background filling algorithm */
-       private void fillBackground(int xS, int yS, int zS)
-       {
-           if (image == null)
-           {
-               System.gc();
-               MipavUtil.displayError("image not found");
-               return;
-           }
-
-           // retrieve the mask
-           BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-           if (obj == null)
-           {
-               MipavUtil.displayError("paint mask not found");
-               return;
-           }
-
-           // save it to previous
-           previous = (BitSet) obj.clone();
-
-           // get parameters
-           connectType = (String) comboConnectType.getSelectedItem();
-           if (radioBackground3D.isSelected())
-           {
-               backgroundDim = 3;
-           }
-           else
-           {
-               backgroundDim = 2;
-           }
-
-           // find main object
-           if ( (backgroundDim == 2) && (sliceDir == XY))
-           {
-               int[][] label;
-               // extract the slice and invert
-               boolean[][] img = new boolean[nx][ny];
-               for (int x = 0; x < nx; x++)
-               {
-                   for (int y = 0; y < ny; y++)
-                   {
-                       img[x][y] = (!obj.get(x + nx * y + nx * ny * zS));
-                   }
-               }
-               // connected components on background
-               if (connectType.equals("6/26") || connectType.equals("6/18"))
-               {
-                   label = connected8Object2D(img, nx, ny);
-               }
-               else
-               {
-                   label = connected4Object2D(img, nx, ny);
-               }
-               // remove the selected background
-               for (int x = 0; x < nx; x++)
-               {
-                   for (int y = 0; y < ny; y++)
-                   {
-                       if (label[x][y] == label[xS][yS])
-                       {
-                           obj.set(x + nx * y + nx * ny * zS, true);
-                       }
-                   }
-               }
-           }
-           else if ( (backgroundDim == 2) && (sliceDir == XZ))
-           {
-               int[][] label;
-               // extract the slice and invert
-               boolean[][] img = new boolean[nx][nz];
-               for (int x = 0; x < nx; x++)
-               {
-                   for (int z = 0; z < nz; z++)
-                   {
-                       img[x][z] = (!obj.get(x + nx * yS + nx * ny * z));
-                   }
-               }
-               // connected components on background
-               if (connectType.equals("6/26") || connectType.equals("6/18"))
-               {
-                   label = connected8Object2D(img, nx, nz);
-               }
-               else
-               {
-                   label = connected4Object2D(img, nx, nz);
-               }
-               // remove the selected background
-               for (int x = 0; x < nx; x++)
-               {
-                   for (int z = 0; z < nz; z++)
-                   {
-                       if (label[x][z] == label[xS][zS])
-                       {
-                           obj.set(x + nx * yS + nx * ny * z, true);
-                       }
-                   }
-               }
-           }
-           else if ( (backgroundDim == 2) && (sliceDir == ZY))
-           {
-               int[][] label;
-               // extract the slice and invert
-               boolean[][] img = new boolean[nz][ny];
-               for (int z = 0; z < nz; z++)
-               {
-                   for (int y = 0; y < ny; y++)
-                   {
-                       img[z][y] = (!obj.get(xS + nx * y + nx * ny * z));
-                   }
-               }
-               // connected components on background
-               if (connectType.equals("6/26") || connectType.equals("6/18"))
-               {
-                   label = connected8Object2D(img, nz, ny);
-               }
-               else
-               {
-                   label = connected4Object2D(img, nz, ny);
-               }
-               // remove the selected background
-               for (int z = 0; z < nz; z++)
-               {
-                   for (int y = 0; y < ny; y++)
-                   {
-                       if (label[z][y] == label[zS][yS])
-                       {
-                           obj.set(xS + nx * y + nx * ny * z, true);
-                       }
-                   }
-               }
-           }
-           else
-           {
-               int[][][] label;
-               // extract the mask and invert
-               boolean[][][] img = new boolean[nx][ny][nz];
-               for (int x = 0; x < nx; x++)
-               {
-                   for (int y = 0; y < ny; y++)
-                   {
-                       for (int z = 0; z < nz; z++)
-                       {
-                           img[x][y][z] = (!obj.get(x + nx * y + nx * ny * z));
-                       }
-                   }
-               }
-               // connected components on background
-               if (connectType.equals("6/26"))
-               {
-                   label = connected26Object3D(img, nx, ny, nz);
-               }
-               else if (connectType.equals("6/18"))
-               {
-                   label = connected18Object3D(img, nx, ny, nz);
-               }
-               else
-               {
-                   label = connected6Object3D(img, nx, ny, nz);
-               }
-               // remove the selected background
-               for (int x = 0; x < nx; x++)
-               {
-                   for (int y = 0; y < ny; y++)
-                   {
-                       for (int z = 0; z < nz; z++)
-                       {
-                           if (label[x][y][z] == label[xS][yS][zS])
-                           {
-                               obj.set(x + nx * y + nx * ny * z, true);
-                           }
-                       }
-                   }
-               }
-           }
-           refreshImagePaint(image, obj);
-       }
-
-    /** background filling algorithm */
-    private void fillAllBackgrounds(int xS, int yS, int zS)
-    {
-        if (image == null)
-        {
+        if (image == null) {
             System.gc();
-            MipavUtil.displayError("image not found");
+            MipavUtil.displayError("Error: image not found");
+
             return;
         }
 
         // retrieve the mask
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
+            return;
+        }
+
+        // extract slice
+        int zS = image.getParentFrame().getComponentImage().getSlice();
+
+        if (zS == 0) {
+            return;
+        }
+
+        int nxny = nx * ny;
+        int nxnyzS = nxny * zS;
+        int nxnyzSp = nxnyzS + nxny;
+
+        // copy the paint mask one slice down
+        for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                 index = obj.nextSetBit(index + 1)) {
+            obj.set(index - nxny, true);
+        }
+
+        // move to next slice
+        image.getParentFrame().getComponentImage().setSlice(zS - 1);
+        image.getParentFrame().setSlice(zS - 1);
+        image.getParentFrame().updateImages(true);
+
+        return;
+    }
+
+    /**
+     * propagate to the next slice.
+     */
+    private void propagateUp() {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("Error: image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
+            MipavUtil.displayError("Error: paint mask not found");
+
+            return;
+        }
+
+        // extract slice
+        int zS = image.getParentFrame().getComponentImage().getSlice();
+
+        if (zS == (nz - 1)) {
+            return;
+        }
+
+        int nxny = nx * ny;
+        int nxnyzS = nxny * zS;
+        int nxnyzSp = nxnyzS + nxny;
+
+        // copy the paint mask one slice up
+        for (int index = obj.nextSetBit(nxnyzS); ((index >= 0) && (index < nxnyzSp));
+                 index = obj.nextSetBit(index + 1)) {
+            obj.set(index + nxny, true);
+        }
+
+        // move to next slice
+        image.getParentFrame().getComponentImage().setSlice(zS + 1);
+        image.getParentFrame().setSlice(zS + 1);
+        image.getParentFrame().updateImages(true);
+
+        return;
+    }
+
+    /**
+     * refresh the displayed mask.
+     *
+     * @param  img  DOCUMENT ME!
+     * @param  obj  DOCUMENT ME!
+     */
+    private void refreshImagePaint(ModelImage img, BitSet obj) {
+
+        // replace it by previous
+        img.getParentFrame().getComponentImage().setPaintMask(obj);
+        img.setMask(obj);
+
+        // show result
+        img.getParentFrame().updateImages(true);
+
+        if (img.getTriImageFrame() != null) {
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setPaintMask(obj);
+            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setPaintMask(obj);
+            img.getTriImageFrame().updateImages(true);
+        }
+    }
+
+    /**
+     * object removal algorithm.
+     *
+     * @param  xS  DOCUMENT ME!
+     * @param  yS  DOCUMENT ME!
+     * @param  zS  DOCUMENT ME!
+     */
+    private void removeAllObjects(int xS, int yS, int zS) {
+
+        if (image == null) {
+            System.gc();
+            MipavUtil.displayError("image not found");
+
+            return;
+        }
+
+        // retrieve the mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        if (obj == null) {
             MipavUtil.displayError("paint mask not found");
+
             return;
         }
 
@@ -1196,533 +3220,169 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         // get parameters
         connectType = (String) comboConnectType.getSelectedItem();
-        if (radioBackgrounds3D.isSelected())
-        {
-            backgroundsDim = 3;
-        }
-        else
-        {
-            backgroundsDim = 2;
-        }
 
-        // find main object
-        if ( (backgroundsDim == 2) && (sliceDir == XY))
-        {
-            int[][] label;
-            // extract the slice and invert
-            boolean[][] img = new boolean[nx][ny];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[x][y] = (!obj.get(x + nx * y + nx * ny * zS));
-                }
-            }
-            // connected components on background
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected8Object2D(img, nx, ny);
-            }
-            else
-            {
-                label = connected4Object2D(img, nx, ny);
-            }
-            // remove all but the selected background
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[x][y] != label[xS][yS])
-                    {
-                        obj.set(x + nx * y + nx * ny * zS, true);
-                    }
-                }
-            }
-        }
-        else if ( (backgroundsDim == 2) && (sliceDir == XZ))
-        {
-            int[][] label;
-            // extract the slice and invert
-            boolean[][] img = new boolean[nx][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    img[x][z] = (!obj.get(x + nx * yS + nx * ny * z));
-                }
-            }
-            // connected components on background
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected8Object2D(img, nx, nz);
-            }
-            else
-            {
-                label = connected4Object2D(img, nx, nz);
-            }
-            // remove all but the selected background
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    if (label[x][z] != label[xS][zS])
-                    {
-                        obj.set(x + nx * yS + nx * ny * z, true);
-                    }
-                }
-            }
-        }
-        else if ( (backgroundsDim == 2) && (sliceDir == ZY))
-        {
-            int[][] label;
-            // extract the slice and invert
-            boolean[][] img = new boolean[nz][ny];
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[z][y] = (!obj.get(xS + nx * y + nx * ny * z));
-                }
-            }
-            // connected components on background
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected8Object2D(img, nz, ny);
-            }
-            else
-            {
-                label = connected4Object2D(img, nz, ny);
-            }
-            // remove all but the selected background
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[z][y] != label[zS][yS])
-                    {
-                        obj.set(xS + nx * y + nx * ny * z, true);
-                    }
-                }
-            }
-        }
-        else
-        {
-            int[][][] label;
-            // extract the mask and invert
-            boolean[][][] img = new boolean[nx][ny][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        img[x][y][z] = (!obj.get(x + nx * y + nx * ny * z));
-                    }
-                }
-            }
-            // connected components on background
-            if (connectType.equals("6/26"))
-            {
-                label = connected26Object3D(img, nx, ny, nz);
-            }
-            else if (connectType.equals("6/18"))
-            {
-                label = connected18Object3D(img, nx, ny, nz);
-            }
-            else
-            {
-                label = connected6Object3D(img, nx, ny, nz);
-            }
-            // remove all but the selected background
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        if (label[x][y][z] != label[xS][yS][zS])
-                        {
-                            obj.set(x + nx * y + nx * ny * z, true);
-                        }
-                    }
-                }
-            }
-        }
-        refreshImagePaint(image, obj);
-    }
-
-    /** object removal algorithm */
-    private void removeObject(int xS, int yS, int zS)
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("paint mask not found");
-            return;
-        }
-
-        // save it to previous
-        previous = (BitSet) obj.clone();
-
-        // get parameters
-        connectType = (String) comboConnectType.getSelectedItem();
-        if (radioObject3D.isSelected())
-        {
-            rmObjDim = 3;
-        }
-        else
-        {
-            rmObjDim = 2;
-        }
-
-        // find main object
-        if ( (rmObjDim == 2) && (sliceDir == XY))
-        {
-            int[][] label;
-            // extract the slice
-            boolean[][] img = new boolean[nx][ny];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[x][y] = obj.get(x + nx * y + nx * ny * zS);
-                }
-            }
-            // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected4Object2D(img, nx, ny);
-            }
-            else
-            {
-                label = connected8Object2D(img, nx, ny);
-            }
-            // remove the selected object
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[x][y] == label[xS][yS])
-                    {
-                        obj.set(x + nx * y + nx * ny * zS, false);
-                    }
-                }
-            }
-        }
-        else if ( (rmObjDim == 2) && (sliceDir == XZ))
-        {
-            int[][] label;
-            // extract the slice
-            boolean[][] img = new boolean[nx][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    img[x][z] = obj.get(x + nx * yS + nx * ny * z);
-                }
-            }
-            // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected4Object2D(img, nx, nz);
-            }
-            else
-            {
-                label = connected8Object2D(img, nx, nz);
-            }
-            // remove the selected object
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    if (label[x][z] == label[xS][zS])
-                    {
-                        obj.set(x + nx * yS + nx * ny * z, false);
-                    }
-                }
-            }
-        }
-        else if ( (rmObjDim == 2) && (sliceDir == ZY))
-        {
-            int[][] label;
-            // extract the slice
-            boolean[][] img = new boolean[nz][ny];
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[z][y] = obj.get(xS + nx * y + nx * ny * z);
-                }
-            }
-            // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected4Object2D(img, nz, ny);
-            }
-            else
-            {
-                label = connected8Object2D(img, nz, ny);
-            }
-            // remove the selected object
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[z][y] == label[zS][yS])
-                    {
-                        obj.set(xS + nx * y + nx * ny * z, false);
-                    }
-                }
-            }
-        }
-        else
-        {
-            int[][][] label;
-            // extract the slice
-            boolean[][][] img = new boolean[nx][ny][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        img[x][y][z] = obj.get(x + nx * y + nx * ny * z);
-                    }
-                }
-            }
-            // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
-                label = connected6Object3D(img, nx, ny, nz);
-            }
-            else if (connectType.equals("18/6"))
-            {
-                label = connected18Object3D(img, nx, ny, nz);
-            }
-            else
-            {
-                label = connected26Object3D(img, nx, ny, nz);
-            }
-            // remove the selected object
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        if (label[x][y][z] == label[xS][yS][zS])
-                        {
-                            obj.set(x + nx * y + nx * ny * z, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        refreshImagePaint(image, obj);
-    }
-
-    /** object removal algorithm */
-    private void removeAllObjects(int xS, int yS, int zS)
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("paint mask not found");
-            return;
-        }
-
-        // save it to previous
-        previous = (BitSet) obj.clone();
-
-        // get parameters
-        connectType = (String) comboConnectType.getSelectedItem();
-        if (radioObjects3D.isSelected())
-        {
+        if (radioObjects3D.isSelected()) {
             rmObjsDim = 3;
-        }
-        else
-        {
+        } else {
             rmObjsDim = 2;
         }
 
         // find main object
-        if ( (rmObjsDim == 2) && (sliceDir == XY))
-        {
+        if ((rmObjsDim == 2) && (sliceDir == XY)) {
             int[][] label;
+
             // extract the slice
             boolean[][] img = new boolean[nx][ny];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[x][y] = obj.get(x + nx * y + nx * ny * zS);
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[x][y] = obj.get(x + (nx * y) + (nx * ny * zS));
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected4Object2D(img, nx, ny);
-            }
-            else
-            {
+            } else {
                 label = connected8Object2D(img, nx, ny);
             }
+
             // remove all but the selected object
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[x][y] != label[xS][yS])
-                    {
-                        obj.set(x + nx * y + nx * ny * zS, false);
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[x][y] != label[xS][yS]) {
+                        obj.set(x + (nx * y) + (nx * ny * zS), false);
                     }
                 }
             }
-        }
-        else if ( (rmObjsDim == 2) && (sliceDir == XZ))
-        {
+        } else if ((rmObjsDim == 2) && (sliceDir == XZ)) {
             int[][] label;
+
             // extract the slice
             boolean[][] img = new boolean[nx][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    img[x][z] = obj.get(x + nx * yS + nx * ny * z);
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+                    img[x][z] = obj.get(x + (nx * yS) + (nx * ny * z));
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected4Object2D(img, nx, nz);
-            }
-            else
-            {
+            } else {
                 label = connected8Object2D(img, nx, nz);
             }
+
             // remove all but the selected object
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    if (label[x][z] != label[xS][zS])
-                    {
-                        obj.set(x + nx * yS + nx * ny * z, false);
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+
+                    if (label[x][z] != label[xS][zS]) {
+                        obj.set(x + (nx * yS) + (nx * ny * z), false);
                     }
                 }
             }
-        }
-        else if ( (rmObjsDim == 2) && (sliceDir == ZY))
-        {
+        } else if ((rmObjsDim == 2) && (sliceDir == ZY)) {
             int[][] label;
+
             // extract the slice
             boolean[][] img = new boolean[nz][ny];
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[z][y] = obj.get(xS + nx * y + nx * ny * z);
+
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[z][y] = obj.get(xS + (nx * y) + (nx * ny * z));
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected4Object2D(img, nz, ny);
-            }
-            else
-            {
+            } else {
                 label = connected8Object2D(img, nz, ny);
             }
+
             // remove all but the selected object
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[z][y] != label[zS][yS])
-                    {
-                        obj.set(xS + nx * y + nx * ny * z, false);
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[z][y] != label[zS][yS]) {
+                        obj.set(xS + (nx * y) + (nx * ny * z), false);
                     }
                 }
             }
-        }
-        else
-        {
+        } else {
             int[][][] label;
+
             // extract the slice
             boolean[][][] img = new boolean[nx][ny][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        img[x][y][z] = obj.get(x + nx * y + nx * ny * z);
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+                        img[x][y][z] = obj.get(x + (nx * y) + (nx * ny * z));
                     }
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected6Object3D(img, nx, ny, nz);
-            }
-            else if (connectType.equals("18/6"))
-            {
+            } else if (connectType.equals("18/6")) {
                 label = connected18Object3D(img, nx, ny, nz);
-            }
-            else
-            {
+            } else {
                 label = connected26Object3D(img, nx, ny, nz);
             }
+
             // remove all but the selected object
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        if (label[x][y][z] != label[xS][yS][zS])
-                        {
-                            obj.set(x + nx * y + nx * ny * z, false);
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+
+                        if (label[x][y][z] != label[xS][yS][zS]) {
+                            obj.set(x + (nx * y) + (nx * ny * z), false);
                         }
                     }
                 }
             }
         }
+
         refreshImagePaint(image, obj);
     }
 
-    /** region growing algorithm */
-    private void growRegion(int xS, int yS, int zS)
-    {
-        if (image == null)
-        {
+    /**
+     * object removal algorithm.
+     *
+     * @param  xS  DOCUMENT ME!
+     * @param  yS  DOCUMENT ME!
+     * @param  zS  DOCUMENT ME!
+     */
+    private void removeObject(int xS, int yS, int zS) {
+
+        if (image == null) {
             System.gc();
             MipavUtil.displayError("image not found");
+
             return;
         }
 
         // retrieve the mask
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
+
+        if (obj == null) {
             MipavUtil.displayError("paint mask not found");
+
             return;
         }
 
@@ -1731,735 +3391,170 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         // get parameters
         connectType = (String) comboConnectType.getSelectedItem();
-        if (radioGrowRegion3D.isSelected())
-        {
-            regionGrowDim = 3;
+
+        if (radioObject3D.isSelected()) {
+            rmObjDim = 3;
+        } else {
+            rmObjDim = 2;
         }
-        else
-        {
-            regionGrowDim = 2;
-        }
-        float imgValue = image.get(xS, yS, zS).floatValue();
 
         // find main object
-        if ( (regionGrowDim == 2) && (sliceDir == XY))
-        {
+        if ((rmObjDim == 2) && (sliceDir == XY)) {
             int[][] label;
-            // find potential regions
+
+            // extract the slice
             boolean[][] img = new boolean[nx][ny];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[x][y] = (image.get(x, y, zS).floatValue() == imgValue);
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[x][y] = obj.get(x + (nx * y) + (nx * ny * zS));
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected4Object2D(img, nx, ny);
-            }
-            else
-            {
+            } else {
                 label = connected8Object2D(img, nx, ny);
             }
-            // add to the paint mask
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[x][y] == label[xS][yS])
-                    {
-                        obj.set(x + nx * y + nx * ny * zS, true);
+
+            // remove the selected object
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[x][y] == label[xS][yS]) {
+                        obj.set(x + (nx * y) + (nx * ny * zS), false);
                     }
                 }
             }
-        }
-        else if ( (backgroundDim == 2) && (sliceDir == XZ))
-        {
+        } else if ((rmObjDim == 2) && (sliceDir == XZ)) {
             int[][] label;
+
             // extract the slice
             boolean[][] img = new boolean[nx][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    img[x][z] = (image.get(x, yS, z).floatValue() == imgValue);
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+                    img[x][z] = obj.get(x + (nx * yS) + (nx * ny * z));
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected4Object2D(img, nx, nz);
-            }
-            else
-            {
+            } else {
                 label = connected8Object2D(img, nx, nz);
             }
-            // add to paint
-            for (int x = 0; x < nx; x++)
-            {
-                for (int z = 0; z < nz; z++)
-                {
-                    if (label[x][z] == label[xS][zS])
-                    {
-                        obj.set(x + nx * yS + nx * ny * z, true);
+
+            // remove the selected object
+            for (int x = 0; x < nx; x++) {
+
+                for (int z = 0; z < nz; z++) {
+
+                    if (label[x][z] == label[xS][zS]) {
+                        obj.set(x + (nx * yS) + (nx * ny * z), false);
                     }
                 }
             }
-        }
-        else if ( (backgroundDim == 2) && (sliceDir == ZY))
-        {
+        } else if ((rmObjDim == 2) && (sliceDir == ZY)) {
             int[][] label;
+
             // extract the slice
             boolean[][] img = new boolean[nz][ny];
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    img[z][y] = (image.get(xS, y, z).floatValue() == imgValue);
+
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+                    img[z][y] = obj.get(xS + (nx * y) + (nx * ny * z));
                 }
             }
+
             // connected components
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected4Object2D(img, nz, ny);
-            }
-            else
-            {
+            } else {
                 label = connected8Object2D(img, nz, ny);
             }
-            // remove the selected background
-            for (int z = 0; z < nz; z++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    if (label[z][y] == label[zS][yS])
-                    {
-                        obj.set(xS + nx * y + nx * ny * z, true);
+
+            // remove the selected object
+            for (int z = 0; z < nz; z++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    if (label[z][y] == label[zS][yS]) {
+                        obj.set(xS + (nx * y) + (nx * ny * z), false);
                     }
                 }
             }
-        }
-        else
-        {
+        } else {
             int[][][] label;
-            // extract the mask and invert
+
+            // extract the slice
             boolean[][][] img = new boolean[nx][ny][nz];
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        img[x][y][z] = (image.get(x, y, z).floatValue() == imgValue);
+
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+                        img[x][y][z] = obj.get(x + (nx * y) + (nx * ny * z));
                     }
                 }
             }
-            // connected components on background
-            if (connectType.equals("6/26") || connectType.equals("6/18"))
-            {
+
+            // connected components
+            if (connectType.equals("6/26") || connectType.equals("6/18")) {
                 label = connected6Object3D(img, nx, ny, nz);
-            }
-            else if (connectType.equals("18/6"))
-            {
+            } else if (connectType.equals("18/6")) {
                 label = connected18Object3D(img, nx, ny, nz);
-            }
-            else
-            {
+            } else {
                 label = connected26Object3D(img, nx, ny, nz);
             }
-            // remove the selected background
-            for (int x = 0; x < nx; x++)
-            {
-                for (int y = 0; y < ny; y++)
-                {
-                    for (int z = 0; z < nz; z++)
-                    {
-                        if (label[x][y][z] == label[xS][yS][zS])
-                        {
-                            obj.set(x + nx * y + nx * ny * z, true);
+
+            // remove the selected object
+            for (int x = 0; x < nx; x++) {
+
+                for (int y = 0; y < ny; y++) {
+
+                    for (int z = 0; z < nz; z++) {
+
+                        if (label[x][y][z] == label[xS][yS][zS]) {
+                            obj.set(x + (nx * y) + (nx * ny * z), false);
                         }
                     }
                 }
             }
         }
+
         refreshImagePaint(image, obj);
     }
 
-    /** erosion */
-    private void erodeImage()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("image not found");
-            return;
-        }
+    /**
+     * revert to previous mask.
+     */
+    private void revertImage() {
 
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("paint mask not found");
-            return;
-        }
-
-        // save it to previous
-        previous = (BitSet) obj.clone();
-
-        // create morphology mask if needed
-        String tmpStr = textStructuring.getText();
-        float size = 0.0f;
-        if (testParameter(tmpStr, 0.0, 100.0))
-        {
-            size = Float.valueOf(tmpStr).floatValue();
-        }
-        else
-        {
-            textStructuring.requestFocus();
-            textStructuring.selectAll();
-            return;
-        }
-        String shape = (String) comboStructureType.getSelectedItem();
-        if ( (size != structureSize) || (shape != structureType))
-        {
-            structureSize = size;
-            structureType = shape;
-            createStructuringElement2D();
-            createStructuringElement3D();
-        }
-
-        // get the dimension
-        String erodeType = (String) comboErodeDimType.getSelectedItem();
-
-        // erosion
-        if (erodeType.equals("3D"))
-        {
-            obj = erodeObject(obj, nx, ny, nz, se3, c3x, c3y, c3z);
-        }
-        else if (erodeType.equals("2.5D"))
-        {
-            obj = erodeObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
-        }
-        else if (erodeType.equals("2.5D(XY)"))
-        {
-            obj = erodeObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
-        }
-        else if (erodeType.equals("2.5D(XZ)"))
-        {
-            obj = erodeObject(obj, nx, ny, nz, se2xz, c2x, 0, c2z);
-        }
-        else if (erodeType.equals("2.5D(YZ)"))
-        {
-            obj = erodeObject(obj, nx, ny, nz, se2yz, 0, c2y, c2z);
-        }
-        else if (erodeType.equals("2D"))
-        {
-            // extract slice
-            int zS = image.getParentFrame().getComponentImage().getSlice();
-            int nxnyzS = nx * ny * zS;
-            int nxnyzSp = nx * ny * (zS + 1);
-            BitSet img = new BitSet(nx * ny);
-            for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-            {
-                img.set(index - nxnyzS, true);
-            }
-            // erode
-            img = erodeObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
-            // copy the result
-            for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-            {
-                if (!img.get(index - nxnyzS))
-                {
-                    obj.set(index, false);
-                }
-            }
-        }
-        else if (erodeType.equals("2D(XY)"))
-        {
-            // extract slice
-            int zS = image.getTriImageFrame().getAxialComponentSlice();
-            int nxnyzS = nx * ny * zS;
-            int nxnyzSp = nx * ny * (zS + 1);
-            BitSet img = new BitSet(nx * ny);
-            for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-            {
-                img.set(index - nxnyzS, true);
-            }
-            // erode
-            img = erodeObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
-            // copy the result
-            for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-            {
-                if (!img.get(index - nxnyzS))
-                {
-                    obj.set(index, false);
-                }
-            }
-        }
-        else if (erodeType.equals("2D(XZ)"))
-        {
-            // extract slice
-            int yS = image.getTriImageFrame().getCoronalComponentSlice();
-            BitSet img = new BitSet(nx * nz);
-            int nxny = nx * ny;
-            int x, z;
-            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
-            {
-                if (yS == (index % nxny) / nx)
-                {
-                    x = ( (index % nxny) % nx);
-                    z = index / nxny;
-                    img.set(x + nx * z, true);
-                }
-            }
-            // erode
-            img = erodeObject(img, nx, nz, 1, se2xz, c2x, c2z, 0);
-            // copy the result
-            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
-            {
-                if (yS == (index % nxny) / nx)
-                {
-                    x = ( (index % nxny) % nx);
-                    z = index / nxny;
-                    if (!img.get(x + nx * z))
-                    {
-                        obj.set(index, false);
-                    }
-                }
-            }
-        }
-        else if (erodeType.equals("2D(YZ)"))
-        {
-            // extract slice
-            int xS = image.getTriImageFrame().getSagittalComponentSlice();
-            BitSet img = new BitSet(nx * ny);
-            int nxny = nx * ny;
-            int y, z;
-            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
-            {
-                if (xS == ( (index % nxny) % nx))
-                {
-                    y = (index % nxny) / nx;
-                    z = index / nxny;
-                    img.set(y + ny * z, true);
-                }
-            }
-            // erode
-            img = erodeObject(img, ny, nz, 1, se2yz, c2y, c2z, 0);
-            // copy the result
-            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
-            {
-                if (xS == ( (index % nxny) % nx))
-                {
-                    y = (index % nxny) / nx;
-                    z = index / nxny;
-                    if (!img.get(y + ny * z))
-                    {
-                        obj.set(index, false);
-                    }
-                }
-            }
-        }
-        refreshImagePaint(image, obj);
-    }
-
-    /** dilation */
-    private void dilateImage()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("paint mask not found");
-            return;
-        }
-
-        // save it to previous
-        previous = (BitSet) obj.clone();
-
-        // create morphology mask if needed
-        String tmpStr = textStructuring.getText();
-        float size = 0.0f;
-        if (testParameter(tmpStr, 0.0, 100.0))
-        {
-            size = Float.valueOf(tmpStr).floatValue();
-        }
-        else
-        {
-            textStructuring.requestFocus();
-            textStructuring.selectAll();
-            return;
-        }
-        String shape = (String) comboStructureType.getSelectedItem();
-        if ( (size != structureSize) || (shape != structureType))
-        {
-            structureSize = size;
-            structureType = shape;
-            createStructuringElement2D();
-            createStructuringElement3D();
-        }
-
-        // get the dimension
-        String dilateType = (String) comboDilateDimType.getSelectedItem();
-
-        // dilation
-        if (dilateType.equals("3D"))
-        {
-            obj = dilateObject(obj, nx, ny, nz, se3, c3x, c3y, c3z);
-        }
-        else if (dilateType.equals("2.5D"))
-        {
-            obj = dilateObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
-        }
-        else if (dilateType.equals("2.5D(XY)"))
-        {
-            obj = dilateObject(obj, nx, ny, nz, se2xy, c2x, c2y, 0);
-        }
-        else if (dilateType.equals("2.5D(XZ)"))
-        {
-            obj = dilateObject(obj, nx, ny, nz, se2xz, c2x, 0, c2z);
-        }
-        else if (dilateType.equals("2.5D(YZ)"))
-        {
-            obj = dilateObject(obj, nx, ny, nz, se2yz, 0, c2y, c2z);
-        }
-        else if (dilateType.equals("2D"))
-        {
-            // extract slice
-            int zS = image.getParentFrame().getComponentImage().getSlice();
-            int nxnyzS = nx * ny * zS;
-            int nxnyzSp = nx * ny * (zS + 1);
-            BitSet img = new BitSet(nx * ny);
-            for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-            {
-                img.set(index - nxnyzS, true);
-            }
-            // dilate
-            img = dilateObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
-            // copy the result
-            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1))
-            {
-                if (img.get(index))
-                {
-                    obj.set(index + nxnyzS, true);
-                }
-            }
-        }
-        else if (dilateType.equals("2D(XY)"))
-        {
-            // extract slice
-            int zS = image.getTriImageFrame().getAxialComponentSlice();
-            int nxnyzS = nx * ny * zS;
-            int nxnyzSp = nx * ny * (zS + 1);
-            BitSet img = new BitSet(nx * ny);
-            for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-            {
-                img.set(index - nxnyzS, true);
-            }
-            // dilate
-            img = dilateObject(img, nx, ny, 1, se2xy, c2x, c2y, 0);
-            // copy the result
-            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1))
-            {
-                if (img.get(index))
-                {
-                    obj.set(index + nxnyzS, true);
-                }
-            }
-        }
-        else if (dilateType.equals("2D(XZ)"))
-        {
-            // extract slice
-            int yS = image.getTriImageFrame().getCoronalComponentSlice();
-            BitSet img = new BitSet(nx * nz);
-            int nxny = nx * ny;
-            int x, z;
-            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
-            {
-                if (yS == (index % nxny) / nx)
-                {
-                    x = ( (index % nxny) % nx);
-                    z = index / nxny;
-                    img.set(x + nx * z, true);
-                }
-            }
-            // dilate
-            img = dilateObject(img, nx, nz, 1, se2xz, c2x, c2z, 0);
-            // copy the result
-            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1))
-            {
-                x = index % nx;
-                z = index / nx;
-                obj.set(x + nx * yS + nxny * z, true);
-            }
-        }
-        else if (dilateType.equals("2D(YZ)"))
-        {
-            // extract slice
-            int xS = image.getTriImageFrame().getSagittalComponentSlice();
-            BitSet img = new BitSet(nx * ny);
-            int nxny = nx * ny;
-            int y, z;
-            for (int index = obj.nextSetBit(0); index >= 0; index = obj.nextSetBit(index + 1))
-            {
-                if (xS == ( (index % nxny) % nx))
-                {
-                    y = (index % nxny) / nx;
-                    z = index / nxny;
-                    img.set(y + ny * z, true);
-                }
-            }
-            // dilate
-            img = dilateObject(img, ny, nz, 1, se2yz, c2y, c2z, 0);
-            // copy the result
-            for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1))
-            {
-                y = index % ny;
-                z = index / ny;
-                obj.set(xS + nx * y + nxny * z, true);
-            }
-        }
-        refreshImagePaint(image, obj);
-    }
-
-    /** make the structuring element for morphology */
-    private void createStructuringElement2D()
-    {
-        float rx, ry, rz;
-        int dmx, dmy, dmz;
-
-        // build the structuring element for erosion and dilatation
-        // along the three dimensions
-        rx = image.getFileInfo()[0].getResolutions()[0];
-        ry = image.getFileInfo()[0].getResolutions()[1];
-        rz = image.getFileInfo()[0].getResolutions()[2];
-
-        // ideally: use a spherical ball of radius seSize
-        dmx = (int) Math.floor(structureSize / rx);
-        dmy = (int) Math.floor(structureSize / ry);
-        dmz = (int) Math.floor(structureSize / rz);
-        if (dmx % 2 == 0)
-        {
-            dmx++;
-        }
-        if (dmy % 2 == 0)
-        {
-            dmy++;
-        }
-        if (dmz % 2 == 0)
-        {
-            dmz++;
-        }
-        c2x = (dmx - 1) / 2;
-        c2y = (dmy - 1) / 2;
-        c2z = (dmz - 1) / 2;
-
-        se2xy = new BitSet(dmx * dmy);
-        se2xz = new BitSet(dmx * dmz);
-        se2yz = new BitSet(dmx * dmy);
-        if (structureType.equals("ball"))
-        {
-            for (int i = 0; i < dmx; i++)
-            {
-                for (int j = 0; j < dmy; j++)
-                {
-                    if ( (i - c2x) * (i - c2x) * rx * rx + (j - c2y) * (j - c2y) * ry * ry <
-                        0.25f * structureSize * structureSize)
-                    {
-                        se2xy.set(i + dmx * j, true);
-                    }
-                    else
-                    {
-                        se2xy.set(i + dmx * j, false);
-                    }
-                }
-            }
-            for (int i = 0; i < dmx; i++)
-            {
-                for (int j = 0; j < dmz; j++)
-                {
-                    if ( (i - c2x) * (i - c2x) * rx * rx + (j - c2z) * (j - c2z) * rz * rz <
-                        0.25f * structureSize * structureSize)
-                    {
-                        se2xz.set(i + dmx * j, true);
-                    }
-                    else
-                    {
-                        se2xz.set(i + dmx * j, false);
-                    }
-                }
-            }
-            for (int i = 0; i < dmy; i++)
-            {
-                for (int j = 0; j < dmz; j++)
-                {
-                    if ( (i - c2y) * (i - c2y) * ry * ry + (j - c2z) * (j - c2z) * rz * rz <
-                        0.25f * structureSize * structureSize)
-                    {
-                        se2yz.set(i + dmy * j, true);
-                    }
-                    else
-                    {
-                        se2yz.set(i + dmy * j, false);
-                    }
-                }
-            }
-        }
-        else if (structureType.equals("diamond"))
-        {
-            for (int i = 0; i < dmx; i++)
-            {
-                for (int j = 0; j < dmy; j++)
-                {
-                    if (Math.abs(i - c2x) * rx + Math.abs(j - c2y) * ry < 0.5f * structureSize)
-                    {
-                        se2xy.set(i + dmx * j, true);
-                    }
-                    else
-                    {
-                        se2xy.set(i + dmx * j, false);
-                    }
-                }
-            }
-            for (int i = 0; i < dmx; i++)
-            {
-                for (int j = 0; j < dmz; j++)
-                {
-                    if (Math.abs(i - c2x) * rx + Math.abs(j - c2z) * rz < 0.5f * structureSize)
-                    {
-                        se2xz.set(i + dmx * j, true);
-                    }
-                    else
-                    {
-                        se2xz.set(i + dmx * j, false);
-                    }
-                }
-            }
-            for (int i = 0; i < dmy; i++)
-            {
-                for (int j = 0; j < dmz; j++)
-                {
-                    if (Math.abs(i - c2y) * ry + Math.abs(j - c2z) * rz < 0.5f * structureSize)
-                    {
-                        se2yz.set(i + dmy * j, true);
-                    }
-                    else
-                    {
-                        se2yz.set(i + dmy * j, false);
-                    }
-                }
-            }
-        }
-        return;
-    }
-
-    /** make the structuring element for morphology */
-    private void createStructuringElement3D()
-    {
-        float rx, ry, rz;
-        int dmx, dmy, dmz;
-
-        // build the structuring element for erosion and dilatation
-        // different ones for different resolutions ?
-        rx = image.getFileInfo()[0].getResolutions()[0];
-        ry = image.getFileInfo()[0].getResolutions()[1];
-        rz = image.getFileInfo()[0].getResolutions()[2];
-
-        // ideally: use a spherical ball of radius seSize
-        dmx = (int) Math.floor(structureSize / rx);
-        dmy = (int) Math.floor(structureSize / ry);
-        dmz = (int) Math.floor(structureSize / rz);
-        if (dmx % 2 == 0)
-        {
-            dmx++;
-        }
-        if (dmy % 2 == 0)
-        {
-            dmy++;
-        }
-        if (dmz % 2 == 0)
-        {
-            dmz++;
-        }
-        c3x = (dmx - 1) / 2;
-        c3y = (dmy - 1) / 2;
-        c3z = (dmz - 1) / 2;
-
-        se3 = new BitSet(dmx * dmy * dmz);
-        if (structureType.equals("ball"))
-        {
-            for (int i = 0; i < dmx; i++)
-            {
-                for (int j = 0; j < dmy; j++)
-                {
-                    for (int k = 0; k < dmz; k++)
-                    {
-                        if ( (i - c3x) * (i - c3x) * rx * rx + (j - c3y) * (j - c3y) * ry * ry +
-                            (k - c3z) * (k - c3z) * rz * rz < 0.25f * structureSize * structureSize)
-                        {
-                            se3.set(i + dmx * j + dmx * dmy * k, true);
-                        }
-                        else
-                        {
-                            se3.set(i + dmx * j + dmx * dmy * k, false);
-                        }
-                    }
-                }
-            }
-        }
-        else if (structureType.equals("diamond"))
-        {
-            for (int i = 0; i < dmx; i++)
-            {
-                for (int j = 0; j < dmy; j++)
-                {
-                    for (int k = 0; k < dmz; k++)
-                    {
-                        if (Math.abs(i - c3x) * rx + Math.abs(j - c3y) * ry + Math.abs(k - c3z) * rz <
-                            0.5f * structureSize)
-                        {
-                            se3.set(i + dmx * j + dmx * dmy * k, true);
-                        }
-                        else
-                        {
-                            se3.set(i + dmx * j + dmx * dmy * k, false);
-                        }
-                    }
-                }
-            }
-        }
-        return;
-    }
-
-    /** revert to previous mask */
-    private void revertImage()
-    {
-        if (image == null)
-        {
+        if (image == null) {
             System.gc();
             MipavUtil.displayError("Error: image not found");
+
             return;
         }
 
         // retrieve the mask
         BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
+
+        if (obj == null) {
             MipavUtil.displayError("Error: paint mask not found");
+
             return;
         }
+
         // no previous image
-        if (previous == null)
-        {
+        if (previous == null) {
             return;
         }
 
@@ -2469,977 +3564,62 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         // put current into previous
         previous = (BitSet) obj.clone();
     }
-
-    /** propagate to the next slice */
-    private void propagateUp()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-        // extract slice
-        int zS = image.getParentFrame().getComponentImage().getSlice();
-        if (zS == nz - 1)
-        {
-            return;
-        }
-        int nxny = nx * ny;
-        int nxnyzS = nxny * zS;
-        int nxnyzSp = nxnyzS + nxny;
-        // copy the paint mask one slice up
-        for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-        {
-            obj.set(index + nxny, true);
-        }
-        // move to next slice
-        image.getParentFrame().getComponentImage().setSlice(zS + 1);
-        image.getParentFrame().setSlice(zS + 1);
-        image.getParentFrame().updateImages(true);
-        return;
-    }
-
-    /** propagate to the next slice */
-    private void propagateDown()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-        // extract slice
-        int zS = image.getParentFrame().getComponentImage().getSlice();
-        if (zS == 0)
-        {
-            return;
-        }
-        int nxny = nx * ny;
-        int nxnyzS = nxny * zS;
-        int nxnyzSp = nxnyzS + nxny;
-        // copy the paint mask one slice down
-        for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-        {
-            obj.set(index - nxny, true);
-        }
-        // move to next slice
-        image.getParentFrame().getComponentImage().setSlice(zS - 1);
-        image.getParentFrame().setSlice(zS - 1);
-        image.getParentFrame().updateImages(true);
-        return;
-    }
-
-    /** propagate to all slices */
-    private void propagateAll()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-        // extract slice
-        int zS = image.getParentFrame().getComponentImage().getSlice();
-        int nxny = nx * ny;
-        int nxnyzS = nxny * zS;
-        int nxnyzSp = nxnyzS + nxny;
-        int indx;
-        // copy the paint mask one slice down
-        for (int index = obj.nextSetBit(nxnyzS); (index >= 0 && index < nxnyzSp); index = obj.nextSetBit(index + 1))
-        {
-            indx = index % nxny;
-            for (int i = 0; i < nz; i++)
-            {
-                obj.set(indx + i * nxny, true);
-            }
-        }
-        return;
-    }
-
-    /** import from VOI */
-    private void importFromVOI()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-
-        // call the VOI to paint program
-        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "PaintMask"));
-
-        // remove the VOI
-        image.getParentFrame().getComponentImage().deleteSelectedContours();
-    }
-
-    /** export to VOI */
-    private void exportToVOI()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-
-        // call the paint to VOI program
-        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "PaintToVOI"));
-
-        // clear the mask
-        obj.clear();
-        refreshImagePaint(image, obj);
-    }
-
-    /** import from Mask */
-    private void importFromMask()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-
-        // call the paint to mask program
-        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToPaint"));
-
-        refreshImagePaint(image, obj);
-    }
-
-    /** export to Mask */
-    private void exportToMask()
-    {
-        if (image == null)
-        {
-            System.gc();
-            MipavUtil.displayError("Error: image not found");
-            return;
-        }
-
-        // retrieve the mask
-        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        if (obj == null)
-        {
-            MipavUtil.displayError("Error: paint mask not found");
-            return;
-        }
-
-        // select the ID: if not new, update the mask
-        if (image.getParentFrame().getImageB() == null)
-        {
-            // create the mask image
-            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "NewMask"));
-        }
-
-        // record selected image; set to image B
-        ModelImage active = image.getParentFrame().getActiveImage();
-        image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
-
-        // call the paint to mask program
-        image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "CommitPaint"));
-
-        // reset the active image
-        if (!active.equals(image.getParentFrame().getActiveImage()))
-        {
-            image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
-        }
-
-        refreshImagePaint(image, obj);
-    }
-
-    /** refresh the displayed mask */
-    private void refreshImagePaint(ModelImage img, BitSet obj)
-    {
-        // replace it by previous
-        img.getParentFrame().getComponentImage().setPaintMask(obj);
-        img.setMask(obj);
-        // show result
-        img.getParentFrame().updateImages(true);
-        if (img.getTriImageFrame() != null)
-        {
-            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).setPaintMask(obj);
-            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).setPaintMask(obj);
-            img.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).setPaintMask(obj);
-            img.getTriImageFrame().updateImages(true);
-        }
-    }
-
-    /*
-     * 	erode binary object with a custom kernel
-     *	using the BitSet structure with indexing convention
-     *	index = x + nx*y + nx*ny*z
-     */
-    private BitSet erodeObject(BitSet img, int nx, int ny, int nz, BitSet mask, int dx, int dy, int dz)
-    {
-        BitSet eroded = new BitSet(nx * ny * nz);
-        int ndx = 2 * dx + 1;
-        int ndxndy = ndx * (2 * dy + 1);
-        int nxny = nx * ny;
-        int x, y, z;
-
-        // dx,dy,dz describe the structuring element ( x+/-dx, y+/-dy, z+/-dz )
-        for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1))
-        {
-            z = index / nxny;
-            y = (index % nxny) / nx;
-            x = ( (index % nxny) % nx);
-            eroded.set(index, true);
-            for (int i = -dx; i <= dx; i++)
-            {
-                for (int j = -dy; j <= dy; j++)
-                {
-                    for (int k = -dz; k <= dz; k++)
-                    {
-                        if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny) && (z + k >= 0) &&
-                            (z + k < nz))
-                        {
-                            if ( (mask.get(i + dx + ndx * (j + dy) + ndxndy * (k + dz)))
-                                && (!img.get(x + i + nx * (y + j) + nxny * (z + k))))
-                            {
-                                eroded.set(index, false);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return eroded;
-    }
-
-    /*
-     * 	dilate binary object with a custom kernel
-     *	using the BitSet structure with indexing convention
-     *	index = x + nx*y + nx*ny*z
-     */
-    private BitSet dilateObject(BitSet img, int nx, int ny, int nz, BitSet mask, int dx, int dy, int dz)
-    {
-        BitSet dilated = new BitSet(nx * ny * nz);
-        int ndx = 2 * dx + 1;
-        int ndxndy = ndx * (2 * dy + 1);
-        int nxny = nx * ny;
-        int x, y, z;
-
-        // dx,dy,dz describe the structuring element ( x+/-dx, y+/-dy, z+/-dz )
-        for (int index = img.nextSetBit(0); index >= 0; index = img.nextSetBit(index + 1))
-        {
-            z = index / nxny;
-            y = (index % nxny) / nx;
-            x = ( (index % nxny) % nx);
-            for (int i = -dx; i <= dx; i++)
-            {
-                for (int j = -dy; j <= dy; j++)
-                {
-                    for (int k = -dz; k <= dz; k++)
-                    {
-                        if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny) && (z + k >= 0) &&
-                            (z + k < nz))
-                        {
-                            if ( (mask.get(i + dx + ndx * (j + dy) + ndxndy * (k + dz))))
-                            {
-                                dilated.set(x + i + nx * (y + j) + nxny * (z + k));
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return dilated;
-    }
-
-    /**
-     *  2D images: 4-connectivity
-     */
-    private int[][] connected4Object2D(boolean img[][], int nx, int ny)
-    {
-        int Nlabel;
-        int[][] label = new int[nx][ny];
-        int[] lb = new int[MaxObject];
-        int lbMin;
-        int x, y, c, i, j, k;
-        int Nlb;
-        int[] connect = new int[4];
-        int Nconnect;
-
-        // the input is a 3x3 binary image (0 out, 1 in)
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                label[x][y] = 0;
-            }
-        }
-
-        lb[0] = 0;
-        Nlabel = 1;
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                if (img[x][y])
-                {
-                    // object point: neighbors ?
-                    Nconnect = 0;
-                    for (i = -1; i <= 1; i++)
-                    {
-                        for (j = -1; j <= 1; j++)
-                        {
-                            if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny))
-                            {
-                                if (i * i + j * j < 2)
-                                {
-                                    if (label[x + i][y + j] > 0)
-                                    {
-                                        connect[Nconnect] = lb[label[x + i][y + j]];
-                                        Nconnect++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // if connected values, find the smallest lb label and attribute it
-                    // to all others (-> join labels)
-                    if (Nconnect > 0)
-                    {
-                        lbMin = lb[connect[0]];
-                        for (k = 1; k < Nconnect; k++)
-                        {
-                            lbMin = Math.min(lbMin, lb[connect[k]]);
-                        }
-                        for (k = 0; k < Nconnect; k++)
-                        {
-                            lb[connect[k]] = lbMin;
-                        }
-                        label[x][y] = lbMin;
-                    }
-                    else
-                    {
-                        // new, unconnected region
-                        label[x][y] = Nlabel;
-                        lb[Nlabel] = Nlabel;
-                        Nlabel++;
-                    }
-                }
-            }
-        }
-        // only one level of labels
-        for (k = 1; k < Nlabel; k++)
-        {
-            c = k;
-            while (lb[c] != c)
-            {
-                c = lb[c];
-            }
-            lb[k] = c;
-        }
-        // count the valid labels and rearrange labels to have regular increment
-        Nlb = 0;
-        int[] lb2 = new int[Nlabel];
-        lb2[0] = 0;
-        for (k = 1; k < Nlabel; k++)
-        {
-            if (lb[k] == k)
-            {
-                Nlb++;
-                lb2[k] = Nlb;
-            }
-        }
-        // copy on label image
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                label[x][y] = lb2[lb[label[x][y]]];
-            }
-        }
-        // clean up
-        lb = null;
-        lb2 = null;
-        connect = null;
-
-        return label;
-    }
-
-    /**
-     *  2D images: 8-neighborhood
-     */
-    private int[][] connected8Object2D(boolean img[][], int nx, int ny)
-    {
-        int Nlabel;
-        int[][] label = new int[nx][ny];
-        int[] lb = new int[MaxObject];
-        int lbMin;
-        int x, y, c, i, j, k;
-        int Nlb;
-        int[] connect = new int[4];
-        int Nconnect;
-
-        // the input is a 3x3 binary image (0 out, 1 in)
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                label[x][y] = 0;
-            }
-        }
-
-        lb[0] = 0;
-        Nlabel = 1;
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                if (img[x][y])
-                {
-                    // object point: neighbors ?
-                    // object point: neighbors ?
-                    Nconnect = 0;
-                    for (i = -1; i <= 1; i++)
-                    {
-                        for (j = -1; j <= 1; j++)
-                        {
-                            if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny))
-                            {
-                                if (i * i + j * j < 3)
-                                {
-                                    if (label[x + i][y + j] > 0)
-                                    {
-                                        connect[Nconnect] = lb[label[x + i][y + j]];
-                                        Nconnect++;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // if connected values, find the smallest lb label and attribute it
-                    // to all others (-> join labels)
-                    if (Nconnect > 0)
-                    {
-                        lbMin = lb[connect[0]];
-                        for (k = 1; k < Nconnect; k++)
-                        {
-                            lbMin = Math.min(lbMin, lb[connect[k]]);
-                        }
-                        for (k = 0; k < Nconnect; k++)
-                        {
-                            lb[connect[k]] = lbMin;
-                        }
-                        label[x][y] = lbMin;
-                    }
-                    else
-                    {
-                        // new, unconnected region
-                        label[x][y] = Nlabel;
-                        lb[Nlabel] = Nlabel;
-                        Nlabel++;
-                    }
-                }
-            }
-        }
-        // only one level of labels
-        for (k = 1; k < Nlabel; k++)
-        {
-            c = k;
-            while (lb[c] != c)
-            {
-                c = lb[c];
-            }
-            lb[k] = c;
-        }
-        // count the valid labels and rearrange labels to have regular increment
-        Nlb = 0;
-        int[] lb2 = new int[Nlabel];
-        lb2[0] = 0;
-        for (k = 1; k < Nlabel; k++)
-        {
-            if (lb[k] == k)
-            {
-                Nlb++;
-                lb2[k] = Nlb;
-            }
-        }
-        // copy on label image
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                label[x][y] = lb2[lb[label[x][y]]];
-            }
-        }
-        // clean up
-        lb = null;
-        lb2 = null;
-        connect = null;
-
-        return label;
-    }
-
-    /**
-     *  3D images: 6-neighborhood
-     */
-    private int[][][] connected6Object3D(boolean img[][][], int nx, int ny, int nz)
-    {
-        int Nlabel = 0;
-        int[][][] label = new int[nx][ny][nz];
-        int[] lb = new int[MaxObject];
-        int lbMin;
-        int x, y, z, i, j, k, l, c;
-        int Nlb;
-        int[] connect = new int[6];
-        int Nconnect;
-
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    label[x][y][z] = 0;
-                }
-            }
-        }
-
-        lb[0] = 0;
-        Nlabel = 1;
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    if (img[x][y][z])
-                    {
-                        // object point: neighbors ?
-                        Nconnect = 0;
-                        for (i = -1; i <= 1; i++)
-                        {
-                            for (j = -1; j <= 1; j++)
-                            {
-                                for (k = -1; k <= 1; k++)
-                                {
-                                    if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny) && (z + k >= 0) &&
-                                        (z + k < nz))
-                                    {
-                                        if (i * i + j * j + k * k < 2)
-                                        {
-                                            if (label[x + i][y + j][z + k] > 0)
-                                            {
-                                                connect[Nconnect] = lb[label[x + i][y + j][z + k]];
-                                                Nconnect++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // if connected values, find the smallest lb label and attribute it
-                        // to all others (-> join labels)
-                        if (Nconnect > 0)
-                        {
-                            //printf("c:%d",Nconnect);
-                            lbMin = lb[connect[0]];
-                            for (l = 1; l < Nconnect; l++)
-                            {
-                                lbMin = Math.min(lbMin, lb[connect[l]]);
-                            }
-                            for (l = 0; l < Nconnect; l++)
-                            {
-                                lb[connect[l]] = lbMin;
-                            }
-                            label[x][y][z] = lbMin;
-                        }
-                        else
-                        {
-                            // new, unconnected region
-                            label[x][y][z] = Nlabel;
-                            lb[Nlabel] = Nlabel;
-                            //printf("l:%d", Nlabel);
-                            Nlabel++;
-                        }
-                    }
-                }
-            }
-        }
-        // only one level of labels
-        for (k = 1; k < Nlabel; k++)
-        {
-            c = k;
-            while (lb[c] != c)
-            {
-                c = lb[c];
-            }
-            lb[k] = c;
-        }
-        // count the valid labels and rearrange labels to have regular increment
-        Nlb = 0;
-        int[] lb2 = new int[Nlabel];
-        lb2[0] = 0;
-        for (k = 1; k < Nlabel; k++)
-        {
-            if (lb[k] == k)
-            {
-                Nlb++;
-                lb2[k] = Nlb;
-            }
-        }
-        // copy on label image
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    label[x][y][z] = lb2[lb[label[x][y][z]]];
-                }
-            }
-        }
-        // clean up
-        lb = null;
-        lb2 = null;
-        connect = null;
-
-        return label;
-    }
-
-    /**
-     *  3D images: 18-neighborhood
-     */
-    private int[][][] connected18Object3D(boolean img[][][], int nx, int ny, int nz)
-    {
-        int Nlabel = 0;
-        int[][][] label = new int[nx][ny][nz];
-        int[] lb = new int[MaxObject];
-        int lbMin;
-        int x, y, z, i, j, k, l, c;
-        int Nlb;
-        int[] connect = new int[18];
-        int Nconnect;
-
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    label[x][y][z] = 0;
-                }
-            }
-        }
-
-        lb[0] = 0;
-        Nlabel = 1;
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    if (img[x][y][z])
-                    {
-                        // object point: neighbors ?
-                        Nconnect = 0;
-                        for (i = -1; i <= 1; i++)
-                        {
-                            for (j = -1; j <= 1; j++)
-                            {
-                                for (k = -1; k <= 1; k++)
-                                {
-                                    if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny) && (z + k >= 0) &&
-                                        (z + k < nz))
-                                    {
-                                        if (i * i + j * j + k * k < 3)
-                                        {
-                                            if (label[x + i][y + j][z + k] > 0)
-                                            {
-                                                connect[Nconnect] = lb[label[x + i][y + j][z + k]];
-                                                Nconnect++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // if connected values, find the smallest lb label and attribute it
-                        // to all others (-> join labels)
-                        if (Nconnect > 0)
-                        {
-                            //printf("c:%d",Nconnect);
-                            lbMin = lb[connect[0]];
-                            for (l = 1; l < Nconnect; l++)
-                            {
-                                lbMin = Math.min(lbMin, lb[connect[l]]);
-                            }
-                            for (l = 0; l < Nconnect; l++)
-                            {
-                                lb[connect[l]] = lbMin;
-                            }
-                            label[x][y][z] = lbMin;
-                        }
-                        else
-                        {
-                            // new, unconnected region
-                            label[x][y][z] = Nlabel;
-                            lb[Nlabel] = Nlabel;
-                            //printf("l:%d", Nlabel);
-                            Nlabel++;
-                        }
-                    }
-                }
-            }
-        }
-        // only one level of labels
-        for (k = 1; k < Nlabel; k++)
-        {
-            c = k;
-            while (lb[c] != c)
-            {
-                c = lb[c];
-            }
-            lb[k] = c;
-        }
-        // count the valid labels and rearrange labels to have regular increment
-        Nlb = 0;
-        int[] lb2 = new int[Nlabel];
-        lb2[0] = 0;
-        for (k = 1; k < Nlabel; k++)
-        {
-            if (lb[k] == k)
-            {
-                Nlb++;
-                lb2[k] = Nlb;
-            }
-        }
-        // copy on label image
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    label[x][y][z] = lb2[lb[label[x][y][z]]];
-                }
-            }
-        }
-        // clean up
-        lb = null;
-        lb2 = null;
-        connect = null;
-
-        return label;
-    }
-
-    /**
-     *  3D images: 26-neighborhood
-     */
-    private int[][][] connected26Object3D(boolean img[][][], int nx, int ny, int nz)
-    {
-        int Nlabel = 0;
-        int[][][] label = new int[nx][ny][nz];
-        int[] lb = new int[MaxObject];
-        int lbMin;
-        int x, y, z, i, j, k, l, c;
-        int Nlb;
-        int[] connect = new int[26];
-        int Nconnect;
-
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    label[x][y][z] = 0;
-                }
-            }
-        }
-
-        lb[0] = 0;
-        Nlabel = 1;
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    if (img[x][y][z])
-                    {
-                        // object point: neighbors ?
-                        Nconnect = 0;
-                        for (i = -1; i <= 1; i++)
-                        {
-                            for (j = -1; j <= 1; j++)
-                            {
-                                for (k = -1; k <= 1; k++)
-                                {
-                                    if ( (x + i >= 0) && (x + i < nx) && (y + j >= 0) && (y + j < ny) && (z + k >= 0) &&
-                                        (z + k < nz))
-                                    {
-                                        if (label[x + i][y + j][z + k] > 0)
-                                        {
-                                            connect[Nconnect] = lb[label[x + i][y + j][z + k]];
-                                            Nconnect++;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        // if connected values, find the smallest lb label and attribute it
-                        // to all others (-> join labels)
-                        if (Nconnect > 0)
-                        {
-                            //printf("c:%d",Nconnect);
-                            lbMin = lb[connect[0]];
-                            for (l = 1; l < Nconnect; l++)
-                            {
-                                lbMin = Math.min(lbMin, lb[connect[l]]);
-                            }
-                            for (l = 0; l < Nconnect; l++)
-                            {
-                                lb[connect[l]] = lbMin;
-                            }
-                            label[x][y][z] = lbMin;
-                        }
-                        else
-                        {
-                            // new, unconnected region
-                            label[x][y][z] = Nlabel;
-                            lb[Nlabel] = Nlabel;
-                            //printf("l:%d", Nlabel);
-                            Nlabel++;
-                        }
-                    }
-                }
-            }
-        }
-        // only one level of labels
-        for (k = 1; k < Nlabel; k++)
-        {
-            c = k;
-            while (lb[c] != c)
-            {
-                c = lb[c];
-            }
-            lb[k] = c;
-        }
-        // count the valid labels and rearrange labels to have regular increment
-        Nlb = 0;
-        int[] lb2 = new int[Nlabel];
-        lb2[0] = 0;
-        for (k = 1; k < Nlabel; k++)
-        {
-            if (lb[k] == k)
-            {
-                Nlb++;
-                lb2[k] = Nlb;
-            }
-        }
-        // copy on label image
-        for (x = 0; x < nx; x++)
-        {
-            for (y = 0; y < ny; y++)
-            {
-                for (z = 0; z < nz; z++)
-                {
-                    label[x][y][z] = lb2[lb[label[x][y][z]]];
-                }
-            }
-        }
-        // clean up
-        lb = null;
-        lb2 = null;
-        connect = null;
-
-        return label;
-    }
 }
 
-class PaintAutoSave extends TimerTask
-{
+/**
+ * DOCUMENT ME!
+ */
+class PaintAutoSave extends TimerTask {
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     ModelImage image;
 
-    public PaintAutoSave(ModelImage img)
-    {
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new PaintAutoSave object.
+     *
+     * @param  img  DOCUMENT ME!
+     */
+    public PaintAutoSave(ModelImage img) {
         image = img;
     }
 
-    public void run()
-    {
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void run() {
+
         // transfer the paint to a ModelImage
         System.out.println("saving the paint");
+
         ModelImage tmp = new ModelImage(ModelImage.BOOLEAN, image.getExtents(), "paint_autosave");
-        try
-        {
+
+        try {
             tmp.importData(0, image.getParentFrame().getComponentImage().getPaintMask(), true);
+
             FileImageXML file = new FileImageXML(image.getParentFrame().getUserInterface(), "paint_autosave",
-                                       image.getFileInfo(0).getFileDirectory(), false);
+                                                 image.getFileInfo(0).getFileDirectory(), false);
             file.writeHeader(tmp, null, "paint_autosave", image.getFileInfo(0).getFileDirectory(), true);
+
             FileWriteOptions opt = new FileWriteOptions(true);
             opt.setBeginSlice(0);
-            if (image.getNDims() > 2)
-            {
+
+            if (image.getNDims() > 2) {
                 opt.setEndSlice(image.getExtents()[2] - 1);
-            }
-            else
-            {
+            } else {
                 opt.setEndSlice(0);
             }
+
             file.writeImage(tmp, opt);
             file = null;
-        }
-        catch (IOException io)
-        {
-        }
+        } catch (IOException io) { }
+
         tmp = null;
     }
 
 }
-
