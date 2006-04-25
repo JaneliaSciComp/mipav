@@ -7,7 +7,7 @@ package gov.nih.mipav.view;
  * @author Evan McCreedy
  * @version 1.0 July 13, 2004
  */
-public interface ScriptRecorder {
+public interface ScriptRecorderInterface {
 
     /**
      *  Appends the script text area with the message.  Used by other classes to record commands from the GUI (such as <code>OpenImage</code>).
