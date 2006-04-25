@@ -86,11 +86,24 @@
     -->
     <property name="project.run.args" value=""/>
 
+    <!--
+        =========
+            Formatter options
+        =========
+    -->
+    <property name="formatter.convention" value="jalopy_formatter_config.xml"/>
+    <property name="formatter.dest" value="src_formatted"/>
+    <property name="formatter.loglocation" value="format_log/format_log.html"/>
+
     <!-- INITIALISER -->
     <target name="init" description="Do not invoke on its own.">
         <tstamp />
         <path id="build.classpath">
+            <pathelement path="${dir.dest}"/>
             <pathelement path="${dir.jdk}/lib"/>
+            <fileset dir="${dir.jdk}/lib">
+                <filename name="**/*.jar"/>
+            </fileset>
             <fileset dir="${dir.jmf}">
                 <filename description="The JMF JAR files." name="*.jar"/>
             </fileset>
@@ -319,5 +332,23 @@
         <delete dir="${dir.doc}"/>
     </target>
 
+    <target name="format"
+            description="Format source files using jalopy."
+            depends="compile">
+        
+        <taskdef name="jalopy" classname="com.triemax.JalopyTask"/>
+        
+        <jalopy convention="${formatter.convention}"
+                classpathref="build.classpath"
+                fork="true"
+                loglevel="info"
+                threads="1"
+                log="${formatter.loglocation}"
+                failonerror="true">
+            <fileset dir="${dir.source}">
+                <include name="**/*.java"/>
+            </fileset>
+        </jalopy>
+    </target>
 </project>
 
