@@ -22,10 +22,10 @@ import java.io.*;
  * to be cancelled, we should NOT use the static method, but rather construct a new AlgorithmTransform and run the
  * algorithm using the standard .run() method.</p>
  *
- * <p>* NOTE for possible improvements in the future. To move images into "mm"* space we presently multiple by voxel
- * resolutions as we loop through the* dimensions. A more efficent method is to modify the scale values of the* the
- * transformation matrix (i.e. the diagonals). This would speed the* process by reducing the number of mults and
- * divisions. Not sure how much but* faster is better. Change should happen here and in the JDialogTransform interface.
+ * <p>NOTE for possible improvements in the future. To move images into "mm" space we presently multiple by voxel
+ * resolutions as we loop through the dimensions. A more efficent method is to modify the scale values of the the
+ * transformation matrix (i.e. the diagonals). This would speed the process by reducing the number of mults and
+ * divisions. Not sure how much but faster is better. Change should happen here and in the JDialogTransform interface.
  * </p>
  *
  * <p>This version of AlgorithmTransform includes a flag (passed as the last parameter) indicating whether to pad the
@@ -11636,9 +11636,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             Line = new double[nx];
 
             for (int y = 0; y < ny; y++) {
-                getRow(Image, y, nx, ny, Line);
+                getRow(Image, y, nx, Line);
                 convertToInterpolationCoefficients(Line, nx, pole, Npoles, DBL_EPSILON);
-                putRow(Image, y, nx, ny, Line);
+                putRow(Image, y, nx, Line);
             }
 
             Line = null;
@@ -11647,9 +11647,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             Line = new double[ny];
 
             for (int x = 0; x < nx; x++) {
-                getColumn(Image, x, nx, ny, Line);
+                getColumn(Image, x, ny, Line);
                 convertToInterpolationCoefficients(Line, ny, pole, Npoles, DBL_EPSILON);
-                putColumn(Image, x, nx, ny, Line);
+                putColumn(Image, x, ny, Line);
             }
 
             Line = null;
@@ -11713,9 +11713,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (int y = 0; y < ny; y++) {
 
                 for (int z = 0; z < nz; z++) {
-                    getRow(Image, y, z, nx, ny, nz, Line);
+                    getRow(Image, y, z, nx, Line);
                     convertToInterpolationCoefficients(Line, nx, pole, Npoles, DBL_EPSILON);
-                    putRow(Image, y, z, nx, ny, nz, Line);
+                    putRow(Image, y, z, nx, Line);
                 }
             }
 
@@ -11727,9 +11727,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (int x = 0; x < nx; x++) {
 
                 for (int z = 0; z < nz; z++) {
-                    getColumn(Image, x, z, nx, ny, nz, Line);
+                    getColumn(Image, x, z, ny, Line);
                     convertToInterpolationCoefficients(Line, ny, pole, Npoles, DBL_EPSILON);
-                    putColumn(Image, x, z, nx, ny, nz, Line);
+                    putColumn(Image, x, z, ny, Line);
                 }
             }
 
@@ -11741,9 +11741,9 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (int x = 0; x < nx; x++) {
 
                 for (int y = 0; y < ny; y++) {
-                    getStack(Image, x, y, nx, ny, nz, Line);
+                    getStack(Image, x, y, nz, Line);
                     convertToInterpolationCoefficients(Line, nz, pole, Npoles, DBL_EPSILON);
-                    putStack(Image, x, y, nx, ny, nz, Line);
+                    putStack(Image, x, y, nz, Line);
                 }
             }
 
@@ -11806,11 +11806,10 @@ public class AlgorithmTransform extends AlgorithmBase {
          *
          * @param  Image  DOCUMENT ME!
          * @param  x      DOCUMENT ME!
-         * @param  nx     DOCUMENT ME!
          * @param  ny     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void getColumn(float[][] Image, int x, int nx, int ny, double[] Line) {
+        private void getColumn(float[][] Image, int x, int ny, double[] Line) {
 
             for (int y = 0; y < ny; y++) {
                 Line[y] = (double) Image[x][y];
@@ -11823,12 +11822,10 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  Image  DOCUMENT ME!
          * @param  x      DOCUMENT ME!
          * @param  z      DOCUMENT ME!
-         * @param  nx     DOCUMENT ME!
          * @param  ny     DOCUMENT ME!
-         * @param  nz     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void getColumn(float[][][] Image, int x, int z, int nx, int ny, int nz, double[] Line) {
+        private void getColumn(float[][][] Image, int x, int z, int ny, double[] Line) {
 
             for (int y = 0; y < ny; y++) {
                 Line[y] = (double) Image[x][y][z];
@@ -11841,10 +11838,9 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  Image  DOCUMENT ME!
          * @param  y      DOCUMENT ME!
          * @param  nx     DOCUMENT ME!
-         * @param  ny     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void getRow(float[][] Image, int y, int nx, int ny, double[] Line) {
+        private void getRow(float[][] Image, int y, int nx, double[] Line) {
 
             for (int x = 0; x < nx; x++) {
                 Line[x] = (double) Image[x][y];
@@ -11858,11 +11854,9 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  y      DOCUMENT ME!
          * @param  z      DOCUMENT ME!
          * @param  nx     DOCUMENT ME!
-         * @param  ny     DOCUMENT ME!
-         * @param  nz     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void getRow(float[][][] Image, int y, int z, int nx, int ny, int nz, double[] Line) {
+        private void getRow(float[][][] Image, int y, int z, int nx, double[] Line) {
 
             for (int x = 0; x < nx; x++) {
                 Line[x] = (double) Image[x][y][z];
@@ -11880,7 +11874,7 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  nz     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void getStack(float[][][] Image, int x, int y, int nx, int ny, int nz, double[] Line) {
+        private void getStack(float[][][] Image, int x, int y, int nz, double[] Line) {
 
             for (int z = 0; z < nz; z++) {
                 Line[z] = (double) Image[x][y][z];
@@ -11959,11 +11953,10 @@ public class AlgorithmTransform extends AlgorithmBase {
          *
          * @param  Image  DOCUMENT ME!
          * @param  x      DOCUMENT ME!
-         * @param  nx     DOCUMENT ME!
          * @param  ny     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void putColumn(float[][] Image, int x, int nx, int ny, double[] Line) {
+        private void putColumn(float[][] Image, int x, int ny, double[] Line) {
 
             for (int y = 0; y < ny; y++) {
                 Image[x][y] = (float) Line[y];
@@ -11976,12 +11969,10 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  Image  DOCUMENT ME!
          * @param  x      DOCUMENT ME!
          * @param  z      DOCUMENT ME!
-         * @param  nx     DOCUMENT ME!
          * @param  ny     DOCUMENT ME!
-         * @param  nz     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void putColumn(float[][][] Image, int x, int z, int nx, int ny, int nz, double[] Line) {
+        private void putColumn(float[][][] Image, int x, int z, int ny, double[] Line) {
 
             for (int y = 0; y < ny; y++) {
                 Image[x][y][z] = (float) Line[y];
@@ -11994,10 +11985,9 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  Image  DOCUMENT ME!
          * @param  y      DOCUMENT ME!
          * @param  nx     DOCUMENT ME!
-         * @param  ny     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void putRow(float[][] Image, int y, int nx, int ny, double[] Line) {
+        private void putRow(float[][] Image, int y, int nx, double[] Line) {
 
             for (int x = 0; x < nx; x++) {
                 Image[x][y] = (float) Line[x];
@@ -12011,11 +12001,9 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  y      DOCUMENT ME!
          * @param  z      DOCUMENT ME!
          * @param  nx     DOCUMENT ME!
-         * @param  ny     DOCUMENT ME!
-         * @param  nz     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void putRow(float[][][] Image, int y, int z, int nx, int ny, int nz, double[] Line) {
+        private void putRow(float[][][] Image, int y, int z, int nx, double[] Line) {
 
             for (int x = 0; x < nx; x++) {
                 Image[x][y][z] = (float) Line[x];
@@ -12028,12 +12016,10 @@ public class AlgorithmTransform extends AlgorithmBase {
          * @param  Image  DOCUMENT ME!
          * @param  x      DOCUMENT ME!
          * @param  y      DOCUMENT ME!
-         * @param  nx     DOCUMENT ME!
-         * @param  ny     DOCUMENT ME!
          * @param  nz     DOCUMENT ME!
          * @param  Line   DOCUMENT ME!
          */
-        private void putStack(float[][][] Image, int x, int y, int nx, int ny, int nz, double[] Line) {
+        private void putStack(float[][][] Image, int x, int y, int nz, double[] Line) {
 
             for (int z = 0; z < nz; z++) {
                 Image[x][y][z] = (float) Line[z];
