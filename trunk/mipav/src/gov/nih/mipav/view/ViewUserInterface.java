@@ -123,7 +123,7 @@ public class ViewUserInterface
     /**
      * Dialog that records actions in the GUI in a script.
      */
-    private ScriptRecorder scriptDialog = null;
+    private ScriptRecorderInterface scriptDialog = null;
 
     /**
      * Command line string argument -- should be image file name.
@@ -1033,7 +1033,7 @@ public class ViewUserInterface
      * Accessor that returns the script dialog.
      * @return  The script dialog.
      */
-    public ScriptRecorder getScriptDialog() {
+    public ScriptRecorderInterface getScriptDialog() {
         return scriptDialog;
     }
 
@@ -1041,7 +1041,7 @@ public class ViewUserInterface
      * Accessor to set the script dialog.
      * @param d           The script dialog.
      */
-    public void setScriptDialog(ScriptRecorder d) {
+    public void setScriptDialog(ScriptRecorderInterface d) {
         scriptDialog = d;
     }
 
