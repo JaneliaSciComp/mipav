@@ -26,7 +26,7 @@ import java.util.*;
  *		@see AlgorithmScriptParser
  */
 public class JDialogScript extends JDialogBase
-    implements ScriptRecorder, ActionListener, WindowListener {
+    implements ScriptRecorderInterface, ActionListener, WindowListener {
 
     private boolean isRecording = false;
     private JTextArea scriptText;
