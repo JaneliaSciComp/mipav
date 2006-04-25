@@ -2719,7 +2719,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @param image   Image to convert.
      * @param in      Original point.
      * @param orient  The image orientation.
-     * @return        The point <code>in</code converted from DICOM space into the space of the image
+     * @return        The point <code>in</code> converted from DICOM space into the space of the image
      */
     protected static Point3Df toOriginal(ModelImage image, Point3Df in, int[] orient)
     {
