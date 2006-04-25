@@ -91,6 +91,7 @@
             Formatter options
         =========
     -->
+    <property name="formatter.taskclasspath" value="."/>
     <property name="formatter.convention" value="jalopy_formatter_config.xml"/>
     <property name="formatter.dest" value="src_formatted"/>
     <property name="formatter.loglocation" value="format_log/format_log.html"/>
@@ -100,10 +101,6 @@
         <tstamp />
         <path id="build.classpath">
             <pathelement path="${dir.dest}"/>
-            <pathelement path="${dir.jdk}/lib"/>
-            <fileset dir="${dir.jdk}/lib">
-                <filename name="**/*.jar"/>
-            </fileset>
             <fileset dir="${dir.jmf}">
                 <filename description="The JMF JAR files." name="*.jar"/>
             </fileset>
@@ -336,7 +333,7 @@
             description="Format source files using jalopy."
             depends="compile">
         
-        <taskdef name="jalopy" classname="com.triemax.JalopyTask"/>
+        <taskdef name="jalopy" classname="com.triemax.JalopyTask" classpath="${formatter.taskclasspath}"/>
         
         <jalopy convention="${formatter.convention}"
                 classpathref="build.classpath"
