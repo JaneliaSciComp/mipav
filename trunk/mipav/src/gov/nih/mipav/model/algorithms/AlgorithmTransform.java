@@ -4089,6 +4089,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     transformNearestNeighbor4Dim2DC(imgBuf, imgBuf2, xfrm);
                 } else if (interp == BILINEAR) {
                     transformBilinear4DC(imgBuf, imgBuf2, xfrm);
+                } else if (interp == RIGID_BODY_BSPLINE3) {
+                    transformRigidBspline2DC(imgBuf, xfrm, 3);
+                } else if (interp == RIGID_BODY_BSPLINE4) {
+                    transformRigidBspline2DC(imgBuf, xfrm, 4);
                 } else if (interp == BSPLINE3) {
                     transformBspline4Dim2DC(imgBuf, imgBuf2, xfrm, 3);
                 } else if (interp == BSPLINE4) {
@@ -4110,6 +4114,10 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 if (interp == BILINEAR) {
                     transformBilinear3DC(imgBuf, imgBuf2, xfrm);
+                } else if (interp == RIGID_BODY_BSPLINE3) {
+                    transformRigidBspline2DC(imgBuf, xfrm, 3);
+                } else if (interp == RIGID_BODY_BSPLINE4) {
+                    transformRigidBspline2DC(imgBuf, xfrm, 4);
                 } else if (interp == BSPLINE3) {
                     transformBspline3Dim2DC(imgBuf, imgBuf2, xfrm, 3);
                 } else if (interp == BSPLINE4) {
@@ -4188,6 +4196,18 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                 } else if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor2DC(imgBuf, imgBuf2, xfrm);
+
+                    if (transformVOI == true) {
+                        transform2DVOI(srcImage, imgBuf, xfrm);
+                    }
+                } else if (interp == RIGID_BODY_BSPLINE3) {
+                    transformRigidBspline2DC(imgBuf, xfrm, 3);
+
+                    if (transformVOI == true) {
+                        transform2DVOI(srcImage, imgBuf, xfrm);
+                    }
+                } else if (interp == RIGID_BODY_BSPLINE4) {
+                    transformRigidBspline2DC(imgBuf, xfrm, 4);
 
                     if (transformVOI == true) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
@@ -9549,6 +9569,213 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
     
                     destImage.set(index++, value);
+                }
+            }
+        }
+
+        Preferences.debug("finished Bspline");
+
+    }
+    
+    /**
+     * Transforms and resamples volume using Bspline interpolation.
+     *
+     * @param  imgBuf  image array
+     * @param  xfrm    transformation matrix to be applied
+     * @param  degree  degree of polynomial
+     */
+    private void transformRigidBspline2DC(float[] imgBuf, float[][] xfrm, int degree) {
+        int i, j;
+        float X, Y;
+        float value;
+        float imm, jmm;
+        int mod = Math.max(1, oYdim / 50);;
+        float j1, j2;
+        float T00, T01, T02, T10, T11, T12;
+        int nx, ny, nz;
+        int border = 0;
+        float[][][][] image;
+        int x, y, z;
+        int xm, ym;
+        BSplineProcessing splineAlg = null;
+        float sliceMin[][];
+        float sliceMax[][];
+        float img2D[][];
+        int c;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+
+        nx = srcImage.getExtents()[0] + (2 * border);
+        ny = srcImage.getExtents()[1] + (2 * border);
+
+        if (srcImage.getNDims() == 2) {
+            nz = 1;
+        } else if (srcImage.getNDims() == 3){
+            nz = srcImage.getExtents()[2];
+        }
+        else {
+            nz = srcImage.getExtents()[2]* srcImage.getExtents()[3];
+        }
+        sliceMin = new float[nz][3];
+        sliceMax = new float[nz][3];
+        
+        for (i = 0; i < nz; i++) {
+            for (c = 0; c < 3; c++) {
+                sliceMin[i][c] = Float.MAX_VALUE;
+                sliceMax[i][c] = -Float.MAX_VALUE;
+            }
+        }
+
+        image = new float[nx][ny][nz][3];
+
+        for (z = 0; z < nz; z++) {
+
+            if ((z >= 1) && (z <= (nz - 1))) {
+
+                try {
+                    srcImage.exportData(z * imgLength, imgLength, imgBuf);
+                } catch (IOException error) {
+                    displayError("Algorithm Transform: Image(s) locked");
+                    setCompleted(false);
+                    disposeProgressBar();
+
+                    return;
+                }
+            }
+
+            for (y = border; y < (ny - border); y++) {
+
+                for (x = border; x < (nx - border); x++) {
+                    for (c = 1; c <= 3; c++) {
+                        image[x][y][z][c-1] = imgBuf[4*((x - border) + ((nx - (2 * border)) * (y - border))) + c];
+                        if (image[x][y][z][c-1] > sliceMax[z][c-1]) {
+                            sliceMax[z][c-1] = image[x][y][z][c-1];
+                        }
+                        if (image[x][y][z][c-1] < sliceMin[z][c-1]) {
+                            sliceMin[z][c-1] = image[x][y][z][c-1];   
+                        }
+                    }
+                }
+            }
+            
+            for (c = 0; c < 3; c++) {
+                for (y = 0, ym = 2*border-1; y < border; y++, ym--) {
+                    for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                        image[x][y][z][c] = image[xm][ym][z][c];
+                    }
+                    for (x = border; x < nx - border; x++) {
+                        image[x][y][z][c] = image[x][ym][z][c];
+                    }
+                    for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                        image[x][y][z][c] = image[xm][ym][z][c];
+                    }
+                }
+                for (y = border; y < ny - border; y++) {
+                    for (x = 0, xm = 2*border - 1; x < border; x++, xm--) {
+                        image[x][y][z][c] = image[xm][y][z][c];
+                    }
+                    for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                        image[x][y][z][c] = image[xm][y][z][c];
+                    }
+                }
+                for (y = ny - border, ym = ny - border - 1; y < ny; y++, ym--) {
+                    for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                        image[x][y][z][c] = image[xm][ym][z][c];
+                    }
+                    for (x = border; x < nx - border; x++) {
+                        image[x][y][z][c] = image[x][ym][z][c];
+                    }
+                    for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                        image[x][y][z][c] = image[xm][ym][z][c];
+                    }
+                }
+            }
+        }  
+
+        splineAlg = new BSplineProcessing();
+        img2D = new float[nx][ny];
+
+        for (z = 0; z < nz; z++) {
+
+            if (isProgressBarVisible()) {
+                progressBar.updateValue((int) (((float) z / nz * 50) + 0.5), activeImage);
+            }
+            for (c = 0; c < 3; c++) {
+
+                for (x = 0; x < nx; x++) {
+    
+                    for (y = 0; y < ny; y++) {
+                        img2D[x][y] = image[x][y][z][c];
+                    }
+                }
+    
+                splineAlg.samplesToCoefficients(img2D, nx, ny, degree);
+    
+                for (x = 0; x < nx; x++) {
+    
+                    for (y = 0; y < ny; y++) {
+                        image[x][y][z][c] = img2D[x][y];
+                    }
+                }
+            } // for (c = 0; c < 3; c++)
+        } // for (z = 0; z < nz; z++)
+
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+
+        int index[] = new int[3];
+        index[0] = 1;
+        index[1] = 2;
+        index[2] = 3;
+
+        for (z = 0; z < nz; z++) {
+            for (c = 0; c < 3; c++) {
+
+                for (x = 0; x < nx; x++) {
+    
+                    for (y = 0; y < ny; y++) {
+                        img2D[x][y] = image[x][y][z][c];
+                    }
+                }
+                for (j = border; (j < ny - border) && !threadStopped; j++) {
+        
+                    if (isProgressBarVisible() && (((j-border) % mod) == 0)) {
+                        progressBar.updateValue((int) ((((float)z/nz * 50) + ((float)c/(3*nz)*50) + ((float)(j-border) / (3*(ny-border)*nz) * 50)) + 50.5f), activeImage);
+                    }
+        
+                    jmm = j * oYres;
+                    j1 = (jmm * T01) + T02;
+                    j2 = (jmm * T11) + T12;
+        
+                    for (i = border; (i < nx-border) && !threadStopped; i++) {
+        
+                        // transform i,j,z
+                        value = sliceMin[z][c]; // remains zero if voxel is transformed out of bounds
+                        imm = i * oXres;
+                        X = (j1 + (imm * T00)) * invXRes;
+        
+                        if ((X > border - 0.5f) && (X < (nx - border - 0.5f))) {
+                            Y = (j2 + (imm * T10)) * invYRes;
+        
+                            if ((Y > border - 0.5f) && (Y < (ny - border - 0.5f))) {
+                                value = (float) splineAlg.interpolatedValue(img2D, X, Y, nx, ny, degree);
+                                if (value > sliceMax[z][c]) {
+                                    value = sliceMax[z][c];
+                                }
+                                else if (value < sliceMin[z][c]) {
+                                    value = sliceMin[z][c];
+                                }
+                            }
+                        }
+        
+                        destImage.set(index[c], value);
+                        index[c] += 4;
+                    }
                 }
             }
         }
