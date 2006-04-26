@@ -3884,6 +3884,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                     transformBilinear4D(imgBuf, xfrm);
                 } else if (interp == BSPLINE3) {
                     transformBspline4Dim2D(imgBuf, xfrm, 3);
+                } else if (interp == RIGID_BODY_BSPLINE3) {
+                    transformRigidBspline2D(imgBuf, xfrm, 3);
+                } else if (interp == RIGID_BODY_BSPLINE4) {
+                    transformRigidBspline2D(imgBuf, xfrm, 4);
                 } else if (interp == BSPLINE4) {
                     transformBspline4Dim2D(imgBuf, xfrm, 4);
                 } else if (interp == CUBIC_LAGRANGIAN) {
@@ -3902,9 +3906,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } else if (interp == BILINEAR) {
                     transformBilinear3D(imgBuf, xfrm);
                 } else if (interp == RIGID_BODY_BSPLINE3) {
-                    transformRigidBspline2D(imgBuf, transMatrix, 3);
+                    transformRigidBspline2D(imgBuf, xfrm, 3);
                 } else if (interp == RIGID_BODY_BSPLINE4) {
-                    transformRigidBspline2D(imgBuf, transMatrix, 4);
+                    transformRigidBspline2D(imgBuf, xfrm, 4);
                 } else if (interp == BSPLINE3) {
                     transformBspline3Dim2D(imgBuf, xfrm, 3);
                 } else if (interp == BSPLINE4) {
@@ -3950,13 +3954,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == RIGID_BODY_BSPLINE3) {
-                    transformRigidBspline3D(imgBuf, transMatrix, 3);
+                    transformRigidBspline3D(imgBuf, xfrm, 3);
 
                     if (transformVOI == true) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == RIGID_BODY_BSPLINE4) {
-                    transformRigidBspline3D(imgBuf, transMatrix, 4);
+                    transformRigidBspline3D(imgBuf, xfrm, 4);
 
                     if (transformVOI == true) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
@@ -4023,13 +4027,13 @@ public class AlgorithmTransform extends AlgorithmBase {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == RIGID_BODY_BSPLINE3) {
-                    transformRigidBspline2D(imgBuf, transMatrix, 3);
+                    transformRigidBspline2D(imgBuf, xfrm, 3);
 
                     if (transformVOI == true) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == RIGID_BODY_BSPLINE4) {
-                    transformRigidBspline2D(imgBuf, transMatrix, 4);
+                    transformRigidBspline2D(imgBuf, xfrm, 4);
 
                     if (transformVOI == true) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
@@ -9360,59 +9364,52 @@ public class AlgorithmTransform extends AlgorithmBase {
         QLag = null;
         Preferences.debug("finished quintic Lagrangian");
     }
-
+    
     /**
      * Transforms and resamples volume using Bspline interpolation.
      *
      * @param  imgBuf  image array
-     * @param  tMat    transformation matrix to be applied
+     * @param  xfrm    transformation matrix to be applied
      * @param  degree  degree of polynomial
      */
-    private void transformRigidBspline2D(float[] imgBuf, TransMatrix tMat, int degree) {
-        boolean success;
-        double transX;
-        double transY;
-        double rotZ;
-        double xOrigin = 0.0;
-        double yOrigin = 0.0;
+    private void transformRigidBspline2D(float[] imgBuf, float[][] xfrm, int degree) {
+        int i, j;
+        float X, Y;
+        float value;
+        float imm, jmm;
+        int mod = Math.max(1, oYdim / 50);;
+        float j1, j2;
+        float T00, T01, T02, T10, T11, T12;
         int nx, ny, nz;
         int border = 0;
         float[][][] image;
         int x, y, z;
+        int xm, ym;
         BSplineProcessing splineAlg = null;
-        float[][] img2D;
-        float[][] res2D;
-        double xShift = 0.0;
-        double yShift = 0.0;
-        double x0, y0, x1, y1;
-        double a11, a12, a21, a22;
-        boolean masking = true;
         float sliceMin[];
         float sliceMax[];
-        int i;
-        success = tMat.decomposeMatrix2D(tMat);
+        float img2D[][];
 
-        if (!success) {
-            MipavUtil.displayError("decomposeMatrix2D failure in transformRigidBSpline2D");
-            disposeLocal();
-            setCompleted(false);
-        }
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
 
-        transX = tMat.getTranslateX() / iXres;
-        transY = tMat.getTranslateY() / iYres;
-        rotZ = -tMat.getRotateZ() * Math.PI / 180.0;
         nx = srcImage.getExtents()[0] + (2 * border);
         ny = srcImage.getExtents()[1] + (2 * border);
 
         if (srcImage.getNDims() == 2) {
-            nz = 1 + (2 * border);
-            sliceMin = new float[1];
-            sliceMax = new float[1];
-        } else {
-            nz = srcImage.getExtents()[2] + (2 * border);
-            sliceMin = new float[srcImage.getExtents()[2]];
-            sliceMax = new float[srcImage.getExtents()[2]];
+            nz = 1;
+        } else if (srcImage.getNDims() == 3){
+            nz = srcImage.getExtents()[2];
         }
+        else {
+            nz = srcImage.getExtents()[2]* srcImage.getExtents()[3];
+        }
+        sliceMin = new float[nz];
+        sliceMax = new float[nz];
         
         for (i = 0; i < sliceMin.length; i++) {
             sliceMin[i] = Float.MAX_VALUE;
@@ -9421,22 +9418,12 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         image = new float[nx][ny][nz];
 
-        for (x = 0; x < nx; x++) {
+        for (z = 0; z < nz; z++) {
 
-            for (y = 0; y < ny; y++) {
-
-                for (z = 0; z < nz; z++) {
-                    image[x][y][z] = -1.0f;
-                }
-            }
-        }
-
-        for (z = border; z < (nz - border); z++) {
-
-            if ((z >= (border + 1)) && (z <= (nz - 1 - border))) {
+            if ((z >= 1) && (z <= (nz - 1))) {
 
                 try {
-                    srcImage.exportData((z - border) * imgLength, imgLength, imgBuf);
+                    srcImage.exportData(z * imgLength, imgLength, imgBuf);
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
@@ -9450,19 +9437,49 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 for (x = border; x < (nx - border); x++) {
                     image[x][y][z] = imgBuf[(x - border) + ((nx - (2 * border)) * (y - border))];
-                    if (image[x][y][z] > sliceMax[z-border]) {
-                        sliceMax[z-border] = image[x][y][z];
+                    if (image[x][y][z] > sliceMax[z]) {
+                        sliceMax[z] = image[x][y][z];
                     }
-                    if (image[x][y][z] < sliceMin[z-border]) {
-                        sliceMin[z-border] = image[x][y][z];   
+                    if (image[x][y][z] < sliceMin[z]) {
+                        sliceMin[z] = image[x][y][z];   
                     }
                 }
             }
-        }
+            
+            for (y = 0, ym = 2*border-1; y < border; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][z];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+            }
+            for (y = border; y < ny - border; y++) {
+                for (x = 0, xm = 2*border - 1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][y][z];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][y][z];
+                }
+            }
+            for (y = ny - border, ym = ny - border - 1; y < ny; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][z];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+            }
+        }  
 
         splineAlg = new BSplineProcessing();
         img2D = new float[nx][ny];
-        res2D = new float[nx][ny];
 
         for (z = 0; z < nz; z++) {
 
@@ -9487,22 +9504,12 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
         } // for (z = 0; z < nz; z++)
 
-        // Prepare the geometry
-        a11 = Math.cos(rotZ);
-        a12 = -Math.sin(rotZ);
-        a21 = Math.sin(rotZ);
-        a22 = Math.cos(rotZ);
-        x0 = (a11 * (transX + xOrigin)) + (a12 * (transY + yOrigin));
-        y0 = (a21 * (transX + xOrigin)) + (a22 * (transY + yOrigin));
-        xShift = xOrigin - x0;
-        yShift = yOrigin - y0;
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
 
-        // Visit all the pixels of the output image asnd assign their value
+        int index = 0;
+
         for (z = 0; z < nz; z++) {
-
-            if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) z / nz * 50) + 50.5), activeImage);
-            }
 
             for (x = 0; x < nx; x++) {
 
@@ -9510,155 +9517,94 @@ public class AlgorithmTransform extends AlgorithmBase {
                     img2D[x][y] = image[x][y][z];
                 }
             }
-
-            for (y = 0; y < ny; y++) {
-                x0 = (a12 * (double) y) + xShift;
-                y0 = (a22 * (double) y) + yShift;
-
-                for (x = 0; x < nx; x++) {
-                    x1 = x0 + (a11 * (double) x);
-                    y1 = y0 + (a21 * (double) x);
-
-                    if (masking) {
-
-                        if ((x1 <= -0.5) || (((double) nx - 0.5) <= x1) || (y1 <= -0.5) ||
-                                (((double) ny - 0.5) <= y1)) {
-                            res2D[x][y] = sliceMin[z];
-                        } else {
-                            res2D[x][y] = (float) splineAlg.interpolatedValue(img2D, x1, y1, nx, ny, degree);
-                            if (res2D[x][y] > sliceMax[z]) {
-                                res2D[x][y] = sliceMax[z];
+            for (j = border; (j < ny - border) && !threadStopped; j++) {
+    
+                if (isProgressBarVisible() && (((j-border) % mod) == 0)) {
+                    progressBar.updateValue((int) ((((float)z/nz * 50) + ((float)(j-border) / ((ny-border)*nz) * 50)) + 50.5f), activeImage);
+                }
+    
+                jmm = j * oYres;
+                j1 = (jmm * T01) + T02;
+                j2 = (jmm * T11) + T12;
+    
+                for (i = border; (i < nx-border) && !threadStopped; i++) {
+    
+                    // transform i,j,z
+                    value = sliceMin[z]; // remains zero if voxel is transformed out of bounds
+                    imm = i * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
+    
+                    if ((X > border - 0.5f) && (X < (nx - border - 0.5f))) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+    
+                        if ((Y > border - 0.5f) && (Y < (ny - border - 0.5f))) {
+                            value = (float) splineAlg.interpolatedValue(img2D, X, Y, nx, ny, degree);
+                            if (value > sliceMax[z]) {
+                                value = sliceMax[z];
                             }
-                            if (res2D[x][y] < sliceMin[z]) {
-                                res2D[x][y] = sliceMin[z];
+                            else if (value < sliceMin[z]) {
+                                value = sliceMin[z];
                             }
-                        }
-                    } // if (masking)
-                    else {
-                        res2D[x][y] = (float) splineAlg.interpolatedValue(img2D, x1, y1, nx, ny, degree);
-                        if (res2D[x][y] > sliceMax[z]) {
-                            res2D[x][y] = sliceMax[z];
-                        }
-                        if (res2D[x][y] < sliceMin[z]) {
-                            res2D[x][y] = sliceMin[z];
                         }
                     }
-                } // for (x = 0; x < nx; x++)
-            } // for (y = 0; y < ny; y++)
-
-            for (x = 0; x < nx; x++) {
-
-                for (y = 0; y < ny; y++) {
-                    image[x][y][z] = res2D[x][y];
+    
+                    destImage.set(index++, value);
                 }
-            }
-        } // for (z = 0; z < nz; z++)
-
-        nx = nx - (2 * border);
-        ny = ny - (2 * border);
-        nz = nz - (2 * border);
-
-        for (z = 0; z < nz; z++) {
-
-            for (x = 0; x < nx; x++) {
-
-                for (y = 0; y < ny; y++) {
-                    imgBuf[x + (nx * y)] = image[x + border][y + border][z + border];
-                }
-            }
-
-            try {
-                destImage.importData(z * imgLength, imgBuf, false);
-            } catch (IOException e) {
-                displayError("Algorithm Transform: IOException Error on importData");
-                setCompleted(false);
-                disposeProgressBar();
-
-                return;
             }
         }
 
-        destImage.calcMinMax();
+        Preferences.debug("finished Bspline");
 
-        return;
     }
-
+    
     /**
      * Transforms and resamples volume using Bspline interpolation.
      *
      * @param  imgBuf  image array
-     * @param  tMat    transformation matrix to be applied
+     * @param  xfrm    transformation matrix to be applied
      * @param  degree  degree of polynomial
      */
-    private void transformRigidBspline3D(float[] imgBuf, TransMatrix tMat, int degree) {
-        boolean success;
-        double transX;
-        double transY;
-        double transZ;
-        double rotX;
-        double rotY;
-        double rotZ;
-        double xOrigin = 0.0;
-        double yOrigin = 0.0;
-        double zOrigin = 0.0;
-        int nx, ny, nz;
+    private void transformRigidBspline3D(float[] imgBuf, float [][] xfrm, int degree) {
+        int i, j, k;
+        float X, Y, Z;
+        float value;
+        float imm, jmm, kmm;
+        int mod = Math.max(1, oZdim / 50);
         int border = 0;
-        float[][][] image;
+        int nx, ny, nz;
+        float image[][][];
         int x, y, z;
-        BSplineProcessing splineAlg = null;
-        float[][][] res3D;
-        double xShift = 0.0;
-        double yShift = 0.0;
-        double zShift = 0.0;
-        double x0, y0, z0, x1, y1, z1, x2, y2, z2;
-        double a11, a12, a13, a21, a22, a23, a31, a32, a33;
-        boolean masking = true;
+        int xm, ym, zm;
+        BSplineProcessing splineAlg;
         float imageMin;
         float imageMax;
         
         srcImage.calcMinMax();
         imageMin = (float)srcImage.getMin();
         imageMax = (float)srcImage.getMax();
-        
-        success = tMat.decomposeMatrix(tMat);
 
-        if (!success) {
-            MipavUtil.displayError("decomposeMatrix failure in transformRigidBSpline3D");
-            disposeLocal();
-            setCompleted(false);
-        }
+        float k1, k2, k3, j1, j2, j3;
 
-        transX = tMat.getTranslateX() / iXres;
-        transY = tMat.getTranslateY() / iYres;
-        transZ = tMat.getTranslateZ() / iZres;
-        /*rotX = tMat.getRotateX();
-        System.out.println("rotX = " + rotX);
-        rotY = tMat.getRotateY();
-        System.out.println("rotY = " + rotY);
-        rotZ = tMat.getRotateZ();
-        System.out.println("rotZ = " + rotZ);*/
-        rotX = -tMat.getRotateX() * Math.PI / 180.0;
-        rotY = -tMat.getRotateY() * Math.PI / 180.0;
-        rotZ = -tMat.getRotateZ() * Math.PI / 180.0;
-        //System.out.println("transX = " + transX + " transY = " + transY +
-                           //" transZ = " + transZ);
-        //System.out.println("rotX = " + rotX + " rotY = " + rotY +
-                           //" rotZ = " + rotZ);
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
+
+        T00 = (float) xfrm[0][0];
+        T01 = (float) xfrm[0][1];
+        T02 = (float) xfrm[0][2];
+        T03 = (float) xfrm[0][3];
+        T10 = (float) xfrm[1][0];
+        T11 = (float) xfrm[1][1];
+        T12 = (float) xfrm[1][2];
+        T13 = (float) xfrm[1][3];
+        T20 = (float) xfrm[2][0];
+        T21 = (float) xfrm[2][1];
+        T22 = (float) xfrm[2][2];
+        T23 = (float) xfrm[2][3];
+
         nx = srcImage.getExtents()[0] + (2 * border);
         ny = srcImage.getExtents()[1] + (2 * border);
         nz = srcImage.getExtents()[2] + (2 * border);
 
         image = new float[nx][ny][nz];
-
-        for (x = 0; x < nx; x++) {
-
-            for (y = 0; y < ny; y++) {
-
-                for (z = 0; z < nz; z++) {
-                    image[x][y][z] = -1.0f;
-                }
-            }
-        }
 
         for (z = border; z < (nz - border); z++) {
 
@@ -9670,107 +9616,166 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             }
         }
-
+        
+        for (z = 0, zm = 2*border -1; z < border; z++, zm--) {
+            for (y = 0, ym = 2*border-1; y < border; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][zm];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+            }
+            for (y = border; y < ny - border; y++) {
+                for (x = 0, xm = 2*border - 1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][y][zm];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][y][zm];
+                }
+            }
+            for (y = ny - border, ym = ny - border - 1; y < ny; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][zm];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+            }
+        }
+        for (z = border; z < nz - border; z++) {
+            for (y = 0, ym = 2*border-1; y < border; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][z];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+            }
+            for (y = border; y < ny - border; y++) {
+                for (x = 0, xm = 2*border - 1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][y][z];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][y][z];
+                }
+            }
+            for (y = ny - border, ym = ny - border - 1; y < ny; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][z];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][z];
+                }
+            }    
+        }
+        for (z = nz - border, zm = nz - border - 1; z < nz; z++, zm--) {
+            for (y = 0, ym = 2*border-1; y < border; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][zm];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+            }
+            for (y = border; y < ny - border; y++) {
+                for (x = 0, xm = 2*border - 1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][y][zm];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][y][zm];
+                }
+            }
+            for (y = ny - border, ym = ny - border - 1; y < ny; y++, ym--) {
+                for (x = 0, xm = 2*border-1; x < border; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+                for (x = border; x < nx - border; x++) {
+                    image[x][y][z] = image[x][ym][zm];
+                }
+                for (x = nx - border, xm = nx - border - 1; x < nx; x++, xm--) {
+                    image[x][y][z] = image[xm][ym][zm];
+                }
+            }
+        }
+        
+        
         splineAlg = new BSplineProcessing();
         splineAlg.samplesToCoefficients(image, nx, ny, nz, degree);
-        res3D = new float[nx][ny][nz];
 
-        // Prepare the geometry
-        a11 = Math.cos(rotY) * Math.cos(rotZ);
-        a12 = -Math.cos(rotY) * Math.sin(rotZ);
-        a13 = Math.sin(rotY);
-        a21 = (Math.sin(rotX) * Math.sin(rotY) * Math.cos(rotZ)) + (Math.cos(rotX) * Math.sin(rotZ));
-        a22 = (-Math.sin(rotX) * Math.sin(rotY) * Math.sin(rotZ)) + (Math.cos(rotX) * Math.cos(rotZ));
-        a23 = -Math.sin(rotX) * Math.cos(rotY);
-        a31 = (-Math.cos(rotX) * Math.sin(rotY) * Math.cos(rotZ)) + (Math.sin(rotX) * Math.sin(rotZ));
-        a32 = (Math.cos(rotX) * Math.sin(rotY) * Math.sin(rotZ)) + (Math.sin(rotX) * Math.cos(rotZ));
-        a33 = Math.cos(rotX) * Math.cos(rotY);
-        x0 = (a11 * (transX + xOrigin)) + (a12 * (transY + yOrigin)) + (a13 * (transZ + zOrigin));
-        y0 = (a21 * (transX + xOrigin)) + (a22 * (transY + yOrigin)) + (a23 * (transZ + zOrigin));
-        z0 = (a31 * (transX + xOrigin)) + (a32 * (transY + yOrigin)) + (a33 * (transZ + zOrigin));
-        xShift = xOrigin - x0;
-        yShift = yOrigin - y0;
-        zShift = zOrigin - z0;
-        // System.out.println("a11 = " + a11 + " a12 = " + a12 + " a13 = " + a13);
-        // System.out.println("a21 = " + a21 + " a22 = " + a22 + " a23 = " + a23);
-        // System.out.println("a31 = " + a31 + " a32 = " + a32 + " a33 = " + a33);
+        float invXRes = 1 / iXres;
+        float invYRes = 1 / iYres;
+        float invZRes = 1 / iZres;
 
-        // Visit all the pixels of the output image asnd assign their value
-        for (z = 0; z < nz; z++) {
+        int index = 0;
 
-            if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) z / nz * 50) + 50.5), activeImage);
+        for (k = border; (k < nz - border) && !threadStopped; k++) {
+
+            if (isProgressBarVisible() && (((k-border) % mod) == 0)) {
+                progressBar.updateValue((int) (((float) (k-border) / oZdim * 100) + 0.5f), activeImage);
             }
 
-            x0 = (a13 * (double) z) + xShift;
-            y0 = (a23 * (double) z) + yShift;
-            z0 = (a33 * (double) z) + zShift;
+            kmm = k * oZres;
+            k1 = (kmm * T02) + T03;
+            k2 = (kmm * T12) + T13;
+            k3 = (kmm * T22) + T23;
 
-            for (y = 0; y < ny; y++) {
-                x1 = x0 + (a12 * (double) y);
-                y1 = y0 + (a22 * (double) y);
-                z1 = z0 + (a32 * (double) y);
+            for (j = border; (j < ny - border) && !threadStopped; j++) {
+                jmm = j * oYres;
+                j1 = (jmm * T01) + k1;
+                j2 = (jmm * T11) + k2;
+                j3 = (jmm * T21) + k3;
 
-                for (x = 0; x < nx; x++) {
-                    x2 = x1 + (a11 * (double) x);
-                    y2 = y1 + (a21 * (double) x);
-                    z2 = z1 + (a31 * (double) x);
+                for (i = border; (i < nx - border) && !threadStopped; i++) {
 
-                    if (masking) {
+                    // transform i,j,k
+                    value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of bounds
+                    imm = i * oXres;
+                    X = (j1 + (imm * T00)) * invXRes;
 
-                        if ((x2 <= -0.5) || (((double) nx - 0.5) <= x2) || (y2 <= -0.5) ||
-                                (((double) ny - 0.5) <= y2) || (z2 <= -0.5) || (((double) nz - 0.5) <= z2)) {
-                            res3D[x][y][z] = imageMin;
-                        } else {
-                            res3D[x][y][z] = (float) splineAlg.interpolatedValue(image, x2, y2, z2, nx, ny, nz, degree);
-                            if (res3D[x][y][z] > imageMax) {
-                                res3D[x][y][z] = imageMax;
+                    if ((X > border - 0.5f) && (X < (nx - border - 0.5f))) {
+                        Y = (j2 + (imm * T10)) * invYRes;
+
+                        if ((Y > border - 0.5f) && (Y < (ny - border - 0.5f))) {
+                            Z = (j3 + (imm * T20)) * invZRes;
+
+                            if ((Z > border - 0.5f) && (Z < (nz - border - 0.5f))) {
+                                value = (float) splineAlg.interpolatedValue(image, X, Y, Z, nx, ny, nz, degree);
+                                if (value > imageMax) {
+                                    value = imageMax;
+                                }
+                                else if (value < imageMin) {
+                                    value = imageMin;
+                                }
                             }
-                            if (res3D[x][y][z] < imageMin) {
-                                res3D[x][y][z] = imageMin;
-                            }
-                        }
-                    } // if (masking)
-                    else {
-                        res3D[x][y][z] = (float) splineAlg.interpolatedValue(image, x2, y2, z2, nx, ny, nz, degree);
-                        if (res3D[x][y][z] > imageMax) {
-                            res3D[x][y][z] = imageMax;
-                        }
-                        if (res3D[x][y][z] < imageMin) {
-                            res3D[x][y][z] = imageMin;
                         }
                     }
-                } // for (x = 0; x < nx; x++)
-            } // for (y = 0; y < ny; y++)
-        } // for (z = 0; z < nz; z++)
 
-        nx = nx - (2 * border);
-        ny = ny - (2 * border);
-        nz = nz - (2 * border);
-
-        for (z = 0; z < nz; z++) {
-
-            for (x = 0; x < nx; x++) {
-
-                for (y = 0; y < ny; y++) {
-                    imgBuf[x + (nx * y) + (nx * ny * z)] = res3D[x + border][y + border][z + border];
+                    destImage.set(index++, value);
                 }
             }
         }
 
-        try {
-            destImage.importData(0, imgBuf, true);
-        } catch (IOException e) {
-            displayError("Algorithm Transform: IOException Error on importData");
-            setCompleted(false);
-            disposeProgressBar();
+        Preferences.debug("finished Bspline");
 
-            return;
-        }
-
-        return;
     }
 
+    
     /**
      * Transforms and resamples a 3D volume using trilinear interpolation.
      *
