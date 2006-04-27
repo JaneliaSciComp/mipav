@@ -235,13 +235,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeVOIPointDrawTypeOptions(gbc, gbl);
 
         // make the saving options
-        // gbc.gridx = 0;
-        // gbc.gridy = 0;
         fileSavePanel.setLayout(gbl);
         fileSavePanel.setBorder(buildTitledBorder("Save"));
         makeSaveOverwriteOptions(gbc, gbl);
         makeSaveAllOptions(gbc, gbl);
-        makeSaveDefaultsOptions(gbc, gbl);
+        //makeSaveDefaultsOptions(gbc, gbl);
         makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeSaveXMLZipOptions(gbc, gbl);
@@ -260,11 +258,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayPanel.add(displayColorPanel);
 
         // make the other options
-        // gbc.gridx = 0;
-        // gbc.gridy = 0;
         otherPanel.setLayout(gbl);
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.NORTHWEST;
+        makeSaveDefaultsOptions(gbc, gbl);
         makeLogModeOptions(gbc, gbl);
         makeLaxCheckOptions(gbc, gbl);
         makeCheckOnCloseFrameOptions(gbc, gbl);
@@ -865,7 +862,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         debugPanel.setBorder(this.buildTitledBorder("Debug levels"));
 
         GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc.anchor = gbc2.NORTHWEST;
+        gbc2.anchor = gbc2.NORTHWEST;
 
         boolean[] levels = Preferences.getDebugLevels();
 
@@ -886,17 +883,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         debugCommsBox.setSelected(levels[3]);
 
         debugPanel.add(debugMinorBox, gbc2);
-
-        gbc.gridy = 1;
         debugPanel.add(debugAlgorithmBox, gbc2);
-
-        gbc.gridy = 2;
         debugPanel.add(debugFileIOBox, gbc2);
-
-        gbc.gridy = 3;
         debugPanel.add(debugCommsBox, gbc2);
 
-        gbc.gridy++;
         gbc.fill = gbc.BOTH;
         otherPanel.add(debugPanel, gbc);
     }
@@ -918,22 +908,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         fileMiscPanel.add(fileFilterLabel);
 
         filterButton = new JButton();
-
-        // filterButton.setFont(MipavUtil.font12);
         filterButton.addActionListener(this);
         filterButton.setActionCommand("chooseFilter");
         filterButton.setFont(MipavUtil.font12);
 
-        // fileFilterComboBox = new JComboBox(ViewImageFileFilter.getDescriptions());
-        // fileFilterComboBox.setFont(MipavUtil.font12);
-        // fileFilterComboBox.setForeground(Color.black);
-        // fileFilterComboBox.setBackground(Color.white);
-        // fileFilterComboBox.addActionListener(this);
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
-        // gbl.setConstraints(fileFilterComboBox, gbc);
-        // globalChangesPanel.add(fileFilterComboBox);
 
         gbl.setConstraints(filterButton, gbc);
         fileMiscPanel.add(filterButton);
@@ -1028,8 +1009,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.fill = gbc.HORIZONTAL;
         fontPanel.add(fontSizeField, gbc2);
 
-        gbc.gridy++;
-        gbc.fill = gbc.BOTH;
+        //gbc.gridy++;
+        //gbc.fill = gbc.BOTH;
         otherPanel.add(fontPanel, gbc);
     }
 
@@ -1265,6 +1246,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  GridBagLayout the layout...
      */
     protected void makeSaveDefaultsOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        
         saveDefaultsCheckBox = new JCheckBox("Save dialog settings");
         saveDefaultsCheckBox.setFont(MipavUtil.font12);
         saveDefaultsCheckBox.setForeground(Color.black);
@@ -1273,7 +1255,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(saveDefaultsCheckBox, gbc);
-        fileSavePanel.add(saveDefaultsCheckBox);
+        otherPanel.add(saveDefaultsCheckBox);
 
         // preset the choices.
         saveDefaultsCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
