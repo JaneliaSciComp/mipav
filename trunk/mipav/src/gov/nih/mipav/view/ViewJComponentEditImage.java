@@ -156,6 +156,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** spacing of the grid (vertical) in terms of resolution. */
     protected float gridSpacingY = 20f;
 
+    /** if number/lettering should be displayed for grid boxes */
+    protected boolean gridLabelingOn = false;
+
+    /** boolean to determine the orientation:
+     * true is x-axis numbered
+     * false is x-axis lettered
+     */
+    protected boolean gridLabelOrientation = true;
+
+
     /** true if image is known to be in patient orientation and is displayed in ViewJFrameTriImage. */
     protected boolean hasOrientation = false;
 
@@ -1053,6 +1063,31 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         showRegionInfo(count, str);
     }
+
+    /**
+     * Calls the VOI Function (for polyline slices) to calculate and display distances
+     */
+    public void calcPLineSliceDistances() {
+        int i, nVOI;
+
+        ViewVOIVector VOIs = imageActive.getVOIs();
+
+        nVOI = VOIs.size();
+        if (nVOI == 0) {
+            return;
+        }
+
+        for (i = 0; i < nVOI; i++) {
+            if (VOIs.VOIAt(i).isActive() == true &&
+                VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+
+                VOIs.VOIAt(i).calcPLineDistances(imageActive.getFileInfo(0));
+            }
+
+        }
+
+    }
+
 
     /**
      * Loops through the images and displays them.
@@ -3171,7 +3206,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
-        if ((pixBuffer == null) || (imageBufferActive == null) || (modifyFlag == false)) {
+        if (pixBuffer == null || imageBufferActive == null || modifyFlag == false) {
             return;
         }
 
@@ -3181,36 +3216,30 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         xDim = imageActive.getExtents()[0];
         yDim = imageActive.getExtents()[1];
         sliceSize = xDim * yDim;
-
         if (imageActive.getNDims() >= 3) {
             zDim = imageActive.getExtents()[2];
         }
-
-        if ((xS < 0) || (xS >= xDim) || (yS < 0) || (yS >= yDim)) {
+        if (xS < 0 || xS >= xDim || yS < 0 || yS >= yDim) {
             return;
         }
 
         try {
-
             if (mode == DEFAULT) {
-
-                if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
-
+                if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
                     // Dragging the mouse with the right mouse button pressed
                     // increases the window when going from left to right.
                     // Dragging the mouse with the right mouse button pressed
                     // increases the level when going from down to up.
                     setCursor(winLevelCursor);
-
                     if (!winLevelSet) {
                         winLevelSet = true;
 
                         if (imageActive.isColorImage()) {
-
                             if (imageActive.getType() == ModelStorageBase.ARGB) {
                                 minImageWin = 0;
                                 maxImageWin = 255;
-                            } else {
+                            }
+                            else {
                                 minImageWin = (float) imageActive.getMin();
                                 maxImageWin = (float) imageActive.getMax();
                             }
@@ -3224,47 +3253,38 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             maxG = -Float.MAX_VALUE;
                             minB = Float.MAX_VALUE;
                             maxB = -Float.MAX_VALUE;
-
                             for (i = 0; i < sliceSize; i++) {
-
-                                if (imageBufferActive[(4 * i) + 1] > maxR) {
-                                    maxR = imageBufferActive[(4 * i) + 1];
+                                if (imageBufferActive[4 * i + 1] > maxR) {
+                                    maxR = imageBufferActive[4 * i + 1];
                                 }
-
-                                if (imageBufferActive[(4 * i) + 1] < minR) {
-                                    minR = imageBufferActive[(4 * i) + 1];
+                                if (imageBufferActive[4 * i + 1] < minR) {
+                                    minR = imageBufferActive[4 * i + 1];
                                 }
-
-                                if (imageBufferActive[(4 * i) + 2] > maxG) {
-                                    maxG = imageBufferActive[(4 * i) + 2];
+                                if (imageBufferActive[4 * i + 2] > maxG) {
+                                    maxG = imageBufferActive[4 * i + 2];
                                 }
-
-                                if (imageBufferActive[(4 * i) + 2] < minG) {
-                                    minG = imageBufferActive[(4 * i) + 2];
+                                if (imageBufferActive[4 * i + 2] < minG) {
+                                    minG = imageBufferActive[4 * i + 2];
                                 }
-
-                                if (imageBufferActive[(4 * i) + 3] > maxB) {
-                                    maxB = imageBufferActive[(4 * i) + 3];
+                                if (imageBufferActive[4 * i + 3] > maxB) {
+                                    maxB = imageBufferActive[4 * i + 3];
                                 }
-
-                                if (imageBufferActive[(4 * i) + 3] < minB) {
-                                    minB = imageBufferActive[(4 * i) + 3];
+                                if (imageBufferActive[4 * i + 3] < minB) {
+                                    minB = imageBufferActive[4 * i + 3];
                                 }
                             } // for (i = 0; i < sliceSize; i++)
-
                             minWin = Math.min(minR, minG);
                             minWin = Math.min(minWin, minB);
                             maxWin = Math.max(maxR, maxG);
                             maxWin = Math.max(maxWin, maxB);
-
                             if (imageActive.getType() == ModelStorageBase.ARGB) {
                                 xWin[1] = minWin;
                                 xWin[2] = maxWin;
-                            } else {
+                            }
+                            else {
                                 xWin[1] = minWin * 255 / maxWin;
                                 xWin[2] = 255;
                             }
-
                             xWin[0] = 0;
                             yWin[0] = 255;
                             zWin[0] = 0;
@@ -3275,43 +3295,44 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             xWin[3] = 255;
                             yWin[3] = 0;
                             zWin[3] = 0;
-
                             if (imageA == imageActive) {
                                 RGBTA.getRedFunction().importArrays(xWin, yWin, 4);
                                 RGBTA.getGreenFunction().importArrays(xWin, yWin, 4);
                                 RGBTA.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.makeRGB(-1);
-                                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTA);
-                            } else {
+                                RGBTA.makeRGB( -1);
+                                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
+                                    RGBTA);
+                            }
+                            else {
                                 RGBTB.getRedFunction().importArrays(xWin, yWin, 4);
                                 RGBTB.getGreenFunction().importArrays(xWin, yWin, 4);
                                 RGBTB.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.makeRGB(-1);
-                                imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTB);
+                                RGBTB.makeRGB( -1);
+                                imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
+                                    RGBTB);
                             }
                         } // if (imageActive.isColorImage())
                         else { // imageActive black and white
-
                             if (imageActive.getType() == ModelStorageBase.UBYTE) {
                                 minImageWin = 0;
                                 maxImageWin = 255;
-                            } else if (imageActive.getType() == ModelStorageBase.BYTE) {
+                            }
+                            else if (imageActive.getType() ==
+                                     ModelStorageBase.BYTE) {
                                 minImageWin = -128;
                                 maxImageWin = 127;
-                            } else {
+                            }
+                            else {
                                 minImageWin = (float) imageActive.getMin();
                                 maxImageWin = (float) imageActive.getMax();
                             }
 
                             minWin = Float.MAX_VALUE;
                             maxWin = -Float.MAX_VALUE;
-
                             for (i = 0; i < imageBufferActive.length; i++) {
-
                                 if (imageBufferActive[i] > maxWin) {
                                     maxWin = imageBufferActive[i];
                                 }
-
                                 if (imageBufferActive[i] < minWin) {
                                     minWin = imageBufferActive[i];
                                 }
@@ -3332,59 +3353,58 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             xWin[3] = maxImageWin;
                             yWin[3] = 0;
                             zWin[3] = 0;
-
                             if (imageA == imageActive) {
                                 LUTa.getTransferFunction().importArrays(xWin, yWin, 4);
                                 imageActive.notifyImageDisplayListeners(LUTa, false);
-                            } else {
+                            }
+                            else {
                                 LUTb.getTransferFunction().importArrays(xWin, yWin, 4);
                                 imageActive.notifyImageDisplayListeners(LUTb, false);
                             }
                         } // else imageActive black and white
-
                         level = (xWin[1] + xWin[2]) / 2.0f;
                         window = xWin[2] - xWin[1];
                         oldXS = xS;
                         oldYS = yS;
                     } // if (!winLevelSet)
-                    else if (winLevelSet && ((xS != oldXS) || (yS != oldYS))) {
+                    else if (winLevelSet && ( (xS != oldXS) || (yS != oldYS))) {
 
                         // update the transfer function so the on-screen image
                         // (modelImage/viewJFrameImage) updates for the user
                         if (imageActive.isColorImage()) {
                             windowChange = xS - oldXS;
-                            window = window + (windowChange * 4 * 255.0f / (xDim - 1));
-
-                            if (window > (2 * 255.0f)) {
+                            window = window +
+                                windowChange * 4 * 255.0f / (xDim - 1);
+                            if (window > 2 * 255.0f) {
                                 window = 2 * 255.0f;
-                            } else if (window < 1) {
+                            }
+                            else if (window < 1) {
                                 window = 1;
                             }
-
                             levelChange = oldYS - yS;
-                            level = level + (levelChange * 2 * 255.0f / (yDim - 1));
-
+                            level = level + levelChange * 2 * 255.0f / (yDim - 1);
                             if (level > 255.0f) {
                                 level = 255.0f;
-                            } else if (level < 0.0f) {
+                            }
+                            else if (level < 0.0f) {
                                 level = 0.0f;
                             }
 
-                            xWin[2] = level + (window / 2);
-
+                            xWin[2] = level + window / 2;
                             if (xWin[2] > 255.0f) {
                                 yWin[2] = 255.0f * (xWin[2] - 255.0f) / window;
                                 xWin[2] = 255.0f;
-                            } else {
+                            }
+                            else {
                                 yWin[2] = 0.0f;
                             }
 
-                            xWin[1] = level - (window / 2);
-
+                            xWin[1] = level - window / 2;
                             if (xWin[1] < 0.0f) {
-                                yWin[1] = 255.0f + (255.0f * xWin[1] / window);
+                                yWin[1] = 255.0f + 255.0f * xWin[1] / window;
                                 xWin[1] = 0.0f;
-                            } else {
+                            }
+                            else {
                                 yWin[1] = 255.0f;
                             }
 
@@ -3392,196 +3412,189 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                 RGBTA.getRedFunction().importArrays(xWin, yWin, 4);
                                 RGBTA.getGreenFunction().importArrays(xWin, yWin, 4);
                                 RGBTA.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.makeRGB(-1);
-                                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTA);
-
+                                RGBTA.makeRGB( -1);
+                                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
+                                    RGBTA);
                                 if (imageA.getHistoRGBFrame() != null) {
                                     imageA.getHistoRGBFrame().update();
                                 }
-                            } else {
+                            }
+                            else {
                                 RGBTB.getRedFunction().importArrays(xWin, yWin, 4);
                                 RGBTB.getGreenFunction().importArrays(xWin, yWin, 4);
                                 RGBTB.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.makeRGB(-1);
-                                imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTB);
-
+                                RGBTB.makeRGB( -1);
+                                imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
+                                    RGBTB);
                                 if (imageB.getHistoRGBFrame() != null) {
                                     imageB.getHistoRGBFrame().update();
                                 }
                             }
-                        } // if (imageActive.isColorImage())
+                        } //  if (imageActive.isColorImage())
                         else { // imageActive black and white
                             windowChange = xS - oldXS;
-                            window = window + (windowChange * 4 * (maxImageWin - minImageWin) / (xDim - 1));
-
-                            if (window > (2 * (maxImageWin - minImageWin))) {
+                            window = window +
+                                windowChange * 4 * (maxImageWin - minImageWin) / (xDim - 1);
+                            if (window > 2 * (maxImageWin - minImageWin)) {
                                 window = 2 * (maxImageWin - minImageWin);
-                            } else if (window < 1) {
+                            }
+                            else if (window < 1) {
                                 window = 1;
                             }
-
                             levelChange = oldYS - yS;
-                            level = level + (levelChange * 2 * (maxImageWin - minImageWin) / (yDim - 1));
-
+                            level = level +
+                                levelChange * 2 * (maxImageWin - minImageWin) / (yDim - 1);
                             if (level > maxImageWin) {
                                 level = maxImageWin;
-                            } else if (level < minImageWin) {
+                            }
+                            else if (level < minImageWin) {
                                 level = minImageWin;
                             }
 
-                            xWin[2] = level + (window / 2);
-
+                            xWin[2] = level + window / 2;
                             if (xWin[2] > maxImageWin) {
                                 yWin[2] = 255.0f * (xWin[2] - maxImageWin) / window;
                                 xWin[2] = maxImageWin;
-                            } else {
+                            }
+                            else {
                                 yWin[2] = 0.0f;
                             }
 
-                            xWin[1] = level - (window / 2);
-
+                            xWin[1] = level - window / 2;
                             if (xWin[1] < minImageWin) {
-                                yWin[1] = 255.0f - (255.0f * (minImageWin - xWin[1]) / window);
+                                yWin[1] = 255.0f - 255.0f * (minImageWin - xWin[1]) / window;
                                 xWin[1] = minImageWin;
-                            } else {
+                            }
+                            else {
                                 yWin[1] = 255.0f;
                             }
 
                             if (imageA == imageActive) {
                                 LUTa.getTransferFunction().importArrays(xWin, yWin, 4);
                                 imageActive.notifyImageDisplayListeners(LUTa, false);
-
                                 if (imageA.getHistoLUTFrame() != null) {
                                     imageA.getHistoLUTFrame().update();
                                 }
-                            } else {
+                            }
+                            else {
                                 LUTb.getTransferFunction().importArrays(xWin, yWin, 4);
                                 imageActive.notifyImageDisplayListeners(LUTb, false);
-
                                 if (imageB.getHistoLUTFrame() != null) {
                                     imageB.getHistoLUTFrame().update();
                                 }
                             }
                         } // imageActive black and white
-
                         oldXS = xS;
                         oldYS = yS;
                     } // else if (winLevelSet && ((xS != oldXS) || (yS != oldYS)))
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
             } // if (mode == DEFAULT))
-
-            if ((imageActive.getFileInfo(0).getOrigin()[0] != 0) || (imageActive.getFileInfo(0).getOrigin()[1] != 0) ||
-                    (imageActive.getFileInfo(0).getOrigin()[2] != 0)) {
+            if (imageActive.getFileInfo(0).getOrigin()[0] != 0 || imageActive.getFileInfo(0).getOrigin()[1] != 0
+                || imageActive.getFileInfo(0).getOrigin()[2] != 0) {
 
                 fileInfo = imageActive.getFileInfo()[slice];
-
                 String[] values = setScannerPosition(fileInfo, xS, yS, slice);
 
                 if (values != null) {
 
                     if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
-                              "  G:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
-                              "  B:  " +
-                              String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]) +
-                              " Position: " + values[0] + " " + values[1] + " " + values[2];
-                    } else {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
-                              String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
-                              " Position: " + values[0] + " " + values[1] + " " + values[2];
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                            + "  G:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                            + "  B:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
+                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
+                    }
+                    else {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
+                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
                     }
 
                     frame.setMessageText(str);
-
-                    if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                } else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
-                          String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]);
-                    frame.setMessageText(str);
-
-                    if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
                         frame.getUserInterface().setDataText("\n" + str);
                     }
                 }
-            } else {
-
-                if (imageActive.isColorImage() == true) {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  " +
-                          String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) +
-                          "  G:  " +
-                          String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
-                          "  B:  " +
-                          String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                else {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
                     frame.setMessageText(str);
-
-                    if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                } else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
-                          String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]);
-                    frame.setMessageText(str);
-
-                    if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
                         frame.getUserInterface().setDataText("\n" + str);
                     }
                 }
             }
-        } catch (ArrayIndexOutOfBoundsException error) {
+            else {
+                if (imageActive.isColorImage() == true) {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                        + "  G:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                        + "  B:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
+                    frame.setMessageText(str);
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                        frame.getUserInterface().setDataText("\n" + str);
+                    }
+                }
+                else {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
+                    frame.setMessageText(str);
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                        frame.getUserInterface().setDataText("\n" + str);
+                    }
+                }
+            }
+        }
+        catch (ArrayIndexOutOfBoundsException error) {
             str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1);
             frame.setMessageText(str);
-
-            if ((mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+            if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
                 frame.getUserInterface().setDataText("\n" + str);
             }
         }
 
         distX = xS - anchorPt.x; // distance from original to cursor
         distY = yS - anchorPt.y;
-
         int end = 1;
 
         nVOI = VOIs.size();
 
         if (mode == MOVE) {
-
             for (i = 0; i < nVOI; i++) {
                 int curveType = VOIs.VOIAt(i).getCurveType();
 
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
+                    if ( (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                          || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE
+                          || VOIs.VOIAt(i).getCurveType() == VOI.LINE
+                          || VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR
+                          || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE)
+                        && mouseEvent.isControlDown() == false
+                        && (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
 
-                    if (((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.LINE) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE)) &&
-                            (mouseEvent.isControlDown() == false) &&
-                            (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
 
-
-                        // System.err.println("ABCDEFG");
                         wasDragging = true;
-
                         if (imageActive.getNDims() < 3) {
                             end = 1;
-                        } else {
+                        }
+                        else {
                             end = imageActive.getExtents()[2];
                         }
 
                         if (allActive) {
-                            VOIs.VOIAt(i).moveVOI(-1, xDim, yDim, zDim, distX, distY, 0);
+                            VOIs.VOIAt(i).moveVOI( slice, xDim, yDim, zDim, distX, distY, 0);
                             imageActive.notifyImageDisplayListeners();
-                        } else {
-
+                        }
+                        else {
                             for (int sl = 0; sl < end; sl++) {
 
                                 if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
-
-                                    if ((sl == slice) && VOIs.VOIAt(i).nearLine(xS, yS, sl)) {
+                                    if (sl == slice &&
+                                        VOIs.VOIAt(i).nearLine(xS, yS, sl)) {
 
                                         System.err.println("calling moveVOI for POLYLINE_SLICE: " + xS + "," + yS);
                                         VOIs.VOIAt(i).moveVOI(sl, xDim, yDim, zDim, distX, distY, 0);
@@ -3590,40 +3603,58 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                                 } else {
 
-                                    for (j = 0; j < VOIs.VOIAt(i).getCurves()[sl].size(); j++) {
+                                    for (j = 0;
+                                             j < VOIs.VOIAt(i).getCurves()[sl].
+                                             size(); j++) {
                                         boolean contains = false;
                                         boolean isActive = false;
 
-                                        if ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
+                                        if (curveType == VOI.CONTOUR ||
+                                            curveType == VOI.POLYLINE) {
 
-                                            contains = ((VOIContour) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j)))
-                                                           .contains(xS, yS, true);
+                                            contains = ((VOIContour) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    contains(
+                                                    xS, yS, true);
 
-                                            isActive = ((VOIContour) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j)))
-                                                           .isActive();
+                                            isActive = ((VOIContour) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    isActive();
                                         } else if (curveType == VOI.LINE) {
-                                            contains = ((VOILine) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j)))
-                                                           .contains(xS, yS, true);
-                                            isActive = ((VOILine) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j)))
-                                                           .isActive();
+                                            contains = ((VOILine) (VOIs.VOIAt(i).
+                                                    getCurves()[sl].elementAt(j))).
+                                                    contains(
+                                                    xS, yS, true);
+                                            isActive = ((VOILine) (VOIs.VOIAt(i).
+                                                    getCurves()[sl].elementAt(j))).
+                                                    isActive();
                                         } else if (curveType == VOI.PROTRACTOR) {
-                                            contains = ((VOIProtractor) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j)))
-                                                           .contains(xS, yS, true);
-                                            isActive = ((VOIProtractor) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j)))
-                                                           .isActive();
+                                            contains = ((VOIProtractor) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    contains(
+                                                    xS, yS, true);
+                                            isActive = ((VOIProtractor) (VOIs.
+                                                    VOIAt(i).getCurves()[sl].
+                                                    elementAt(j))).
+                                                    isActive();
                                         }
 
                                         if (contains && isActive) {
-                                            VOIs.VOIAt(i).moveVOI(sl, xDim, yDim, zDim, distX, distY, 0);
-                                            imageActive.notifyImageDisplayListeners();
+                                            VOIs.VOIAt(i).moveVOI(sl, xDim,
+                                                    yDim, zDim, distX, distY, 0);
+                                            imageActive.
+                                                    notifyImageDisplayListeners();
                                         }
                                     }
                                 }
                             }
                         }
 
-                        if ((VOIs.VOIAt(i).getContourGraph() != null) && VOIs.VOIAt(i).getContourGraph().isVisible() &&
-                                ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE))) {
+                        if (VOIs.VOIAt(i).getContourGraph() != null && VOIs.VOIAt(i).getContourGraph().isVisible()
+                            && (curveType == VOI.CONTOUR || curveType == VOI.POLYLINE)) {
                             VOI v;
                             float intensitySum;
                             int length = imageActive.getSliceSize();
@@ -3633,275 +3664,253 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                             position = VOIs.VOIAt(i).getPosition();
                             intensity = VOIs.VOIAt(i).getIntensity();
-
                             float[][] rgbPositions = VOIs.VOIAt(i).getRGBPositions();
                             float[][] rgbIntensities = VOIs.VOIAt(i).getRGBIntensities();
 
                             if (imageActive.getNDims() == 3) {
-
                                 if (imageActive.isColorImage() == true) {
-
                                     try {
                                         v = VOIs.VOIAt(i);
-
                                         for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
-
                                             try {
-
                                                 for (int c = 0; c < 3; c++) {
                                                     numPixels = 0;
-
-                                                    for (j = 0, intensitySum = 0;
-                                                             j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-
-                                                        if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                                .isActive() || foundCurve) {
-
+                                                    for (j = 0, intensitySum = 0; j
+                                                        < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
+                                                        if ( ( (VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j)).
+                                                            isActive()
+                                                            || foundCurve) {
                                                             if (!foundCurve) {
                                                                 imageActive.exportData(s * length * 4, length * 4,
-                                                                                       graphImgBuff);
+                                                                    graphImgBuff);
                                                             } // locks and releases lock
-
-                                                            intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(graphImgBuff,
-                                                                                                      imageActive.getExtents()[0],
-                                                                                                      c);
-                                                            numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                             .getLastNumPixels();
+                                                            intensitySum += ( (VOIContour) (VOIs.VOIAt(i).getCurves()[
+                                                                s].elementAt(j))).calcRGBIntensity(
+                                                                graphImgBuff, imageActive.getExtents()[0], c);
+                                                            numPixels += ( (VOIContour) (VOIs.VOIAt(i).getCurves()[
+                                                                s].elementAt(j))).getLastNumPixels();
                                                             foundCurve = true;
                                                         }
                                                     }
-
                                                     if (foundCurve) {
                                                         rgbPositions[c][s] = s;
-
-                                                        if (v.getTotalIntensity() || (numPixels == 0)) {
+                                                        if (v.getTotalIntensity() || numPixels == 0) {
                                                             rgbIntensities[c][s] = intensitySum;
-                                                        } else {
+                                                        }
+                                                        else {
                                                             rgbIntensities[c][s] = intensitySum / numPixels;
                                                         }
                                                     }
                                                 }
-                                            } catch (IOException error) {
+                                            }
+                                            catch (IOException error) {
                                                 MipavUtil.displayError("Image(s) locked");
-
                                                 return;
                                             }
-
                                             foundCurve = false;
                                         }
-
                                         VOIs.VOIAt(i).getContourGraph().update(rgbPositions, rgbIntensities, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
 
-                                    } catch (OutOfMemoryError error) {
-                                        System.gc();
-                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
-                                        return;
                                     }
-                                } else {
-
-                                    try {
-                                        v = VOIs.VOIAt(i);
-
-                                        for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
-
-                                            try {
-                                                numPixels = 0;
-
-                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
-                                                         j++) {
-                                                    boolean isActive = ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                           .isActive();
-
-                                                    if (isActive || foundCurve) {
-
-                                                        if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, graphImgBuff);
-                                                        } // locks and releases lock
-
-                                                        intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(graphImgBuff,
-                                                                                               imageActive.getExtents()[0]);
-                                                        numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                         .getLastNumPixels();
-                                                        foundCurve = true;
-                                                    }
-                                                }
-
-                                                if (foundCurve) {
-                                                    position[s] = s;
-
-                                                    if (v.getTotalIntensity() || (numPixels == 0)) {
-                                                        intensity[s] = intensitySum;
-                                                    } else {
-                                                        intensity[s] = intensitySum / numPixels;
-                                                    }
-
-                                                    foundCurve = false;
-                                                }
-                                            } catch (IOException error) {
-                                                MipavUtil.displayError("Image(s) locked");
-
-                                                return;
-                                            }
-                                        }
-
-                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
-
-                                    } catch (OutOfMemoryError error) {
+                                    catch (OutOfMemoryError error) {
                                         System.gc();
                                         MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
                                         return;
                                     }
                                 }
-                            } else if (imageActive.getNDims() == 4) {
+                                else {
+                                    try {
+                                        v = VOIs.VOIAt(i);
+                                        for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
+                                            try {
+                                                numPixels = 0;
+                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
+                                                    j++) {
+                                                    boolean isActive = ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].
+                                                        elementAt(j))).isActive();
 
+                                                    if (isActive || foundCurve) {
+                                                        if (!foundCurve) {
+                                                            imageActive.exportData(s * length, length, graphImgBuff);
+                                                        } // locks and releases lock
+                                                        intensitySum +=
+                                                            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                            calcIntensity(
+                                                            graphImgBuff, imageActive.getExtents()[0]);
+                                                        numPixels +=
+                                                            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                            getLastNumPixels();
+                                                        foundCurve = true;
+                                                    }
+                                                }
+                                                if (foundCurve) {
+                                                    position[s] = s;
+                                                    if (v.getTotalIntensity() || numPixels == 0) {
+                                                        intensity[s] = intensitySum;
+                                                    }
+                                                    else {
+                                                        intensity[s] = intensitySum / numPixels;
+                                                    }
+                                                    foundCurve = false;
+                                                }
+                                            }
+                                            catch (IOException error) {
+                                                MipavUtil.displayError("Image(s) locked");
+                                                return;
+                                            }
+                                        }
+                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+
+                                    }
+                                    catch (OutOfMemoryError error) {
+                                        System.gc();
+                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
+                                        return;
+                                    }
+                                }
+                            }
+                            else if (imageActive.getNDims() == 4) {
                                 try {
                                     v = VOIs.VOIAt(i);
-
                                     for (int t = 0; t < imageActive.getExtents()[3]; t++) {
-
                                         try {
                                             numPixels = 0;
-
                                             for (s = 0, intensitySum = 0; s < imageActive.getExtents()[2]; s++) {
-                                                imageActive.exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, graphImgBuff); // locks and releases lock
-
+                                                imageActive.exportData( (t * xDim * yDim * zDim) + (s * xDim * yDim),
+                                                    length, graphImgBuff); // locks and releases lock
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-                                                    intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(graphImgBuff,
-                                                                                           imageActive.getExtents()[0]);
-                                                    numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                     .getLastNumPixels();
+                                                    intensitySum +=
+                                                        ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                        calcIntensity(
+                                                        graphImgBuff, imageActive.getExtents()[0]);
+                                                    numPixels +=
+                                                        ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                        getLastNumPixels();
 
                                                 }
                                             }
-
                                             position[t] = t;
-
-                                            if (v.getTotalIntensity() || (numPixels == 0)) {
+                                            if (v.getTotalIntensity() || numPixels == 0) {
                                                 intensity[t] = intensitySum;
-                                            } else {
+                                            }
+                                            else {
                                                 intensity[t] = intensitySum / numPixels;
                                             }
-                                        } catch (IOException error) {
+                                        }
+                                        catch (IOException error) {
                                             MipavUtil.displayError("Image(s) locked");
-
                                             return;
                                         }
                                     }
-
                                     VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
-                                } catch (OutOfMemoryError error) {
+                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                            imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                }
+                                catch (OutOfMemoryError error) {
                                     System.gc();
                                     MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
                                     return;
                                 }
                             }
                         }
-                    } else if ((VOIs.VOIAt(i).getCurveType() == VOI.POINT) ||
-                                   (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
+                    }
+                    else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT
+                             || VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
                         setCursor(crosshairCursor);
-
                         if (allActive) {
-                            VOIs.VOIAt(i).moveVOI(-1, xDim, yDim, zDim, distX, distY, 0);
-                        } else {
+                            VOIs.VOIAt(i).moveVOI( -1, xDim, yDim, zDim, distX, distY, 0);
+                        }
+                        else {
                             VOIs.VOIAt(i).moveVOI(slice, xDim, yDim, zDim, distX, distY, 0);
                         }
-
                         imageActive.notifyImageDisplayListeners();
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                             Point3Df pt;
 
                             for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
-
-                                if (((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
-                                    pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).getActivePt();
-                                    setPixelInformationAtLocation((int) pt.x, (int) pt.y);
-
+                                if ( ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
+                                    pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).getActivePt();
+                                    setPixelInformationAtLocation((int)pt.x, (int)pt.y);
                                     if (imageActive.getNDims() == 3) {
 
                                         if (imageActive.isColorImage() == true) {
 
                                             for (int s = 0; s < imageActive.getExtents()[2]; s++) {
-                                                pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j)))
-                                                         .exportPoint();
-
+                                                pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).
+                                                    exportPoint();
                                                 for (int c = 0; c < 3; c++) {
-
-                                                    if ((ptRGBPositions != null) && (ptRGBIntensities != null)) {
+                                                    if (ptRGBPositions != null && ptRGBIntensities != null) {
                                                         ptRGBPositions[c][s] = s;
-                                                        ptRGBIntensities[c][s] = imageActive.getFloat((int) ((4 *
-                                                                                                                  ((s *
-                                                                                                                        imageActive.getExtents()[0] *
-                                                                                                                        imageActive.getExtents()[1]) +
-                                                                                                                       (pt.y *
-                                                                                                                            imageActive.getExtents()[0]) +
-                                                                                                                       pt.x)) +
-                                                                                                             c + 1));
+                                                        ptRGBIntensities[c][s] = imageActive.getFloat(
+                                                            (int) (4
+                                                            * (s * imageActive.getExtents()[0]
+                                                            * imageActive.getExtents()[1]
+                                                            + pt.y * imageActive.getExtents()[0]
+                                                            + pt.x)
+                                                            + c
+                                                            + 1));
                                                     }
                                                 }
                                             }
-
                                             if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                                VOIs.VOIAt(i).getContourGraph().update(ptRGBPositions, ptRGBIntensities,
-                                                                                       j);
-                                                VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                                VOIs.VOIAt(i).getContourGraph().update(ptRGBPositions,
+                                                    ptRGBIntensities, j);
+                                                VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                    imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                             }
-                                        } else {
+                                        }
+                                        else {
 
                                             for (int s = 0; s < imageActive.getExtents()[2]; s++) {
 
-                                                pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j)))
-                                                         .exportPoint();
-
-                                                if ((ptPosition != null) && (ptIntensity != null)) {
+                                                pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).
+                                                    exportPoint();
+                                                if (ptPosition != null && ptIntensity != null) {
                                                     ptPosition[s] = s;
-                                                    ptIntensity[s] = imageActive.getFloat((int) ((s *
-                                                                                                      imageActive.getExtents()[0] *
-                                                                                                      imageActive.getExtents()[1]) +
-                                                                                                 (pt.y *
-                                                                                                      imageActive.getExtents()[0]) +
-                                                                                                 pt.x));
+                                                    ptIntensity[s] = imageActive.getFloat(
+                                                        (int) (s * imageActive.getExtents()[0]
+                                                        * imageActive.getExtents()[1]
+                                                        + pt.y * imageActive.getExtents()[0] + pt.x));
                                                 }
                                             }
-
                                             if (VOIs.VOIAt(i).getContourGraph() != null) {
                                                 VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
-                                                VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                                VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                    imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                             }
                                         }
-                                    } else if (imageActive.getNDims() == 4) {
-
+                                    }
+                                    else if (imageActive.getNDims() == 4) {
                                         for (int t = 0; t < imageActive.getExtents()[3]; t++) {
-                                            pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j)))
-                                                     .exportPoint();
-
-                                            if ((ptPosition != null) && (ptIntensity != null)) {
+                                            pt = ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).
+                                                exportPoint();
+                                            if (ptPosition != null && ptIntensity != null) {
                                                 ptPosition[t] = t;
-                                                ptIntensity[t] = imageActive.getFloat((int) ((t * xDim * yDim * zDim) +
-                                                                                             (pt.z * xDim * yDim) +
-                                                                                             (pt.y * xDim) + pt.x));
+                                                ptIntensity[t] = imageActive.getFloat(
+                                                    (int) (t * xDim * yDim * zDim + pt.z * xDim * yDim
+                                                    + pt.y * xDim + pt.x));
                                             }
                                         }
-
                                         if (VOIs.VOIAt(i).getContourGraph() != null) {
                                             VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
-                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                         }
                                     }
                                 }
                             }
                         }
-
                         break;
                     }
                 }
@@ -3911,25 +3920,28 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             anchorPt.y = yS;
 
             return;
-        } else if (mode == MOVE_POINT) { // rubberband a point
+        }
+        else if (mode == MOVE_POINT) { // rubberband a point
 
             xS = getScaledX(mouseEvent.getX());
             yS = getScaledY(mouseEvent.getY());
 
             if (mouseEvent.isShiftDown() == false) {
                 Graphics g = getGraphics();
-
                 for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() != VOI.POINT)) {
-
+                    if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() != VOI.POINT) {
                         // Hides the cursor during dragging so it doesn't get in the way.
                         setCursor(blankCursor);
 
                         VOIs.VOIAt(i).rubberbandVOI(xS, yS, slice, xDim, yDim, false, getZoomX(), getZoomY(),
-                                                    resolutionX, resolutionY, g);
+                                resolutionX, resolutionY, g);
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                            Point3Df pt = VOIs.VOIAt(i).exportPSlicePoint(slice);
+                            if (pt != null) {
+                                setPixelInformationAtLocation( (int) pt.x, (int) pt.y);
+                            }
 
-                        if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
+                        } else if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
                             int length;
                             float[][] rgbPositions;
                             float[][] rgbIntensities;
@@ -3941,45 +3953,43 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                             if (imageActive.isColorImage() == true) {
 
-                                length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
-                                                          ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-                                rgbPositions = new float[3][(length * 2) + 1];
-                                rgbIntensities = new float[3][(length * 2) + 1];
-
+                                length = (int) (Math.sqrt(
+                                    ( (lineX[1] - lineX[0]) * (lineX[1] - lineX[0]))
+                                    + ( (lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
+                                rgbPositions = new float[3][length * 2 + 1];
+                                rgbIntensities = new float[3][length * 2 + 1];
                                 for (int c = 0; c < 3; c++) {
-                                    int pt = ((VOILine) (VOIs.VOIAt(i).getCurves()[slice].elementAt(0)))
-                                                 .findPositionAndIntensityRGB(rgbPositions[c], rgbIntensities[c], c,
-                                                                                  getActiveImageBuffer(),
-                                                                                  imageActive.getFileInfo()[slice].getResolutions(),
-                                                                                  getActiveImage().getExtents()[0],
-                                                                                  getActiveImage().getExtents()[1]);
+                                    int pt = ( (VOILine) (VOIs.VOIAt(i).getCurves()[slice].elementAt(0))).
+                                        findPositionAndIntensityRGB(
+                                            rgbPositions[c], rgbIntensities[c], c, getActiveImageBuffer(),
+                                            imageActive.getFileInfo()[slice].getResolutions(),
+                                            getActiveImage().getExtents()[0], getActiveImage().getExtents()[1]);
 
                                     if (c == 0) {
                                         rgbPos = new float[3][pt];
                                         rgbInten = new float[3][pt];
                                     }
-
                                     for (m = 0; m < pt; m++) {
                                         rgbPos[c][m] = rgbPositions[c][m];
                                         rgbInten[c][m] = rgbIntensities[c][m];
                                     }
                                 }
-
                                 if (VOIs.VOIAt(i).getContourGraph() != null) {
                                     VOIs.VOIAt(i).getContourGraph().saveNewFunction(rgbPos, rgbInten, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                            imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                 }
-                            } else {
-                                length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
-                                                          ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-                                position = new float[(length * 2) + 1];
-                                intensity = new float[(length * 2) + 1];
-
+                            }
+                            else {
+                                length = (int) (Math.sqrt(
+                                    ( (lineX[1] - lineX[0]) * (lineX[1] - lineX[0]))
+                                    + ( (lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
+                                position = new float[length * 2 + 1];
+                                intensity = new float[length * 2 + 1];
                                 int pt = VOIs.VOIAt(i).findPositionAndIntensity(slice, 0, position, intensity,
-                                                                                imageBufferActive,
-                                                                                imageActive.getFileInfo()[slice].getResolutions(),
-                                                                                imageActive.getExtents()[0],
-                                                                                imageActive.getExtents()[1]);
+                                    imageBufferActive, imageActive.getFileInfo()[slice].getResolutions(),
+                                    imageActive.getExtents()[0], imageActive.getExtents()[1]);
                                 float[] pos = new float[pt];
                                 float[] inten = new float[pt];
 
@@ -3987,14 +3997,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                     pos[m] = position[m];
                                     inten[m] = intensity[m];
                                 }
-
                                 if (VOIs.VOIAt(i).getContourGraph() != null) {
                                     VOIs.VOIAt(i).getContourGraph().replaceFunction(pos, inten);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                            imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                 }
                             }
                         } // if (VOIs.VOIAt(i).getCurveType() == VOI.LINE)
-
                         break;
                     } // if( VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() != VOI.POINT)
                 } // for (i = 0; i < nVOI; i++)
@@ -4002,37 +4012,30 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 g.dispose();
             } // end of if (mouseEvent.isShiftDown() == false)
             else { // shift key is depressed
-
                 if (imageActive.getNDims() >= 3) {
                     sliceNum = imageActive.getExtents()[2];
-                } else {
+                }
+                else {
                     sliceNum = 1;
                 }
-
                 for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() != VOI.POINT)) {
-
+                    if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() != VOI.POINT) {
                         for (j = 0; j < sliceNum; j++) {
                             VOIs.VOIAt(i).rubberbandVOI(xS, yS, j, xDim, yDim, false);
                         }
-
                         break;
                     }
                 }
             } // end of else for shift key is depressed
-
             imageActive.notifyImageDisplayListeners();
-
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
+                    if ( (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                          || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)
+                        && mouseEvent.isControlDown() == false
+                        && (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
 
-                    if (((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) && (mouseEvent.isControlDown() == false) &&
-                            (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
-
-                        if ((VOIs.VOIAt(i).getContourGraph() != null) && VOIs.VOIAt(i).getContourGraph().isVisible()) {
+                        if (VOIs.VOIAt(i).getContourGraph() != null && VOIs.VOIAt(i).getContourGraph().isVisible()) {
                             VOI v;
                             float intensitySum;
                             int length = imageActive.getSliceSize();
@@ -4042,174 +4045,157 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                             position = VOIs.VOIAt(i).getPosition();
                             intensity = VOIs.VOIAt(i).getIntensity();
-
                             float[][] rgbPositions = VOIs.VOIAt(i).getRGBPositions();
                             float[][] rgbIntensities = VOIs.VOIAt(i).getRGBIntensities();
 
                             if (imageActive.getNDims() == 3) {
-
                                 if (imageActive.isColorImage() == true) {
-
                                     try {
                                         v = VOIs.VOIAt(i);
-
                                         for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
-
                                             try {
-
                                                 for (int c = 0; c < 3; c++) {
                                                     numPixels = 0;
-
-                                                    for (j = 0, intensitySum = 0;
-                                                             j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-
-                                                        if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                                .isActive() || foundCurve) {
-
+                                                    for (j = 0, intensitySum = 0; j
+                                                        < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
+                                                        if ( ( (VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j)).
+                                                            isActive()
+                                                            || foundCurve) {
                                                             if (!foundCurve) {
                                                                 imageActive.exportData(s * length * 4, length * 4,
-                                                                                       graphImgBuff);
+                                                                    graphImgBuff);
                                                             } // locks and releases lock
-
-                                                            intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(graphImgBuff,
-                                                                                                      imageActive.getExtents()[0],
-                                                                                                      c);
-                                                            numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                             .getLastNumPixels();
+                                                            intensitySum += ( (VOIContour) (VOIs.VOIAt(i).getCurves()[
+                                                                s].elementAt(j))).calcRGBIntensity(
+                                                                graphImgBuff, imageActive.getExtents()[0], c);
+                                                            numPixels += ( (VOIContour) (VOIs.VOIAt(i).getCurves()[
+                                                                s].elementAt(j))).getLastNumPixels();
                                                             foundCurve = true;
                                                         }
                                                     }
-
                                                     if (foundCurve) {
                                                         rgbPositions[c][s] = s;
-
-                                                        if (v.getTotalIntensity() || (numPixels == 0)) {
+                                                        if (v.getTotalIntensity() || numPixels == 0) {
                                                             rgbIntensities[c][s] = intensitySum;
-                                                        } else {
+                                                        }
+                                                        else {
                                                             rgbIntensities[c][s] = intensitySum / numPixels;
                                                         }
                                                     }
                                                 }
-                                            } catch (IOException error) {
+                                            }
+                                            catch (IOException error) {
                                                 MipavUtil.displayError("Image(s) locked");
-
                                                 return;
                                             }
-
                                             foundCurve = false;
                                         }
-
                                         VOIs.VOIAt(i).getContourGraph().update(rgbPositions, rgbIntensities, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
 
-                                    } catch (OutOfMemoryError error) {
-                                        System.gc();
-                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
-                                        return;
                                     }
-                                } else {
-
-                                    try {
-                                        v = VOIs.VOIAt(i);
-
-                                        for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
-
-                                            try {
-                                                numPixels = 0;
-
-                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
-                                                         j++) {
-
-                                                    if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                            .isActive() || foundCurve) {
-
-                                                        if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, graphImgBuff);
-                                                        } // locks and releases lock
-
-                                                        intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(graphImgBuff,
-                                                                                               imageActive.getExtents()[0]);
-                                                        numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                         .getLastNumPixels();
-                                                        foundCurve = true;
-                                                    }
-                                                }
-
-                                                if (foundCurve) {
-                                                    position[s] = s;
-
-                                                    if (v.getTotalIntensity() || (numPixels == 0)) {
-                                                        intensity[s] = intensitySum;
-                                                    } else {
-                                                        intensity[s] = intensitySum / numPixels;
-                                                    }
-
-                                                    foundCurve = false;
-                                                }
-                                            } catch (IOException error) {
-                                                MipavUtil.displayError("Image(s) locked");
-
-                                                return;
-                                            }
-                                        }
-
-                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
-
-                                    } catch (OutOfMemoryError error) {
+                                    catch (OutOfMemoryError error) {
                                         System.gc();
                                         MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
                                         return;
                                     }
                                 }
-                            } else if (imageActive.getNDims() == 4) {
+                                else {
+                                    try {
+                                        v = VOIs.VOIAt(i);
+                                        for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
+                                            try {
+                                                numPixels = 0;
+                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
+                                                    j++) {
+                                                    if ( ( (VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j)).
+                                                        isActive()
+                                                        || foundCurve) {
+                                                        if (!foundCurve) {
+                                                            imageActive.exportData(s * length, length, graphImgBuff);
+                                                        } // locks and releases lock
+                                                        intensitySum +=
+                                                            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                            calcIntensity(
+                                                            graphImgBuff, imageActive.getExtents()[0]);
+                                                        numPixels +=
+                                                            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                            getLastNumPixels();
+                                                        foundCurve = true;
+                                                    }
+                                                }
+                                                if (foundCurve) {
+                                                    position[s] = s;
+                                                    if (v.getTotalIntensity() || numPixels == 0) {
+                                                        intensity[s] = intensitySum;
+                                                    }
+                                                    else {
+                                                        intensity[s] = intensitySum / numPixels;
+                                                    }
+                                                    foundCurve = false;
+                                                }
+                                            }
+                                            catch (IOException error) {
+                                                MipavUtil.displayError("Image(s) locked");
+                                                return;
+                                            }
+                                        }
+                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
 
+                                    }
+                                    catch (OutOfMemoryError error) {
+                                        System.gc();
+                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
+                                        return;
+                                    }
+                                }
+                            }
+                            else if (imageActive.getNDims() == 4) {
                                 try {
                                     v = VOIs.VOIAt(i);
-
                                     for (int t = 0; t < imageActive.getExtents()[3]; t++) {
-
                                         try {
                                             numPixels = 0;
-
                                             for (s = 0, intensitySum = 0; s < imageActive.getExtents()[2]; s++) {
-                                                imageActive.exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, graphImgBuff); // locks and releases lock
-
+                                                imageActive.exportData( (t * xDim * yDim * zDim) + (s * xDim * yDim),
+                                                    length, graphImgBuff); // locks and releases lock
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-                                                    intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(graphImgBuff,
-                                                                                           imageActive.getExtents()[0]);
-                                                    numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                     .getLastNumPixels();
+                                                    intensitySum +=
+                                                        ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                        calcIntensity(
+                                                        graphImgBuff, imageActive.getExtents()[0]);
+                                                    numPixels +=
+                                                        ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                        getLastNumPixels();
 
                                                 }
                                             }
-
                                             position[t] = t;
-
-                                            if (v.getTotalIntensity() || (numPixels == 0)) {
+                                            if (v.getTotalIntensity() || numPixels == 0) {
                                                 intensity[t] = intensitySum;
-                                            } else {
+                                            }
+                                            else {
                                                 intensity[t] = intensitySum / numPixels;
                                             }
-                                        } catch (IOException error) {
+                                        }
+                                        catch (IOException error) {
                                             MipavUtil.displayError("Image(s) locked");
-
                                             return;
                                         }
                                     }
-
                                     VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
-                                } catch (OutOfMemoryError error) {
+                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                            imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                }
+                                catch (OutOfMemoryError error) {
                                     System.gc();
                                     MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
                                     return;
                                 }
                             }
@@ -4219,45 +4205,44 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             return;
-        } else if (mode == RETRACE) { // (mouseEvent.isControlDown() ) {
-
+        }
+        else if (mode == RETRACE) { // (mouseEvent.isControlDown() ) {
             Graphics g = getGraphics();
-
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).isActive()) {
-                    ((VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).retraceContour(getZoomX(), getZoomY(),
-                                                                                          resolutionX, resolutionY,
-                                                                                          imageActive.getFileInfo(0).getResolutions(),
-                                                                                          xS, yS, g);
+                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).retraceContour(getZoomX(),
+                        getZoomY(), resolutionX, resolutionY, imageActive.getFileInfo(0).getResolutions(), xS, yS,
+                        g);
                     setMode(RETRACE);
-
                     break;
                 }
             }
-
             g.dispose();
-
             return;
-        } else if (mode == DROPPER_PAINT) {
-
+        }
+        else if (mode == DROPPER_PAINT) {
             if (imageActive.isColorImage() == true) {
-                dropperColor = new Color((int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1],
-                                         (int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2],
-                                         (int) imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                dropperColor = new Color( (int) imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1],
+                                         (int) imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2],
+                                         (int) imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
                 frame.getControls().getTools().setPaintColor(dropperColor);
-            } else {
-                intensityDropper = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
-                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
             }
-        } else if (mode == ERASER_PAINT) {
+            else {
+                intensityDropper = imageBufferActive[yS * imageActive.getExtents()[0] + xS];
+                frame.getControls().getTools().setIntensityPaintName(String.valueOf( (int) (
+                    intensityDropper)));
+            }
+        }
+        else if (mode == ERASER_PAINT) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == PAINT_VOI) {
+        }
+        else if (mode == PAINT_VOI) {
             performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
             imageActive.notifyImageDisplayListeners();
         }
     }
+
 
     /**
      * Unchanged.
@@ -4286,10 +4271,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * A mouse event. If the mode is level set, draws level sets as user moves mouse. Otherwise, changes the cursor
-     * depending on where the mouse is in relation to the VOI.
-     *
-     * @param  mouseEvent  event that triggered the function
+     *  A mouse event.  If the mode is level set, draws
+     *  level sets as user moves mouse.  Otherwise, changes
+     *  the cursor depending on where the mouse is in relation
+     *  to the VOI.
+     *  @param mouseEvent   event that triggered the function
      */
     public void mouseMoved(MouseEvent mouseEvent) {
         int i, j;
@@ -4304,8 +4290,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseY = mouseEvent.getY();
         shiftDown = mouseEvent.isShiftDown();
 
-        if ((mode == ZOOMING_IN) || (mode == ZOOMING_OUT)) {
-
+        if (mode == ZOOMING_IN || mode == ZOOMING_OUT) {
             // if we are in zoom mode, we don't care about any of the other things
             // that are happening here, in fact, zoom breaks if we don't return
             return;
@@ -4314,231 +4299,196 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
-        if ((mode == PAINT_VOI) && mouseEvent.isShiftDown()) {
+        if (mode == PAINT_VOI && mouseEvent.isShiftDown()) {
             performPaint(mouseEvent, false);
             imageActive.notifyImageDisplayListeners(null, true);
-
             return;
         }
 
         // the user can erase by holding down shift while in eraser mode
         // or by holding down control while in paint mode
-        if (((mode == ERASER_PAINT) && mouseEvent.isShiftDown()) ||
-                ((mode == PAINT_VOI) && mouseEvent.isControlDown())) {
+        if ( (mode == ERASER_PAINT && mouseEvent.isShiftDown()) || (mode == PAINT_VOI && mouseEvent.isControlDown())) {
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners(null, true);
-
             return;
         }
 
         removeMouseListener(popup);
         removeMouseListener(popupPt);
-
-        if ((g == null) || (modifyFlag == false) || (slice == -99)) {
+        if (g == null || modifyFlag == false || slice == -99) {
             return;
         }
-
-        if ((pixBuffer == null) || (imageBufferActive == null)) {
+        if (pixBuffer == null || imageBufferActive == null) {
             g.dispose();
-
             return;
         }
 
         x = mouseEvent.getX();
         y = mouseEvent.getY();
 
-        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || // Check to ensure point is within
-                (yS < 0) || (yS >= imageActive.getExtents()[1])) { // the image bounds
+        if (xS < 0 || xS >= imageActive.getExtents()[0] || // Check to ensure point is within
+            yS < 0 || yS >= imageActive.getExtents()[1]) { // the image bounds
             g.dispose();
-
             return;
         }
 
         if (mode == MAG_REGION) {
             repaint();
-
             return;
         }
-
         if (mode == WIN_REGION) {
             repaint();
-
+            return;
+        }
+        if (mode == PAINT_VOI || mode == ERASER_PAINT) {
+            //repaint();
+                paintComponent(getGraphics());
             return;
         }
 
-        if ((mode == PAINT_VOI) || (mode == ERASER_PAINT)) {
-
-            // repaint();
-            paintComponent(getGraphics());
-
-            return;
-        }
-
-        if ((mode == PAINT_CAN) || (mode == PAINT_VASC)) {
-
+        if (mode == PAINT_CAN || mode == PAINT_VASC) {
             if (growDialog != null) {
-
                 if (imageActive.isColorImage()) {
-                    growDialog.setPositionText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)) +
-                                               "  R:  " +
-                                               String.valueOf(imageBufferActive[(4 *
-                                                                                     ((yS *
-                                                                                           imageActive.getExtents()[0]) +
-                                                                                          xS)) + 1]) + "  G:  " +
-                                               String.valueOf(imageBufferActive[(4 *
-                                                                                     ((yS *
-                                                                                           imageActive.getExtents()[0]) +
-                                                                                          xS)) + 2]) + "  B:  " +
-                                               String.valueOf(imageBufferActive[(4 *
-                                                                                     ((yS *
-                                                                                           imageActive.getExtents()[0]) +
-                                                                                          xS)) + 3]));
-                } else {
-                    growDialog.setPositionText("  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) +
-                                               "  Intensity:  " +
-                                               String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
+                    growDialog.setPositionText(
+                        "  X: " + String.valueOf( (xS + 1)) + " Y: " + String.valueOf( (yS + 1)) + "  R:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                        + "  G:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                        + "  B:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]));
+                }
+                else {
+                    growDialog.setPositionText(
+                        "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]));
                 }
             }
-
             g.dispose();
-
             return;
         }
 
-        if ((mode == RECTANGLE) || (mode == ELLIPSE) || (mode == LINE) || (mode == RECTANGLE3D) ||
-                (mode == POINT_VOI) || (mode == POLYLINE) || (mode == LEVELSET) || (mode == PAINT_VOI) ||
-                (mode == DROPPER_PAINT) || (mode == ERASER_PAINT) || (mode == QUICK_LUT) || (mode == PROTRACTOR) ||
-                (mode == LIVEWIRE) || (mode == ANNOTATION) || (mode == POLYLINE_SLICE_VOI)) {
+        if (mode == RECTANGLE || mode == ELLIPSE || mode == LINE || mode == RECTANGLE3D || mode == POINT_VOI
+            || mode == POLYLINE || mode == LEVELSET || mode == PAINT_VOI || mode == DROPPER_PAINT
+            || mode == ERASER_PAINT || mode == QUICK_LUT || mode == PROTRACTOR || mode == LIVEWIRE
+            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI) {
             g.dispose();
-
             return;
         }
 
         VOIs = imageActive.getVOIs(); // Get the VOIs from the active image.
         nVOI = 0;
-
         if (VOIs != null) {
             nVOI = VOIs.size();
-
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
                     curves = VOIs.VOIAt(i).getCurves();
                     nCurves = curves[slice].size();
-
-                    if (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY) &&
-                            mouseEvent.isShiftDown()) {
-
-                        if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                                (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-
+                    if (mouseEvent.isShiftDown() &&
+                        VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                            || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
                             for (j = 0; j < nCurves; j++) {
-
                                 if (VOIs.VOIAt(i).nearPoint(x, y, slice, j, getZoomX(), resolutionX, resolutionY)) {
                                     break;
                                 }
                             }
-
                             if (j == nCurves) {
                                 return;
                             }
-
                             // BEN LINK CHANGE can delete point from bounding box'd contour
                             // if ( VOIs.VOIAt( i ).getBoundingBoxFlag() == false ) {
                             setMode(DELETE_POINT);
-
                             // } else {
                             // setMode( MOVE_POINT );
                             // }
                             // Displays contour with the active point highlighted
                             // VOIs.VOIAt(i).drawVertices(getZoomX(), getZoomY(), resolutionX, resolutionY, slice, g);
                             VOIs.VOIAt(i).drawVertices(getZoomX(), getZoomY(), resolutionX, resolutionY,
-                                                       imageActive.getFileInfo(0).getResolutions(),
-                                                       imageActive.getFileInfo(0).getUnitsOfMeasure(), slice,
-                                                       orientation, g, j);
+                                imageActive.getFileInfo(0).getResolutions(),
+                                imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, orientation, g, j);
                             g.dispose();
-
                             return;
                         }
-                    } else if (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY) &&
-                                   (VOIs.VOIAt(i).getCurveType() != VOI.POINT) &&
-                                   (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) &&
-                                   (VOIs.VOIAt(i).getCurveType() != VOI.PROTRACTOR) &&
-                                   (mouseEvent.isShiftDown() == false) && (mouseEvent.isAltDown() == false)) {
+                    }
+                    else if (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)
+                             && VOIs.VOIAt(i).getCurveType() != VOI.POINT
+                             && VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION
+                             && VOIs.VOIAt(i).getCurveType() != VOI.PROTRACTOR && mouseEvent.isShiftDown() == false
+                             && mouseEvent.isAltDown() == false) {
 
-                        for (j = 0; j < nCurves; j++) {
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                            //System.err.println("setting polyslice to move point mode");
+                            setMode(MOVE_POINT);
+                            g.dispose();
+                            return;
+                        } else {
 
-                            if (VOIs.VOIAt(i).nearPoint(x, y, slice, j, getZoomX(), resolutionX, resolutionY)) {
-                                break;
+                            for (j = 0; j < nCurves; j++) {
+                                if (VOIs.VOIAt(i).nearPoint(x, y, slice, j, getZoomX(), resolutionX,
+                                                            resolutionY)) {
+                                    break;
+                                }
                             }
-                        }
+                            if (j == nCurves) {
+                                return;
+                            }
+                            setMode(MOVE_POINT);
 
-                        if (j == nCurves) {
+                            // don't bother redrawing for a line ... point is not highlighted
+                            if (VOIs.VOIAt(i).getCurveType() != VOI.LINE) {
+                                // Displays contour with the active point highlighted
+                                VOIs.VOIAt(i).drawVertices(getZoomX(), getZoomY(), resolutionX,
+                                                           resolutionY,
+                                                           imageActive.getFileInfo(0).getResolutions(),
+                                                           imageActive.getFileInfo(0).getUnitsOfMeasure(),
+                                                           slice, orientation, g, j);
+                            }
+                            g.dispose();
                             return;
                         }
-
-                        setMode(MOVE_POINT);
-
-                        // don't bother redrawing for a line ... point is not highlighted
-                        if (VOIs.VOIAt(i).getCurveType() != VOI.LINE) {
-
-                            // Displays contour with the active point highlighted
-                            VOIs.VOIAt(i).drawVertices(getZoomX(), getZoomY(), resolutionX, resolutionY,
-                                                       imageActive.getFileInfo(0).getResolutions(),
-                                                       imageActive.getFileInfo(0).getUnitsOfMeasure(), slice,
-                                                       orientation, g, j);
-                        }
-
-                        g.dispose();
-
-                        return;
-                    } else if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-
+                    }
+                    else if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
                         for (j = 0; j < nCurves; j++) {
-
-                            if (VOIs.VOIAt(i).nearOuterPoint(x, y, slice, j, getZoomX(), resolutionX, resolutionY) &&
-                                    (mouseEvent.isShiftDown() == false) && (mouseEvent.isAltDown() == false)) {
+                            if (VOIs.VOIAt(i).nearOuterPoint(x, y, slice, j, getZoomX(), resolutionX, resolutionY)
+                                && mouseEvent.isShiftDown() == false && mouseEvent.isAltDown() == false) {
                                 setMode(MOVE_POINT);
                                 VOIs.VOIAt(i).drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f,
-                                                       imageActive.getFileInfo(0).getResolutions(),
-                                                       imageActive.getFileInfo(0).getUnitsOfMeasure(), slice,
-                                                       orientation, g);
+                                    imageActive.getFileInfo(0).getResolutions(),
+                                    imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, orientation, g);
                                 g.dispose();
-
                                 return;
                             }
                         }
                     }
-                    // see if the mouse is near the line in between the points of the contour/polyline/polyline_slice
-                    else if ((VOIs.VOIAt(i)).nearLine(xS, yS, slice) && (mouseEvent.isAltDown() == false)) {
+                    //see if the mouse is near the line in between the points of the contour/polyline/polyline_slice
+                    else if ( (VOIs.VOIAt(i)).nearLine(xS, yS, slice)
+                             && mouseEvent.isAltDown() == false) {
 
-                        if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                                (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                            || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
                             for (j = 0; j < nCurves; j++) {
-
-                                if (((VOIContour) (curves[slice].elementAt(j))).isActive() &&
-                                        ((VOIContour) (curves[slice].elementAt(j))).nearLine(xS, yS)) {
+                                if ( ( (VOIContour) (curves[slice].elementAt(j))).isActive()
+                                    && ( (VOIContour) (curves[slice].elementAt(j))).nearLine(xS, yS)) {
                                     break;
                                 }
                             }
-
                             if (j == nCurves) {
                                 return;
                             }
-
                             setMode(NEW_POINT);
                             g.dispose();
-
+                            return;
+                        } else if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE && mouseEvent.isShiftDown()) {
+                            setMode(NEW_POINT);
+                            g.dispose();
                             return;
                         }
-                    } else if (mouseEvent.isAltDown() == true) {
-
-                        if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                                (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                    }
+                    else if (mouseEvent.isAltDown() == true) {
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                            || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
                             setMode(RETRACE);
                             g.dispose();
-
                             return;
                         }
                     }
@@ -4550,66 +4500,70 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         for (i = 0; i < nVOI; i++) {
             int curveType = VOIs.VOIAt(i).getCurveType();
 
-            if ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE) || (curveType == VOI.PROTRACTOR) ||
-                    (curveType == VOI.LINE) || (curveType == VOI.ANNOTATION)) {
-                curves = ((VOI) (VOIs.elementAt(i))).getCurves();
-
+            if (curveType == VOI.CONTOUR || curveType == VOI.POLYLINE || curveType == VOI.PROTRACTOR
+                || curveType == VOI.LINE || curveType == VOI.ANNOTATION) {
+                curves = ( (VOI) (VOIs.elementAt(i))).getCurves();
                 for (j = 0; j < curves[slice].size(); j++) {
                     boolean isContained = false;
 
-                    if ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
-                        isContained = ((VOIContour) (curves[slice].elementAt(j))).contains(xS, yS, false);
-                    } else if (curveType == VOI.PROTRACTOR) {
-                        isContained = ((VOIProtractor) (curves[slice].elementAt(j))).contains(xS, yS, false);
-                        ((VOIProtractor) (curves[slice].elementAt(j))).setShowLength(true);
-                    } else if (curveType == VOI.LINE) {
-                        isContained = ((VOILine) (curves[slice].elementAt(j))).contains(xS, yS, false);
-                    } else if (curveType == VOI.ANNOTATION) {
-                        isContained = ((VOIText) (curves[slice].elementAt(j))).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                                        imageActive.getFileInfo(0).getResolutions(),
-                                                                                        g);
+                    if (curveType == VOI.CONTOUR || curveType == VOI.POLYLINE) {
+                        isContained = ( (VOIContour) (curves[slice].elementAt(j))).contains(xS, yS, false);
                     }
-
+                    else if (curveType == VOI.PROTRACTOR) {
+                        isContained = ( (VOIProtractor) (curves[slice].elementAt(j))).contains(xS, yS, false);
+                        ( (VOIProtractor) (curves[slice].elementAt(j))).setShowLength(true);
+                    }
+                    else if (curveType == VOI.LINE) {
+                        isContained = ( (VOILine) (curves[slice].elementAt(j))).contains(xS, yS, false);
+                    }
+                    else if (curveType == VOI.ANNOTATION) {
+                        isContained = ( (VOIText) (curves[slice].elementAt(j))).contains(xS, yS, getZoomX(),
+                            getZoomY(), imageActive.getFileInfo(0).getResolutions(), g);
+                    }
                     if (VOIs.VOIAt(i).isVisible() && isContained) {
                         setMode(MOVE);
-
-                        if ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
+                        if (curveType == VOI.CONTOUR || curveType == VOI.POLYLINE) {
                             popup.setEnabledProps(true);
                             addMouseListener(popup);
                         }
-
                         g.dispose();
-
                         return;
                     }
                 }
-            } else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-
-                if (VOIs.VOIAt(i).isVisible() &&
-                        VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
+            }
+            else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+                if (VOIs.VOIAt(i).isVisible()
+                    && VOIs.VOIAt(i).nearPoint(xS, yS, slice, getZoomX(), resolutionX, resolutionY)) {
 
                     setMode(MOVE);
 
                     addMouseListener(popupPt);
 
                     g.dispose();
-
                     return;
                 }
-            } else if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
-
-                if (VOIs.VOIAt(i).isVisible() && VOIs.VOIAt(i).nearLine(x, y, slice)) {
+            }
+            else if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                if (VOIs.VOIAt(i).isVisible() &&
+                    (VOIs.VOIAt(i).nearPoint(xS, yS, slice, getZoomX(), resolutionX, resolutionY) ||
+                //VOIs.VOIAt(i).nearLinePoint(
+                     VOIs.VOIAt(i).nearLine(xS, yS, slice) )) {
                     setMode(MOVE);
 
-                    g.dispose();
+                    popup.setEnabledProps(true);
+                    addMouseListener(popup);
 
+                    g.dispose();
                     return;
+
                 }
             }
         }
 
         setMode(DEFAULT);
-    }
+    } //end mouseReleased
+
+
 
     /**
      * A mouse event. Sets the mode of the program depending on the cursor mode. If the mode is move, activates the
@@ -4965,9 +4919,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * A mouse event. This function sets up and draws the VOI according to the mode.
-     *
-     * @param  mouseEvent  event that triggered function
+     *  A mouse event.  This function sets up and draws
+     *  the VOI according to the mode.
+     *  @param mouseEvent   event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
         int i, j, k;
@@ -4978,7 +4932,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (wasDragging) {
             wasDragging = false;
-
             return;
         }
 
@@ -4994,7 +4947,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int xDim = imageActive.getExtents()[0];
         int yDim = imageActive.getExtents()[1];
 
-        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
+        if (xS < 0 || xS >= imageActive.getExtents()[0] || yS < 0 || yS >= imageActive.getExtents()[1]) {
             return;
         }
 
@@ -5004,7 +4957,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
-        if ((mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
+        if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {
@@ -5013,56 +4966,51 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if (mode == POINT_VOI) {
-
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
-
+            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
                 if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
-
                     try {
                         float[] x = new float[1];
                         float[] y = new float[1];
                         float[] z = new float[1];
 
                         voiID = imageActive.getVOIs().size();
-
                         int colorID = 0;
 
                         if (imageActive.getVOIs().size() > 0) {
-                            colorID = ((VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
+                            colorID = ( (VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
                         }
 
                         if (imageActive.getNDims() > 2) {
 
-                            newPtVOI = new VOI((short) colorID, "point3D.voi", imageActive.getExtents()[2], VOI.POINT,
+                            newPtVOI = new VOI( (short) colorID, "point3D.voi", imageActive.getExtents()[2], VOI.POINT,
                                                -1.0f);
-                        } else {
-                            newPtVOI = new VOI((short) colorID, "point2d.voi", 1, VOI.POINT, -1.0f);
                         }
-
+                        else {
+                            newPtVOI = new VOI( (short) colorID, "point2d.voi", 1, VOI.POINT, -1.0f);
+                        }
                         x[0] = xS;
                         y[0] = yS;
                         z[0] = slice;
                         newPtVOI.importCurve(x, y, z, slice);
                         newPtVOI.setUID(newPtVOI.hashCode());
 
-                    } catch (OutOfMemoryError error) {
+                    }
+                    catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: ComponentEditImage.mouseReleased");
                         setMode(DEFAULT);
-
                         return;
                     }
-
                     lastPointVOI = voiID;
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
                     updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
-                    ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
+                    ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
 
-                    graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
+                    graphPointVOI(newPtVOI, ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
@@ -5070,7 +5018,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                 } // end of if (voiID == -1)
                 else { // voiID != -1 add point to existing VOI
-
                     int index;
 
                     nVOI = VOIs.size();
@@ -5084,16 +5031,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     z[0] = slice;
 
                     for (i = 0; i < nVOI; i++) {
-
                         if (VOIs.VOIAt(i).getID() == voiID) {
-
                             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                                 VOIs.VOIAt(i).importCurve(x, y, z, slice);
-
                                 break;
-                            } else {
+                            }
+                            else {
                                 MipavUtil.displayError("Can't add Point VOI to other VOI structure.");
-
                                 return;
                             }
                         }
@@ -5103,89 +5047,83 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     if (imageActive.getNDims() >= 3) {
                         end = imageActive.getExtents()[2];
-                    } else {
+                    }
+                    else {
                         end = 1;
                     }
-
                     for (j = 0; j < end; j++) {
                         index = VOIs.VOIAt(i).getCurves()[j].size();
-
                         for (k = 0; k < index; k++) {
-                            ((VOIPoint) (VOIs.VOIAt(i).getCurves()[j].elementAt(k))).setActive(false);
+                            ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[j].elementAt(k))).setActive(false);
                         }
                     }
 
                     index = VOIs.VOIAt(i).getCurves()[slice].size();
-                    ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))).setActive(true);
+                    ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
 
-                    if (!((VOIs.VOIAt(i).getContourGraph() != null) && (imageActive.isColorImage() == true))) {
+                    if (! (VOIs.VOIAt(i).getContourGraph() != null && imageActive.isColorImage() == true)) {
                         graphPointVOI(VOIs.VOIAt(i),
-                                      ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))), index - 1);
+                                      ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))), index - 1);
                     }
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
                     }
-
                     return;
                 } // end of else for if voiID != -1 add point to existing VOI
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
         } // end of else if (mode == POINT_VOI)
+
         else if (mode == POLYLINE_SLICE_VOI) {
-
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
-
+            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
                 if (isNewVoiNeeded(VOI.POLYLINE_SLICE)) { // create new VOI
-
                     try {
                         float[] x = new float[1];
                         float[] y = new float[1];
                         float[] z = new float[1];
 
                         voiID = imageActive.getVOIs().size();
-
                         int colorID = 0;
 
                         if (imageActive.getVOIs().size() > 0) {
-                            colorID = ((VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
+                            colorID = ( (VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
                         }
 
                         if (imageActive.getNDims() > 2) {
-                            newPolySliceVOI = new VOI((short) colorID, "Polyline_slice", imageActive.getExtents()[2],
-                                                      VOI.POLYLINE_SLICE, -1.0f);
-                        } else {
-                            MipavUtil.displayError("Inter-frame polyline must be used on 2.5/3D images only");
-
-                            return;
+                            newPolySliceVOI = new VOI( (short) colorID, "Polyline_slice", imageActive.getExtents()[2],
+                                                       VOI.POLYLINE_SLICE, -1.0f);
                         }
-
+                        else {
+                           MipavUtil.displayError("Inter-frame polyline must be used on 2.5/3D images only");
+                           return;
+                        }
                         x[0] = xS;
                         y[0] = yS;
                         z[0] = slice;
                         newPolySliceVOI.importCurve(x, y, z, slice);
                         newPolySliceVOI.setUID(newPolySliceVOI.hashCode());
 
-                    } catch (OutOfMemoryError error) {
+                    }
+                    catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: ComponentEditImage.mouseReleased");
                         setMode(DEFAULT);
-
                         return;
                     }
-
                     lastPolysliceVOI = voiID;
                     imageActive.registerVOI(newPolySliceVOI);
                     newPolySliceVOI.setActive(true);
-                    ((VOIBase) (newPolySliceVOI.getCurves()[slice].elementAt(0))).setActive(true);
+                    allActive = true;
+                    ((VOIBase)(newPolySliceVOI.getCurves()[slice].elementAt(0))).setActive(true);
 
                     updateVOIColor(newPolySliceVOI.getColor(), newPolySliceVOI.getUID());
-                    // ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
+                   // ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
 
-                    // System.err.println("click count: " + mouseEvent.getClickCount());
+                    //System.err.println("click count: " + mouseEvent.getClickCount());
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
@@ -5193,7 +5131,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                 } // end of if (voiID == -1)
                 else { // voiID != -1 add point to existing VOI
-
                     int index;
 
                     nVOI = VOIs.size();
@@ -5207,67 +5144,47 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     z[0] = slice;
 
                     for (i = 0; i < nVOI; i++) {
-
                         if (VOIs.VOIAt(i).getID() == voiID) {
-
                             if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
                                 VOIs.VOIAt(i).importCurve(x, y, z, slice);
-
+                                VOIs.VOIAt(i).setAllActive(true);
+                                VOIs.VOIAt(i).setActive(true);
                                 break;
-                            } else {
+                            }
+                            else {
                                 MipavUtil.displayError("Can't add POLYLINE_SLICE VOI to other VOI structure.");
-
                                 return;
                             }
                         }
                     }
-
-                    int end;
-
-                    if (imageActive.getNDims() >= 3) {
-                        end = imageActive.getExtents()[2];
-                    } else {
-                        end = 1;
-                    }
-
-                    for (j = 0; j < end; j++) {
-                        index = VOIs.VOIAt(i).getCurves()[j].size();
-
-                        for (k = 0; k < index; k++) {
-                            ((VOIPoint) (VOIs.VOIAt(i).getCurves()[j].elementAt(k))).setActive(false);
-                        }
-                    }
-
-                    index = VOIs.VOIAt(i).getCurves()[slice].size();
-                    ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))).setActive(true);
-
+                    allActive = true;
                     imageActive.notifyImageDisplayListeners();
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
                     }
-
                     return;
                 } // end of else for if voiID != -1 add point to existing VOI
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
 
-        } else if (mode == ANNOTATION) {
-
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+        }
+        else if (mode == ANNOTATION) {
+            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
 
                 VOI newTextVOI = null;
 
                 int colorID = 0;
 
                 if (imageActive.getVOIs().size() > 0) {
-                    colorID = ((VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
+                    colorID = ( (VOI) (imageActive.getVOIs().lastElement())).getID() + 1;
                 }
 
                 if (imageActive.getNDims() > 2) {
-                    newTextVOI = new VOI((short) colorID, "annotation3d.voi", imageActive.getExtents()[2],
+                    newTextVOI = new VOI( (short) colorID, "annotation3d.voi", imageActive.getExtents()[2],
                                          VOI.ANNOTATION, -1.0f);
-                } else {
-                    newTextVOI = new VOI((short) colorID, "annotation2d.voi", 1, VOI.ANNOTATION, -1.0f);
+                }
+                else {
+                    newTextVOI = new VOI( (short) colorID, "annotation2d.voi", 1, VOI.ANNOTATION, -1.0f);
                 }
 
                 float[] x = new float[1];
@@ -5299,43 +5216,69 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
 
-        } else if ((mode == POLYLINE) || (mode == LIVEWIRE)) {
+        }
+        else if (mode == POLYLINE || mode == LIVEWIRE) {
             return;
             // setMode(DEFAULT);
-        } else if (mode == LEVELSET) { }
-        else if (mode == RECTANGLE) { }
-        else if (mode == RECTANGLE3D) { }
-        else if (mode == ELLIPSE) { }
-        else if (mode == LINE) { }
-        else if (mode == PROTRACTOR) { }
+        }
+        else if (mode == LEVELSET) {}
+        else if (mode == RECTANGLE) {}
+        else if (mode == RECTANGLE3D) {}
+        else if (mode
+                 == ELLIPSE) {}
+        else if (mode == LINE) {}
+        else if (mode == PROTRACTOR) {}
         else if (mode == NEW_POINT) { // impossible for LINE
 
-            if (mouseEvent.getModifiers() == MouseEvent.BUTTON1_MASK) {
+            if (mouseEvent.isShiftDown()) {
                 nVOI = VOIs.size();
-
                 for (i = 0; i < nVOI; i++) {
-
                     if (VOIs.VOIAt(i).isActive()) {
                         break;
                     }
                 }
-
                 if (i == nVOI) {
+                    return;
+                }
+
+                // Handle differently for POLYLINE_SLICE type VOIs...insert new VOIPoint structures
+                if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+
+                    if (mouseEvent.isShiftDown()) {
+                        VOIs.VOIAt(i).insertPSlicePt(new Point3Df(xS, yS, 0), slice);
+                        imageActive.notifyImageDisplayListeners(null, true);
+                    }
+                    return;
+                }
+
+            }
+            else if (mouseEvent.getModifiers() == MouseEvent.BUTTON1_MASK) {
+                nVOI = VOIs.size();
+                for (i = 0; i < nVOI; i++) {
+                    if (VOIs.VOIAt(i).isActive()) {
+                        break;
+                    }
+                }
+                if (i == nVOI) {
+                    return;
+                }
+
+                if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
                     return;
                 }
 
                 int index = VOIs.VOIAt(i).getActiveContourIndex(slice);
 
-                ((VOIContour) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index))).insertElement(xS, yS, slice);
+                ( (VOIContour) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index))).insertElement(xS, yS, slice);
                 imageActive.notifyImageDisplayListeners(null, true);
 
                 if (VOIs.VOIAt(i).isVisible()) {
+                    if ( (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                          || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)
+                        && mouseEvent.isControlDown() == false
+                        && (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
 
-                    if (((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) && (mouseEvent.isControlDown() == false) &&
-                            (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
-
-                        if ((VOIs.VOIAt(i).getContourGraph() != null) && VOIs.VOIAt(i).getContourGraph().isVisible()) {
+                        if (VOIs.VOIAt(i).getContourGraph() != null && VOIs.VOIAt(i).getContourGraph().isVisible()) {
                             VOI v;
                             float intensitySum;
                             int length = imageActive.getSliceSize();
@@ -5348,170 +5291,157 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             float[][] rgbIntensities = VOIs.VOIAt(i).getRGBIntensities();
 
                             if (imageActive.getNDims() == 3) {
-
                                 if (imageActive.isColorImage() == true) {
-
                                     try {
                                         v = VOIs.VOIAt(i);
-
                                         for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
-
                                             try {
-
                                                 for (int c = 0; c < 3; c++) {
                                                     numPixels = 0;
-
-                                                    for (j = 0, intensitySum = 0;
-                                                             j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-
-                                                        if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                                .isActive() || foundCurve) {
-
+                                                    for (j = 0, intensitySum = 0; j
+                                                        < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
+                                                        if ( ( (VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j)).
+                                                            isActive()
+                                                            || foundCurve) {
                                                             if (!foundCurve) {
                                                                 imageActive.exportData(s * length * 4, length * 4,
-                                                                                       graphImgBuff);
+                                                                    graphImgBuff);
                                                             } // locks and releases lock
-
-                                                            intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(graphImgBuff,
-                                                                                                      imageActive.getExtents()[0],
-                                                                                                      c);
-                                                            numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                             .getLastNumPixels();
+                                                            intensitySum +=
+                                                                ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].
+                                                                elementAt(j))).calcRGBIntensity(
+                                                                graphImgBuff, imageActive.getExtents()[0], c);
+                                                            numPixels +=
+                                                                ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].
+                                                                elementAt(j))).getLastNumPixels();
                                                             foundCurve = true;
                                                         }
                                                     }
-
                                                     if (foundCurve) {
                                                         rgbPositions[c][s] = s;
-
-                                                        if (v.getTotalIntensity() || (numPixels == 0)) {
+                                                        if (v.getTotalIntensity() || numPixels == 0) {
                                                             rgbIntensities[c][s] = intensitySum;
-                                                        } else {
+                                                        }
+                                                        else {
                                                             rgbIntensities[c][s] = intensitySum / numPixels;
                                                         }
                                                     }
                                                 }
-                                            } catch (IOException error) {
+                                            }
+                                            catch (IOException error) {
                                                 MipavUtil.displayError("Image(s) locked");
-
                                                 return;
                                             }
-
                                             foundCurve = false;
                                         }
-
                                         VOIs.VOIAt(i).getContourGraph().update(rgbPositions, rgbIntensities, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
 
-                                    } catch (OutOfMemoryError error) {
-                                        System.gc();
-                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
-                                        return;
                                     }
-                                } else {
-
-                                    try {
-                                        v = VOIs.VOIAt(i);
-
-                                        for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
-
-                                            try {
-                                                numPixels = 0;
-
-                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
-                                                         j++) {
-
-                                                    if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                            .isActive() || foundCurve) {
-
-                                                        if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, graphImgBuff);
-                                                        } // locks and releases lock
-
-                                                        intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(graphImgBuff,
-                                                                                               imageActive.getExtents()[0]);
-                                                        numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                         .getLastNumPixels();
-                                                        foundCurve = true;
-                                                    }
-                                                }
-
-                                                if (foundCurve) {
-                                                    position[s] = s;
-
-                                                    if (v.getTotalIntensity() || (numPixels == 0)) {
-                                                        intensity[s] = intensitySum;
-                                                    } else {
-                                                        intensity[s] = intensitySum / numPixels;
-                                                    }
-
-                                                    foundCurve = false;
-                                                }
-                                            } catch (IOException error) {
-                                                MipavUtil.displayError("Image(s) locked");
-
-                                                return;
-                                            }
-                                        }
-
-                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
-
-                                    } catch (OutOfMemoryError error) {
+                                    catch (OutOfMemoryError error) {
                                         System.gc();
                                         MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
                                         return;
                                     }
                                 }
-                            } else if (imageActive.getNDims() == 4) {
+                                else {
+                                    try {
+                                        v = VOIs.VOIAt(i);
+                                        for (s = 0, foundCurve = false; s < imageActive.getExtents()[2]; s++) {
+                                            try {
+                                                numPixels = 0;
+                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
+                                                    j++) {
+                                                    if ( ( (VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j)).
+                                                        isActive()
+                                                        || foundCurve) {
+                                                        if (!foundCurve) {
+                                                            imageActive.exportData(s * length, length, graphImgBuff);
+                                                        } // locks and releases lock
+                                                        intensitySum +=
+                                                            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                            calcIntensity(
+                                                            graphImgBuff, imageActive.getExtents()[0]);
+                                                        numPixels +=
+                                                            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                            getLastNumPixels();
+                                                        foundCurve = true;
+                                                    }
+                                                }
+                                                if (foundCurve) {
+                                                    position[s] = s;
+                                                    if (v.getTotalIntensity() || numPixels == 0) {
+                                                        intensity[s] = intensitySum;
+                                                    }
+                                                    else {
+                                                        intensity[s] = intensitySum / numPixels;
+                                                    }
+                                                    foundCurve = false;
+                                                }
+                                            }
+                                            catch (IOException error) {
+                                                MipavUtil.displayError("Image(s) locked");
+                                                return;
+                                            }
+                                        }
+                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                                imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+
+                                    }
+                                    catch (OutOfMemoryError error) {
+                                        System.gc();
+                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
+                                        return;
+                                    }
+                                }
+                            }
+                            else if (imageActive.getNDims() == 4) {
                                 int zDim = imageActive.getExtents()[2];
 
                                 try {
                                     v = VOIs.VOIAt(i);
-
                                     for (int t = 0; t < imageActive.getExtents()[3]; t++) {
-
                                         try {
                                             numPixels = 0;
-
                                             for (s = 0, intensitySum = 0; s < imageActive.getExtents()[2]; s++) {
-                                                imageActive.exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, graphImgBuff); // locks and releases lock
-
+                                                imageActive.exportData( (t * xDim * yDim * zDim) + (s * xDim * yDim),
+                                                    length, graphImgBuff); // locks and releases lock
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-                                                    intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(graphImgBuff,
-                                                                                           imageActive.getExtents()[0]);
-                                                    numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                     .getLastNumPixels();
+                                                    intensitySum +=
+                                                        ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                        calcIntensity(
+                                                        graphImgBuff, imageActive.getExtents()[0]);
+                                                    numPixels +=
+                                                        ( (VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j))).
+                                                        getLastNumPixels();
 
                                                 }
                                             }
-
                                             position[t] = t;
-
-                                            if (v.getTotalIntensity() || (numPixels == 0)) {
+                                            if (v.getTotalIntensity() || numPixels == 0) {
                                                 intensity[t] = intensitySum;
-                                            } else {
+                                            }
+                                            else {
                                                 intensity[t] = intensitySum / numPixels;
                                             }
-                                        } catch (IOException error) {
+                                        }
+                                        catch (IOException error) {
                                             MipavUtil.displayError("Image(s) locked");
-
                                             return;
                                         }
                                     }
-
                                     VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
-                                } catch (OutOfMemoryError error) {
+                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
+                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
+                                            imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                }
+                                catch (OutOfMemoryError error) {
                                     System.gc();
                                     MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
                                     return;
                                 }
                             }
@@ -5519,116 +5449,97 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
                 }
             }
-        } else if (mode == DELETE_POINT) { // impossible for LINE
+        }
+        else if (mode == DELETE_POINT) { // impossible for LINE
             nVOI = VOIs.size();
-
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).isActive()) {
                     break;
                 }
             }
-
             if (i == nVOI) {
                 return;
             }
 
             int index = VOIs.VOIAt(i).getActiveContourIndex(slice);
 
-            ((VOIContour) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index))).removeElement();
+            ( (VOIContour) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index))).removeElement();
 
             imageActive.notifyImageDisplayListeners();
             setMode(MOVE_POINT);
-        } else if (mode == PAINT_CAN) {
+        }
+        else if (mode == PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
             zPG = (short) slice;
-
             if (imageActive.isColorImage()) {
                 int index = 4 * (yS + imageActive.getExtents()[0] + xS);
                 seedValR = imageBufferActive[index + 1];
                 seedValG = imageBufferActive[index + 2];
                 seedValB = imageBufferActive[index + 3];
-                regionGrow((short) xS, (short) yS, (short) slice, seedValR, seedValG, seedValB, null, true);
-            } else {
-                seedVal = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
-                regionGrow((short) xS, (short) yS, (short) slice, seedVal, null, true);
+                regionGrow( (short) xS, (short) yS, (short) slice, seedValR,
+                           seedValG, seedValB, null, true);
             }
-
+            else {
+                seedVal = imageBufferActive[yS * imageActive.getExtents()[0] + xS];
+                regionGrow( (short) xS, (short) yS, (short) slice, seedVal, null, true);
+            }
             imageActive.notifyImageDisplayListeners(null, true);
 
-        } else if (mode == PAINT_VASC) {
-            int index = xS + (yS * imageActive.getExtents()[0]);
-            int z = MipavMath.round(((ViewJFramePaintVasculature) frame).getMIPZValue(index));
-            float value = ((ViewJFramePaintVasculature) frame).imageBuffer[index + (z * imageActive.getSliceSize())];
+        }
+        else if (mode == PAINT_VASC) {
+            int index = xS + yS * imageActive.getExtents()[0];
+            int z = MipavMath.round( ( (ViewJFramePaintVasculature) frame).getMIPZValue(index));
+            float value = ( (ViewJFramePaintVasculature) frame).imageBuffer[index + z * imageActive.getSliceSize()];
 
-            ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().regionGrow((short) xS,
-                                                                                                           (short) yS,
-                                                                                                           (short) z,
-                                                                                                           value, null,
-                                                                                                           true);
-            ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars((short)
-                                                                                                                      xS,
-                                                                                                                  (short)
-                                                                                                                      yS,
-                                                                                                                  (short)
-                                                                                                                      z,
-                                                                                                                  value);
+            ( (ViewJFrameImage) ( (ViewJFramePaintVasculature) frame).parent).getComponentImage().regionGrow(
+                (short) xS, (short) yS, (short) z, value, null, true);
+            ( (ViewJFrameImage) ( (ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars(
+                (short) xS, (short) yS, (short) z, value);
             imageActive.notifyImageDisplayListeners(null, true);
-        } else if (mode == MOVE) {
+        }
+        else if (mode == MOVE) {
             Graphics g = getGraphics();
             nVOI = VOIs.size();
-
             if (!mouseEvent.isControlDown()) {
-
                 for (i = 0; i < nVOI; i++) { // VOIs.VOIAt(i).setAllActive(false); // deactivate all other VOIs
                 }
             }
-
             for (i = 0; i < nVOI; i++) {
                 VOIBase selectedCurve = null;
 
                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
-
                     // get the curve referenced by the VOI.  We'll check it.
-                    selectedCurve = ((VOIBase) VOIs.VOIAt(i).getCurves()[slice].elementAt(j));
+                    selectedCurve = ( (VOIBase) VOIs.VOIAt(i).getCurves()[slice].elementAt(j));
 
                     if (selectedCurve instanceof VOIPoint) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
 
-                            if (((VOIPoint) selectedCurve).nearPoint(xR, yR, getZoomX(), resolutionX, resolutionY)) {
-                                allActive = false;
+                             if (VOIs.VOIAt(i).nearLine(xS, yS, slice)) {
                                 VOIs.VOIAt(i).setActive(true);
-                                updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                                ((VOIPoint) (selectedCurve)).setActive(true);
-
-                                Point3Df pt = ((VOIPoint) (selectedCurve)).exportPoint();
-
-                                setPixelInformationAtLocation((int) pt.x, (int) pt.y);
-
-                                voiID = VOIs.VOIAt(i).getID();
-                                fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
-                            } else if (VOIs.VOIAt(i).nearLine(xR, yR, slice)) {
                                 VOIs.VOIAt(i).setAllActive(true);
 
+                                VOIs.VOIAt(i).markPSlicePt(slice);
+
+                                allActive = true;
                                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                                 voiID = VOIs.VOIAt(i).getID();
                                 j = VOIs.VOIAt(i).getCurves()[slice].size();
                                 fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
+                                break;
                             }
-                        } else if (((VOIPoint) selectedCurve).nearPoint(xR, yR, getZoomX(), resolutionX, resolutionY)) {
-
+                        }
+                        else if (((VOIPoint) selectedCurve).nearPoint(xR, yR, getZoomX(), resolutionX,
+                                                                 resolutionY)) {
                             // points are not true curves, but we want to check if we
                             // released mouse over it. we'll at least set the point active.
                             if (mouseEvent.isShiftDown()) {
                                 allActive = true;
-
                                 // if true set all points in VOI active - move all points
                                 VOIs.VOIAt(i).setAllActive(true);
                                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                                 voiID = VOIs.VOIAt(i).getID();
-
                                 // and we are done with this VOI.
                                 // skip the rest of the curves
                                 j = VOIs.VOIAt(i).getCurves()[slice].size();
@@ -5648,39 +5559,38 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
 
                         }
-                    } else if ((selectedCurve instanceof VOIText) &&
-                                   ((VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                          imageActive.getFileInfo()[0].getResolutions(),
-                                                                          g)) {
+                    }
+                    else if (selectedCurve instanceof VOIText
+                             && ( (VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
+                        imageActive.getFileInfo()[0].getResolutions(), g)) {
 
                         allActive = false;
                         VOIs.VOIAt(i).setActive(true);
                         updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                        ((VOIText) (selectedCurve)).setActive(true);
+                        ( (VOIText) (selectedCurve)).setActive(true);
                         voiID = VOIs.VOIAt(i).getID();
 
                         // if the Text was double-clicked, bring up the editor
                         if (mouseEvent.getClickCount() == 2) {
                             new JDialogAnnotation(imageActive, VOIs.VOIAt(i), slice, true);
                         }
-                    } else if (selectedCurve.contains(xS, yS, true)) {
+                    }
+                    else if (selectedCurve.contains(xS, yS, true)) {
 
                         // if we released the mouse over another kind of curve,
                         // we'll at least set it active.
                         if (mousePressIsShiftDown) {
-
                             // when shift is presed at the same time,
                             // select all the curves in the (contour) grouping.
                             allActive = true;
                             VOIs.VOIAt(i).setAllActive(true);
                             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             voiID = VOIs.VOIAt(i).getID();
-
                             // and we are done with this VOI. Skip the rest of the curves
                             j = VOIs.VOIAt(i).getCurves()[slice].size();
-                        } else {
+                        }
+                        else {
                             allActive = false;
-
                             // toggle isActive (or if VOI was dragged, leave active)
                             boolean toggle = !selectedCurve.isActive() || wasDragging || mouseEvent.isPopupTrigger();
 
@@ -5688,7 +5598,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             // make any other contours active unless
                             // control was held down
                             if (!mouseEvent.isControlDown() && toggle) {
-
                                 for (k = 0; k < nVOI; k++) {
                                     VOIs.VOIAt(k).setAllActive(false); // deactivate all VOIs
                                 }
@@ -5698,9 +5607,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                 voiID = VOIs.VOIAt(i).getID();
                                 fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
                                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-
                                 break;
-                            } else {
+                            }
+                            else {
                                 VOIs.VOIAt(i).setActive(toggle);
                                 selectedCurve.setActive(toggle);
                             }
@@ -5711,81 +5620,75 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                             voiID = VOIs.VOIAt(i).getID();
                         }
-
                         fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
-                    } else if (!mouseEvent.isControlDown() && !mouseEvent.isPopupTrigger()) { // selected curve was not
-                                                                                              // selected, so set false.
+                    }
+                    else if (!mouseEvent.isControlDown() && !mouseEvent.isPopupTrigger()) { // selected curve was not selected, so set false.
                         selectedCurve.setActive(false);
                         fireVOISelectionChange(VOIs.VOIAt(i));
-                        // System.err.println("set something to inactive...fired a changed?");
+                        //System.err.println("set something to inactive...fired a changed?");
                     }
                 } // end of curves in this VOI
             } // end checking all VOIs in the active image
-
             wasDragging = false; // reset the mouse drag boolean
             g.dispose();
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == MOVE_POINT) {
+        }
+        else if (mode == MOVE_POINT) {
 
             nVOI = VOIs.size();
 
             for (i = 0; i < nVOI; i++) {
-
-                if ((VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) ||
-                        (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
+                    || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
                     VOIs.VOIAt(i).rubberbandVOI(xS, yS, slice, xDim, yDim, true);
 
                     for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
-
-                        if (((VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
-                            Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).getActivePt();
-                            setPixelInformationAtLocation((int) pt.x, (int) pt.y);
-
+                        if ( ( (VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
+                            Point3Df pt = ( (VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).getActivePt();
+                            setPixelInformationAtLocation((int)pt.x, (int)pt.y);
                             break;
                         }
                     }
 
                     VOIs.VOIAt(i).nearPoint(0, 0, slice, getZoomX(), resolutionX, resolutionY);
-                } else if ((VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() == VOI.LINE)) ||
-                               (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR)) {
-
+                }
+                else if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() == VOI.LINE
+                         || VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
                     for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
-
-                        if (((VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
+                        if ( ( (VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).isActive()) {
 
                             if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                                Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).getActivePt();
+                                Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).
+                                              getActivePt();
                                 setPixelInformationAtLocation((int) pt.x, (int) pt.y);
                             }
-
                             if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-                                ((VOIProtractor) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).setShowLength(true);
+                                ( (VOIProtractor) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).setShowLength(
+                                    true);
                             }
 
                             imageActive.notifyImageDisplayListeners();
-
                             return;
                         }
                     }
                 }
             }
-
             imageActive.notifyImageDisplayListeners(null, true);
-        } else if (mode == RETRACE) {
+        }
+        else if (mode == RETRACE) {
             nVOI = VOIs.size();
-
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).isActive()) {
-                    ((VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).trimPoints(Preferences.getTrim(), true);
-                    ((VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).resetIndex();
+                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).trimPoints(Preferences.getTrim(),
+                        true);
+                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).resetIndex();
 
                     break;
                 }
             }
-
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == QUICK_LUT) {
+        }
+        else if (mode == QUICK_LUT) {
             int wS, hS;
             float min = Float.MAX_VALUE;
             float max = -100000000;
@@ -5794,7 +5697,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             float minG = Float.MAX_VALUE;
 
             ;
-
             float maxG = -Float.MAX_VALUE;
             float minB = Float.MAX_VALUE;
             float maxB = -Float.MAX_VALUE;
@@ -5811,19 +5713,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             hS = MipavMath.round(rubberband.getBounds().height / (getZoomY() * resolutionY));
 
             if (imageA.isColorImage() == false) {
-
                 if (imageA == imageActive) {
-
-                    for (j = yS; j < (yS + hS); j++) {
-
-                        for (i = xS; i < (xS + wS); i++) {
-
-                            if (imageBufferA[(j * xDim) + i] > max) {
-                                max = imageBufferA[(j * xDim) + i];
+                    for (j = yS; j < yS + hS; j++) {
+                        for (i = xS; i < xS + wS; i++) {
+                            if (imageBufferA[j * xDim + i] > max) {
+                                max = imageBufferA[j * xDim + i];
                             }
-
-                            if (imageBufferA[(j * xDim) + i] < min) {
-                                min = imageBufferA[(j * xDim) + i];
+                            if (imageBufferA[j * xDim + i] < min) {
+                                min = imageBufferA[j * xDim + i];
                             }
                         }
                     }
@@ -5831,10 +5728,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageA.getType() == ModelStorageBase.UBYTE) {
                         minImage = 0;
                         maxImage = 255;
-                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
+                    }
+                    else if (imageA.getType() == ModelStorageBase.BYTE) {
                         minImage = -128;
                         maxImage = 127;
-                    } else {
+                    }
+                    else {
                         minImage = (float) imageA.getMin();
                         maxImage = (float) imageA.getMax();
                     }
@@ -5853,37 +5752,33 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     y[3] = 0;
                     z[3] = 0;
                     LUTa.getTransferFunction().importArrays(x, y, 4);
-                } else if ((imageB != null) && (imageActive == imageB)) {
-
+                }
+                else if (imageB != null && imageActive == imageB) {
                     if (imageB.getType() == ModelStorageBase.UBYTE) {
                         minImage = 0;
                         maxImage = 255;
-                    } else if (imageB.getType() == ModelStorageBase.BYTE) {
+                    }
+                    else if (imageB.getType() == ModelStorageBase.BYTE) {
                         minImage = -128;
                         maxImage = 127;
-                    } else {
+                    }
+                    else {
                         minImage = (float) imageB.getMin();
                         maxImage = (float) imageB.getMax();
                     }
-
                     if (imageBufferB != null) {
                         min = Float.MAX_VALUE;
                         max = -100000000;
-
-                        for (j = yS; j < (yS + hS); j++) {
-
-                            for (i = xS; i < (xS + wS); i++) {
-
-                                if (imageBufferB[(j * xDim) + i] > max) {
-                                    max = imageBufferB[(j * xDim) + i];
+                        for (j = yS; j < yS + hS; j++) {
+                            for (i = xS; i < xS + wS; i++) {
+                                if (imageBufferB[j * xDim + i] > max) {
+                                    max = imageBufferB[j * xDim + i];
                                 }
-
-                                if (imageBufferB[(j * xDim) + i] < min) {
-                                    min = imageBufferB[(j * xDim) + i];
+                                if (imageBufferB[j * xDim + i] < min) {
+                                    min = imageBufferB[j * xDim + i];
                                 }
                             }
                         }
-
                         x[0] = minImage;
                         y[0] = dim.height - 1;
                         z[0] = 0;
@@ -5899,40 +5794,31 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                         LUTb.getTransferFunction().importArrays(x, y, 4);
                     }
                 }
-            } else { // RGB image
-
+            }
+            else { // RGB image
                 if (imageA == imageActive) {
-
-                    for (j = yS; j < (yS + hS); j++) {
-
-                        for (i = xS; i < (xS + wS); i++) {
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 1] > maxR) {
-                                maxR = imageBufferA[(j * xDim * 4) + (i * 4) + 1];
+                    for (j = yS; j < yS + hS; j++) {
+                        for (i = xS; i < xS + wS; i++) {
+                            if (imageBufferA[j * xDim * 4 + i * 4 + 1] > maxR) {
+                                maxR = imageBufferA[j * xDim * 4 + i * 4 + 1];
                             }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 1] < minR) {
-                                minR = imageBufferA[(j * xDim * 4) + (i * 4) + 1];
+                            if (imageBufferA[j * xDim * 4 + i * 4 + 1] < minR) {
+                                minR = imageBufferA[j * xDim * 4 + i * 4 + 1];
                             }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 2] > maxG) {
-                                maxG = imageBufferA[(j * xDim * 4) + (i * 4) + 2];
+                            if (imageBufferA[j * xDim * 4 + i * 4 + 2] > maxG) {
+                                maxG = imageBufferA[j * xDim * 4 + i * 4 + 2];
                             }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 2] < minG) {
-                                minG = imageBufferA[(j * xDim * 4) + (i * 4) + 2];
+                            if (imageBufferA[j * xDim * 4 + i * 4 + 2] < minG) {
+                                minG = imageBufferA[j * xDim * 4 + i * 4 + 2];
                             }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 3] > maxB) {
-                                maxB = imageBufferA[(j * xDim * 4) + (i * 4) + 3];
+                            if (imageBufferA[j * xDim * 4 + i * 4 + 3] > maxB) {
+                                maxB = imageBufferA[j * xDim * 4 + i * 4 + 3];
                             }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 3] < minB) {
-                                minB = imageBufferA[(j * xDim * 4) + (i * 4) + 3];
+                            if (imageBufferA[j * xDim * 4 + i * 4 + 3] < minB) {
+                                minB = imageBufferA[j * xDim * 4 + i * 4 + 3];
                             }
                         }
                     }
-
                     max = Math.max(maxR, maxG);
                     max = Math.max(maxB, max);
 
@@ -5941,11 +5827,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageA.getType() == ModelStorageBase.ARGB) {
                         x[1] = minR;
                         x[2] = maxR;
-                    } else {
+                    }
+                    else {
                         x[1] = minR * 255 / max;
                         x[2] = maxR * 255 / max;
                     }
-
                     x[0] = 0;
                     y[0] = dim.height - 1;
                     z[0] = 0;
@@ -5962,11 +5848,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageA.getType() == ModelStorageBase.ARGB) {
                         x[1] = minG;
                         x[2] = maxG;
-                    } else {
+                    }
+                    else {
                         x[1] = minG * 255 / max;
                         x[2] = maxG * 255 / max;
                     }
-
                     x[0] = 0;
                     y[0] = dim.height - 1;
                     z[0] = 0;
@@ -5983,11 +5869,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageA.getType() == ModelStorageBase.ARGB) {
                         x[1] = minB;
                         x[2] = maxB;
-                    } else {
+                    }
+                    else {
                         x[1] = minB * 255 / max;
                         x[2] = maxB * 255 / max;
                     }
-
                     x[0] = 0;
                     y[0] = dim.height - 1;
                     z[0] = 0;
@@ -6000,45 +5886,37 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     z[3] = 0;
 
                     RGBTA.getBlueFunction().importArrays(x, y, 4);
-                    RGBTA.makeRGB(-1);
-                } else if ((imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
+                    RGBTA.makeRGB( -1);
+                }
+                else if (imageBufferB != null && imageB != null && imageB == imageActive) {
                     minR = Float.MAX_VALUE;
                     maxR = -Float.MAX_VALUE;
                     minG = Float.MAX_VALUE;
                     maxG = -Float.MAX_VALUE;
                     minB = Float.MAX_VALUE;
                     maxB = -Float.MAX_VALUE;
-
-                    for (j = yS; j < (yS + hS); j++) {
-
-                        for (i = xS; i < (xS + wS); i++) {
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 1] > maxR) {
-                                maxR = imageBufferB[(j * xDim * 4) + (i * 4) + 1];
+                    for (j = yS; j < yS + hS; j++) {
+                        for (i = xS; i < xS + wS; i++) {
+                            if (imageBufferB[j * xDim * 4 + i * 4 + 1] > maxR) {
+                                maxR = imageBufferB[j * xDim * 4 + i * 4 + 1];
                             }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 1] < minR) {
-                                minR = imageBufferB[(j * xDim * 4) + (i * 4) + 1];
+                            if (imageBufferB[j * xDim * 4 + i * 4 + 1] < minR) {
+                                minR = imageBufferB[j * xDim * 4 + i * 4 + 1];
                             }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 2] > maxG) {
-                                maxG = imageBufferB[(j * xDim * 4) + (i * 4) + 2];
+                            if (imageBufferB[j * xDim * 4 + i * 4 + 2] > maxG) {
+                                maxG = imageBufferB[j * xDim * 4 + i * 4 + 2];
                             }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 2] < minG) {
-                                minG = imageBufferB[(j * xDim * 4) + (i * 4) + 2];
+                            if (imageBufferB[j * xDim * 4 + i * 4 + 2] < minG) {
+                                minG = imageBufferB[j * xDim * 4 + i * 4 + 2];
                             }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 3] > maxB) {
-                                maxB = imageBufferB[(j * xDim * 4) + (i * 4) + 3];
+                            if (imageBufferB[j * xDim * 4 + i * 4 + 3] > maxB) {
+                                maxB = imageBufferB[j * xDim * 4 + i * 4 + 3];
                             }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 3] < minB) {
-                                minB = imageBufferB[(j * xDim * 4) + (i * 4) + 3];
+                            if (imageBufferB[j * xDim * 4 + i * 4 + 3] < minB) {
+                                minB = imageBufferB[j * xDim * 4 + i * 4 + 3];
                             }
                         }
                     }
-
                     max = Math.max(maxR, maxG);
                     max = Math.max(maxB, max);
 
@@ -6046,11 +5924,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageB.getType() == ModelStorageBase.ARGB) {
                         x[1] = minR;
                         x[2] = maxR;
-                    } else {
+                    }
+                    else {
                         x[1] = minR * 255 / max;
                         x[2] = maxR * 255 / max;
                     }
-
                     x[0] = 0;
                     y[0] = dim.height - 1;
                     z[0] = 0;
@@ -6063,15 +5941,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     z[3] = 0;
 
                     RGBTB.getRedFunction().importArrays(x, y, 4);
-
                     if (imageB.getType() == ModelStorageBase.ARGB) {
                         x[1] = minG;
                         x[2] = maxG;
-                    } else {
+                    }
+                    else {
                         x[1] = minG * 255 / max;
                         x[2] = maxG * 255 / max;
                     }
-
                     x[0] = 0;
                     y[0] = dim.height - 1;
                     z[0] = 0;
@@ -6084,15 +5961,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     z[3] = 0;
 
                     RGBTB.getGreenFunction().importArrays(x, y, 4);
-
                     if (imageB.getType() == ModelStorageBase.ARGB) {
                         x[1] = minB;
                         x[2] = maxB;
-                    } else {
+                    }
+                    else {
                         x[1] = minB * 255 / max;
                         x[2] = maxB * 255 / max;
                     }
-
                     x[0] = 0;
                     y[0] = dim.height - 1;
                     z[0] = 0;
@@ -6105,46 +5981,42 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     z[3] = 0;
 
                     RGBTB.getBlueFunction().importArrays(x, y, 4);
-                    RGBTB.makeRGB(-1);
+                    RGBTB.makeRGB( -1);
                 }
             }
 
             if (!imageActive.isColorImage()) {
                 imageA.notifyImageDisplayListeners(LUTa, false);
-
                 if (imageB != null) {
                     imageB.notifyImageDisplayListeners(LUTb, false);
                 }
-            } else {
+            }
+            else {
                 imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTA);
-
                 if (imageB != null) {
                     imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTB);
                 }
             }
 
             if (imageB == null) {
-
                 if (imageA.isColorImage()) {
-
                     if (imageA.getHistoRGBFrame() != null) {
                         imageA.getHistoRGBFrame().update();
                     }
-                } else if (imageA.getHistoLUTFrame() != null) {
-
+                }
+                else if (imageA.getHistoLUTFrame() != null) {
                     if (imageA.getHistoLUTFrame() != null) {
                         imageA.getHistoLUTFrame().update();
                     }
                 }
-            } else {
-
+            }
+            else {
                 if (imageB.isColorImage()) {
-
                     if (imageB.getHistoRGBFrame() != null) {
                         imageB.getHistoRGBFrame().update();
                     }
-                } else if (imageB.getHistoLUTFrame() != null) {
-
+                }
+                else if (imageB.getHistoLUTFrame() != null) {
                     if (imageB.getHistoLUTFrame() != null) {
                         imageB.getHistoLUTFrame().update();
                     }
@@ -6160,6 +6032,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         mousePressIsShiftDown = false;
 
     } // end mouseReleased()
+
 
     /**
      * ************************************************************************ ************************** Mouse Wheel
@@ -9117,6 +8990,35 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void setGridColor(Color color) {
         this.gridColor = color;
     }
+
+    /**
+     * Tells the grid overlay (if on) to show abc/123 labeling
+     * @param doLabel boolean
+     */
+    public void setGridLabelingOn(boolean doLabel) {
+        this.gridLabelingOn = doLabel;
+    }
+
+    /**
+     * Whether or not labels should be drawn on the grid overlay
+     * @return boolean
+     */
+    public boolean getGridLabeling() {
+        return gridLabelingOn;
+    }
+
+    /**
+     * Sets the axis orientation of abc and 123 labeling of the grid overlay
+     * @param or boolean true = x-axis numbered, false = x-axis lettered
+     */
+    public void setGridLabelOrientation(boolean or) {
+        this.gridLabelOrientation = or;
+    }
+
+    public boolean getGridLabelOrientation() {
+        return gridLabelOrientation;
+    }
+
 
     /**
      * Sets whether or not to show the NEI grid overlay.

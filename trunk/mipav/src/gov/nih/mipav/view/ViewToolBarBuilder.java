@@ -840,12 +840,11 @@ public class ViewToolBarBuilder implements ItemListener {
 
         VOIToolBar.add(buildToggleButton("Point", "Draw point VOI", "pointROI", VOIGroup));
 
-        JToggleButton polysliceButton = buildToggleButton("Polyslice", "Draw inter-slice polyline", "polyframe",
-                                                          VOIGroup);
-        polysliceButton.setEnabled(false);
+        JToggleButton polysliceButton = buildToggleButton( "Polyslice", "Draw inter-slice polyline", "polyframe", VOIGroup );
+        //polysliceButton.setEnabled(false);
+        polysliceButton.setEnabled( numberOfDimensions > 2);
+        VOIToolBar.add( polysliceButton );
 
-        // polysliceButton.setEnabled( numberOfDimensions > 2);
-        VOIToolBar.add(polysliceButton);
 
 
         VOIToolBar.add(buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));

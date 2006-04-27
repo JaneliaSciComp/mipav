@@ -441,7 +441,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 if (srcImage.getNDims() == 2) {
                     calc2D(activeVOI);
                 } else if (srcImage.getNDims() > 2) {
-                    calc3D(activeVOI);
+                    calc34D(activeVOI);
                 }
             }
         } catch (NullPointerException npe) {
@@ -1097,11 +1097,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     }
 
     /**
-     * Calculates the image properties in an region defined by the VOI.
-     *
-     * @param  selectedVOI  DOCUMENT ME!
+     *   Calculates the image properties in an region defined by the VOI
      */
-    private void calc3D(VOI selectedVOI) {
+    private void calc34D( VOI selectedVOI ) {
         float minIntensity = Float.MAX_VALUE, totalMinIntensity = Float.MAX_VALUE;
         float maxIntensity = -Float.MAX_VALUE, totalMaxIntensity = -Float.MAX_VALUE;
         float minIntenRed = Float.MAX_VALUE, totalMinIntenRed = Float.MAX_VALUE;
@@ -1123,7 +1121,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float totalMajorAxis = 0;
         float totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
-        Point3Df totalC = new Point3Df(0, 0, 0);
+        Point3Df totalC = new Point3Df( 0, 0, 0 );
         float[] imgBuffer;
         float[] tmpPAxis = null;
         float[] tmpEcc = null;
@@ -1136,15 +1134,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float perimeter = 0f;
         float totalPerimeter = 0f;
 
+
         Vector[] contours;
         BitSet mask;
-        VOIStatisticalProperties statProperty = getVOIProperties(selectedVOI);
+        VOIStatisticalProperties statProperty = getVOIProperties( selectedVOI );
 
         area = 0;
         volume = 0;
         nVox = 0;
 
-        if (srcImage.isColorImage()) {
+        if ( srcImage.isColorImage() ) {
             length = 4 * srcImage.getSliceSize();
         } else {
             length = srcImage.getSliceSize();
@@ -1154,7 +1153,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
         try {
             imgBuffer = new float[length * srcImage.getExtents()[2]];
-            mask = new BitSet(length);
+            int offset4D = imgBuffer.length *
+                           ViewUserInterface.getReference().getFrameContainingImage(srcImage).getViewableTimeSlice();
+
+            mask = new BitSet( length );
             tmpPAxis = new float[1];
             tmpEcc = new float[1];
             tmpMajorAxis = new float[1];
@@ -1162,44 +1164,38 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             xExtents = new float[2];
             yExtents = new float[2];
             zExtents = new float[2];
-            srcImage.exportData(0, imgBuffer.length, imgBuffer); // locks and releases lock
-        } catch (IOException error) {
-            displayError("Algorithm VOI Properties: Image(s) locked");
-            setCompleted(false);
 
+            srcImage.exportData(offset4D, imgBuffer.length, imgBuffer);
+
+        } catch ( IOException error ) {
+            displayError( "Algorithm VOI Properties: Image(s) locked" );
+            setCompleted( false );
             return;
-        } catch (OutOfMemoryError e) {
-            displayError("Algorithm VOI Properties: Out of Memory");
-            setCompleted(false);
-
+        } catch ( OutOfMemoryError e ) {
+            displayError( "Algorithm VOI Properties: Out of Memory" );
+            setCompleted( false );
             return;
         }
 
-        selectedVOI.getBounds(xExtents, yExtents, zExtents);
-
+        selectedVOI.getBounds( xExtents, yExtents, zExtents );
         float ignoreMin = selectedVOI.getMinimumIgnore();
         float ignoreMax = selectedVOI.getMaximumIgnore();
 
         contours = selectedVOI.getCurves();
-
-        if ((perSlice == true) || (perContour == true)) {
-
+        if ( perSlice == true || perContour == true ) {
             // since we're in a 3D image, contours.length is how many slices this VOI is on
-            for (int q = 0; q < contours.length; q++) {
+            for ( int q = 0; q < contours.length; q++ ) {
                 int stop = 1;
                 String end = q + ";";
 
-                if (perContour == true) {
+                if ( perContour == true ) {
                     stop = contours[q].size();
                 }
-
-                if (contours[q].size() < 1) {
+                if ( contours[q].size() < 1 ) {
                     stop = 0;
                 }
-
-                for (int r = 0; r < stop; r++) {
-
-                    if (perContour == true) {
+                for ( int r = 0; r < stop; r++ ) {
+                    if ( perContour == true ) {
                         end = q + ";" + r;
                     }
 
@@ -1211,20 +1207,19 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     area = 0;
                     volume = 0;
 
-                    ((VOIContour) (contours[q].elementAt(r))).secondOrderAttributes(srcImage.getExtents()[0],
-                                                                                    srcImage.getExtents()[1],
-                                                                                    srcImage.getFileInfo(0).getResolutions()[0],
-                                                                                    srcImage.getFileInfo(0).getResolutions()[1],
-                                                                                    srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
-                                                                                    srcImage.getFileInfo(0).getUnitsOfMeasure()[1],
-                                                                                    tmpPAxis, tmpEcc, tmpMajorAxis,
-                                                                                    tmpMinorAxis);
-                    statProperty.setProperty(statProperty.axisDescription + end, String.valueOf(tmpPAxis[0]));
-                    statProperty.setProperty(statProperty.eccentricityDescription + end, String.valueOf(tmpEcc[0]));
-                    statProperty.setProperty(statProperty.majorAxisDescription + end, String.valueOf(tmpMajorAxis[0]));
-                    statProperty.setProperty(statProperty.minorAxisDescription + end, String.valueOf(tmpMinorAxis[0]));
-                    statProperty.setProperty(statProperty.centerDescription + end,
-                                             ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass().toString());
+                    ( (VOIContour) ( contours[q].elementAt( r ) ) ).secondOrderAttributes(
+                      srcImage.getExtents()[0], srcImage.getExtents()[1],
+                      srcImage.getFileInfo(0).getResolutions()[0],
+                      srcImage.getFileInfo(0).getResolutions()[1],
+                      srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
+                      srcImage.getFileInfo(0).getUnitsOfMeasure()[1],
+                      tmpPAxis, tmpEcc, tmpMajorAxis, tmpMinorAxis );
+                    statProperty.setProperty( statProperty.axisDescription + end, String.valueOf( tmpPAxis[0] ) );
+                    statProperty.setProperty( statProperty.eccentricityDescription + end, String.valueOf( tmpEcc[0] ) );
+                    statProperty.setProperty( statProperty.majorAxisDescription + end, String.valueOf( tmpMajorAxis[0] ) );
+                    statProperty.setProperty( statProperty.minorAxisDescription + end, String.valueOf( tmpMinorAxis[0] ) );
+                    statProperty.setProperty( statProperty.centerDescription + end,
+                                              ( (VOIContour) ( contours[q].elementAt( r ) ) ).getCenterOfMass().toString() );
 
 
                     totalEcc += tmpEcc[0];
@@ -1233,105 +1228,90 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     totalMinorAxis += tmpMinorAxis[0];
                     totalC = selectedVOI.getCenterOfMass();
 
-                    perimeter = ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
-                                                                                        srcImage.getFileInfo(0).getResolutions()[1]);
+                    perimeter = ((VOIContour)(contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
+                        srcImage.getFileInfo(0).getResolutions()[1]);
                     totalPerimeter += perimeter;
 
 
-                    mask.clear(); // only works for Java1.4
-
-                    // for ( int m = 0; m < mask.size(); m++ ) {
-                    // mask.clear( m );
-                    // }
-                    if (perSlice == true) {
-
-                        for (int rr = 0; rr < contours[q].size(); rr++) {
-                            ((VOIContour) (contours[q].elementAt(rr))).setActive(true);
+                     mask.clear(); //only works for Java1.4
+                    //for ( int m = 0; m < mask.size(); m++ ) {
+                    //    mask.clear( m );
+                    //}
+                    if ( perSlice == true ) {
+                        for ( int rr = 0; rr < contours[q].size(); rr++ ) {
+                            ( (VOIContour) ( contours[q].elementAt( rr ) ) ).setActive( true );
                         }
                     } else {
-                        ((VOIContour) (contours[q].elementAt(r))).setActive(true);
+                        ( (VOIContour) ( contours[q].elementAt( r ) ) ).setActive( true );
                     }
-
-                    selectedVOI.createActiveContourBinaryMask(srcImage.getExtents()[0], srcImage.getExtents()[1], q,
-                                                              mask, true);
-
-                    if (perSlice == true) {
-
-                        for (int rr = 0; rr < contours[q].size(); rr++) {
-                            ((VOIContour) (contours[q].elementAt(rr))).setActive(false);
+                    selectedVOI.createActiveContourBinaryMask( srcImage.getExtents()[0], srcImage.getExtents()[1], q,
+                            mask, true );
+                    if ( perSlice == true ) {
+                        for ( int rr = 0; rr < contours[q].size(); rr++ ) {
+                            ( (VOIContour) ( contours[q].elementAt( rr ) ) ).setActive( false );
                         }
                     } else {
-                        ((VOIContour) (contours[q].elementAt(r))).setActive(false);
+                        ( (VOIContour) ( contours[q].elementAt( r ) ) ).setActive( false );
                     }
 
                     Point3Df[] pts = selectedVOI.maxWidth();
 
-                    maxDistance = Math.sqrt(((pts[1].x - pts[0].x) * fileInfo[q].getResolutions()[0] *
-                                                 (pts[1].x - pts[0].x) * fileInfo[q].getResolutions()[0]) +
-                                            ((pts[1].y - pts[0].y) * fileInfo[q].getResolutions()[1] *
-                                                 (pts[1].y - pts[0].y) * fileInfo[q].getResolutions()[1]) +
-                                            ((pts[1].z - pts[0].z) * fileInfo[q].getResolutions()[2] *
-                                                 (pts[1].z - pts[0].z) * fileInfo[q].getResolutions()[2]));
-                    statProperty.setProperty(statProperty.maxWidthDescription + end,
-                                             String.valueOf(Math.sqrt(((pts[1].x - pts[0].x) *
-                                                                           fileInfo[q].getResolutions()[0] *
-                                                                           (pts[1].x - pts[0].x) *
-                                                                           fileInfo[q].getResolutions()[0]) +
-                                                                      ((pts[1].y - pts[0].y) *
-                                                                           fileInfo[q].getResolutions()[1] *
-                                                                           (pts[1].y - pts[0].y) *
-                                                                           fileInfo[q].getResolutions()[1]) +
-                                                                      ((pts[1].z - pts[0].z) *
-                                                                           fileInfo[q].getResolutions()[2] *
-                                                                           (pts[1].z - pts[0].z) *
-                                                                           fileInfo[q].getResolutions()[2]))));
+                    maxDistance = Math.sqrt(
+                            ( pts[1].x - pts[0].x ) * fileInfo[q].getResolutions()[0] * ( pts[1].x - pts[0].x )
+                            * fileInfo[q].getResolutions()[0]
+                                    + ( pts[1].y - pts[0].y ) * fileInfo[q].getResolutions()[1]
+                                    * ( pts[1].y - pts[0].y ) * fileInfo[q].getResolutions()[1]
+                                    + ( pts[1].z - pts[0].z ) * fileInfo[q].getResolutions()[2]
+                                    * ( pts[1].z - pts[0].z ) * fileInfo[q].getResolutions()[2] );
+                    statProperty.setProperty( statProperty.maxWidthDescription + end,
+                            String.valueOf(
+                            Math.sqrt(
+                                    ( pts[1].x - pts[0].x ) * fileInfo[q].getResolutions()[0] * ( pts[1].x - pts[0].x )
+                                    * fileInfo[q].getResolutions()[0]
+                                            + ( pts[1].y - pts[0].y ) * fileInfo[q].getResolutions()[1]
+                                            * ( pts[1].y - pts[0].y ) * fileInfo[q].getResolutions()[1]
+                                            + ( pts[1].z - pts[0].z ) * fileInfo[q].getResolutions()[2]
+                                            * ( pts[1].z - pts[0].z ) * fileInfo[q].getResolutions()[2] ) ) );
 
-                    if (srcImage.isColorImage()) {
+                    if ( srcImage.isColorImage() ) {
                         minIntenRed = Float.MAX_VALUE;
                         maxIntenRed = -Float.MAX_VALUE;
                         minIntenGreen = Float.MAX_VALUE;
                         maxIntenGreen = -Float.MAX_VALUE;
                         minIntenBlue = Float.MAX_VALUE;
                         maxIntenBlue = -Float.MAX_VALUE;
-
                         int offset = length * q;
 
-                        for (int i = 0; i < length; i += 4) {
-
-                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+                        for ( int i = 0; i < length; i += 4 ) {
+                            if ( mask.get( i / 4 ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 1] )
+                                    && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 2] )
+                                    && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 3] ) ) {
                                 sumR += imgBuffer[offset + i + 1];
                                 sumG += imgBuffer[offset + i + 2];
                                 sumB += imgBuffer[offset + i + 3];
                                 nVox++;
-
-                                if (imgBuffer[offset + i + 1] < minIntenRed) {
+                                if ( imgBuffer[offset + i + 1] < minIntenRed ) {
                                     minIntenRed = imgBuffer[offset + i + 1];
                                 }
-
-                                if (imgBuffer[offset + i + 1] > maxIntenRed) {
+                                if ( imgBuffer[offset + i + 1] > maxIntenRed ) {
                                     maxIntenRed = imgBuffer[offset + i + 1];
                                 }
 
-                                if (imgBuffer[offset + i + 2] < minIntenGreen) {
+                                if ( imgBuffer[offset + i + 2] < minIntenGreen ) {
                                     minIntenGreen = imgBuffer[offset + i + 2];
                                 }
-
-                                if (imgBuffer[offset + i + 2] > maxIntenGreen) {
+                                if ( imgBuffer[offset + i + 2] > maxIntenGreen ) {
                                     maxIntenGreen = imgBuffer[offset + i + 2];
                                 }
 
-                                if (imgBuffer[offset + i + 3] < minIntenBlue) {
+                                if ( imgBuffer[offset + i + 3] < minIntenBlue ) {
                                     minIntenBlue = imgBuffer[offset + i + 3];
                                 }
-
-                                if (imgBuffer[offset + i + 3] > maxIntenBlue) {
+                                if ( imgBuffer[offset + i + 3] > maxIntenBlue ) {
                                     maxIntenBlue = imgBuffer[offset + i + 3];
                                 }
                             }
                         }
-
                         avgIntenR = sumR / nVox;
                         avgIntenG = sumG / nVox;
                         avgIntenB = sumB / nVox;
@@ -1341,128 +1321,112 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         totalSumB += sumB;
                         totalNVox += nVox;
 
-                        if (minIntenRed < totalMinIntenRed) {
+                        if ( minIntenRed < totalMinIntenRed ) {
                             totalMinIntenRed = minIntenRed;
                         }
-
-                        if (minIntenGreen < totalMinIntenRed) {
+                        if ( minIntenGreen < totalMinIntenRed ) {
                             totalMinIntenGreen = minIntenGreen;
                         }
-
-                        if (minIntenBlue < totalMinIntenRed) {
+                        if ( minIntenBlue < totalMinIntenRed ) {
                             totalMinIntenBlue = minIntenBlue;
                         }
-
-                        if (maxIntenRed > totalMaxIntenRed) {
+                        if ( maxIntenRed > totalMaxIntenRed ) {
                             totalMaxIntenRed = maxIntenRed;
                         }
-
-                        if (maxIntenGreen > totalMaxIntenGreen) {
+                        if ( maxIntenGreen > totalMaxIntenGreen ) {
                             totalMaxIntenGreen = maxIntenGreen;
                         }
-
-                        if (maxIntenBlue > totalMaxIntenBlue) {
+                        if ( maxIntenBlue > totalMaxIntenBlue ) {
                             totalMaxIntenBlue = maxIntenBlue;
                         }
 
-                        statProperty.setProperty(statProperty.minIntensity + "Red" + end, String.valueOf(minIntenRed));
-                        statProperty.setProperty(statProperty.maxIntensity + "Red" + end, String.valueOf(maxIntenRed));
-                        statProperty.setProperty(statProperty.minIntensity + "Green" + end,
-                                                 String.valueOf(minIntenGreen));
-                        statProperty.setProperty(statProperty.maxIntensity + "Green" + end,
-                                                 String.valueOf(maxIntenGreen));
-                        statProperty.setProperty(statProperty.minIntensity + "Blue" + end,
-                                                 String.valueOf(minIntenBlue));
-                        statProperty.setProperty(statProperty.maxIntensity + "Blue" + end,
-                                                 String.valueOf(maxIntenBlue));
-                        statProperty.setProperty(statProperty.avgIntensity + "Red" + end, String.valueOf(avgIntenR));
-                        statProperty.setProperty(statProperty.avgIntensity + "Green" + end, String.valueOf(avgIntenG));
-                        statProperty.setProperty(statProperty.avgIntensity + "Blue" + end, String.valueOf(avgIntenB));
-                        statProperty.setProperty(statProperty.quantityDescription + end, String.valueOf(nVox));
+                        statProperty.setProperty( statProperty.minIntensity + "Red" + end, String.valueOf( minIntenRed ) );
+                        statProperty.setProperty( statProperty.maxIntensity + "Red" + end, String.valueOf( maxIntenRed ) );
+                        statProperty.setProperty( statProperty.minIntensity + "Green" + end,
+                                String.valueOf( minIntenGreen ) );
+                        statProperty.setProperty( statProperty.maxIntensity + "Green" + end,
+                                String.valueOf( maxIntenGreen ) );
+                        statProperty.setProperty( statProperty.minIntensity + "Blue" + end,
+                                String.valueOf( minIntenBlue ) );
+                        statProperty.setProperty( statProperty.maxIntensity + "Blue" + end,
+                                String.valueOf( maxIntenBlue ) );
+                        statProperty.setProperty( statProperty.avgIntensity + "Red" + end, String.valueOf( avgIntenR ) );
+                        statProperty.setProperty( statProperty.avgIntensity + "Green" + end, String.valueOf( avgIntenG ) );
+                        statProperty.setProperty( statProperty.avgIntensity + "Blue" + end, String.valueOf( avgIntenB ) );
+                        statProperty.setProperty( statProperty.quantityDescription + end, String.valueOf( nVox ) );
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
-
                         int offset = length * q;
 
-                        for (int i = 0; i < length; i++) {
-
-                            if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i])) {
+                        for ( int i = 0; i < length; i++ ) {
+                            if ( mask.get( i ) && !inRange( ignoreMin, ignoreMax, imgBuffer[offset + i] ) ) {
                                 sum += imgBuffer[offset + i];
                                 nVox++;
-
-                                if (imgBuffer[offset + i] < minIntensity) {
+                                if ( imgBuffer[offset + i] < minIntensity ) {
                                     minIntensity = imgBuffer[offset + i];
                                 }
-
-                                if (imgBuffer[offset + i] > maxIntensity) {
+                                if ( imgBuffer[offset + i] > maxIntensity ) {
                                     maxIntensity = imgBuffer[offset + i];
                                 }
                             }
                         }
-
                         avgInten = sum / nVox;
 
                         totalSum += sum;
                         totalNVox += nVox;
-
-                        if (minIntensity < totalMinIntensity) {
+                        if ( minIntensity < totalMinIntensity ) {
                             totalMinIntensity = minIntensity;
                         }
-
-                        if (maxIntensity > totalMaxIntensity) {
+                        if ( maxIntensity > totalMaxIntensity ) {
                             totalMaxIntensity = maxIntensity;
                         }
 
-                        statProperty.setProperty(statProperty.minIntensity + end, String.valueOf(minIntensity));
-                        statProperty.setProperty(statProperty.maxIntensity + end, String.valueOf(maxIntensity));
-                        statProperty.setProperty(statProperty.avgIntensity + end, String.valueOf(avgInten));
-                        statProperty.setProperty(statProperty.quantityDescription + end, String.valueOf(nVox));
+                        statProperty.setProperty( statProperty.minIntensity + end, String.valueOf( minIntensity ) );
+                        statProperty.setProperty( statProperty.maxIntensity + end, String.valueOf( maxIntensity ) );
+                        statProperty.setProperty( statProperty.avgIntensity + end, String.valueOf( avgInten ) );
+                        statProperty.setProperty( statProperty.quantityDescription + end, String.valueOf( nVox ) );
                     }
-
-                    area = nVox * (fileInfo[q].getResolutions()[0] * fileInfo[q].getResolutions()[1]);
-                    statProperty.setProperty(statProperty.areaDescription + end, String.valueOf(area));
+                    area = nVox * ( fileInfo[q].getResolutions()[0] * fileInfo[q].getResolutions()[1] );
+                    statProperty.setProperty( statProperty.areaDescription + end, String.valueOf( area ) );
                     volume = area * fileInfo[q].getResolutions()[2];
-                    statProperty.setProperty(statProperty.volumeDescription + end, String.valueOf(volume));
+                    statProperty.setProperty( statProperty.volumeDescription + end, String.valueOf( volume ) );
 
                     totalArea += area;
                     totalVolume += volume;
 
-                    // add perimeter
-                    statProperty.setProperty(statProperty.perimeterDescription + end, String.valueOf(perimeter));
+                    //add perimeter
+                    statProperty.setProperty( statProperty.perimeterDescription + end, String.valueOf(perimeter));
 
                     // calculate standard deviation
                     sum = sumR = sumG = sumB = 0;
-
                     int cnt = 0;
 
-                    if (srcImage.isColorImage()) {
+                    if ( srcImage.isColorImage() ) {
                         int offset = length * q;
 
-                        for (int i = 0; i < length; i += 4) {
-
-                            if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                                    !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
-                                sumR += ((imgBuffer[offset + i + 1] - avgIntenR) *
-                                             (imgBuffer[offset + i + 1] - avgIntenR));
-                                sumG += ((imgBuffer[offset + i + 2] - avgIntenG) *
-                                             (imgBuffer[offset + i + 2] - avgIntenG));
-                                sumB += ((imgBuffer[offset + i + 3] - avgIntenB) *
-                                             (imgBuffer[offset + i + 3] - avgIntenB));
+                        for ( int i = 0; i < length; i += 4 ) {
+                            if ( mask.get( i / 4 ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 1] )
+                                    && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 2] )
+                                    && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 3] ) ) {
+                                sumR += ( ( imgBuffer[offset + i + 1] - avgIntenR )
+                                        * ( imgBuffer[offset + i + 1] - avgIntenR ) );
+                                sumG += ( ( imgBuffer[offset + i + 2] - avgIntenG )
+                                        * ( imgBuffer[offset + i + 2] - avgIntenG ) );
+                                sumB += ( ( imgBuffer[offset + i + 3] - avgIntenB )
+                                        * ( imgBuffer[offset + i + 3] - avgIntenB ) );
                                 cnt++;
                             }
                         }
-
-                        stdDevR = (float) Math.sqrt(sumR / cnt);
-                        stdDevG = (float) Math.sqrt(sumG / cnt);
-                        stdDevB = (float) Math.sqrt(sumB / cnt);
-                        statProperty.setProperty(statProperty.deviationDescription + "Red" + end,
-                                                 String.valueOf(stdDevR));
-                        statProperty.setProperty(statProperty.deviationDescription + "Green" + end,
-                                                 String.valueOf(stdDevG));
-                        statProperty.setProperty(statProperty.deviationDescription + "Blue" + end,
-                                                 String.valueOf(stdDevB));
+                        stdDevR = (float) Math.sqrt( sumR / cnt );
+                        stdDevG = (float) Math.sqrt( sumG / cnt );
+                        stdDevB = (float) Math.sqrt( sumB / cnt );
+                        statProperty.setProperty( statProperty.deviationDescription + "Red" + end,
+                                String.valueOf( stdDevR ) );
+                        statProperty.setProperty( statProperty.deviationDescription + "Green" + end,
+                                String.valueOf( stdDevG ) );
+                        statProperty.setProperty( statProperty.deviationDescription + "Blue" + end,
+                                String.valueOf( stdDevB ) );
 
                         totalStdDevR += sumR;
                         totalStdDevG += sumG;
@@ -1470,236 +1434,208 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     } else {
                         int offset = length * q;
 
-                        for (int i = 0; i < length; i++) {
-
-                            if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[offset + i])) {
-                                sum += ((imgBuffer[offset + i] - avgInten) * (imgBuffer[offset + i] - avgInten));
+                        for ( int i = 0; i < length; i++ ) {
+                            if ( mask.get( i ) && !inRange( ignoreMin, ignoreMax, imgBuffer[offset + i] ) ) {
+                                sum += ( ( imgBuffer[offset + i] - avgInten ) * ( imgBuffer[offset + i] - avgInten ) );
                                 cnt++;
                             }
                         }
-
-                        stdDev = (float) Math.sqrt(sum / cnt);
-                        statProperty.setProperty(statProperty.deviationDescription + end, String.valueOf(stdDev));
+                        stdDev = (float) Math.sqrt( sum / cnt );
+                        statProperty.setProperty( statProperty.deviationDescription + end, String.valueOf( stdDev ) );
                         totalStdDev += sum;
                     }
                 }
             }
+            if ( showTotals == true ) {
+                statProperty.setProperty( statProperty.axisDescription + "Total", String.valueOf( totalAxis ) );
+                statProperty.setProperty( statProperty.eccentricityDescription + "Total", String.valueOf( totalEcc ) );
+                statProperty.setProperty( statProperty.majorAxisDescription + "Total", String.valueOf( totalMajorAxis ) );
+                statProperty.setProperty( statProperty.minorAxisDescription + "Total", String.valueOf( totalMinorAxis ) );
+                statProperty.setProperty( statProperty.centerDescription + "Total", totalC.toString() );
+                statProperty.setProperty( statProperty.areaDescription + "Total", String.valueOf( totalArea ) );
+                statProperty.setProperty( statProperty.volumeDescription + "Total", String.valueOf( totalVolume ) );
+                statProperty.setProperty( statProperty.quantityDescription + "Total", String.valueOf( totalNVox ) );
+                statProperty.setProperty( statProperty.perimeterDescription + "Total", String.valueOf( totalPerimeter ) );
 
-            if (showTotals == true) {
-                statProperty.setProperty(statProperty.axisDescription + "Total", String.valueOf(totalAxis));
-                statProperty.setProperty(statProperty.eccentricityDescription + "Total", String.valueOf(totalEcc));
-                statProperty.setProperty(statProperty.majorAxisDescription + "Total", String.valueOf(totalMajorAxis));
-                statProperty.setProperty(statProperty.minorAxisDescription + "Total", String.valueOf(totalMinorAxis));
-                statProperty.setProperty(statProperty.centerDescription + "Total", totalC.toString());
-                statProperty.setProperty(statProperty.areaDescription + "Total", String.valueOf(totalArea));
-                statProperty.setProperty(statProperty.volumeDescription + "Total", String.valueOf(totalVolume));
-                statProperty.setProperty(statProperty.quantityDescription + "Total", String.valueOf(totalNVox));
-                statProperty.setProperty(statProperty.perimeterDescription + "Total", String.valueOf(totalPerimeter));
-
-                if (srcImage.isColorImage()) {
-                    statProperty.setProperty(statProperty.deviationDescription + "Red" + "Total",
-                                             String.valueOf((float) Math.sqrt(totalStdDevR / totalNVox)));
-                    statProperty.setProperty(statProperty.deviationDescription + "Green" + "Total",
-                                             String.valueOf((float) Math.sqrt(totalStdDevG / totalNVox)));
-                    statProperty.setProperty(statProperty.deviationDescription + "Blue" + "Total",
-                                             String.valueOf((float) Math.sqrt(totalStdDevB / totalNVox)));
-                    statProperty.setProperty(statProperty.minIntensity + "Red" + "Total",
-                                             String.valueOf(totalMinIntenRed));
-                    statProperty.setProperty(statProperty.maxIntensity + "Red" + "Total",
-                                             String.valueOf(totalMaxIntenRed));
-                    statProperty.setProperty(statProperty.minIntensity + "Green" + "Total",
-                                             String.valueOf(totalMinIntenGreen));
-                    statProperty.setProperty(statProperty.maxIntensity + "Green" + "Total",
-                                             String.valueOf(totalMaxIntenGreen));
-                    statProperty.setProperty(statProperty.minIntensity + "Blue" + "Total",
-                                             String.valueOf(totalMinIntenBlue));
-                    statProperty.setProperty(statProperty.maxIntensity + "Blue" + "Total",
-                                             String.valueOf(totalMaxIntenBlue));
-                    statProperty.setProperty(statProperty.avgIntensity + "Red" + "Total",
-                                             String.valueOf(totalSumR / totalNVox));
-                    statProperty.setProperty(statProperty.avgIntensity + "Green" + "Total",
-                                             String.valueOf(totalSumG / totalNVox));
-                    statProperty.setProperty(statProperty.avgIntensity + "Blue" + "Total",
-                                             String.valueOf(totalSumB / totalNVox));
+                if ( srcImage.isColorImage() ) {
+                    statProperty.setProperty( statProperty.deviationDescription + "Red" + "Total",
+                            String.valueOf( (float) Math.sqrt( totalStdDevR / totalNVox ) ) );
+                    statProperty.setProperty( statProperty.deviationDescription + "Green" + "Total",
+                            String.valueOf( (float) Math.sqrt( totalStdDevG / totalNVox ) ) );
+                    statProperty.setProperty( statProperty.deviationDescription + "Blue" + "Total",
+                            String.valueOf( (float) Math.sqrt( totalStdDevB / totalNVox ) ) );
+                    statProperty.setProperty( statProperty.minIntensity + "Red" + "Total",
+                            String.valueOf( totalMinIntenRed ) );
+                    statProperty.setProperty( statProperty.maxIntensity + "Red" + "Total",
+                            String.valueOf( totalMaxIntenRed ) );
+                    statProperty.setProperty( statProperty.minIntensity + "Green" + "Total",
+                            String.valueOf( totalMinIntenGreen ) );
+                    statProperty.setProperty( statProperty.maxIntensity + "Green" + "Total",
+                            String.valueOf( totalMaxIntenGreen ) );
+                    statProperty.setProperty( statProperty.minIntensity + "Blue" + "Total",
+                            String.valueOf( totalMinIntenBlue ) );
+                    statProperty.setProperty( statProperty.maxIntensity + "Blue" + "Total",
+                            String.valueOf( totalMaxIntenBlue ) );
+                    statProperty.setProperty( statProperty.avgIntensity + "Red" + "Total",
+                            String.valueOf( totalSumR / totalNVox ) );
+                    statProperty.setProperty( statProperty.avgIntensity + "Green" + "Total",
+                            String.valueOf( totalSumG / totalNVox ) );
+                    statProperty.setProperty( statProperty.avgIntensity + "Blue" + "Total",
+                            String.valueOf( totalSumB / totalNVox ) );
                 } else {
-                    statProperty.setProperty(statProperty.minIntensity + "Total", String.valueOf(totalMinIntensity));
-                    statProperty.setProperty(statProperty.maxIntensity + "Total", String.valueOf(totalMaxIntensity));
-                    statProperty.setProperty(statProperty.avgIntensity + "Total", String.valueOf(totalSum / totalNVox));
-                    statProperty.setProperty(statProperty.deviationDescription + "Total",
-                                             String.valueOf((float) Math.sqrt(totalStdDev / totalNVox)));
+                    statProperty.setProperty( statProperty.minIntensity + "Total", String.valueOf( totalMinIntensity ) );
+                    statProperty.setProperty( statProperty.maxIntensity + "Total", String.valueOf( totalMaxIntensity ) );
+                    statProperty.setProperty( statProperty.avgIntensity + "Total",
+                            String.valueOf( totalSum / totalNVox ) );
+                    statProperty.setProperty( statProperty.deviationDescription + "Total",
+                            String.valueOf( (float) Math.sqrt( totalStdDev / totalNVox ) ) );
                 }
             }
         } else {
             VOIContour thisContour = null;
 
-            for (int i = 0; i < contours.length; i++) {
-
-                if (contours[i].size() > 0) {
-                    thisContour = ((VOIContour) (contours[i].elementAt(0)));
-
+            for ( int i = 0; i < contours.length; i++ ) {
+                if ( contours[i].size() > 0 ) {
+                    thisContour = ( (VOIContour) ( contours[i].elementAt( 0 ) ) );
                     break;
                 }
             }
+            thisContour.secondOrderAttributes( srcImage.getExtents()[0], srcImage.getExtents()[1],
+                                               srcImage.getFileInfo(0).getResolutions()[0],
+                                               srcImage.getFileInfo(0).getResolutions()[1],
+                                               srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
+                                               srcImage.getFileInfo(0).getUnitsOfMeasure()[1],
+                                               tmpPAxis, tmpEcc, tmpMajorAxis, tmpMinorAxis );
+            statProperty.setProperty( statProperty.axisDescription, String.valueOf( tmpPAxis[0] ) );
+            statProperty.setProperty( statProperty.eccentricityDescription, String.valueOf( tmpEcc[0] ) );
+            statProperty.setProperty( statProperty.majorAxisDescription, String.valueOf( tmpMajorAxis[0] ) );
+            statProperty.setProperty( statProperty.minorAxisDescription, String.valueOf( tmpMinorAxis[0] ) );
+            statProperty.setProperty( statProperty.centerDescription, selectedVOI.getCenterOfMass().toString() );
 
-            thisContour.secondOrderAttributes(srcImage.getExtents()[0], srcImage.getExtents()[1],
-                                              srcImage.getFileInfo(0).getResolutions()[0],
-                                              srcImage.getFileInfo(0).getResolutions()[1],
-                                              srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
-                                              srcImage.getFileInfo(0).getUnitsOfMeasure()[1], tmpPAxis, tmpEcc,
-                                              tmpMajorAxis, tmpMinorAxis);
-            statProperty.setProperty(statProperty.axisDescription, String.valueOf(tmpPAxis[0]));
-            statProperty.setProperty(statProperty.eccentricityDescription, String.valueOf(tmpEcc[0]));
-            statProperty.setProperty(statProperty.majorAxisDescription, String.valueOf(tmpMajorAxis[0]));
-            statProperty.setProperty(statProperty.minorAxisDescription, String.valueOf(tmpMinorAxis[0]));
-            statProperty.setProperty(statProperty.centerDescription, selectedVOI.getCenterOfMass().toString());
+            mask = new BitSet( imgBuffer.length );
+            selectedVOI.createBinaryMask( mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+               srcImage.getParentFrame().useXOR(), false );
 
-            mask = new BitSet(imgBuffer.length);
-            selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
-                                         srcImage.getParentFrame().useXOR(), false);
-
-            if (srcImage.isColorImage()) {
-
-                for (int i = 0; i < imgBuffer.length; i += 4) {
-
-                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
+            if ( srcImage.isColorImage() ) {
+                for ( int i = 0; i < imgBuffer.length; i += 4 ) {
+                    if ( mask.get( i / 4 ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 1] )
+                            && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 2] )
+                            && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 3] ) ) {
                         sumR += imgBuffer[i + 1];
                         sumG += imgBuffer[i + 2];
                         sumB += imgBuffer[i + 3];
                         nVox++;
-
-                        if (imgBuffer[i + 1] < minIntenRed) {
+                        if ( imgBuffer[i + 1] < minIntenRed ) {
                             minIntenRed = imgBuffer[i + 1];
                         }
-
-                        if (imgBuffer[i + 1] > maxIntenRed) {
+                        if ( imgBuffer[i + 1] > maxIntenRed ) {
                             maxIntenRed = imgBuffer[i + 1];
                         }
 
-                        if (imgBuffer[i + 2] < minIntenGreen) {
+                        if ( imgBuffer[i + 2] < minIntenGreen ) {
                             minIntenGreen = imgBuffer[i + 2];
                         }
-
-                        if (imgBuffer[i + 2] > maxIntenGreen) {
+                        if ( imgBuffer[i + 2] > maxIntenGreen ) {
                             maxIntenGreen = imgBuffer[i + 2];
                         }
 
-                        if (imgBuffer[i + 3] < minIntenBlue) {
+                        if ( imgBuffer[i + 3] < minIntenBlue ) {
                             minIntenBlue = imgBuffer[i + 3];
                         }
-
-                        if (imgBuffer[i + 3] > maxIntenBlue) {
+                        if ( imgBuffer[i + 3] > maxIntenBlue ) {
                             maxIntenBlue = imgBuffer[i + 3];
                         }
                     }
                 }
-
                 avgIntenR = sumR / nVox;
                 avgIntenG = sumG / nVox;
                 avgIntenB = sumB / nVox;
 
-                statProperty.setProperty(statProperty.minIntensity + "Red", String.valueOf(minIntenRed));
-                statProperty.setProperty(statProperty.maxIntensity + "Red", String.valueOf(maxIntenRed));
-                statProperty.setProperty(statProperty.minIntensity + "Green", String.valueOf(minIntenGreen));
-                statProperty.setProperty(statProperty.maxIntensity + "Green", String.valueOf(maxIntenGreen));
-                statProperty.setProperty(statProperty.minIntensity + "Blue", String.valueOf(minIntenBlue));
-                statProperty.setProperty(statProperty.maxIntensity + "Blue", String.valueOf(maxIntenBlue));
-                statProperty.setProperty(statProperty.avgIntensity + "Red", String.valueOf(avgIntenR));
-                statProperty.setProperty(statProperty.avgIntensity + "Green", String.valueOf(avgIntenG));
-                statProperty.setProperty(statProperty.avgIntensity + "Blue", String.valueOf(avgIntenB));
-                statProperty.setProperty(statProperty.quantityDescription, String.valueOf(nVox));
+                statProperty.setProperty( statProperty.minIntensity + "Red", String.valueOf( minIntenRed ) );
+                statProperty.setProperty( statProperty.maxIntensity + "Red", String.valueOf( maxIntenRed ) );
+                statProperty.setProperty( statProperty.minIntensity + "Green", String.valueOf( minIntenGreen ) );
+                statProperty.setProperty( statProperty.maxIntensity + "Green", String.valueOf( maxIntenGreen ) );
+                statProperty.setProperty( statProperty.minIntensity + "Blue", String.valueOf( minIntenBlue ) );
+                statProperty.setProperty( statProperty.maxIntensity + "Blue", String.valueOf( maxIntenBlue ) );
+                statProperty.setProperty( statProperty.avgIntensity + "Red", String.valueOf( avgIntenR ) );
+                statProperty.setProperty( statProperty.avgIntensity + "Green", String.valueOf( avgIntenG ) );
+                statProperty.setProperty( statProperty.avgIntensity + "Blue", String.valueOf( avgIntenB ) );
+                statProperty.setProperty( statProperty.quantityDescription, String.valueOf( nVox ) );
             } else {
-
-                for (int i = 0; i < imgBuffer.length; i++) {
-
-                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
+                for ( int i = 0; i < imgBuffer.length; i++ ) {
+                    if ( mask.get( i ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i] ) ) {
                         sum += imgBuffer[i];
                         nVox++;
-
-                        if (imgBuffer[i] < minIntensity) {
+                        if ( imgBuffer[i] < minIntensity ) {
                             minIntensity = imgBuffer[i];
                         }
-
-                        if (imgBuffer[i] > maxIntensity) {
+                        if ( imgBuffer[i] > maxIntensity ) {
                             maxIntensity = imgBuffer[i];
                         }
                     }
                 }
-
                 avgInten = sum / nVox;
 
-                statProperty.setProperty(statProperty.minIntensity, String.valueOf(minIntensity));
-                statProperty.setProperty(statProperty.maxIntensity, String.valueOf(maxIntensity));
-                statProperty.setProperty(statProperty.avgIntensity, String.valueOf(avgInten));
-                statProperty.setProperty(statProperty.quantityDescription, String.valueOf(nVox));
+                statProperty.setProperty( statProperty.minIntensity, String.valueOf( minIntensity ) );
+                statProperty.setProperty( statProperty.maxIntensity, String.valueOf( maxIntensity ) );
+                statProperty.setProperty( statProperty.avgIntensity, String.valueOf( avgInten ) );
+                statProperty.setProperty( statProperty.quantityDescription, String.valueOf( nVox ) );
             }
 
-            // calc the perimeter
+            //calc the perimeter
             totalPerimeter = 0f;
-
-            for (int q = 0; q < contours.length; q++) {
-
+            for ( int q = 0; q < contours.length; q++ ) {
                 // System.out.println("algoVOIprops nContours = " + contours[q].size() );
                 for (int r = 0; r < contours[q].size(); r++) {
-                    totalPerimeter += ((VOIContour) (contours[q].elementAt(r))).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
-                                                                                              srcImage.getFileInfo(0).getResolutions()[1]);
+                    totalPerimeter +=( (VOIContour) ( contours[q].elementAt( r ) ) ).calcPerimeter(srcImage.getFileInfo(0).getResolutions()[0],
+                        srcImage.getFileInfo(0).getResolutions()[1]);
                 }
             }
 
-            statProperty.setProperty(statProperty.perimeterDescription, String.valueOf(totalPerimeter));
-            statProperty.setProperty(statProperty.perimeterDescription + "0;", String.valueOf(totalPerimeter));
+            statProperty.setProperty( statProperty.perimeterDescription, String.valueOf(totalPerimeter));
+            statProperty.setProperty( statProperty.perimeterDescription + "0;", String.valueOf(totalPerimeter));
 
 
-            area = nVox *
-                       (fileInfo[fileInfo.length / 2].getResolutions()[0] *
-                            fileInfo[fileInfo.length / 2].getResolutions()[1]);
-            volume = area * fileInfo[fileInfo.length / 2].getResolutions()[2];
-            statProperty.setProperty(statProperty.areaDescription, String.valueOf(area));
-            statProperty.setProperty(statProperty.volumeDescription, String.valueOf(volume));
+            area = nVox * ( fileInfo[fileInfo.length/2].getResolutions()[0] * fileInfo[fileInfo.length/2].getResolutions()[1] );
+            volume = area * fileInfo[fileInfo.length/2].getResolutions()[2];
+            statProperty.setProperty( statProperty.areaDescription, String.valueOf( area ) );
+            statProperty.setProperty( statProperty.volumeDescription, String.valueOf( volume ) );
 
             // calculate standard deviation
             sum = sumR = sumG = sumB = 0;
-
             int cnt = 0;
 
-            if (srcImage.isColorImage()) {
-
-                for (int i = 0; i < imgBuffer.length; i += 4) {
-
-                    if (mask.get(i / 4) && !inRange(ignoreMin, ignoreMax, imgBuffer[i + 1]) &&
-                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 2]) &&
-                            !inRange(ignoreMin, ignoreMax, imgBuffer[i + 3])) {
-                        sumR += ((imgBuffer[i + 1] - avgIntenR) * (imgBuffer[i + 1] - avgIntenR));
-                        sumG += ((imgBuffer[i + 2] - avgIntenG) * (imgBuffer[i + 2] - avgIntenG));
-                        sumB += ((imgBuffer[i + 3] - avgIntenB) * (imgBuffer[i + 3] - avgIntenB));
+            if ( srcImage.isColorImage() ) {
+                for ( int i = 0; i < imgBuffer.length; i += 4 ) {
+                    if ( mask.get( i / 4 ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 1] )
+                            && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 2] )
+                            && !inRange( ignoreMin, ignoreMax, imgBuffer[i + 3] ) ) {
+                        sumR += ( ( imgBuffer[i + 1] - avgIntenR ) * ( imgBuffer[i + 1] - avgIntenR ) );
+                        sumG += ( ( imgBuffer[i + 2] - avgIntenG ) * ( imgBuffer[i + 2] - avgIntenG ) );
+                        sumB += ( ( imgBuffer[i + 3] - avgIntenB ) * ( imgBuffer[i + 3] - avgIntenB ) );
                         cnt++;
                     }
                 }
-
-                stdDevR = (float) Math.sqrt(sumR / cnt);
-                stdDevG = (float) Math.sqrt(sumG / cnt);
-                stdDevB = (float) Math.sqrt(sumB / cnt);
-                statProperty.setProperty(statProperty.deviationDescription + "Red", String.valueOf(stdDevR));
-                statProperty.setProperty(statProperty.deviationDescription + "Green", String.valueOf(stdDevG));
-                statProperty.setProperty(statProperty.deviationDescription + "Blue", String.valueOf(stdDevB));
+                stdDevR = (float) Math.sqrt( sumR / cnt );
+                stdDevG = (float) Math.sqrt( sumG / cnt );
+                stdDevB = (float) Math.sqrt( sumB / cnt );
+                statProperty.setProperty( statProperty.deviationDescription + "Red", String.valueOf( stdDevR ) );
+                statProperty.setProperty( statProperty.deviationDescription + "Green", String.valueOf( stdDevG ) );
+                statProperty.setProperty( statProperty.deviationDescription + "Blue", String.valueOf( stdDevB ) );
             } else {
-
-                for (int i = 0; i < imgBuffer.length; i++) {
-
-                    if (mask.get(i) && !inRange(ignoreMin, ignoreMax, imgBuffer[i])) {
-                        sum += ((imgBuffer[i] - avgInten) * (imgBuffer[i] - avgInten));
+                for ( int i = 0; i < imgBuffer.length; i++ ) {
+                    if ( mask.get( i ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i] ) ) {
+                        sum += ( ( imgBuffer[i] - avgInten ) * ( imgBuffer[i] - avgInten ) );
                         cnt++;
                     }
                 }
-
-                stdDev = (float) Math.sqrt(sum / cnt);
-                statProperty.setProperty(statProperty.deviationDescription, String.valueOf(stdDev));
+                stdDev = (float) Math.sqrt( sum / cnt );
+                statProperty.setProperty( statProperty.deviationDescription, String.valueOf( stdDev ) );
             }
         }
-
-        setCompleted(true);
+        setCompleted( true );
     }
+
 
     /**
      * not for use. should be moved to a better location. does NOT clone the VOIs that it find to be active, and inserts
