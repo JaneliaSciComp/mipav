@@ -3091,6 +3091,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
+    * Gets the current Time slice which is being viewed
+    * @return int the current time slice
+    */
+   public int getViewableTimeSlice() {
+       return tSlice;
+   }
+
+
+    /**
      * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
      * that were masked with the intensity value that is currently active.
      *

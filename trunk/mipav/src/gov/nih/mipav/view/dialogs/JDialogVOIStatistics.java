@@ -217,6 +217,7 @@ public class JDialogVOIStatistics extends JDialogBase
                 callAlgorithm();
             }
         } else if (source == cancelButton) {
+            ViewUserInterface.getReference().getFrameContainingImage(image).getComponentImage().eraseAllPaint(false);
             dispose(); // consider removing the VOI listners here.
         }
     }

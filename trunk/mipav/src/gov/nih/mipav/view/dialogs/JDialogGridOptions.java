@@ -53,6 +53,12 @@ public class JDialogGridOptions extends JDialogBase {
     /** DOCUMENT ME! */
     private JTextField widthField;
 
+    private JCheckBox labelBox;
+    private JRadioButton labelXNumButton;
+    private JRadioButton labelXAlphaButton;
+
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -83,12 +89,20 @@ public class JDialogGridOptions extends JDialogBase {
         String command = event.getActionCommand();
         Object source = event.getSource();
 
-        if (command.equals("Apply")) {
+        if (source.equals(labelBox)) {
+            labelXNumButton.setEnabled(labelBox.isSelected());
+            labelXAlphaButton.setEnabled(labelBox.isSelected());
+        }
+       else if (command.equals("Apply")) {
 
             if (setVariables()) {
                 comp.setGridSpacingX(width);
                 comp.setGridSpacingY(height);
                 comp.setGridColor(color);
+
+                comp.setGridLabelingOn(labelBox.isSelected());
+                comp.setGridLabelOrientation(labelXNumButton.isSelected());
+
 
                 if (comp.getGridOverlay()) {
                     comp.paintComponent(comp.getGraphics());
@@ -121,11 +135,21 @@ public class JDialogGridOptions extends JDialogBase {
         JPanel paramPanel = new JPanel(new GridBagLayout());
 
         JLabel widthLabel = new JLabel("width (" + unitsStr + "): ");
-        JLabel heightLabel = new JLabel("height (" + unitsStr + "): ");
+    widthLabel.setFont(MipavUtil.font12);
+
+    JLabel heightLabel = new JLabel("height (" + unitsStr + "): " );
+    heightLabel.setFont(MipavUtil.font12);
+
+
         JLabel colorLabel = new JLabel("color: ");
+        colorLabel.setFont(MipavUtil.font12);
+
 
         widthField = new JTextField(Float.toString(width), 4);
+        widthField.setFont(MipavUtil.font12);
+
         heightField = new JTextField(Float.toString(height), 4);
+        heightField.setFont(MipavUtil.font12);
 
         MipavUtil.makeNumericsOnly(widthField, true);
         MipavUtil.makeNumericsOnly(heightField, true);
@@ -135,6 +159,24 @@ public class JDialogGridOptions extends JDialogBase {
         colorButton.setBackground(color);
         colorButton.addActionListener(this);
         colorButton.setActionCommand("Color");
+
+        labelBox = new JCheckBox("Label grid", false);
+        labelBox.setFont(MipavUtil.font12);
+        labelBox.addActionListener(this);
+
+        labelXNumButton = new JRadioButton("x-axis 1-2-3-4");
+    labelXNumButton.setFont(MipavUtil.font12);
+    labelXNumButton.setEnabled(false);
+
+    labelXAlphaButton = new JRadioButton("x-axis a-b-c-d");
+    labelXAlphaButton.setFont(MipavUtil.font12);
+    labelXAlphaButton.setEnabled(false);
+
+    ButtonGroup bGroup = new ButtonGroup();
+    bGroup.add(labelXNumButton);
+    bGroup.add(labelXAlphaButton);
+
+    labelXNumButton.setSelected(true);
 
 
         gbc.insets = new Insets(0, 5, 0, 5);
@@ -157,6 +199,17 @@ public class JDialogGridOptions extends JDialogBase {
         gbc.weightx = 0;
         gbc.fill = gbc.NONE;
         paramPanel.add(colorButton, gbc);
+
+        gbc.gridx = 0;
+    gbc.gridy = 1;
+    paramPanel.add(labelBox, gbc);
+
+    gbc.gridx = 1;
+    paramPanel.add(labelXNumButton, gbc);
+
+    gbc.gridx = 2;
+    paramPanel.add(labelXAlphaButton, gbc);
+
 
         JPanel mainPanel = new JPanel();
         mainPanel.add(paramPanel);
