@@ -128,7 +128,7 @@ public class ViewMenuBar {
                                                                   false),
                                         menuBuilder.makeMenu("Brain tools", false,
                                                              new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Anonymize face",
+                                                                 menuBuilder.buildMenuItem("Face de-identification",
                                                                                            "Anonymize face (BET)", 0,
                                                                                            null, false),
                                                                  menuBuilder.buildMenuItem("Extract brain surface (BET)",
