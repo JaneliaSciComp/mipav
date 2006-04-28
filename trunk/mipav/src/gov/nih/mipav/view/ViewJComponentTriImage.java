@@ -691,9 +691,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * DOCUMENT ME!
+     * This indicates which of the 3 tri-image components we are currently in; either AXIAL, SAGITTAL, or CORONAL. 
      *
-     * @return  DOCUMENT ME!
+     * @return  The orientation, either AXIAL, SAGITTAL, or CORONAL. 
      */
     public int getTriComponentOrientation() {
         return triComponentOrientation;
@@ -2006,9 +2006,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         int xS = (int) (crosshairPt.x / (getZoomX() * resolutionX));
         int yS = (int) (crosshairPt.y / (getZoomY() * resolutionY));
-
+        
         triImageFrame.setCrosshairs(xS, yS, slice, this);
-
+        
         Point3D newLabel = null;
 
         int coronalSlice = triImageFrame.getCoronalComponentSlice();
@@ -3191,7 +3191,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Changes the slices that this component should display.
+     * Sets the crosshair coordinate (in screen space) from an image volume point.
      *
      * @param  pt3D  volume point (3D) to be converted to screen point
      */
