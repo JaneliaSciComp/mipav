@@ -1560,14 +1560,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          *        else if (command.equals("subsampleBy2")) {       /// makes streaks and i don't know why...       if
          * (imageA.getNDims() == 3) {       int newExtents[] = new int[imageA.getNDims()];       float sigmas[] = new
          * float[imageA.getNDims()];       newExtents[0] = imageA.getExtents()[0] / 2;       newExtents[1] =
-         * imageA.getExtents()[1] / 2;       newExtents[2] = imageA.getExtents()[2];       sigmas[0] = 1.0f;
-         * sigmas[1] = 1.0f; sigmas[2] = 1.0f * (imageA.getFileInfo(0).getResolutions()[0] /
+         * imageA.getExtents()[1] / 2;       newExtents[2] = imageA.getExtents()[2];       sigmas[0] = 1.0f; sigmas[1] =
+         * 1.0f; sigmas[2] = 1.0f * (imageA.getFileInfo(0).getResolutions()[0] /
          * imageA.getFileInfo(0).getResolutions()[2]);///       ModelImage resultImage = new
-         * ModelImage(imageA.getType(),       newExtents,       imageA.getImageName() + "_subsample_2",
-         * userInterface); AlgorithmSubsample algo = new AlgorithmSubsample(imageA, resultImage, newExtents, sigmas,
-         * true, true);       algo.setActiveImage(false);       algo.run();       //resultImage = algo.getResultImage();
-         *       new ViewJFrameImage(resultImage, LUTa, userInterface.getNewFrameLocation(), userInterface);       }
-         *   }
+         * ModelImage(imageA.getType(),       newExtents,       imageA.getImageName() + "_subsample_2", userInterface);
+         * AlgorithmSubsample algo = new AlgorithmSubsample(imageA, resultImage, newExtents, sigmas, true, true);
+         * algo.setActiveImage(false);       algo.run();       //resultImage = algo.getResultImage();      new
+         * ViewJFrameImage(resultImage, LUTa, userInterface.getNewFrameLocation(), userInterface);       }  }
          */
         else if (command.equals("subsample")) {
             new JDialogSubsample(this, imageA);
@@ -2311,8 +2310,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         /*
          *        else if (command.equals("Jogl")) {       new InfiniteShadowVolumes().run();       }       else if
-         * (command.equals("Gears")) {       new Gears();       }       else if (command.equals("GearsRotate")) {
-         * new GearsRotate();       }       else if (command.equals("GearsDebug")) {       new GearsDebug();       }
+         * (command.equals("Gears")) {       new Gears();       }       else if (command.equals("GearsRotate")) { new
+         * GearsRotate();       }       else if (command.equals("GearsDebug")) {       new GearsDebug();       }
          */
         else if (command.equals("Trim")) {
             JDialogTrim trimSettings = new JDialogTrim(this);
@@ -2633,8 +2632,47 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PluginView")) {
+        } else if (command.equals("PlugInFileTransfer")) {
+            Object thePlugIn = null;
+            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
+            try {
+                thePlugIn = Class.forName(plugInName).newInstance();
+
+                if (thePlugIn instanceof PlugInFileTransfer) {
+                    ((PlugInFileTransfer) thePlugIn).transferFiles();
+                } else {
+                    MipavUtil.displayError("PlugIn " + plugInName +
+                                           " claims to be an File Transfer PlugIn, but does not implement PlugInFileTransfer.");
+                }
+            } catch (ClassNotFoundException e) {
+                MipavUtil.displayError("PlugIn not found: " + plugInName);
+            } catch (InstantiationException e) {
+                MipavUtil.displayError("Unable to load plugin (ins)");
+            } catch (IllegalAccessException e) {
+                MipavUtil.displayError("Unable to load plugin (acc)");
+            }
+        } else if (command.equals("PlugInGeneric")) {
+            Object thePlugIn = null;
+            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+
+            try {
+                thePlugIn = Class.forName(plugInName).newInstance();
+
+                if (thePlugIn instanceof PlugInGeneric) {
+                    ((PlugInGeneric) thePlugIn).run();
+                } else {
+                    MipavUtil.displayError("Plug-in " + plugInName +
+                                           " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                }
+            } catch (ClassNotFoundException e) {
+                MipavUtil.displayError("PlugIn not found: " + plugInName);
+            } catch (InstantiationException e) {
+                MipavUtil.displayError("Unable to load plugin (ins)");
+            } catch (IllegalAccessException e) {
+                MipavUtil.displayError("Unable to load plugin (acc)");
+            }
+        } else if (command.equals("PluginView")) {
             Object thePlugIn = null;
             String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
@@ -3091,12 +3129,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
-    * Gets the current Time slice which is being viewed
-    * @return int the current time slice
-    */
-   public int getViewableTimeSlice() {
-       return tSlice;
-   }
+     * Gets the current Time slice which is being viewed.
+     *
+     * @return  int the current time slice
+     */
+    public int getViewableTimeSlice() {
+        return tSlice;
+    }
 
 
     /**
