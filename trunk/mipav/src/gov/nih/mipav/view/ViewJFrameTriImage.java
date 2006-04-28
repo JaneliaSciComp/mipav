@@ -172,21 +172,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** DOCUMENT ME! */
     public static int zoomMode = ViewJComponentEditImage.EXPONENTIAL;
 
-    /** DOCUMENT ME! */
-    public static final int MAX_TRI_IMAGES = 9; // maximum number of tri-images
+    /** Maximum number of tri-images! */
+    public static final int MAX_TRI_IMAGES = 9; 
 
-    /** DOCUMENT ME! */
-    protected static final String OLD_LAYOUT = "OldLayout"; // a constant for which to test in the actionPerformed
+    /** A constant for which to test in the actionPerformed */
+    protected static final String OLD_LAYOUT = "OldLayout"; 
 
-    /** DOCUMENT ME! */
-    protected static final String PANEL_PLUGIN = "PanelPlugin"; // a constant for which to test in the actionPerformed
+    /** A constant for which to test in the actionPerformed */
+    protected static final String PANEL_PLUGIN = "PanelPlugin"; 
 
-    /** DOCUMENT ME! */
-    protected static final int DEFAULT_OPTIMAL_ZOOM = 256; // constant to determine how many pixels would be optimal
-                                                           // for the image to be initially zoomed to
+    /** Constant to determine how many pixels would be optimal for the image to be initially zoomed to */
+    protected static final int DEFAULT_OPTIMAL_ZOOM = 256; 
 
     /**
-     * these constants are used to index into the boundingBoxPoints[] array, and represent the corners of the bounding
+     * These constants are used to index into the boundingBoxPoints[] array, and represent the corners of the bounding
      * box. relative to the image's ORIGINAL orientation
      */
     public static final int UPPER_LEFT_FRONT = 0;
@@ -232,11 +231,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** DOCUMENT ME! */
     protected boolean centerButtonSelected = false;
 
-    /** DOCUMENT ME! */
-    protected JCheckBox chkShowTalairachGrid; // "Show talairach grid" checkbox
+    /** "Show talairach grid" checkbox */
+    protected JCheckBox chkShowTalairachGrid; 
 
-    /** DOCUMENT ME! */
-    protected JCheckBox chkShowTalairachGridMarkers; // "Show talairach gridmarkers" checkbox
+    /** "Show talairach gridmarkers" checkbox */
+    protected JCheckBox chkShowTalairachGridMarkers; 
 
     /** Color of the paint. */
     protected Color color = new Color(225, 0, 0);
@@ -265,8 +264,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** The current values of the absolute position labels. */
     protected Point3D currentAbsolutePositionLabels;
 
-    /** DOCUMENT ME! */
-    protected int defaultPreferredHeight = 1000; // the default hight of the window, if it cannot be calculated
+    /** The default hight of the window, if it cannot be calculated */
+    protected int defaultPreferredHeight = 1000; 
 
     /** Extents of image. */
     protected int[] extents;
@@ -282,35 +281,35 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Image control toolbar. */
     protected JToolBar imageToolBar;
 
-    /** DOCUMENT ME! */
-    protected JSpinner intensitySpinner; // spinner component for the paint intensity
+    /** Spinner component for the paint intensity */
+    protected JSpinner intensitySpinner; 
 
-    /** DOCUMENT ME! */
-    protected JLabel labelXPos; // Label the absolute x value in the image volume.
+    /** Label the absolute x value in the image volume. */
+    protected JLabel labelXPos; 
 
     /** Label the anatomical position x value in the image volume. */
     protected JLabel labelXRef;
 
-    /** DOCUMENT ME! */
-    protected JLabel labelXTal; // Label the Talairach position x value in the image volume.
+    /** Label the Talairach position x value in the image volume. */
+    protected JLabel labelXTal; 
 
-    /** DOCUMENT ME! */
-    protected JLabel labelYPos; // Label the absolute y value in the image volume.
+    /** Label the absolute y value in the image volume. */
+    protected JLabel labelYPos; 
 
     /** Label the anatomical position y value in the image volume. */
     protected JLabel labelYRef;
 
-    /** DOCUMENT ME! */
-    protected JLabel labelYTal; // Label the Talairach position y value in the image volume.
+    /** Label the Talairach position y value in the image volume. */
+    protected JLabel labelYTal; 
 
-    /** DOCUMENT ME! */
-    protected JLabel labelZPos; // Label the absolute z value in the image volume.
+    /** Label the absolute z value in the image volume. */
+    protected JLabel labelZPos; 
 
     /** Label the anatomical position z value in the image volume. */
     protected JLabel labelZRef;
 
-    /** DOCUMENT ME! */
-    protected JLabel labelZTal; // Label the Talairach position z value in the image volume.
+    /** Label the Talairach position z value in the image volume. */
+    protected JLabel labelZTal; 
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
@@ -344,11 +343,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
 
-    /** DOCUMENT ME! */
-    protected ViewJFrameImage parentFrame; // reference to the parent window
+    /** Reference to the parent window */
+    protected ViewJFrameImage parentFrame; 
 
-    /** DOCUMENT ME! */
-    protected Component pluginPanel; // reference to the plug-in panel in the 2x2 (old) layout
+    /** Reference to the plug-in panel in the 2x2 (old) layout */
+    protected Component pluginPanel; 
 
     /** Label heading for the anatomical position x, y, z values in the image volume. */
     protected JLabel posLabel;
@@ -416,21 +415,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** The point to become center of transformed image. */
     protected int[] volumeCenter = new int[3];
 
-    /** DOCUMENT ME! */
-    protected VolumePositionFrame volumePositionFrame; // reference to the volume coordinate frame
+    /** Reference to the volume coordinate frame */
+    protected VolumePositionFrame volumePositionFrame; 
 
-    /** DOCUMENT ME! */
-    protected JPanel volumePositionPanel; // reference to the volume coordinate panel when it is in the plug-in position
-
+    /** Reference to the volume coordinate panel when it is in the plug-in position */
+    protected JPanel volumePositionPanel; 
+    
     /** Magnification for image. */
     protected float zoom = 1.0f;
 
     /** DOCUMENT ME! */
     private JToggleButton addPointToggleButton;
 
-    /** DOCUMENT ME! */
-    private Point3D[] boundingBoxPoints = new Point3D[8]; // array of points that specify the corners of the bounding
-                                                          // box
+    /** Array of points that specify the corners of the bounding box */
+    private Point3D[] boundingBoxPoints = new Point3D[8]; 
 
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
@@ -1914,7 +1912,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Sets the slice index for each plane in the frame and components. Should be zero indexed.
+     * Sets the crosshairs for each plane of image. Should be zero indexed.
      *
      * @param  x            slice index in the patient
      * @param  y            slice index in the patient
@@ -1945,7 +1943,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 (sourceImage == triImage[SAGITTAL_AB]) || (sourceImage == triImage[CORONAL_AB])) {
             affectB = true;
         }
-
 
         // This updates positions of the cursors in the other components.
         if ((orientation == ViewJComponentBase.AXIAL) || (orientation == ViewJComponentBase.NA)) {
@@ -1985,6 +1982,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             if ((triImage[AXIAL_AB] != null) && affectA && affectB) {
                 triImage[AXIAL_AB].updateCrosshairPosition(volPt);
             }
+
         } else if (orientation == ViewJComponentBase.CORONAL) {
 
             if ((triImage[AXIAL_A] != null) && affectA) {
