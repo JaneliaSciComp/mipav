@@ -170,7 +170,7 @@ public class AlgorithmMask extends AlgorithmBase {
      */
     public void calcInPlace25D(BitSet mask, float fillValue, int tSlice, Vector intensityLockVector) {
 
-        int i, z, end = 1;
+        int i, z, t, end = 1, tEnd = 1;
         int imgLength, volLength = 0, offset;
         float[] buffer;
         float[] bufferI;
@@ -232,61 +232,71 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            for (z = 0; (z < end) && !threadStopped; z++) {
-
-                try {
-                    srcImage.exportData((tSlice * volLength) + (z * imgLength), imgLength, buffer); // locks and releases lock
-                } catch (IOException error) {
-                    buffer = null;
-                    bufferI = null;
-                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
-
-                    return;
-                }
-
-                if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
-                }
-
-                offset = z * imgLength;
-
-                int mod = imgLength / 10;
-
-                for (i = 0; (i < imgLength) && !threadStopped; i++) {
-
-                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+            if (tSlice != -1) {
+                t = tSlice;
+                tEnd = tSlice+1;
+            }
+            else{
+                t = 0;
+                tEnd = srcImage.getExtents()[3];
+            }
+            
+            for( ; t < tEnd; t++  ) {
+                for (z = 0; (z < end) && !threadStopped; z++) {
+                    try {
+                        srcImage.exportData((t * volLength) + (z * imgLength), imgLength, buffer); // locks and releases lock
+                    } catch (IOException error) {
+                        buffer = null;
+                        bufferI = null;
+                        errorCleanUp("Algorithm Mask: Image(s) locked", true);
+    
+                        return;
                     }
-
-                    if (((mask.get(offset + i) == true) && (polarity == true)) ||
-                            ((mask.get(offset + i) == false) && (polarity == false))) {
-
-                        boolean locked = false;
-
-                        if (lockedIntensities != null) {
-
-                            for (int j = 0; j < lockedIntensities.length; j++) {
-
-                                if (buffer[i] == lockedIntensities[j]) {
-                                    locked = true;
+    
+                    if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                    }
+    
+                    offset = z * imgLength;
+    
+                    int mod = imgLength / 10;
+    
+                    for (i = 0; (i < imgLength) && !threadStopped; i++) {
+    
+                        if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
+                            progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                        }
+    
+                        if (((mask.get(offset + i) == true) && (polarity == true)) ||
+                                ((mask.get(offset + i) == false) && (polarity == false))) {
+    
+                            boolean locked = false;
+    
+                            if (lockedIntensities != null) {
+    
+                                for (int j = 0; j < lockedIntensities.length; j++) {
+    
+                                    if (buffer[i] == lockedIntensities[j]) {
+                                        locked = true;
+                                    }
                                 }
                             }
-                        }
-
-                        if (locked == false) {
-                            buffer[i] = fillValue;
+    
+                            if (locked == false) {
+                                buffer[i] = fillValue;
+                            }
                         }
                     }
-                }
-
-                try {
-                    srcImage.importData((tSlice * volLength) + (z * imgLength), buffer, false);
-                } catch (IOException error) {
-                    buffer = null;
-                    bufferI = null;
-                    errorCleanUp("Algorithm Mask: Image(s) locked", true);
-
-                    return;
+    
+                    try {
+                        srcImage.importData((t * volLength) + (z * imgLength), buffer, false);
+                    } catch (IOException error) {
+                        buffer = null;
+                        bufferI = null;
+                        errorCleanUp("Algorithm Mask: Image(s) locked", true);
+    
+                        return;
+                    }
                 }
             }
 
@@ -1424,6 +1434,7 @@ public class AlgorithmMask extends AlgorithmBase {
         disposeProgressBar();
         setCompleted(true);
     }
+    
 
     /**
      * Fills new image/VOI with new fill value;
