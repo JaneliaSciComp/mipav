@@ -9,6 +9,7 @@ import java.awt.*;
 import java.util.*;
 import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.view.dialogs.JDialogShortcutEditor;
+import java.text.*;
 
 
 /**
@@ -2435,6 +2436,8 @@ public class VOI extends ModelSerialCloneable {
         ViewUserInterface.getReference().getMessageFrame().append("Number of points in polyline slice VOI: " +
                 distanceVector.size() + "\n", ViewJFrameMessage.DATA);
 
+        DecimalFormat n = new DecimalFormat("0.00");
+
         for (i = 0; i < distanceVector.size() - 1; i++) {
             firstPoint = ((PolyPointHolder) distanceVector.elementAt(i)).
                          getPoint();
@@ -2450,20 +2453,9 @@ public class VOI extends ModelSerialCloneable {
             totalDistance3D += distance3D;
             totalDistance2D += distance2D;
 
-
-            //Round to nearest .01
-            distance3D /= .01;
-            distance3D = (int)MipavMath.round(distance3D);
-            distance3D *= .01;
-
-            distance2D /= .01;
-            distance2D = (int)MipavMath.round(distance2D);
-            distance2D *= .01;
-
-
             ViewUserInterface.getReference().getMessageFrame().append("\tpoint " + Integer.toString(i+1) +
-                    " to point " + Integer.toString(i+2) + ": " + Double.toString(distance2D) + unitsStr +
-                    " (2D), " + Double.toString(distance3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
+                    " to point " + Integer.toString(i+2) + ": " + n.format(distance2D) + unitsStr +
+                    " (2D), " + n.format(distance3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
 
         }
         firstPoint = ((PolyPointHolder) distanceVector.elementAt(0)).getPoint();
@@ -2476,33 +2468,17 @@ public class VOI extends ModelSerialCloneable {
                                             secondPoint.x, secondPoint.y,
                                             secondPoint.z,
                                             resols);
-        //round to nearest .01
-        displacement3D /= .01;
-        displacement2D /= .01;
-        totalDistance3D /= .01;
-        totalDistance2D /= .01;
-
-        displacement3D = (int)MipavMath.round(displacement3D);
-        displacement2D = (int)MipavMath.round(displacement2D);
-        totalDistance3D = (int)MipavMath.round(totalDistance3D);
-        totalDistance2D = (int)MipavMath.round(totalDistance2D);
-
-        displacement3D *= .01;
-        displacement2D *= .01;
-        totalDistance3D *= .01;
-        totalDistance2D *= .01;
-
 
         //print displacement
         ViewUserInterface.getReference().getMessageFrame().append("Displacement (first point to last point): " +
-                Double.toString(displacement2D) + unitsStr + " (2D), " +
-                Double.toString(displacement3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
+                n.format(displacement2D) + unitsStr + " (2D), " +
+                n.format(displacement3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
 
 
         //print total distance
         ViewUserInterface.getReference().getMessageFrame().append("Total distance: " +
-                Double.toString(totalDistance2D) + unitsStr + " (2D), " +
-                Double.toString(totalDistance3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
+               n.format(totalDistance2D) + unitsStr + " (2D), " +
+                n.format(totalDistance3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
 
     }
 
@@ -2925,19 +2901,10 @@ public class VOI extends ModelSerialCloneable {
                     }
                 }
             }
+            DecimalFormat n = new DecimalFormat("0.00");
+            sDistStr = n.format(sDist);
+            String tmpString = n.format(distance);
 
-            try {
-                sDistStr = String.valueOf(sDist);
-            } catch (Exception ex) {
-
-            }
-
-
-            String tmpString = String.valueOf(distance);
-            i = tmpString.indexOf('.');
-            if (tmpString.length() >= i + 3) {
-                tmpString = tmpString.substring(0, i + 3);
-            }
             switch (unitsOfMeasure[0]) {
             case FileInfoBase.INCHES:
                 tmpString = tmpString + " in";
@@ -2970,15 +2937,7 @@ public class VOI extends ModelSerialCloneable {
                 tmpString += " Unknown";
             }
 
-            //if there is a segment distance to be displayed, set the correct units
-            if (!sDistStr.equals("")) {
-                i = sDistStr.indexOf('.');
-                if (sDistStr.length() >= i + 3) {
-                    sDistStr = sDistStr.substring(0, i + 3);
-                }
-
-                sDistStr += tmpString.substring(tmpString.indexOf(" ") + 1, tmpString.length());
-            }
+            sDistStr += tmpString.substring(tmpString.indexOf(" ") + 1, tmpString.length());
 
             //finally draw the points
             for (i = 0; i < curves[slice].size(); i++) {
