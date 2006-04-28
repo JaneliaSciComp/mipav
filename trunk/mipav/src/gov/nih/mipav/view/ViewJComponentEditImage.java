@@ -1188,6 +1188,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         float min, max;
         Color fillColor = new Color(128, 0, 0);
+        int slice[] = new int[1];
+        slice[0]=1;
 
         AlgorithmMask maskAlgo = null;
 
@@ -1212,30 +1214,38 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
-                maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
-                maskAlgo.setActiveImage(false);
-                maskAlgo.setProgressBarVisible(showProgressBar);
-                maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
-
-                if (imageA.getType() == ModelStorageBase.UBYTE) {
-                    min = 0;
-                    max = 255;
-                } else if (imageA.getType() == ModelStorageBase.BYTE) {
-                    min = -128;
-                    max = 127;
-                } else {
-                    min = (float) imageA.getMin();
-                    max = (float) imageA.getMax();
+                if (imageA.getNDims() == 4){
+                    // Build dialog 3D or 4D
+                    JDialogMask3D4D dialog3D4D = new JDialogMask3D4D(frame, slice);
+                    if (slice[0] == -1 ) timeSlice = -1;
                 }
-
-                float imgMin = (float) imageA.getMin();
-                float imgMax = (float) imageA.getMax();
-
-                if ((intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
-                    LUTa.resetTransferLine(min, imgMin, max, imgMax);
-
-                    if (imageA.getHistoLUTFrame() != null) {
-                        imageA.getHistoLUTFrame().update();
+                
+                if (slice[0] <= 0 ){
+                    maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                    maskAlgo.setActiveImage(false);
+                    maskAlgo.setProgressBarVisible(showProgressBar);
+                    maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
+    
+                    if (imageA.getType() == ModelStorageBase.UBYTE) {
+                        min = 0;
+                        max = 255;
+                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
+                        min = -128;
+                        max = 127;
+                    } else {
+                        min = (float) imageA.getMin();
+                        max = (float) imageA.getMax();
+                    }
+    
+                    float imgMin = (float) imageA.getMin();
+                    float imgMax = (float) imageA.getMax();
+    
+                    if ((intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
+                        LUTa.resetTransferLine(min, imgMin, max, imgMax);
+    
+                        if (imageA.getHistoLUTFrame() != null) {
+                            imageA.getHistoLUTFrame().update();
+                        }
                     }
                 }
             }
