@@ -8,6 +8,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.event.*;
 import java.awt.*;
+import java.awt.image.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -1632,68 +1633,94 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                                                hasFocus);
 
             if (value instanceof VOIGroupNode) {
-                setForeground(((VOIGroupNode) value).getVOIgroup().getColor());
-
-                setBackgroundNonSelectionColor(background);
-                setBackgroundSelectionColor(Color.black);
 
                 setIcon(null);
                 int type = ((VOIGroupNode) value).getVOIgroup().getCurveType();
 
+                Icon typeIcon = null;
+
                 switch (type) {
                 case VOI.POLYLINE:
-                    setIcon(ICON_POLYLINE);
+                    typeIcon = ICON_POLYLINE;
                     break;
                 case VOI.CONTOUR:
-                    setIcon(ICON_POLYGON);
+                    typeIcon = ICON_POLYGON;
                     break;
                 case VOI.LINE:
-                    setIcon(ICON_LINE);
+                    typeIcon = ICON_LINE;
                     break;
                 case VOI.POINT:
-                    setIcon(ICON_POINT);
+                    typeIcon = ICON_POINT;
                     break;
                 case VOI.PROTRACTOR:
-                    setIcon(ICON_PROTRACTOR);
+                    typeIcon = ICON_PROTRACTOR;
                     break;
                 default:
                     setIcon(null);
                 }
+
+                int rgb = ((VOIGroupNode) value).getVOIgroup().getColor().getRGB();
+
+
+                if (typeIcon != null) {
+                    ImageIcon ico = (ImageIcon)typeIcon;
+                    int imageWidth = ico.getIconWidth();
+                    int imageHeight = ico.getIconHeight();
+
+                    int[] pixels = new int[imageWidth * imageHeight];
+                    PixelGrabber pg = new PixelGrabber(ico.getImage(), 0, 0, imageWidth, imageHeight, pixels, 0, imageWidth);
+                    try {
+                        pg.grabPixels();
+                    } catch (InterruptedException e) {
+                        Preferences.debug("JIMI: Interrupted waiting for pixels!" + "\n");
+
+                        return null;
+                    }
+
+                    BufferedImage image2 = new BufferedImage( ico.getIconWidth() + 15,
+                                                              ico.getIconHeight(),
+                                                              BufferedImage.TYPE_INT_ARGB);
+
+                    for (int y = 0; y < imageHeight; y++) {
+                        for (int x = 0; x < imageWidth; x++) {
+                           image2.setRGB(x, y, pixels[(y * imageWidth) + x]);
+                        }
+                    }
+
+                    for (int i = ico.getIconWidth() + 5; i < image2.getWidth() - 5; i++) {
+                        for (int j = 2; j < image2.getHeight() - 2; j++) {
+                            image2.setRGB(i, j, rgb);
+                        }
+                    }
+                    setIcon(new ImageIcon(image2));
+
+                } else {
+                    BufferedImage image = new BufferedImage(5, 24,  BufferedImage.TYPE_INT_ARGB);
+                    for (int i = 0; i < 5; i++) {
+                        for (int j = 2; j < 22; j++) {
+                            image.setRGB(i, j, rgb);
+                        }
+                    }
+                    setIcon (new ImageIcon(image));
+                }
+
+               // ImageIcon ico = new ImageIcon(image);
+               // setIcon(ico);
+
+
                 setBorder(null);
                 setFont(MipavUtil.font12);
             } else if (value instanceof VOIFrameNode) {
-                // setForeground(((VOIGroupNode) ((TreeNode) value).getParent()).
-                //               getVOIgroup().getColor());
-
-                setForeground(Color.BLACK);
-
-                setTextSelectionColor(Color.WHITE);
-                setBackgroundNonSelectionColor(Color.lightGray);
-                setBackgroundSelectionColor(Color.gray);
                 setBorder(frameBorder);
                 setFont(MipavUtil.font10);
                 setIcon(null);
 
             } else if (value instanceof VOINode) {
-
-                setForeground(((VOIGroupNode) (((VOIFrameNode) ((VOINode) value).
-                                                getParent()).getParent())).
-                              getVOIgroup().getColor());
-
-                setBackgroundNonSelectionColor(background);
-                setBackgroundSelectionColor(Color.BLACK);
                 setIcon(null);
                 setBorder(null);
                 setFont(MipavUtil.font12);
             } else {
                 //setForeground(Color.white);
-
-
-                this.setTextNonSelectionColor(Color.BLACK);
-                this.setTextSelectionColor(Color.white);
-                setBackgroundNonSelectionColor(voiTree.getBackground());
-                setBackgroundSelectionColor(Color.BLACK);
-
                 setIcon(ICON_MEDICAL_FRAME);
                 setFont(MipavUtil.font12);
                 setBorder(null);
