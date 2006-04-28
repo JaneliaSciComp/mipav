@@ -520,6 +520,26 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
+        } else if (command.equals("PlugInGeneric")) {
+            Object thePlugIn = null;
+            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+
+            try {
+                thePlugIn = Class.forName(plugInName).newInstance();
+
+                if (thePlugIn instanceof PlugInGeneric) {
+                    ((PlugInGeneric) thePlugIn).run();
+                } else {
+                    MipavUtil.displayError("Plug-in " + plugInName +
+                                           " claims to be an generic PlugIn, but does not implement PlugInGeneric.");
+                }
+            } catch (ClassNotFoundException e) {
+                MipavUtil.displayError("PlugIn not found: " + plugInName);
+            } catch (InstantiationException e) {
+                MipavUtil.displayError("Unable to load plugin (ins)");
+            } catch (IllegalAccessException e) {
+                MipavUtil.displayError("Unable to load plugin (acc)");
+            }
         } else if (command.equals("InstallPlugin")) {
             JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame, this);
             instPlugin.setVisible(true);
@@ -689,6 +709,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         JMenu viewMenu = ViewMenuBuilder.buildMenu("View", 0, false);
 
+        JMenu genericMenu = ViewMenuBuilder.buildMenu("General", 0, false);
+
         File pluginsDir = new File(userPlugins);
 
         if (pluginsDir.isDirectory()) {
@@ -749,6 +771,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                                                                 name.length()) + " - transfer files",
                                                                  "PlugInFileTransfer", 0, al, null, false);
                         fileTransferMenu.add(menuItem);
+                        menuItem.setName(name);
+                    } else if (plugIn instanceof PlugInGeneric) {
+                        menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
+                                                                                name.length()), "PlugInGeneric", 0, al,
+                                                                 null, false);
+                        genericMenu.add(menuItem);
                         menuItem.setName(name);
                     } else if ((plugIn instanceof PlugInView) && !(al instanceof ViewUserInterface)) {
 
@@ -3043,9 +3071,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *   <li>sets the TRIM</li>
      * </ol>
      *
-     * Over-riding classes should not over-ride this method unless one of these intermediate operations is not desired
-     * or more operations are needed. To modify the defaults used in creating a preferences file, over-ride one of the
-     * called methods.
+     * <p>Over-riding classes should not over-ride this method unless one of these intermediate operations is not
+     * desired or more operations are needed. To modify the defaults used in creating a preferences file, over-ride one
+     * of the called methods.</p>
      *
      * @see  #setDefaultDirectory(String)
      * @see  #showSplashGraphics()
