@@ -1056,6 +1056,10 @@ public class ViewToolBarBuilder implements ItemListener {
     }
 
 
+    /**
+     * Sets the correct VOI button to be selected (based on action command)
+     * @param command String the action command of the VOI Button (easiest)
+     */
     public void setVOIButtonSelected(String command) {
         if ( VOIGroup != null) {
 
