@@ -28,6 +28,9 @@ public class ViewMenuBuilder {
     /** List that holds the last X number of recently opened images. */
     private QuickList quickList;
 
+    /** Index for rebuilding quicklist */
+    private int quicklistIndex = 0;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -830,10 +833,14 @@ public class ViewMenuBuilder {
                 } else if (menuComponent[i] instanceof QuickList) {
                     Vector list = ((QuickList) menuComponent[i]).getList();
 
-                    for (int j = 0; j < list.size(); j++) {
-                        menu.add((JMenuItem) list.elementAt(j));
-                    }
+                    //save the index of the quicklist here for rebuilding
+                    quicklistIndex = menu.getItemCount();
 
+                    if (list.size() > 0) {
+                        for (int j = 0; j < list.size(); j++) {
+                            menu.add((JMenuItem) list.elementAt(j));
+                        }
+                    }
                     this.quickList = (QuickList) menuComponent[i];
 
                 }
@@ -924,7 +931,6 @@ public class ViewMenuBuilder {
      * Updates the most recently opened images list (called when images are opened etc).
      */
     public void updateQuickList() {
-        int index = 25; // this is the number of items in the file menu BEFORE the quicklist
 
         // and this MUST be changed if new items are added
 
@@ -939,7 +945,7 @@ public class ViewMenuBuilder {
         list = quickList.getList();
 
         for (int i = 0; i < list.size(); i++) {
-            fileMenu.add((JMenuItem) list.elementAt(i), (index + i));
+            fileMenu.add((JMenuItem) list.elementAt(i), (quicklistIndex + i));
         }
     }
 

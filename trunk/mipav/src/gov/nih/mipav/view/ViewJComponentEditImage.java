@@ -1582,7 +1582,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     curves = voi.getCurves();
                     nCurves = curves[zSlice].size();
                 }
+            } else if (voi.getCurveType() == VOI.POLYLINE_SLICE) {
+                if ( ( (VOIPoint) (curves[zSlice].elementAt(j))).isActive()) {
+                    voi.removeCurves(zSlice);
+                    j = -1;
+                    nCurves = 0;
+                }
             }
+
         }
     }
 
@@ -3596,7 +3603,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                     if (sl == slice &&
                                         VOIs.VOIAt(i).nearLine(xS, yS, sl)) {
 
-                                        System.err.println("calling moveVOI for POLYLINE_SLICE: " + xS + "," + yS);
                                         VOIs.VOIAt(i).moveVOI(sl, xDim, yDim, zDim, distX, distY, 0);
                                         imageActive.notifyImageDisplayListeners();
                                     }
@@ -9258,11 +9264,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case POINT_VOI:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("point");
+                }
+
                 rubberband.setActive(false);
                 setCursor(crosshairCursor);
                 break;
 
             case RECTANGLE:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("rectvoi");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbRect;
                 rubberband.setActive(true);
@@ -9270,6 +9284,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case ELLIPSE:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("ellipsevoi");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbEllipse;
                 rubberband.setActive(true);
@@ -9277,6 +9295,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case RECTANGLE3D:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("rect3dvoi");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbRect;
                 rubberband.setActive(true);
@@ -9305,6 +9327,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case POLYLINE:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("polyline");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbPolyline;
                 rubberband.setActive(true);
@@ -9312,6 +9338,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case LIVEWIRE:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("livewirevoi");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbLivewire;
                 rubberband.setActive(true);
@@ -9319,11 +9349,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case LEVELSET:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("levelsetvoi");
+                }
+
                 rubberband.setActive(false);
                 setCursor(crosshairCursor);
                 break;
 
             case LINE:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("line");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbLine;
                 rubberband.setActive(true);
@@ -9331,6 +9369,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case PROTRACTOR:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("protractor");
+                }
+
                 rubberband.setActive(false);
                 rubberband = rbProtractor;
                 rubberband.setActive(true);
@@ -9353,6 +9395,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 break;
 
             case POLYLINE_SLICE_VOI:
+                if (frame instanceof ViewJFrameImage) {
+                    frame.getControls().getTools().setVOIButtonSelected("polyslice");
+                }
+
                 rubberband.setActive(false);
                 setCursor(crosshairCursor);
                 break;
@@ -11472,9 +11518,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Handles cycling through contours or VOIs left or right = cycle through contours up or down = cycle through VOIs.
-     *
-     * @param  keyCode  int directional arrow key
+     * Handles cycling through contours or VOIs
+     * left or right = cycle through contours
+     * up or down = cycle through VOIs
+     * @param keyCode int directional arrow key
      */
     private void cycleVOI(int keyCode) {
         int end = 0;
@@ -11483,89 +11530,87 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         ViewVOIVector VOIs = imageActive.getVOIs();
         int nVOI = VOIs.size();
 
-        boolean contourOnly = ((keyCode == KeyEvent.VK_LEFT) || (keyCode == KeyEvent.VK_RIGHT));
-
+        boolean contourOnly = (keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT);
         for (int i = 0; i < nVOI; i++) {
 
             if (VOIs.VOIAt(i).isActive()) {
-
                 if (imageActive.getNDims() < 3) {
                     end = 1;
-                } else {
+                }
+                else {
                     end = imageActive.getExtents()[2];
                 }
 
                 if (contourOnly) {
+                    if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                        //do nothing...return
+                        return;
+                    }
 
-                    // if they are all active, set the 1st contour to active
+                    //if they are all active, set the 1st contour to active
                     if (allActive) {
                         VOIs.VOIAt(i).setAllActive(false);
-
-                        // sketchy : ( (VOIBase) (VOIs.VOIAt(i).getCurves()[0].elementAt(0))).setActive(true);
+                        //sketchy : ( (VOIBase) (VOIs.VOIAt(i).getCurves()[0].elementAt(0))).setActive(true);
                         imageActive.notifyImageDisplayListeners();
-                    } else {
-
+                    }
+                    else {
                         for (int sl = 0; sl < end; sl++) {
                             size = VOIs.VOIAt(i).getCurves()[sl].size();
-
                             for (int j = 0; j < size; j++) {
 
-                                if (((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
-                                    ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).setActive(false);
+                                if ( ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
+                                    ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).setActive(false);
 
                                     int index = 0;
 
 
-                                    if (keyCode == KeyEvent.VK_RIGHT) {
 
-                                        if ((j + 1) < size) {
+
+                                    if (keyCode == KeyEvent.VK_RIGHT) {
+                                        if (j + 1 < size) {
                                             index = j + 1;
                                         } else {
                                             index = 0;
                                         }
-                                    } else {
-
-                                        if ((j - 1) >= 0) {
+                                    }
+                                    else {
+                                        if (j - 1 >= 0) {
                                             index = j - 1;
-                                        } else {
+                                        }
+                                        else {
                                             index = size - 1;
                                         }
                                     }
+                                    ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index))).
+                                        setActive(true);
 
-                                    ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index))).setActive(true);
-
-                                    Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index)))
-                                                      .getActivePt();
-
+                                    Point3Df pt = ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(index))).getActivePt();
                                     if (pt != null) {
-                                        setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                        setPixelInformationAtLocation( (int) pt.x, (int) pt.y);
                                     }
+
 
                                     imageActive.notifyImageDisplayListeners();
                                     fireVOISelectionChange(VOIs.VOIAt(i));
-
                                     return;
                                 }
                             }
                         }
                     }
                 }
-                // end if contourOnly
+                //end if contourOnly
                 else { // for cycling between whole VOIs (not contours)
 
                     VOIs.VOIAt(i).setActive(false);
                     VOIs.VOIAt(i).setAllActive(false);
-
                     int index = 0;
 
-                    if (keyCode == KeyEvent.VK_UP) {
-
-                        if ((i + 1) < nVOI) {
+                    if ( keyCode == KeyEvent.VK_UP) {
+                        if (i + 1 < nVOI) {
                             index = i + 1;
                         }
                     } else {
-
-                        if ((i - 1) >= 0) {
+                        if (i - 1 >= 0) {
                             index = i - 1;
                         } else {
                             index = nVOI - 1;
@@ -11573,17 +11618,19 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
 
                     VOIs.VOIAt(index).setActive(true);
+                    if (VOIs.VOIAt(index).getCurveType() == VOI.POLYLINE_SLICE) {
+                        VOIs.VOIAt(index).setAllActive(true);
+                        allActive = true;
+                    }
 
                     for (int sl = 0; sl < end; sl++) {
                         size = VOIs.VOIAt(index).getCurves()[sl].size();
-
                         if (size > 0) {
-                            ((VOIBase) (VOIs.VOIAt(index).getCurves()[sl].elementAt(0))).setActive(true);
+                            ( (VOIBase) (VOIs.VOIAt(index).getCurves()[sl].elementAt(0))).setActive(true);
 
-                            Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(0))).getActivePt();
-
+                            Point3Df pt = ( (VOIBase) (VOIs.VOIAt(index).getCurves()[sl].elementAt(0))).getActivePt();
                             if (pt != null) {
-                                setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                setPixelInformationAtLocation( (int) pt.x, (int) pt.y);
                             }
 
                             break;
@@ -11592,12 +11639,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     fireVOISelectionChange(VOIs.VOIAt(index));
                     imageActive.notifyImageDisplayListeners();
-
                     return;
                 }
             }
         }
     }
+
 
     /**
      * Draws text onto the image, such as the slice number.
@@ -11667,10 +11714,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Handles cycling/moving the active point of a contour (must be active).
-     *
-     * @param  keyCode  int (arrow key)
-     * @param  doMove   boolean (true = move, false = cycle)
+     * Handles cycling/moving the active point of a contour (must be active)
+     * @param keyCode int (arrow key)
+     * @param doMove boolean (true = move, false = cycle)
      */
     private void handleVOIActivePt(int keyCode, boolean doMove) {
         int end = 0;
@@ -11684,46 +11730,56 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             int curveType = VOIs.VOIAt(i).getCurveType();
 
             if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
-
-                if (((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE) || (curveType == VOI.LINE) ||
-                         (curveType == VOI.POINT))) {
-
+                if ( (curveType == VOI.CONTOUR
+                      || curveType == VOI.POLYLINE
+                      || curveType == VOI.LINE
+                      || curveType == VOI.POINT
+                      || curveType == VOI.POLYLINE_SLICE)) {
                     if (imageActive.getNDims() < 3) {
                         end = 1;
-                    } else {
+                    }
+                    else {
                         end = imageActive.getExtents()[2];
                     }
-
+                   // System.err.println("Doin poly stuff...all active is: " + allActive);
                     if (allActive) {
-                        System.err.println("all active");
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                            if (doMove) {
+                                VOIs.VOIAt(i).moveVOI(slice, xDim, yDim,
+                                        imageActive.getExtents()[2], 0, 0,
+                                        keyCode);
+                                Point3Df pt = VOIs.VOIAt(i).exportPSlicePoint(slice);
+                                if (pt != null) {
+                                    setPixelInformationAtLocation( (int) pt.x, (int) pt.y);
+                                }
 
+                                imageActive.notifyImageDisplayListeners();
+                            } else {
+                                VOIs.VOIAt(i).cyclePSlicePt(slice, keyCode);
+                                imageActive.notifyImageDisplayListeners();
+                            }
+                        }
                         return;
-                    } else {
-
+                    }
+                    else {
                         for (int sl = 0; sl < end; sl++) {
-
                             for (int j = 0; j < VOIs.VOIAt(i).getCurves()[sl].size(); j++) {
 
-                                if (((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
+                                if (( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
 
                                     if (doMove) {
-                                        ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).moveActivePt(keyCode,
-                                                                                                              xDim,
-                                                                                                              yDim);
+                                        ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).moveActivePt(keyCode, xDim, yDim);
                                     } else {
-                                        ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).cycleActivePt(keyCode);
+                                        ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).cycleActivePt(keyCode);
                                     }
 
-                                    // show the active point's new (or dif active pt) location
+                                    //show the active point's new (or dif active pt) location
 
-                                    Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
-
+                                    Point3Df pt = ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
                                     if (pt != null) {
-                                        setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                        setPixelInformationAtLocation( (int) pt.x, (int) pt.y);
                                     }
-
                                     imageActive.notifyImageDisplayListeners();
-
                                     return;
                                 }
                             }
@@ -11733,9 +11789,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
         }
-
         return;
     }
+
 
     /**
      * Loads the User Defined transfer function into the lut.
@@ -11883,9 +11939,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Allows user to move any active VOI using the up/down/left/right keys.
-     *
-     * @param  keyCode  int (only up down left and right do anything)
+     * Allows user to move any active VOI using the up/down/left/right keys
+     * @param keyCode int (only up down left and right do anything)
      */
     private void moveVOI(int keyCode) {
 
@@ -11894,23 +11949,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int end = 0;
 
         switch (keyCode) {
-
             case KeyEvent.VK_UP:
                 distY = -1;
                 break;
-
             case KeyEvent.VK_DOWN:
                 distY = 1;
                 break;
-
             case KeyEvent.VK_LEFT:
                 distX = -1;
                 break;
-
             case KeyEvent.VK_RIGHT:
                 distX = 1;
                 break;
-
             default:
                 return;
         }
@@ -11920,7 +11970,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int xDim = imageActive.getExtents()[0];
         int yDim = imageActive.getExtents()[1];
         int zDim = 1;
-
         if (imageActive.getNDims() > 2) {
             zDim = imageActive.getExtents()[2];
         }
@@ -11929,32 +11978,40 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             int curveType = VOIs.VOIAt(i).getCurveType();
 
             if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
-
-                if (((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE) || (curveType == VOI.LINE) ||
-                         (curveType == VOI.PROTRACTOR) || (curveType == VOI.POINT))) {
-
+                if ( (curveType == VOI.CONTOUR
+                      || curveType == VOI.POLYLINE
+                      || curveType == VOI.LINE
+                      || curveType == VOI.PROTRACTOR
+                      || curveType == VOI.POINT
+                      || curveType == VOI.POLYLINE_SLICE)) {
                     if (imageActive.getNDims() < 3) {
                         end = 1;
-                    } else {
+                    }
+                    else {
                         end = imageActive.getExtents()[2];
                     }
 
+
+
                     if (allActive) {
-                        VOIs.VOIAt(i).moveVOI(-1, xDim, yDim, zDim, distX, distY, 0);
+
+                        if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
+                           VOIs.VOIAt(i).moveVOI( slice, xDim, yDim, zDim, distX, distY, 0);
+                        } else {
+                            VOIs.VOIAt(i).moveVOI( -1, xDim, yDim, zDim, distX, distY, 0);
+                        }
                         imageActive.notifyImageDisplayListeners();
-                    } else {
-
+                    }
+                    else {
                         for (int sl = 0; sl < end; sl++) {
-
                             for (int j = 0; j < VOIs.VOIAt(i).getCurves()[sl].size(); j++) {
 
-                                if (((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
+                                if (( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).isActive()) {
                                     VOIs.VOIAt(i).moveVOI(sl, xDim, yDim, zDim, distX, distY, 0);
 
-                                    Point3Df pt = ((VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
-
+                                    Point3Df pt = ( (VOIBase) (VOIs.VOIAt(i).getCurves()[sl].elementAt(j))).getActivePt();
                                     if (pt != null) {
-                                        setPixelInformationAtLocation((int) pt.x, (int) pt.y);
+                                        setPixelInformationAtLocation( (int) pt.x, (int) pt.y);
                                     }
 
                                     imageActive.notifyImageDisplayListeners();
@@ -11967,6 +12024,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         }
     }
+
 
     /**
      * Draws the VOI, blending it with the image.
