@@ -2349,6 +2349,11 @@ public class VOI extends ModelSerialCloneable {
         return totalArea;
     }
 
+    /**
+     * Prints out the distances between segments, displacement (1st to last point)
+     * and total distance in 2D and 3D
+     * @param fileInfo FileInfoBase
+     */
     public void calcPLineDistances(FileInfoBase fileInfo) {
         if (curveType != POLYLINE_SLICE) {
             return;
@@ -2445,6 +2450,17 @@ public class VOI extends ModelSerialCloneable {
             totalDistance3D += distance3D;
             totalDistance2D += distance2D;
 
+
+            //Round to nearest .01
+            distance3D /= .01;
+            distance3D = (int)MipavMath.round(distance3D);
+            distance3D *= .01;
+
+            distance2D /= .01;
+            distance2D = (int)MipavMath.round(distance2D);
+            distance2D *= .01;
+
+
             ViewUserInterface.getReference().getMessageFrame().append("\tpoint " + Integer.toString(i+1) +
                     " to point " + Integer.toString(i+2) + ": " + Double.toString(distance2D) + unitsStr +
                     " (2D), " + Double.toString(distance3D) + unitsStr + " (3D)\n", ViewJFrameMessage.DATA);
@@ -2460,8 +2476,21 @@ public class VOI extends ModelSerialCloneable {
                                             secondPoint.x, secondPoint.y,
                                             secondPoint.z,
                                             resols);
+        //round to nearest .01
+        displacement3D /= .01;
+        displacement2D /= .01;
+        totalDistance3D /= .01;
+        totalDistance2D /= .01;
 
+        displacement3D = (int)MipavMath.round(displacement3D);
+        displacement2D = (int)MipavMath.round(displacement2D);
+        totalDistance3D = (int)MipavMath.round(totalDistance3D);
+        totalDistance2D = (int)MipavMath.round(totalDistance2D);
 
+        displacement3D *= .01;
+        displacement2D *= .01;
+        totalDistance3D *= .01;
+        totalDistance2D *= .01;
 
 
         //print displacement
@@ -2788,6 +2817,7 @@ public class VOI extends ModelSerialCloneable {
 
 
         if (curveType == POLYLINE_SLICE) {
+            boolean is25D = fileInfo.getIs2_5D();
             double distance = 0;
             Vector distanceVector = new Vector();
             Point3Df firstPoint, secondPoint;
@@ -2804,7 +2834,11 @@ public class VOI extends ModelSerialCloneable {
                         pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
                         firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).
                                      exportPoint();
-                        firstPoint.z = sliceCounter;
+                        if (is25D) {
+                            firstPoint.z = 0;
+                        } else {
+                            firstPoint.z = sliceCounter;
+                        }
                         distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
                     } catch (Exception e) {
                         e.printStackTrace();

@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -1049,9 +1050,24 @@ public class ViewToolBarBuilder implements ItemListener {
      * Accessor that sets the pointer button to selected.
      */
     public void setPointerSelected() {
-
         if (pointerVOIButton != null) {
             pointerVOIButton.setSelected(true);
+        }
+    }
+
+
+    public void setVOIButtonSelected(String command) {
+        if ( VOIGroup != null) {
+
+            Enumeration e = VOIGroup.getElements();
+            JToggleButton tButton;
+            while (e.hasMoreElements()) {
+                tButton = (JToggleButton)e.nextElement();
+                if (tButton.getActionCommand().equalsIgnoreCase(command)) {
+                    tButton.setSelected(true);
+                    break;
+                }
+            }
         }
     }
 
