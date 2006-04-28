@@ -11369,7 +11369,11 @@ public class AlgorithmTransform extends AlgorithmBase {
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * DOCUMENT ME!
+     * This is a port of code from a C language spline interpolation program by
+     * Philippe Thevenaz found at http://bigwww.epfl.ch/thevenaz/interpolation.
+     * The C program is based on the paper:
+     * Philippe Thevenaz, Thierry Blu, and Michael Unser, "Interpolation Revisited",
+     * IEEE Transactions on Medical Imaging, Vol. 19, No. 7, pp. 739-785, July, 2000.
      */
     public class BSplineProcessing {
 
