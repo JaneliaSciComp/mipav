@@ -811,6 +811,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             menu.add(fileTransferMenu);
         }
 
+        if (genericMenu.getItemCount() > 0) {
+            menu.add(genericMenu);
+        }
+
         if (!(al instanceof ViewUserInterface)) {
 
             if (viewMenu.getItemCount() > 0) {
