@@ -744,6 +744,10 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         String tmpStr;
         int xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
+        int zUnits = FileInfoBase.UNKNOWN_MEASURE;
+        if (image.getNDims() > 2) {
+            zUnits = image.getFileInfo(0).getUnitsOfMeasure()[2];
+        }
         String unitsString = null;
 
         if (source == colorButton) {
@@ -913,25 +917,43 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                                        algoVOI.getNVoxels() + "\n");
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[1])) {
-                        //might want to double check to ensure all three units are the same if not display a tag
-                        str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-                        UI.setDataText("  Volume                       \t= " +
+                        if ((xUnits == yUnits) && (xUnits == zUnits) &&
+                            (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                            UI.setDataText("  Volume                       \t= " +
                                        algoVOI.getVolume() + "   " +
                                        str + "\n");
+                        }
+                        else {
+                            UI.setDataText("  Volume                       \t= " +
+                                    algoVOI.getVolume() + "\n");   
+                        }
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[2])) {
-                        //might want to double check to ensure all three units are the same if not display a tag
-                        str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
-                        UI.setDataText("  Area                         \t= " +
+                        if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                            UI.setDataText("  Area                         \t= " +
                                        algoVOI.getArea() + "   " +
                                        str + "\n");
+                        }
+                        else {
+                            UI.setDataText("  Area                         \t= " +
+                                    algoVOI.getArea() + "\n");    
+                        }
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[3])) {
-                        str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.
+                        if ((xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(image.
                                 getFileInfo(0).getUnitsOfMeasure(0));
-                        UI.setDataText(
+                            UI.setDataText(
                                 "  Perimeter                         \t= " +
                                 algoVOI.getPerimeter() + "   " + str + "\n");
+                        }
+                        else {
+                            UI.setDataText(
+                                    "  Perimeter                         \t= " +
+                                    algoVOI.getPerimeter() + "\n");    
+                        }
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[4])) {
                         if (image.isColorImage()) {
