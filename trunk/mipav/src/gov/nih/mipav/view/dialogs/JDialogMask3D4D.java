@@ -27,10 +27,10 @@ public class JDialogMask3D4D extends JDialogBase {
 
     /** Radio button indicating that the image should  be masked in 4D */
     private JRadioButton fourD;
-    
+
     /** Single value array indicating 3D or 4d processing.
      *   0 = single volume processing or 3D
-     *  -1 = multiple volume processing or 4D 
+     *  -1 = multiple volume processing or 4D
      */
     private int sliceRef[];
 
@@ -80,11 +80,11 @@ public class JDialogMask3D4D extends JDialogBase {
         setTitle("Mask");
 
         ButtonGroup destinationGroup = new ButtonGroup();
-        threeD = new JRadioButton("3D      ", true);
+        threeD = new JRadioButton("3D", true);
         threeD.setFont(serif12);
         destinationGroup.add(threeD);
 
-        fourD = new JRadioButton("4D      ", false);
+        fourD = new JRadioButton("4D", false);
         fourD.setFont(serif12);
         destinationGroup.add(fourD);
 
@@ -95,7 +95,7 @@ public class JDialogMask3D4D extends JDialogBase {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = gbc.BOTH;
         gbc.gridheight = 1;
         gbc.anchor = gbc.WEST;
         gbc.weightx = 1;
@@ -109,16 +109,13 @@ public class JDialogMask3D4D extends JDialogBase {
         //buildCancelButton();
         //buttonPanel.add(cancelButton);
 
-        JPanel mainPanel = new JPanel();
-        
         destinationPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        mainPanel.add(destinationPanel);
-        getContentPane().add(mainPanel);
+        getContentPane().add(destinationPanel, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
     }
 
-    
+
 
 }
