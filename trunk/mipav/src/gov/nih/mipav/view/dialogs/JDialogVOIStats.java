@@ -1682,7 +1682,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 }
 
                 int rgb = ((VOIGroupNode) value).getVOIgroup().getColor().getRGB();
-
+                int black = Color.black.getRGB();
 
                 if (typeIcon != null) {
                     ImageIcon ico = (ImageIcon)typeIcon;
@@ -1709,20 +1709,67 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                         }
                     }
 
+
+
+                    //draw black border around color box
+                    for (int i = ico.getIconWidth() + 3; i < image2.getWidth() - 3; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            image2.setRGB(i, j, black);
+                        }
+                        for (int j = image2.getHeight() - 2; j < image2.getHeight(); j++) {
+                            image2.setRGB(i, j , black);
+                        }
+                    }
+                    for (int j = 0; j < image2.getHeight(); j++) {
+
+                        for (int i = ico.getIconWidth() + 3; i < ico.getIconWidth() + 5; i++) {
+                            image2.setRGB(i, j, black);
+                        }
+
+                        for (int i = image2.getWidth() - 5; i < image2.getWidth() - 3; i++) {
+                            image2.setRGB(i, j, black);
+                        }
+
+                    }
+
+                    //draw color
                     for (int i = ico.getIconWidth() + 5; i < image2.getWidth() - 5; i++) {
                         for (int j = 2; j < image2.getHeight() - 2; j++) {
                             image2.setRGB(i, j, rgb);
                         }
                     }
+
+
+
                     setIcon(new ImageIcon(image2));
 
                 } else {
-                    BufferedImage image = new BufferedImage(5, 24,  BufferedImage.TYPE_INT_ARGB);
-                    for (int i = 0; i < 5; i++) {
-                        for (int j = 2; j < 22; j++) {
+                    BufferedImage image = new BufferedImage(9, 26,  BufferedImage.TYPE_INT_ARGB);
+
+                    for (int i = 2; i < 7; i++) {
+                        for (int j = 4; j < 24; j++) {
                             image.setRGB(i, j, rgb);
                         }
                     }
+
+                    //draw black border
+                    for (int i = 0; i < 9; i++) {
+                        for (int j = 2; j < 4; j++) {
+                            image.setRGB(i, j, black);
+                        }
+                        for (int j = 24; j < 26; j++) {
+                            image.setRGB(i, j, black);
+                        }
+                    }
+                    for (int j = 2; j < 26; j++) {
+                        for (int i = 0; i < 2; i++) {
+                            image.setRGB(i, j, black);
+                        }
+                        for (int i = 7; i < 9; i++) {
+                            image.setRGB(i, j, black);
+                        }
+                    }
+
                     setIcon (new ImageIcon(image));
                 }
 
