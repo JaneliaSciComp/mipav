@@ -172,17 +172,17 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
                 // Where index is the static value for FAT etc, and color is the new color.
                 // Then Do myFrame.updateImages(true);
 
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.MUSCLE, Color.GREEN);
+                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.Muscle, Color.GREEN);
                 f1.getLUTa().setColor(PlugInAlgorithmPipelineB.FAT, Color.MAGENTA);
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE, Color.RED);
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE_MARROW, Color.PINK);
+                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.Bone, Color.RED);
+                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.BoneMarrow, Color.PINK);
                 f1.getLUTa().setColor(PlugInAlgorithmPipelineB.SUB_CUT_FAT, Color.YELLOW);
                 f1.updateImages(true);
 
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.MUSCLE, Color.GREEN);
+                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.Muscle, Color.GREEN);
                 f2.getLUTa().setColor(PlugInAlgorithmPipelineB.FAT, Color.MAGENTA);
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE, Color.RED);
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE_MARROW, Color.PINK);
+                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.Bone, Color.RED);
+                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.BoneMarrow, Color.PINK);
                 f2.getLUTa().setColor(PlugInAlgorithmPipelineB.SUB_CUT_FAT, Color.YELLOW);
                 f2.updateImages(true);
 
@@ -281,3 +281,4 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
         setVisible(true);
     }
 }
+
