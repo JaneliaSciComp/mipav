@@ -282,7 +282,13 @@ public class ViewMenuBar {
                                                                                                                     null,
                                                                                                                     0,
                                                                                                                     null,
-                                                                                                                    false)
+                                                                                                                    false),
+                                                                                        menuBuilder.buildMenuItem("Maximum Likelihood Iterative blind deconvolution",
+                                                                                                                  null,
+                                                                                                                  0,
+                                                                                                                  null,
+                                                                                                                  false)
+
                                                                                       }),
                                                              }),
                                         menuBuilder.makeMenu("Morphological", false,

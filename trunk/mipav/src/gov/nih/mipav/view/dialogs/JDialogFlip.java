@@ -183,9 +183,9 @@ public class JDialogFlip extends JDialogBase implements AlgorithmInterface, Scri
             } else {
                 flipAlgo.setActiveImage(isActiveImage);
 
-                if (!userInterface.isAppFrameVisible()) {
+                //if (!userInterface.isAppFrameVisible()) {
                     flipAlgo.setProgressBarVisible(false);
-                }
+                //}
 
                 flipAlgo.run();
             }

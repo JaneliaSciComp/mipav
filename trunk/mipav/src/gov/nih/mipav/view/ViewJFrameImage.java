@@ -2091,6 +2091,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogReplaceSlice(this, getActiveImage());
         } else if (command.equals("Iterative blind deconvolution")) {
             new JDialogIteratedBlindDeconvolution(this, getActiveImage());
+        } else if (command.equals("Maximum Likelihood Iterative blind deconvolution")) {
+            new JDialogMaximumLikelihoodIteratedBlindDeconvolution(this, getActiveImage());
         } else if (command.equals("Reslice - isotropic voxels")) {
             new JDialogReslice(this, getActiveImage());
         } else if (command.equals("Test algorithm")) { // new JDialogRegionGrow(this, getActiveImage());
