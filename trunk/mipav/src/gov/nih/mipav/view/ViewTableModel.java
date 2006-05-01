@@ -107,6 +107,26 @@ public class ViewTableModel extends DefaultTableModel implements Serializable {
 
         return -1;
     }
+    
+    /**
+     * Gets the index of the given column name.
+     *
+     * @param   name  Name of column.
+     *
+     * @return  Index of column when created, or -1 if none.
+     */
+    public int getColumnBaseIndex(String name) {
+        int strLength;
+        for (int i = 0; i < columnIdentifiers.size(); i++) {
+            strLength = ((String)columnIdentifiers.elementAt(i)).length();
+            if ((strLength >= name.length()) &&
+                (name.equals(((String)columnIdentifiers.elementAt(i)).substring(0,name.length())))) {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 
     /**
      * Returns false for all cells, so none can be edited.
