@@ -199,7 +199,6 @@ public class AlgorithmMask extends AlgorithmBase {
         if (srcImage.getType() != ModelStorageBase.COMPLEX) {
 
             try {
-
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
                 buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
@@ -240,7 +239,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 t = 0;
                 tEnd = srcImage.getExtents()[3];
             }
-            
+
             for( ; t < tEnd; t++  ) {
                 for (z = 0; (z < end) && !threadStopped; z++) {
                     try {
@@ -249,52 +248,52 @@ public class AlgorithmMask extends AlgorithmBase {
                         buffer = null;
                         bufferI = null;
                         errorCleanUp("Algorithm Mask: Image(s) locked", true);
-    
+
                         return;
                     }
-    
-                    if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
+
+                    if ((srcImage.getNDims() > 2) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
                     }
-    
+
                     offset = z * imgLength;
-    
+
                     int mod = imgLength / 10;
-    
+
                     for (i = 0; (i < imgLength) && !threadStopped; i++) {
-    
+
                         if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
                         }
-    
+
                         if (((mask.get(offset + i) == true) && (polarity == true)) ||
                                 ((mask.get(offset + i) == false) && (polarity == false))) {
-    
+
                             boolean locked = false;
-    
+
                             if (lockedIntensities != null) {
-    
+
                                 for (int j = 0; j < lockedIntensities.length; j++) {
-    
+
                                     if (buffer[i] == lockedIntensities[j]) {
                                         locked = true;
                                     }
                                 }
                             }
-    
+
                             if (locked == false) {
                                 buffer[i] = fillValue;
                             }
                         }
                     }
-    
+
                     try {
                         srcImage.importData((t * volLength) + (z * imgLength), buffer, false);
                     } catch (IOException error) {
                         buffer = null;
                         bufferI = null;
                         errorCleanUp("Algorithm Mask: Image(s) locked", true);
-    
+
                         return;
                     }
                 }
@@ -1434,7 +1433,7 @@ public class AlgorithmMask extends AlgorithmBase {
         disposeProgressBar();
         setCompleted(true);
     }
-    
+
 
     /**
      * Fills new image/VOI with new fill value;
