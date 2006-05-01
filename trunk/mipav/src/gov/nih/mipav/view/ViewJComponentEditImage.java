@@ -1189,7 +1189,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float min, max;
         Color fillColor = new Color(128, 0, 0);
         int slice[] = new int[1];
-        slice[0]=1;
+        slice[0]=0;
 
         AlgorithmMask maskAlgo = null;
 
