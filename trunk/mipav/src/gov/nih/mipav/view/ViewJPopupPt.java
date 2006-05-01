@@ -61,8 +61,8 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             itemShowGraph = ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0, this, null, false);
             itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem("Point area average intensities", "PAAI", 0,
                                                                this, null, false);
-            itemBuildPolyline = ViewMenuBuilder.buildMenuItem("Convert to poly-line slice VOI", "BuildPoly", 0, this, null,
-                                                              false);
+          //  itemBuildPolyline = ViewMenuBuilder.buildMenuItem("Convert to poly-line slice VOI", "BuildPoly", 0, this, null,
+         //                                                     false);
             itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
                                                                     Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
             itemProps = ViewMenuBuilder.buildMenuItem("Properties", "Properties", 0, this, null, true);
@@ -86,10 +86,11 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
         ptPopup.add(itemShowPAAIDialog);
         ptPopup.addSeparator();
         ptPopup.add(itemShowVOIName);
-        ptPopup.add(itemBuildPolyline);
+
+       // ptPopup.add(itemBuildPolyline);
 
 
-        itemBuildPolyline.setEnabled(false);
+       // itemBuildPolyline.setEnabled(false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
