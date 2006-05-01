@@ -59,9 +59,9 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             ptPopup = new JPopupMenu();
             propSubMenu = ViewMenuBuilder.buildMenu("Propagate", 0, false);
             itemShowGraph = ViewMenuBuilder.buildMenuItem("Show VOI Graph", "ShowGraph", 0, this, null, false);
-            itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem("Point area average intensities", "ShowPAIIDialog", 0,
+            itemShowPAAIDialog = ViewMenuBuilder.buildMenuItem("Point area average intensities", "PAAI", 0,
                                                                this, null, false);
-            itemBuildPolyline = ViewMenuBuilder.buildMenuItem("Build inter-frame poly-line", "BuildPoly", 0, this, null,
+            itemBuildPolyline = ViewMenuBuilder.buildMenuItem("Convert to poly-line slice VOI", "BuildPoly", 0, this, null,
                                                               false);
             itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
                                                                     Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
@@ -88,6 +88,8 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
         ptPopup.add(itemShowVOIName);
         ptPopup.add(itemBuildPolyline);
 
+
+        itemBuildPolyline.setEnabled(false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -101,7 +103,6 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     public void actionPerformed(ActionEvent event) {
 
         try {
-
             if (event.getActionCommand().equals("ShowGraph")) {
                 component.setGraphVisible();
             } else if (event.getActionCommand().equals("PropVOIUp")) {
@@ -116,7 +117,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
                 }
             } else if (event.getActionCommand().equals("PropVOIAll")) {
                 component.propVOIAll();
-            } else if (event.getActionCommand().equals("ShowPAAIDialog")) {
+            } else if (event.getActionCommand().equals("PAAI")) {
                 component.setPAAIGraphVisible();
             } else if (event.getActionCommand().equals("ShowName")) {
                 Preferences.setProperty(Preferences.PREF_SHOW_VOI_NAME, Boolean.toString(itemShowVOIName.isSelected()));
