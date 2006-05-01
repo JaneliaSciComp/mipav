@@ -38,6 +38,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** Number of iterations for the deconvolution: */
     private int m_iNumberIterations;
 
+    /** Show the deconvolved image in progress every m_iNumberProgress steps: */
+    private int m_iNumberProgress;
+
     /** Physically-based parameters: */
     /** numerical aperature of the imaging lense: */
     private float m_fObjectiveNumericalAperature;
@@ -70,6 +73,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      */
     public AlgorithmMaximumLikelihoodIteratedBlindDeconvolution( ModelImage kSrcImg,
                                                                  int iIterations,
+                                                                 int iProgress,
                                                                  float fObjectiveNumericalAperature,
                                                                  float fWavelength,
                                                                  float fRefractiveIndex
@@ -77,16 +81,18 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     {
         m_kSourceImage = kSrcImg;
         m_iNumberIterations =  iIterations;
+        m_iNumberProgress = iProgress;
         m_fObjectiveNumericalAperature = fObjectiveNumericalAperature;
         m_fWavelength = fWavelength;
         m_fRefractiveIndex = fRefractiveIndex;
         
         /* The initial guess at the estimated image is the original image: */
         m_kEstimatedImage = (ModelImage)(m_kSourceImage.clone());
+        m_kEstimatedImage.setImageName( "estimate" + 0 );
 
         /* The initial PSF is set to a uniform gray with a constant pixel 
          * value = 1/number of voxels */
-        m_kPSFImage = (ModelImage)(m_kSourceImage.clone());
+        m_kPSFImage = new ModelImage(m_kSourceImage.getType(), m_kSourceImage.getExtents(), "psf" + 0);
 
         // get the dimensions and length of the arrays
         int numDims = m_kSourceImage.getNDims();
@@ -136,46 +142,48 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /**
      * Runs the deconvolution algorithm.
      */
-    public void run()
+    private void runDeconvolution()
     {
-        ModelImage tempImage1;
-        ModelImage tempImage2;
-        ModelImage tempImage3;
-        ModelImage tempImage4;
+        ModelImage tempImage;
         ModelImage originalDividedByEstimateCPSF;
-        ModelImage estimatedTemp;
-        for ( int i = 0; i < m_iNumberIterations; i++ )
+        for ( int i = 1; i <= m_iNumberIterations; i++ )
         {
-            System.err.println( i );
-            tempImage1 = convolve( m_kEstimatedImage, m_kPSFImage, true );
-            originalDividedByEstimateCPSF = calc( m_kSourceImage, tempImage1,
+            /* Convolve the current estimate with the current PSF: */
+            tempImage = convolve( m_kEstimatedImage, m_kPSFImage, 
+                                  (i%m_iNumberProgress) == 0 );
+            /* Divide the original image by the result and store: */
+            originalDividedByEstimateCPSF = calc( m_kSourceImage, tempImage,
                                                   AlgorithmImageCalculator.DIVIDE );
 
             /* Create new m_kEstimatedImage based on original image and psf: */
-            tempImage2 = convolve( originalDividedByEstimateCPSF, m_kPSFMirrorImage, false );
-            estimatedTemp = calc( m_kEstimatedImage, tempImage2,
-                                  AlgorithmImageCalculator.MULTIPLY );
-            m_kEstimatedImage = null;
-            m_kEstimatedImage = estimatedTemp;
+            /* Convolve the divided image with the psf mirror: */
+            tempImage = convolve( originalDividedByEstimateCPSF, m_kPSFMirrorImage, false );
+            /* multiply the result by the current estimated image: */
+            m_kEstimatedImage = calc( m_kEstimatedImage, tempImage,
+                                      AlgorithmImageCalculator.MULTIPLY );
+            m_kEstimatedImage.setImageName( "estimated" + i );
 
             /* Create new psf based on original image and psf: */
-            tempImage3 =
+            /* convolve the divided image with the estimated mirror: */
+            tempImage =
                 convolve( originalDividedByEstimateCPSF, m_kEstimatedMirrorImage, false );
-            tempImage4 = calc( m_kPSFImage, tempImage3,
-                               AlgorithmImageCalculator.MULTIPLY );
+            /* multiply the result by the current psf image: */
+            m_kPSFImage = calc( m_kPSFImage, tempImage,
+                                AlgorithmImageCalculator.MULTIPLY );
             /* Apply constraints to new PSF: */
-            constraints( tempImage4 );
+            constraints( );
+            m_kPSFImage.setImageName( "psf" + i );
 
             m_kEstimatedMirrorImage = null;
             m_kEstimatedMirrorImage = mirror( m_kEstimatedImage );
+            m_kPSFMirrorImage.setImageName( "estimatedmirror" + i );
             m_kPSFMirrorImage = null;
             m_kPSFMirrorImage = mirror( m_kPSFImage );
+            m_kPSFMirrorImage.setImageName( "psfmirror" + i );
 
-            tempImage1 = null;
-            tempImage2 = null;
-            tempImage3 = null;
-            tempImage4 = null;
+            tempImage = null;
             originalDividedByEstimateCPSF = null;
+            System.gc();
         }
     } // end run()
 
@@ -206,9 +214,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         if ( bDisplay )
         {
-            //new ViewJFrameImage((ModelImage)(kImageSpectrum1.clone()), null, new Dimension(610, 200));
-            //new ViewJFrameImage((ModelImage)(kImage2.clone()), null, new Dimension(610, 200));
-            //new ViewJFrameImage((ModelImage)(kImageSpectrum2.clone()), null, new Dimension(610, 200));
+            //            new ViewJFrameImage((ModelImage)(kImageSpectrum1.clone()), null, new Dimension(610, 200));
+//             new ViewJFrameImage((ModelImage)(kImage2.clone()), null, new Dimension(610, 200));
+//             new ViewJFrameImage((ModelImage)(kImageSpectrum2.clone()), null, new Dimension(610, 200));
             new ViewJFrameImage((ModelImage)(kResult.clone()), null, new Dimension(610, 200));
         }
 
@@ -310,9 +318,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      */
     private ModelImage calc( ModelImage kImage1, ModelImage kImage2, int iType )
     {
-        ModelImage kReturn = (ModelImage)(kImage1.clone());
+        ModelImage kReturn = new ModelImage(kImage1.getType(),
+                                            kImage1.getExtents(), "" );
         AlgorithmImageCalculator algImageCalc =
-            new AlgorithmImageCalculator( kReturn, kImage1, kImage1,
+            new AlgorithmImageCalculator( kReturn, kImage1, kImage2,
                                           iType,
                                           AlgorithmImageMath.PROMOTE, true,
                                           null);
@@ -339,17 +348,17 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * @param kImage, the unconstrained PSFImage
      * MEMBER MODIFIED: m_kPSFImage is modified by this funcion.
      */
-    private void constraints( ModelImage kImage )
+    private void constraints(  )
     {
-        int iDimX = kImage.getExtents()[0];
-        int iDimY = kImage.getExtents()[1];
+        int iDimX = m_kPSFImage.getExtents()[0];
+        int iDimY = m_kPSFImage.getExtents()[1];
         int iDimZ = 1;
-        if ( kImage.getNDims() > 2 )
+        if ( m_kPSFImage.getNDims() > 2 )
         {
-            iDimZ = kImage.getExtents()[2];
+            iDimZ = m_kPSFImage.getExtents()[2];
         }
         int arrayLength = iDimX * iDimY * iDimZ;
-        if ( kImage.isColorImage() )
+        if ( m_kPSFImage.isColorImage() )
         {
             arrayLength *= 4;
         }
@@ -358,11 +367,11 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         float fSum = 0;
         for ( int i = 0; i < arrayLength; i++ )
         {
-            fSum += kImage.getFloat( i );
+            fSum += m_kPSFImage.getFloat( i );
         }
         for ( int i = 0; i < arrayLength; i++ )
         {
-            kImage.set( i, kImage.getFloat( i ) / fSum );
+            m_kPSFImage.set( i, m_kPSFImage.getFloat( i ) / fSum );
         }
 
         /* 2). Hourglass constraint: */
@@ -380,11 +389,11 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                            ((y - (iDimY+1)/2) * (y - (iDimY+1)/2))   ) > 
                          ( ( fRadius + fRadiusZ ) * ( fRadius + fRadiusZ ) ) )
                     {
-                        if ( kImage.isColorImage() )
+                        if ( m_kPSFImage.isColorImage() )
                         {
                             for ( int c = 0; c < 4; c++ )
                             {
-                                kImage.set( (z - 1) * (iDimY * iDimX * 4) + 
+                                m_kPSFImage.set( (z - 1) * (iDimY * iDimX * 4) + 
                                             (y - 1) * iDimX * 4 +
                                             (x - 1) * 4 + 
                                             c,
@@ -393,7 +402,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                         }
                         else
                         {
-                            kImage.set( (z - 1) * (iDimY * iDimX ) + 
+                            m_kPSFImage.set( (z - 1) * (iDimY * iDimX ) + 
                                         (y - 1) * iDimX +
                                         (x - 1),
                                         0f );
@@ -408,7 +417,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         float fAxialBandLimit = (float)(( m_fObjectiveNumericalAperature *
                                           m_fObjectiveNumericalAperature )  /
                                         (2.0 * m_fRefractiveIndex * m_fWavelength ));
-        ModelImage kImageFFT = fft( kImage );
+        ModelImage kImageFFT = fft( m_kPSFImage );
         for ( int z = 1; z <= iDimZ; z++ )
         {
             for ( int x = 1; x <= iDimX; x++ )
@@ -448,12 +457,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             }
         }
         /* 4). Nonnegativity constraint: */
-        kImage = inverse_fft( kImageFFT, kImage );
-        m_kPSFImage = null;
-        m_kPSFImage = (ModelImage)(kImage.clone());
+        m_kPSFImage = inverse_fft( kImageFFT, m_kPSFImage );
         for ( int i = 0; i < arrayLength; i++ )
         {
-            if ( kImage.getFloat(i) < 0 )
+            if ( m_kPSFImage.getFloat(i) < 0 )
             {
                 m_kPSFImage.set( i, 0.0000000001f );
             }
@@ -500,7 +507,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             return;
         }
 
-        run();
+        runDeconvolution();
 
         if (threadStopped) {
             finalize();

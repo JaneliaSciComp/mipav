@@ -43,6 +43,8 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
 
     /** The number of iterations for calculating the deconvolution: */
     private int numberIterations = 2;
+    /** Display the deconvolved image every X images to show progress: */
+    private int showProgress = 10;
 
     /** The following are physical properties of the imaging lense and
      * sample: */
@@ -60,6 +62,8 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
     /** User-Interface components: */
     /** User-Interface for entering the number of deconvolution iterations: */
     private JTextField textNumberIterations;
+    /** User-Interface for entering the number of intermediate images to show: */
+    private JTextField textShowProgress;
     /** User-Interface for entering the objective numerical aperature: */
     private JTextField textObjectiveNumericalAperature;
     /** User-Interface for entering the sample wavelength: */
@@ -208,6 +212,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
             ibdAlgor =
                 new AlgorithmMaximumLikelihoodIteratedBlindDeconvolution(originalImage,
                                                                          numberIterations,
+                                                                         showProgress,
                                                                          objectiveNumericalAperature,
                                                                          wavelength,
                                                                          refractiveIndex
@@ -262,6 +267,17 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         textNumberIterations.setText(Integer.toString(numberIterations));
         textNumberIterations.setFont(serif12);
 
+        // Show deconvolved image, every X images:
+        JLabel labelShowProgress = new JLabel("Display intermediate images every: ");
+        labelShowProgress.setFont(serif12);
+
+        textShowProgress = new JTextField();
+        textShowProgress.setColumns(5);
+        textShowProgress.setMaximumSize(labelShowProgress.getPreferredSize());
+        textShowProgress.setHorizontalAlignment(JTextField.RIGHT);
+        textShowProgress.setText(Integer.toString(showProgress));
+        textShowProgress.setFont(serif12);
+
         // Objective numerical aperature
         JLabel labelObjectiveNumericalAperature =
             new JLabel("Objective Numerical Aperature ");
@@ -310,19 +326,25 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         gbc.gridx = 1;
         parameterPanel.add(textNumberIterations, gbc);
 
-        gbc.gridy = 1;
+        gbc.gridy++;
+        gbc.gridx = 0;
+        parameterPanel.add(labelShowProgress, gbc);
+        gbc.gridx = 1;
+        parameterPanel.add(textShowProgress, gbc);
+
+        gbc.gridy++;
         gbc.gridx = 0;
         parameterPanel.add(labelObjectiveNumericalAperature, gbc);
         gbc.gridx = 1;
         parameterPanel.add(textObjectiveNumericalAperature, gbc);
 
-        gbc.gridy = 2;
+        gbc.gridy++;
         gbc.gridx = 0;
         parameterPanel.add(labelWavelength, gbc);
         gbc.gridx = 1;
         parameterPanel.add(textWavelength, gbc);
 
-        gbc.gridy = 3;
+        gbc.gridy++;
         gbc.gridx = 0;
         parameterPanel.add(labelRefractiveIndex, gbc);
         gbc.gridx = 1;
@@ -357,6 +379,9 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         String tmpStr;
         tmpStr = textNumberIterations.getText();
         numberIterations = Integer.parseInt(tmpStr);
+
+        tmpStr = textShowProgress.getText();
+        showProgress = Integer.parseInt(tmpStr);
 
         tmpStr = textObjectiveNumericalAperature.getText();
         objectiveNumericalAperature = Float.parseFloat(tmpStr);
