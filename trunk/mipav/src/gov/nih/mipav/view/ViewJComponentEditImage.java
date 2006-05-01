@@ -1219,13 +1219,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     JDialogMask3D4D dialog3D4D = new JDialogMask3D4D(frame, slice);
                     if (slice[0] == -1 ) timeSlice = -1;
                 }
-                
+
                 if (slice[0] <= 0 ){
                     maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                     maskAlgo.setActiveImage(false);
                     maskAlgo.setProgressBarVisible(showProgressBar);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
-    
+
                     if (imageA.getType() == ModelStorageBase.UBYTE) {
                         min = 0;
                         max = 255;
@@ -1236,13 +1236,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                         min = (float) imageA.getMin();
                         max = (float) imageA.getMax();
                     }
-    
+
                     float imgMin = (float) imageA.getMin();
                     float imgMax = (float) imageA.getMax();
-    
+
                     if ((intensityDropper < imgMinOrig) || (intensityDropper > imgMaxOrig)) {
                         LUTa.resetTransferLine(min, imgMin, max, imgMax);
-    
+
                         if (imageA.getHistoLUTFrame() != null) {
                             imageA.getHistoLUTFrame().update();
                         }
@@ -4549,7 +4549,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
             else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                 if (VOIs.VOIAt(i).isVisible()
-                    && VOIs.VOIAt(i).nearPoint(xS, yS, slice, getZoomX(), resolutionX, resolutionY)) {
+                    && VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
 
                     setMode(MOVE);
 
@@ -4561,7 +4561,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
             else if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
                 if (VOIs.VOIAt(i).isVisible() &&
-                    (VOIs.VOIAt(i).nearPoint(xS, yS, slice, getZoomX(), resolutionX, resolutionY) ||
+                    (VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY) ||
                 //VOIs.VOIAt(i).nearLinePoint(
                      VOIs.VOIAt(i).nearLine(xS, yS, slice) )) {
                     setMode(MOVE);
@@ -4577,7 +4577,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         setMode(DEFAULT);
-    } //end mouseReleased
+    } //end mouseMoved
 
 
 
