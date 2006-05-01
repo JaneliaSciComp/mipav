@@ -235,13 +235,13 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         int inverseTransformDir = -1;
         boolean logMagDisplay = true;
         boolean unequalDim = false;
-        boolean image25D = true;
+        boolean image25D = false;
         boolean imageCrop = true;
         int kernelDiameter = 15;
-        int filterType = AlgorithmFFT.BANDPASS;
+        int filterType = 2;
         float freq1 = 0.0f;
         float freq2 = 1.0f;
-        int constructionMethod = AlgorithmFFT.WINDOW;
+        int constructionMethod = 1;
         int butterworthOrder = 0;
 
         // take the FFT of the first input image: 
@@ -275,13 +275,13 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         int inverseTransformDir = -1;
         boolean logMagDisplay = true;
         boolean unequalDim = false;
-        boolean image25D = true;
+        boolean image25D = false;
         boolean imageCrop = true;
         int kernelDiameter = 15;
-        int filterType = AlgorithmFFT.BANDPASS;
+        int filterType = 2;
         float freq1 = 0.0f;
         float freq2 = 1.0f;
-        int constructionMethod = AlgorithmFFT.WINDOW;
+        int constructionMethod = 1;
         int butterworthOrder = 0;
 
         // take the FFT of the first input image: 

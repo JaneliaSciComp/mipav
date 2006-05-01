@@ -50,7 +50,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
      * the sample: */
     private float objectiveNumericalAperature = 1.0f;
     /** The reflected or fluroescence wavelength of the sample: */
-    private float wavelength = 300f;
+    private float wavelength = 0.6f;
     /** The index of refraction of the sample: */
     private float refractiveIndex = 1.0f;
 
