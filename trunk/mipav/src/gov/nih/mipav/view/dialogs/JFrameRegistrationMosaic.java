@@ -242,7 +242,6 @@ public class JFrameRegistrationMosaic extends JFrame
      * @param  event  button event
      */
     public void actionPerformed(ActionEvent event) {
-        Object source = event.getSource();
         String command = event.getActionCommand();
 
         if (command.equals("OpenReference")) {
@@ -472,8 +471,14 @@ public class JFrameRegistrationMosaic extends JFrame
                     storeImage(kMosaic);
                     m_bFileLoaded = true;
                     m_bResetAlpha = false;
-                    kTransformedTile = null;
-                    kTransformedTileAlpha = null;
+                    if (kTransformedTile != null) {
+                        kTransformedTile.disposeLocal();
+                        kTransformedTile = null;
+                    }
+                    if (kTransformedTileAlpha != null) {
+                        kTransformedTileAlpha.disposeLocal();
+                        kTransformedTileAlpha = null;
+                    }
                 } else {
                     MipavUtil.displayError("Registration failed, re-align images and try again");
 
@@ -524,8 +529,11 @@ public class JFrameRegistrationMosaic extends JFrame
 
         if (m_akBackupImages != null) {
 
-            for (int i = 0; i < 2; i++) {
-                m_akBackupImages[i] = null;
+            for (int i = 0; i < m_akBackupImages.length; i++) {
+                if (m_akBackupImages[i] != null) {
+                    m_akBackupImages[i].disposeLocal();
+                    m_akBackupImages[i] = null;
+                }
             }
         }
 
@@ -541,10 +549,19 @@ public class JFrameRegistrationMosaic extends JFrame
         m_kOldTransform = null;
         m_aabReference = null;
         m_aabReferenceBackup = null;
-        m_kReferenceAlpha = null;
-        m_kReferenceAlphaBackup = null;
-        m_kTileAlpha = null;
-
+        if (m_kReferenceAlpha != null) {
+            m_kReferenceAlpha.disposeLocal();
+            m_kReferenceAlpha = null;
+        }
+        if (m_kReferenceAlphaBackup != null) {
+            m_kReferenceAlphaBackup.disposeLocal();
+            m_kReferenceAlphaBackup = null;
+        }
+        if (m_kTileAlpha != null) {
+            m_kTileAlpha.disposeLocal();
+            m_kTileAlpha = null;
+        }
+        
         super.dispose();
     }
 
@@ -830,8 +847,11 @@ public class JFrameRegistrationMosaic extends JFrame
         /* delete model images: */
         if (m_akImages != null) {
 
-            for (int i = 0; i < 2; i++) {
-                m_akImages[i] = null;
+            for (int i = 0; i < m_akImages.length; i++) {
+                if (m_akImages[i] != null) {
+                    m_akImages[i].disposeLocal();
+                    m_akImages[i] = null;
+                }
             }
         }
 
@@ -839,7 +859,10 @@ public class JFrameRegistrationMosaic extends JFrame
         m_aabReference = null;
 
         if (bResetAlpha) {
-            m_kReferenceAlpha = null;
+            if (m_kReferenceAlpha != null) {
+                m_kReferenceAlpha.disposeLocal();
+                m_kReferenceAlpha = null;
+            }
         }
 
         /* Reset initial state: */
@@ -1319,6 +1342,9 @@ public class JFrameRegistrationMosaic extends JFrame
         ;
 
         /* reference alpha: */
+        if (m_kReferenceAlpha != null) {
+            m_kReferenceAlpha.disposeLocal();
+        }
         m_kReferenceAlpha = new ModelImage(ModelStorageBase.FLOAT, aiExtents, "reference_alpha");
         ;
 
@@ -1334,6 +1360,9 @@ public class JFrameRegistrationMosaic extends JFrame
         ;
 
         /* tile alpha: */
+        if (m_kTileAlpha != null) {
+            m_kTileAlpha.disposeLocal();
+        }
         m_kTileAlpha = new ModelImage(ModelStorageBase.FLOAT, aiExtents, "tile_alpha");
         ;
 
@@ -1570,6 +1599,28 @@ public class JFrameRegistrationMosaic extends JFrame
         }
 
         kAlgorithmReg.run();
+        kAlgorithmReg.disposeLocal();
+        kAlgorithmReg = null;
+        
+        if (kReferenceReg != null) {
+            kReferenceReg.disposeLocal();
+            kReferenceReg = null;
+        }
+        
+        if (kTileReg != null) {
+            kTileReg.disposeLocal();
+            kTileReg = null;
+        }
+        
+        if (kReferenceMask != null) {
+            kReferenceMask.disposeLocal();
+            kReferenceMask = null; 
+        }
+        
+        if (kTileMask != null) {
+            kTileMask.disposeLocal();
+            kTileMask = null;
+        }
 
         return true;
     }
