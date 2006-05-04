@@ -1993,32 +1993,6 @@ public class FileInfoMinc extends FileInfoBase {
     /**
      * Helper method to set the axis orientations.
      *
-     * @param   comments  String giving orientation information.
-     *
-     * @return  The proper axis orientation for that space.
-     */
-    private int setOrientType(String comments) {
-
-        if (comments.indexOf("left to right") != -1) {
-            return ORI_L2R_TYPE;
-        } else if (comments.indexOf("right to left") != -1) {
-            return ORI_R2L_TYPE;
-        } else if (comments.indexOf("posterior to anterior") != -1) {
-            return ORI_P2A_TYPE;
-        } else if (comments.indexOf("anterior to posterior") != -1) {
-            return ORI_A2P_TYPE;
-        } else if (comments.indexOf("inferior to superior") != -1) {
-            return ORI_I2S_TYPE;
-        } else if (comments.indexOf("superior to inferior") != -1) {
-            return ORI_S2I_TYPE;
-        } else {
-            return ORI_UNKNOWN_TYPE;
-        }
-    }
-
-    /**
-     * Helper method to set the axis orientations.
-     *
      * @param   space     The space - "xspace", "yspace", or "zspace".
      * @param   positive  Flag indicating if the space is moving in a positive direction.
      *
