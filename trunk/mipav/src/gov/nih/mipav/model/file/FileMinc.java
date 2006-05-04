@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.file;
 
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -91,102 +89,7 @@ public class FileMinc extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Flips image. Minc stores its data "upside down".
-     *
-     * @param   image  Image to flip.
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public static void flipTopBottom(ModelImage image) throws IOException {
-        int nBuffers;
-        int bufferSize;
-        float[] buffer = null;
-        float[] resultBuffer = null;
-
-        try {
-
-            if (image.getNDims() > 1) {
-                bufferSize = image.getSliceSize();
-            } else {
-                bufferSize = image.getExtents()[0];
-            }
-
-            if (image.getNDims() == 5) {
-                nBuffers = image.getExtents()[4] * image.getExtents()[3] * image.getExtents()[2];
-
-            } else if (image.getNDims() == 4) {
-                nBuffers = image.getExtents()[3] * image.getExtents()[2];
-            } else if (image.getNDims() == 3) {
-                nBuffers = image.getExtents()[2];
-            } else {
-                nBuffers = 1;
-            }
-
-            System.gc();
-            buffer = new float[bufferSize];
-            resultBuffer = new float[bufferSize];
-
-            int i, j, k;
-            int xDim = image.getExtents()[0];
-            int yDim = image.getExtents()[1];
-
-            for (k = 0; k < nBuffers; k++) {
-                image.exportData(k * bufferSize, bufferSize, buffer);
-
-                for (j = 0; j < yDim; j++) {
-
-                    for (i = 0; i < xDim; i++) {
-                        resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
-                    }
-                }
-
-                image.importData(k * bufferSize, resultBuffer, false);
-            }
-        } catch (IOException error) {
-            buffer = null;
-            resultBuffer = null;
-            throw new IOException("FileMinc.flipTopBottom: " + error);
-        } catch (OutOfMemoryError error) {
-            buffer = null;
-            resultBuffer = null;
-            throw (error);
-        }
-
-        buffer = null;
-        resultBuffer = null;
-    }
-
-    /**
-     * Flips image. Minc stores its data "upside down".
-     *
-     * @param   buffer  the image data buffer
-     * @param   xDim    the x dim of the image
-     * @param   yDim    the y dim of the image
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public static void flipTopBottom(float[] buffer, int xDim, int yDim) throws IOException {
-        float[] resultBuffer = null;
-        int i, j;
-
-        try {
-            resultBuffer = new float[buffer.length];
-
-            for (j = 0; j < yDim; j++) {
-
-                for (i = 0; i < xDim; i++) {
-                    resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
-                }
-            }
-        } catch (OutOfMemoryError error) {
-            resultBuffer = null;
-            throw (error);
-        }
-
-        resultBuffer = null;
-    }
-
+    
     /**
      * Reads in all the tags available in the file and stores them in FileInfoMinc.
      *
@@ -779,10 +682,6 @@ public class FileMinc extends FileBase {
             throw (error);
         }
 
-        if (fileInfo.isFlipped() == true) {
-            flipTopBottom(image);
-        }
-
         if (fileInfo.getExtents().length == 3) {
             progressBar.updateValueImmed(100);
             progressBar.dispose();
@@ -817,7 +716,6 @@ public class FileMinc extends FileBase {
         raFile.setLength(0);
 
         ModelImage image = null;
-        boolean flipped;
         progressBar.updateValue(10, options.isActiveImage());
 
         try {
@@ -825,19 +723,6 @@ public class FileMinc extends FileBase {
                                    _image.getImageFileName(), UI);
 
             image.copyFileTypeInfo(_image);
-
-            // if ((image.getFileInfo(0).getAxisOrientation(1) == FileInfoBase.ORI_A2P_TYPE) ||
-            // (image.getFileInfo(0).getAxisOrientation(1) == FileInfoBase.ORI_S2I_TYPE)) {
-            // flipped = false;
-            // }
-            // else {
-            // flipped = true;
-            // }
-            // Since MIPAV origin in upper left and right-hand rule and
-            // MINC's origin is lower left and left hand rule only the
-            // y - axis is different therefore must be flipped - always.
-            // I'm not sure why this ever an option before.
-            flipped = true;
 
             if (!options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileBase.MINC)) {
                 FileInfoMinc fileInfo;
@@ -867,9 +752,6 @@ public class FileMinc extends FileBase {
                                                         Math.round((float) j / (fileInfo.getExtents()[2] - 1) * 35),
                                                         options.isActiveImage());
 
-                                if (flipped == true) {
-                                    flipTopBottom(data, fileInfo.getExtents()[0], fileInfo.getExtents()[1]);
-                                }
 
                                 // Why don't we recalc min and max per image slice.
                                 // What happens if the image changes ?
@@ -893,13 +775,6 @@ public class FileMinc extends FileBase {
                             progressBar.updateValue(100, options.isActiveImage());
                             progressBar.dispose();
                         } else {
-
-                            if (flipped == true) {
-                                _image.exportData(0, length, data);
-                                flipTopBottom(data, fileInfo.getExtents()[0], fileInfo.getExtents()[1]);
-                                image.importData(0, data, false);
-                            }
-
                             rawChunkFile.writeImage(image, 0, image.getExtents()[0] * image.getExtents()[1], 0);
                         }
 
@@ -1012,15 +887,7 @@ public class FileMinc extends FileBase {
                 image.getFileInfo(0).setEndianess(FileBase.BIG_ENDIAN);
                 progressBar.setMessage("Saving image(s) ...");
                 count = 1;
-
-                if (flipped == true) {
-                    AlgorithmFlip flipAlgo = new AlgorithmFlip(image, AlgorithmFlip.X_AXIS, AlgorithmBase.NO_PROGRESS);
-                    flipAlgo.setActiveImage(false);
-                    flipAlgo.run();
-                }
-
-                // System.out.println("Image \n" + image); ViewJFrameImage imgFrame = new ViewJFrameImage(image, null,
-                // new Dimension(100,100), _image.getUserInterface());
+                
                 for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
                     jp = j - options.getBeginSlice();
 

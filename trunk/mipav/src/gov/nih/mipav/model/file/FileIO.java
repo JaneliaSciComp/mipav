@@ -1927,6 +1927,7 @@ public class FileIO {
 
         // loop through files, place them in image array
         pInterface.setTitle(UI.getProgressBarPrefix() + "image " + fileList[0]);
+        myFileInfo.finalize();
         pBarVal = 0;
 
         for (i = 0; i < nImages; i++) {
@@ -2196,6 +2197,7 @@ public class FileIO {
         pInterface.dispose();
         imageFile.finalize();
         imageFile = null;
+        matrix = null;
 
         return image;
     }
@@ -8278,8 +8280,8 @@ public class FileIO {
 
             // Why this stuff
             myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN); // ??
-            myFileInfo.setRescaleIntercept(image.getFileInfo(0).getRescaleIntercept()); // ??
-            myFileInfo.setRescaleSlope(image.getFileInfo(0).getRescaleSlope()); // ??
+            myFileInfo.setRescaleIntercept(0); 
+            myFileInfo.setRescaleSlope(1); 
             myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             myFileInfo.vr_type = myFileInfo.EXPLICIT;
 
