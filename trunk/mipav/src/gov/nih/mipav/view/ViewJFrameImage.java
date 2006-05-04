@@ -986,7 +986,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         } else if (command.equals("VOIStatistics")) {
-            getActiveImage().setMask(getActiveImage().generateVOIMask(useXOR));
             componentImage.showStatisticsCalculator();
         } else if (command.equals("boundaryIntensity")) {
             componentImage.graphVOI();
