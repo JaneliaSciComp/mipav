@@ -1526,6 +1526,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS);
 
             flip.callAlgorithm();
+        } else if (command.equals("RotateX180")) {
+            JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_180);
+
+            rotate.callAlgorithm();
         } else if (command.equals("RotateXPlus")) {
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_PLUS);
 
@@ -1534,12 +1538,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_MINUS);
 
             rotate.callAlgorithm();
+        } else if (command.equals("RotateY180")) {
+            JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.Y_AXIS_180);
+
+            rotate.callAlgorithm();
         } else if (command.equals("RotateYPlus")) {
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.Y_AXIS_PLUS);
 
             rotate.callAlgorithm();
         } else if (command.equals("RotateYMinus")) {
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.Y_AXIS_MINUS);
+
+            rotate.callAlgorithm();
+        } else if (command.equals("RotateZ180")) {
+            JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.Z_AXIS_180);
 
             rotate.callAlgorithm();
         } else if (command.equals("RotateZPlus")) {
