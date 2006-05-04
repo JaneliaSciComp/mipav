@@ -305,12 +305,20 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
 
                 switch (rotateAxis) {
 
+                    case AlgorithmRotate.X_AXIS_180:
+                        axis = "X180";
+                        break;
+                
                     case AlgorithmRotate.X_AXIS_PLUS:
                         axis = "X+";
                         break;
 
                     case AlgorithmRotate.X_AXIS_MINUS:
                         axis = "X-";
+                        break;
+                        
+                    case AlgorithmRotate.Y_AXIS_180:
+                        axis = "Y180";
                         break;
 
                     case AlgorithmRotate.Y_AXIS_PLUS:
@@ -319,6 +327,10 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
 
                     case AlgorithmRotate.Y_AXIS_MINUS:
                         axis = "Y-";
+                        break;
+                        
+                    case AlgorithmRotate.Z_AXIS_180:
+                        axis = "Z180";
                         break;
 
                     case AlgorithmRotate.Z_AXIS_MINUS:
@@ -375,14 +387,20 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
             String axisn = parser.getNextString();
             int axis;
 
-            if (axisn.equals("X+")) {
+            if (axisn.equals("X180")) {
+                axis = AlgorithmRotate.X_AXIS_180;
+            } else if (axisn.equals("X+")) {
                 axis = AlgorithmRotate.X_AXIS_PLUS;
             } else if (axisn.equals("X-")) {
                 axis = AlgorithmRotate.X_AXIS_MINUS;
+            } else if (axisn.equals("Y180")) {
+                axis = AlgorithmRotate.Y_AXIS_180;
             } else if (axisn.equals("Y+")) {
                 axis = AlgorithmRotate.Y_AXIS_PLUS;
             } else if (axisn.equals("Y-")) {
                 axis = AlgorithmRotate.Y_AXIS_MINUS;
+            } else if (axisn.equals("Z180")) {
+                axis = AlgorithmRotate.Z_AXIS_180;
             } else if (axisn.equals("Z+")) {
                 axis = AlgorithmRotate.Z_AXIS_PLUS;
             } else if (axisn.equals("Z-")) {
