@@ -296,12 +296,14 @@ public class FileDicom extends FileDicomBase {
         fileName = null;
         fileDir = null;
         fileHeader = null;
+        
+        if (fileInfo != null)
+            fileInfo.finalize();
         fileInfo = null;
         image = null;
         vr = null;
 
         if (rawFile != null) {
-
             try {
                 rawFile.close();
             } catch (IOException ex) { }
@@ -310,7 +312,6 @@ public class FileDicom extends FileDicomBase {
         }
 
         if (raFile != null) {
-
             try {
                 raFile.close();
             } catch (IOException ex) { }
