@@ -81,6 +81,7 @@ public class FileDicomBase {
         byteBuffer4 = null;
         byteBuffer8 = null;
         progressBar = null;
+        tagBuffer = null;
 
         if (raFile != null) {
 
