@@ -222,6 +222,11 @@ public class JDialogSaveDicom extends JDialogBase {
     /** DOCUMENT ME! */
     private JTabbedPane tabPane;
 
+    /**
+     * DICOM tags extracted from the image we want to save. Example: dicom_0xNNNN el_0xNNNN tags stored in MINC headers.
+     */
+    private Hashtable tagsImportedFromNonDicomImage;
+
     /** DOCUMENT ME! */
     private Hashtable tagsList;
 
@@ -287,7 +292,28 @@ public class JDialogSaveDicom extends JDialogBase {
 
         // try to extract out dicom-converted tags which may be buried in the minc header
         if (fileInfo.getFileFormat() == FileBase.MINC) {
-            fillDataFromTable(((FileInfoMinc) fileInfo).convertTagsToTable());
+            tagsImportedFromNonDicomImage = ((FileInfoMinc) fileInfo).convertTagsToTable();
+            fillDataFromTable(tagsImportedFromNonDicomImage);
+
+            // remove tags which were used to fill the GUI in fillDataFromTable().  the rest will be blindly imported
+            // into the dicom fileinfo later..
+            Enumeration keys = tagsImportedFromNonDicomImage.keys();
+            String tag;
+            while (keys.hasMoreElements()) {
+                tag = (String) keys.nextElement();
+
+                // handle chooser fields differently
+                if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
+                        tag.equals("(0018,5100)")) {
+
+                    // don't blindly import tags which are in the GUI
+                    tagsImportedFromNonDicomImage.remove(tag);
+                } else if (tagsList.get(tag) != null) {
+
+                    // don't blindly import tags which are in the GUI
+                    tagsImportedFromNonDicomImage.remove(tag);
+                }
+            }
         }
     }
 
@@ -321,6 +347,27 @@ public class JDialogSaveDicom extends JDialogBase {
                     checkTag(seriesSmall.getText(), "USorSS") && checkTag(seriesLarge.getText(), "USorSS") &&
                     checkTag(seriesStepID.getText(), "SH") && checkTag(seriesStepDate.getText(), "DA") &&
                     checkTag(seriesStepTime.getText(), "TM") && checkTag(seriesStepDescrip.getText(), "LO")) {
+
+                // blindly import any tags which were exported from the image we want to save (shouldn't be any gui
+                // tags, though)
+                if (tagsImportedFromNonDicomImage != null) {
+                    Enumeration keys = tagsImportedFromNonDicomImage.keys();
+                    String tag, value;
+                    while (keys.hasMoreElements()) {
+                        tag = (String) keys.nextElement();
+                        value = (String) tagsImportedFromNonDicomImage.get(tag);
+                        tag = tag.replaceAll("[()]", "");
+                        tag = tag.toUpperCase();
+                        try {
+                            dicomFileInfo.setValue(tag, value);
+                        } catch (Exception e) {
+                            Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
+                                              Preferences.DEBUG_FILEIO);
+                            Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
+                            Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                }
 
                 // dicomFileInfo.setVRType(dicomFileInfo.EXPLICIT);
                 dicomFileInfo.setValue("0002,0000", new Integer(140), 4);
@@ -1192,7 +1239,7 @@ public class JDialogSaveDicom extends JDialogBase {
         button.setActionCommand(title);
         button.addActionListener(this);
         button.setFont(serif12B);
-        button.setPreferredSize(MipavUtil.defaultButtonSize);
+        // button.setPreferredSize(MipavUtil.defaultButtonSize);
 
         return button;
     }
