@@ -428,7 +428,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     private JToggleButton addPointToggleButton;
 
     /** Array of points that specify the corners of the bounding box */
-    private Point3D[] boundingBoxPoints = new Point3D[8]; 
+    private Point3Df[] boundingBoxPoints = new Point3Df[8]; 
 
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
@@ -1037,7 +1037,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 if (triImage[i] != null) {
                     triImage[i].setZoom(zoom, zoom);
 
-                    Point oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
                         int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
@@ -1068,7 +1068,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 if (triImage[i] != null) {
                     triImage[i].setZoom(zoom, zoom);
 
-                    Point oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
                         int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
@@ -1093,7 +1093,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                     triImage[i].setZoom(1, 1);
 
-                    Point oldCrosshairPoint = triImage[i].getCrosshairPoint();
+                    Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
                         int newX = (int) (oldCrosshairPoint.x / oldZoom);
@@ -1203,9 +1203,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             dialogCrop.setSeparateThread(true);
 
-            int[] xBounds = new int[] { boundingBoxPoints[UPPER_LEFT_FRONT].x, boundingBoxPoints[UPPER_RIGHT_FRONT].x };
-            int[] yBounds = new int[] { boundingBoxPoints[UPPER_LEFT_FRONT].y, boundingBoxPoints[LOWER_LEFT_FRONT].y };
-            int[] zBounds = new int[] { boundingBoxPoints[UPPER_LEFT_FRONT].z, boundingBoxPoints[UPPER_LEFT_BACK].z };
+            int[] xBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].x, (int)boundingBoxPoints[UPPER_RIGHT_FRONT].x };
+            int[] yBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].y, (int)boundingBoxPoints[LOWER_LEFT_FRONT].y };
+            int[] zBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].z, (int)boundingBoxPoints[UPPER_LEFT_BACK].z };
 
             dialogCrop.setXBounds(xBounds);
             dialogCrop.setYBounds(yBounds);
@@ -1383,7 +1383,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  Point3D[] the array of 3D points
      */
-    public Point3D[] getBoundingBoxPoints() {
+    public Point3Df[] getBoundingBoxPoints() {
         return boundingBoxPoints;
     }
 
@@ -1919,13 +1919,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  z            slice index in the patient
      * @param  sourceImage  the triImage that called this method
      */
-    public void setCrosshairs(int x, int y, int z, ViewJComponentTriImage sourceImage) {
+    public void setCrosshairs(float x, float y, float z, ViewJComponentTriImage sourceImage) {
 
         if (sourceImage == null) {
             return;
         }
 
-        Point3D volPt = sourceImage.getVolumePosition(x, y, z);
+        Point3Df volPt = sourceImage.getVolumePosition(x, y, z);
 
         int orientation = sourceImage.getOrientation();
 
@@ -5382,21 +5382,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * tri-planar's bounding box.
      */
     private void setupBoundingBoxPoints() {
-        boundingBoxPoints[UPPER_LEFT_FRONT] = new Point3D((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
+        boundingBoxPoints[UPPER_LEFT_FRONT] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
                                                           (int) (extents[2] * 0.25f));
-        boundingBoxPoints[UPPER_RIGHT_FRONT] = new Point3D((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
+        boundingBoxPoints[UPPER_RIGHT_FRONT] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
                                                            (int) (extents[2] * 0.25f));
-        boundingBoxPoints[LOWER_RIGHT_FRONT] = new Point3D((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
+        boundingBoxPoints[LOWER_RIGHT_FRONT] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
                                                            (int) (extents[2] * 0.25f));
-        boundingBoxPoints[LOWER_LEFT_FRONT] = new Point3D((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
+        boundingBoxPoints[LOWER_LEFT_FRONT] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
                                                           (int) (extents[2] * 0.25f));
-        boundingBoxPoints[UPPER_LEFT_BACK] = new Point3D((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
+        boundingBoxPoints[UPPER_LEFT_BACK] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
                                                          (int) (extents[2] * 0.75f));
-        boundingBoxPoints[UPPER_RIGHT_BACK] = new Point3D((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
+        boundingBoxPoints[UPPER_RIGHT_BACK] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
                                                           (int) (extents[2] * 0.75f));
-        boundingBoxPoints[LOWER_RIGHT_BACK] = new Point3D((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
+        boundingBoxPoints[LOWER_RIGHT_BACK] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
                                                           (int) (extents[2] * 0.75f));
-        boundingBoxPoints[LOWER_LEFT_BACK] = new Point3D((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
+        boundingBoxPoints[LOWER_LEFT_BACK] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
                                                          (int) (extents[2] * 0.75f));
     }
 

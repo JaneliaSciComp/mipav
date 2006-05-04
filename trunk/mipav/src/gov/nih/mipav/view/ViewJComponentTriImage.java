@@ -103,7 +103,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private Point anchorPt = new Point(0, 0);
 
     /** The x and y coordinate of the cursor position in screen space of this component. */
-    private Point crosshairPt = new Point(0, 0);
+    private Point2Df crosshairPt = new Point2Df(0.0f, 0.0f);
 
     /**
      * Whether to show the center of rotation point in the volume and allow the user to change it. <code>doCenter</code>
@@ -527,17 +527,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public CubeBounds getBoundedVolume() {
 
         // no translation needed since the low and high vars are already in volume space (always x,y,z)
-        Point3D[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+        Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
 
-        return new CubeBounds(boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].x,
-                              boundingBoxPoints[ViewJFrameTriImage.UPPER_LEFT_FRONT].x,
-                              boundingBoxPoints[ViewJFrameTriImage.LOWER_RIGHT_FRONT].y,
-                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].y,
-                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_BACK].z + 1, // TODO: the +1 shouldn't
+        return new CubeBounds((int)boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].x,
+                (int)boundingBoxPoints[ViewJFrameTriImage.UPPER_LEFT_FRONT].x,
+                (int)boundingBoxPoints[ViewJFrameTriImage.LOWER_RIGHT_FRONT].y,
+                (int)boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].y,
+                (int)boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_BACK].z + 1, // TODO: the +1 shouldn't
                                                                                             // be here, it is fudged
                                                                                             // until we can figure out
                                                                                             // why it is needed
-                              boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].z + 1);
+                (int)boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].z + 1);
     }
 
     /**
@@ -545,7 +545,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      *
      * @return  DOCUMENT ME!
      */
-    public Point getCrosshairPoint() {
+    public Point2Df getCrosshairPoint() {
         return crosshairPt;
     }
 
@@ -618,8 +618,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      *
      * @return  Point
      */
-    public Point getScreenCoordinates(Point3D point3d) {
-        int x = 0, y = 0;
+    public Point2Df getScreenCoordinates(Point3Df point3d) {
+        float x = 0, y = 0;
 
         switch (axisOrder[0]) {
 
@@ -675,10 +675,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 break;
         }
 
-        x = (int) (x * getZoomX() * resolutionX);
-        y = (int) (y * getZoomY() * resolutionY);
+        x = (x * getZoomX() * resolutionX);
+        y =  (y * getZoomY() * resolutionY);
 
-        return new Point(x, y);
+        return new Point2Df(x, y);
     }
 
     /**
@@ -708,11 +708,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      *
      * @return  the point position within the volume
      */
-    public final Point3D getTriImagePosition(int x, int y) {
-        x = (int) (x / (getZoomX() * getResolutionX()));
-        y = (int) (y / (getZoomY() * getResolutionY()));
+    public final Point3Df getTriImagePosition(float x, float y) {
+        float xPt, yPt;
+        xPt =  (x / (getZoomX() * getResolutionX()));
+        yPt =  (y / (getZoomY() * getResolutionY()));
 
-        return getVolumePosition(x, y, slice);
+        return getVolumePosition(xPt, yPt, slice);
     }
 
     /**
@@ -773,6 +774,103 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public final Point3D getVolumePosition(int x, int y, int z) {
         Point3D pt = new Point3D();
+
+        switch (axisOrder[0]) {
+
+            case 0:
+                pt.x = x;
+                if (axisFlip[0]) {
+                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
+                }
+
+                break;
+
+            case 1:
+                pt.y = x;
+                if (axisFlip[0]) {
+                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
+                }
+
+                break;
+
+            case 2:
+                pt.z = x;
+                if (axisFlip[0]) {
+                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
+                }
+
+                break;
+        }
+
+        switch (axisOrder[1]) {
+
+            case 0:
+                pt.x = y;
+                if (axisFlip[1]) {
+                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
+                }
+
+                break;
+
+            case 1:
+                pt.y = y;
+                if (axisFlip[1]) {
+                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
+                }
+
+                break;
+
+            case 2:
+                pt.z = y;
+                if (axisFlip[1]) {
+                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
+                }
+
+                break;
+        }
+
+        switch (axisOrder[2]) {
+
+            case 0:
+                pt.x = z;
+                if (axisFlip[2]) {
+                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
+                }
+
+                break;
+
+            case 1:
+                pt.y = z;
+                if (axisFlip[2]) {
+                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
+                }
+
+                break;
+
+            case 2:
+                pt.z = z;
+                if (axisFlip[2]) {
+                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
+                }
+
+                break;
+        }
+
+        return pt;
+    }
+    
+    /**
+     * Translate a point on the x-y tri-image component into image volume space. Assumes input parameters have zoom and
+     * voxel resolution already factored out.
+     *
+     * @param   x  x value of the point within the component
+     * @param   y  y value of the point within the component
+     * @param   z  the z coordinate ( usually == slice ) (the out-of-component dimension)
+     *
+     * @return  the point translated into the image volume
+     */
+    public final Point3Df getVolumePosition(float x, float y, float z) {
+        Point3Df pt = new Point3Df();
 
         switch (axisOrder[0]) {
 
@@ -1160,7 +1258,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             }
 
             // get the volume position of the mouse event
-            Point3D volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+            Point3Df volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
 
             if ((volumeMousePoint.x < 0) || (volumeMousePoint.y < 0) || (volumeMousePoint.z < 0) ||
                     (volumeMousePoint.x >= imageA.getExtents()[0]) || (volumeMousePoint.y >= imageA.getExtents()[1]) ||
@@ -1223,7 +1321,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
 
                     if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                        Point3D mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                        Point3Df mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
 
                         found = true;
 
@@ -1253,17 +1351,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                         int[] y = new int[1];
                                         int[] z = new int[1];
 
-                                        x[0] = mousePt.x;
-                                        y[0] = mousePt.y;
-                                        z[0] = mousePt.z;
+                                        x[0] = (int)mousePt.x;
+                                        y[0] = (int)mousePt.y;
+                                        z[0] = (int)mousePt.z;
 
                                         VOIBase pt = new VOIPoint();
 
                                         pt.importArrays(x, y, z, x.length);
-                                        VOIs.VOIAt(i).getCurves()[mousePt.z].addElement(pt);
-                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[mousePt.z].lastElement())).setLabel(pointString);
-                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[mousePt.z].lastElement())).setActive(true);
-                                        lastZOrg = mousePt.z;
+                                        VOIs.VOIAt(i).getCurves()[(int)mousePt.z].addElement(pt);
+                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int)mousePt.z].lastElement())).setLabel(pointString);
+                                        ((VOIPoint) (VOIs.VOIAt(i).getCurves()[(int)mousePt.z].lastElement())).setActive(true);
+                                        lastZOrg = (int)mousePt.z;
                                     }
                                 }
                             }
@@ -1281,10 +1379,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         else if (mode == CUBE_BOUNDS) {
 
             // get array representing the 8 corners of the bounding box
-            Point3D[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+            Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
 
             // get the volume position of the mouse event
-            Point3D volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+            Point3Df volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
 
             if ((volumeMousePoint.x < 0) || (volumeMousePoint.y < 0) || (volumeMousePoint.z < 0)) {
                 return;
@@ -1322,7 +1420,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             continue;
                         }
 
-                        Point3D potentiallyCoplanarPoint = boundingBoxPoints[i];
+                        Point3Df potentiallyCoplanarPoint = boundingBoxPoints[i];
 
                         // test the potentially coplanar point to see if it is, in fact, coplanar
                         if ((boundingBoxPoints[dragBBpt].x == potentiallyCoplanarPoint.x) ||
@@ -1333,22 +1431,22 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                     // for each coplanar point
                     for (i = 0; i < coplanarPoints.size(); i++) {
-                        Point3D commonPoint = (Point3D) coplanarPoints.elementAt(i);
+                        Point3Df commonPoint = (Point3Df) coplanarPoints.elementAt(i);
 
                         // set coplanar dimensions equal, therefore equalizing the point on a common plane
                         if (boundingBoxPoints[dragBBpt].x == commonPoint.x) {
-                            commonPoint.x = volumeMousePoint.x;
+                            commonPoint.x = (int)volumeMousePoint.x;
                         }
 
                         // set coplanar dimensions equal, therefore equalizing the point on a common plane
                         if (boundingBoxPoints[dragBBpt].y == commonPoint.y) {
-                            commonPoint.y = volumeMousePoint.y;
+                            commonPoint.y = (int)volumeMousePoint.y;
                         }
                     }
 
                     // finally, set dragged point to new mouse value
-                    boundingBoxPoints[dragBBpt].x = volumeMousePoint.x;
-                    boundingBoxPoints[dragBBpt].y = volumeMousePoint.y;
+                    boundingBoxPoints[dragBBpt].x = (int)volumeMousePoint.x;
+                    boundingBoxPoints[dragBBpt].y = (int)volumeMousePoint.y;
 
                 }
             }
@@ -1361,8 +1459,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                     for (i = 0; i < boundingBoxPoints.length; i++) {
 
-                        if ((Math.abs(boundingBoxPoints[i].x - volumeMousePoint.x) < 5) &&
-                                (Math.abs(boundingBoxPoints[i].z - volumeMousePoint.z) < 5)) {
+                        if ((Math.abs(boundingBoxPoints[i].x - (int)volumeMousePoint.x) < 5) &&
+                                (Math.abs(boundingBoxPoints[i].z - (int)volumeMousePoint.z) < 5)) {
                             dragBBpt = i;
 
                             break;
@@ -1381,7 +1479,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             continue;
                         }
 
-                        Point3D potentiallyCommonPoint = boundingBoxPoints[i];
+                        Point3Df potentiallyCommonPoint = boundingBoxPoints[i];
 
                         if ((boundingBoxPoints[dragBBpt].x == potentiallyCommonPoint.x) ||
                                 (boundingBoxPoints[dragBBpt].z == potentiallyCommonPoint.z)) {
@@ -1390,19 +1488,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     }
 
                     for (i = 0; i < commonPoints.size(); i++) {
-                        Point3D commonPoint = (Point3D) commonPoints.elementAt(i);
+                        Point3Df commonPoint = (Point3Df) commonPoints.elementAt(i);
 
                         if (boundingBoxPoints[dragBBpt].x == commonPoint.x) {
-                            commonPoint.x = volumeMousePoint.x;
+                            commonPoint.x = (int)volumeMousePoint.x;
                         }
 
                         if (boundingBoxPoints[dragBBpt].z == commonPoint.z) {
-                            commonPoint.z = volumeMousePoint.z;
+                            commonPoint.z = (int)volumeMousePoint.z;
                         }
                     }
 
-                    boundingBoxPoints[dragBBpt].x = volumeMousePoint.x;
-                    boundingBoxPoints[dragBBpt].z = volumeMousePoint.z;
+                    boundingBoxPoints[dragBBpt].x = (int)volumeMousePoint.x;
+                    boundingBoxPoints[dragBBpt].z = (int)volumeMousePoint.z;
                 }
             }
 
@@ -1412,8 +1510,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                     for (i = 0; i < boundingBoxPoints.length; i++) {
 
-                        if ((Math.abs(boundingBoxPoints[i].y - volumeMousePoint.y) < 5) &&
-                                (Math.abs(boundingBoxPoints[i].z - volumeMousePoint.z) < 5)) {
+                        if ((Math.abs(boundingBoxPoints[i].y - (int)volumeMousePoint.y) < 5) &&
+                                (Math.abs(boundingBoxPoints[i].z - (int)volumeMousePoint.z) < 5)) {
                             dragBBpt = i;
 
                             break;
@@ -1432,7 +1530,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                             continue;
                         }
 
-                        Point3D potentiallyCommonPoint = boundingBoxPoints[i];
+                        Point3Df potentiallyCommonPoint = boundingBoxPoints[i];
 
                         if ((boundingBoxPoints[dragBBpt].y == potentiallyCommonPoint.y) ||
                                 (boundingBoxPoints[dragBBpt].z == potentiallyCommonPoint.z)) {
@@ -1441,19 +1539,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     }
 
                     for (i = 0; i < commonPoints.size(); i++) {
-                        Point3D commonPoint = (Point3D) commonPoints.elementAt(i);
+                        Point3Df commonPoint = (Point3Df) commonPoints.elementAt(i);
 
                         if (boundingBoxPoints[dragBBpt].y == commonPoint.y) {
-                            commonPoint.y = volumeMousePoint.y;
+                            commonPoint.y = (int)volumeMousePoint.y;
                         }
 
                         if (boundingBoxPoints[dragBBpt].z == commonPoint.z) {
-                            commonPoint.z = volumeMousePoint.z;
+                            commonPoint.z = (int)volumeMousePoint.z;
                         }
                     }
 
-                    boundingBoxPoints[dragBBpt].y = volumeMousePoint.y;
-                    boundingBoxPoints[dragBBpt].z = volumeMousePoint.z;
+                    boundingBoxPoints[dragBBpt].y = (int)volumeMousePoint.y;
+                    boundingBoxPoints[dragBBpt].z = (int)volumeMousePoint.z;
                 }
             }
 
@@ -1632,7 +1730,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         if (mode == PAINT_CAN) {
 
             if (growDialog != null) {
-                Point3D point = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                Point3Df point = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
 
                 // the "++" here is to make the display 1-based, like the crosshairs, instead of 0-based
                 point.x++;
@@ -2004,12 +2102,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         slice = newSlice;
 
-        int xS = (int) (crosshairPt.x / (getZoomX() * resolutionX));
-        int yS = (int) (crosshairPt.y / (getZoomY() * resolutionY));
+        float xS = (crosshairPt.x / (getZoomX() * resolutionX));
+        float yS = (crosshairPt.y / (getZoomY() * resolutionY));
         
         triImageFrame.setCrosshairs(xS, yS, slice, this);
         
-        Point3D newLabel = null;
+        Point3Df newLabel = null;
 
         int coronalSlice = triImageFrame.getCoronalComponentSlice();
         int sagittalSlice = triImageFrame.getSagittalComponentSlice();
@@ -2030,7 +2128,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
-        triImageFrame.setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
+        triImageFrame.setPositionLabels((int)newLabel.x, (int)newLabel.y, (int)newLabel.z);
 
         triImageFrame.updateImages();
     }
@@ -2048,9 +2146,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public boolean nearBoundsPoint(int mouseX, int mouseY, int boundsX, int boundsY) {
         double dist;
 
-        Point3D pt = getTriImagePosition(mouseX, mouseY);
-        mouseX = pt.x;
-        mouseY = pt.y;
+        Point3Df pt = getTriImagePosition(mouseX, mouseY);
+        mouseX = (int)pt.x;
+        mouseY = (int)pt.y;
 
         dist = Math.sqrt(((mouseX - boundsX) * (mouseX - boundsX)) + ((mouseY - boundsY) * (mouseY - boundsY)));
 
@@ -2108,8 +2206,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid) {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
 
-                Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-                computeTalairachVoxelPosition(pt.x, pt.y);
+                Point2Df pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
+                computeTalairachVoxelPosition((int)pt.x, (int)pt.y);
             }
 
         } // end of if (triComponentOrientation == AXIAL)
@@ -2126,8 +2224,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid) {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
 
-                Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-                computeTalairachVoxelPosition(pt.x, pt.y);
+                Point2Df pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
+                computeTalairachVoxelPosition((int)pt.x, (int)pt.y);
             }
 
         } // end of else if (triComponentOrientation == CORONAL)
@@ -2144,8 +2242,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid) {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
 
-                Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-                computeTalairachVoxelPosition(pt.x, pt.y);
+                Point2Df pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
+                computeTalairachVoxelPosition((int)pt.x, (int)pt.y);
             } // if (showTalairach)
         } // end of else if (triComponentOrientation == SAGITTAL)
 
@@ -3195,8 +3293,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      *
      * @param  pt3D  volume point (3D) to be converted to screen point
      */
-    public void updateCrosshairPosition(Point3D pt3D) {
-        Point screenPt = getScreenCoordinates(pt3D);
+    public void updateCrosshairPosition(Point3Df pt3D) {
+        Point2Df screenPt = getScreenCoordinates(pt3D);
         crosshairPt.x = screenPt.x;
         crosshairPt.y = screenPt.y;
     }
@@ -3644,22 +3742,22 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             indices[3] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
         }
 
-        Point3D[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+        Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
 
-        Point screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
-        Point screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
-        Point screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
-        Point screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
+        Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
+        Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
+        Point2Df screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
+        Point2Df screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
 
-        graphics.drawLine(screenPoint1.x, screenPoint1.y, screenPoint2.x, screenPoint2.y);
-        graphics.drawLine(screenPoint2.x, screenPoint2.y, screenPoint3.x, screenPoint3.y);
-        graphics.drawLine(screenPoint3.x, screenPoint3.y, screenPoint4.x, screenPoint4.y);
-        graphics.drawLine(screenPoint4.x, screenPoint4.y, screenPoint1.x, screenPoint1.y);
+        graphics.drawLine((int)screenPoint1.x, (int)screenPoint1.y, (int)screenPoint2.x, (int)screenPoint2.y);
+        graphics.drawLine((int)screenPoint2.x, (int)screenPoint2.y, (int)screenPoint3.x, (int)screenPoint3.y);
+        graphics.drawLine((int)screenPoint3.x, (int)screenPoint3.y, (int)screenPoint4.x, (int)screenPoint4.y);
+        graphics.drawLine((int)screenPoint4.x, (int)screenPoint4.y, (int)screenPoint1.x, (int)screenPoint1.y);
 
-        graphics.fillRect(screenPoint1.x - 2, screenPoint1.y - 2, 4, 4);
-        graphics.fillRect(screenPoint2.x - 2, screenPoint2.y - 2, 4, 4);
-        graphics.fillRect(screenPoint3.x - 2, screenPoint3.y - 2, 4, 4);
-        graphics.fillRect(screenPoint4.x - 2, screenPoint4.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint1.x - 2, (int)screenPoint1.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint2.x - 2, (int)screenPoint2.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint3.x - 2, (int)screenPoint3.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint4.x - 2, (int)screenPoint4.y - 2, 4, 4);
 
         if (true) {
             return;
@@ -3878,22 +3976,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             indices[3] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
         }
 
-        Point3D[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+        Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+        
 
-        Point screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
-        Point screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
-        Point screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
-        Point screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
+        Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
+        Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
+        Point2Df screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
+        Point2Df screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
 
-        graphics.drawLine(screenPoint1.x, screenPoint1.y, screenPoint2.x, screenPoint2.y);
-        graphics.drawLine(screenPoint2.x, screenPoint2.y, screenPoint3.x, screenPoint3.y);
-        graphics.drawLine(screenPoint3.x, screenPoint3.y, screenPoint4.x, screenPoint4.y);
-        graphics.drawLine(screenPoint4.x, screenPoint4.y, screenPoint1.x, screenPoint1.y);
+        graphics.drawLine((int)screenPoint1.x, (int)screenPoint1.y, (int)screenPoint2.x, (int)screenPoint2.y);
+        graphics.drawLine((int)screenPoint2.x, (int)screenPoint2.y, (int)screenPoint3.x, (int)screenPoint3.y);
+        graphics.drawLine((int)screenPoint3.x, (int)screenPoint3.y, (int)screenPoint4.x, (int)screenPoint4.y);
+        graphics.drawLine((int)screenPoint4.x, (int)screenPoint4.y, (int)screenPoint1.x, (int)screenPoint1.y);
 
-        graphics.fillRect(screenPoint1.x - 2, screenPoint1.y - 2, 4, 4);
-        graphics.fillRect(screenPoint2.x - 2, screenPoint2.y - 2, 4, 4);
-        graphics.fillRect(screenPoint3.x - 2, screenPoint3.y - 2, 4, 4);
-        graphics.fillRect(screenPoint4.x - 2, screenPoint4.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint1.x - 2, (int)screenPoint1.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint2.x - 2, (int)screenPoint2.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint3.x - 2, (int)screenPoint3.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint4.x - 2, (int)screenPoint4.y - 2, 4, 4);
 
         if (true) {
             return;
@@ -4182,22 +4281,22 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             indices[3] = ViewJFrameTriImage.LOWER_LEFT_BACK;
         }
 
-        Point3D[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+        Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
 
-        Point screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
-        Point screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
-        Point screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
-        Point screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
+        Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
+        Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
+        Point2Df screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
+        Point2Df screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
 
-        graphics.drawLine(screenPoint1.x, screenPoint1.y, screenPoint2.x, screenPoint2.y);
-        graphics.drawLine(screenPoint2.x, screenPoint2.y, screenPoint3.x, screenPoint3.y);
-        graphics.drawLine(screenPoint3.x, screenPoint3.y, screenPoint4.x, screenPoint4.y);
-        graphics.drawLine(screenPoint4.x, screenPoint4.y, screenPoint1.x, screenPoint1.y);
+        graphics.drawLine((int)screenPoint1.x, (int)screenPoint1.y, (int)screenPoint2.x, (int)screenPoint2.y);
+        graphics.drawLine((int)screenPoint2.x, (int)screenPoint2.y, (int)screenPoint3.x, (int)screenPoint3.y);
+        graphics.drawLine((int)screenPoint3.x, (int)screenPoint3.y, (int)screenPoint4.x, (int)screenPoint4.y);
+        graphics.drawLine((int)screenPoint4.x, (int)screenPoint4.y, (int)screenPoint1.x, (int)screenPoint1.y);
 
-        graphics.fillRect(screenPoint1.x - 2, screenPoint1.y - 2, 4, 4);
-        graphics.fillRect(screenPoint2.x - 2, screenPoint2.y - 2, 4, 4);
-        graphics.fillRect(screenPoint3.x - 2, screenPoint3.y - 2, 4, 4);
-        graphics.fillRect(screenPoint4.x - 2, screenPoint4.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint1.x - 2, (int)screenPoint1.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint2.x - 2, (int)screenPoint2.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint3.x - 2, (int)screenPoint3.y - 2, 4, 4);
+        graphics.fillRect((int)screenPoint4.x - 2, (int)screenPoint4.y - 2, 4, 4);
 
         if (true) {
             return;
@@ -4329,12 +4428,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     private void drawCenterMark(Graphics2D offscreenGraphics2d) {
 
-        Point pt = crosshairPt;
+        Point2Df pt = crosshairPt;
 
         offscreenGraphics2d.setColor(Color.yellow);
 
-        int centerXD = pt.x;
-        int centerYD = pt.y;
+        int centerXD = (int)pt.x;
+        int centerYD = (int)pt.y;
         offscreenGraphics2d.drawLine(centerXD, centerYD - 5, centerXD, centerYD + 5);
         offscreenGraphics2d.drawLine(centerXD - 5, centerYD, centerXD + 5, centerYD);
         offscreenGraphics2d.setColor(Color.black);
@@ -4352,15 +4451,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCrosshairLines(Graphics2D offscreenGraphics2d) {
 
         // This snaps the crosshair to the voxel boundary
-        Point pt = crosshairPt;
+        Point2Df pt = crosshairPt;
 
         offscreenGraphics2d.setColor(xColor);
-        offscreenGraphics2d.drawLine(pt.x, 0, pt.x, pt.y - 10);
-        offscreenGraphics2d.drawLine(pt.x, getSize().height, pt.x, pt.y + 10);
+        offscreenGraphics2d.drawLine((int)pt.x, 0, (int)pt.x, (int)pt.y - 10);
+        offscreenGraphics2d.drawLine((int)pt.x, getSize().height, (int)pt.x, (int)pt.y + 10);
 
         offscreenGraphics2d.setColor(yColor);
-        offscreenGraphics2d.drawLine(0, pt.y, pt.x - 10, pt.y);
-        offscreenGraphics2d.drawLine(getSize().width, pt.y, pt.x + 10, pt.y);
+        offscreenGraphics2d.drawLine(0, (int)pt.y, (int)pt.x - 10, (int)pt.y);
+        offscreenGraphics2d.drawLine(getSize().width, (int)pt.y, (int)pt.x + 10, (int)pt.y);
     }
 
     /**
@@ -4385,7 +4484,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         // This snaps the crosshair to the voxel boundary
         // Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-        Point pt = crosshairPt;
+        Point2Df pt = crosshairPt;
 
         // border
         offscreenGraphics2d.setColor(zColor);
@@ -4393,13 +4492,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         // x stubs
         offscreenGraphics2d.setColor(xColor);
-        offscreenGraphics2d.drawLine(pt.x, 0, pt.x, 10);
-        offscreenGraphics2d.drawLine(pt.x, getSize().height, pt.x, getSize().height - 10);
+        offscreenGraphics2d.drawLine((int)pt.x, 0, (int)pt.x, 10);
+        offscreenGraphics2d.drawLine((int)pt.x, getSize().height, (int)pt.x, getSize().height - 10);
 
         // y stubs
         offscreenGraphics2d.setColor(yColor);
-        offscreenGraphics2d.drawLine(0, pt.y, 10, pt.y);
-        offscreenGraphics2d.drawLine(getSize().width, pt.y, getSize().width - 10, pt.y);
+        offscreenGraphics2d.drawLine(0, (int)pt.y, 10, (int)pt.y);
+        offscreenGraphics2d.drawLine(getSize().width, (int)pt.y, getSize().width - 10, (int)pt.y);
     }
 
     /**
@@ -4914,7 +5013,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                         Point3Df[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
 
                         for (int j = 0; j < voiPoints.length; j++) {
-                            Point pt = getScreenCoordinates(new Point3D((int) voiPoints[j].x, (int) voiPoints[j].y,
+                            Point2Df pt = getScreenCoordinates(new Point3Df((int) voiPoints[j].x, (int) voiPoints[j].y,
                                                                         (int) voiPoints[j].z));
 
                             int flipSlice = slice;
@@ -4927,7 +5026,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                                         (int) voiPoints[j].x, (int) voiPoints[j].y, (int) voiPoints[j].z
                                                     };
 
-                            if ((!((pt.x == -1) && (pt.y == -1))) && (orderedVOIPoint[axisOrder[2]] == flipSlice)) {
+                            if ((!(((int)pt.x == -1) && ((int)pt.y == -1))) && (orderedVOIPoint[axisOrder[2]] == flipSlice)) {
                                 offscreenGraphics2d.setColor(VOIs.VOIAt(i).getColor());
 
                                 if (hasOrientation) {
@@ -4935,7 +5034,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                                               (int) voiPoints[j].z);
 
                                     ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).drawAxialSelf(offscreenGraphics2d,
-                                                                                                           pt.x, pt.y,
+                                                                                                           (int)pt.x, (int)pt.y,
                                                                                                            label.x,
                                                                                                            label.y);
                                 } // if (hasOrientation)
@@ -5947,10 +6046,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) // curve type is a VOI point
             {
-                Point3D mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
-                int xOrg = mousePt.x;
-                int yOrg = mousePt.y;
-                int zOrg = mousePt.z;
+                Point3Df mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                int xOrg = (int)mousePt.x;
+                int yOrg = (int)mousePt.y;
+                int zOrg = (int)mousePt.z;
 
                 pt = null;
 
