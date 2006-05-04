@@ -8278,8 +8278,7 @@ public class FileIO {
                 image = newImage;
             }
 
-            // Why this stuff
-            myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN); // ??
+            myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
             myFileInfo.setRescaleIntercept(0); 
             myFileInfo.setRescaleSlope(1); 
             myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
