@@ -14,7 +14,7 @@ import java.text.*;
 
 
 /**
- * An Algorithm to rotate 3D or 4D dataset 90 degrees about X, Y, or Z axis. 2D Images can also be rotated. A new
+ * An Algorithm to rotate 3D or 4D dataset 90 or 180 degrees about X, Y, or Z axis. 2D Images can also be rotated. A new
  * rotated image with modified dimensions and resolutions created and can be accessed through returnImage().
  *
  * @version  1.0 July 25, 2000
@@ -25,23 +25,32 @@ public class AlgorithmRotate extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /** Rotate about the x axis 180 degrees. */
+    public static final int X_AXIS_180 = 0;
+    
     /** Rotate about the x axis 90 degrees. */
-    public static final int X_AXIS_PLUS = 0;
+    public static final int X_AXIS_PLUS = 1;
 
     /** Rotate about the x axis -90 degrees (or 270 degrees). */
-    public static final int X_AXIS_MINUS = 1;
+    public static final int X_AXIS_MINUS = 2;
+    
+    /** Rotate about the y axis 180 degrees. */
+    public static final int Y_AXIS_180 = 3;
 
     /** Rotate about the y axis 90 degrees. */
-    public static final int Y_AXIS_PLUS = 2;
+    public static final int Y_AXIS_PLUS = 4;
 
     /** Rotate about the y axis -90 degrees (or 270 degrees). */
-    public static final int Y_AXIS_MINUS = 3;
+    public static final int Y_AXIS_MINUS = 5;
+    
+    /** Rotate about the z axis 180 degrees. */
+    public static final int Z_AXIS_180 = 6;
 
     /** Rotate about the z axis 90 degrees. */
-    public static final int Z_AXIS_PLUS = 4;
+    public static final int Z_AXIS_PLUS = 7;
 
     /** Rotate about the z axis -90 degrees (or 270 degrees). */
-    public static final int Z_AXIS_MINUS = 5;
+    public static final int Z_AXIS_MINUS = 8;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -59,8 +68,9 @@ public class AlgorithmRotate extends AlgorithmBase {
     public AlgorithmRotate(ModelImage srcImg, int rotateMode) {
         super(null, srcImg);
 
-        if ((rotateMode == Y_AXIS_PLUS) || (rotateMode == Y_AXIS_MINUS) || (rotateMode == X_AXIS_PLUS) ||
-                (rotateMode == X_AXIS_MINUS) || (rotateMode == Z_AXIS_PLUS) || (rotateMode == Z_AXIS_MINUS)) {
+        if ((rotateMode == Y_AXIS_180) || (rotateMode == Y_AXIS_PLUS) || (rotateMode == Y_AXIS_MINUS) || 
+            (rotateMode == X_AXIS_180) || (rotateMode == X_AXIS_PLUS) || (rotateMode == X_AXIS_MINUS) ||
+            (rotateMode == Z_AXIS_180) || (rotateMode == Z_AXIS_PLUS) || (rotateMode == Z_AXIS_MINUS)) {
             rotateAxis = rotateMode;
         } else {
             rotateAxis = Z_AXIS_PLUS; // default rotate mode
@@ -159,22 +169,26 @@ public class AlgorithmRotate extends AlgorithmBase {
         float[] buffer;
         int[] oldDimExtents = new int[2];
         oldDimExtents = srcImage.getExtents();
+        int count;
 
-        int colorFactor;
+        int cf;
         int[] newDimExtents;
         float[] newResolutions = srcImage.getFileInfo(0).getResolutions();
         ;
 
-        if ((rotateAxis != Z_AXIS_PLUS) && (rotateAxis != Z_AXIS_MINUS)) {
+        if ((rotateAxis != Z_AXIS_180) && (rotateAxis != Z_AXIS_PLUS) && (rotateAxis != Z_AXIS_MINUS)) {
             return;
         }
 
         try {
 
             if (srcImage.isColorImage()) {
-                colorFactor = 4; // ARGB Image
+                cf = 4; // ARGB Image
+            } else if ((srcImage.getType() == ModelStorageBase.COMPLEX) ||
+                       (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                cf = 2;
             } else {
-                colorFactor = 1; // Grey Scale Image
+                cf = 1; // Grey Scale Image
             }
 
             buildProgressBar(srcImage.getImageName(), "Rotating image ...", 0, 100);
@@ -187,12 +201,20 @@ public class AlgorithmRotate extends AlgorithmBase {
 
         try {
             newDimExtents = new int[2];
-            length = colorFactor * srcImage.getSliceSize();
+            length = cf * srcImage.getSliceSize();
             buffer = new float[length];
-            newDimExtents[0] = oldDimExtents[1];
-            newDimExtents[1] = oldDimExtents[0];
-            newResolutions[0] = srcImage.getFileInfo(0).getResolutions()[1];
-            newResolutions[1] = srcImage.getFileInfo(0).getResolutions()[0];
+            if (rotateAxis == Z_AXIS_180) {
+                newDimExtents[0] = oldDimExtents[0];
+                newDimExtents[1] = oldDimExtents[1];
+                newResolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
+                newResolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];    
+            }
+            else {
+                newDimExtents[0] = oldDimExtents[1];
+                newDimExtents[1] = oldDimExtents[0];
+                newResolutions[0] = srcImage.getFileInfo(0).getResolutions()[1];
+                newResolutions[1] = srcImage.getFileInfo(0).getResolutions()[0];
+            }
             destImage = new ModelImage(srcImage.getType(), newDimExtents, srcImage.getImageName(),
                                        srcImage.getUserInterface());
         } catch (OutOfMemoryError e) {
@@ -205,11 +227,38 @@ public class AlgorithmRotate extends AlgorithmBase {
         int mod = length / 10; // mod is 10 percent of length
         initProgressBar();
 
-        if (colorFactor == 1) {
+        if (cf == 1) {
 
             try {
+                
+                if (rotateAxis == Z_AXIS_180) {
+                    try {
+                        srcImage.setLock(ModelStorageBase.W_LOCKED);
+                    } catch (IOException error) {
+                        throw error;
+                    }
 
-                if (rotateAxis == Z_AXIS_PLUS) {
+                    i = newDimExtents[0]*newDimExtents[1] - 1;
+                    count = 0;
+
+                    // gets new data for rotated image
+                    for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
+                        for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
+
+                            if (((count % mod) == 0) && isProgressBarVisible()) {
+                                progressBar.updateValue(Math.round((float) (count) / (length - 1) * 100), activeImage);
+                            }
+
+                            buffer[i] = srcImage.getFloat(j, k); // places new pixel data in buffer
+                            i--;
+                            count++;
+                        }
+                    }
+
+                    srcImage.releaseLock();   
+                }
+
+                else if (rotateAxis == Z_AXIS_PLUS) {
 
                     try {
                         srcImage.setLock(ModelStorageBase.W_LOCKED);
@@ -263,11 +312,41 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                 return;
             }
-        } else { // else colorFactor = 4
+        } else { // else cf = 2 or 4
 
             try {
+                
+                if (rotateAxis == Z_AXIS_180) {
 
-                if (rotateAxis == Z_AXIS_PLUS) {
+                    try {
+                        srcImage.setLock(ModelStorageBase.W_LOCKED);
+                    } catch (IOException error) {
+                        throw error;
+                    }
+
+                    i = cf*newDimExtents[0]*newDimExtents[1] - 1;
+                    count = 0;
+
+                    // gets new data for rotated image
+                    for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
+                        for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
+
+                            // must repeat cf times for each pixel in order to get ARGB or complex data
+                            for (w = cf-1; (w >= 0) && !threadStopped; w--) {
+
+                                if (((count % mod) == 0) && isProgressBarVisible()) {
+                                    progressBar.updateValue(Math.round((float) (count) / (length - 1) * 100), activeImage);
+                                }
+
+                                buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * cf) + ((cf * j) + w)); // puts new pixel data in buffer
+                                i--;
+                                count++;
+                            }
+                        }
+                    }
+
+                    srcImage.releaseLock();
+                } else if (rotateAxis == Z_AXIS_PLUS) {
 
                     try {
                         srcImage.setLock(ModelStorageBase.W_LOCKED);
@@ -282,14 +361,14 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         for (k = oldDimExtents[1] - 1; (k >= 0) && !threadStopped; k--) {
 
-                            // must repeat 4 times for each pixel in order to get ARGB data
-                            for (w = 0; (w < 4) && !threadStopped; w++) {
+                            // must repeat cf times for each pixel in order to get ARGB or complex data
+                            for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
                                     progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
                                 }
 
-                                buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * 4) + ((4 * j) + w)); // puts new pixel data in buffer
+                                buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * cf) + ((cf * j) + w)); // puts new pixel data in buffer
                                 i++;
                             }
                         }
@@ -304,14 +383,14 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
 
-                            // must repeat 4 times for each pixel in order to get ARGB data
-                            for (w = 0; (w < 4) && !threadStopped; w++) {
+                            // must repeat cf times for each pixel in order to get ARGB or complex data
+                            for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
                                     progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
                                 }
 
-                                buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * 4) + ((4 * j) + w)); // puts new pixel data in buffer
+                                buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * cf) + ((cf * j) + w)); // puts new pixel data in buffer
                                 i++;
                             }
                         }
@@ -353,7 +432,13 @@ public class AlgorithmRotate extends AlgorithmBase {
                                                                                                 // nontrivial value
             newFileInfo.setAxisOrientation(srcImage.getFileInfo(0).getAxisOrientation()[2], 2);
 
-            if (rotateAxis == Z_AXIS_PLUS) {
+            if (rotateAxis == Z_AXIS_180) {
+                newFileInfo.setAxisOrientation(FileInfoBase.oppositeOrient(srcImage.getFileInfo(0).getAxisOrientation()[0]),
+                        0);
+                newFileInfo.setAxisOrientation(FileInfoBase.oppositeOrient(srcImage.getFileInfo(0).getAxisOrientation()[1]),
+                        1);
+            }
+            else if (rotateAxis == Z_AXIS_PLUS) {
                 newFileInfo.setAxisOrientation(srcImage.getFileInfo(0).getAxisOrientation()[0], 1);
                 newFileInfo.setAxisOrientation(FileInfoBase.oppositeOrient(srcImage.getFileInfo(0).getAxisOrientation()[1]),
                                                0);
@@ -392,7 +477,7 @@ public class AlgorithmRotate extends AlgorithmBase {
     private void calcInPlace3D() {
 
         int s, i, j, k, w, t;
-        int colorFactor;
+        int cf;
         int tOffset;
         int index;
         int stride, tmpStart;
@@ -436,9 +521,12 @@ public class AlgorithmRotate extends AlgorithmBase {
         try {
 
             if (srcImage.isColorImage()) {
-                colorFactor = 4; // ARGB image
+                cf = 4; // ARGB Image
+            } else if ((srcImage.getType() == ModelStorageBase.COMPLEX) ||
+                       (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                cf = 2;
             } else {
-                colorFactor = 1; // Gray Scale Image
+                cf = 1; // Grey Scale Image
             }
 
             buildProgressBar(srcImage.getImageName(), "Rotating image ...", 0, 100);
@@ -473,11 +561,11 @@ public class AlgorithmRotate extends AlgorithmBase {
                 orderIndex[i] = i;
             }
 
-            if ((rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
+            if ((rotateAxis == Y_AXIS_180) || (rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
 
                 // calculates size  and initializes buffer for a single slice and
                 // total buffer for whole image
-                length = colorFactor * srcImage.getExtents()[2] * srcImage.getExtents()[1];
+                length = cf * srcImage.getExtents()[2] * srcImage.getExtents()[1];
                 totalLength = length * oldDimExtents[0] * oldTDim;
                 buffer = new float[length];
                 resultBuffer = new float[totalLength];
@@ -490,8 +578,8 @@ public class AlgorithmRotate extends AlgorithmBase {
                 } else {
                     oppositeOrients[0] = true;
                 }
-            } else if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == X_AXIS_MINUS)) {
-                length = colorFactor * srcImage.getExtents()[0] * srcImage.getExtents()[2];
+            } else if ((rotateAxis == X_AXIS_180) || (rotateAxis == X_AXIS_PLUS) || (rotateAxis == X_AXIS_MINUS)) {
+                length = cf * srcImage.getExtents()[0] * srcImage.getExtents()[2];
                 totalLength = length * oldDimExtents[1] * oldTDim;
                 buffer = new float[length];
                 resultBuffer = new float[totalLength];
@@ -505,14 +593,24 @@ public class AlgorithmRotate extends AlgorithmBase {
                     oppositeOrients[2] = true;
                 }
             } else {
-                length = colorFactor * srcImage.getExtents()[1] * srcImage.getExtents()[0];
+                length = cf * srcImage.getExtents()[1] * srcImage.getExtents()[0];
                 totalLength = length * oldDimExtents[2] * oldTDim;
                 buffer = new float[length];
                 resultBuffer = new float[totalLength];
-                orderIndex[0] = 1;
-                orderIndex[1] = 0;
+                if (rotateAxis == Z_AXIS_180) {
+                    orderIndex[0] = 0;
+                    orderIndex[1] = 1;   
+                }
+                else {
+                    orderIndex[0] = 1;
+                    orderIndex[1] = 0;
+                }
                 orderIndex[2] = 2;
 
+                if (rotateAxis == Z_AXIS_180) {
+                    oppositeOrients[0] = true;
+                    oppositeOrients[1] = true;
+                }
                 if (rotateAxis == Z_AXIS_PLUS) {
                     oppositeOrients[0] = true;
                 } else {
@@ -598,13 +696,13 @@ public class AlgorithmRotate extends AlgorithmBase {
         }
 
         for (t = 0; (t < tStop) && !threadStopped; t++) {
-            tOffset = colorFactor * newDimExtents[0] * newDimExtents[1] * newDimExtents[2] * t;
+            tOffset = cf * newDimExtents[0] * newDimExtents[1] * newDimExtents[2] * t;
 
             for (s = 0; (s < newDimExtents[2]) && !threadStopped; s++) {
                 float min = Float.MAX_VALUE;
                 float max = Float.MIN_VALUE;
 
-                if (colorFactor == 1) {
+                if (cf == 1) {
                     start = s * length;
 
                     try {
@@ -751,6 +849,36 @@ public class AlgorithmRotate extends AlgorithmBase {
                             }
 
                             srcImage.releaseLock();
+                        } else if (rotateAxis == Z_AXIS_180) {
+
+                            try {
+                                srcImage.setLock(ModelStorageBase.W_LOCKED);
+                            } catch (IOException error) {
+                                throw error;
+                            }
+
+                            i = newDimExtents[0]*newDimExtents[1] - 1;
+
+                            // calculates pixel data for rotated image
+                            for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
+                                for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
+
+                                    // puts pixel data for the particular slice into the buffer
+                                    buffer[i] = srcImage.getFloat(j, k, s, t);
+
+                                    if (buffer[i] > max) {
+                                        max = buffer[i];
+                                    }
+
+                                    if (buffer[i] < min) {
+                                        min = buffer[i];
+                                    }
+
+                                    i--;
+                                }
+                            }
+
+                            srcImage.releaseLock();
                         } else if (rotateAxis == Z_AXIS_PLUS) {
 
                             try {
@@ -834,7 +962,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         resultBuffer[start + index + tOffset] = buffer[index];
                     }
-                } else { // else colorFactor = 4
+                } else { // else cf = 2 for complex or 4 for ARGB
                     start = s * length;
 
                     try {
@@ -856,11 +984,11 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                                 for (k = 0; (k < oldDimExtents[2]) && !threadStopped; k++) {
 
-                                    // must copy all ARGB values for each pixel
-                                    for (w = 0; (w < 4) && !threadStopped; w++) {
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                         // putS pixel data into buffer
-                                        buffer[i] = srcImage.getFloat((tmpStart * 4) + (k * stride * 4) + w + tOffset);
+                                        buffer[i] = srcImage.getFloat((tmpStart * cf) + (k * stride * cf) + w + tOffset);
 
                                         if (buffer[i] > max) {
                                             max = buffer[i];
@@ -896,11 +1024,11 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                                 for (k = oldDimExtents[2] - 1; (k >= 0) && !threadStopped; k--) {
 
-                                    // must copy all ARGB values for each pixel
-                                    for (w = 0; w < 4; w++) {
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = 0; w < cf; w++) {
 
                                         // puts pixel data into buffer
-                                        buffer[i] = srcImage.getFloat((tmpStart * 4) + (k * stride * 4) + w + tOffset);
+                                        buffer[i] = srcImage.getFloat((tmpStart * cf) + (k * stride * cf) + w + tOffset);
 
                                         if (buffer[i] > max) {
                                             max = buffer[i];
@@ -936,11 +1064,11 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                                 for (k = 0; (k < oldDimExtents[0]) && !threadStopped; k++) {
 
-                                    // must copy all ARGB values for each pixel
-                                    for (w = 0; (w < 4) && !threadStopped; w++) {
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                         // puts pixel data into buffer
-                                        buffer[i] = srcImage.getFloat((tmpStart * 4) + (k * 4) + w + tOffset);
+                                        buffer[i] = srcImage.getFloat((tmpStart * cf) + (k * cf) + w + tOffset);
 
                                         if (buffer[i] > max) {
                                             max = buffer[i];
@@ -975,11 +1103,11 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                                 for (k = 0; (k < oldDimExtents[0]) && !threadStopped; k++) {
 
-                                    // must copy all ARGB values for each pixel
-                                    for (w = 0; (w < 4) && !threadStopped; w++) {
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                         // puts pixel data into buffer
-                                        buffer[i] = srcImage.getFloat((tmpStart * 4) + (k * 4) + w + tOffset);
+                                        buffer[i] = srcImage.getFloat((tmpStart * cf) + (k * cf) + w + tOffset);
 
                                         if (buffer[i] > max) {
                                             max = buffer[i];
@@ -994,6 +1122,43 @@ public class AlgorithmRotate extends AlgorithmBase {
                                 }
 
                                 tmpStart -= stride;
+                            }
+
+                            srcImage.releaseLock();
+                        } else if (rotateAxis == Z_AXIS_180) {
+
+                            try {
+                                srcImage.setLock(ModelStorageBase.W_LOCKED);
+                            } catch (IOException error) {
+                                throw error;
+                            }
+
+                            i = cf*newDimExtents[0]*newDimExtents[1] - 1;
+
+                            // calculates new pixel data for particluar slice of rotated image
+                            for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
+                                for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
+
+
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = cf-1; (w >= 0) && !threadStopped; w--) {
+
+                                        // puts pixel data into buffer
+                                        buffer[i] = srcImage.getFloat((s * (oldDimExtents[0] * oldDimExtents[1] * cf)) +
+                                                                      (k * oldDimExtents[0] * cf) + ((cf * j) + w) +
+                                                                      tOffset);
+
+                                        if (buffer[i] > max) {
+                                            max = buffer[i];
+                                        }
+
+                                        if (buffer[i] < min) {
+                                            min = buffer[i];
+                                        }
+
+                                        i--;
+                                    }
+                                }
                             }
 
                             srcImage.releaseLock();
@@ -1012,12 +1177,12 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                                 for (k = oldDimExtents[1] - 1; (k >= 0) && !threadStopped; k--) {
 
-                                    // must copy all ARGB values for each pixel
-                                    for (w = 0; (w < 4) && !threadStopped; w++) {
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                         // puts pizel data into buffer
-                                        buffer[i] = srcImage.getFloat((s * (oldDimExtents[0] * oldDimExtents[1] * 4)) +
-                                                                      (k * oldDimExtents[0] * 4) + ((4 * j) + w) +
+                                        buffer[i] = srcImage.getFloat((s * (oldDimExtents[0] * oldDimExtents[1] * cf)) +
+                                                                      (k * oldDimExtents[0] * cf) + ((cf * j) + w) +
                                                                       tOffset);
 
                                         if (buffer[i] > max) {
@@ -1042,12 +1207,12 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                                 for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
 
-                                    // must copy all ARGB values for each pixel
-                                    for (w = 0; (w < 4) && !threadStopped; w++) {
+                                    // must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                         // puts pixel data into buffer
-                                        buffer[i] = srcImage.getFloat((s * (oldDimExtents[0] * oldDimExtents[1] * 4)) +
-                                                                      (k * oldDimExtents[0] * 4) + ((4 * j) + w) +
+                                        buffer[i] = srcImage.getFloat((s * (oldDimExtents[0] * oldDimExtents[1] * cf)) +
+                                                                      (k * oldDimExtents[0] * cf) + ((cf * j) + w) +
                                                                       tOffset);
 
                                         if (buffer[i] > max) {
@@ -1153,14 +1318,21 @@ public class AlgorithmRotate extends AlgorithmBase {
         TransMatrix rotMatrix = new TransMatrix(4);
         rotMatrix.identity();
 
-        if (rotateAxis == X_AXIS_PLUS) {
+        if (rotateAxis == X_AXIS_180) {
+            rotMatrix.setRotate(180, 0, 0, TransMatrix.DEGREES);    
+        }
+        else if (rotateAxis == X_AXIS_PLUS) {
             rotMatrix.setRotate(90, 0, 0, TransMatrix.DEGREES);
         } else if (rotateAxis == X_AXIS_MINUS) {
             rotMatrix.setRotate(-90, 0, 0, TransMatrix.DEGREES);
+        } else if (rotateAxis == Y_AXIS_180) {
+            rotMatrix.setRotate(0, 180, 0, TransMatrix.DEGREES);
         } else if (rotateAxis == Y_AXIS_PLUS) {
             rotMatrix.setRotate(0, 90, 0, TransMatrix.DEGREES);
         } else if (rotateAxis == Y_AXIS_MINUS) {
             rotMatrix.setRotate(0, -90, 0, TransMatrix.DEGREES);
+        } else if (rotateAxis == Z_AXIS_180) {
+            rotMatrix.setRotate(0, 0, 180, TransMatrix.DEGREES);
         } else if (rotateAxis == Z_AXIS_PLUS) {
             rotMatrix.setRotate(0, 0, 90, TransMatrix.DEGREES);
         } else if (rotateAxis == Z_AXIS_MINUS) {
@@ -1224,7 +1396,8 @@ public class AlgorithmRotate extends AlgorithmBase {
             // pixel spacing, slice thickness, and spacing between slices changes for
             // X- or Y-axis rotation, but not for Z-axis rotation.  Also should not be set if
             // it wasn't there in the first place.
-            if ((rotateAxis != Z_AXIS_PLUS) && (rotateAxis != Z_AXIS_PLUS) && (tmp != null)) {
+            if ((rotateAxis != Z_AXIS_180) && (rotateAxis != Z_AXIS_PLUS) &&
+                    (rotateAxis != Z_AXIS_PLUS) && (tmp != null)) {
                 newTagPixelSpc = new StringBuffer(Float.toString(newResolutions[0]) + "\\" +
                                                   Float.toString(newResolutions[1]));
                 newTagSliceSpc = new StringBuffer(Float.toString(newResolutions[2]));
@@ -1240,7 +1413,8 @@ public class AlgorithmRotate extends AlgorithmBase {
             for (i = 0; i < newDimExtents[2]; i++) {
 
                 // more correct information for a Z-axis rotation, so copy the file info on a slice basis
-                if ((rotateAxis == Z_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
+                if ((rotateAxis == Z_AXIS_180) || (rotateAxis == Z_AXIS_PLUS) || 
+                        (rotateAxis == Z_AXIS_MINUS)) {
                     newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(i).clone();
                 } // not possible for other rotations because the z-dimension is different
                 else {
