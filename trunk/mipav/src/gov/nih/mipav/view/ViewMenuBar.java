@@ -771,13 +771,19 @@ public class ViewMenuBar {
                                                                   false),
                                         menuBuilder.makeMenu("Rotate", false,
                                                              new JMenuItem[] {
+                                                                 menuBuilder.buildMenuItem("X axis 180", "RotateX180",
+                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("X axis +90", "RotateXPlus",
                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("X axis -90", "RotateXMinus",
                                                                                            0, null, false),
+                                                                 menuBuilder.buildMenuItem("Y axis 180", "RotateY180",
+                                                                                           0, null, false),
                                                                  menuBuilder.buildMenuItem("Y axis +90", "RotateYPlus",
                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("Y axis -90", "RotateYMinus",
+                                                                                           0, null, false),
+                                                                 menuBuilder.buildMenuItem("Z axis 180", "RotateZ180",
                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("Z axis +90", "RotateZPlus",
                                                                                            0, null, false),
@@ -1089,8 +1095,10 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
             menuBuilder.setMenuItemEnabled("B-Spline automatic registration 2.5D", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
+            menuBuilder.setMenuItemEnabled("X axis 180", false);
             menuBuilder.setMenuItemEnabled("X axis +90", false);
             menuBuilder.setMenuItemEnabled("X axis -90", false);
+            menuBuilder.setMenuItemEnabled("Y axis 180", false);
             menuBuilder.setMenuItemEnabled("Y axis +90", false);
             menuBuilder.setMenuItemEnabled("Y axis -90", false);
             menuBuilder.setMenuItemEnabled("Randomize slice order", false);
