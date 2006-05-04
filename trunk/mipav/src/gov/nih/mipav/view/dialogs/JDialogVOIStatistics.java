@@ -130,7 +130,8 @@ public class JDialogVOIStatistics extends JDialogBase
     // actual things we can see...
     /** List of available VOIs. */
     private JList volumesList = new JList();
-    
+
+    /** DOCUMENT ME! */
     private int xUnits, yUnits, zUnits;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -138,7 +139,13 @@ public class JDialogVOIStatistics extends JDialogBase
     /**
      * Empty constructor needed for dynamic instantiation.
      */
-    public JDialogVOIStatistics() { }
+    public JDialogVOIStatistics() {
+        this.addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent event) {
+                    cleanUpAndDispose();
+                }
+            });
+    }
 
     /**
      * builds and packs the frame. does <i>not</I> set it visible.
@@ -202,6 +209,12 @@ public class JDialogVOIStatistics extends JDialogBase
 
         pack();
         setSize(800, 500); // decent size??
+
+        this.addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent event) {
+                    cleanUpAndDispose();
+                }
+            });
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -226,8 +239,7 @@ public class JDialogVOIStatistics extends JDialogBase
                 callAlgorithm();
             }
         } else if (source == cancelButton) {
-            ViewUserInterface.getReference().getFrameContainingImage(image).getComponentImage().eraseAllPaint(false);
-            dispose(); // consider removing the VOI listners here.
+            cleanUpAndDispose();
         }
     }
 
@@ -282,44 +294,30 @@ public class JDialogVOIStatistics extends JDialogBase
                 if (checkBoxPanel.getSelectedList(VOIStatisticList.statisticDescription[i])) {
 
                     if (logModel.getColumnIndex(VOIStatisticList.statisticDescription[i]) == -1) {
-                        if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) &&
-                                (xUnits == yUnits) && (xUnits == zUnits) &&
-                                (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-                                logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                        " (" + str + ")");
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Area") != -1) &&
-                                (xUnits == yUnits) &&
-                                (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
-                                logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                        " (" + str + ")");
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1) &&
-                                 (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                                    logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                            " (" + str + ")");
-                        }
-                        else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
-                            logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                    " (degrees)");    
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1) &&
-                                 (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                   str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                                   logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                           " (" + str + ")");
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1) &&
-                                (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                  str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                                  logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                          " (" + str + ")");
-                        }
-                        else {
-                            logModel.addColumn(VOIStatisticList.statisticDescription[i]);    
+                        if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits) &&
+                                (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Area") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (degrees)");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else {
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i]);
                         }
                     }
 
@@ -440,44 +438,30 @@ public class JDialogVOIStatistics extends JDialogBase
                 if (checkBoxPanel.getSelectedList(VOIStatisticList.statisticDescription[i])) {
 
                     if (logModel.getColumnIndex(VOIStatisticList.statisticDescription[i]) == -1) {
-                        if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) &&
-                                (xUnits == yUnits) && (xUnits == zUnits) &&
-                                (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-                                logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                        " (" + str + ")");
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Area") != -1) &&
-                                (xUnits == yUnits) &&
-                                (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
-                                logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                        " (" + str + ")");
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1) &&
-                                 (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                                    logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                            " (" + str + ")");
-                        }
-                        else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
-                            logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                    " (degrees)");    
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1) &&
-                                (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                  str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                                  logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                          " (" + str + ")");
-                        }
-                        else if ((VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1) &&
-                                (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                                 str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                                 logModel.addColumn(VOIStatisticList.statisticDescription[i] +
-                                         " (" + str + ")");
-                        }
-                        else {
-                            logModel.addColumn(VOIStatisticList.statisticDescription[i]);    
+                        if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits) &&
+                                (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Area") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Perimeter") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if (VOIStatisticList.statisticDescription[i].indexOf("Principal Axis") != -1) {
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (degrees)");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Major axis length") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else if ((VOIStatisticList.statisticDescription[i].indexOf("Minor axis length") != -1) &&
+                                       (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
+                        } else {
+                            logModel.addColumn(VOIStatisticList.statisticDescription[i]);
                         }
                     }
 
@@ -784,6 +768,21 @@ public class JDialogVOIStatistics extends JDialogBase
     public void vectorSelected(VOIVectorEvent voiEvent) { }
 
     /**
+     * Clean up some things done by the dialog which may affect other parts of MIPAV.
+     */
+    protected void cleanUpAndDispose() {
+
+        // make sure all voi listeners are removed from the image's list, if that isn't done problems happen when
+        // the image is serialized (e.g. if it's cloned)
+        for (int i = 0; i < image.getVOIs().size(); i++) {
+            image.getVOIs().VOIAt(i).removeVOIListener(highlighter);
+        }
+        image.getVOIs().removeVectorListener(this);
+
+        dispose();
+    }
+
+    /**
      * creates a panel for the output log.
      *
      * @return  DOCUMENT ME!
@@ -1057,37 +1056,29 @@ public class JDialogVOIStatistics extends JDialogBase
 
         for (i = 0; i < checklist.length; i++) {
             if (checkBoxPanel.getSelectedList(i)) {
-                if ((checklist[i].equals("Volume")) &&
-                        (xUnits == yUnits) && (xUnits == zUnits) &&
+                if ((checklist[i].equals("Volume")) && (xUnits == yUnits) && (xUnits == zUnits) &&
                         (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                        str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
-                        kl += checklist[i] + " (" + str + ")" + "\t";
-                }
-                else if ((checklist[i].equals("Area")) &&
-                        (xUnits == yUnits) &&
-                        (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                        str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
-                        kl  += checklist[i] + " (" + str + ")" + "\t";
-                }
-                else if ((checklist[i].equals("Perimeter")) &&
-                         (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                            str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                            kl += checklist[i] + " (" + str + ")" + "\t";
-                }
-                else if (checklist[i].equals("Principal Axis")) {
-                    kl += checklist[i] + " (degrees)" + "\t";    
-                }
-                else if ((checklist[i].equals("Major axis length")) &&
-                        (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                          str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                          kl += checklist[i] + " (" + str + ")" + "\t";
-                }
-                else if ((checklist[i].equals("Minor axis length")) &&
-                        (xUnits == yUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
-                         str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
-                         kl += checklist[i] + " (" + str + ")" + "\t";
-                }
-                else {
+                    str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();
+                    kl += checklist[i] + " (" + str + ")" + "\t";
+                } else if ((checklist[i].equals("Area")) && (xUnits == yUnits) &&
+                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                    str = image.getFileInfo(0).getAreaUnitsOfMeasureStr();
+                    kl += checklist[i] + " (" + str + ")" + "\t";
+                } else if ((checklist[i].equals("Perimeter")) && (xUnits == yUnits) &&
+                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                    kl += checklist[i] + " (" + str + ")" + "\t";
+                } else if (checklist[i].equals("Principal Axis")) {
+                    kl += checklist[i] + " (degrees)" + "\t";
+                } else if ((checklist[i].equals("Major axis length")) && (xUnits == yUnits) &&
+                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                    kl += checklist[i] + " (" + str + ")" + "\t";
+                } else if ((checklist[i].equals("Minor axis length")) && (xUnits == yUnits) &&
+                               (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
+                    str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
+                    kl += checklist[i] + " (" + str + ")" + "\t";
+                } else {
                     kl += checklist[i] + "\t";
                 }
             }
@@ -1376,6 +1367,9 @@ public class JDialogVOIStatistics extends JDialogBase
      */
     public class JPanelAddRemoveVOI extends JPanelListController {
 
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = -2076771728355899710L;
+
         /**
          * Sets the Add/Remove VOI panel to Y-Axis layout and with images.
          */
@@ -1420,6 +1414,9 @@ public class JDialogVOIStatistics extends JDialogBase
      * display the ranges as values for exclusion, but minor rewriting this class to allow operation specific titles.
      */
     public class JPanelExclusionSelector extends JPanel implements ActionListener {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 1471564039185960351L;
 
         /** DOCUMENT ME! */
         private JTextField boundA;
@@ -1697,8 +1694,8 @@ public class JDialogVOIStatistics extends JDialogBase
          * Tries to store the values held in the text areas to temporary storage. It only does so if there are valid
          * (that is, numbers and that they are neither infinite nor at the maximum or minimum value.
          *
-         * @see  Float.MAX_VALUE
-         * @see  Float.MIN_VALUE
+         * @see  Float#MAX_VALUE
+         * @see  Float#MIN_VALUE
          */
         protected void storeLimitValues() {
 
@@ -1732,6 +1729,9 @@ public class JDialogVOIStatistics extends JDialogBase
      * &quot;Output format&quot;, it permits options for tab-delimited or XML-formatted output file.
      */
     public class JPanelStatisticFileFormatOptions extends JPanel {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = -4726615904924397356L;
 
         /** Radio button to choose a tab-delimited file. */
         JRadioButton tabDelimited;
@@ -1781,6 +1781,9 @@ public class JDialogVOIStatistics extends JDialogBase
      * there is a retrieval facility available for other options.
      */
     public class JPanelStatisticsOptions extends JPanel {
+
+        /** Use serialVersionUID for interoperability. */
+        private static final long serialVersionUID = 6577076069976323730L;
 
         /** A radio button to select calculation by VOI contour. */
         JRadioButton byContour;
