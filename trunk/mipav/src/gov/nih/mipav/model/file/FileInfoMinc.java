@@ -1217,92 +1217,14 @@ public class FileInfoMinc extends FileInfoBase {
                     }
                 }
             } else if (varArray[i].name.equals(spacex)) {
-
-                // axisOrientation[0] = setOrientType(varArray[i].comments);
-                // if (axisOrientation[0] == ORI_UNKNOWN_TYPE) {
                 axisOrientation[0] = setOrientType(spacex, (varArray[i].resolution > 0));
                 ix = i;
-                // }
-
-                switch (axisOrientation[0]) {
-
-                    case ORI_UNKNOWN_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_UNKNOWN_TYPE\n");
-                        break;
-
-                    case ORI_R2L_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_R2L_TYPE\n");
-                        break;
-
-                    case ORI_L2R_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_L2R_TYPE\n");
-                        break;
-
-                    case ORI_P2A_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_P2A_TYPE\n");
-                        break;
-
-                    case ORI_A2P_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_A2P_TYPE\n");
-                        break;
-
-                    case ORI_I2S_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_I2S_TYPE\n");
-                        break;
-
-                    case ORI_S2I_TYPE:
-                        Preferences.debug("axisOrientation[0] = ORI_S2I_TYPE\n");
-                        break;
-                }
             } else if (varArray[i].name.equals(spacey)) {
-
-                // opposite because MINC's origin is at the bottom left and
-                // ours is at the top left
-                // axisOrientation[1] = oppositeOrient(setOrientType(varArray[i].comments));
-                // if (axisOrientation[1] == ORI_UNKNOWN_TYPE) {
-                // axisOrientation[1] = oppositeOrient(setOrientType(spacey, (varArray[i].resolution > 0)));
                 axisOrientation[1] = setOrientType(spacey, (varArray[i].resolution > 0));
                 iy = i;
-                // }
-
             } else if (varArray[i].name.equals(spacez)) {
-
-                // axisOrientation[2] = setOrientType(varArray[i].comments);
-                // if (axisOrientation[2] == ORI_UNKNOWN_TYPE) {
                 axisOrientation[2] = setOrientType(spacez, (varArray[i].resolution > 0));
                 iz = i;
-                // }
-
-                switch (axisOrientation[2]) {
-
-                    case ORI_UNKNOWN_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_UNKNOWN_TYPE\n");
-                        break;
-
-                    case ORI_R2L_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_R2L_TYPE\n");
-                        break;
-
-                    case ORI_L2R_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_L2R_TYPE\n");
-                        break;
-
-                    case ORI_P2A_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_P2A_TYPE\n");
-                        break;
-
-                    case ORI_A2P_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_A2P_TYPE\n");
-                        break;
-
-                    case ORI_I2S_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_I2S_TYPE\n");
-                        break;
-
-                    case ORI_S2I_TYPE:
-                        Preferences.debug("axisOrientation[2] = ORI_S2I_TYPE\n");
-                        break;
-                }
             }
         }
 
@@ -1324,46 +1246,46 @@ public class FileInfoMinc extends FileInfoBase {
             }
 
             if (varArray[iy].resolution < 0) {
-                axisOrientation[1] = oppositeOrient(axisOrientation[1]);
+               axisOrientation[1] = oppositeOrient(axisOrientation[1]);
             }
 
             if (varArray[iz].resolution < 0) {
-                axisOrientation[2] = oppositeOrient(axisOrientation[2]);
+               axisOrientation[2] = oppositeOrient(axisOrientation[2]);
             }
         }
+        
 
-        flipped = true;
-        axisOrientation[1] = oppositeOrient(axisOrientation[1]);
-
-        switch (axisOrientation[1]) {
-
-            case ORI_UNKNOWN_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_UNKNOWN_TYPE\n");
-                break;
-
-            case ORI_R2L_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_R2L_TYPE\n");
-                break;
-
-            case ORI_L2R_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_L2R_TYPE\n");
-                break;
-
-            case ORI_P2A_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_P2A_TYPE\n");
-                break;
-
-            case ORI_A2P_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_A2P_TYPE\n");
-                break;
-
-            case ORI_I2S_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_I2S_TYPE\n");
-                break;
-
-            case ORI_S2I_TYPE:
-                Preferences.debug("axisOrientation[1] = ORI_S2I_TYPE\n");
-                break;
+        for(int i = 0; i < axisOrientation.length; i++){
+            switch (axisOrientation[i]) {
+    
+                case ORI_UNKNOWN_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_UNKNOWN_TYPE\n");
+                    break;
+    
+                case ORI_R2L_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_R2L_TYPE\n");
+                    break;
+    
+                case ORI_L2R_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_L2R_TYPE\n");
+                    break;
+    
+                case ORI_P2A_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_P2A_TYPE\n");
+                    break;
+    
+                case ORI_A2P_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_A2P_TYPE\n");
+                    break;
+    
+                case ORI_I2S_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_I2S_TYPE\n");
+                    break;
+    
+                case ORI_S2I_TYPE:
+                    Preferences.debug("axisOrientation[" + i + "] = ORI_S2I_TYPE\n");
+                    break;
+            }
         }
     }
 

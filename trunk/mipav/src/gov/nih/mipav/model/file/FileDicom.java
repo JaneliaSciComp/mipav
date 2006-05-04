@@ -297,8 +297,6 @@ public class FileDicom extends FileDicomBase {
         fileDir = null;
         fileHeader = null;
         
-        if (fileInfo != null)
-            fileInfo.finalize();
         fileInfo = null;
         image = null;
         vr = null;

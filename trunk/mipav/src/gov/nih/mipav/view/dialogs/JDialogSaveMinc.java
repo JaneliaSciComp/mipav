@@ -389,7 +389,7 @@ public class JDialogSaveMinc extends JDialogBase {
      */
     private void init() {
         ori = fileInfo.getAxisOrientation();
-        ori[1] = FileInfoMinc.oppositeOrient(ori[1]);
+        //ori[1] = FileInfoMinc.oppositeOrient(ori[1]);
         setTitle("Attributes to save");
         setResizable(false);
         cancelFlag = false;
@@ -560,29 +560,6 @@ public class JDialogSaveMinc extends JDialogBase {
         }
     }
 
-    /**
-     * Makes a radio button and adds it to the panel.
-     *
-     * @param   title   The title of the radio button.
-     * @param   layout  The layout to add the constraints to.
-     * @param   gbc     The constraints for this radio button.
-     * @param   panel   The panel to add the radio button to.
-     * @param   group   The group to add the radio button to.
-     *
-     * @return  The radio button created.
-     */
-    private JRadioButton setRadio(String title, GridBagLayout layout, GridBagConstraints gbc, JPanel panel,
-                                  ButtonGroup group) {
-        JRadioButton radio = new JRadioButton(title);
-        radio.setFont(serif12);
-        radio.setForeground(Color.black);
-        layout.setConstraints(radio, gbc);
-        panel.add(radio);
-        radio.setSelected(false);
-        group.add(radio);
-
-        return radio;
-    }
 
     /**
      * Initializes the text fields for the dialog. MORE!
