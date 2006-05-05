@@ -105,6 +105,8 @@ public class FileInterfile extends FileBase {
 
     /** DOCUMENT ME! */
     private boolean haveEnergyWindowsNumber = false;
+    
+    private boolean haveImagesPerEWindow = false;
 
     /** DOCUMENT ME! */
     private boolean haveFileName = false;
@@ -796,6 +798,7 @@ public class FileInterfile extends FileBase {
                         haveDetectorHeadNumber = true;
                     } else if (keyString.equalsIgnoreCase("NUMBEROFIMAGES/ENERGYWINDOW")) {
                         fileInfo.setImagesPerEWindow(valueString);
+                        haveImagesPerEWindow = true;
                     } else if (keyString.equalsIgnoreCase("PROCESSSTATUS")) {
 
                         if ((valueString.equalsIgnoreCase("RECONSTRUCTED")) ||
@@ -1105,6 +1108,10 @@ public class FileInterfile extends FileBase {
 
             if (!haveEnergyWindowsNumber) {
                 fileInfo.setEnergyWindowsNumber("1");
+            }
+            
+            if (haveEnergyWindowsNumber && !haveImagesPerEWindow) {
+                fileInfo.setImagesPerEWindowBrief("1");
             }
 
             if (!haveFloodCorrected) {
