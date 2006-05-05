@@ -132,34 +132,6 @@ public class AlgorithmRotate extends AlgorithmBase {
     }
 
     /**
-     * Helper method for finding biggest (absolute value) of three numbers.
-     *
-     * @param   zero  DOCUMENT ME!
-     * @param   one   DOCUMENT ME!
-     * @param   two   DOCUMENT ME!
-     *
-     * @return  Index of number that is the biggest.
-     */
-    private int absBiggest(double zero, double one, double two) {
-
-        if (Math.abs(zero) > Math.abs(one)) {
-
-            if (Math.abs(zero) > Math.abs(two)) {
-                return 0;
-            } else {
-                return 2;
-            }
-        } else {
-
-            if (Math.abs(one) > Math.abs(two)) {
-                return 1;
-            } else {
-                return 2;
-            }
-        }
-    }
-
-    /**
      * Calculates the rotated image and replaces the source image with the rotated image. Two dimensional images call
      * this method.
      */
@@ -476,7 +448,7 @@ public class AlgorithmRotate extends AlgorithmBase {
      */
     private void calcInPlace3D() {
 
-        int s, i, j, k, w, t;
+        int s, i, j, k, w, t, sNew;
         int cf;
         int tOffset;
         int index;
@@ -515,7 +487,6 @@ public class AlgorithmRotate extends AlgorithmBase {
         array[0][2] = oldStartLocations[2];
         array[0][3] = 1;
 
-        Matrix mat = new Matrix(array);
         TransMatrix tMat = null;
 
         try {
@@ -565,29 +536,63 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                 // calculates size  and initializes buffer for a single slice and
                 // total buffer for whole image
-                length = cf * srcImage.getExtents()[2] * srcImage.getExtents()[1];
-                totalLength = length * oldDimExtents[0] * oldTDim;
+                if (rotateAxis == Y_AXIS_180) {
+                    length = cf * srcImage.getExtents()[1] * srcImage.getExtents()[0];
+                    totalLength = length * oldDimExtents[2] * oldTDim;   
+                }
+                else {
+                    length = cf * srcImage.getExtents()[2] * srcImage.getExtents()[1];
+                    totalLength = length * oldDimExtents[0] * oldTDim;
+                }
                 buffer = new float[length];
                 resultBuffer = new float[totalLength];
-                orderIndex[0] = 2;
-                orderIndex[1] = 1;
-                orderIndex[2] = 0;
+                if (rotateAxis == Y_AXIS_180) {
+                    orderIndex[0] = 0;
+                    orderIndex[1] = 1;
+                    orderIndex[2] = 2;
+                }
+                else {
+                    orderIndex[0] = 2;
+                    orderIndex[1] = 1;
+                    orderIndex[2] = 0;
+                }
 
-                if (rotateAxis == Y_AXIS_PLUS) {
+                if (rotateAxis == Y_AXIS_180) {
+                    oppositeOrients[0] = true;
+                    oppositeOrients[2] = true;
+                }
+                else if (rotateAxis == Y_AXIS_PLUS) {
                     oppositeOrients[2] = true;
                 } else {
                     oppositeOrients[0] = true;
                 }
             } else if ((rotateAxis == X_AXIS_180) || (rotateAxis == X_AXIS_PLUS) || (rotateAxis == X_AXIS_MINUS)) {
-                length = cf * srcImage.getExtents()[0] * srcImage.getExtents()[2];
-                totalLength = length * oldDimExtents[1] * oldTDim;
+                if (rotateAxis == X_AXIS_180) {
+                    length = cf * srcImage.getExtents()[1] * srcImage.getExtents()[0];
+                    totalLength = length * oldDimExtents[2] * oldTDim;    
+                }
+                else {
+                    length = cf * srcImage.getExtents()[0] * srcImage.getExtents()[2];
+                    totalLength = length * oldDimExtents[1] * oldTDim;
+                }
                 buffer = new float[length];
                 resultBuffer = new float[totalLength];
-                orderIndex[0] = 0;
-                orderIndex[1] = 2;
-                orderIndex[2] = 1;
+                if (rotateAxis == X_AXIS_180) {
+                    orderIndex[0] = 0;
+                    orderIndex[1] = 1;
+                    orderIndex[2] = 2;    
+                }
+                else {
+                    orderIndex[0] = 0;
+                    orderIndex[1] = 2;
+                    orderIndex[2] = 1;
+                }
 
-                if (rotateAxis == X_AXIS_PLUS) {
+                if (rotateAxis == X_AXIS_180) {
+                    oppositeOrients[1] = true;
+                    oppositeOrients[2] = true;
+                }
+                else if (rotateAxis == X_AXIS_PLUS) {
                     oppositeOrients[1] = true;
                 } else {
                     oppositeOrients[2] = true;
@@ -707,7 +712,40 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                     try {
 
-                        if (rotateAxis == Y_AXIS_PLUS) {
+                        if (rotateAxis == Y_AXIS_180) {
+                            try {
+                                srcImage.setLock(ModelStorageBase.W_LOCKED);
+                            } catch (IOException error) {
+                                throw error;
+                            }
+
+                            sNew = newDimExtents[2] - s - 1;
+                            i = 0;
+
+                            // calculates pixel data for rotated image
+                            for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
+
+                                for (j = oldDimExtents[0] - 1; (j >= 0) && !threadStopped; j--) {
+
+                                    // puts pixel data for the particular slice into buffer
+                                    buffer[i] = srcImage.getFloat(j, k, sNew, t);
+
+                                    if (buffer[i] > max) {
+                                        max = buffer[i];
+                                    }
+
+                                    if (buffer[i] < min) {
+                                        min = buffer[i];
+                                    }
+
+                                    i++;
+                                }
+                            }
+
+                            srcImage.releaseLock();
+    
+                        }
+                        else if (rotateAxis == Y_AXIS_PLUS) {
 
                             try {
                                 srcImage.setLock(ModelStorageBase.W_LOCKED);
@@ -779,6 +817,37 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                             srcImage.releaseLock();
 
+                        } else if (rotateAxis == X_AXIS_180) {
+                            try {
+                                srcImage.setLock(ModelStorageBase.W_LOCKED);
+                            } catch (IOException error) {
+                                throw error;
+                            }
+
+                            sNew = newDimExtents[2] - s - 1;
+                            i = 0;
+
+                            // calculates pixel data for rotated image
+                            for (k = oldDimExtents[1] - 1; (k >= 0) && !threadStopped; k--) {
+
+                                for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
+
+                                    // puts pixel data for the particular slice into buffer
+                                    buffer[i] = srcImage.getFloat(j, k, sNew, t);
+
+                                    if (buffer[i] > max) {
+                                        max = buffer[i];
+                                    }
+
+                                    if (buffer[i] < min) {
+                                        min = buffer[i];
+                                    }
+
+                                    i++;
+                                }
+                            }
+
+                            srcImage.releaseLock();
                         } else if (rotateAxis == X_AXIS_MINUS) {
 
                             try {
@@ -966,8 +1035,46 @@ public class AlgorithmRotate extends AlgorithmBase {
                     start = s * length;
 
                     try {
+                        if (rotateAxis == Y_AXIS_180) {
+                            try {
+                                srcImage.setLock(ModelStorageBase.W_LOCKED);
+                            } catch (IOException error) {
+                                throw error;
+                            }
 
-                        if (rotateAxis == Y_AXIS_PLUS) {
+                            sNew = newDimExtents[2] - s - 1;
+                            i = 0;
+
+                            // calculates pixel data for rotated image
+                            for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
+
+                                for (j = oldDimExtents[0] - 1; (j >= 0) && !threadStopped; j--) {
+                                    
+//                                  must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
+
+                                        // puts pixel data for the particular slice into buffer
+                                        buffer[i] = srcImage.getFloat((sNew * (oldDimExtents[0] * oldDimExtents[1] * cf)) +
+                                                (k * oldDimExtents[0] * cf) + ((cf * j) + w) +
+                                                tOffset);
+    
+                                        if (buffer[i] > max) {
+                                            max = buffer[i];
+                                        }
+    
+                                        if (buffer[i] < min) {
+                                            min = buffer[i];
+                                        }
+    
+                                        i++;
+                                    }
+                                }
+                            }
+
+                            srcImage.releaseLock();
+    
+                        }
+                        else if (rotateAxis == Y_AXIS_PLUS) {
 
                             try {
                                 srcImage.setLock(ModelStorageBase.W_LOCKED);
@@ -1047,6 +1154,44 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                             srcImage.releaseLock();
 
+                        } else if (rotateAxis == X_AXIS_180) {
+                            try {
+                                srcImage.setLock(ModelStorageBase.W_LOCKED);
+                            } catch (IOException error) {
+                                throw error;
+                            }
+
+                            sNew = newDimExtents[2] - s - 1;
+                            i = 0;
+
+                            // calculates pixel data for rotated image
+                            for (k = oldDimExtents[1] - 1; (k >= 0) && !threadStopped; k--) {
+
+                                for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
+                                    
+//                                  must copy all ARGB or complex values for each pixel
+                                    for (w = 0; (w < cf) && !threadStopped; w++) {
+
+                                        // puts pixel data for the particular slice into buffer
+                                        buffer[i] = srcImage.getFloat((sNew * (oldDimExtents[0] * oldDimExtents[1] * cf)) +
+                                                (k * oldDimExtents[0] * cf) + ((cf * j) + w) +
+                                                tOffset);
+    
+                                        if (buffer[i] > max) {
+                                            max = buffer[i];
+                                        }
+    
+                                        if (buffer[i] < min) {
+                                            min = buffer[i];
+                                        }
+    
+                                        i++;
+                                    }
+                                }
+                            }
+
+                            srcImage.releaseLock();
+    
                         } else if (rotateAxis == X_AXIS_MINUS) {
 
                             try {
@@ -1489,6 +1634,19 @@ public class AlgorithmRotate extends AlgorithmBase {
             newLoc[0] = oldLoc[0];
             newLoc[1] = oldLoc[1];
             newLoc[2] = oldLoc[2];
+            
+            if (rotateAxis == X_AXIS_180) {
+                newLoc[1] = -newLoc[1];
+                newLoc[2] = -newLoc[2];
+            }
+            else if (rotateAxis == Y_AXIS_180) {
+                newLoc[0] = -newLoc[0];
+                newLoc[2] = -newLoc[2];
+            }
+            else if (rotateAxis == Z_AXIS_180) {
+                newLoc[0] = -newLoc[0];
+                newLoc[1] = -newLoc[1];
+            }
 
             if (srcImage.getFileInfo(0).getImageOrientation() == FileInfoBase.SAGITTAL) {
 
