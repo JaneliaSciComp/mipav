@@ -87,7 +87,6 @@ Binary mask (‘voiMask’) created from input muscle bundle VOI. Contours of ‘voiMa
 public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** hardSeg intensities (3 class segmentation). */
     public static int BACKGROUND = 85;
 
@@ -103,12 +102,6 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float[] centroid_array = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage destImage1 = null;
-
-    /** DOCUMENT ME! */
     private ModelImage destImageA = null;
 
     /** DOCUMENT ME! */
@@ -118,7 +111,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     private AlgorithmFuzzyCMeans firstFuzz = null;
 
     /** DOCUMENT ME! */
-    private ModelImage[] HardSeg = null;
+    private ModelImage HardSeg = null;
 
     /** DOCUMENT ME! */
     private int[] imgBuffer = null;
@@ -128,10 +121,13 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int[] imgBuffer2 = null;
+    
+    /** DOCUMENT ME! */
+    public static int xDim, yDim, zDim, sliceSize;
 
     /** DOCUMENT ME! */
     private ModelImage obMask = null;
-
+    
     /** DOCUMENT ME! */
     private ModelImage obMaskA = null;
 
@@ -173,13 +169,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     public void disposeLocal() {
         imgBuffer = null;
 
-
-        obMask.disposeLocal();
-        destImage1.disposeLocal();
-
-        obMask = null;
-        destImage1 = null;
-
+        destImage1.disposeLocal();        	destImage1 = null;
     }
 
     /**
@@ -227,178 +217,132 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     public ModelImage getResultImageB() {
         return this.destImageB;
     }
-
+        
+    
     /**
      * DOCUMENT ME!
+     *
+     * @param  srcImage        DOCUMENT ME!
+     * @param  nClasses        DOCUMENT ME!
      */
-    public void runAlgorithm() {
+    public ModelImage HardFuzzy(ModelImage srcImage, int nClasses){
 
-        buildProgressBar("Pipeline_Crop", "Initializing...", 0, 100);
-        initProgressBar();
+    	float centroid_array[] = new float[nClasses];
+    	getCentroid(centroid_array, srcImage, nClasses);
+    	
+        ModelImage HardSeg[] = new ModelImage[1];
+        FileInfoBase fileInfo1;
+        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg", srcImage.getUserInterface());
+		fileInfo1 = HardSeg[0].getFileInfo()[0];
+		fileInfo1.setResolutions(srcImage.getFileInfo()[0].getResolutions());
+		fileInfo1.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+		HardSeg[0].setFileInfo(fileInfo1, 0);
 
+        firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses,4, 1, 2, 2.0f, 20000, 200000, false,
+        		AlgorithmFuzzyCMeans.HARD_ONLY, false, 0.0f, 200, 0.01f, true);
 
-        try {
-            patientID = (String) ((FileDicomTag) ((FileInfoDicom) srcImage.getFileInfo(0)).getEntry("0010,0020"))
-                            .getValue(false);
-            System.err.println("patient id is: " + patientID);
-        } catch (Exception ex) { // do nothing
-        }
-
-
-        int i, j, x, y, xx, yy;
-        double min, max;
-        int BACKGROUNDFound;
-        int z = 1;
-        int xDim, yDim, sliceSize;
-
-        xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        sliceSize = xDim * yDim;
-        imgBuffer = new int[sliceSize];
-        imgBuffer1 = new int[sliceSize];
-        imgBuffer2 = new int[sliceSize];
-
-        if (srcImage.getNDims() == 3) {
-            z = srcImage.getExtents()[2];
-        }
-
-        destImage1 = new ModelImage(srcImage.getType(), srcImage.getExtents(), "destImage1",
-                                    srcImage.getUserInterface());
-        obMask = new ModelImage(srcImage.getType(), srcImage.getExtents(), "obMask", srcImage.getUserInterface());
-
-
-        //-------------------------------------------------------------------------------------------
-        //----------------------START STAGE 1:  THIGH SEPARATION-------------------------------------
-        //-------------------------------------------------------------------------------------------
-
-
-        // --------------- STEP 1: Obtaining Background Mask --------------------
-        // A) FUZZY SEGMENTATION
-        progressBar.updateValue(5, activeImage);
-        progressBar.setMessage("Obtaining Background Mask");
-        HardSeg = new ModelImage[1];
-
-        FileInfoBase fileInfo;
-        HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy" + "_seg",
-                                    srcImage.getUserInterface());
-        fileInfo = HardSeg[0].getFileInfo()[0];
-        fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
-        fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
-        HardSeg[0].setFileInfo(fileInfo, 0);
-
-        srcImage.calcMinMax();
-        min = srcImage.getMin();
-        max = srcImage.getMax();
-
-        int nClasses = 3;
-        centroid_array = new float[nClasses];
-
-        for (i = 0; i < nClasses; i++) {
-            centroid_array[i] = (float) (min + ((max - min) * (i + 1) / (nClasses + 1)));
-        }
-
-        firstFuzz = null;
-        firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses, 4, 1, 2, 2.0f, 20000, 200000, false,
-                                             AlgorithmFuzzyCMeans.HARD_ONLY, false, 0.0f, 200, 0.01f, true);
         firstFuzz.setCentroids(centroid_array);
         firstFuzz.setProgressBarVisible(false);
         firstFuzz.run();
-
-
         firstFuzz.finalize();
         firstFuzz = null;
-
-        // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
-        for (j = 0; j < z; j++) {
-
+        
+        return HardSeg[0];
+    }
+    
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  centroid_array  DOCUMENT ME!
+     * @param  srcImage        DOCUMENT ME!
+     * @param  nClasses        DOCUMENT ME!
+     */
+	public void getCentroid(float[] centroid_array, ModelImage srcImage, int nClasses){
+		int dd;
+		double max = srcImage.getMax();
+    	for(dd=1;dd<(nClasses+1);dd++){
+    		centroid_array[dd-1]=(float)(dd*max/(nClasses+1));
+    	}
+	}
+	
+	
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  SegmentedImg  		DOCUMENT ME!
+     * @param  Mask		        	DOCUMENT ME!
+     */
+	public ModelImage boundaryCorrect(ModelImage SegmentedImg){
+    	ModelImage Mask = new ModelImage(SegmentedImg.getType(), SegmentedImg.getExtents(), "Mask", SegmentedImg.getUserInterface());
+        int j, i, x, y, xx, yy, BACKGROUNDFound;
+        for (j = 0; j < zDim; j++) {
             try {
-                progressBar.updateValue(Math.round(10 + (30 * j / z)), activeImage);
-                HardSeg[0].exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
-                obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
-
+                progressBar.updateValue(Math.round(10 + (30 * j / zDim)), activeImage);
+                SegmentedImg.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
+                Mask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
                 // setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
                 for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer1[i] = 1;
                     imgBuffer2[i] = 1;
                 }
-
                 x = 0;
-
                 for (y = 0; y < yDim; y++) {
                     i = x + (y * xDim);
-
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
-
                 x = xDim - 1;
-
                 for (y = 0; y < yDim; y++) {
                     i = x + (y * xDim);
-
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
-
                 y = 0;
-
                 for (x = 0; x < xDim; x++) {
                     i = x + (y * xDim);
-
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
-
                 y = yDim - 1;
-
                 for (x = 0; x < xDim; x++) {
                     i = x + (y * xDim);
-
                     if (imgBuffer[i] == BACKGROUND) {
                         imgBuffer1[i] = 0;
                         imgBuffer2[i] = 0;
                     }
                 }
-
-                //              setProgressBarVisible(false);
                 // setting BACKGROUND imgBuffers 4-connected to 1 of original boundary, as background.
                 do {
                     BACKGROUNDFound = 0;
-
                     for (y = 0; y < yDim; y++) {
-
                         for (x = 0; x < xDim; x++) {
                             i = x + (y * xDim);
-
                             if (imgBuffer1[i] == 0) {
-
                                 // checks left nearest neighbor
                                 if ((x != 0) && (imgBuffer[i - 1] == BACKGROUND) && (imgBuffer1[i - 1] == 1)) {
                                     imgBuffer1[i - 1] = 0;
                                     imgBuffer2[i - 1] = 0;
                                     BACKGROUNDFound++;
                                 }
-
                                 // right nearest neighbor
                                 if ((x != (xDim - 1)) && (imgBuffer[i + 1] == BACKGROUND) && (imgBuffer1[i + 1] == 1)) {
                                     imgBuffer1[i + 1] = 0;
                                     imgBuffer2[i + 1] = 0;
                                     BACKGROUNDFound++;
                                 }
-
                                 // top
                                 if ((y != 0) && (imgBuffer[i - xDim] == BACKGROUND) && (imgBuffer1[i - xDim] == 1)) {
                                     imgBuffer1[i - xDim] = 0;
                                     imgBuffer2[i - xDim] = 0;
                                     BACKGROUNDFound++;
                                 }
-
                                 // bottom
                                 if ((y != (yDim - 1)) && (imgBuffer[i + xDim] == BACKGROUND) &&
                                         (imgBuffer1[i + xDim] == 1)) {
@@ -413,19 +357,13 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
                 // convert gray imgBuffer with outer BACKGROUND imgBuffer in its 5x5 neighborhood, into BACKGROUND
                 for (y = 2; y < (yDim - 2); y++) {
-
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
-
                         if (imgBuffer[i] == MUSCLE) {
-
                             // check 5x5 neighborhood
                             if ((x != 0) && (y != 0) && (x != (xDim - 1)) && (y != (yDim - 1))) {
-
                                 for (yy = -2; yy <= 2; yy++) {
-
                                     for (xx = -2; xx <= 2; xx++) {
-
                                         if (imgBuffer1[i + xx + (yy * xDim)] == 0) {
                                             imgBuffer[i] = BACKGROUND;
                                             imgBuffer2[i] = 0;
@@ -436,92 +374,127 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                         }
                     }
                 }
-
-                obMask.importData((j * imgBuffer.length), imgBuffer2, false);
+                Mask.importData((j * imgBuffer.length), imgBuffer2, false);
             } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline");
             }
         }
 
-        HardSeg[0].disposeLocal();
-        HardSeg[0] = null;
+        SegmentedImg.disposeLocal();
+        SegmentedImg = null;
+        
+        return Mask;
+    }
+	
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  srcImage        DOCUMENT ME!
+     *
+     */
+    public void crop(ModelImage destImage, ModelImage srcImage, int[] xbound, int[] ybound, int[] zbound){
+    	
+    	AlgorithmCrop algorithmVOICrop1 = new AlgorithmCrop(destImage, srcImage, 0, xbound, ybound, zbound);
+        algorithmVOICrop1.setProgressBarVisible(false);
+        algorithmVOICrop1.run();
+        algorithmVOICrop1.finalize();
+        algorithmVOICrop1 = null;
 
+        destImage.calcMinMax();
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  sourceImg  DOCUMENT ME!
+     * @param  Name       DOCUMENT ME!
+     */
+    public void ShowImage(ModelImage sourceImg, String Name) {
+        ModelImage cloneImg = (ModelImage) sourceImg.clone();
+        cloneImg.calcMinMax();
+        cloneImg.setImageName(Name);
+        new ViewJFrameImage(cloneImg);
+    }
+    
+    /**
+     * DOCUMENT ME!
+     */
+    public void runAlgorithm() {
 
-        //        System.out.println("outer boundary mask obtained --obMask");
-        //        obMask.calcMinMax();
-        //        new ViewJFrameImage(obMask);
+        buildProgressBar("Pipeline_Crop", "Initializing...", 0, 100);
+        initProgressBar();
 
-        // ---------------------- STEP 3: ISN IMAGE------------------------------
-        progressBar.updateValue(40, activeImage);
-
-        if (z > 1) {
-            progressBar.setMessage("Passing 3D image through ISN");
-
-            PlugInAlgorithmISN isnAlgo = null;
-            isnAlgo = new PlugInAlgorithmISN(destImage1, srcImage);
-            isnAlgo.setProgressBarVisible(false);
-            isnAlgo.run();
-
-            isnAlgo.finalize();
-            isnAlgo = null;
+        try {
+            patientID = (String) ((FileDicomTag) ((FileInfoDicom) srcImage.getFileInfo(0)).getEntry("0010,0020")).getValue(false);
+            System.err.println("patient id is: " + patientID);
+        }catch (Exception ex) { // do nothing
         }
 
-        //        destImage1.calcMinMax();
-        //        destImage1.setImageName("ISN'd input");
-        //        new ViewJFrameImage(destImage1);
+        int i, j, x, y, nClasses; 
+        
+        zDim = 1;
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        imgBuffer = new int[sliceSize];
+        imgBuffer1 = new int[sliceSize];
+        imgBuffer2 = new int[sliceSize];
 
-        // ----------------------STEP 4: THIGH SEPARATION -----------------------
+        if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
+        }
 
-        progressBar.setMessage("Doing Thigh Segmentation");
+        // --------------- STEP 1: Obtaining Background Mask --------------------
+        // A) FUZZY SEGMENTATION
+        progressBar.updateValue(5, activeImage);        progressBar.setMessage("Taking Fuzzy");
+        nClasses=3;
+        HardSeg = HardFuzzy(srcImage, nClasses);
+
+        
+        // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
+        progressBar.updateValue(15, activeImage);        progressBar.setMessage("Boundary Correction");
+        obMask = boundaryCorrect(HardSeg);
+        
+        // ----------------------STEP 2: THIGH SEPARATION -----------------------
+        progressBar.updateValue(25, activeImage); 		progressBar.setMessage("Doing Thigh Segmentation");
 
         // CROP VOI
         int[] xbound = new int[2];
         int[] ybound = new int[2];
         int[] zbound = new int[2];
-
+        xbound[0] = (int) (xDim / 2);        xbound[1] = (int) (1);
+        ybound[0] = (int) (yDim / 2);        ybound[1] = (int) (yDim / 2);
+        zbound[0] = 0;					     zbound[1] = zDim - 1;
+        
         int[] xbound1 = new int[2];
-
-        xbound[0] = (int) (xDim / 2);
-        xbound[1] = (int) (1);
-        ybound[0] = (int) (yDim / 2);
-        ybound[1] = (int) (yDim / 2);
-        zbound[0] = 0;
-        zbound[1] = z - 1;
-
-        xbound1[0] = (int) (xDim - 1);
-        xbound1[1] = (int) (xDim / 2);
+        xbound1[0] = (int) (xDim - 1);       xbound1[1] = (int) (xDim / 2);
 
         int x0, x11;
         x0 = xbound[0];
         x11 = xbound1[1];
 
-        for (j = 0; j < z; j++) {
-
+        for (j = 0; j < zDim; j++) {
+        	System.out.println("slice: "+j);
             try {
-                progressBar.updateValue(Math.round(40 + (30 * j / z)), activeImage);
-
+                progressBar.updateValue(Math.round(40 + (30 * j / zDim)), activeImage);
                 obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
 
                 for (y = 5; y < (yDim - 5); y++) {
-
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
-
                         // both legs, top y
                         if ((imgBuffer[i - (2 * xDim)] == 0) && (imgBuffer[i - xDim] == 0) && (imgBuffer[i] == 1) &&
                                 (imgBuffer[i + xDim] == 1) && (imgBuffer[i + (2 * xDim)] == 1) &&
                                 (imgBuffer[i + (5 * xDim)] == 1)) {
-
                             if (y < ybound[0]) {
                                 ybound[0] = y;
                             }
                         }
-
                         // both legs, bottom y
                         if ((imgBuffer[i + (2 * xDim)] == 0) && (imgBuffer[i + xDim] == 0) && (imgBuffer[i] == 1) &&
                                 (imgBuffer[i - xDim] == 1) && (imgBuffer[i - (2 * xDim)] == 1) &&
                                 (imgBuffer[i - (5 * xDim)] == 1)) {
-
                             if (y > ybound[1]) {
                                 ybound[1] = y;
                             }
@@ -530,14 +503,11 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                 }
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-
                     // left leg, left x
                     for (x = 5; x < x0; x++) {
                         i = x + (y * xDim);
-
                         if ((imgBuffer[i - 2] == 0) && (imgBuffer[i - 1] == 0) && (imgBuffer[i] == 1) &&
                                 (imgBuffer[i + 1] == 1) && (imgBuffer[i + 2] == 1) && (imgBuffer[i + 5] == 1)) {
-
                             if (x < xbound[0]) {
                                 xbound[0] = x;
                             }
@@ -546,15 +516,12 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                 }
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-
                     for (x = x11; x < (xDim - 5); x++) {
                         i = x + (y * xDim);
-
                         // right leg, right x
                         if ((imgBuffer[i + 3] == 0) && (imgBuffer[i + 4] == 0) && (imgBuffer[i + 5] == 0) &&
                                 (imgBuffer[i + 2] == 0) && (imgBuffer[i + 1] == 0) && (imgBuffer[i] == 1) &&
                                 (imgBuffer[i - 1] == 1) && (imgBuffer[i - 2] == 1) && (imgBuffer[i - 5] == 1)) {
-
                             if (x > xbound1[1]) {
                                 xbound1[1] = x;
                             }
@@ -563,15 +530,12 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                 }
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-
                     for (x = xbound[0]; x < (xDim / 2); x++) {
                         i = x + (y * xDim);
-
                         // left leg, right x
                         if ((imgBuffer[i - 5] == 1) && (imgBuffer[i - 2] == 1) && (imgBuffer[i - 1] == 1) &&
                                 (imgBuffer[i] == 0) && (imgBuffer[i + 1] == 0) && (imgBuffer[i + 2] == 0) &&
                                 (imgBuffer[i + 3] == 0) && (imgBuffer[i + 4] == 0) && (imgBuffer[i + 5] == 0)) {
-
                             if (x > xbound[1]) {
                                 xbound[1] = x;
                             }
@@ -580,14 +544,11 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                 }
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-
                     for (x = xbound[1]; x < xbound1[1]; x++) {
                         i = x + (y * xDim);
-
                         // right leg, left x
                         if ((imgBuffer[i - 2] == 0) && (imgBuffer[i - 1] == 0) && (imgBuffer[i] == 1) &&
                                 (imgBuffer[i + 1] == 1) && (imgBuffer[i + 2] == 1) && (imgBuffer[i + 5] == 1)) {
-
                             if (x < xbound1[0]) {
                                 xbound1[0] = x;
                             }
@@ -619,51 +580,20 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         destImageA = new ModelImage(srcImage.getType(), extentA, ("cropped right leg"));
         destImageB = new ModelImage(srcImage.getType(), extentB, ("cropped left leg"));
 
-
-        AlgorithmCrop algorithmVOICrop1 = null;
-        algorithmVOICrop1 = new AlgorithmCrop(destImageA, destImage1, 0, xbound, ybound, zbound);
-        algorithmVOICrop1.setProgressBarVisible(false);
-        algorithmVOICrop1.run();
-        algorithmVOICrop1.finalize();
-        algorithmVOICrop1 = null;
-
-        destImageA.calcMinMax();
+        
+        crop(destImageA, srcImage, xbound, ybound, zbound);
         progressBar.updateValue(85, activeImage);
 
-
         //        System.out.println("used obMask voi to crop ISN'd imageA");
-
-        AlgorithmCrop algorithmVOICrop2 = null;
-        algorithmVOICrop2 = new AlgorithmCrop(destImageB, destImage1, 0, xbound1, ybound, zbound);
-        algorithmVOICrop2.setProgressBarVisible(false);
-        algorithmVOICrop2.run();
-        algorithmVOICrop2.finalize();
-        algorithmVOICrop2 = null;
-
-        destImageB.calcMinMax();
+        crop(destImageB, srcImage, xbound1, ybound, zbound);
         progressBar.updateValue(90, activeImage);
 
         //        System.out.println("used obMask voi to crop ISN'd imageB");
-
-        AlgorithmCrop algorithmVOICrop3 = null;
-        algorithmVOICrop3 = new AlgorithmCrop(obMaskA, obMask, 0, xbound, ybound, zbound);
-        algorithmVOICrop3.setProgressBarVisible(false);
-        algorithmVOICrop3.run();
-        algorithmVOICrop3.finalize();
-        algorithmVOICrop3 = null;
-
-        obMaskA.calcMinMax();
+        crop(obMaskA, obMask, xbound, ybound, zbound);
         progressBar.updateValue(95, activeImage);
+        
         //        System.out.println("used obMask voi to crop ISN'd imageA");
-
-        AlgorithmCrop algorithmVOICrop4 = null;
-        algorithmVOICrop4 = new AlgorithmCrop(obMaskB, obMask, 0, xbound1, ybound, zbound);
-        algorithmVOICrop4.setProgressBarVisible(false);
-        algorithmVOICrop4.run();
-        algorithmVOICrop4.finalize();
-        algorithmVOICrop4 = null;
-
-        obMaskB.calcMinMax();
+        crop(obMaskB, obMask, xbound1, ybound, zbound);
         progressBar.updateValue(100, activeImage);
 
         // set the first part to being done, and return to the listening dialog
