@@ -2488,6 +2488,17 @@ public class FileInfoInterfile extends FileInfoBase {
             }
         }
     }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  imagesPerEWindow  DOCUMENT ME!
+     */
+    public void setImagesPerEWindowBrief(String imagesPerEWindow) {
+        this.imagesPerEWindow = imagesPerEWindow;
+        numberImagesPerEWindow = Integer.valueOf(imagesPerEWindow).intValue();
+        numberImages = numberImagesPerEWindow * energyNumber;
+    }
 
     /**
      * DOCUMENT ME!
