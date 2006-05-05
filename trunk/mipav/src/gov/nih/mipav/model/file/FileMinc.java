@@ -21,7 +21,6 @@ import java.util.*;
  * </P>
  *
  * @version  1.0 July 1, 2000
- * @author   Neva Cherniavsky
  * @see      FileIO
  * @see      FileRaw
  * @see      FileRawChunk

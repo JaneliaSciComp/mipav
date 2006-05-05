@@ -27,7 +27,6 @@ import java.util.*;
  * classes are structured exactly like a MINC file.</P>
  *
  * @version  1.0 July 1, 2000
- * @author   Neva Cherniavsky
  * @see      FileMinc
  */
 public class FileInfoMinc extends FileInfoBase {
@@ -149,9 +148,6 @@ public class FileInfoMinc extends FileInfoBase {
 
     /** DOCUMENT ME! */
     private FileMincDimElem[] dimArray;
-
-    /** DOCUMENT ME! */
-    private boolean flipped = true;
 
     /** DOCUMENT ME! */
     private FileMincAttElem[] gattArray;
@@ -367,7 +363,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  Rescale intercept.
      */
-    public double calculateIntercept(double min, double slope) {
+    public final double calculateIntercept(double min, double slope) {
         return (min - (slope * vmin));
     }
 
@@ -417,7 +413,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  Rescale slope
      */
-    public double calculateSlope(double max, double min) {
+    public final double calculateSlope(double max, double min) {
         return (max - min) / (vmax - vmin);
     }
 
@@ -475,7 +471,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @param  length  the length of the array
      */
-    public void createDimArray(int length) {
+    public final void createDimArray(int length) {
         dimArray = new FileMincDimElem[length];
     }
 
@@ -484,7 +480,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @param  length  the length of the array
      */
-    public void createGattArray(int length) {
+    public final void createGattArray(int length) {
         gattArray = new FileMincAttElem[length];
     }
 
@@ -493,7 +489,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @param  length  the length of the array
      */
-    public void createVarArray(int length) {
+    public final void createVarArray(int length) {
         varArray = new FileMincVarElem[length];
     }
 
@@ -619,7 +615,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the array
      */
-    public FileMincDimElem[] getDimArray() {
+    public final FileMincDimElem[] getDimArray() {
         return dimArray;
     }
 
@@ -630,7 +626,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  dimArray[index]
      */
-    public FileMincDimElem getDimElem(int index) {
+    public final FileMincDimElem getDimElem(int index) {
         return dimArray[index];
     }
 
@@ -639,7 +635,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the array
      */
-    public FileMincAttElem[] getGattArray() {
+    public final FileMincAttElem[] getGattArray() {
         return gattArray;
     }
 
@@ -650,7 +646,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  gattArray[index]
      */
-    public FileMincAttElem getGattElem(int index) {
+    public final FileMincAttElem getGattElem(int index) {
         return gattArray[index];
     }
 
@@ -663,7 +659,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  The "start" values for the image.
      */
-    public float[] getStart(int begin) {
+    public final float[] getStart(int begin) {
         double x = 0;
         double y = 0;
         double z = 0;
@@ -689,24 +685,24 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
 
-        float[] res = new float[getExtents().length];
+        float[] starts = new float[getExtents().length];
 
-        if (res.length == 2) {
-            res[0] = (float) x;
-            res[1] = (float) y;
-        } else if (res.length == 3) {
-            res[0] = (float) x;
-            res[1] = (float) y;
+        if (starts.length == 2) {
+            starts[0] = (float) x;
+            starts[1] = (float) y;
+        } else if (starts.length == 3) {
+            starts[0] = (float) x;
+            starts[1] = (float) y;
 
             if ((axisOrientation[2] == ORI_L2R_TYPE) || (axisOrientation[2] == ORI_S2I_TYPE) ||
                     (axisOrientation[2] == ORI_P2A_TYPE)) {
-                res[2] = (float) (z + (-zRes * begin));
+                starts[2] = (float) (z + (-zRes * begin));
             } else {
-                res[2] = (float) (z + (zRes * begin));
+                starts[2] = (float) (z + (zRes * begin));
             }
         }
-
-        return res;
+        //System.out.println("x res = " + starts[0] + " y res = " + starts[1] + " z res = " + starts[2] );
+        return starts;
     }
 
     /**
@@ -716,7 +712,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  The "start" values for the image.
      */
-    public float[] getStartMinc() {
+    public final float[] getStartMinc() {
         double x = 0;
         double y = 0;
         double z = 0;
@@ -751,101 +747,11 @@ public class FileInfoMinc extends FileInfoBase {
     }
 
     /**
-     * Accessor that gets the "start" variable values based on the image orientation. Gets the "true" start, that is,
-     * the start stored in the image file, not the one adjusted for flipping.
-     *
-     * @return  The "start" values for the image.
-     */
-    public float[] getStartOrient() {
-        double x = 0;
-        double y = 0;
-        double z = 0;
-
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals("xspace")) {
-                x = varArray[i].trueStart;
-            }
-
-            if (varArray[i].name.equals("yspace")) {
-                y = varArray[i].trueStart;
-            }
-
-            if (varArray[i].name.equals("zspace")) {
-                z = varArray[i].trueStart;
-            }
-        }
-
-        float[] res = new float[getExtents().length];
-
-        for (int i = 0; i < 3; i++) {
-
-            if ((axisOrientation[i] == ORI_R2L_TYPE) || (axisOrientation[i] == ORI_L2R_TYPE)) {
-                res[i] = (float) x;
-            }
-
-            if ((axisOrientation[i] == ORI_A2P_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE)) {
-                res[i] = (float) y;
-            }
-
-            if ((axisOrientation[i] == ORI_S2I_TYPE) || (axisOrientation[i] == ORI_I2S_TYPE)) {
-                res[i] = (float) z;
-            }
-        }
-
-        return res;
-    }
-
-    /**
-     * Accessor that gets the "step" variable values, adjusted so that [0] holds the image x axis value, [1] the image y
-     * axis value, and [2] the image z axis value.
-     *
-     * @return  The "step" values for the image.
-     */
-    public float[] getStep() {
-        double xRes = 1;
-        double yRes = 1;
-        double zRes = 1;
-        String spacex, spacey, spacez;
-        spacex = getDimElem(2).name;
-        spacey = getDimElem(1).name;
-        spacez = getDimElem(0).name;
-
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals(spacex)) {
-                xRes = varArray[i].resolution;
-            }
-
-            if (varArray[i].name.equals(spacey)) {
-                yRes = varArray[i].resolution;
-            }
-
-            if (varArray[i].name.equals(spacez)) {
-                zRes = varArray[i].resolution;
-            }
-        }
-
-        float[] res = new float[getExtents().length];
-
-        if (res.length == 2) {
-            res[0] = (float) xRes;
-            res[1] = (float) yRes;
-        } else if (res.length == 3) {
-            res[0] = (float) xRes;
-            res[1] = (float) yRes;
-            res[2] = (float) zRes;
-        }
-
-        return res;
-    }
-
-    /**
      * Accessor that gets the "step" variable values, as they are stored in the header file.
      *
      * @return  The "step" values for the image.
      */
-    public float[] getStepMinc() {
+    public final float[] getStepMinc() {
         double xRes = 1;
         double yRes = 1;
         double zRes = 1;
@@ -884,7 +790,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the array
      */
-    public FileMincVarElem[] getVarArray() {
+    public final FileMincVarElem[] getVarArray() {
         return varArray;
     }
 
@@ -895,19 +801,11 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  varArray[index]
      */
-    public FileMincVarElem getVarElem(int index) {
+    public final FileMincVarElem getVarElem(int index) {
         return varArray[index];
     }
 
-    /**
-     * Gets the flipped flag.
-     *
-     * @return  <code>true</code> means image should be flipped because it is upside down.
-     */
-    public boolean isFlipped() {
-        return flipped;
-    }
-
+  
     /**
      * Checks if we need to reset the start locations or axis orientations. If so, file writer will call up a dialog
      * with all variables properly set, and this will call a different version of the write header. The idea is that a
@@ -918,7 +816,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  Flag indicating if the file writer should reset the start locations and orientations.
      */
-    public boolean resetStartLocationsOrientations() {
+    public final boolean resetStartLocationsOrientations() {
         int indexx = 0, indexy = 0, indexz = 0;
         float beginx = 0, beginy = 0, beginz = 0;
         float resy = 1;
@@ -1001,26 +899,24 @@ public class FileInfoMinc extends FileInfoBase {
      * 33 in the anterior direction. The only time they line up is for the patient z - inferior to superior. And it is
      * very rare for the patient z to be the image's x-axis.</p>
      */
-    public void setFlipInfo() {
+    public final void setFlipInfo() {
         String spacex, spacey, spacez;
         int indexx = 0, indexy = 0, indexz = 0;
         double beginx = 0, beginy = 0, beginz = 0;
-        double resy = 0;
         spacex = getDimElem(2).name;
         spacey = getDimElem(1).name;
         spacez = getDimElem(0).name;
 
         for (int i = 0; i < varArray.length; i++) {
 
-            if (varArray[i].name.equals(spacey)) {
-                indexy = i;
-                resy = varArray[i].resolution;
-                beginy = varArray[i].start;
-            }
-
             if (varArray[i].name.equals(spacex)) {
                 indexx = i;
                 beginx = varArray[i].start;
+            }
+            
+            if (varArray[i].name.equals(spacey)) {
+                indexy = i;
+                beginy = varArray[i].start;
             }
 
             if (varArray[i].name.equals(spacez)) {
@@ -1029,28 +925,56 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
 
-        int length = getExtents()[1];
-        beginy = beginy + (resy * (length - 1));
-
-        if (!spacex.equals("zspace")) {
+        //int length = getExtents()[1];
+        //beginy = beginy + (resy * (length - 1));
+        //System.out.println("mipavX = " + spacex);
+        //System.out.println("mipavY = " + spacey);
+        //System.out.println("mipavZ = " + spacez);
+  
+        if (spacex.equals("xspace")) {
+            //System.out.println("xx");
             varArray[indexx].start = -beginx;
         }
-
-        if (!spacey.equals("zspace")) {
+        else if (spacex.equals("yspace")) {
+            //System.out.println("xy");
+            varArray[indexx].start = -beginx;
+        }
+        else if (spacex.equals("zspace")) {
+            //System.out.println("xz");
+            varArray[indexx].start = -beginx;
+        }
+        
+        if (spacey.equals("xspace")) {
+            //System.out.println("yx");
             varArray[indexy].start = -beginy;
-        } else {
+        }
+        else if (spacey.equals("yspace")) {
+            //System.out.println("yy");
+            varArray[indexy].start = -beginy;
+        }
+        else if (spacey.equals("zspace")) {
+            //System.out.println("yz");
             varArray[indexy].start = beginy;
         }
-
-        if (!spacez.equals("zspace")) {
+        
+        if (spacez.equals("xspace")) {
+            //System.out.println("zx");
+            varArray[indexz].start = beginz;
+        }
+        else if (spacez.equals("yspace")) {
+            //System.out.println("zy");
             varArray[indexz].start = -beginz;
+        }
+        else if (spacez.equals("zspace")) {
+            //System.out.println("zz");
+            varArray[indexz].start = beginz;
         }
     }
 
     /**
      * Sets necessary image information.
      */
-    public void setImportantImageInfo() {
+    public final void setImportantImageInfo() {
         int ix = 0, iy = 0, iz = 0;
         String spacex = getDimElem(2).name;
         Preferences.debug("spacex = " + spacex + "\n");
@@ -1386,7 +1310,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @param  origin  the image origin
      */
-    public void setStartLocations(float[] origin) {
+    public final void setStartLocations(float[] origin) {
 
         if (origin.length != 3) {
             Preferences.debug("Start locations array must be of length 3.\n");
@@ -1405,7 +1329,7 @@ public class FileInfoMinc extends FileInfoBase {
      * Sets the units of the dimensions, as in millimeters, inches, etc. Called after the header has been read in so the
      * values within the varArray have been set properly already.
      */
-    public void setUnits() {
+    public final void setUnits() {
 
         for (int i = 0; i < varArray.length; i++) {
 
@@ -1448,7 +1372,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the element id
      */
-    private static String getTagElem(String fullTag) {
+    private final static String getTagElem(String fullTag) {
         int index = fullTag.indexOf(",");
 
         if (index == -1) {
@@ -1465,7 +1389,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the element group
      */
-    private static String getTagGroup(String fullTag) {
+    private final static String getTagGroup(String fullTag) {
         int index = fullTag.indexOf(",");
 
         if (index == -1) {
@@ -1998,7 +1922,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  The proper axis orientation for that space.
      */
-    private int setOrientType(String space, boolean positive) {
+    private final int setOrientType(String space, boolean positive) {
 
         if (positive) {
 
