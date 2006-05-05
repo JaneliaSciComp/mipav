@@ -2390,6 +2390,19 @@ public class FileInfoInterfile extends FileInfoBase {
      * @param  currentImageDuration  DOCUMENT ME!
      */
     public void setImageDuration(String currentImageDuration) {
+        if (imageDuration == null) {
+            imageDuration = new String[1];
+        }
+        else if (imageDurationIndex > imageDuration.length - 1) {
+            String oldImageDuration[] = new String[imageDuration.length];
+            for (i = 0; i < imageDuration.length; i++) {
+                oldImageDuration[i] = imageDuration[i];
+            }
+            imageDuration = new String[imageDurationIndex];
+            for (i = 0; i < oldImageDuration.length; i++) {
+                imageDuration[i] = oldImageDuration[i];
+            }
+        }
         imageDuration[imageDurationIndex++] = currentImageDuration;
     }
 
@@ -2401,6 +2414,19 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public void setImageDuration(String currentTimeFrame, String currentImageDuration) {
         tFrame = Integer.valueOf(currentTimeFrame).intValue();
+        if (imageDuration == null) {
+            imageDuration = new String[1];
+        }
+        else if ((tFrame-1) > imageDuration.length - 1) {
+            String oldImageDuration[] = new String[imageDuration.length];
+            for (i = 0; i < imageDuration.length; i++) {
+                oldImageDuration[i] = imageDuration[i];
+            }
+            imageDuration = new String[imageDurationIndex];
+            for (i = 0; i < oldImageDuration.length; i++) {
+                imageDuration[i] = oldImageDuration[i];
+            }
+        }
         imageDuration[tFrame - 1] = currentImageDuration;
     }
 
