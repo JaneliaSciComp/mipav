@@ -169,7 +169,6 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     public void disposeLocal() {
         imgBuffer = null;
 
-        destImage1.disposeLocal();        	destImage1 = null;
     }
 
     /**
@@ -580,14 +579,14 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         destImageA = new ModelImage(srcImage.getType(), extentA, ("cropped right leg"));
         destImageB = new ModelImage(srcImage.getType(), extentB, ("cropped left leg"));
 
-        
+        //ShowImage(srcImage,"srcImage");
         crop(destImageA, srcImage, xbound, ybound, zbound);
         progressBar.updateValue(85, activeImage);
-
+        //ShowImage(destImageA,"destImageA");
         //        System.out.println("used obMask voi to crop ISN'd imageA");
         crop(destImageB, srcImage, xbound1, ybound, zbound);
         progressBar.updateValue(90, activeImage);
-
+        //ShowImage(destImageB,"destImageA");
         //        System.out.println("used obMask voi to crop ISN'd imageB");
         crop(obMaskA, obMask, xbound, ybound, zbound);
         progressBar.updateValue(95, activeImage);

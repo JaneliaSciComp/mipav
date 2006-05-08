@@ -123,7 +123,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * Creates a new PlugInAlgorithmPipelineB object.
      */
     public PlugInAlgorithmPipelineB() {
-
         try {
             jbInit();
         } catch (Exception ex) {
@@ -166,137 +165,193 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
+     * @param  srcImage  DOCUMENT ME!
+     */
+    public void ISN(ModelImage srcImage){
+        PlugInAlgorithmISN isnAlgo = null;
+        isnAlgo = new PlugInAlgorithmISN(srcImage, srcImage);
+        isnAlgo.setProgressBarVisible(false);
+        isnAlgo.run();
+
+        isnAlgo.finalize();
+        isnAlgo = null;
+        
+        }
+    
+    
+    
+    /**
+     * DOCUMENT ME!
+     *
      * @param  destImage3b  DOCUMENT ME!
      */
     public void marrowCleanup(ModelImage destImage3b){
     	int bb, cc, dd, x, y, i;
     	boolean thereisbone = false;
     	boolean marrowColorPicked = false;
+    	
+    	
         for (bb = 0; bb < zDim; bb++) {
             try {
                 destImage3b.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-                //loop for when there IS bone
-                for (cc = (int)(0.2*yDim*xDim); cc < imgBuffer1.length-(int)(0.5*yDim*xDim); cc++) {
-                	//gap between 'bone to marrow', fill with bonemarrow
-                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+1]!=Bone){
-                		for(dd=5;dd>0;dd--){
-	                    	if(imgBuffer1[cc+dd]==BoneMarrow){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc+i]=BoneMarrow;
-	                    		}
-	                    	}
-                		}
-                	}
-                	//gap between 'marrow to bone', fill with bonemarrow
-                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-1]!=Bone){
-                		for(dd=5;dd>0;dd--){
-	                    	if(imgBuffer1[cc-dd]==BoneMarrow){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc-i]=BoneMarrow;
-	                    		}
-	                    	}
-                		}
-                	}
-                	
-                	//
-                	//if no 'bone', look for 'bonemarrow'
-                	//
-                }
-                //loop for when there's marrow but no bone
-                for (cc = (int)(0.2*yDim*xDim); cc < imgBuffer1.length-(int)(0.5*yDim*xDim); cc++) {
+                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
                 	if(imgBuffer1[cc]==Bone){
                 		thereisbone = true;
                 	}
                 }
-                if(thereisbone==false){
-                	dd=0;
-	                for (cc = (int)(0.2*yDim*xDim); cc < imgBuffer1.length-(int)(0.5*yDim*xDim); cc++) {
-	                	if(imgBuffer1[cc]==BoneMarrow && imgBuffer1[cc+1]!=BoneMarrow){
-	                		dd = imgBuffer1[cc+1];  //all pixels within 2 radius of marrow will be changed to pixel color dd
-	                		marrowColorPicked = true;
+            } catch (IOException ex) {
+                System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP7");
+            }
+        }       
+        
+        
+        
+    	//ShowImage(destImage3b, "before any loop");
+    	if(thereisbone==true){
+	        for (bb = 0; bb < zDim; bb++) {
+	            try {
+	                destImage3b.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+	                //loop for when there IS bone
+	                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+	                	//gap between 'bone to marrow', fill with bonemarrow
+	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+1]!=Bone){
+	                		for(dd=5;dd>0;dd--){
+		                    	if(imgBuffer1[cc+dd]==BoneMarrow && imgBuffer1[cc+dd-1]!=BoneMarrow){
+		                    		for(i=1;i<dd;i++){
+		                    			imgBuffer1[cc+i]=BoneMarrow;
+		                    		}
+		                    	}
+	                		}
 	                	}
-	                }
-	                if(marrowColorPicked==true){
-	                	if(imgBuffer1[cc]==BoneMarrow){
-	                		for(x=-2;x<=2;x++){
-	                			for(y=-2;y<=2;y++){
-	                				i=x+y*xDim;
-	                				if(imgBuffer1[cc+i]==dd){
-	                					imgBuffer1[cc+i]=BoneMarrow;
-	                				}
-	                				else{
-	                					imgBuffer1[cc+i]=Bone;
-	                				}
-	                			}
+	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+xDim]!=Bone){
+	                		for(dd=5;dd>0;dd--){
+		                    	if(imgBuffer1[cc+dd*xDim]==BoneMarrow && imgBuffer1[cc+(dd-1)*xDim]!=BoneMarrow){
+		                    		for(i=1;i<dd;i++){
+		                    			imgBuffer1[cc+i*xDim]=BoneMarrow;
+		                    		}
+		                    	}
 	                		}
 	                	}
 	                }
-                }
-                
-                
-                /*
-                    if (imgBuffer1[cc] == BoneMarrow){ 
-                    	for(dd=5;dd>0;dd--){
-	                    	if(imgBuffer1[cc+dd]==Bone && imgBuffer1[cc+dd-1]!=Bone){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc+i]=BoneMarrow;
-	                    		}
-	                    	}
-	                    	if(imgBuffer1[cc-dd]==Bone && imgBuffer1[cc-(dd-1)]!=Bone){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc-i]=BoneMarrow;
-	                    		}
-	                    	}
-	                    	if(imgBuffer1[cc+dd*xDim]==Bone && imgBuffer1[cc+(dd-1)*xDim]!=Bone){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc+i*xDim]=BoneMarrow;
-	                    		}
-	                    	}
-	                    	if(imgBuffer1[cc-dd*xDim]==Bone && imgBuffer1[cc-(dd-1)*xDim]!=Bone){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc-i*xDim]=BoneMarrow;
-	                    		}
-	                    	}
-                    	}
-                    	//in case no bone surrounds bone marrow
-                    	// 1. eliminate noise
-                    	for(x=-5;x<=5;x++){
-                    		for(y=-5;y<=5;y++){
-                    			i=x+y*xDim;
-                    			if(imgBuffer1[cc+i]==Muscle && imgBuffer1[cc+i+1]!=Muscle && imgBuffer1[cc+i-1]!=Muscle
-                    					&& imgBuffer1[cc+i+xDim]!=Muscle && imgBuffer1[cc+i-xDim]!=Muscle){
-                    				imgBuffer1[cc+i]=imgBuffer1[cc+i-1];
-                    			}
-                    		}
-                    	}
-                    	// 2. extend bone marrow out to all 'fat' ~region growing algorithm (my adapatation)
-                    	for(dd=3;dd>0;dd--){
-	                    	if(imgBuffer1[cc+dd]==FAT && imgBuffer1[cc+dd-1]!=Bone){
-	                    		for(i=0;i<dd;i++){
-	                    			imgBuffer1[cc+i]=BoneMarrow;
-	                    		}
-	                    	}
-                    	}
-                    }
-                    //grow out 'bone'
-	                if (imgBuffer1[cc] == Bone){
-	                    for(x=-2;x<=2;x++){
-	                    	for(y=-2;y<=2;y++){
-	                    		i = x+y*xDim;
-		                    	if(imgBuffer1[cc+i]==FAT){
-		                    		imgBuffer1[cc+i]=Bone;
+	                destImage3b.importData((bb * imgBuffer1.length), imgBuffer1, false);
+	            } catch (IOException ex) {
+	                System.err.println(
+	                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
+	            }
+	        }
+	        //ShowImage(destImage3b, "after first bone loop");
+	        
+	        for (bb = 0; bb < zDim; bb++) {
+	            try {
+	                destImage3b.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+	                //loop for when there IS bone
+	                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+	                	//gap between 'marrow to bone', fill with bonemarrow
+	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-1]!=Bone){
+	                		for(dd=5;dd>0;dd--){
+		                    	if(imgBuffer1[cc-dd]==BoneMarrow && imgBuffer1[cc-dd+1]!=BoneMarrow){
+		                    		for(i=1;i<dd;i++){
+		                    			imgBuffer1[cc-i]=BoneMarrow;
+		                    		}
 		                    	}
-	                    	}
-	                    }
+	                		}
+	                	}
+	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-xDim]!=Bone){
+	                		for(dd=5;dd>0;dd--){
+		                    	if(imgBuffer1[cc-dd*xDim]==BoneMarrow && imgBuffer1[cc-(dd-1)*xDim]!=BoneMarrow){
+		                    		for(i=1;i<dd;i++){
+		                    			imgBuffer1[cc-i*xDim]=BoneMarrow;
+		                    		}
+		                    	}
+	                		}
+	                	}
 	                }
-                }
-                */
-                destImage3b.importData((bb * imgBuffer1.length), imgBuffer1, false);
-            } catch (IOException ex) {
-                System.err.println(
-                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
-            }
-        }
+	                destImage3b.importData((bb * imgBuffer1.length), imgBuffer1, false);
+	            } catch (IOException ex) {
+	                System.err.println(
+	                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
+	            }
+	        }
+	        //ShowImage(destImage3b, "after second bone loop");
+    	}
+    	
+        
+        
+    	if(thereisbone==false){
+        	System.out.println("there is no bone");
+        	dd=0;
+	        for (bb = 0; bb < zDim; bb++) {
+	            try {
+	                destImage3b.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+	                /*loop for when there's marrow but no bone
+		                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+		                	if(imgBuffer1[cc]==BoneMarrow && imgBuffer1[cc+1]!=BoneMarrow){
+		                		dd = imgBuffer1[cc+1];  //all pixels within 2 radius of marrow will be changed to pixel color dd
+		                		marrowColorPicked = true;
+		                	}
+		                }
+		                if(marrowColorPicked==true){
+		                	for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+			                	if(imgBuffer1[cc]==BoneMarrow){
+			                		for(x=-1;x<=1;x++){
+			                			for(y=-1;y<=1;y++){
+			                				i=x+y*xDim;
+			                				if(imgBuffer1[cc+i]==dd){
+			                					imgBuffer1[cc+i]=BoneMarrow;
+			                				}
+			                				else if(imgBuffer1[cc+i]!=BoneMarrow && imgBuffer1[cc+i]!=dd){
+			                					imgBuffer1[cc+i]=Bone;
+			                				}
+			                			}
+			                		}
+			                	}
+		                	}
+		                }
+		                */
+	                	for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+	                		if(imgBuffer1[cc]==BoneMarrow){
+                				if(imgBuffer1[cc-1]!=BoneMarrow && imgBuffer1[cc-2]!=BoneMarrow &&imgBuffer1[cc-3]!=BoneMarrow &&
+                						imgBuffer1[cc-4]!=BoneMarrow &&imgBuffer1[cc-5]!=BoneMarrow){
+                					imgBuffer1[cc-1]=Bone;
+                					imgBuffer1[cc-2]=Bone;
+                					imgBuffer1[cc-3]=Bone;
+            						imgBuffer1[cc-4]=Bone;
+            						imgBuffer1[cc-5]=Bone;
+                				}
+                				if(imgBuffer1[cc+1]!=BoneMarrow && imgBuffer1[cc+2]!=BoneMarrow &&imgBuffer1[cc+3]!=BoneMarrow &&
+                						imgBuffer1[cc+4]!=BoneMarrow &&imgBuffer1[cc+5]!=BoneMarrow){
+                					imgBuffer1[cc+1]=Bone;
+                					imgBuffer1[cc+2]=Bone;
+                					imgBuffer1[cc+3]=Bone;
+            						imgBuffer1[cc+4]=Bone;
+            						imgBuffer1[cc+5]=Bone;
+                				}
+                				if(imgBuffer1[cc-1*xDim]!=BoneMarrow && imgBuffer1[cc-2*xDim]!=BoneMarrow &&imgBuffer1[cc-3*xDim]!=BoneMarrow &&
+                						imgBuffer1[cc-4*xDim]!=BoneMarrow &&imgBuffer1[cc-5*xDim]!=BoneMarrow){
+                					imgBuffer1[cc-1*xDim]=Bone;
+                					imgBuffer1[cc-2*xDim]=Bone;
+                					imgBuffer1[cc-3*xDim]=Bone;
+            						imgBuffer1[cc-4*xDim]=Bone;
+            						imgBuffer1[cc-5*xDim]=Bone;
+                				}
+                				if(imgBuffer1[cc+1*xDim]!=BoneMarrow && imgBuffer1[cc+2*xDim]!=BoneMarrow &&imgBuffer1[cc+3*xDim]!=BoneMarrow &&
+                						imgBuffer1[cc+4*xDim]!=BoneMarrow &&imgBuffer1[cc+5*xDim]!=BoneMarrow){
+                					imgBuffer1[cc+1*xDim]=Bone;
+                					imgBuffer1[cc+2*xDim]=Bone;
+                					imgBuffer1[cc+3*xDim]=Bone;
+            						imgBuffer1[cc+4*xDim]=Bone;
+            						imgBuffer1[cc+5*xDim]=Bone;
+                				}
+	                		}
+	                	}
+	                destImage3b.importData((bb * imgBuffer1.length), imgBuffer1, false);
+	            } catch (IOException ex) {
+	                System.err.println(
+	                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
+	            }
+	        }
+        ShowImage(destImage3b, "after marrow w/o bone loop");
+    	}
     }
 
     /**
@@ -409,7 +464,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * @param  BoneID       DOCUMENT ME!
      */
     public void fillBoneMarrow(ModelImage destImage3a, ModelImage BoneID){
-        ShowImage(BoneID, "BoneID BEFORE");
+    	//requres there be labeled bone outside the marrow
+        //ShowImage(BoneID, "BoneID BEFORE");
         int bb, cc, dd, i, x, y, xmin, xmax;
     	   for (bb = 1; bb < zDim; bb++) {
     	           try {
@@ -464,7 +520,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	           System.err.println("error exporting Bone marrow data from destImageA in AlgorithmPipeline2");
     	           }
     	       }
-    	   ShowImage(BoneID, "BoneID AFTER");
+    	   //ShowImage(BoneID, "BoneID AFTER");
         }
     
     
@@ -498,16 +554,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
 	public void getCentroid(float[] centroid_array, ModelImage srcImage, int nClasses){
 		int dd;
-
-
 		double max = srcImage.getMax();
-
-
     	for(dd=1;dd<(nClasses+1);dd++){
     		centroid_array[dd-1]=(float)(dd*max/(nClasses+1));
-
     	}
-
 	}
 	
 	
@@ -518,6 +568,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
     public ModelImage processBone(ModelImage HardSeg){    	
     	progressBar.setMessage("Isolating Bone");
+    	 ModelImage destImage3a = null;
+    	 destImage3a = new ModelImage(HardSeg.getType(), HardSeg.getExtents(), "destImage3",
+    			 HardSeg.getUserInterface());
         convert(destImage3a, voiMask, HardSeg, 0, BACKGROUND_NEW);
         BoneID = isolatingBone(destImage3a, BACKGROUND);         
         progressBar.updateValue(50 * (aa - 1) + 41, activeImage);
@@ -639,85 +692,101 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * @return  DOCUMENT ME!
      */
     public ModelImage isolatingBone(ModelImage srcImage, int BoneIntensity){
-        int[] numObjects = new int[zDim];
-        int[] BoneObject = new int[zDim];
-    	int n, x, y;
-    	
-        BoneID = threshold(srcImage, BoneIntensity);            ShowImage(BoneID, "thresholded for Bone");
-
-
-
-        
-        IDObjects(BoneID, zDim*1000/20, zDim*30000/20);
+    	//ShowImage(srcImage, "image before isolatingBone");
+        BoneID = threshold(srcImage, BoneIntensity);            //ShowImage(BoneID, "thresholded for Bone");
+        IDObjects(BoneID, zDim*500/20, zDim*30000/20);ShowImage(BoneID, "IDObjects");
         Open6(BoneID);
-
         Close24(BoneID);
-        IDObjects(BoneID, zDim*1000/20, zDim*30000/20);        ShowImage(BoneID, "thresholded IDobjected opened closed idobjected --");
-
-        n = 1;
-        for (bb = 0; bb < zDim; bb++) {
-        	numObjects[bb] = 0;
-        	BoneObject[bb] = 1;
-            try {
-                BoneID.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-                //get numObjects per Slice
-                for (cc = 0; cc < imgBuffer1.length; cc++) {
-                    if (imgBuffer1[cc]>numObjects[bb]) {
-                        numObjects[bb] = imgBuffer1[cc];		//numObjects contains slice maximum.
-                    }
-                }                
-                //initialize centroid variables (for particular slice)
-                int[] centroidX = new int[numObjects[bb]];
-                int[] centroidY = new int[numObjects[bb]];
-                float[] distFromCent = new float[numObjects[bb]];                    
-                for (cc = 0; cc < numObjects[bb]; cc++) {
-                    centroidX[cc] = 0;
-                    centroidY[cc] = 0;
-                }
-                //obtain centroid per slice   & obtain distance between center and centroid of each object (per slice)                
-                for (cc = 1; cc <= numObjects[bb]; cc++) {
-                    for (x = 0; x < xDim; x++) {
-                        for (y = 0; y < yDim; y++) {
-                            i = x + y * xDim;
-                            if (imgBuffer1[i] == cc) {
-							   centroidX[cc-1] = centroidX[cc-1] + x;
-							   centroidY[cc-1] = centroidY[cc-1] + y;
-							   n++;
-                            }
-                        }
-                    }
-                    centroidX[cc-1] = centroidX[cc-1] / n;
-                    centroidY[cc-1] = centroidY[cc-1] / n;
-                    distFromCent[cc-1] = Math.abs((centroidX[cc-1] - xDim / 2) ^2 + (centroidY[cc-1] - yDim / 2) ^ 2);
-                }
-                //using centroids to find correct Bone object. object correspondent to minimum distFromCent
-                for (cc = 0; cc < numObjects[bb]; cc++) {
-                	if(BoneObject[bb]>1){
-                        if (distFromCent[cc] < distFromCent[BoneObject[bb]]) {
-                               BoneObject[bb] = cc+1;
-                               //System.out.println("BoneObject["+bb+"]: "+ BoneObject[bb]);
-                        }
-                	}
-                }
-                //eliminating incorrect Bone objects
-                for (x = 0; x < xDim; x++) {
-                    for (y = 0; y < yDim; y++) {
-                        i = x + y * xDim;
-                        if (imgBuffer1[i] == BoneObject[bb]) {
-                            imgBuffer1[i] = 1;
-                        }
-                        else{
-                        	imgBuffer1[i]=0;
-                        }
-                    }
-                }
-                BoneID.importData((bb * imgBuffer1.length), imgBuffer1, false);
-            } catch (IOException ex) {
-                System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
-            }
-        }
+        IDObjects(BoneID, zDim*500/20, zDim*30000/20);        ShowImage(BoneID, "thresholded IDobjected opened closed idobjected --");
+        isolatingCenterObject(BoneID);
+        ShowImage(BoneID, "image after isolatingBone");
         return BoneID;
     }  
+    
+    
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   srcImage       DOCUMENT ME!
+     *
+     */
+    public void isolatingCenterObject(ModelImage srcImage){
+    	
+    	//ShowImage(srcImage, "image before isolatingCenterObject");
+    	if(srcImage.getMax()>1){
+	        int[] numObjects = new int[zDim];
+	        int[] BoneObject = new int[zDim];
+	    	int i, n, x, y;
+	    	float min;
+	    	System.out.println("got to first loop");
+	        for (bb = 0; bb < zDim; bb++) {
+	        	numObjects[bb] = 0;
+	        	BoneObject[bb] = 1;
+	            try {
+	                BoneID.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+	                //get numObjects per Slice
+	                for (cc = 0; cc < imgBuffer1.length; cc++) {
+	                    if (imgBuffer1[cc]>numObjects[bb]) {
+	                        numObjects[bb] = imgBuffer1[cc];		//numObjects contains slice maximum.
+	                    }
+	                }
+	                //initialize centroid variables (for particular slice)
+	                float[] centroidX = new float[numObjects[bb]];
+	                float[] centroidY = new float[numObjects[bb]];
+	                float[] distFromCent = new float[numObjects[bb]];                    
+	                for (cc = 0; cc < numObjects[bb]; cc++) {
+	                    centroidX[cc] = 0;
+	                    centroidY[cc] = 0;
+	                }
+	                System.out.println("got to centroid section ");
+	                //obtain centroid per slice   & obtain distance between center and centroid of each object (per slice)                
+	                for (cc = 1; cc <= numObjects[bb]; cc++) {
+	                	n=1;
+	                    for (x = 0; x < xDim; x++) {
+	                        for (y = 0; y < yDim; y++) {
+	                            i = x + y * xDim;
+	                            if (imgBuffer1[i] == cc) {
+								   centroidX[cc-1] = centroidX[cc-1] + x;
+								   centroidY[cc-1] = centroidY[cc-1] + y;
+								   n++;
+								   System.out.println("centroidX: "+centroidX[cc-1]+", centroidY: "+centroidY[cc-1]);
+								   System.out.println("x: "+x+", y: "+y);
+	                            }
+	                        }
+	                    }
+	                    System.out.println("n: "+n);
+	                    centroidX[cc-1] = centroidX[cc-1] / n;			System.out.println("centroidx of object: "+cc+", is: "+centroidX[cc-1]);
+	                    centroidY[cc-1] = centroidY[cc-1] / n;			System.out.println("centroidy of object: "+cc+", is: "+centroidY[cc-1]);
+	                    distFromCent[cc-1] = Math.abs((centroidX[cc-1] - (xDim / 2))*(centroidX[cc-1] - (xDim / 2))
+	                    		+ (centroidY[cc-1] - (yDim / 2))*(centroidY[cc-1] - (yDim / 2)));
+	                    System.out.println("distFromCent of object: "+cc+", is: "+distFromCent[cc-1]);
+	                }
+	                //using centroids to find correct Bone object. object correspondent to minimum distFromCent
+	                min = 10000; //beginning distance from center. element with distance smaller than this becomes bone object.
+	                for(cc=1;cc<=numObjects[bb];cc++){
+	                	if(distFromCent[cc-1]<min){
+	                		BoneObject[bb] = cc;
+	                	}
+	                }
+	                System.out.println("central object: "+BoneObject[bb]);
+	                //eliminating incorrect Bone objects
+	                for(i = 0; i < imgBuffer1.length; i++){
+	                        if (imgBuffer1[i] == BoneObject[bb]) {
+	                            imgBuffer1[i] = 1;
+	                        }
+	                        else{
+	                        	imgBuffer1[i]=0;
+	                        }
+	                }
+	                BoneID.importData((bb * imgBuffer1.length), imgBuffer1, false);
+	            } catch (IOException ex) {
+	                System.err.println("error exporting data from destImageA in AlgorithmPipeline2");
+	            }
+	        }
+	    	//ShowImage(srcImage, "image after isolatingCenterObject");
+    	}
+    }
 
     /**
      * -------- BASIC STEPS ---------
@@ -837,9 +906,18 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     * @return  DOCUMENT ME!
     */
     public ModelImage extractedBoneMarrow(ModelImage srcImage){
-    	ModelImage BMarrow = (ModelImage)srcImage.clone();
-    	BMarrow = threshold1(BMarrow, (float)(0.5*BMarrow.getMax()), (float)BMarrow.getMax());
-    	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
+    	ModelImage BMarrow = (ModelImage)srcImage.clone();					ShowImage(BMarrow,"bonemarrow before");
+   // 	BMarrow = threshold1(BMarrow, (float)(0.5*BMarrow.getMax()), (float)BMarrow.getMax());
+     	BMarrow = threshold1(BMarrow, 160f,255f);
+    	//ShowImage(BMarrow,"bonemarrow after thresh");
+     	Open6(BMarrow);
+    	IDObjects(BMarrow, 1000*zDim/20, 30000*zDim/20);
+    	//ShowImage(BMarrow,"bonemarrow after IDObjects");
+    	isolatingCenterObject(BMarrow);
+    	//ShowImage(BMarrow,"bonemarrow after isolating bone center");
+    	Close24(BMarrow);
+    	//ShowImage(BMarrow, "bonemarrow after 'closed'");
+    	
     	
     	return BMarrow;
     }
@@ -888,7 +966,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             progressBar.updateValue((50 * (aa - 1)) + 4, activeImage);
 
 
-            // STEP 2: N3 inside VOI
+            // STEP 2: ISN and N3 inside VOI
+            progressBar.setMessage("Taking ISN");
+            ISN(destImage2);
             progressBar.setMessage("Taking N3 inside VOI");
             N3(destImage2);
             progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
@@ -896,25 +976,28 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
             //STEP 3: FUZZY CMEANS- WHOLE IMAGE
             progressBar.setMessage("Taking Fuzzy-C over Entire Image");
-            HardSeg = HardFuzzy(destImage2, 3);            						ShowImage(HardSeg,"hardseg1");		
+            HardSeg = HardFuzzy(destImage2, 3);            						//ShowImage(HardSeg,"hardseg1");		
             progressBar.updateValue(50 * (aa - 1) + 33, activeImage);
 
             
             //STEP 3a: BONE PROCESSING
-            destImage3a = processBone(HardSeg);
+            destImage3a = processBone(HardSeg);						//ShowImage(destImage3a,"bone");
 
             //STEP 4: FUZZY CMEANS- INSIDE BUNDLE
             progressBar.setMessage("Taking Fuzzy-C inside Muscle Bundle");		//convert(destImage2, voiMask, destImage2, 0, 0);  //crop
-            FuzzySeg2 = SoftFuzzy(destImage2, 3);				            	ShowImage(FuzzySeg2[2], "FuzzySeg2["+2+"]");
+            FuzzySeg2 = SoftFuzzy(destImage2, 3);				            	//ShowImage(FuzzySeg2[2], "FuzzySeg2["+2+"]");
             progressBar.updateValue(50 * (aa - 1) + 37, activeImage); 
 
             
             destImage2.disposeLocal();destImage2 = null;
             
             //STEP 4A:  FAT PROCESSING (inside muscle bundle)
-            BMarrow = extractedBoneMarrow(FuzzySeg2[2]);						ShowImage(BMarrow, "boneMarrow");
+    //        BMarrow = extractedBoneMarrow(FuzzySeg2[1]);						
+            BMarrow = extractedBoneMarrow(HardSeg);
+            progressBar.setMessage("marrow extracted,intensity will now be converted");
             convert(destImage3a, BMarrow, destImage3a, 1, BoneMarrow);
             progressBar.setMessage("Processing bundle fat");
+            
             destImage3b = processFat(FuzzySeg2[0],FuzzySeg2[1],FuzzySeg2[2]);  	//ShowImage(destImage3b, "processed fat image");
 	        cleanUp(destImage3b, FAT, Muscle, 300*zDim/20);        				//ShowImage(destImage3b, "bundle cleanedup fat image");     
             progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
@@ -925,7 +1008,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             //--------------- STEP5: bringing two pieces together --------------
             progressBar.setMessage("Recreating Result Image");
-            mergeImages(destImage3b, destImage3a, destImage3b);			ShowImage(destImage3b, "after 'merge'");
+            mergeImages(destImage3b, destImage3a, destImage3b);			//ShowImage(destImage3b, "after 'merge'");
             progressBar.updateValue(50 * (aa - 1) + 47, activeImage);
             
             destImage3a.disposeLocal();destImage3a = null;
@@ -934,7 +1017,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             //-------------- STEP6: last marrow cleanup ------------------------
             progressBar.setMessage("Tissue Type Counts/Volumes");
             marrowCleanup(destImage3b);											
-            ShowImage(destImage3b, "after 'marrowCleanup'");
+            //ShowImage(destImage3b, "after 'marrowCleanup'");
             progressBar.updateValue(50 * (aa - 1) + 49, activeImage);
             
             
