@@ -504,8 +504,19 @@ public class FileMinc extends FileBase {
             throw (error);
         }
 
+        //      set image orientation depending on which variable was read in firs
+        if (fileInfo.getDimElem(0).name.equals("zspace")) {
+            fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+        } else if (fileInfo.getDimElem(0).name.equals("xspace")) {
+            fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+        } else if (fileInfo.getDimElem(0).name.equals("yspace")) {
+            fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+        }
+        
         fileInfo.setImportantImageInfo();
-
+        fileInfo.setResolutions(fileInfo.getImageOrientation());
+        fileInfo.setUnits();
+        
         // ModelImage image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName, UI);
         // for each variable, get its corresponding data - possibly after image
         for (int i = 0; i < fileInfo.getVarArray().length; i++) {
@@ -544,29 +555,12 @@ public class FileMinc extends FileBase {
         }
 
         progressBar.updateValue(15, true);
-
         raFile.close();
-        // set image orientation depending on which variable was read in first
 
         if ((fileInfo.vmax == -1) && (fileInfo.vmin == -1)) {
             fileInfo.vmax = image.getMax();
             fileInfo.vmin = image.getMin();
         }
-
-        fileInfo.setUnits();
-
-        // image.setMatrix(fileInfo.getMatrix());
-        // set image orientation depending on which variable was read in firs
-        if (fileInfo.getDimElem(0).name.equals("zspace")) {
-            fileInfo.setImageOrientation(FileInfoBase.AXIAL);
-        } else if (fileInfo.getDimElem(0).name.equals("xspace")) {
-            fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
-        } else if (fileInfo.getDimElem(0).name.equals("yspace")) {
-            fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-        }
-
-        fileInfo.setResolutions(fileInfo.getImageOrientation());
-        fileInfo.setFlipInfo();
 
         double[] rescaleIntercept = null;
         double[] rescaleSlope = null;
@@ -585,7 +579,7 @@ public class FileMinc extends FileBase {
         if (image.getNDims() == 2) {
             fileInfo.setRescaleIntercept(rescaleIntercept[0]);
             fileInfo.setRescaleSlope(rescaleSlope[0]);
-            fileInfo.setStartLocations(((FileInfoMinc) fileInfo).getStart(0));
+            fileInfo.setStartLocations(((FileInfoMinc) fileInfo).getConvertStartLocationsToDICOM(0));
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
 
@@ -595,7 +589,7 @@ public class FileMinc extends FileBase {
                 progressBar.updateValueImmed(Math.round(15 + ((float) k / image.getExtents()[2] * 10)));
                 fileInfo.setRescaleIntercept(rescaleIntercept[k]);
                 fileInfo.setRescaleSlope(rescaleSlope[k]);
-                fileInfo.setStartLocations(fileInfo0.getStart(k));
+                fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k));
                 image.setFileInfo((FileInfoMinc) fileInfo.clone(), k); // Set the array of fileInfos in ModelImage
             }
         }
