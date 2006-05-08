@@ -655,16 +655,29 @@ public class FileInfoMinc extends FileInfoBase {
      * y axis value, and [2] the image z axis value. It's important that this is accessed AFTER setFlipInfo() and
      * setImportantImageInfo(). Otherwise it won't return the proper values.
      *
-     * @param   begin  slice to begin the start variable on.
+     *  MINC positive axis is right to left
+     *       positive axis is posterior to anterior
+     *       postive  axis is inferior to superior
+     *       
+     *  DICOM positive axis is left to right
+     *        positive axis is anterior to posterior
+     *        postive  axis is inferior to superior
+     *        
+     * @param   slice  slice to begin the start variable on.
      *
      * @return  The "start" values for the image.
      */
-    public final float[] getStart(int begin) {
+    public final float[] getConvertStartLocationsToDICOM(int slice) {
         double x = 0;
         double y = 0;
         double z = 0;
+        double xRes = 1;
+        double yRes = 1;
         double zRes = 1;
+        int tmp = 0;
+        
         String spacex, spacey, spacez;
+        
         spacex = getDimElem(2).name;
         spacey = getDimElem(1).name;
         spacez = getDimElem(0).name;
@@ -673,10 +686,12 @@ public class FileInfoMinc extends FileInfoBase {
 
             if (varArray[i].name.equals(spacex)) {
                 x = varArray[i].start;
+                xRes = varArray[i].resolution;
             }
 
             if (varArray[i].name.equals(spacey)) {
                 y = varArray[i].start;
+                yRes = varArray[i].resolution;
             }
 
             if (varArray[i].name.equals(spacez)) {
@@ -684,27 +699,44 @@ public class FileInfoMinc extends FileInfoBase {
                 zRes = varArray[i].resolution;
             }
         }
+  
+        float[] startLocs = new float[getExtents().length];
 
-        float[] starts = new float[getExtents().length];
+        if (startLocs.length == 2) {
+            startLocs[0] = (float) x;
+            startLocs[1] = (float) y;
+        } else if (startLocs.length == 3) {
 
-        if (starts.length == 2) {
-            starts[0] = (float) x;
-            starts[1] = (float) y;
-        } else if (starts.length == 3) {
-            starts[0] = (float) x;
-            starts[1] = (float) y;
-
-            if ((axisOrientation[2] == ORI_L2R_TYPE) || (axisOrientation[2] == ORI_S2I_TYPE) ||
-                    (axisOrientation[2] == ORI_P2A_TYPE)) {
-                starts[2] = (float) (z + (-zRes * begin));
-            } else {
-                starts[2] = (float) (z + (zRes * begin));
+            if (getImageOrientation() == FileInfoBase.SAGITTAL){               
+                startLocs[0] = (float) x;
+                startLocs[1] = (float) -y;
+                startLocs[2] = (float) -(z + (zRes * slice));               
+            }
+            
+            else if (getImageOrientation() == FileInfoBase.AXIAL){               
+                startLocs[0] = (float) -x;
+                startLocs[1] = (float) -y;
+                startLocs[2] = (float) (z + (zRes * slice));               
+            }
+            else if (getImageOrientation() == FileInfoBase.CORONAL){               
+                startLocs[0] = (float) -x;
+                startLocs[1] = (float) y;
+                startLocs[2] = (float) -(z + (zRes * slice));               
+            }
+            else {               
+                startLocs[0] = (float) x;
+                startLocs[1] = (float) y;
+                startLocs[2] = (float) (z + (zRes * slice));               
             }
         }
+        
+        
+        
         //System.out.println("x res = " + starts[0] + " y res = " + starts[1] + " z res = " + starts[2] );
-        return starts;
+        return startLocs;
     }
-
+    
+    
     /**
      * Accessor that gets the "start" variable values, with the "xspace" in 0, "yspace" in 1, and "zspace" in 2. This
      * differs from the other methods because it doesn't place the values so that they correspond to image x, y, and z.
@@ -712,7 +744,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  The "start" values for the image.
      */
-    public final float[] getStartMinc() {
+    public final float[] getStartLocations() {
         double x = 0;
         double y = 0;
         double z = 0;
@@ -732,22 +764,22 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
 
-        float[] res = new float[getExtents().length];
+        float[] start = new float[getExtents().length];
 
-        if (res.length == 2) {
-            res[0] = (float) x;
-            res[1] = (float) y;
-        } else if (res.length == 3) {
-            res[0] = (float) x;
-            res[1] = (float) y;
-            res[2] = (float) z;
+        if (start.length == 2) {
+            start[0] = (float) x;
+            start[1] = (float) y;
+        } else if (start.length == 3) {
+            start[0] = (float) x;
+            start[1] = (float) y;
+            start[2] = (float) z;
         }
 
-        return res;
+        return start;
     }
 
     /**
-     * Accessor that gets the "step" variable values, as they are stored in the header file.
+     * Accessor that gets the "step" (voxel resolutions) variable values, as they are stored in the header file.
      *
      * @return  The "step" values for the image.
      */
@@ -816,7 +848,9 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  Flag indicating if the file writer should reset the start locations and orientations.
      */
-    public final boolean resetStartLocationsOrientations() {
+ 
+    
+     public final boolean resetStartLocationsOrientations() {
         int indexx = 0, indexy = 0, indexz = 0;
         float beginx = 0, beginy = 0, beginz = 0;
         float resy = 1;
@@ -884,106 +918,22 @@ public class FileInfoMinc extends FileInfoBase {
         return (resetStart || reorderAxis);
     }
 
-    /**
-     * Resets the start variable for the x and y dimension. All MINC images are stored "upside down". When the user
-     * drags the mouse in a MINC image, the proper world dimensions show up in the message frame. For these to be
-     * correct, the MIPAV y start value needs to be inverted. The MIPAV y depends on the orientation; for sagittal and
-     * coronal images, the MIPAV y is the MINC z (superior-inferior). For axial images, the MIPAV y is the MINC y
-     * (anterior-posterior).
-     *
-     * <p>For the x dimension, MINC almost always has the opposite sign for the start variable. This is because MINC
-     * images consider the patient x to be left to right, the patient y to be posterior to anterior, and the patient z
-     * to be inferior to superior. However, in MIPAV we use the DICOM patient orientation system, which considers the
-     * patient x to be right to left, the patient y to be anterior to posterior, and the patient z to be inferior to
-     * superior. So a "-33" in the y dimension of a MINC image is 33 in the posterior direction, whereas in MIPAV it is
-     * 33 in the anterior direction. The only time they line up is for the patient z - inferior to superior. And it is
-     * very rare for the patient z to be the image's x-axis.</p>
-     */
-    public final void setFlipInfo() {
-        String spacex, spacey, spacez;
-        int indexx = 0, indexy = 0, indexz = 0;
-        double beginx = 0, beginy = 0, beginz = 0;
-        spacex = getDimElem(2).name;
-        spacey = getDimElem(1).name;
-        spacez = getDimElem(0).name;
-
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals(spacex)) {
-                indexx = i;
-                beginx = varArray[i].start;
-            }
-            
-            if (varArray[i].name.equals(spacey)) {
-                indexy = i;
-                beginy = varArray[i].start;
-            }
-
-            if (varArray[i].name.equals(spacez)) {
-                indexz = i;
-                beginz = varArray[i].start;
-            }
-        }
-
-        //int length = getExtents()[1];
-        //beginy = beginy + (resy * (length - 1));
-        //System.out.println("mipavX = " + spacex);
-        //System.out.println("mipavY = " + spacey);
-        //System.out.println("mipavZ = " + spacez);
-  
-        if (spacex.equals("xspace")) {
-            //System.out.println("xx");
-            varArray[indexx].start = -beginx;
-        }
-        else if (spacex.equals("yspace")) {
-            //System.out.println("xy");
-            varArray[indexx].start = -beginx;
-        }
-        else if (spacex.equals("zspace")) {
-            //System.out.println("xz");
-            varArray[indexx].start = -beginx;
-        }
-        
-        if (spacey.equals("xspace")) {
-            //System.out.println("yx");
-            varArray[indexy].start = -beginy;
-        }
-        else if (spacey.equals("yspace")) {
-            //System.out.println("yy");
-            varArray[indexy].start = -beginy;
-        }
-        else if (spacey.equals("zspace")) {
-            //System.out.println("yz");
-            varArray[indexy].start = beginy;
-        }
-        
-        if (spacez.equals("xspace")) {
-            //System.out.println("zx");
-            varArray[indexz].start = beginz;
-        }
-        else if (spacez.equals("yspace")) {
-            //System.out.println("zy");
-            varArray[indexz].start = -beginz;
-        }
-        else if (spacez.equals("zspace")) {
-            //System.out.println("zz");
-            varArray[indexz].start = beginz;
-        }
-    }
+   
 
     /**
      * Sets necessary image information.
      */
     public final void setImportantImageInfo() {
         int ix = 0, iy = 0, iz = 0;
-        String spacex = getDimElem(2).name;
-        Preferences.debug("spacex = " + spacex + "\n");
 
-        String spacey = getDimElem(1).name;
-        Preferences.debug("spacey = " + spacey + "\n");
+        String firstDim = getDimElem(0).name;
+        Preferences.debug("firstDim = " + firstDim + "\n");
 
-        String spacez = getDimElem(0).name;
-        Preferences.debug("spacez = " + spacez + "\n");
+        String secondDim = getDimElem(1).name;
+        Preferences.debug("secondDim = " + secondDim + "\n");
+        
+        String thirdDim = getDimElem(2).name;
+        Preferences.debug("thirdDim = " + thirdDim + "\n");
 
         for (int i = 0; i < varArray.length; i++) {
 
@@ -1140,14 +1090,14 @@ public class FileInfoMinc extends FileInfoBase {
                         Preferences.debug("vmin = " + vmin + "\n");
                     }
                 }
-            } else if (varArray[i].name.equals(spacex)) {
-                axisOrientation[0] = setOrientType(spacex, (varArray[i].resolution > 0));
+            } else if (varArray[i].name.equals(thirdDim)) {
+                axisOrientation[0] = setOrientType(thirdDim, (varArray[i].resolution > 0));
                 ix = i;
-            } else if (varArray[i].name.equals(spacey)) {
-                axisOrientation[1] = setOrientType(spacey, (varArray[i].resolution > 0));
+            } else if (varArray[i].name.equals(secondDim)) {
+                axisOrientation[1] = setOrientType(secondDim, (varArray[i].resolution > 0));
                 iy = i;
-            } else if (varArray[i].name.equals(spacez)) {
-                axisOrientation[2] = setOrientType(spacez, (varArray[i].resolution > 0));
+            } else if (varArray[i].name.equals(firstDim)) {
+                axisOrientation[2] = setOrientType(firstDim, (varArray[i].resolution > 0));
                 iz = i;
             }
         }
@@ -1279,16 +1229,15 @@ public class FileInfoMinc extends FileInfoBase {
      * @param  originCoord  origin coord.
      * @param  axis         Axis of orientation; x is 0, y is 1, z is 2.
      */
-    public void setStartLocation(float originCoord, int axis) {
-
-        if ((axis < 0) || (axis > 2)) {
-            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
-
-            return;
-        }
+    private void setStartLocation(float originCoord, int axis) {
 
         String space;
         int index = 0;
+        
+        if ((axis < 0) || (axis > 2)) {
+            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
+            return;
+        }
 
         // opposite axis: if axis is 2 we need to getDimElem(0). See previous examples
         // of String spacez = getDimElem(0).name. Minc stores the x dimension in
@@ -1314,7 +1263,6 @@ public class FileInfoMinc extends FileInfoBase {
 
         if (origin.length != 3) {
             Preferences.debug("Start locations array must be of length 3.\n");
-
             return;
         }
 

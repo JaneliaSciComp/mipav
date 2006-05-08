@@ -448,39 +448,22 @@ public class JDialogSaveMinc extends JDialogBase {
 
         createLabel(" ", layout, setGBC(gbc, 0, 4, gbc.REMAINDER, 1), panel);
 
-        createLabel("X Start:", layout, setGBC(gbc, 0, 5, 1, 1), panel);
+        createLabel("L/R Start:", layout, setGBC(gbc, 0, 5, 1, 1), panel);
         xStart = setTextField("", layout, setGBC(gbc, 1, 5, 1, 1), panel);
-        createLabel("  X Space:", layout, setGBC(gbc, 2, 5, 1, 1), panel);
+        createLabel("  L/R Space:", layout, setGBC(gbc, 2, 5, 1, 1), panel);
         xSpace = setTextField("", layout, setGBC(gbc, 3, 5, 1, 1), panel);
 
-        createLabel("Y Start:", layout, setGBC(gbc, 0, 6, 1, 1), panel);
+        createLabel("P/A Start:", layout, setGBC(gbc, 0, 6, 1, 1), panel);
         yStart = setTextField("", layout, setGBC(gbc, 1, 6, 1, 1), panel);
-        createLabel("  Y Space:", layout, setGBC(gbc, 2, 6, 1, 1), panel);
+        createLabel("  P/A Space:", layout, setGBC(gbc, 2, 6, 1, 1), panel);
         ySpace = setTextField("", layout, setGBC(gbc, 3, 6, 1, 1), panel);
 
-        createLabel("Z Start:", layout, setGBC(gbc, 0, 7, 1, 1), panel);
+        createLabel("I/S Start:", layout, setGBC(gbc, 0, 7, 1, 1), panel);
         zStart = setTextField("", layout, setGBC(gbc, 1, 7, 1, 1), panel);
-        createLabel("  Z Space:", layout, setGBC(gbc, 2, 7, 1, 1), panel);
+        createLabel("  I/S Space:", layout, setGBC(gbc, 2, 7, 1, 1), panel);
         zSpace = setTextField("", layout, setGBC(gbc, 3, 7, 1, 1), panel);
 
         createLabel(" ", layout, setGBC(gbc, 0, 8, gbc.REMAINDER, 1), panel);
-
-        JLabel l = createLabel("In the current image:", layout, setGBC(gbc, 0, 9, gbc.REMAINDER, 1), panel);
-        l.setFont(serif12B);
-
-        JLabel l2 = createLabel(" The (0,0) pixel is in the lower left hand corner of the image for MINC files. ",
-                                layout, setGBC(gbc, 0, 10, gbc.REMAINDER, 1), panel);
-        l2.setFont(MipavUtil.font12I);
-
-        JLabel l3 = createLabel(" Therefore, the positive directions are left to right, bottom to top,", layout,
-                                setGBC(gbc, 0, 11, gbc.REMAINDER, 1), panel);
-        l3.setFont(MipavUtil.font12I);
-
-        JLabel l4 = createLabel(" and lower slice number to higher slice number.", layout,
-                                setGBC(gbc, 0, 12, gbc.REMAINDER, 1), panel);
-        l4.setFont(MipavUtil.font12I);
-
-        createLabel(" ", layout, setGBC(gbc, 0, 13, gbc.REMAINDER, 1), panel);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -565,9 +548,8 @@ public class JDialogSaveMinc extends JDialogBase {
      * Initializes the text fields for the dialog. MORE!
      */
     private void setSpace() {
-        int i;
-        float x = 0, y = 0, z = 0, xRes = 1, yRes = 1, zRes = 1;
-        float[] start = new float[3];
+
+        float lr = 0, pa = 0, is = 0, xRes = 1, yRes = 1, zRes = 1;
 
         switch (ori[2]) {
 
@@ -593,58 +575,75 @@ public class JDialogSaveMinc extends JDialogBase {
                 orient = FileInfoBase.AXIAL;
                 orientLabel.setText("AXIAL");
         }
+        
+        if (orient == FileInfoBase.SAGITTAL){
 
-        for (i = 0; i < 3; i++) {
-
-            if ((ori[i] != FileInfoBase.ORI_I2S_TYPE) && (ori[i] != FileInfoBase.ORI_S2I_TYPE)) {
-                start[i] = -fileInfo.getOrigin(i);
-            } else {
-                start[i] = fileInfo.getOrigin(i);
-            }
+            lr = -fileInfo.getOrigin(2);
+            xRes = fileInfo.getResolutions()[2];
+            
+            pa = fileInfo.getOrigin(0);
+            yRes = fileInfo.getResolutions()[0];
+            
+            is =  -fileInfo.getOrigin(1);
+            zRes = fileInfo.getResolutions()[1];
         }
+        else if (orient == FileInfoBase.AXIAL){
 
-        if ((ori[1] == FileInfoBase.ORI_R2L_TYPE) || (ori[1] == FileInfoBase.ORI_A2P_TYPE) ||
-                (ori[1] == FileInfoBase.ORI_S2I_TYPE)) {
-            start[1] = start[1] + (fileInfo.getResolutions()[1] * (fileInfo.getExtents()[1] - 1));
-        } else {
-            start[1] = start[1] - (fileInfo.getResolutions()[1] * (fileInfo.getExtents()[1] - 1));
+            lr = -fileInfo.getOrigin(0);
+            xRes = fileInfo.getResolutions()[0];
+            
+            pa = -fileInfo.getOrigin(1);
+            yRes = fileInfo.getResolutions()[1];
+            
+            is =  fileInfo.getOrigin(2);
+            zRes = fileInfo.getResolutions()[2];
         }
+        else if (orient == FileInfoBase.CORONAL){
 
-        for (i = 0; i < ori.length; i++) {
+            lr = -fileInfo.getOrigin(1);
+            xRes = fileInfo.getResolutions()[1];
+            
+            pa = fileInfo.getOrigin(2);
+            yRes = fileInfo.getResolutions()[2];
+            
+            is = -fileInfo.getOrigin(0);
+            zRes = fileInfo.getResolutions()[0];
+        }
+        else {
 
-            switch (ori[i]) {
-
-                case FileInfoBase.ORI_R2L_TYPE:
-                    x = start[i];
-                    xRes = -fileInfo.getResolutions()[i];
-                    break;
-
-                case FileInfoBase.ORI_L2R_TYPE:
-                    x = start[i];
-                    xRes = fileInfo.getResolutions()[i];
-                    break;
-
-                case FileInfoBase.ORI_P2A_TYPE:
-                    y = start[i];
-                    yRes = fileInfo.getResolutions()[i];
-                    break;
-
-                case FileInfoBase.ORI_A2P_TYPE:
-                    y = start[i];
-                    yRes = -fileInfo.getResolutions()[i];
-                    break;
-
-                case FileInfoBase.ORI_I2S_TYPE:
-                    z = start[i];
-                    zRes = fileInfo.getResolutions()[i];
-                    break;
-
-                case FileInfoBase.ORI_S2I_TYPE:
-                    z = start[i];
-                    zRes = -fileInfo.getResolutions()[i];
-                    break;
-            }
-
+            lr = fileInfo.getOrigin(0);
+            xRes = fileInfo.getResolutions()[0];
+            
+            pa = fileInfo.getOrigin(1);
+            yRes = fileInfo.getResolutions()[1];
+            
+            is =  fileInfo.getOrigin(2);
+            zRes = fileInfo.getResolutions()[2];
+            
+        }
+        
+        
+        if (lr < 0 && xRes < 0){
+            xRes = -xRes;
+        }
+        else if (lr > 0 && xRes > 0){
+            xRes = -xRes;
+        }
+        
+   
+        if (pa < 0 && yRes < 0){
+            yRes = -yRes;
+        }
+        else if (pa > 0 && yRes > 0){
+            yRes = -yRes;
+        }
+        
+ 
+        if (is < 0 && zRes < 0){
+            zRes = -zRes;
+        }
+        else if (is > 0 && zRes > 0){
+            zRes = -zRes;
         }
 
         if (fileInfo.getExtents().length == 2) {
@@ -656,55 +655,11 @@ public class JDialogSaveMinc extends JDialogBase {
             Preferences.debug("Is MINC format\n");
         }
 
-        if ((fileInfo.getFileFormat() == FileBase.MINC) &&
-                !((FileInfoMinc) fileInfo).resetStartLocationsOrientations()) {
-            float[] steps = ((FileInfoMinc) fileInfo).getStepMinc();
-            xRes = steps[0];
-            yRes = steps[1];
-
-            if (steps.length > 2) {
-                zRes = steps[2];
-            }
-
-            Preferences.debug("xRes = " + xRes + " yRes = " + yRes + " zRes = " + zRes + "\n");
-
-            float[] values = ((FileInfoMinc) fileInfo).getStartMinc();
-            x = values[0];
-            y = values[1];
-
-            if (values.length > 2) {
-                z = values[2] + (zRes * options.getBeginSlice());
-            }
-
-            Preferences.debug("x = " + x + " y = " + y + "\n");
-            Preferences.debug("values[2] = " + values[2] + "\n");
-            Preferences.debug("options.getBeginSlice() = " + options.getBeginSlice() + "\n");
-        } else {
-
-            switch (ori[2]) {
-
-                case FileInfoBase.ORI_R2L_TYPE:
-                case FileInfoBase.ORI_L2R_TYPE:
-                    x += xRes * options.getBeginSlice();
-                    break;
-
-                case FileInfoBase.ORI_P2A_TYPE:
-                case FileInfoBase.ORI_A2P_TYPE:
-                    y += yRes * options.getBeginSlice();
-                    break;
-
-                case FileInfoBase.ORI_I2S_TYPE:
-                case FileInfoBase.ORI_S2I_TYPE:
-                    z += zRes * options.getBeginSlice();
-                    break;
-            }
-        }
-
-        xStart.setText("" + x);
-        yStart.setText("" + y);
+        xStart.setText("" + lr);
+        yStart.setText("" + pa);
 
         if (zStart.isEnabled()) {
-            zStart.setText("" + z);
+            zStart.setText("" + is);
         }
 
         xSpace.setText("" + xRes);
@@ -715,11 +670,11 @@ public class JDialogSaveMinc extends JDialogBase {
         }
 
         if (!defaultSet) {
-            defaultXStart = x;
-            defaultYStart = y;
+            defaultXStart = lr;
+            defaultYStart = pa;
 
             if (zStart.isEnabled()) {
-                defaultZStart = z;
+                defaultZStart = is;
             }
 
             defaultXSpace = xRes;
