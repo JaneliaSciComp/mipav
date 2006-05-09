@@ -683,8 +683,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                               ">.  Check that this file is available.\n");
         }
 
-        messageFrame.setLocation(0, // Toolkit.getDefaultToolkit().getScreenSize().width  - 400-30,
-                                 Toolkit.getDefaultToolkit().getScreenSize().height - 300 - 30);
+        int frameHeight = messageFrame.getSize().height;
+        int screenHeight = Toolkit.getDefaultToolkit().getScreenSize().height;
+        int taskbarHeight = Toolkit.getDefaultToolkit().getScreenInsets(messageFrame.getGraphicsConfiguration()).bottom;
+        messageFrame.setLocation(0, screenHeight - frameHeight - taskbarHeight);
     }
 
     /**
