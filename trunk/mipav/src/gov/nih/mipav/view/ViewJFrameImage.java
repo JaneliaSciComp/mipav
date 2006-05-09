@@ -1727,6 +1727,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogRGBtoHSB hsb = new JDialogRGBtoHSB(this, getActiveImage());
 
             hsb.callAlgorithm();
+        } else if (command.equals("ColorEdge")) {
+            JDialogColorEdge cEdge = new JDialogColorEdge(this, getActiveImage());
         } else if (command.equals("Grays -> RGB")) {
             JDialogRGBConcat graysToRGB = new JDialogRGBConcat(this, getActiveImage());
 
