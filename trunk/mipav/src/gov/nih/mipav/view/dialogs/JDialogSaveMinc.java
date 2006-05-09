@@ -600,14 +600,14 @@ public class JDialogSaveMinc extends JDialogBase {
         }
         else if (orient == FileInfoBase.CORONAL){
 
-            lr = -fileInfo.getOrigin(1);
-            xRes = fileInfo.getResolutions()[1];
+            lr = -fileInfo.getOrigin(0);
+            xRes = fileInfo.getResolutions()[0];
             
-            pa = fileInfo.getOrigin(2);
-            yRes = fileInfo.getResolutions()[2];
+            pa = -fileInfo.getOrigin(1);
+            yRes = fileInfo.getResolutions()[1];
             
-            is = -fileInfo.getOrigin(0);
-            zRes = fileInfo.getResolutions()[0];
+            is = fileInfo.getOrigin(2);
+            zRes = fileInfo.getResolutions()[2];
         }
         else {
 

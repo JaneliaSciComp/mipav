@@ -8621,18 +8621,10 @@ public class FileIO {
 
         if (image.getNDims() != 3) {
             MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
-
             return false;
         }
 
         try { // Construct a new file object
-
-            if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
-
-                if (((FileInfoMinc) image.getFileInfo(0)).resetStartLocationsOrientations()) {
-                    options.setSaveAs(true);
-                }
-            }
 
             if (options.isSaveAs() && !options.isSet()) {
                 fileInfo = image.getFileInfo(0);

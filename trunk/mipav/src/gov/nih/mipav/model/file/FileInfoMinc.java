@@ -712,7 +712,6 @@ public class FileInfoMinc extends FileInfoBase {
                 startLocs[1] = (float) -y;
                 startLocs[2] = (float) -(z + (zRes * slice));               
             }
-            
             else if (getImageOrientation() == FileInfoBase.AXIAL){               
                 startLocs[0] = (float) -x;
                 startLocs[1] = (float) -y;
@@ -720,8 +719,8 @@ public class FileInfoMinc extends FileInfoBase {
             }
             else if (getImageOrientation() == FileInfoBase.CORONAL){               
                 startLocs[0] = (float) -x;
-                startLocs[1] = (float) y;
-                startLocs[2] = (float) -(z + (zRes * slice));               
+                startLocs[1] = (float) -y;
+                startLocs[2] = (float) (z + (zRes * slice));               
             }
             else {               
                 startLocs[0] = (float) x;
@@ -836,89 +835,6 @@ public class FileInfoMinc extends FileInfoBase {
     public final FileMincVarElem getVarElem(int index) {
         return varArray[index];
     }
-
-  
-    /**
-     * Checks if we need to reset the start locations or axis orientations. If so, file writer will call up a dialog
-     * with all variables properly set, and this will call a different version of the write header. The idea is that a
-     * MINC file which has been rotated or otherwise drastically changed should call the "Save As" version of the header
-     * writer instead of the "Save" version. This method calculates what the original start locations and axis
-     * orientations were and returns false if and only if both the start locations and the axis orientations are as they
-     * were originally.
-     *
-     * @return  Flag indicating if the file writer should reset the start locations and orientations.
-     */
- 
-    
-     public final boolean resetStartLocationsOrientations() {
-        int indexx = 0, indexy = 0, indexz = 0;
-        float beginx = 0, beginy = 0, beginz = 0;
-        float resy = 1;
-        String spacex = getDimElem(2).name;
-        String spacey = getDimElem(1).name;
-        String spacez = getDimElem(0).name;
-        int[] orients = new int[3];
-        boolean reorderAxis, resetStart;
-
-        // Get original values for axis orientations and start locations
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals(spacex)) {
-                orients[0] = setOrientType(spacex, (varArray[i].resolution > 0));
-                indexx = i;
-                beginx = (float) varArray[i].trueStart;
-            } else if (varArray[i].name.equals(spacey)) {
-
-                // opposite because MINC's origin is at the bottom left and
-                // ours is at the top left
-                orients[1] = setOrientType(spacey, !(varArray[i].resolution > 0));
-                indexy = i;
-                resy = (float) varArray[i].resolution;
-                beginy = (float) varArray[i].trueStart;
-            } else if (varArray[i].name.equals(spacez)) {
-                orients[2] = setOrientType(spacez, (varArray[i].resolution > 0));
-                indexz = i;
-                beginz = (float) varArray[i].trueStart;
-            }
-        }
-
-        int length = getExtents()[1];
-        beginy = beginy + (resy * (length - 1));
-
-        if (!spacex.equals("zspace")) {
-            beginx = -beginx;
-        }
-
-        if (!spacey.equals("zspace")) {
-            beginy = -beginy;
-        }
-
-        if (!spacez.equals("zspace")) {
-            beginz = -beginz;
-        }
-
-        // now check that original orients are same as current orients;
-        // if not, we will need to reorder things.
-        if ((orients[0] == axisOrientation[0]) && (orients[1] == axisOrientation[1]) &&
-                (orients[2] == axisOrientation[2])) {
-            reorderAxis = false;
-        } else {
-            reorderAxis = true;
-        }
-
-        // check if original starts are the same as the current starts.
-        if ((beginx == (float) varArray[indexx].start) && (beginy == (float) varArray[indexy].start) &&
-                (beginz == (float) varArray[indexz].start)) {
-            resetStart = false;
-        } else {
-            resetStart = true;
-        }
-
-        // if both are false, return false; otherwise, return true.
-        return (resetStart || reorderAxis);
-    }
-
-   
 
     /**
      * Sets necessary image information.
