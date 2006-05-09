@@ -674,7 +674,6 @@ public class FileInfoMinc extends FileInfoBase {
         double xRes = 1;
         double yRes = 1;
         double zRes = 1;
-        int tmp = 0;
         
         String spacex, spacey, spacez;
         
@@ -736,9 +735,6 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
         
-        
-        
-        //System.out.println("x res = " + starts[0] + " y res = " + starts[1] + " z res = " + starts[2] );
         return startLocs;
     }
     
