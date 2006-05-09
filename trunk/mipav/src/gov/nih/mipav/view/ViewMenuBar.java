@@ -173,6 +173,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Coherence-enhancing diffusion",
                                                                                            "CoherDiff", 0, null,
                                                                                            false),
+                                                                 menuBuilder.buildMenuItem("Color edge", "ColorEdge", 0, null, false),
                                                                  menuBuilder.buildMenuItem("Gaussian blur", null, 0,
                                                                                            null, false),
                                                                  menuBuilder.buildMenuItem("Gradient magnitude", null,
@@ -1154,6 +1155,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
             menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
+            menuBuilder.setMenuItemEnabled("Color edge", false);
 
             if (numberOfDimensions == 2) {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
