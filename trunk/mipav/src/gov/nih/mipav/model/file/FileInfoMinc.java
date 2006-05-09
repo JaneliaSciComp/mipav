@@ -707,10 +707,17 @@ public class FileInfoMinc extends FileInfoBase {
             startLocs[1] = (float) y;
         } else if (startLocs.length == 3) {
 
-            if (getImageOrientation() == FileInfoBase.SAGITTAL){               
-                startLocs[0] = (float) x;
-                startLocs[1] = (float) -y;
-                startLocs[2] = (float) -(z + (zRes * slice));               
+            if (getImageOrientation() == FileInfoBase.SAGITTAL){  
+                if (getAxisOrientation(1) == FileInfoBase.ORI_S2I_TYPE) {
+                    startLocs[0] = (float) x;
+                    startLocs[1] = (float) -y;
+                    startLocs[2] = (float) -(z + (zRes * slice));
+                }
+                else {
+                    startLocs[0] = (float) -x;
+                    startLocs[1] = (float) -y;
+                    startLocs[2] = (float) (z + (zRes * slice));
+                }
             }
             else if (getImageOrientation() == FileInfoBase.AXIAL){               
                 startLocs[0] = (float) -x;
