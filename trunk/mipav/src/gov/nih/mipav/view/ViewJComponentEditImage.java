@@ -1261,6 +1261,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
+                if (imageA.getNDims() == 4){
+                    // Build dialog 3D or 4D
+                    JDialogMask3D4D dialog3D4D = new JDialogMask3D4D(frame, slice);
+                    if (slice[0] == -1 ) timeSlice = -1;
+                }
                 maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                 maskAlgo.setActiveImage(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
