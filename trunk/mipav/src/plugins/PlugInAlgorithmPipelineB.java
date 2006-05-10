@@ -178,11 +178,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	ShowImage(BMarrow, "before extractBoneMarrow");
      	BMarrow = threshold2(BMarrow, 160f,255f);
     	ShowImage(BMarrow,"after 160-255 thresh");
-    	IDObjects(BMarrow, 1000*zDim/20, 5000*zDim/20);
+    	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	if(BMarrow ==null){
 	     	Open6(BMarrow);Close24(BMarrow);
 	     	ShowImage(BMarrow,"opened and closed");
-	     	IDObjects(BMarrow, 1000*zDim/20, 5000*zDim/20);
+	     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	}
     	ShowImage(BMarrow,"objects size 1,000 - 5,000 singled out");
     	isolatingCenterObject(BMarrow);
@@ -1165,11 +1165,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         	    AVGBoneMarrowCount=AVGBoneMarrowCount/e;
         	    }
         	    
-        	    AVGsubcutfatCountTOTAL+= AVGsubcutfatCount; 
-        	    AVGfatCountTOTAL+= AVGfatCount;
-        	    AVGMuscleCountTOTAL+= AVGMuscleCount;
-        	    AVGBoneCountTOTAL+=AVGBoneCount;
-        	    AVGBoneMarrowCountTOTAL+= AVGBoneMarrowCount;
+        	    AVGsubcutfatCountTOTAL+= AVGsubcutfatCount/2; 
+        	    AVGfatCountTOTAL+= AVGfatCount/2;
+        	    AVGMuscleCountTOTAL+= AVGMuscleCount/2;
+        	    AVGBoneCountTOTAL+=AVGBoneCount/2;
+        	    AVGBoneMarrowCountTOTAL+= AVGBoneMarrowCount/2;
         	    
         	    float realpixelSize = 1;
         	    float[] res = destImage3b.getFileInfo()[0].getResolutions();
