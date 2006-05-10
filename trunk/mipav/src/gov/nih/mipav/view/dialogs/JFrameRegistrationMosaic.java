@@ -229,6 +229,13 @@ public class JFrameRegistrationMosaic extends JFrame
      */
     public JFrameRegistrationMosaic() {
         super("Mosaic Registration");
+        try {
+            this.setIconImage(MipavUtil.getIconImage("puzzle3.gif"));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+        }
+
         initGUI();
         initData();
         this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -561,7 +568,7 @@ public class JFrameRegistrationMosaic extends JFrame
             m_kTileAlpha.disposeLocal();
             m_kTileAlpha = null;
         }
-        
+
         super.dispose();
     }
 
@@ -1601,22 +1608,22 @@ public class JFrameRegistrationMosaic extends JFrame
         kAlgorithmReg.run();
         kAlgorithmReg.disposeLocal();
         kAlgorithmReg = null;
-        
+
         if (kReferenceReg != null) {
             kReferenceReg.disposeLocal();
             kReferenceReg = null;
         }
-        
+
         if (kTileReg != null) {
             kTileReg.disposeLocal();
             kTileReg = null;
         }
-        
+
         if (kReferenceMask != null) {
             kReferenceMask.disposeLocal();
-            kReferenceMask = null; 
+            kReferenceMask = null;
         }
-        
+
         if (kTileMask != null) {
             kTileMask.disposeLocal();
             kTileMask = null;
