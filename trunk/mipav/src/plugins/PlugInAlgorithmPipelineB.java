@@ -88,6 +88,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private ModelImage HardSeg = null;
+    
+    /** DOCUMENT ME! */
+    private ModelImage HardSeg1 = null;
 
     /** DOCUMENT ME! */
     private int[] imgBuffer1 = null;
@@ -184,7 +187,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	     	ShowImage(BMarrow,"opened and closed");
 	     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	}
-    	ShowImage(BMarrow,"objects size 1,000 - 5,000 singled out");
+    	ShowImage(BMarrow,"objects marrow-size singled out");
     	isolatingCenterObject(BMarrow);
     	ShowImage(BMarrow,"central object isolated");
     	    	
@@ -201,7 +204,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     */
    //uses soft fuzzy segmentation images 0 and 2, to label interstitial fat
    //voiMask obMask to label remaining muscle, subcutaneous fat, and background
-   public ModelImage processFat(ModelImage fatImage0, ModelImage fatImage1, ModelImage fatImage2){
+   public ModelImage processSoftFat(ModelImage fatImage0, ModelImage fatImage1, ModelImage fatImage2){
    	ModelImage fatImage = new ModelImage(fatImage1.getType(), fatImage1.getExtents(),
    			"fatImage", fatImage1.getUserInterface());
    	float imgBuffer[] = new float[sliceSize];
@@ -235,6 +238,31 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		return fatImage;
 
    }
+   
+   
+   /**
+   *
+   * @param   fatImage0  DOCUMENT ME!
+   * @param   fatImage1  DOCUMENT ME!
+   * @param   fatImage2  DOCUMENT ME!
+   *
+   * @return  DOCUMENT ME!
+   */
+  //uses soft fuzzy segmentation images 0 and 2, to label interstitial fat
+  //voiMask obMask to label remaining muscle, subcutaneous fat, and background
+  public ModelImage processHardFat(ModelImage Hard4Classes){
+  	ModelImage fatImage = new ModelImage(Hard4Classes.getType(), Hard4Classes.getExtents(),
+  			"fatImage", Hard4Classes.getUserInterface());
+
+		convert(fatImage, voiMask, fatImage, 1, Muscle);	//fill voi with muscle
+		convert(fatImage, Hard4Classes, fatImage, 189, FAT);		
+		convert(fatImage, Hard4Classes, fatImage, 252, FAT);		
+		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);	//all outside voi labeled subcutfat
+		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	//all outside obMask labeled background
+				
+		return fatImage;
+
+  }
    
    /**
     * DOCUMENT ME!
@@ -1051,7 +1079,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
             //STEP 3: FUZZY CMEANS- WHOLE IMAGE
             progressBar.setMessage("Taking Fuzzy-C over Entire Image");
-            HardSeg = HardFuzzy(destImage2, 3);            						//ShowImage(HardSeg,"hardseg1");		
+            HardSeg = HardFuzzy(destImage2, 3);            						//ShowImage(HardSeg,"hardseg1");
+            HardSeg1 = HardFuzzy(destImage2, 4);
             progressBar.updateValue(50 * (aa - 1) + 33, activeImage);
 
             
@@ -1060,7 +1089,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
             //STEP 4: FUZZY CMEANS- INSIDE BUNDLE
             progressBar.setMessage("Taking Fuzzy-C inside Muscle Bundle");		//convert(destImage2, voiMask, destImage2, 0, 0);  //crop
-            FuzzySeg2 = SoftFuzzy(destImage2, 3);				            	//ShowImage(FuzzySeg2[2], "FuzzySeg2["+2+"]");
+            //FuzzySeg2 = SoftFuzzy(destImage2, 3);				            	//ShowImage(FuzzySeg2[2], "FuzzySeg2["+2+"]");
             progressBar.updateValue(50 * (aa - 1) + 37, activeImage); 
 
             
@@ -1073,7 +1102,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             convert(destImage3a, BMarrow, destImage3a, 1, BoneMarrow);
             progressBar.setMessage("Processing bundle fat");
             
-            destImage3b = processFat(FuzzySeg2[0],FuzzySeg2[1],FuzzySeg2[2]);  	//ShowImage(destImage3b, "processed fat image");
+    //        destImage3b = processSoftFat(FuzzySeg2[0],FuzzySeg2[1],FuzzySeg2[2]);  	//ShowImage(destImage3b, "processed fat image");
+            destImage3b = processHardFat(HardSeg1);
 	        cleanUp(destImage3b, FAT, Muscle, 300*zDim/20);        				//ShowImage(destImage3b, "bundle cleanedup fat image");     
             progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
             
