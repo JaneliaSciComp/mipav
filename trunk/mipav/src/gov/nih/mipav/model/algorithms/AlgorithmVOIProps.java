@@ -644,8 +644,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                              String.valueOf(tmpMajorAxis[0]));
                     statProperty.setProperty(statProperty.minorAxisDescription + "0;" + r,
                                              String.valueOf(tmpMinorAxis[0]));
-                    statProperty.setProperty(statProperty.centerDescription + "0;" + r,
-                                             ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass().toString());
+
+                    Point3Df centerOfMass = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass();
+                    String comStr = centerOfMass.x + "\t" + centerOfMass.y + "\t" + centerOfMass.z;
+                    statProperty.setProperty(statProperty.centerDescription + "0;" + r, comStr);
 
 
                     totalEcc += tmpEcc[0];
@@ -867,7 +869,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(statProperty.eccentricityDescription + "Total", String.valueOf(totalEcc));
                 statProperty.setProperty(statProperty.majorAxisDescription + "Total", String.valueOf(totalMajorAxis));
                 statProperty.setProperty(statProperty.minorAxisDescription + "Total", String.valueOf(totalMinorAxis));
-                statProperty.setProperty(statProperty.centerDescription + "Total", totalC.toString());
+
+                String comStr = totalC.x + "\t" + totalC.y;
+
+                statProperty.setProperty(statProperty.centerDescription + "Total", comStr);
                 statProperty.setProperty(statProperty.areaDescription + "Total", String.valueOf(totalArea));
                 statProperty.setProperty(statProperty.volumeDescription + "Total", String.valueOf(totalArea));
                 statProperty.setProperty(statProperty.quantityDescription + "Total", String.valueOf(totalNVox));
@@ -919,13 +924,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(statProperty.eccentricityDescription + "0;", String.valueOf(tmpEcc[0]));
             statProperty.setProperty(statProperty.majorAxisDescription + "0;", String.valueOf(tmpMajorAxis[0]));
             statProperty.setProperty(statProperty.minorAxisDescription + "0;", String.valueOf(tmpMinorAxis[0]));
-            statProperty.setProperty(statProperty.centerDescription + "0;", selectedVOI.getCenterOfMass().toString());
+
+            Point3Df selectedCOM = selectedVOI.getCenterOfMass();
+            String comStr = selectedCOM.x + "\t" + selectedCOM.y;
+            statProperty.setProperty(statProperty.centerDescription + "0;", comStr);
 
             statProperty.setProperty(statProperty.axisDescription, String.valueOf(tmpPAxis[0]));
             statProperty.setProperty(statProperty.eccentricityDescription, String.valueOf(tmpEcc[0]));
             statProperty.setProperty(statProperty.majorAxisDescription, String.valueOf(tmpMajorAxis[0]));
             statProperty.setProperty(statProperty.minorAxisDescription, String.valueOf(tmpMinorAxis[0]));
-            statProperty.setProperty(statProperty.centerDescription, selectedVOI.getCenterOfMass().toString());
+            statProperty.setProperty(statProperty.centerDescription, comStr);
 
             selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                                          srcImage.getParentFrame().useXOR(), false);
@@ -1218,8 +1226,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty( statProperty.eccentricityDescription + end, String.valueOf( tmpEcc[0] ) );
                     statProperty.setProperty( statProperty.majorAxisDescription + end, String.valueOf( tmpMajorAxis[0] ) );
                     statProperty.setProperty( statProperty.minorAxisDescription + end, String.valueOf( tmpMinorAxis[0] ) );
-                    statProperty.setProperty( statProperty.centerDescription + end,
-                                              ( (VOIContour) ( contours[q].elementAt( r ) ) ).getCenterOfMass().toString() );
+
+                    Point3Df centerOfMass = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass();
+                    String comStr = centerOfMass.x + "\t" + centerOfMass.y + "\t" + centerOfMass.z;
+
+                    statProperty.setProperty( statProperty.centerDescription + end, comStr );
 
 
                     totalEcc += tmpEcc[0];
@@ -1447,11 +1458,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
             }
             if ( showTotals == true ) {
+                String comStr = totalC.x + "\t" + totalC.y + "\t" + totalC.z;
+
                 statProperty.setProperty( statProperty.axisDescription + "Total", String.valueOf( totalAxis ) );
                 statProperty.setProperty( statProperty.eccentricityDescription + "Total", String.valueOf( totalEcc ) );
                 statProperty.setProperty( statProperty.majorAxisDescription + "Total", String.valueOf( totalMajorAxis ) );
                 statProperty.setProperty( statProperty.minorAxisDescription + "Total", String.valueOf( totalMinorAxis ) );
-                statProperty.setProperty( statProperty.centerDescription + "Total", totalC.toString() );
+                statProperty.setProperty( statProperty.centerDescription + "Total", comStr );
                 statProperty.setProperty( statProperty.areaDescription + "Total", String.valueOf( totalArea ) );
                 statProperty.setProperty( statProperty.volumeDescription + "Total", String.valueOf( totalVolume ) );
                 statProperty.setProperty( statProperty.quantityDescription + "Total", String.valueOf( totalNVox ) );
@@ -1510,7 +1523,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty( statProperty.eccentricityDescription, String.valueOf( tmpEcc[0] ) );
             statProperty.setProperty( statProperty.majorAxisDescription, String.valueOf( tmpMajorAxis[0] ) );
             statProperty.setProperty( statProperty.minorAxisDescription, String.valueOf( tmpMinorAxis[0] ) );
-            statProperty.setProperty( statProperty.centerDescription, selectedVOI.getCenterOfMass().toString() );
+
+            Point3Df selectedCOM = selectedVOI.getCenterOfMass();
+            String comStr = selectedCOM.x + "\t" + selectedCOM.y + "\t" + selectedCOM.z;
+
+            statProperty.setProperty( statProperty.centerDescription, comStr );
 
             mask = new BitSet( imgBuffer.length );
             selectedVOI.createBinaryMask( mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
