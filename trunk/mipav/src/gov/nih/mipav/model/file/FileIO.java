@@ -701,7 +701,7 @@ public class FileIO {
                 result = FilenameSorter.compareToLastNumericalSequence(fileList2[i], fileList2[j]); // compare based on
                                                                                                     // last numerical
                                                                                                     // sequence
-                                                                                                    //     result =
+                                                                                                    // result =
                                                                                                     // fileList2[i].compareTo(
                                                                                                     // fileList2[j] );
 
@@ -1793,12 +1793,12 @@ public class FileIO {
             } // end of performSort
 
             // A separate and equally valid explanation of the Image Orientation matrix is: X patient  Y patient  Z
-            // patient X image     1          0         0 Y image     0          1         0 Z image     0          0
-            //      1 In this case, the number "1" at X image, X patient means the x in the image is the same as the x
-            // in the patient and goes in the same direction; thus, the image x goes from right to left.  If it were a
-            // "-1", that would mean the image x goes from left to right. If it were a "0", and there was a "1" in X
-            // image, Y patient, that would mean that the image x goes from the anterior of the patient to the
-            // posterior.  This is the case in sagittal images, for example.
+            // patient X image     1          0         0 Y image     0          1         0 Z image     0          0 1
+            // In this case, the number "1" at X image, X patient means the x in the image is the same as the x in the
+            // patient and goes in the same direction; thus, the image x goes from right to left.  If it were a "-1",
+            // that would mean the image x goes from left to right. If it were a "0", and there was a "1" in X image, Y
+            // patient, that would mean that the image x goes from the anterior of the patient to the posterior.  This
+            // is the case in sagittal images, for example.
             //
             // We're concerned with what the z image is, because that tells us what the orientation is.  If there is a "1"
             // in X patient, the patient x is the image's z-axis, making this a sagittal image.  If there is a "1" in Y
@@ -2077,10 +2077,11 @@ public class FileIO {
                                                         ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0))
                                                              .getTagsList().get("0018,0088")).getValue(true));
                 }
-                //               System.err.println("Slice Spacing: " + sliceSpacing);
+
+                // System.err.println("Slice Spacing: " + sliceSpacing);
                 if (sliceSpacing != -1) {
                     sliceThickness = sliceSpacing;
-                    //               System.err.println("Slice Thickness: " + sliceThickness);
+                    // System.err.println("Slice Thickness: " + sliceThickness);
                 }
 
                 if (sliceThickness > 0) {
@@ -6011,7 +6012,7 @@ public class FileIO {
         FileMinc imageFile;
 
         try {
-            imageFile = new FileMinc(UI, fileName, fileDir);
+            imageFile = new FileMinc(fileName, fileDir);
             image = imageFile.readImage(one);
         } catch (IOException error) {
 
@@ -6024,6 +6025,10 @@ public class FileIO {
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
+                for (int i = 0; i < error.getStackTrace().length; i++) {
+                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
+                }
             }
 
             return null;
@@ -8279,8 +8284,8 @@ public class FileIO {
             }
 
             myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-            myFileInfo.setRescaleIntercept(0); 
-            myFileInfo.setRescaleSlope(1); 
+            myFileInfo.setRescaleIntercept(0);
+            myFileInfo.setRescaleSlope(1);
             myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             myFileInfo.vr_type = myFileInfo.EXPLICIT;
 
@@ -8641,7 +8646,7 @@ public class FileIO {
                 options = dialog.getOptions();
             }
 
-            mincFile = new FileMinc(UI, options.getFileName(), options.getFileDirectory());
+            mincFile = new FileMinc(options.getFileName(), options.getFileDirectory());
             mincFile.writeImage(image, options);
 
             return true;
@@ -8650,6 +8655,10 @@ public class FileIO {
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+                for (int i = 0; i < error.getStackTrace().length; i++) {
+                    Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
+                }
             }
 
             return false;
