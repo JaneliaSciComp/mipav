@@ -74,6 +74,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** All plugin related files (.class, .jar, .zip). */
     public static final int PLUGIN = 19;
 
+    /** XCEDE schema file. */
+    public static final int XCEDE = 20;
+    
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -94,7 +97,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Surface Files (*.sur; *.wrl; *.xml)", // SURFACE
         "Transfer Function Files (*.fun)", // FUNCT
         "VOI Files (*.voi)", // VOI
-        "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files"
+        "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files",
+        "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)" // XCEDE schema
     }; // NLT
 
     /** short description strings for each filterType. */
@@ -118,7 +122,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Transfer Function Files", // FUNCT
         "VOI Files", // VOI
         "Nonlinear Transformation Files", // NLT
-        "Dynamic", "Plugin"
+        "Dynamic", "Plugin", "XCEDE Schema"
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -307,7 +311,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if ((filterType == TECH) &&
                        ((extension.equals("img")) || (extension.equals("ima")) || (extension.equals("dcm")) ||
                             (extension.equals("mnc")) || (extension.equals("sig")) || (extension.equals("xml")) ||
-                            (extension.equals("head")) || (extension.equals("nii")))) {
+                            (extension.equals("head")) || (extension.equals("nii")) )) {
             return true;
         } else if ((filterType == VOI) && ((extension.equals("voi")) || (extension.equals("oly")))) {
             return true;
@@ -356,8 +360,12 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
                     return true;
                 }
             }
+            
+        } else if (filterType == XCEDE && extension.equalsIgnoreCase("bxh")){
+            return true;
         }
 
+        
         return false;
 
     }
