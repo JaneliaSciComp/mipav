@@ -4,6 +4,10 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.file.xcede.*;
+import gov.nih.mipav.model.srb.*;
+import gov.nih.mipav.view.srb.FileTransferSRB;
+import gov.nih.mipav.view.xcede.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.plugins.*;
@@ -21,6 +25,8 @@ import java.util.*;
 
 import javax.swing.*;
 
+import edu.sdsc.grid.io.*;
+import edu.sdsc.grid.io.local.LocalFile;
 
 /**
  * This class is the _glue_ keeps a record of the present structure of the application. It keeps a list of all the image
@@ -406,10 +412,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
+        } else if (command.equals("OpenXCEDESchema")){
+            openXCEDESchema();
         } else if (command.equals("Browse")) {
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             buildDICOMFrame();
+        } else if(command.equals("OpenSRBFile")){
+            openSRBFile();
+        } else if(command.equals("SaveSRBFile")){
+            saveSRBFile();
+        } else if(command.equals("TransferSRBFiles")){
+            SRBFileTransferer transferer = new SRBFileTransferer();
+            transferer.transferFiles();
+        } else if(command.equals("AutoUploadToSRB")){
         } else if (command.equals("RecordScript")) {
 
             if (scriptDialog != null) {
@@ -1497,6 +1513,225 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         memoryFrame = new ViewJFrameMemory(this);
     }
 
+    /**
+     * Used to parse the XCEDE schema and creates the JXCEDEExplorer to show
+     * the hierarchical structure of the XCEDE Schema.
+     *
+     */
+    public void openXCEDESchema(){
+        FileIO fileIO;
+        String fileName;
+        File selectedFile;
+        String currentDirectory;
+        
+        XCEDEElement root = null;
+        /**
+         * Creates the JFileChooser object.
+         */
+        JFileChooser fileChooser = new JFileChooser();
+        
+        /**
+         * Sets up the current directory of the JFileChooser.
+         */
+        if (getDefaultDirectory() != null) {
+            File file = new File(getDefaultDirectory());
+
+            if (file != null) {
+                fileChooser.setCurrentDirectory(file);
+            } else {
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+        } else {
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
+
+        /**
+         * Sets up the file filter of the JFileChooser.
+         */
+        fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.XCEDE));
+
+        /**
+         * Sets the title of the JFileChooser.
+         */
+        fileChooser.setDialogTitle("Open XCEDE Schema");
+        
+        /**
+         * Displays the file chooser dialog and retrieves the user selection.
+         */
+        int returnValue = fileChooser.showOpenDialog(getMainFrame());
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            selectedFile = fileChooser.getSelectedFile();
+            fileName = selectedFile.getName();
+            currentDirectory = String.valueOf(fileChooser.getCurrentDirectory()) + File.separatorChar;
+            fileIO = new FileIO();
+            root = fileIO.readXCEDE(fileName, currentDirectory);
+            setDefaultDirectory(currentDirectory);
+            
+            if(root == null){
+                return;
+            }
+            
+            /**
+             * Creates the JXCEDEExplorer to display the hierarchical structure of the 
+             * XCEDE schema.
+             */
+            new JXCEDEExplorer(selectedFile, root);
+        }
+        fileChooser = null;
+    }
+
+    /**
+     * Opens the srb file and display the images
+     */
+    public void openSRBFile(){
+        SRBFileTransferer transferer = new SRBFileTransferer();
+        GeneralFile[] sourceFiles = transferer.selectSourceFiles(SRBFileTransferer.SCHEMAS[1]);
+        if(sourceFiles == null){
+            return;
+        }
+        sourceFiles = SRBFileTransferer.createCompleteFileList(sourceFiles);
+        transferer.setSourceFiles(sourceFiles);
+        GeneralFile tempDir = transferer.getLocalTempDir();
+        if(tempDir == null){
+            MipavUtil.displayError("The local temporary directory has to be specified");
+            return;
+        }
+        GeneralFile[] targetFiles = transferer.createTargetFiles(tempDir, sourceFiles[0].getParentFile(), sourceFiles);
+        if(targetFiles == null){
+            return;
+        }
+        
+        /**
+         * Deletes the temporary files when mipav exits.
+         */
+        for(int i = 0; i < targetFiles.length; i++){
+            targetFiles[i].deleteOnExit();
+        }
+        transferer.setTargetFiles(targetFiles);
+        transferer.setThreadSeperated(false);
+        transferer.transfer(sourceFiles, targetFiles);
+        boolean multiFile = (targetFiles.length > 1)?true:false;
+        
+        GeneralFile[] primaryFiles = SRBFileTransferer.getPrimaryFiles(targetFiles);
+        if(primaryFiles != null){
+            for(int i = 0; i < primaryFiles.length; i++){
+                ViewUserInterface.getReference().openImageFrame(primaryFiles[i].getPath(), multiFile);
+            }
+        }        
+    }
+    
+    public void saveSRBFile(){
+        SRBFileTransferer transferer = new SRBFileTransferer();
+        GeneralFile targetDir = transferer.selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
+        if(targetDir == null){
+            return;
+        }
+        
+        /**
+         * Gets the active ViewJFrameImage instance.
+         */
+        ViewJFrameImage currentImageFrame = getActiveImageFrame();
+
+        /**
+         * Gets the current image file opened inside the active ViewJFrameImage.
+         */
+        if (currentImageFrame == null) {
+            return;
+        }
+
+        ModelImage currentImage = currentImageFrame.getActiveImage();
+
+        if (currentImage == null) {
+            return;
+        }
+
+        /**
+         * Gets the file informations for the current opened images.
+         */
+        FileInfoBase[] currentFileInfoList = currentImage.getFileInfo();
+
+        if (currentFileInfoList == null) {
+            return;
+        }
+
+        /**
+         * Gets the local temporary diretory, if it doesn't exist, then it will be created.
+         */
+        LocalFile localTempDir = null;
+
+        localTempDir = transferer.getLocalTempDir();
+        if(localTempDir == null){
+            return;
+        }
+        /**
+         * Saves the current directory for recovery at the end of function.
+         *
+         * The idea is try to use the save function save the files to different directory.
+         */
+        String savedDir = currentFileInfoList[0].getFileDirectory();
+
+        /**
+         * Sets the new directory which we want the files saved to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + "\\");
+        }
+
+        /**
+         * Creates the local temporary file list.
+         */
+        Vector fileNameList = SRBFileTransferer.getFileNameList(currentFileInfoList);
+        Vector sourceFileList = new Vector();
+        if(fileNameList == null){
+            return;
+        }
+        
+        for(int i = 0; i < fileNameList.size(); i++){
+            sourceFileList.add(SRBFileTransferer.createFile(localTempDir, (String)fileNameList.get(i)));
+        }
+
+        /**
+         * Constructs the FileWriteOptions to prepare the file name for save.
+         */
+        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
+                                                     localTempDir.getPath() + "//", false);
+
+
+        if (currentImage.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(currentImage.getExtents()[2] - 1);
+        }
+
+        opts.setOptionsSet(true);
+
+        /**
+         * Saves the opened images to the local temporary directory.
+         */
+        currentImageFrame.saveSRB(opts, -1);
+
+        /**
+         * Recovers the original directory which these files belong to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(savedDir);
+        }
+
+        /**
+         * Copies the local temporary files to the directory of the SRB server.
+         */
+        GeneralFile[] targetFiles = transferer.createTargetFiles(targetDir,
+                ((GeneralFile) sourceFileList.get(0)).getParentFile(),
+                SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+
+        for (int i = 0; i < sourceFileList.size(); i++) {
+            LocalFile lf = (LocalFile) sourceFileList.get(i);
+            lf.deleteOnExit();
+        }
+        transferer.setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        transferer.setTargetFiles(targetFiles);
+        transferer.setThreadSeperated(true);
+        new Thread(transferer).start();
+    }
     /**
      * This method opens an image and puts it into a frame.
      */
@@ -2631,6 +2866,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         fileMenu.add(ViewMenuBuilder.buildMenuItem("Open new image(A)", "OpenNewImage", 0, this, "open.gif", true));
 
+        fileMenu.add(ViewMenuBuilder.buildMenuItem("Open XCEDE Schema", "OpenXCEDESchema", 0, this, "open.gif", true));
+
         fileMenu.add(ViewMenuBuilder.buildMenuItem("Open Leica series", "loadLeica", 0, this, "open.gif", true));
 
         fileMenu.add(ViewMenuBuilder.buildMenuItem("Open image sequence", "openImgSeq", 0, this, "open.gif", true));
@@ -2659,6 +2896,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         fileMenu.add(itemDicom);
 
+        fileMenu.addSeparator();
+        JMenu birnMenu = ViewMenuBuilder.buildMenu("SRB-BIRN", 0, true);
+        birnMenu.add(ViewMenuBuilder.buildMenuItem("Open", "OpenSRBFile", 0, this, null, true));
+        birnMenu.add(ViewMenuBuilder.buildMenuItem("Save", "SaveSRBFile", 0, this, null, true));
+        birnMenu.add(ViewMenuBuilder.buildMenuItem("Transfer", "TransferSRBFiles", 0, this, null, true));
+        birnMenu.add(ViewMenuBuilder.buildCheckBoxMenuItem("Auto Upload on/off", "AutoUploadToSRB", this, false));
+        fileMenu.add(birnMenu);
+        
         fileMenu.addSeparator();
 
         JMenu menu = ViewMenuBuilder.buildMenu("Scripts", 0, true);
