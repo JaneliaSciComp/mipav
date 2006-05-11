@@ -729,7 +729,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             new JDialogLoginSRB("Connect to");
         }
 
-        if (JDialogLoginSRB.srbFileSystem == null) {
+        if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
             return;
         }
 
