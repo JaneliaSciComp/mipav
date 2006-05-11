@@ -101,6 +101,16 @@ public class FileTransferSRB extends Thread implements ActionListener, WindowLis
         }
     }
 
+    public static boolean parallelCopy(GeneralFile sourceFile, GeneralFile targetFile){
+        try{
+            sourceFile.copyTo(targetFile);
+            return true;
+        }catch(IOException e){
+            e.printStackTrace();
+            MipavUtil.displayError("File I/O error: " + e.getMessage());
+            return false;
+        }
+    }
     /**
      * **** Action Event Listener.*****
      *
@@ -157,7 +167,7 @@ public class FileTransferSRB extends Thread implements ActionListener, WindowLis
 
             GeneralFile sourceFile = (GeneralFile) sourceFileList.get(i);
             GeneralFile targetFile = (GeneralFile) targetFileList.get(i);
-            copy(sourceFile, targetFile);
+            parallelCopy(sourceFile, targetFile);
         }
 
         progressBar.updateValue(100, isThreadSeperated());
