@@ -25,51 +25,89 @@ import java.util.*;
  * @see      FileRaw
  * @see      FileRawChunk
  */
-
 public class FileMinc extends FileBase {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /**
+     * The location, in bytes, of the portion of the minc file being written directly after the header. Does not include
+     * data added to the header by the dynamically generated history attribute or dicom-exported tags.
+     */
+    private static final int DEFAULT_NON_HEADER_START_LOCATION = 2228;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /**
+     * Table of tags extracted from a dicom file info to be written to the minc file. Generated in writeHeader(), then
+     * used again later in writeImage() to output placeholder values outside of the header.
+     */
+    private Hashtable dicomConvertedTagTable;
+
+    /**
+     * The endianess of the image being written or read.
+     *
+     * <p>TODO: this variable either needs to be local to the read/write methods or consistently used globally. As it
+     * stands right now, it is used in both ways and confuses things greatly.</p>
+     */
     private boolean endianess;
 
-    /** DOCUMENT ME! */
+    /** The directory containing the minc file being written out or read in. */
     private String fileDir;
 
-    /** DOCUMENT ME! */
+    /** The name of the minc file to be read in or written out. */
     private String fileName;
 
-    /** DOCUMENT ME! */
+    /** The location, in bytes, of the image data in the minc file being written out. */
     private int imgBegin = 0;
 
-    /** DOCUMENT ME! */
+    /** The size of the image data that will be written out, in bytes. */
     private int imgSize = 0;
 
-    /** DOCUMENT ME! */
+    /**
+     * TODO: THIS VARIABLE MUST BE REMOVED! It is used as if local in places and global in others. A number of methods
+     * change it, causing subtle side effects which must be carefully managed.
+     */
     private int location = 0;
-
-    /** DOCUMENT ME! */
-    private int START2D = 1844;
-
-    /** DOCUMENT ME! */
-    private int START3D = 2228;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * MINC reader/writer constructor.
      *
-     * @param      _UI    User interface reference.
      * @param      fName  File name.
      * @param      fDir   File directory.
      *
      * @exception  IOException  if there is an error constructing the files
      */
+    public FileMinc(String fName, String fDir) throws IOException {
+        fileName = fName;
+        fileDir = fDir;
+
+        try {
+
+            try {
+                raFile = new RandomAccessFile(new File(fileDir + fileName), "rw");
+            } catch (IOException e) {
+                raFile = new RandomAccessFile(new File(fileDir + fileName), "r");
+            }
+
+        } catch (OutOfMemoryError e) {
+            throw new IOException("Out of memory in FileMinc constructor.");
+        }
+    }
+
+    /**
+     * MINC reader/writer constructor.
+     *
+     * @param       _UI    User interface reference.
+     * @param       fName  File name.
+     * @param       fDir   File directory.
+     *
+     * @exception   IOException  if there is an error constructing the files
+     *
+     * @deprecated  _UI no longer needed/used in this class
+     */
     public FileMinc(ViewUserInterface _UI, String fName, String fDir) throws IOException {
-        UI = _UI;
         fileName = fName;
         fileDir = fDir;
 
@@ -88,7 +126,6 @@ public class FileMinc extends FileBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    
     /**
      * Reads in all the tags available in the file and stores them in FileInfoMinc.
      *
@@ -483,9 +520,9 @@ public class FileMinc extends FileBase {
                     extents[i] = fileInfo.getExtents()[i];
                 }
 
-                image = new ModelImage(ModelImage.FLOAT, new int[] { extents[0], extents[1] }, fileName, UI);
+                image = new ModelImage(ModelImage.FLOAT, new int[] { extents[0], extents[1] }, fileName);
             } else {
-                image = new ModelImage(ModelImage.FLOAT, fileInfo.getExtents(), fileName, UI);
+                image = new ModelImage(ModelImage.FLOAT, fileInfo.getExtents(), fileName);
             }
 
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, false, FileBase.READ);
@@ -504,7 +541,7 @@ public class FileMinc extends FileBase {
             throw (error);
         }
 
-        //      set image orientation depending on which variable was read in firs
+        // set image orientation depending on which variable was read in firs
         if (fileInfo.getDimElem(0).name.equals("zspace")) {
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
         } else if (fileInfo.getDimElem(0).name.equals("xspace")) {
@@ -512,12 +549,12 @@ public class FileMinc extends FileBase {
         } else if (fileInfo.getDimElem(0).name.equals("yspace")) {
             fileInfo.setImageOrientation(FileInfoBase.CORONAL);
         }
-        
+
         fileInfo.setImportantImageInfo();
         fileInfo.setResolutions(fileInfo.getImageOrientation());
         fileInfo.setUnits();
-        
-        // ModelImage image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName, UI);
+
+        // ModelImage image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
         // for each variable, get its corresponding data - possibly after image
         for (int i = 0; i < fileInfo.getVarArray().length; i++) {
 
@@ -694,8 +731,6 @@ public class FileMinc extends FileBase {
      *
      * @exception  IOException  if there is an error writing the file
      *
-     * @return     Flag indicating if this was a successful write.
-     *
      * @see        FileInfoMinc
      * @see        FileMinc
      */
@@ -713,7 +748,7 @@ public class FileMinc extends FileBase {
 
         try {
             image = new ModelImage(_image.getFileInfo()[0].getDataType(), _image.getFileInfo()[0].getExtents(),
-                                   _image.getImageFileName(), UI);
+                                   _image.getImageFileName());
 
             image.copyFileTypeInfo(_image);
 
@@ -805,6 +840,14 @@ public class FileMinc extends FileBase {
 
                 writeHeader(fileInfo, options);
 
+                // placeholder for location pointed to by rootvariable NC_VARIABLE
+                writeInt(0, endianess);
+
+                // placeholders for location pointed to by {x,y,z}space NC_VARIABLEs
+                for (int j = 0; j < fileInfo.getExtents().length; j++) {
+                    writeDouble(0, endianess);
+                }
+
                 progressBar.updateValueImmed(2);
                 fileInfo.setExtents(extents); // reset extents to proper value
 
@@ -880,7 +923,7 @@ public class FileMinc extends FileBase {
                 image.getFileInfo(0).setEndianess(FileBase.BIG_ENDIAN);
                 progressBar.setMessage("Saving image(s) ...");
                 count = 1;
-                
+
                 for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
                     jp = j - options.getBeginSlice();
 
@@ -906,6 +949,13 @@ public class FileMinc extends FileBase {
                     writeDouble(mins[m++], FileBase.BIG_ENDIAN);
                 }
 
+                // write out placeholders values pointed to by NC_VARIABLEs of extracted dicom tag groups (if any)
+                Enumeration groupEnum = dicomConvertedTagTable.keys();
+                while (groupEnum.hasMoreElements()) {
+                    groupEnum.nextElement();
+                    writeInt(0, FileBase.BIG_ENDIAN);
+                }
+
                 progressBar.updateValue(100, options.isActiveImage());
             }
         } catch (OutOfMemoryError e) {
@@ -926,14 +976,129 @@ public class FileMinc extends FileBase {
     }
 
     /**
+     * Extracts any Dicom tags from a given FileInfoBase (if the file info is dicom) and puts them into a Hashtable.
+     *
+     * @param   fileInfo  the file info to extract dicom tags from
+     *
+     * @return  Hashtable keyed on tag group, containing Hashtables keyed on tag element, containing the tag values.
+     *          Returns an empty Hashtable if the file info is not dicom.
+     */
+    private static Hashtable extractDicomTags(FileInfoBase fileInfo) {
+        Hashtable tagTable = new Hashtable();
+
+        if (fileInfo instanceof FileInfoDicom) {
+            FileInfoDicom dicomInfo = (FileInfoDicom) fileInfo;
+            Hashtable dicomTags = dicomInfo.getTagsList();
+            Enumeration tagKeyEnum = dicomTags.keys();
+
+            while (tagKeyEnum.hasMoreElements()) {
+                FileDicomKey key = (FileDicomKey) tagKeyEnum.nextElement();
+                FileDicomTag tag = (FileDicomTag) dicomTags.get(key);
+
+                String group = key.getGroup();
+                String element = key.getElement();
+
+                String valueStr = getDicomValueAsString(key, tag);
+
+                if (valueStr != null) {
+                    Preferences.debug("exported:\t" + group + "," + element + "\t" + valueStr + "\n",
+                                      Preferences.DEBUG_FILEIO);
+
+                    if (!tagTable.containsKey(group)) {
+                        tagTable.put(group, new Hashtable());
+                    }
+
+                    ((Hashtable) tagTable.get(group)).put(element, valueStr);
+                }
+            }
+        }
+
+        return tagTable;
+    }
+
+    /**
+     * Returns the value of a dicom tag, represented as a string. Null tag values are ignored, as are array value types.
+     *
+     * @param   key  The dicom tag key (contains the tag group and element strings). TODO: maybe remove this parameter.
+     * @param   tag  The dicom tag (including its value).
+     *
+     * @return  the value of the given dicom tag (null if the value is null or is an array (which we don't support at
+     *          the moment))
+     */
+    private static String getDicomValueAsString(FileDicomKey key, FileDicomTag tag) {
+        String group = key.getGroup();
+        String element = key.getElement();
+
+        // note: don't parse the dicom value into something more human-readable, just put it into the minc
+        Object value = tag.getValue(false);
+        if (value == null) {
+
+            // Preferences.debug("skipping null tag:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+            return null;
+        }
+
+        String valueStr = null;
+        if (value instanceof Integer) {
+            valueStr = value.toString();
+            Preferences.debug("Int:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+        } else if (value instanceof Short) {
+            valueStr = value.toString();
+            Preferences.debug("Short:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+        } else if (value instanceof String) {
+            valueStr = value.toString();
+            Preferences.debug("String:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+        } else if (value instanceof Float) {
+            valueStr = value.toString();
+            Preferences.debug("Float:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+        } else if (value instanceof Double) {
+            valueStr = value.toString();
+            Preferences.debug("Double:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+        } else if (value instanceof Byte[]) {
+            Preferences.debug("Byte[] - skipped:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+
+            // Byte[] array = (Byte[]) value;
+            // valueStr = new String();
+            // for (int i = 0; i < (array.length - 1); i++) {
+            // valueStr += array[i].toString();
+            // }
+        } else if (value instanceof Short[]) {
+            Preferences.debug("Short[] - skipped:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+
+            // Short[] array = (Short[]) value;
+            // valueStr = new String();
+            // for (int i = 0; i < array.length; i++) {
+            // valueStr += array[i].toString();
+            // }
+        } else if (value instanceof Integer[]) {
+            Preferences.debug("Int[] - skipped:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+
+            // Integer[] array = (Integer[]) value;
+            // valueStr = new String();
+            // for (int i = 0; i < array.length; i++) {
+            // valueStr += array[i].toString();
+            // }
+        } else if (value instanceof Float[]) {
+            Preferences.debug("Float[] - skipped:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
+
+            // Float[] array = (Float[]) value;
+            // valueStr = new String();
+            // for (int i = 0; i < array.length; i++) {
+            // valueStr += array[i].toString();
+            // }
+        }
+
+        return valueStr;
+    }
+
+    /**
      * Gets the next element, switching on the type.
      *
      * @param   type       Short, byte, float, etc, defined in FileInfoMinc.
-     * @param   endianess  Big or little.
+     * @param   endianess  Endianess, FileBase.BIG_ENDIAN or FileBase.LITTLE_ENDIAN.
      *
      * @return  The element read in.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  if an error is encountered reading from the file
      */
     private Object getNextElem(int type, boolean endianess) throws IOException {
         Object value = null;
@@ -997,12 +1162,91 @@ public class FileMinc extends FileBase {
     }
 
     /**
+     * Get the size, in bytes, of the data which would be written to the header to store a set of dicom tags.
+     *
+     * @param   tagTable  hashtable of exported dicom tags. Hashtable inside of a Hashtable ultimately storing Strings
+     *                    (<code>tagValue = table[tagGroup][tagElement]</code>).
+     *
+     * @return  the size of the data which will be written to the header for the exported dicom tags
+     */
+    private int getSizeOfExportedDicomTags(Hashtable tagTable) {
+
+        // figure out the amount to adjust START3D by due to dicom-exported tags
+        int exportedTagsSize = 0;
+        Enumeration groupEnum = tagTable.keys();
+        while (groupEnum.hasMoreElements()) {
+            String group = (String) groupEnum.nextElement();
+
+            // writeName("dicom_0x" + group, 0, endianess);
+            exportedTagsSize += getSizeOfWrittenName("dicom_0x" + group, 0);
+
+            // writeInt(1, endianess);
+            exportedTagsSize += 4;
+
+            // writeInt(0, endianess);
+            exportedTagsSize += 4;
+
+            // writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess);
+            exportedTagsSize += 4;
+
+            // writeInt(1, endianess); -- number of subvars (actual number doesn't matter for this size calc
+            exportedTagsSize += 4;
+
+            // ...calc the size of the attributes elsewhere...
+            Enumeration elemEnum = ((Hashtable) tagTable.get(group)).keys();
+            while (elemEnum.hasMoreElements()) {
+                String element = (String) elemEnum.nextElement();
+                String value = (String) ((Hashtable) tagTable.get(group)).get(element);
+
+                // writeName("el_0x" + element, 0, endianess);
+                exportedTagsSize += getSizeOfWrittenName("el_0x" + element, 0);
+
+                // writeInt(FileInfoMinc.NC_CHAR, endianess);
+                exportedTagsSize += 4;
+
+                // writeName(value, 1, endianess);
+                exportedTagsSize += getSizeOfWrittenName(value, 1);
+            }
+
+            // writeInt(FileInfoMinc.NC_INT, endianess); -- type of placeholder value pointed to within non-header
+            // portion of file
+            exportedTagsSize += 4;
+
+            // writeInt(4, endianess); -- size (in bytes) of placeholder value pointed to within non-header portion of
+            // file
+            exportedTagsSize += 4;
+
+            // writeInt(imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages), endianess); -- beginning location of
+            // placeholder value pointed to within non-header portion of file
+            exportedTagsSize += 4;
+        }
+
+        return exportedTagsSize;
+    }
+
+    /**
+     * Returns the number of bytes that would be written to disk by calling <code>writeName()</code> on a given string.
+     *
+     * @param   string     the string which would be passed to <code>writeName()</code>
+     * @param   addedByte  the number of bytes of explicit padding to put after the string (see the second param of
+     *                     <code>writeName()</code>)
+     *
+     * @return  the number of bytes that would be written to disk if the given string was passed to <code>
+     *          writeName()</code>
+     *
+     * @see     #writeName(String, int, boolean)
+     */
+    private int getSizeOfWrittenName(String string, int addedByte) {
+        return string.length() + getPadding(string.length() + addedByte) + 4 + addedByte;
+    }
+
+    /**
      * Gets the attribute array within a variable.
      *
      * @param   index     Index into the variable array; i.e., which variable this is.
-     * @param   fileInfo  DOCUMENT ME!
+     * @param   fileInfo  The file info to fill with data from the Vatt array read in from the minc file
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while reading from the file
      */
     private void getVattArray(int index, FileInfoMinc fileInfo) throws IOException {
         String attrString;
@@ -1124,7 +1368,7 @@ public class FileMinc extends FileBase {
     /**
      * Pads to the nearest 4 byte boundary. Everything in MINC files is padded this way.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while reading from the file
      */
     private void padding() throws IOException {
 
@@ -1135,13 +1379,58 @@ public class FileMinc extends FileBase {
     }
 
     /**
+     * Writes the dicom-extracted tags contained in <code>tagTable</code> to disk.
+     *
+     * @param   tagTable         a tag-group keyed table, containing a tag-element keyed table of string values
+     * @param   beginningOffset  the location, in bytes, directly after the data section pointed to by the previous
+     *                           NC_VARIABLE section (usually image-min)
+     *
+     * @throws  IOException  If an error is encountered while writing to the file
+     *
+     * @see     #extractDicomTags(FileInfoBase)
+     */
+    private void writeDicomTagsToHeader(Hashtable tagTable, int beginningOffset) throws IOException {
+        Enumeration groupEnum = tagTable.keys();
+        int i = 0;
+        while (groupEnum.hasMoreElements()) {
+            String group = (String) groupEnum.nextElement();
+
+
+            writeName("dicom_0x" + group, 0, endianess);
+
+            writeInt(1, endianess);
+            writeInt(0, endianess);
+
+            writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess);
+
+            Enumeration elementEnum = ((Hashtable) tagTable.get(group)).keys();
+            writeInt(((Hashtable) tagTable.get(group)).size(), endianess);
+
+            while (elementEnum.hasMoreElements()) {
+                String element = (String) elementEnum.nextElement();
+                String elementValue = (String) ((Hashtable) tagTable.get(group)).get(element);
+
+                writeName("el_0x" + element, 0, endianess);
+                writeInt(FileInfoMinc.NC_CHAR, endianess);
+                writeName(elementValue, 1, endianess);
+            }
+
+            writeInt(FileInfoMinc.NC_INT, endianess);
+            writeInt(4, endianess);
+            writeInt(beginningOffset + (i * 4), endianess);
+
+            i++;
+        }
+    }
+
+    /**
      * Writes a header for MINC to MINC. This is much easier than the other-format-to-MINC writeHeader; in this case, we
      * already have all the information we need to write. Therefore, the process is just to go through the dimArray,
      * gattArray, and varArray and write out the variables.
      *
      * @param   fileInfo  File info needed to write the header.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writeHeader(FileInfoMinc fileInfo) throws IOException {
         boolean endianess = fileInfo.getEndianess();
@@ -1166,6 +1455,8 @@ public class FileMinc extends FileBase {
             writeInt(fileInfo.getGattArray().length, endianess);
 
             for (int i = 0; i < fileInfo.getGattArray().length; i++) {
+                Preferences.debug("writing global att: " + fileInfo.getGattElem(i).name + "\n",
+                                  Preferences.DEBUG_FILEIO);
                 writeName(fileInfo.getGattElem(i).name, 0, endianess);
                 writeInt(fileInfo.getGattElem(i).nc_type, endianess);
                 writeInt(fileInfo.getGattElem(i).values.length, endianess);
@@ -1181,6 +1472,7 @@ public class FileMinc extends FileBase {
             writeInt(fileInfo.getVarArray().length, endianess);
 
             for (int i = 0; i < fileInfo.getVarArray().length; i++) {
+                Preferences.debug("writing var: " + fileInfo.getVarElem(i).name + "\n", Preferences.DEBUG_FILEIO);
                 writeName(fileInfo.getVarElem(i).name, 0, endianess); // write name
                 writeInt(fileInfo.getVarElem(i).dimid.length, endianess); // write dim id
 
@@ -1192,6 +1484,8 @@ public class FileMinc extends FileBase {
                 writeInt(fileInfo.getVarElem(i).vattArray.length, endianess);
 
                 for (int j = 0; j < fileInfo.getVarElem(i).vattArray.length; j++) { // write attribute array
+                    Preferences.debug("writing var att: " + fileInfo.getVarElem(i).vattArray[j].name + "\n",
+                                      Preferences.DEBUG_FILEIO);
                     writeName(fileInfo.getVarElem(i).vattArray[j].name, 0, endianess);
                     writeInt(fileInfo.getVarElem(i).vattArray[j].nc_type, endianess);
                     writeInt(fileInfo.getVarElem(i).vattArray[j].values.length, endianess);
@@ -1229,13 +1523,15 @@ public class FileMinc extends FileBase {
      * @param   fileInfo  Info to use when writing the header.
      * @param   options   The structure that returns important information about the image to be written.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writeHeader(FileInfoBase fileInfo, FileWriteOptions options) throws IOException {
+        int currentNonHeaderStartLocation = DEFAULT_NON_HEADER_START_LOCATION;
+
         int nImages = options.getEndSlice() - options.getBeginSlice() + 1;
 
-        boolean endianess = FileBase.BIG_ENDIAN; // seems to always be big endian;
-                                                 // at least, that's what Display reads
+        endianess = FileBase.BIG_ENDIAN; // seems to always be big endian;
+                                         // at least, that's what Display reads
         raFile.writeBytes("CDF" + '\001'); // indicates NetCDF
         writeInt(0, endianess); // number of records, don't know what means
 
@@ -1321,11 +1617,22 @@ public class FileMinc extends FileBase {
         raFile.writeBytes(s);
         location = s.length();
         writePadding();
-        START3D += location;
+
+        // expand the starting point for the non-header data downward to compensate for data we have written to the
+        // history attribute
+        currentNonHeaderStartLocation += location;
 
         writeInt(FileInfoMinc.NC_VARIABLE, endianess); // variable array
 
-        writeInt(7, endianess);
+        // we need to export any and all dicom tags early so that we can figure out the number of NC_VARIABLEs and the
+        // amount to adjust START3D by
+        dicomConvertedTagTable = extractDicomTags(fileInfo);
+
+        // adding exported dicom tags moves the start of the non-header portion of the file downwards
+        currentNonHeaderStartLocation += getSizeOfExportedDicomTags(dicomConvertedTagTable);
+
+        // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag groups)
+        writeInt(7 + dicomConvertedTagTable.size(), endianess);
 
         writeName("rootvariable", 0, endianess); // always in MINC files (not sure what it means)
         writeInt(0, endianess);
@@ -1353,7 +1660,7 @@ public class FileMinc extends FileBase {
         writeInt(FileInfoMinc.NC_INT, endianess); // type of variable
         writeInt(4, endianess); // size of variable
 
-        writeInt(START3D, endianess);
+        writeInt(currentNonHeaderStartLocation, endianess);
 
         double xSpace = options.getXSpace();
         double ySpace = options.getYSpace(), zSpace = 1;
@@ -1396,7 +1703,7 @@ public class FileMinc extends FileBase {
 
             writeInt(FileInfoMinc.NC_DOUBLE, endianess);
             writeInt(8, endianess);
-            writeInt(START3D + 4, endianess);
+            writeInt(currentNonHeaderStartLocation + 4, endianess);
 
             switch (options.getAxisOrientation()[1]) {
 
@@ -1430,7 +1737,7 @@ public class FileMinc extends FileBase {
 
             writeInt(FileInfoMinc.NC_DOUBLE, endianess);
             writeInt(8, endianess);
-            writeInt(START3D + 12, endianess);
+            writeInt(currentNonHeaderStartLocation + 12, endianess);
 
             switch (options.getAxisOrientation()[0]) {
 
@@ -1464,7 +1771,7 @@ public class FileMinc extends FileBase {
 
             writeInt(FileInfoMinc.NC_DOUBLE, endianess);
             writeInt(8, endianess);
-            writeInt(START3D + 20, endianess);
+            writeInt(currentNonHeaderStartLocation + 20, endianess);
         }
 
         writeName("image", 0, endianess);
@@ -1559,8 +1866,8 @@ public class FileMinc extends FileBase {
 
         if (fileInfo.getExtents().length == 3) {
             writeInt(fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size, endianess);
-            writeInt(START3D + 28, endianess);
-            imgBegin = START3D + 28;
+            writeInt(currentNonHeaderStartLocation + 28, endianess);
+            imgBegin = currentNonHeaderStartLocation + 28;
             imgSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size;
         }
 
@@ -1619,12 +1926,7 @@ public class FileMinc extends FileBase {
         writeInt(8 * nImages, endianess);
         writeInt(imgBegin + imgSize + pad + (8 * nImages), endianess);
 
-        writeInt(0, endianess);
-
-        for (int j = 0; j < fileInfo.getExtents().length; j++) {
-            writeDouble(0, endianess);
-        }
-
+        writeDicomTagsToHeader(dicomConvertedTagTable, imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages));
     }
 
     /**
@@ -1633,9 +1935,9 @@ public class FileMinc extends FileBase {
      *
      * @param   name       Value to write.
      * @param   add        Length of padding to add.
-     * @param   endianess  Endianess, big or little.
+     * @param   endianess  Endianess, FileBase.BIG_ENDIAN or FileBase.LITTLE_ENDIAN.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writeName(String name, int add, boolean endianess) throws IOException {
         location = 0;
@@ -1653,11 +1955,11 @@ public class FileMinc extends FileBase {
     /**
      * Writes the next element, switching on the type.
      *
-     * @param   value      DOCUMENT ME!
+     * @param   value      The value to write out.
      * @param   type       Short, byte, float, etc, defined in FileInfoMinc.
-     * @param   endianess  Big or little.
+     * @param   endianess  Endianess, FileBase.BIG_ENDIAN or FileBase.LITTLE_ENDIAN.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writeNextElem(Object value, int type, boolean endianess) throws IOException {
 
@@ -1702,7 +2004,7 @@ public class FileMinc extends FileBase {
     /**
      * Pads to the nearest 4 byte boundary. Everything in MINC files is padded this way.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writePadding() throws IOException {
 
@@ -1720,11 +2022,11 @@ public class FileMinc extends FileBase {
      *
      * @param   step       Step, see above.
      * @param   start      Start, see above.
-     * @param   space      DOCUMENT ME!
-     * @param   endianess  Big or little.
-     * @param   isNormal   DOCUMENT ME!
+     * @param   space      The string label used for the space ('xspace', 'yspace', or 'zspace')
+     * @param   endianess  Endianess, FileBase.BIG_ENDIAN or FileBase.LITTLE_ENDIAN.
+     * @param   isNormal   No longer used to determine the space direction comment. Consider removal.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writeSpace(double step, double start, String space, boolean endianess, boolean isNormal)
             throws IOException {
@@ -1745,26 +2047,11 @@ public class FileMinc extends FileBase {
         writeInt(FileInfoMinc.NC_CHAR, endianess);
 
         if (space.equals("xspace")) {
-
-            if (isNormal) {
-                writeName("X increases from patient left to right", 1, endianess);
-            } else {
-                writeName("X increases from patient right to left", 1, endianess);
-            }
+            writeName("X increases from patient left to right", 1, endianess);
         } else if (space.equals("yspace")) {
-
-            if (isNormal) {
-                writeName("Y increases from patient posterior to anterior", 1, endianess);
-            } else {
-                writeName("Y increases from patient anterior to posterior", 1, endianess);
-            }
+            writeName("Y increases from patient posterior to anterior", 1, endianess);
         } else if (space.equals("zspace")) {
-
-            if (isNormal) {
-                writeName("Z increases from patient inferior to superior", 1, endianess);
-            } else {
-                writeName("Z increases from patient superior to inferior", 1, endianess);
-            }
+            writeName("Z increases from patient inferior to superior", 1, endianess);
         }
 
         writeName("spacing", 0, endianess);
@@ -1793,9 +2080,9 @@ public class FileMinc extends FileBase {
      *
      * @param   values     Array to write.
      * @param   type       Short, byte, float, etc, defined in FileInfoMinc.
-     * @param   endianess  Big or little.
+     * @param   endianess  Endianess, FileBase.BIG_ENDIAN or FileBase.LITTLE_ENDIAN.
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  If an error is encountered while writing to the file
      */
     private void writeValuesArray(Object[] values, int type, boolean endianess) throws IOException {
 
@@ -1858,5 +2145,4 @@ public class FileMinc extends FileBase {
                 MipavUtil.displayError("Invalid type in FileMinc.writeValuesArray");
         }
     }
-
 }
