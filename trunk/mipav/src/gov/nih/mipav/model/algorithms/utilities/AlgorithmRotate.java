@@ -1629,170 +1629,111 @@ public class AlgorithmRotate extends AlgorithmBase {
         float[] oldLoc = srcImage.getFileInfo()[0].getOrigin();
         float[] oldRes = srcImage.getFileInfo()[0].getResolutions();
         int[] oldDims = srcImage.getExtents();
-        int xAxis = 0;
-        int yAxis = 1;
-        int zAxis = 2;
+        
         int i;
 
         if (srcImage.getNDims() == 3) {
             
-            int axisOrientation[] = srcImage.getFileInfo()[0].getAxisOrientation();
-            for (i = 0; i <= 2; i++) {
-                if ((axisOrientation[i] == FileInfoBase.ORI_R2L_TYPE) ||
-                    (axisOrientation[i] == FileInfoBase.ORI_L2R_TYPE)) {
-                    xAxis = i;
-                }
-                else if ((axisOrientation[i] == FileInfoBase.ORI_A2P_TYPE) ||
-                    (axisOrientation[i] == FileInfoBase.ORI_P2A_TYPE)) {
-                    yAxis = i;
-                }
-                else if ((axisOrientation[i] == FileInfoBase.ORI_I2S_TYPE) ||
-                         (axisOrientation[i] == FileInfoBase.ORI_S2I_TYPE)) {
-                    zAxis = i;
-                }
-            }
-            
-            newLoc[xAxis] = oldLoc[xAxis];
-            newLoc[yAxis] = oldLoc[yAxis];
-            newLoc[zAxis] = oldLoc[zAxis];
+            newLoc[0] = oldLoc[0];
+            newLoc[1] = oldLoc[1];
+            newLoc[2] = oldLoc[2];
             
             if (rotateAxis == X_AXIS_180) {
-                if (oldLoc[yAxis] > 0.0f) {
-                    newLoc[yAxis] = oldLoc[yAxis] - (oldDims[1] - 1) * oldRes[1];
+                if (oldLoc[1] > 0.0f) {
+                    newLoc[1] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
                 }
                 else {
-                    newLoc[yAxis] = oldLoc[yAxis] + (oldDims[1] - 1) * oldRes[1];
+                    newLoc[1] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
                 }
-                if (oldLoc[zAxis] > 0.0f) {
-                    newLoc[zAxis] = oldLoc[zAxis] - (oldDims[2] - 1) * oldRes[2];
+                if (oldLoc[2] > 0.0f) {
+                    newLoc[2] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
                 }
                 else {
-                    newLoc[zAxis] = oldLoc[zAxis] + (oldDims[2] - 1) * oldRes[2];
+                    newLoc[2] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
                 }
             }
             else if (rotateAxis == X_AXIS_PLUS) {
-                if (oldLoc[zAxis] > 0.0f) {
-                    newLoc[zAxis] = oldLoc[zAxis] - (oldDims[2] - 1) * oldRes[2];
+                if (oldLoc[2] > 0.0f) {
+                    newLoc[1] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
                 }
                 else {
-                    newLoc[zAxis] = oldLoc[zAxis] + (oldDims[2] - 1) * oldRes[2];
+                    newLoc[1] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
                 }
-                newLoc[yAxis] = oldLoc[yAxis];
+                newLoc[2] = oldLoc[1];
             }
             else if (rotateAxis == X_AXIS_MINUS) {
-                newLoc[zAxis] = oldLoc[zAxis];
-                if (oldLoc[yAxis] > 0.0f) {
-                    newLoc[yAxis] = oldLoc[yAxis] - (oldDims[1] - 1) * oldRes[1];
+                newLoc[1] = oldLoc[2];
+                if (oldLoc[1] > 0.0f) {
+                    newLoc[2] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
                 }
                 else {
-                    newLoc[yAxis] = oldLoc[yAxis] + (oldDims[1] - 1) * oldRes[1];
+                    newLoc[2] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
                 }
             }
             else if (rotateAxis == Y_AXIS_180) {
-                if (oldLoc[xAxis] > 0.0f) {
-                    newLoc[xAxis] = oldLoc[xAxis] - (oldDims[0] - 1) * oldRes[0];
+                if (oldLoc[0] > 0.0f) {
+                    newLoc[0] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
                 }
                 else {
-                    newLoc[xAxis] = oldLoc[xAxis] + (oldDims[0] - 1) * oldRes[0];
+                    newLoc[0] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
                 }
-                if (oldLoc[zAxis] > 0.0f) {
-                    newLoc[zAxis] = oldLoc[zAxis] - (oldDims[2] - 1) * oldRes[2];
+                if (oldLoc[2] > 0.0f) {
+                    newLoc[2] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
                 }
                 else {
-                    newLoc[zAxis] = oldLoc[zAxis] + (oldDims[2] - 1) * oldRes[2];
+                    newLoc[2] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
                 }
             }
             else if (rotateAxis == Y_AXIS_PLUS) {
-                newLoc[zAxis] = oldLoc[zAxis];
-                if (oldLoc[xAxis] > 0.0f) {
-                    newLoc[xAxis] = oldLoc[xAxis] - (oldDims[0] - 1) * oldRes[0];
+                newLoc[0] = oldLoc[2];
+                if (oldLoc[0] > 0.0f) {
+                    newLoc[2] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
                 }
                 else {
-                    newLoc[xAxis] = oldLoc[xAxis] + (oldDims[0] - 1) * oldRes[0];
+                    newLoc[2] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
                 }
             }
             else if (rotateAxis == Y_AXIS_MINUS) {
-                if (oldLoc[zAxis] > 0.0f) {
-                    newLoc[zAxis] = oldLoc[zAxis] - (oldDims[2] - 1) * oldRes[2];
+                if (oldLoc[2] > 0.0f) {
+                    newLoc[0] = oldLoc[2] - (oldDims[2] - 1) * oldRes[2];
                 }
                 else {
-                    newLoc[zAxis] = oldLoc[zAxis] + (oldDims[2] - 1) * oldRes[2];
+                    newLoc[0] = oldLoc[2] + (oldDims[2] - 1) * oldRes[2];
                 }
-                newLoc[xAxis] = oldLoc[xAxis];
+                newLoc[2] = oldLoc[0];
             }
             else if (rotateAxis == Z_AXIS_180) {
-                if (oldLoc[xAxis] > 0.0f) {
-                    newLoc[xAxis] = oldLoc[xAxis] - (oldDims[0] - 1) * oldRes[0];
+                if (oldLoc[0] > 0.0f) {
+                    newLoc[0] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
                 }
                 else {
-                    newLoc[xAxis] = oldLoc[xAxis] + (oldDims[0] - 1) * oldRes[0];
+                    newLoc[0] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
                 }
-                if (oldLoc[yAxis] > 0.0f) {
-                    newLoc[yAxis] = oldLoc[yAxis] - (oldDims[1] - 1) * oldRes[1];
+                if (oldLoc[1] > 0.0f) {
+                    newLoc[1] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
                 }
                 else {
-                    newLoc[yAxis] = oldLoc[yAxis] + (oldDims[1] - 1) * oldRes[1];
+                    newLoc[1] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
                 }
             }
             else if (rotateAxis == Z_AXIS_PLUS) {
-                if (oldLoc[yAxis] > 0.0f) {
-                    newLoc[yAxis] = oldLoc[yAxis] - (oldDims[1] - 1) * oldRes[1];
+                if (oldLoc[1] > 0.0f) {
+                    newLoc[0] = oldLoc[1] - (oldDims[1] - 1) * oldRes[1];
                 }
                 else {
-                    newLoc[yAxis] = oldLoc[yAxis] + (oldDims[1] - 1) * oldRes[1];
+                    newLoc[0] = oldLoc[1] + (oldDims[1] - 1) * oldRes[1];
                 }
-                newLoc[xAxis] = oldLoc[xAxis];
+                newLoc[1] = oldLoc[0];
             }
             else if (rotateAxis == Z_AXIS_MINUS) {
-                newLoc[yAxis] = oldLoc[yAxis];
-                if (oldLoc[xAxis] > 0.0f) {
-                    newLoc[xAxis] = oldLoc[xAxis] - (oldDims[0] - 1) * oldRes[0];
+                newLoc[0] = oldLoc[1];
+                if (oldLoc[0] > 0.0f) {
+                    newLoc[1] = oldLoc[0] - (oldDims[0] - 1) * oldRes[0];
                 }
                 else {
-                    newLoc[xAxis] = oldLoc[xAxis] + (oldDims[0] - 1) * oldRes[0];
+                    newLoc[1] = oldLoc[0] + (oldDims[0] - 1) * oldRes[0];
                 }
             }
-
-            /*if (srcImage.getFileInfo(0).getImageOrientation() == FileInfoBase.SAGITTAL) {
-
-                if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
-                    newLoc[0] = oldLoc[0] - ((oldDims[2] - 1) * oldRes[2]);
-                } else if ((rotateAxis == X_AXIS_MINUS) || (rotateAxis == Z_AXIS_PLUS)) {
-                    newLoc[2] = oldLoc[2] - ((oldDims[1] - 1) * oldRes[1]);
-                } else if ((rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
-                    newLoc[1] = oldLoc[1] + ((oldDims[0] - 1) * oldRes[0]);
-                }
-            } else if (srcImage.getFileInfo(0).getImageOrientation() == FileInfoBase.AXIAL) {
-
-                if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
-                    newLoc[2] = oldLoc[2] + ((oldDims[2] - 1) * oldRes[2]);
-                } else if ((rotateAxis == X_AXIS_MINUS) || (rotateAxis == Z_AXIS_PLUS)) {
-                    newLoc[1] = oldLoc[1] + ((oldDims[1] - 1) * oldRes[1]);
-                } else if ((rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
-                    newLoc[0] = oldLoc[0] + ((oldDims[0] - 1) * oldRes[0]);
-                }
-            } else if (srcImage.getFileInfo(0).getImageOrientation() == FileInfoBase.CORONAL) {
-
-                if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
-                    newLoc[1] = oldLoc[1] + ((oldDims[2] - 1) * oldRes[2]);
-                } else if ((rotateAxis == X_AXIS_MINUS) || (rotateAxis == Z_AXIS_PLUS)) {
-                    newLoc[2] = oldLoc[2] - ((oldDims[1] - 1) * oldRes[1]);
-                } else if ((rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
-                    newLoc[0] = oldLoc[0] + ((oldDims[0] - 1) * oldRes[0]);
-                }
-            } else {
-
-                if ((rotateAxis == X_AXIS_PLUS) || (rotateAxis == Y_AXIS_MINUS)) {
-                    newLoc[1] = oldLoc[1] - ((oldDims[2] - 1) * oldRes[2]);
-                    newLoc[2] = oldLoc[2] - ((oldDims[1] - 1) * oldRes[1]);
-                } else if ((rotateAxis == X_AXIS_MINUS) || (rotateAxis == Z_AXIS_PLUS)) {
-                    newLoc[0] = oldLoc[0] - ((oldDims[1] - 1) * oldRes[1]);
-                    newLoc[1] = oldLoc[1] - ((oldDims[0] - 1) * oldRes[0]);
-                } else if ((rotateAxis == Y_AXIS_PLUS) || (rotateAxis == Z_AXIS_MINUS)) {
-                    newLoc[0] = oldLoc[0] - ((oldDims[2] - 1) * oldRes[2]);
-                    newLoc[2] = oldLoc[2] - ((oldDims[0] - 1) * oldRes[0]);
-                }
-            } */
         }
 
     }
