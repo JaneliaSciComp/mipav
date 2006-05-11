@@ -331,6 +331,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
+        } else if(command.equals("OpenXCEDESchema")){
+            userInterface.openXCEDESchema();
         } else if (command.equals("Zoom linearly")) {
             componentImage.zoomMode = ViewJComponentEditImage.LINEAR;
         } else if (command.equals("Zoom exponentially")) {
