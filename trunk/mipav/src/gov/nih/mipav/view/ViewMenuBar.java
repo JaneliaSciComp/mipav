@@ -533,6 +533,13 @@ public class ViewMenuBar {
                                         menuBuilder.buildCheckBoxMenuItem("DICOM receiver on/off", "Dicom",
                                                                           Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)),
                                         separator,
+                                        menuBuilder.makeMenu("SRB-BIRN", true,
+                                                            new JMenuItem[] {
+                                                            menuBuilder.buildMenuItem("Open", "OpenSRBFile", 0, null, true),
+                                                            menuBuilder.buildMenuItem("Save", "SaveSRBFile", 0, null, true),
+                                                            menuBuilder.buildMenuItem("Transfer", "TransferSRBFiles", 0, null, true),
+                                                            menuBuilder.buildCheckBoxMenuItem("Auto Upload on/off", "AutoUploadToSRB", false)}),
+                                        separator,
                                         menuBuilder.makeMenu("Scripts", true,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Record script",
