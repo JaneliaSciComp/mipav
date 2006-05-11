@@ -178,9 +178,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     public ModelImage extractedBoneMarrow(ModelImage srcImage){
     	ModelImage BMarrow = (ModelImage)srcImage.clone();	
     	
-    	ShowImage(BMarrow, "before extractBoneMarrow");
+    	//ShowImage(BMarrow, "before extractBoneMarrow");
      	BMarrow = threshold2(BMarrow, 160f,255f);
-    	ShowImage(BMarrow,"after 160-255 thresh");
+    	//ShowImage(BMarrow,"after 160-255 thresh");
     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	if(BMarrow ==null){
 	     	Open6(BMarrow);Close24(BMarrow);
@@ -189,7 +189,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	}
     	ShowImage(BMarrow,"objects marrow-size singled out");
     	isolatingCenterObject(BMarrow);
-    	ShowImage(BMarrow,"central object isolated");
+    	//ShowImage(BMarrow,"central object isolated");
     	    	
     	return BMarrow;
     }
@@ -270,16 +270,18 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     * @param  HardSeg  DOCUMENT ME!
     */
    // everything outside voi labeled background, isolates bone, labels as bone
-   public ModelImage processBone(ModelImage HardSeg){
-	    ModelImage destImage3a = new ModelImage(HardSeg.getType(), HardSeg.getExtents(), "destImage3",
-				 HardSeg.getUserInterface());
-		convert(destImage3a, voiMask, HardSeg, 0, BACKGROUND_NEW);
+   public ModelImage processBone(ModelImage SegmentedImage){
+	    ModelImage destImage3a = new ModelImage(SegmentedImage.getType(), SegmentedImage.getExtents(), "destImage3",
+	    		SegmentedImage.getUserInterface());
+		convert(destImage3a, voiMask, SegmentedImage, 0, BACKGROUND_NEW);
 		
 		progressBar.setMessage("Isolating/Labeling Bone");
-		ModelImage BoneID = threshold1(destImage3a, BACKGROUND);  
+		ModelImage BoneID = threshold1(destImage3a, BACKGROUND_2);  
 		Open6(BoneID);
 		Close24(BoneID);
+		ShowImage(BoneID, "afteropen/close");
 		IDObjects(BoneID, zDim*5000/20, zDim*20000/20);  //should be on the order or 10,000
+		ShowImage(BoneID, "after idobjects");
 		isolatingCenterObject(BoneID); //doesn't seem to be working
 	    convert(destImage3a, BoneID, destImage3a, 1, Bone);
 	    //
@@ -414,7 +416,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         for (bb = 0; bb < zDim; bb++) {
             try {
                 srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+                for (cc = 0; cc < imgBuffer1.length; cc++) {
                 	if(imgBuffer1[cc]==Bone){
                 		thereisbone = true;
                 	}
@@ -422,17 +424,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             } catch (IOException ex) {
                 System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP7");
             }
-        }       
+        }
     	//ShowImage(srcImage, "before any loop");
     	if(thereisbone==true){
 	        for (bb = 0; bb < zDim; bb++) {
 	            try {
 	                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
 	                //loop for when there IS bone
-	                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+	                for (cc = 0; cc < imgBuffer1.length; cc++) {
 	                	//gap between 'bone to marrow', fill with bonemarrow
 	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+1]!=Bone){
-	                		for(dd=5;dd>0;dd--){
+	                		for(dd=10;dd>0;dd--){
 		                    	if(imgBuffer1[cc+dd]==BoneMarrow && imgBuffer1[cc+dd-1]!=BoneMarrow){
 		                    		for(i=1;i<dd;i++){
 		                    			imgBuffer1[cc+i]=BoneMarrow;
@@ -441,7 +443,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                		}
 	                	}
 	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+xDim]!=Bone){
-	                		for(dd=5;dd>0;dd--){
+	                		for(dd=10;dd>0;dd--){
 		                    	if(imgBuffer1[cc+dd*xDim]==BoneMarrow && imgBuffer1[cc+(dd-1)*xDim]!=BoneMarrow){
 		                    		for(i=1;i<dd;i++){
 		                    			imgBuffer1[cc+i*xDim]=BoneMarrow;
@@ -462,10 +464,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	            try {
 	                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
 	                //loop for when there IS bone
-	                for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.6*yDim*xDim); cc++) {
+	                for (cc = 0; cc < imgBuffer1.length; cc++) {
 	                	//gap between 'marrow to bone', fill with bonemarrow
 	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-1]!=Bone){
-	                		for(dd=5;dd>0;dd--){
+	                		for(dd=10;dd>0;dd--){
 		                    	if(imgBuffer1[cc-dd]==BoneMarrow && imgBuffer1[cc-dd+1]!=BoneMarrow){
 		                    		for(i=1;i<dd;i++){
 		                    			imgBuffer1[cc-i]=BoneMarrow;
@@ -474,7 +476,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                		}
 	                	}
 	                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-xDim]!=Bone){
-	                		for(dd=5;dd>0;dd--){
+	                		for(dd=10;dd>0;dd--){
 		                    	if(imgBuffer1[cc-dd*xDim]==BoneMarrow && imgBuffer1[cc-(dd-1)*xDim]!=BoneMarrow){
 		                    		for(i=1;i<dd;i++){
 		                    			imgBuffer1[cc-i*xDim]=BoneMarrow;
@@ -1057,8 +1059,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             imgBuffer2 = new int[sliceSize];
             destImage2 = (ModelImage)destImage1.clone();
             
-            progressBar.updateValue((50 * (aa - 1)) + 2, activeImage);
-
             /********************************************************
              **************** general processing ********************
              ********************************************************/            
@@ -1072,21 +1072,25 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             // STEP 2: ISN and N3 inside VOI
             progressBar.setMessage("Taking ISN");
             ISN(destImage2);
-            progressBar.setMessage("Taking N3 inside VOI");
-            N3(destImage2);
-            progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
+            progressBar.updateValue((50 * (aa - 1)) + 10, activeImage);
+            //progressBar.setMessage("Taking N3 inside VOI");
+            //N3(destImage2);
+            //progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
 
 
             //STEP 3: FUZZY CMEANS- WHOLE IMAGE
             progressBar.setMessage("Taking Fuzzy-C over Entire Image");
-            HardSeg = HardFuzzy(destImage2, 3);            						//ShowImage(HardSeg,"hardseg1");
+            //HardSeg = HardFuzzy(destImage2, 3);            						//ShowImage(HardSeg,"hardseg1");
             HardSeg1 = HardFuzzy(destImage2, 4);
             progressBar.updateValue(50 * (aa - 1) + 33, activeImage);
 
             
             //STEP 3a: BONE PROCESSING
-            destImage3a = processBone(HardSeg);						//ShowImage(destImage3a,"bone");
+            progressBar.setMessage("Locating Bone");
+            destImage3a = processBone(HardSeg1);						//ShowImage(destImage3a,"bone");
+            progressBar.updateValue(50 * (aa - 1) + 35, activeImage);
 
+            
             //STEP 4: FUZZY CMEANS- INSIDE BUNDLE
             progressBar.setMessage("Taking Fuzzy-C inside Muscle Bundle");		//convert(destImage2, voiMask, destImage2, 0, 0);  //crop
             //FuzzySeg2 = SoftFuzzy(destImage2, 3);				            	//ShowImage(FuzzySeg2[2], "FuzzySeg2["+2+"]");
@@ -1097,7 +1101,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             //STEP 4A:  FAT PROCESSING (inside muscle bundle)
     //        BMarrow = extractedBoneMarrow(FuzzySeg2[1]);						
-            BMarrow = extractedBoneMarrow(HardSeg);
+            BMarrow = extractedBoneMarrow(HardSeg1);
             progressBar.setMessage("marrow extracted,intensity will now be converted");
             convert(destImage3a, BMarrow, destImage3a, 1, BoneMarrow);
             progressBar.setMessage("Processing bundle fat");
