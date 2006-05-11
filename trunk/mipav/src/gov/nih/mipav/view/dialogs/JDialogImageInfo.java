@@ -1338,33 +1338,16 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         JPanel stPanel = new JPanel(new GridBagLayout());
         stPanel.setBorder(buildTitledBorder(" Origin for the first image slice (upper left corner) "));
-
-        JLabel dim1, dim2, dim3;
         
-        if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.UNKNOWN_ORIENT) {
-            dim1 = new JLabel("1st dimension:");
-        }
-        else {
-            dim1 = new JLabel("RL dimension:");
-        }
+        JLabel dim1 = new JLabel("1st dimension:");
         dim1.setFont(serif12);
         dim1.setForeground(Color.black);
 
-        if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.UNKNOWN_ORIENT) {
-            dim2 = new JLabel("2nd dimension:");
-        }
-        else {
-            dim2 = new JLabel("AP dimension:");
-        }
+        JLabel dim2 = new JLabel("2nd dimension:");
         dim2.setFont(serif12);
         dim2.setForeground(Color.black);
 
-        if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.UNKNOWN_ORIENT) {
-            dim3 = new JLabel("3rd dimension:");
-        }
-        else {
-            dim3 = new JLabel("IS dimension:");
-        }
+        JLabel dim3 = new JLabel("3rd dimension:");
         dim3.setFont(serif12);
         dim3.setForeground(Color.black);
 
