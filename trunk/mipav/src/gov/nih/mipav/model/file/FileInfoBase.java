@@ -1614,9 +1614,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /**
      * Returns the origin value of the requested axis.
      *
-     * @param   axis  requested axis; x is 0, y is 1, z is 2, and t is 3 if orientation
-     *                                is unknown.  If axis orientation is known,
-     *                                RL is 0, AP is 1, and IS is 2.
+     * @param   axis  requested axis; x is 0, y is 1, z is 2
      *
      * @return  float orientation of axis
      */
@@ -2069,9 +2067,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * Sets the start location in the specified axis. creates the startLocations if the arrray has not yet been created.
      *
      * @param  originCoord  start location
-     * @param  axis         axis of orientation; x is 0, y is 1, z is 2 if axis orientation
-     *                      is unknown,  If axis orientation is known, RL is 0,
-     *                      AP is 1, and IS is 2.
+     * @param  axis         axis of orientation; x is 0, y is 1, z is 2
      *
      * @see    #getStartLocations(int)
      */
