@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.xcede.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -2834,6 +2835,21 @@ public class FileIO {
             modelImageTemp = null;
             oneSliceBuffer = null;
         }
+    }
+
+    /**
+     * Reads the XCEDE schema file.
+     *
+     * @param  fileName   the file name of the XCEDE file.
+     * @param  directory  the directory of the XCEDE file.
+     *
+     * @return the root element of the XCEDE schema.
+     */
+    public XCEDEElement readXCEDE(String fileName, String directory){
+        FileXCEDEXML xcedeFile;
+        boolean showProgressBar = ( !quiet ) ? true : false;
+        xcedeFile = new FileXCEDEXML(UI, fileName, directory, showProgressBar);
+        return xcedeFile.parse();
     }
 
     /**
