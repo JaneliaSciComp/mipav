@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.plugins.*;
@@ -370,6 +371,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             userInterface.buildDICOMFrame();
+        } else if(command.equals("OpenSRBFile")){
+            userInterface.openSRBFile();
+        } else if(command.equals("SaveSRBFile")){
+            userInterface.saveSRBFile();
+        } else if(command.equals("TransferSRBFiles")){
+            SRBFileTransferer transferer = new SRBFileTransferer();
+            transferer.transferFiles();
+        } else if(command.equals("AutoUploadToSRB")){
         } else if (command.equals("OpenNewGraph")) {
             new ViewJFrameGraph("Graph", true);
         } else if (command.equals("QueryDatabase")) {
