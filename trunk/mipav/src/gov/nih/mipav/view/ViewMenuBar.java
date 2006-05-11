@@ -494,6 +494,9 @@ public class ViewMenuBar {
 
                                                                  // menuBuilder.buildMenuItem("Multi-file(A)",
         // "OpenImageStack", null, "open.gif"),
+                                                                 menuBuilder.buildMenuItem("Open XCEDE Schema", 
+                                                                                           "OpenXCEDESchema", 0, 
+                                                                                           "open.gif", true),
                                                                  menuBuilder.buildMenuItem("Leica series(A)",
                                                                                            "loadLeica", 0, "open.gif",
                                                                                            true),
