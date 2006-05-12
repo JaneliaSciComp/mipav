@@ -141,6 +141,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private JCheckBox saveDefaultsCheckBox;
 
     /** DOCUMENT ME! */
+    private JCheckBox saveImgAsAnalyzeCheckBox;
+
+    /** DOCUMENT ME! */
     private JCheckBox savePromptOverwriteBox;
 
     /** DOCUMENT ME! */
@@ -194,7 +197,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      *   <li>Debugging options</li>
      * </ol>
      *
-     * It then builds in the Apply and Close (window) buttons and makes the dialog visible.
+     * <p>It then builds in the Apply and Close (window) buttons and makes the dialog visible.</p>
      */
     public JDialogMipavOptions() {
         super(ViewUserInterface.getReference().getMainFrame(), false);
@@ -239,7 +242,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         fileSavePanel.setBorder(buildTitledBorder("Save"));
         makeSaveOverwriteOptions(gbc, gbl);
         makeSaveAllOptions(gbc, gbl);
-        //makeSaveDefaultsOptions(gbc, gbl);
+
+        // makeSaveDefaultsOptions(gbc, gbl);
+        makeSaveImgAsAnalyzeOptions(gbc, gbl);
         makeSaveXMLOnHDRSaveOptions(gbc, gbl);
         makeSaveXMLThumbnailOptions(gbc, gbl);
         makeSaveXMLZipOptions(gbc, gbl);
@@ -341,6 +346,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty("ShowPaintBorder", String.valueOf(showPaintBorderBox.isSelected()));
             Preferences.setProperty("Log", String.valueOf(logModeCheckBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE,
+                                    String.valueOf(saveImgAsAnalyzeCheckBox.isSelected()));
             Preferences.setProperty("SaveXMLOnHDRSave", String.valueOf(saveXMLOnHDRSaveCheckBox.isSelected()));
             Preferences.setProperty("SaveAllOnSave", String.valueOf(saveAllCheckBox.isSelected()));
             Preferences.setProperty("SaveDefaults", String.valueOf(saveDefaultsCheckBox.isSelected()));
@@ -1009,8 +1016,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.fill = gbc.HORIZONTAL;
         fontPanel.add(fontSizeField, gbc2);
 
-        //gbc.gridy++;
-        //gbc.fill = gbc.BOTH;
+        // gbc.gridy++;
+        // gbc.fill = gbc.BOTH;
         otherPanel.add(fontPanel, gbc);
     }
 
@@ -1246,7 +1253,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  GridBagLayout the layout...
      */
     protected void makeSaveDefaultsOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        
+
         saveDefaultsCheckBox = new JCheckBox("Save dialog settings");
         saveDefaultsCheckBox.setFont(MipavUtil.font12);
         saveDefaultsCheckBox.setForeground(Color.black);
@@ -1259,6 +1266,27 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         // preset the choices.
         saveDefaultsCheckBox.setSelected(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
+    }
+
+    /**
+     * Makes the "Always save .img files in Analyze format" option line in the otherPanel.
+     *
+     * @param  gbc  the constraints used in the globalChangesPanel
+     * @param  gbl  the layout used in the globablChangesPanel
+     */
+    protected void makeSaveImgAsAnalyzeOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        saveImgAsAnalyzeCheckBox = new JCheckBox("Always save .img files in Analyze format");
+        saveImgAsAnalyzeCheckBox.setFont(MipavUtil.font12);
+        saveImgAsAnalyzeCheckBox.setForeground(Color.black);
+        saveImgAsAnalyzeCheckBox.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(saveImgAsAnalyzeCheckBox, gbc);
+        fileSavePanel.add(saveImgAsAnalyzeCheckBox);
+
+        // preset the choices.
+        saveImgAsAnalyzeCheckBox.setSelected(Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE));
     }
 
     /**
@@ -1619,8 +1647,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             /*
              *       setIcon(icon);      if (icon != null) { name = "\t" + name.substring(9, name.length() - 4) + "\t";
-             * setText(name); setFont(list.getFont());      }      else { setText(name + " (no image available)");
-             * }
+             * setText(name); setFont(list.getFont());      }      else { setText(name + " (no image available)"); }
              */
             return this;
         }

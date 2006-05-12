@@ -141,6 +141,12 @@ public class Preferences {
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
+    /**
+     * Constant that indicates whether .img files should always be written in analyze format (as opposed to asking
+     * whether to save as nifti).
+     */
+    public static final String PREF_ALWAYS_SAVE_IMG_AS_ANALYZE = "AlwaysSaveImgAsAnalyze";
+
     /** Operating system constant for Windows. */
     public static final int OS_WINDOWS = 2;
 
@@ -2062,6 +2068,15 @@ public class Preferences {
 
         setProperty("subsampleWidth", String.valueOf(subsampleDimension.width));
         setProperty("subsampleHeight", String.valueOf(subsampleDimension.height));
+    }
+
+    /**
+     * Sets whether all imgs should be saved in analyze format (i.e., don't ask about whether to save as analyze/nifti).
+     *
+     * @param  doSaveAnalyze  whether to always save .img files as analyze format files
+     */
+    public static final void setAlwaysSaveImgAsAnalyze(boolean doSaveAnalyze) {
+        setProperty(PREF_ALWAYS_SAVE_IMG_AS_ANALYZE, Boolean.toString(doSaveAnalyze));
     }
 
     /**
