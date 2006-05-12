@@ -184,10 +184,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	if(BMarrow ==null){
 	     	Open6(BMarrow);Close24(BMarrow);
-	     	ShowImage(BMarrow,"opened and closed");
+	     	//ShowImage(BMarrow,"opened and closed");
 	     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	}
-    	ShowImage(BMarrow,"objects marrow-size singled out");
+    	//ShowImage(BMarrow,"objects marrow-size singled out");
     	isolatingCenterObject(BMarrow);
     	//ShowImage(BMarrow,"central object isolated");
     	    	
@@ -279,9 +279,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		ModelImage BoneID = threshold1(destImage3a, BACKGROUND_2);  
 		Open6(BoneID);
 		Close24(BoneID);
-		ShowImage(BoneID, "afteropen/close");
+		//ShowImage(BoneID, "afteropen/close");
 		IDObjects(BoneID, zDim*5000/20, zDim*20000/20);  //should be on the order or 10,000
-		ShowImage(BoneID, "after idobjects");
+		//ShowImage(BoneID, "after idobjects");
 		isolatingCenterObject(BoneID); //doesn't seem to be working
 	    convert(destImage3a, BoneID, destImage3a, 1, Bone);
 	    //
