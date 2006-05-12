@@ -1,15 +1,11 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.view.*;
-
-import com.sun.media.codec.video.vcm.*;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import javax.media.*;
-import javax.media.format.*;
 
 import javax.swing.*;
 
@@ -29,18 +25,17 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Check box indicating that the user wants to always save .img files in Analyze format. */
+    private JCheckBox alwaysSaveAnalyzeCheckBox;
+
+    /** Radio button to indicate that an analyze img file should be written out. */
     private JRadioButton analyzeFile;
 
-    /** DOCUMENT ME! */
+    /** Radio button to indicate that a nifti img file should be written out. */
     private JRadioButton niftiFile;
 
-    /** DOCUMENT ME! */
+    /** Whether the window was closed through the user clicking the OK button (and not just killing the dialog). */
     private boolean okayPressed = false;
-
-
-    /** DOCUMENT ME! */
-    private ButtonGroup writeGroup;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -52,6 +47,17 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     public JDialogAnalyzeNIFTIChoice(Frame theParentFrame) {
         super(theParentFrame, true);
         init();
+
+        // skip the dialog if the user has requested to not be bothered
+        if (Preferences.is(Preferences.PREF_ALWAYS_SAVE_IMG_AS_ANALYZE)) {
+            alwaysSaveAnalyzeCheckBox.setSelected(true);
+            analyzeFile.setSelected(true);
+            okayPressed = true;
+            dispose();
+            return;
+        }
+
+        setVisible(true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -64,6 +70,10 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     public void actionPerformed(ActionEvent event) {
 
         if (event.getSource() == OKButton) {
+            if (alwaysSaveAnalyzeCheckBox.isSelected()) {
+                Preferences.setAlwaysSaveImgAsAnalyze(true);
+            }
+
             okayPressed = true;
         }
 
@@ -71,9 +81,9 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Returns whether output of an analyze file was selected in the dialog.
      *
-     * @return  DOCUMENT ME!
+     * @return  whether an analyze .img file should be output
      */
     public boolean isAnalyzeFile() {
 
@@ -83,7 +93,6 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
             return false;
         }
     }
-
 
     /**
      * Was the okay button pressed.
@@ -100,41 +109,29 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     private void init() {
         setTitle("Choose type of file to write");
 
-        JPanel createPanel = new JPanel(new GridBagLayout());
-        createPanel.setBorder(buildTitledBorder("Write file as"));
+        PanelManager manager = new PanelManager("Write .img as..");
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.insets = new Insets(0, 20, 0, 0);
+        ButtonGroup writeGroup = new ButtonGroup();
+        analyzeFile = WidgetFactory.buildRadioButton("Analyze file", true, writeGroup);
+        niftiFile = WidgetFactory.buildRadioButton("NIfTI file", false, writeGroup);
+        alwaysSaveAnalyzeCheckBox = WidgetFactory.buildCheckBox("Always save .img files in Analyze format", false);
 
-        writeGroup = new ButtonGroup();
-        analyzeFile = new JRadioButton("Analyze file", true);
-        analyzeFile.setFont(serif12);
-        analyzeFile.setForeground(Color.black);
-        writeGroup.add(analyzeFile);
-        analyzeFile.setEnabled(true);
-        createPanel.add(analyzeFile, gbc);
+        manager.getConstraints().insets = new Insets(0, 15, 0, 10);
+        manager.add(analyzeFile);
+        manager.addOnNextLine(niftiFile);
 
-        gbc.gridy = 1;
-        niftiFile = new JRadioButton("NIFTI file", false);
-        niftiFile.setFont(serif12);
-        niftiFile.setForeground(Color.black);
-        writeGroup.add(niftiFile);
-        niftiFile.setEnabled(true);
-        createPanel.add(niftiFile, gbc);
+        manager.getConstraints().insets = new Insets(10, 0, 0, 0);
+        manager.addOnNextLine(alwaysSaveAnalyzeCheckBox);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
 
-        mainDialogPanel.add(createPanel);
+        mainDialogPanel.add(manager.getPanel());
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         getContentPane().add(mainDialogPanel);
 
         pack();
-        setVisible(true);
     }
 }
