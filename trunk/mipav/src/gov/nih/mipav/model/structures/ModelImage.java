@@ -1383,20 +1383,23 @@ public class ModelImage extends ModelStorageBase {
 
             for (int j = 0; j < 3; j++) {
 
-                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
-                        getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
+                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ){
+                    tCoord[0] = -coord[j]; 
+                }
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
                     tCoord[0] = coord[j];
-                   
                 }
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
-                        getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ){
+                    tCoord[1] = -coord[j];
+                }
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
                     tCoord[1] = coord[j];
-                       
                 }
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
-                        getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE){
+                    tCoord[2] = -coord[j]; 
+                }    
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
                     tCoord[2] = coord[j];
-                       
                 }    
             }
             
@@ -1405,8 +1408,6 @@ public class ModelImage extends ModelStorageBase {
             scannerCoord[2] = origin[2] + tCoord[2];
 
         }
-        
-          
     }
 
 
