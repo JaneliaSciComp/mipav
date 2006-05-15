@@ -887,6 +887,15 @@ public class ViewMenuBuilder {
             Preferences.debug("Unable to find menu item named " + name + "\n", Preferences.DEBUG_MINOR);
         }
     }
+    
+    public JMenuItem getMenuItem(String menuItemName){
+        for (int i = 0; i < menuItemVector.size(); i++) {
+            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(menuItemName)) {
+                return (JMenuItem) ((MipavMenuItem)(menuItemVector.elementAt(i))).getItem();
+            }
+        }
+        return null;
+    }
 
     /**
      * Provides a method for changing the status of a checkbox menu item.

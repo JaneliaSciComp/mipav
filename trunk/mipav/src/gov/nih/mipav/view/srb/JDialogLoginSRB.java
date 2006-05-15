@@ -22,7 +22,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2797550808781412556L;
 
-    /** DOCUMENT ME! */
+    /** the available authentication schema */
     private static final String[] auth_schemas = { "ENCRYPT1", "PASSWD_AUTH" };
 
     /** DOCUMENT ME! */

@@ -6,6 +6,7 @@ import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.model.srb.*;
+import gov.nih.mipav.model.util.*;
 import gov.nih.mipav.view.srb.FileTransferSRB;
 import gov.nih.mipav.view.xcede.*;
 import gov.nih.mipav.model.structures.*;
@@ -59,6 +60,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /**
+     * Checkbox Menu item to enable the dicom automatic uploading to the SRB server.
+     */
+    protected JCheckBoxMenuItem menuItemAutoUpload;
+    
     /** DICOM menu checkbox to indicate if the Dicom receiver is on or off. */
     protected JCheckBoxMenuItem itemDicom;
 
@@ -127,6 +133,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DICOM query frame for sending and receiving DICOM images. */
     private ViewJFrameDICOMQuery DICOMQueryFrame = null;
 
+    private NDARPipeline pipeline = null;
     /**
      * Location of new image frames. This location is updated with each additional image opened.
      *
@@ -381,6 +388,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     itemQueryDatabase.setEnabled(false);
+                    
+                    /**
+                     * Also need to disable the auto upload to srb function.
+                     */
+                    if(menuItemAutoUpload.isSelected()){
+                        menuItemAutoUpload.setSelected(false);
+                    }
+                    if(pipeline != null){
+                        pipeline.uninstall();
+                        pipeline = null;
+                    }
                 }
 
             } else {
@@ -405,6 +423,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     itemQueryDatabase.setEnabled(false);
+                    
+                    /**
+                     * Also need to disable the auto upload to srb function.
+                     */
+                    if(menuItemAutoUpload.isSelected()){
+                        menuItemAutoUpload.setSelected(false);
+                    }
+                    if(pipeline != null){
+                        pipeline.uninstall();
+                        pipeline = null;
+                    }
                 }
 
             }
@@ -426,6 +455,23 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             SRBFileTransferer transferer = new SRBFileTransferer();
             transferer.transferFiles();
         } else if(command.equals("AutoUploadToSRB")){
+            pipeline = new NDARPipeline();
+            if(menuItemAutoUpload.isSelected()){
+                if(!itemDicom.isSelected()){
+                    if (DICOMcatcher != null) {
+                        DICOMcatcher.setStop();
+                    }
+
+                    DICOMcatcher = new DICOM_Receiver();
+                    itemQueryDatabase.setEnabled(true);
+                    itemDicom.setSelected(true);                   
+                    Preferences.setProperty("EnableDICOMReceiver", "true");
+                }
+                pipeline.install(DICOMcatcher);
+           }else{
+                pipeline.uninstall();
+                pipeline = null;
+            }
         } else if (command.equals("RecordScript")) {
 
             if (scriptDialog != null) {
@@ -1098,6 +1144,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return DICOMcatcher;
     }
 
+    /**
+     * Returns the pipeline
+     * @return the pipeline.
+     */
+    public NDARPipeline getNDARPipeline(){
+        return pipeline;
+    }
+    
+    public void setNDARPipeline(NDARPipeline pipeline){
+        this.pipeline = pipeline;
+    }
     /**
      * Accessor to get the DICOM query frame.
      *
@@ -2901,7 +2958,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         birnMenu.add(ViewMenuBuilder.buildMenuItem("Open", "OpenSRBFile", 0, this, null, true));
         birnMenu.add(ViewMenuBuilder.buildMenuItem("Save", "SaveSRBFile", 0, this, null, true));
         birnMenu.add(ViewMenuBuilder.buildMenuItem("Transfer", "TransferSRBFiles", 0, this, null, true));
-        birnMenu.add(ViewMenuBuilder.buildCheckBoxMenuItem("Auto Upload on/off", "AutoUploadToSRB", this, false));
+        menuItemAutoUpload =ViewMenuBuilder.buildCheckBoxMenuItem("Auto Upload on|off", "AutoUploadToSRB", this, (pipeline != null)?true:false); 
+        birnMenu.add(menuItemAutoUpload);
         fileMenu.add(birnMenu);
         
         fileMenu.addSeparator();
