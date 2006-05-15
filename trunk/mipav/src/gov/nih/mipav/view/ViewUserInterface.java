@@ -707,6 +707,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         openingMenuBar.add(menuBar.makeFileMenu(false));
         this.pluginsMenu = buildPlugInsMenu(this);
         openingMenuBar.add(pluginsMenu);
+        openingMenuBar.add(menuBar.makeScriptingMenu());
         openingMenuBar.add(menuBar.makeHelpMenu());
     }
 

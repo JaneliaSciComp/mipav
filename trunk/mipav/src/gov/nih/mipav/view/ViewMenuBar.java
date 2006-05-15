@@ -728,7 +728,7 @@ public class ViewMenuBar {
      * @return  The new scripting menu
      */
     protected JMenu makeScriptingMenu() {
-        return menuBuilder.makeMenu("Scripts", true,
+        return menuBuilder.makeMenu("Scripts", false,
                                     new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Record script", "RecordScript", 0, null, false),
                                         menuBuilder.buildMenuItem("Run script", "RunScript", 0, null, false)
