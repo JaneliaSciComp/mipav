@@ -1170,6 +1170,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         int xS = getScaledX(mouseEvent.getX());
         int yS = getScaledY(mouseEvent.getY());
+        float xfS = (float) (mouseEvent.getX() / (getZoomX() * resolutionX));
+        float yfS = (float) (mouseEvent.getY() / (getZoomY() * resolutionY));
 
         if (xS < 0) {
             xS = 0;
@@ -1231,12 +1233,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                 triImageFrame.setVolumeCenter(point3d);
 
-                triImageFrame.setCrosshairs(xS, yS, slice, this);
+                triImageFrame.setCrosshairs(xfS, yfS, slice, this);
 
                 // Because the upper left hand of the image is the origin and therefore the y coordinate must be
                 // inverted.
                 if (hasOrientation && ((triComponentOrientation == SAGITTAL) || (triComponentOrientation == CORONAL))) {
-                    yS = imageActive.getExtents()[axisOrder[1]] - yS - 1;
+                    yS = (int)(imageActive.getExtents()[axisOrder[1]] - yfS - 1);
                 }
 
                 triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
@@ -1271,13 +1273,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 setCursor(blankCursor);
             }
 
-            updateFrameLabels(frame, xS, yS);
+            updateFrameLabels(frame, xfS, yfS);
+            //System.out.println("x = " + xS + " y = " + yS + " z = " + slice);
 
-            triImageFrame.setCrosshairs(xS, yS, slice, this);
+            triImageFrame.setCrosshairs(xfS, yfS, slice, this);
 
             // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
             if (hasOrientation && ((triComponentOrientation == SAGITTAL) || (triComponentOrientation == CORONAL))) {
-                yS = imageActive.getExtents()[axisOrder[1]] - yS - 1;
+                yS = (int)(imageActive.getExtents()[axisOrder[1]] - yfS - 1);
             }
 
             triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
@@ -3323,9 +3326,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      *
      * @return  DOCUMENT ME!
      */
-    public Point3D updateFrameLabels(ViewJFrameBase triFrame, int xS, int yS) {
-        Point3D point = getVolumePosition(xS, yS, slice);
-        ((ViewJFrameTriImage) triFrame).setPositionLabels(point.x, point.y, point.z);
+    public Point3Df updateFrameLabels(ViewJFrameBase triFrame, float xS, float yS) {
+        Point3Df point = getVolumePosition(xS, yS, slice);
+        ((ViewJFrameTriImage) triFrame).setPositionLabels((int)point.x, (int)point.y, (int)point.z);
 
         return point;
     }
