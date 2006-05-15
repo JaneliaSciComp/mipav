@@ -1928,7 +1928,7 @@ public class FileIO {
 
         // loop through files, place them in image array
         pInterface.setTitle(UI.getProgressBarPrefix() + "image " + fileList[0]);
-        myFileInfo.finalize();
+        //myFileInfo.finalize();
         pBarVal = 0;
 
         for (i = 0; i < nImages; i++) {
@@ -1979,12 +1979,37 @@ public class FileIO {
                 myFileInfo.setImageOrientation(orientation);
 
                 float[] origin = new float[3];
+                float[] newOriginPt = new float[3];
 
                 origin[0] = ((FileInfoDicom) myFileInfo).xLocation;
                 origin[1] = ((FileInfoDicom) myFileInfo).yLocation;
                 origin[2] = ((FileInfoDicom) myFileInfo).zLocation;
+                
+                
+                //TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
+                // Finally convert the point to axial millimeter DICOM space.
+                //dicomMatrix.transform(coord, tCoord);
+                
+                for (int j = 0; j < 3; j++) {
 
-                myFileInfo.setOrigin(origin);
+                    if (orient[j] == FileInfoBase.ORI_L2R_TYPE ||
+                        orient[j] == FileInfoBase.ORI_R2L_TYPE){
+                        newOriginPt[j] = origin[0];
+                       
+                    }
+                    else if (orient[j] == FileInfoBase.ORI_P2A_TYPE ||
+                            orient[j] == FileInfoBase.ORI_A2P_TYPE){
+                            newOriginPt[j] = origin[1];
+                           
+                    }
+                    else if (orient[j] == FileInfoBase.ORI_S2I_TYPE ||
+                            orient[j] == FileInfoBase.ORI_I2S_TYPE){
+                            newOriginPt[j] = origin[2];
+                           
+                    }
+                }
+                
+                myFileInfo.setOrigin(newOriginPt);
                 image.setFileInfo(myFileInfo, location);
 
                 if (image.getType() == ModelStorageBase.FLOAT) {
