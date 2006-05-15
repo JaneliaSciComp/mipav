@@ -1327,12 +1327,33 @@ public class ModelImage extends ModelStorageBase {
         coord[1] = y;
         coord[2] = z;
 
-        // Get the DICOM reference point ( origin ) in the image orientation (axial, sag, coronal )
-        origin[0] = getFileInfo()[0].getOrigin()[0]; // LPS = x,y,z orientation for DICOM origin
+        // Get image origin 
+        origin[0] = getFileInfo()[0].getOrigin()[0]; 
         origin[1] = getFileInfo()[0].getOrigin()[1];
         origin[2] = getFileInfo()[0].getOrigin()[2];
         // System.out.println("Origin     "  + origin[0] + ", " + origin[1] + ", " + origin[2] );
+        
+        for (int j = 0; j < 3; j++) {
 
+            if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
+                    getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
+                origin[0] = getFileInfo()[0].getOrigin()[j];
+               
+            }
+            else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
+                    getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
+                origin[1] = getFileInfo()[0].getOrigin()[j];
+                   
+            }
+            else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
+                    getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
+                origin[2] = getFileInfo()[0].getOrigin()[j];
+                   
+            }
+        }
+        // origin in LPS order
+        
+    
         // Get voxel resolutions
         res[0] = getFileInfo(0).getResolutions()[0];
         res[1] = getFileInfo(0).getResolutions()[1];
@@ -1343,71 +1364,48 @@ public class ModelImage extends ModelStorageBase {
         coord[0] = coord[0] * res[0];
         coord[1] = coord[1] * res[1];
         coord[2] = coord[2] * res[2];
-
-        // Get the DICOM transform that discribes the transformation from axial to this image orientation
-        TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
-
+  
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-        if ((getFileInfo()[0].getFileFormat() == FileBase.MINC) ||
-                (getFileInfo()[0].getFileFormat() == FileBase.AFNI) ||
-                (getFileInfo()[0].getFileFormat() == FileBase.NIFTI) ||
-                (getFileInfo()[0].getFileFormat() == FileBase.XML)) {
-
-            for (int r = 0; r < 4; r++) {
-
-                for (int c = 0; c < 4; c++) {
-                    dicomMatrix.setMatrix(0.0, r, c);
-                }
-            }
-
-            dicomMatrix.setMatrix(1.0, 3, 3);
+        if ((getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL)){
+            
+            //System.out.println("dicomMatrix = " + dicomMatrix.toString());
+            TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
+            // Finally convert the point to axial millimeter DICOM space.
+            dicomMatrix.transform(coord, tCoord);
+    
+            // Add in the
+            scannerCoord[0] = origin[0] + tCoord[0];
+            scannerCoord[1] = origin[1] + tCoord[1];
+            scannerCoord[2] = origin[2] + tCoord[2];
+        }
+        else {
 
             for (int j = 0; j < 3; j++) {
 
-                switch (getFileInfo(0).getAxisOrientation()[j]) {
-
-                    case FileInfoBase.ORI_L2R_TYPE:
-                    case FileInfoBase.ORI_R2L_TYPE:
-                        if (origin[0] > 0.0) {
-                            dicomMatrix.setMatrix(-1.0, 0, j);
-                        } else {
-                            dicomMatrix.setMatrix(1.0, 0, j);
-                        }
-
-                        break;
-
-                    case FileInfoBase.ORI_P2A_TYPE:
-                    case FileInfoBase.ORI_A2P_TYPE:
-                        if (origin[1] > 0.0) {
-                            dicomMatrix.setMatrix(-1.0, 1, j);
-                        } else {
-                            dicomMatrix.setMatrix(1.0, 1, j);
-                        }
-
-                        break;
-
-                    case FileInfoBase.ORI_S2I_TYPE:
-                    case FileInfoBase.ORI_I2S_TYPE:
-                        if (origin[2] > 0.0) {
-                            dicomMatrix.setMatrix(-1.0, 2, j);
-                        } else {
-                            dicomMatrix.setMatrix(1.0, 2, j);
-                        }
-
-                        break;
+                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
+                        getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
+                    tCoord[0] = coord[j];
+                   
                 }
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
+                        getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
+                    tCoord[1] = coord[j];
+                       
+                }
+                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
+                        getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
+                    tCoord[2] = coord[j];
+                       
+                }    
             }
+            
+            scannerCoord[0] = origin[0] + tCoord[0];
+            scannerCoord[1] = origin[1] + tCoord[1];
+            scannerCoord[2] = origin[2] + tCoord[2];
+
         } // if ( getFileInfo()[0].getFileFormat() == FileBase.MINC)
-
-        // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-
-        // Finally convert the point to axial millimeter DICOM space.
-        dicomMatrix.transform(coord, tCoord);
-
-        // Add in the DICOM origin
-        scannerCoord[0] = origin[0] + tCoord[0];
-        scannerCoord[1] = origin[1] + tCoord[1];
-        scannerCoord[2] = origin[2] + tCoord[2];
+        
+          
     }
 
 
