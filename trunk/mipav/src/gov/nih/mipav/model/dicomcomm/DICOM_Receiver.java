@@ -7,11 +7,14 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.util.Vector;
 
 import java.net.*;
 
 import javax.swing.*;
 
+import gov.nih.mipav.model.util.Observable;
+import gov.nih.mipav.model.util.Observer;
 
 /**
  * This is the DICOM server class that hangs a listener on a given port for incoming image store requests from a remote
@@ -19,7 +22,7 @@ import javax.swing.*;
  *
  * @version  1.0
  */
-public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
+public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observable {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -49,6 +52,10 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
     /** Reference to the DICOM verification object. */
     private DICOM_Verification verification;
 
+    private String defaultStorageDir;
+    private Vector fileNameList = new Vector();
+    private Vector observerList = new Vector();
+    private boolean changed = false;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -71,6 +78,13 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         return runner.isAlive();
     }
 
+    /**
+     * Returns the default storage directory for the received dicom files.
+     * @return the default storage directory for the received dicom files.
+     */
+    public String getDefaultStorageDir(){
+        return defaultStorageDir;
+    }
     /**
      * Starts the DICOM image receiver.
      */
@@ -157,6 +171,14 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
 
                 e.printStackTrace();
             }
+
+            /**
+             * Notifies the observers that this object has changed.
+             */
+            if(hasChanged()){
+                notifyObservers(fileNameList);
+            }
+            
         }
 
         // cleanup
@@ -193,6 +215,11 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         DICOM_Object dco = new DICOM_Object(); /* Reference to DICOM command object */
         DICOM_Object ddo = new DICOM_Object(); /* Reference to DICOM data object */
 
+        /**
+         * Clear the file name list
+         */
+        fileNameList.clear();
+        
         DICOM_CResponse cStoreRSP = new DICOM_CResponse(DICOM_Constants.COMMAND_CStoreRSP);
 
         JDialogText receivedImageDialog = null;
@@ -336,8 +363,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
                         studyNo.trim();
                     }
 
-                    String filePath = parseServerInfo(Preferences.getProperty(Preferences.getDefaultStorageKey()))[2] +
+                    defaultStorageDir = parseServerInfo(Preferences.getProperty(Preferences.getDefaultStorageKey()))[2] +
                                       File.separatorChar;
+                    String filePath = defaultStorageDir;
                     String fileName = new String("");
 
                     // set up the path and filename for received image
@@ -420,6 +448,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
 
                     // Save preample and image data
                     saveImageToFile(preambleBuffer, filePath + fileName);
+                    fileNameList.add(filePath + fileName);
                     preambleBuffer = null;
                     fullData = null;
 
@@ -483,6 +512,11 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
             dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
             showMessage("" + e);
         }
+        
+        /**
+         * Marks this object as having been changed.
+         */
+        setChanged();
     }
 
     /**
@@ -812,5 +846,72 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable {
         }
     }
 
-
+    /**
+     * The implementation of the Observable interface.
+     */
+    /**
+     * @see Observable#addObserver(Observer)
+     */
+    public void addObserver(Observer o){
+        if(!observerList.contains(o)){
+            observerList.add(o);
+        }
+    }
+    
+    /**
+     * @see Observable#clearChanged()
+     */
+    public void clearChanged(){
+        changed = false;
+    }
+    
+    /**
+     * @see Observable#countObservers()
+     */
+    public int countObservers(){
+        return observerList.size();
+    }
+    
+    /**
+     * @see Observable#deleteObserver(Observer)
+     */
+    public void deleteObserver(Observer o){
+        if(o != null && observerList.contains(o)){
+            observerList.remove(o);
+        }
+    }
+    
+    /**
+     * @see Observable#deleteObservers()
+     */
+    public void deleteObservers(){
+        observerList.clear();
+        clearChanged();
+    }
+    
+    /**
+     * @see Observable#hasChanged()
+     */
+    public boolean hasChanged(){
+        return changed;
+    }
+    
+    /**
+     * @see Observable#notifyObservers(Object)
+     */
+    public void notifyObservers(Object obj){
+        for(int i = 0; i < countObservers(); i++){
+            Observer observer = (Observer)observerList.get(i);
+            observer.update(this, obj);
+        }
+        clearChanged();
+    }
+    
+    /**
+     * @see Observable#setChanged()
+     *
+     */
+    public void setChanged(){
+        changed = true;
+    }
 }
