@@ -1367,7 +1367,7 @@ public class ModelImage extends ModelStorageBase {
   
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
         if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
-                (getFileInfo()[0].getFileFormat() != FileBase.DICOM) ){
+                (getFileInfo()[0].getFileFormat() == FileBase.DICOM) ){
             
             //System.out.println("dicomMatrix = " + dicomMatrix.toString());
             TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
@@ -1404,7 +1404,7 @@ public class ModelImage extends ModelStorageBase {
             scannerCoord[1] = origin[1] + tCoord[1];
             scannerCoord[2] = origin[2] + tCoord[2];
 
-        } // if ( getFileInfo()[0].getFileFormat() == FileBase.MINC)
+        }
         
           
     }
