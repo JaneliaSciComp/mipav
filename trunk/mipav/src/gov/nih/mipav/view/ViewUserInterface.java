@@ -6,14 +6,16 @@ import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.model.srb.*;
-import gov.nih.mipav.model.util.*;
-import gov.nih.mipav.view.srb.FileTransferSRB;
-import gov.nih.mipav.view.xcede.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.util.*;
 
 import gov.nih.mipav.plugins.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.xcede.*;
+
+import edu.sdsc.grid.io.*;
+import edu.sdsc.grid.io.local.LocalFile;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -26,8 +28,6 @@ import java.util.*;
 
 import javax.swing.*;
 
-import edu.sdsc.grid.io.*;
-import edu.sdsc.grid.io.local.LocalFile;
 
 /**
  * This class is the _glue_ keeps a record of the present structure of the application. It keeps a list of all the image
@@ -60,22 +60,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /**
-     * Checkbox Menu item to enable the dicom automatic uploading to the SRB server.
-     */
-    protected JCheckBoxMenuItem menuItemAutoUpload;
-    
-    /** DICOM menu checkbox to indicate if the Dicom receiver is on or off. */
-    protected JCheckBoxMenuItem itemDicom;
-
-    /** Checkbox to enable the display of the output window. */
-    protected JCheckBoxMenuItem itemOutput;
-
-    /** DICOM menu item that needs to be enabled and disabled depending on if the receiver's on. */
-    protected JMenuItem itemQueryDatabase;
-
     /** The main menu bar that runs MIPAV. */
     protected JFrame mainFrame;
+
+    /** The object used to build and enable/select the menus. */
+    protected ViewMenuBuilder menuBuilder;
 
     /** Message line at the bottom of the mainFrame. */
     protected JTextField messageField;
@@ -133,7 +122,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DICOM query frame for sending and receiving DICOM images. */
     private ViewJFrameDICOMQuery DICOMQueryFrame = null;
 
-    private NDARPipeline pipeline = null;
     /**
      * Location of new image frames. This location is updated with each additional image opened.
      *
@@ -180,6 +168,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * during java start.
      */
     private JDialogMipavOptions optionsDialog = null;
+
+    /** DOCUMENT ME! */
+    private NDARPipeline pipeline = null;
 
     /** Stores the plugins menu so that it can be removed/updated when plugins are installed. */
     private JMenu pluginsMenu = null;
@@ -365,8 +356,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             System.gc();
 
             return;
-        } else if (command.equals("ShowOutput")) {
-            toggleOutputWindow();
         } else if (command.equals("Dicom")) {
 
             if (source instanceof JCheckBoxMenuItem) {
@@ -379,7 +368,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    itemQueryDatabase.setEnabled(true);
+                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 } else {
                     Preferences.setProperty("EnableDICOMReceiver", "false");
 
@@ -387,15 +376,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         DICOMcatcher.setStop();
                     }
 
-                    itemQueryDatabase.setEnabled(false);
-                    
-                    /**
-                     * Also need to disable the auto upload to srb function.
-                     */
-                    if(menuItemAutoUpload.isSelected()){
-                        menuItemAutoUpload.setSelected(false);
-                    }
-                    if(pipeline != null){
+                    menuBuilder.setMenuItemEnabled("DICOM database access", false);
+
+                    // Also need to disable the auto upload to srb function.
+                    menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
+                    if (pipeline != null) {
                         pipeline.uninstall();
                         pipeline = null;
                     }
@@ -404,9 +389,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } else {
 
                 // this was a shortcut stroke to get here...toggle the switch
-                itemDicom.setSelected(!itemDicom.isSelected());
+                menuBuilder.setMenuItemSelected("Enable DICOM receiver",
+                                                !menuBuilder.isMenuItemSelected("Enable DICOM receiver"));
 
-                if (itemDicom.isSelected()) {
+                if (menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
                     Preferences.setProperty("EnableDICOMReceiver", "true");
 
                     if (DICOMcatcher != null) {
@@ -414,7 +400,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    itemQueryDatabase.setEnabled(true);
+                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 } else {
                     Preferences.setProperty("EnableDICOMReceiver", "false");
 
@@ -422,15 +408,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         DICOMcatcher.setStop();
                     }
 
-                    itemQueryDatabase.setEnabled(false);
-                    
-                    /**
-                     * Also need to disable the auto upload to srb function.
-                     */
-                    if(menuItemAutoUpload.isSelected()){
-                        menuItemAutoUpload.setSelected(false);
-                    }
-                    if(pipeline != null){
+                    menuBuilder.setMenuItemEnabled("DICOM database access", false);
+
+                    // Also need to disable the auto upload to srb function.
+                    menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
+                    if (pipeline != null) {
                         pipeline.uninstall();
                         pipeline = null;
                     }
@@ -441,34 +423,38 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
-        } else if (command.equals("OpenXCEDESchema")){
+        } else if (command.equals("OpenXCEDESchema")) {
             openXCEDESchema();
-        } else if (command.equals("Browse")) {
+        } else if (command.equals("BrowseImages")) {
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             buildDICOMFrame();
-        } else if(command.equals("OpenSRBFile")){
+        } else if (command.equals("OpenSRBFile")) {
             openSRBFile();
-        } else if(command.equals("SaveSRBFile")){
+        } else if (command.equals("SaveSRBFile")) {
             saveSRBFile();
-        } else if(command.equals("TransferSRBFiles")){
+        } else if (command.equals("TransferSRBFiles")) {
             SRBFileTransferer transferer = new SRBFileTransferer();
             transferer.transferFiles();
-        } else if(command.equals("AutoUploadToSRB")){
+        } else if (command.equals("AutoUploadToSRB")) {
             pipeline = new NDARPipeline();
-            if(menuItemAutoUpload.isSelected()){
-                if(!itemDicom.isSelected()){
+            if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
+                if (!menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
                     if (DICOMcatcher != null) {
                         DICOMcatcher.setStop();
                     }
 
                     DICOMcatcher = new DICOM_Receiver();
-                    itemQueryDatabase.setEnabled(true);
-                    itemDicom.setSelected(true);                   
-                    Preferences.setProperty("EnableDICOMReceiver", "true");
+                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
+                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
+
+                    // note: activating the auto srb upload does not imply wanting the pacs to always start.  the user
+                    // must still explictly enable its auto-start
+
+                    // Preferences.setProperty("EnableDICOMReceiver", "true");
                 }
                 pipeline.install(DICOMcatcher);
-           }else{
+            } else {
                 pipeline.uninstall();
                 pipeline = null;
             }
@@ -499,8 +485,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 JDialogMultiple multiple = new JDialogMultiple("Run script on multiple images", this);
                 multiple.setVisible(true);
             }
-        } else if (command.equals("OpenNewGraph")) {
-            new ViewJFrameGraph("Graph", true);
         } else if (command.equals("CreateBlankImage")) {
             createBlankImage(null);
         } else if (command.equals("QueryDatabase")) {
@@ -615,9 +599,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             about();
         } else if (command.equals("License")) {
             showLicense();
-        } else if (command.equals("About Java")) {
+        } else if (command.equals("AboutJava")) {
             aboutJava();
-        } else if (command.equals("Help Topics")) {
+        } else if (command.equals("Help")) {
             MipavUtil.showHelp(null);
         } else if (command.equals("MemoryUsage")) {
             memoryFrame();
@@ -633,14 +617,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             showShortcutEditor(false);
         } else if (command.equals("dccieconvert")) {
             new JDialogDCCIEConversion(this);
-        } else if (command.equals("convertXML")) {
-            ViewDirectoryChooser chooser = new ViewDirectoryChooser();
-            String dir = chooser.getImageDirectory();
-
-            if (dir != null) {
-                AlgorithmConvertOldXML algo = new AlgorithmConvertOldXML(this, dir);
-                algo.run();
-            }
         } else if (command.equals("loadLeica")) {
             // open a file chooser to select .txt header
 
@@ -723,11 +699,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Builds menus for the User Interface.
      */
     public void buildMenu() {
+        menuBuilder = new ViewMenuBuilder(this);
+
+        ViewMenuBar menuBar = new ViewMenuBar(menuBuilder);
+
         openingMenuBar = new JMenuBar();
-        openingMenuBar.add(buildFileMenu());
+        openingMenuBar.add(menuBar.makeFileMenu(false));
         this.pluginsMenu = buildPlugInsMenu(this);
         openingMenuBar.add(pluginsMenu);
-        openingMenuBar.add(buildHelpMenu());
+        openingMenuBar.add(menuBar.makeHelpMenu());
     }
 
     /**
@@ -1021,6 +1001,29 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * Toggles the display of the Output window and updates all JFrameImages so that the menu checkbox will reflect the
+     * status of the output window.
+     *
+     * @param  doShowFrame  Whether the output window should be shown.
+     */
+    public void enableOutputWindow(boolean doShowFrame) {
+
+        // this can be triggered by trying to "close the output window frame also"
+        messageFrame.setVisible(doShowFrame);
+        Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, Boolean.toString(doShowFrame));
+
+        Enumeration e = this.getRegisteredImages();
+
+        while (e.hasMoreElements()) {
+
+            try {
+                this.getFrameContainingImage((ModelImage) e.nextElement()).setOutputWindowBox(doShowFrame);
+            } catch (NullPointerException ex) { // do nothing
+            }
+        }
+    }
+
+    /**
      * Return the active image monitor.
      *
      * @return  activeImageMonitorFrame active image monitor
@@ -1145,17 +1148,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Returns the pipeline
-     * @return the pipeline.
-     */
-    public NDARPipeline getNDARPipeline(){
-        return pipeline;
-    }
-    
-    public void setNDARPipeline(NDARPipeline pipeline){
-        this.pipeline = pipeline;
-    }
-    /**
      * Accessor to get the DICOM query frame.
      *
      * @return  The DICOM query frame.
@@ -1233,6 +1225,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public ViewJFrameMessage getMessageFrame() {
         return (messageFrame);
+    }
+
+    /**
+     * Returns the pipeline.
+     *
+     * @return  the pipeline.
+     */
+    public NDARPipeline getNDARPipeline() {
+        return pipeline;
     }
 
     /**
@@ -1571,225 +1572,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Used to parse the XCEDE schema and creates the JXCEDEExplorer to show
-     * the hierarchical structure of the XCEDE Schema.
-     *
-     */
-    public void openXCEDESchema(){
-        FileIO fileIO;
-        String fileName;
-        File selectedFile;
-        String currentDirectory;
-        
-        XCEDEElement root = null;
-        /**
-         * Creates the JFileChooser object.
-         */
-        JFileChooser fileChooser = new JFileChooser();
-        
-        /**
-         * Sets up the current directory of the JFileChooser.
-         */
-        if (getDefaultDirectory() != null) {
-            File file = new File(getDefaultDirectory());
-
-            if (file != null) {
-                fileChooser.setCurrentDirectory(file);
-            } else {
-                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-        } else {
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-        }
-
-        /**
-         * Sets up the file filter of the JFileChooser.
-         */
-        fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.XCEDE));
-
-        /**
-         * Sets the title of the JFileChooser.
-         */
-        fileChooser.setDialogTitle("Open XCEDE Schema");
-        
-        /**
-         * Displays the file chooser dialog and retrieves the user selection.
-         */
-        int returnValue = fileChooser.showOpenDialog(getMainFrame());
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            selectedFile = fileChooser.getSelectedFile();
-            fileName = selectedFile.getName();
-            currentDirectory = String.valueOf(fileChooser.getCurrentDirectory()) + File.separatorChar;
-            fileIO = new FileIO();
-            root = fileIO.readXCEDE(fileName, currentDirectory);
-            setDefaultDirectory(currentDirectory);
-            
-            if(root == null){
-                return;
-            }
-            
-            /**
-             * Creates the JXCEDEExplorer to display the hierarchical structure of the 
-             * XCEDE schema.
-             */
-            new JXCEDEExplorer(selectedFile, root);
-        }
-        fileChooser = null;
-    }
-
-    /**
-     * Opens the srb file and display the images
-     */
-    public void openSRBFile(){
-        SRBFileTransferer transferer = new SRBFileTransferer();
-        GeneralFile[] sourceFiles = transferer.selectSourceFiles(SRBFileTransferer.SCHEMAS[1]);
-        if(sourceFiles == null){
-            return;
-        }
-        sourceFiles = SRBFileTransferer.createCompleteFileList(sourceFiles);
-        transferer.setSourceFiles(sourceFiles);
-        GeneralFile tempDir = transferer.getLocalTempDir();
-        if(tempDir == null){
-            MipavUtil.displayError("The local temporary directory has to be specified");
-            return;
-        }
-        GeneralFile[] targetFiles = transferer.createTargetFiles(tempDir, sourceFiles[0].getParentFile(), sourceFiles);
-        if(targetFiles == null){
-            return;
-        }
-        
-        /**
-         * Deletes the temporary files when mipav exits.
-         */
-        for(int i = 0; i < targetFiles.length; i++){
-            targetFiles[i].deleteOnExit();
-        }
-        transferer.setTargetFiles(targetFiles);
-        transferer.setThreadSeperated(false);
-        transferer.transfer(sourceFiles, targetFiles);
-        boolean multiFile = (targetFiles.length > 1)?true:false;
-        
-        GeneralFile[] primaryFiles = SRBFileTransferer.getPrimaryFiles(targetFiles);
-        if(primaryFiles != null){
-            for(int i = 0; i < primaryFiles.length; i++){
-                ViewUserInterface.getReference().openImageFrame(primaryFiles[i].getPath(), multiFile);
-            }
-        }        
-    }
-    
-    public void saveSRBFile(){
-        SRBFileTransferer transferer = new SRBFileTransferer();
-        GeneralFile targetDir = transferer.selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
-        if(targetDir == null){
-            return;
-        }
-        
-        /**
-         * Gets the active ViewJFrameImage instance.
-         */
-        ViewJFrameImage currentImageFrame = getActiveImageFrame();
-
-        /**
-         * Gets the current image file opened inside the active ViewJFrameImage.
-         */
-        if (currentImageFrame == null) {
-            return;
-        }
-
-        ModelImage currentImage = currentImageFrame.getActiveImage();
-
-        if (currentImage == null) {
-            return;
-        }
-
-        /**
-         * Gets the file informations for the current opened images.
-         */
-        FileInfoBase[] currentFileInfoList = currentImage.getFileInfo();
-
-        if (currentFileInfoList == null) {
-            return;
-        }
-
-        /**
-         * Gets the local temporary diretory, if it doesn't exist, then it will be created.
-         */
-        LocalFile localTempDir = null;
-
-        localTempDir = transferer.getLocalTempDir();
-        if(localTempDir == null){
-            return;
-        }
-        /**
-         * Saves the current directory for recovery at the end of function.
-         *
-         * The idea is try to use the save function save the files to different directory.
-         */
-        String savedDir = currentFileInfoList[0].getFileDirectory();
-
-        /**
-         * Sets the new directory which we want the files saved to.
-         */
-        for (int i = 0; i < currentFileInfoList.length; i++) {
-            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + "\\");
-        }
-
-        /**
-         * Creates the local temporary file list.
-         */
-        Vector fileNameList = SRBFileTransferer.getFileNameList(currentFileInfoList);
-        Vector sourceFileList = new Vector();
-        if(fileNameList == null){
-            return;
-        }
-        
-        for(int i = 0; i < fileNameList.size(); i++){
-            sourceFileList.add(SRBFileTransferer.createFile(localTempDir, (String)fileNameList.get(i)));
-        }
-
-        /**
-         * Constructs the FileWriteOptions to prepare the file name for save.
-         */
-        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
-                                                     localTempDir.getPath() + "//", false);
-
-
-        if (currentImage.getNDims() == 3) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(currentImage.getExtents()[2] - 1);
-        }
-
-        opts.setOptionsSet(true);
-
-        /**
-         * Saves the opened images to the local temporary directory.
-         */
-        currentImageFrame.saveSRB(opts, -1);
-
-        /**
-         * Recovers the original directory which these files belong to.
-         */
-        for (int i = 0; i < currentFileInfoList.length; i++) {
-            currentFileInfoList[i].setFileDirectory(savedDir);
-        }
-
-        /**
-         * Copies the local temporary files to the directory of the SRB server.
-         */
-        GeneralFile[] targetFiles = transferer.createTargetFiles(targetDir,
-                ((GeneralFile) sourceFileList.get(0)).getParentFile(),
-                SRBFileTransferer.convertFromVectorToArray(sourceFileList));
-
-        for (int i = 0; i < sourceFileList.size(); i++) {
-            LocalFile lf = (LocalFile) sourceFileList.get(i);
-            lf.deleteOnExit();
-        }
-        transferer.setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
-        transferer.setTargetFiles(targetFiles);
-        transferer.setThreadSeperated(true);
-        new Thread(transferer).start();
-    }
-    /**
      * This method opens an image and puts it into a frame.
      */
     public void openImageFrame() {
@@ -2054,6 +1836,115 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * Opens the srb file and display the images.
+     */
+    public void openSRBFile() {
+        SRBFileTransferer transferer = new SRBFileTransferer();
+        GeneralFile[] sourceFiles = transferer.selectSourceFiles(SRBFileTransferer.SCHEMAS[1]);
+        if (sourceFiles == null) {
+            return;
+        }
+        sourceFiles = SRBFileTransferer.createCompleteFileList(sourceFiles);
+        transferer.setSourceFiles(sourceFiles);
+
+        GeneralFile tempDir = transferer.getLocalTempDir();
+        if (tempDir == null) {
+            MipavUtil.displayError("The local temporary directory has to be specified");
+            return;
+        }
+
+        GeneralFile[] targetFiles = transferer.createTargetFiles(tempDir, sourceFiles[0].getParentFile(), sourceFiles);
+        if (targetFiles == null) {
+            return;
+        }
+
+        /**
+         * Deletes the temporary files when mipav exits.
+         */
+        for (int i = 0; i < targetFiles.length; i++) {
+            targetFiles[i].deleteOnExit();
+        }
+        transferer.setTargetFiles(targetFiles);
+        transferer.setThreadSeperated(false);
+        transferer.transfer(sourceFiles, targetFiles);
+
+        boolean multiFile = (targetFiles.length > 1) ? true : false;
+
+        GeneralFile[] primaryFiles = SRBFileTransferer.getPrimaryFiles(targetFiles);
+        if (primaryFiles != null) {
+            for (int i = 0; i < primaryFiles.length; i++) {
+                ViewUserInterface.getReference().openImageFrame(primaryFiles[i].getPath(), multiFile);
+            }
+        }
+    }
+
+    /**
+     * Used to parse the XCEDE schema and creates the JXCEDEExplorer to show the hierarchical structure of the XCEDE
+     * Schema.
+     */
+    public void openXCEDESchema() {
+        FileIO fileIO;
+        String fileName;
+        File selectedFile;
+        String currentDirectory;
+
+        XCEDEElement root = null;
+
+        /**
+         * Creates the JFileChooser object.
+         */
+        JFileChooser fileChooser = new JFileChooser();
+
+        /**
+         * Sets up the current directory of the JFileChooser.
+         */
+        if (getDefaultDirectory() != null) {
+            File file = new File(getDefaultDirectory());
+
+            if (file != null) {
+                fileChooser.setCurrentDirectory(file);
+            } else {
+                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+        } else {
+            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
+
+        /**
+         * Sets up the file filter of the JFileChooser.
+         */
+        fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.XCEDE));
+
+        /**
+         * Sets the title of the JFileChooser.
+         */
+        fileChooser.setDialogTitle("Open XCEDE Schema");
+
+        /**
+         * Displays the file chooser dialog and retrieves the user selection.
+         */
+        int returnValue = fileChooser.showOpenDialog(getMainFrame());
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            selectedFile = fileChooser.getSelectedFile();
+            fileName = selectedFile.getName();
+            currentDirectory = String.valueOf(fileChooser.getCurrentDirectory()) + File.separatorChar;
+            fileIO = new FileIO();
+            root = fileIO.readXCEDE(fileName, currentDirectory);
+            setDefaultDirectory(currentDirectory);
+
+            if (root == null) {
+                return;
+            }
+
+            /**
+             * Creates the JXCEDEExplorer to display the hierarchical structure of the XCEDE schema.
+             */
+            new JXCEDEExplorer(selectedFile, root);
+        }
+        fileChooser = null;
+    }
+
+    /**
      * Display Options dialog for all mipav options (including image specific options) to allow user to adjust display
      * in one place.
      */
@@ -2262,6 +2153,123 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
+     * DOCUMENT ME!
+     */
+    public void saveSRBFile() {
+        SRBFileTransferer transferer = new SRBFileTransferer();
+        GeneralFile targetDir = transferer.selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
+        if (targetDir == null) {
+            return;
+        }
+
+        /**
+         * Gets the active ViewJFrameImage instance.
+         */
+        ViewJFrameImage currentImageFrame = getActiveImageFrame();
+
+        /**
+         * Gets the current image file opened inside the active ViewJFrameImage.
+         */
+        if (currentImageFrame == null) {
+            return;
+        }
+
+        ModelImage currentImage = currentImageFrame.getActiveImage();
+
+        if (currentImage == null) {
+            return;
+        }
+
+        /**
+         * Gets the file informations for the current opened images.
+         */
+        FileInfoBase[] currentFileInfoList = currentImage.getFileInfo();
+
+        if (currentFileInfoList == null) {
+            return;
+        }
+
+        /**
+         * Gets the local temporary diretory, if it doesn't exist, then it will be created.
+         */
+        LocalFile localTempDir = null;
+
+        localTempDir = transferer.getLocalTempDir();
+        if (localTempDir == null) {
+            return;
+        }
+
+        /**
+         * Saves the current directory for recovery at the end of function.
+         *
+         * The idea is try to use the save function save the files to different directory.
+         */
+        String savedDir = currentFileInfoList[0].getFileDirectory();
+
+        /**
+         * Sets the new directory which we want the files saved to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + "\\");
+        }
+
+        /**
+         * Creates the local temporary file list.
+         */
+        Vector fileNameList = SRBFileTransferer.getFileNameList(currentFileInfoList);
+        Vector sourceFileList = new Vector();
+        if (fileNameList == null) {
+            return;
+        }
+
+        for (int i = 0; i < fileNameList.size(); i++) {
+            sourceFileList.add(SRBFileTransferer.createFile(localTempDir, (String) fileNameList.get(i)));
+        }
+
+        /**
+         * Constructs the FileWriteOptions to prepare the file name for save.
+         */
+        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
+                                                     localTempDir.getPath() + "//", false);
+
+
+        if (currentImage.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(currentImage.getExtents()[2] - 1);
+        }
+
+        opts.setOptionsSet(true);
+
+        /**
+         * Saves the opened images to the local temporary directory.
+         */
+        currentImageFrame.saveSRB(opts, -1);
+
+        /**
+         * Recovers the original directory which these files belong to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(savedDir);
+        }
+
+        /**
+         * Copies the local temporary files to the directory of the SRB server.
+         */
+        GeneralFile[] targetFiles = transferer.createTargetFiles(targetDir,
+                                                                 ((GeneralFile) sourceFileList.get(0)).getParentFile(),
+                                                                 SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+
+        for (int i = 0; i < sourceFileList.size(); i++) {
+            LocalFile lf = (LocalFile) sourceFileList.get(i);
+            lf.deleteOnExit();
+        }
+        transferer.setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        transferer.setTargetFiles(targetFiles);
+        transferer.setThreadSeperated(true);
+        new Thread(transferer).start();
+    }
+
+    /**
      * Method sets the parameter frame to top and active.
      *
      * @param  frame  Frame to be set active (i.e. to the top of the list).
@@ -2413,6 +2421,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (messageField != null) {
             messageField.setText(str);
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  pipeline  DOCUMENT ME!
+     */
+    public void setNDARPipeline(NDARPipeline pipeline) {
+        this.pipeline = pipeline;
     }
 
     /**
@@ -2629,30 +2646,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 } finally {
                     splashScreen.dispose();
                 }
-            }
-        }
-    }
-
-    /**
-     * Toggles the display of the Output window and updates all JFrameImages so that the menu checkbox will reflect the
-     * status of the output window.
-     */
-    public void toggleOutputWindow() {
-        boolean doShow = !messageFrame.isVisible();
-
-        // this can be triggered by trying to "close the output window frame also"
-        messageFrame.setVisible(doShow);
-        Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, Boolean.toString(doShow));
-
-        itemOutput.setSelected(doShow);
-
-        Enumeration e = this.getRegisteredImages();
-
-        while (e.hasMoreElements()) {
-
-            try {
-                this.getFrameContainingImage((ModelImage) e.nextElement()).setOutputWindowBox(doShow);
-            } catch (NullPointerException ex) { // do nothing
             }
         }
     }
@@ -2914,147 +2907,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void windowOpened(WindowEvent event) { }
 
     /**
-     * Builds the File Menu for the ViewUserInterface.
-     *
-     * @return  JMenu The file menus object.
-     */
-    protected JMenu buildFileMenu() {
-        JMenu fileMenu = ViewMenuBuilder.buildMenu("File", 'i', false);
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Open new image(A)", "OpenNewImage", 0, this, "open.gif", true));
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Open XCEDE Schema", "OpenXCEDESchema", 0, this, "open.gif", true));
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Open Leica series", "loadLeica", 0, this, "open.gif", true));
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Open image sequence", "openImgSeq", 0, this, "open.gif", true));
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Create blank image(A)", "CreateBlankImage", 0, this, "new.gif",
-                                                   true));
-
-        fileMenu.addSeparator();
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Image browser", "Browse", 0, this, null, true));
-
-        fileMenu.addSeparator();
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, this, null, true));
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Anonymize DICOM directory", "AnonymizeDirectory", 0, this, null,
-                                                   true));
-
-        itemQueryDatabase = ViewMenuBuilder.buildMenuItem("DICOM database access", "QueryDatabase", 0, this,
-                                                          "database.gif", true);
-
-        fileMenu.add(itemQueryDatabase);
-
-        itemDicom = ViewMenuBuilder.buildCheckBoxMenuItem("DICOM receiver on/off", "Dicom", this,
-                                                          Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER));
-
-        fileMenu.add(itemDicom);
-
-        fileMenu.addSeparator();
-        JMenu birnMenu = ViewMenuBuilder.buildMenu("SRB-BIRN", 0, true);
-        birnMenu.add(ViewMenuBuilder.buildMenuItem("Open", "OpenSRBFile", 0, this, null, true));
-        birnMenu.add(ViewMenuBuilder.buildMenuItem("Save", "SaveSRBFile", 0, this, null, true));
-        birnMenu.add(ViewMenuBuilder.buildMenuItem("Transfer", "TransferSRBFiles", 0, this, null, true));
-        menuItemAutoUpload =ViewMenuBuilder.buildCheckBoxMenuItem("Auto Upload on|off", "AutoUploadToSRB", this, (pipeline != null)?true:false); 
-        birnMenu.add(menuItemAutoUpload);
-        fileMenu.add(birnMenu);
-        
-        fileMenu.addSeparator();
-
-        JMenu menu = ViewMenuBuilder.buildMenu("Scripts", 0, true);
-        menu.add(ViewMenuBuilder.buildMenuItem("Record script", "RecordScript", 0, this, null, false));
-
-        menu.add(ViewMenuBuilder.buildMenuItem("Run Script", "RunScript", 0, this, null, false));
-
-        fileMenu.add(menu);
-
-        fileMenu.addSeparator();
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Open graph", "OpenNewGraph", 0, this, "open.gif", true));
-
-        fileMenu.addSeparator();
-
-        String[] lastImages = Preferences.getLastXImages();
-        String tempStr = null;
-        JMenuItem item = null;
-
-        int numDims;
-        int length;
-
-        if ((lastImages != null) && (lastImages.length > 0)) {
-
-            for (int i = 0; i < lastImages.length; i++) {
-                tempStr = new String(lastImages[i]);
-                length = tempStr.length();
-
-                if (tempStr.endsWith("M")) {
-                    numDims = Integer.parseInt(tempStr.substring(length - 2, length - 1));
-                    tempStr = tempStr.substring(0, tempStr.indexOf(","));
-                    item = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0, this,
-                                                         "multifile_" + numDims + "d.gif", true);
-                } else {
-                    numDims = Integer.parseInt(tempStr.substring(length - 1, length));
-                    tempStr = tempStr.substring(0, tempStr.indexOf(","));
-                    item = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0, this,
-                                                         "singlefile_" + numDims + "d.gif", true);
-                }
-
-                item.setActionCommand("LastImage " + i);
-                item.setToolTipText(Preferences.getLastImageAt(i));
-
-                // item.setAccelerator(KeyStroke.getKeyStroke('0' + (i + 1), Event.CTRL_MASK));
-                fileMenu.add(item);
-            }
-
-            fileMenu.addSeparator();
-        }
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Convert old XML", "convertXML", 0, this, null, true));
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, this, null, true));
-
-        fileMenu.addSeparator();
-
-        fileMenu.add(ViewMenuBuilder.buildMenuItem("Exit - MIPAV", "Exit", 0, this, null, true));
-
-        return fileMenu;
-    }
-
-    /**
-     * Build the Help menu.
-     *
-     * @return  the newly constructed Help menu
-     */
-    protected JMenu buildHelpMenu() {
-        JMenu helpMenu = ViewMenuBuilder.buildMenu("Help", 'H', false);
-        // helpMenu.setFont(MipavUtil.font12B);
-        // helpMenu.setMnemonic('H');
-
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("About...", "About", 0, this, null, true));
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("MIPAV License", "License", 0, this, null, true));
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("About Java", "About Java", 0, this, null, true));
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("Help Topics", "Help Topics", 0, this, null, true));
-        helpMenu.addSeparator();
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("Memory Usage", "MemoryUsage", 0, this, null, true));
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("Memory Allocation", "MemoryAdjust", 0, this, null, true));
-        helpMenu.addSeparator();
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("Program Options", "Options", 0, this, null, true));
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("Shortcut Options", "Shortcuts", 0, this, null, true));
-        helpMenu.add(ViewMenuBuilder.buildMenuItem("Image Registry Monitor", "ImageRegistryMonitor", 0, this, null,
-                                                   true));
-
-        helpMenu.addSeparator();
-        itemOutput = ViewMenuBuilder.buildCheckBoxMenuItem("Show/hide Output window", "ShowOutput", this,
-                                                           Preferences.is(Preferences.PREF_SHOW_OUTPUT));
-        helpMenu.add(itemOutput);
-
-        return helpMenu;
-    }
-
-    /**
      * Construct the panel which displays the current memory usage/limit and a garbage collection button.
      *
      * @return  the memory usage panel
@@ -3146,16 +2998,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)) {
             DICOMcatcher = new DICOM_Receiver();
-            itemQueryDatabase.setEnabled(true);
-            itemDicom.setSelected(true);
+            menuBuilder.setMenuItemEnabled("DICOM database access", true);
+            menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
         } else {
 
             if (DICOMcatcher != null) {
                 DICOMcatcher.setStop();
             }
 
-            itemQueryDatabase.setEnabled(false);
-            itemDicom.setSelected(false);
+            menuBuilder.setMenuItemEnabled("DICOM database access", false);
+            menuBuilder.setMenuItemSelected("Enable DICOM receiver", false);
         }
     }
 
