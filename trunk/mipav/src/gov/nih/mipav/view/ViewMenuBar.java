@@ -541,7 +541,7 @@ public class ViewMenuBar {
                                                             menuBuilder.buildMenuItem("Open", "OpenSRBFile", 0, null, true),
                                                             menuBuilder.buildMenuItem("Save", "SaveSRBFile", 0, null, true),
                                                             menuBuilder.buildMenuItem("Transfer", "TransferSRBFiles", 0, null, true),
-                                                            menuBuilder.buildCheckBoxMenuItem("Auto Upload on/off", "AutoUploadToSRB", false)}),
+                                                            menuBuilder.buildCheckBoxMenuItem("Auto Upload on|off", "AutoUploadToSRB", (userInterface.getNDARPipeline()!=null)?true:false)}),
                                         separator,
                                         menuBuilder.makeMenu("Scripts", true,
                                                              new JMenuItem[] {
