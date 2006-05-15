@@ -1366,7 +1366,8 @@ public class ModelImage extends ModelStorageBase {
         coord[2] = coord[2] * res[2];
   
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-        if ((getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL)){
+        if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
+                (getFileInfo()[0].getFileFormat() != FileBase.DICOM) ){
             
             //System.out.println("dicomMatrix = " + dicomMatrix.toString());
             TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
