@@ -559,8 +559,8 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
     /* public boolean setZoomA() {
      * int xDim     = imageA.getExtents()[0]; int yDim     = imageA.getExtents()[1]; float imageTemp[]       = null; int
-     *   pixBufferTemp[]   = null; int   paintBufferTemp[] = null; try   { if (imageA != null) { int bufferFactor = 1;
-     * if ( imageA.isColorImage() ) { bufferFactor = 4; } imageTemp       = new float [bufferFactor * xDim * yDim];
+     * pixBufferTemp[]   = null; int   paintBufferTemp[] = null; try   { if (imageA != null) { int bufferFactor = 1; if
+     * ( imageA.isColorImage() ) { bufferFactor = 4; } imageTemp       = new float [bufferFactor * xDim * yDim];
      * pixBufferTemp   = new int[xDim * yDim]; paintBufferTemp = new int[xDim * yDim]; } } catch (OutOfMemoryError
      * error){ imageTemp      = null; pixBufferTemp   = null; paintBufferTemp = null; System.gc(); throw(error); }
      * imageBufferA  = imageTemp; pixBuffer     = pixBufferTemp; paintBuffer   = paintBufferTemp;
@@ -1817,8 +1817,8 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
         menuBuilder = new ViewMenuBuilder(this);
 
         // build the menuBar based on the number of dimensions for imageA
-        menuBarMaker = new ViewMenuBar(this, menuBuilder);
-        menuBar = menuBarMaker.getMenuBar(imageA.getNDims(), imageA.getType());
+        menuBarMaker = new ViewMenuBar(menuBuilder);
+        menuBar = menuBarMaker.getMenuBar(imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
 
         // imageA.
 

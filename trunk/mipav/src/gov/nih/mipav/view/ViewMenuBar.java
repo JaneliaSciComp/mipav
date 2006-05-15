@@ -23,9 +23,6 @@ public class ViewMenuBar {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** the frame (for actionlistener stuff). */
-    protected ViewJFrameBase frame;
-
     /** Menu and menu item generator. */
     protected ViewMenuBuilder menuBuilder;
 
@@ -40,12 +37,10 @@ public class ViewMenuBar {
     /**
      * Set up the menu bar builder.
      *
-     * @param  frame    the image frame this menu bar is for
      * @param  menuObj  the helper class used to make the menus and menu items
      */
-    public ViewMenuBar(ViewJFrameBase frame, ViewMenuBuilder menuObj) {
-        this.frame = frame;
-        userInterface = frame.getUserInterface();
+    public ViewMenuBar(ViewMenuBuilder menuObj) {
+        userInterface = ViewUserInterface.getReference();
         menuBuilder = menuObj;
     }
 
@@ -65,23 +60,25 @@ public class ViewMenuBar {
      *
      * @param   numberOfDimensions  Dimensionality of image (2D, 3D, 4D...)
      * @param   type                Data type from <code>ModelStorageBase</code>, byte, short, argb, etc.
+     * @param   isDicomImage        Whether the image this menu bar is for is a dicom image.
      *
      * @return  Menu bar with the menus attached.
      */
-    public JMenuBar getMenuBar(int numberOfDimensions, int type) {
+    public JMenuBar getMenuBar(int numberOfDimensions, int type, boolean isDicomImage) {
         JMenuBar menuBar;
 
         try {
             menuBar = new JMenuBar();
-            plugInMenu = userInterface.buildPlugInsMenu(frame);
-            menuBar.add(makeFileMenu());
+            plugInMenu = userInterface.buildPlugInsMenu(userInterface.getActiveImageFrame());
+            menuBar.add(makeFileMenu(true));
             menuBar.add(makeEditMenu());
             menuBar.add(makeVOIMenu());
             menuBar.add(makeLUTMenu());
             menuBar.add(makeAlgorithmsMenu());
             menuBar.add(makeUtilitiesMenu());
             menuBar.add(plugInMenu);
-            menuBar.add(makeImageMenu());
+            menuBar.add(makeScriptingMenu());
+            menuBar.add(makeImageMenu(isDicomImage));
             menuBar.add(makeToolbarsMenu());
             menuBar.add(makeHelpMenu());
         } catch (OutOfMemoryError error) {
@@ -164,7 +161,7 @@ public class ViewMenuBar {
                                                                                            null, false),
 
                                                                  // menuBuilder.buildMenuItem("Adaptive smooth",
-        // "adaptiveSmooth", 0, null, false),
+                                                                 // "adaptiveSmooth", 0, null, false),
                                                                  menuBuilder.buildMenuItem("Anisotropic diffusion",
                                                                                            null, 0, null, false),
                                                                  menuBuilder.buildMenuItem("Boundary attenuation",
@@ -173,7 +170,8 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Coherence-enhancing diffusion",
                                                                                            "CoherDiff", 0, null,
                                                                                            false),
-                                                                 menuBuilder.buildMenuItem("Color edge", "ColorEdge", 0, null, false),
+                                                                 menuBuilder.buildMenuItem("Color edge", "ColorEdge", 0,
+                                                                                           null, false),
                                                                  menuBuilder.buildMenuItem("Gaussian blur", null, 0,
                                                                                            null, false),
                                                                  menuBuilder.buildMenuItem("Gradient magnitude", null,
@@ -279,17 +277,19 @@ public class ViewMenuBar {
                                                                                                                     0,
                                                                                                                     null,
                                                                                                                     false),
-                                                                                          //menuBuilder.buildMenuItem("Iterative blind deconvolution",
-                                                                                          //                          null,
-                                                                                          //                          0,
-                                                                                          //                          null,
-                                                                                          //                          false),
-                                                                                        menuBuilder.buildMenuItem("Maximum Likelihood Iterative blind deconvolution",
-                                                                                                                  null,
-                                                                                                                  0,
-                                                                                                                  null,
-                                                                                                                  false)
 
+                                                                                          //
+                                                                                          // menuBuilder.buildMenuItem("Iterative
+                                                                                          // blind deconvolution",
+                                                                                          // null,
+                                                                                          // 0,
+                                                                                          // null,
+                                                                                          // false),
+                                                                                          menuBuilder.buildMenuItem("Maximum Likelihood Iterative blind deconvolution",
+                                                                                                                    null,
+                                                                                                                    0,
+                                                                                                                    null,
+                                                                                                                    false)
                                                                                       }),
                                                              }),
                                         menuBuilder.makeMenu("Morphological", false,
@@ -334,20 +334,20 @@ public class ViewMenuBar {
 
                                         // menuBuilder.buildMenuItem("Plot surface", null, 0, null, false),
                                         // menuBuilder.buildMenuItem("Point area average intensities", "Point area", 0,
-        // null, false),
+                                        // null, false),
                                         menuBuilder.buildMenuItem("Principal component", "Principal components", 0,
                                                                   null, false),
                                         menuBuilder.makeMenu("Registration", false,
                                                              new JMenuItem[] {
 
                                                                  // menuBuilder.buildMenuItem("AFNI - Shear",
-        // "MRIShear", 0, null, false),
+                                                                 // "MRIShear", 0, null, false),
                                                                  // menuBuilder.buildMenuItem("AIR linear", null, 0,
-        // null, false),
+                                                                 // null, false),
                                                                  // menuBuilder.buildMenuItem("Chamfer", null, 0, null,
-        // false),
+                                                                 // false),
                                                                  // menuBuilder.buildMenuItem("AIR nonlinear", null, 0,
-        // null, false),
+                                                                 // null, false),
                                                                  menuBuilder.buildMenuItem("Align patient position",
                                                                                            "Patient Position", 0, null,
                                                                                            false),
@@ -388,7 +388,7 @@ public class ViewMenuBar {
                                                                                            "TSOAR", 0, null, false),
 
                                                                  // menuBuilder.buildMenuItem("Turbo", "Turbo", 0,
-        // null, false),
+                                                                 // null, false),
                                                                  menuBuilder.buildMenuItem("VOI landmark",
                                                                                            "VOILandmark", 0, null,
                                                                                            false),
@@ -399,7 +399,7 @@ public class ViewMenuBar {
                                                                                            "evalSeg", 0, null, false),
 
                                                                  // menuBuilder.buildMenuItem("Extract object surface",
-        // "extractObjectSurface", 0, null, false),
+                                                                 // "extractObjectSurface", 0, null, false),
                                                                  menuBuilder.makeMenu("Fuzzy C-means", false,
                                                                                       new JMenuItem[] {
                                                                                           menuBuilder.buildMenuItem("Multispectral",
@@ -428,7 +428,7 @@ public class ViewMenuBar {
                                                              }),
 
                                         // menuBuilder.buildMenuItem("Non-parametric", "nonparametric", 0, null,
-        // false)}),
+                                        // false)}),
                                         // menuBuilder.buildMenuItem("Stereo depth", "StereoDepth", 0, null, false),
                                         menuBuilder.makeMenu("Shading correction", false,
                                                              new JMenuItem[] {
@@ -460,6 +460,52 @@ public class ViewMenuBar {
     }
 
     /**
+     * Create the image capture/print File submenu.
+     *
+     * @param   isAnImageOpen  Whether MIPAV has an image open (determines whether the menu is enabled).
+     *
+     * @return  The new submenu
+     *
+     * @see     #makeFileMenu(boolean)
+     */
+    protected JMenu makeCaptureMenu(boolean isAnImageOpen) {
+        JMenu captureMenu = menuBuilder.makeMenu("Capture/print image", true,
+                                                 new JComponent[] {
+                                                     menuBuilder.buildMenuItem("Capture and print image", "PrintImage",
+                                                                               0, "printer.gif", true),
+                                                     menuBuilder.buildMenuItem("Capture image region/slice to TIFF(RGB)",
+                                                                               "CaptureTiff", 0, "camera.gif", true),
+                                                     menuBuilder.buildMenuItem("Capture image slices to new frame",
+                                                                               "CaptureTiffs", 0, "camera.gif", true),
+                                                 });
+
+        menuBuilder.setMenuItemEnabled("Capture/print image", isAnImageOpen);
+
+        return captureMenu;
+    }
+
+
+    /**
+     * Create the Dicom File submenu.
+     *
+     * @return  The new submenu
+     *
+     * @see     #makeFileMenu(boolean)
+     */
+    protected JMenu makeDicomMenu() {
+        return menuBuilder.makeMenu("Dicom", true,
+                                    new JComponent[] {
+                                        menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),
+                                        menuBuilder.buildMenuItem("Anonymize DICOM directory", "AnonymizeDirectory", 0,
+                                                                  null, true),
+                                        menuBuilder.buildMenuItem("DICOM database access", "QueryDatabase", 0,
+                                                                  "database.gif", true),
+                                        menuBuilder.buildCheckBoxMenuItem("Enable DICOM receiver", "Dicom",
+                                                                          Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)),
+                                    });
+    }
+
+    /**
      * Construct the edit menu.
      *
      * @return  the edit menu
@@ -482,83 +528,53 @@ public class ViewMenuBar {
     /**
      * Construct the file menu.
      *
+     * @param   isAnImageOpen  indicates whether an image has been opened in MIPAV yet (false if calling from
+     *                         ViewUserInterface, true otherwise)
+     *
      * @return  the file menu
      */
-    protected JMenu makeFileMenu() {
+    protected JMenu makeFileMenu(boolean isAnImageOpen) {
+        JMenu loadMenu = makeLoadBMenu(isAnImageOpen);
+
+        JMenu captureMenu = makeCaptureMenu(isAnImageOpen);
+
+        JMenu srbMenu = makeSRBMenu();
+
+        JMenu dicomMenu = makeDicomMenu();
+
+        JMenuItem closeImageBItem = menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true);
+        menuBuilder.setMenuItemEnabled("Close image(B)", isAnImageOpen);
+
+        JMenuItem saveImageItem = menuBuilder.buildMenuItem("Save image", "SaveImage", 0, "save.gif", true);
+        JMenuItem saveImageAsItem = menuBuilder.buildMenuItem("Save image as", "SaveImageAs", 0, "save.gif", true);
+        menuBuilder.setMenuItemEnabled("Save image", isAnImageOpen);
+        menuBuilder.setMenuItemEnabled("Save image as", isAnImageOpen);
+
         return menuBuilder.makeMenu("File", 'F', false,
                                     new JComponent[] {
-                                        menuBuilder.makeMenu("Open", true,
+                                        menuBuilder.buildMenuItem("Open image (A) from disk", "OpenNewImage", 0,
+                                                                  "open.gif", true),
+                                        menuBuilder.makeMenu("Open image (A)...", true,
                                                              new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Image(A)", "OpenNewImage",
+                                                                 menuBuilder.buildMenuItem("Leica series", "loadLeica",
                                                                                            0, "open.gif", true),
-
-                                                                 // menuBuilder.buildMenuItem("Multi-file(A)",
-        // "OpenImageStack", null, "open.gif"),
-                                                                 menuBuilder.buildMenuItem("Open XCEDE Schema", 
-                                                                                           "OpenXCEDESchema", 0, 
-                                                                                           "open.gif", true),
-                                                                 menuBuilder.buildMenuItem("Leica series(A)",
-                                                                                           "loadLeica", 0, "open.gif",
-                                                                                           true),
-                                                                 menuBuilder.buildMenuItem("Open image sequence",
+                                                                 menuBuilder.buildMenuItem("Image sequence",
                                                                                            "openImgSeq", 0, "open.gif",
                                                                                            true),
-                                                                 menuBuilder.buildMenuItem("Create blank image(A)",
+                                                                 menuBuilder.buildMenuItem("Create blank image",
                                                                                            "CreateBlankImage", 0,
-                                                                                           "open.gif", true)
-                                                             }), separator,
-                                        menuBuilder.makeMenu("Load", true,
-                                                             new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Image(B) from frame",
-                                                                                           "ComponentLoadB", 0,
-                                                                                           "frame.gif", true),
-                                                                 menuBuilder.buildMenuItem("Image(B) from file",
-                                                                                           "LoadB", 0, "open.gif",
+                                                                                           "open.gif", true),
+                                                                 menuBuilder.buildMenuItem("Image browser",
+                                                                                           "BrowseImages", 0, null,
                                                                                            true),
-                                                                 menuBuilder.buildMenuItem("Blank image(B)",
-                                                                                           "LoadBlankB", 0, "open.gif",
-                                                                                           true),
-                                                             }), separator,
-                                        menuBuilder.buildMenuItem("Save image", "SaveImage", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Save image as", "SaveImageAs", 0, "save.gif", true),
-                                        menuBuilder.buildMenuItem("Print image", "PrintImage", 0, "printer.gif", true),
-                                        menuBuilder.buildMenuItem("Capture image to TIFF(RGB)", "CaptureTiff", 0,
-                                                                  "camera.gif", true),
-                                        menuBuilder.buildMenuItem("Capture images to new frame", "CaptureTiffs", 0,
-                                                                  "camera.gif", true), separator,
-                                        menuBuilder.buildMenuItem("Image browser", "CreateTree", 0, null, true),
-                                        separator,
-                                        menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),
-                                        menuBuilder.buildMenuItem("Anonymize DICOM directory", "AnonymizeDirectory", 0,
-                                                                  null, true),
-                                        menuBuilder.buildMenuItem("DICOM database access", "QueryDatabase", 0,
-                                                                  "database.gif", true),
-                                        menuBuilder.buildCheckBoxMenuItem("DICOM receiver on/off", "Dicom",
-                                                                          Preferences.is(Preferences.PREF_AUTOSTART_DICOM_RECEIVER)),
-                                        separator,
-                                        menuBuilder.makeMenu("SRB-BIRN", true,
-                                                            new JMenuItem[] {
-                                                            menuBuilder.buildMenuItem("Open", "OpenSRBFile", 0, null, true),
-                                                            menuBuilder.buildMenuItem("Save", "SaveSRBFile", 0, null, true),
-                                                            menuBuilder.buildMenuItem("Transfer", "TransferSRBFiles", 0, null, true),
-                                                            menuBuilder.buildCheckBoxMenuItem("Auto Upload on|off", "AutoUploadToSRB", (userInterface.getNDARPipeline()!=null)?true:false)}),
-                                        separator,
-                                        menuBuilder.makeMenu("Scripts", true,
-                                                             new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Record script",
-                                                                                           "RecordScript", 0, null,
-                                                                                           false),
-                                                                 menuBuilder.buildMenuItem("Run script", "RunScript", 0,
-                                                                                           null, false)
-                                                             }), separator,
-                                        menuBuilder.buildMenuItem("Open graph", "OpenNewGraph", 0, "open.gif", true),
-
-        separator, menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true), separator,
-                                        menuBuilder.buildQuickList(), separator,
+                                                             }), separator, loadMenu, closeImageBItem, separator,
+                                        saveImageItem, saveImageAsItem, captureMenu, separator, dicomMenu, separator,
+                                        srbMenu, separator, menuBuilder.buildQuickList(), separator,
                                         menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null,
                                                                   true),
-                                        menuBuilder.buildMenuItem("Convert old XML", "convertXML", 0, null, true),
-                                        separator, menuBuilder.buildMenuItem("Exit - MIPAV", "Exit", 'x', null, true)
+
+                                        // menuBuilder.buildMenuItem("Convert old XML", "convertXML", 0, null, true),
+                                        separator, menuBuilder.buildMenuItem("Exit", "Exit", 'x', null, true)
                                     });
     }
 
@@ -570,33 +586,33 @@ public class ViewMenuBar {
     protected JMenu makeHelpMenu() {
         return menuBuilder.makeMenu("Help", 'H', false,
                                     new JComponent[] {
-                                        menuBuilder.buildMenuItem("About...", "About", 0, null, true),
-                                        menuBuilder.buildMenuItem("MIPAV license", "License", 0, null, true),
-                                        menuBuilder.buildMenuItem("About java", "AboutJava", 0, null, true),
-                                        menuBuilder.buildMenuItem("Help topics", "Help", 0, null, true), separator,
+                                        menuBuilder.buildMenuItem("About MIPAV", "About", 0, null, true),
+                                        menuBuilder.buildMenuItem("JVM information", "AboutJava", 0, null, true),
+                                        menuBuilder.buildMenuItem("MIPAV license", "License", 0, null, true), separator,
+                                        menuBuilder.buildMenuItem("MIPAV help topics", "Help", 0, null, true),
+                                        separator,
                                         menuBuilder.buildMenuItem("Memory usage", "MemoryUsage", 0, null, true),
                                         menuBuilder.buildMenuItem("Memory allocation", "MemoryAdjust", 0, null, true),
-                                        separator,
-                                        menuBuilder.buildMenuItem("Program options", "Options", 0, null, true),
-                                        menuBuilder.buildMenuItem("Shortcut editor", "Shortcuts", 0, null, true),
                                         menuBuilder.buildMenuItem("Image registry monitor", "ImageRegistryMonitor", 0,
                                                                   null, true), separator,
-                                        menuBuilder.buildCheckBoxMenuItem("Show/hide output window", "ShowOutput",
-                                                                          Preferences.is(Preferences.PREF_SHOW_OUTPUT)),
+                                        menuBuilder.buildMenuItem("MIPAV options", "Options", 0, null, true),
+                                        menuBuilder.buildMenuItem("Shortcut editor", "Shortcuts", 0, null, true),
                                     });
     }
 
     /**
      * Construct the image menu.
      *
+     * @param   isDicomImage  Whether the image this menu is attached to is a dicom image.
+     *
      * @return  the image menu
      */
-    protected JMenu makeImageMenu() {
+    protected JMenu makeImageMenu(boolean isDicomImage) {
 
         // grabs the show overlay from prefs
         boolean showOverlay = false;
 
-        if (frame.getImageA().isDicomImage()) {
+        if (isDicomImage) {
             showOverlay = Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS);
         } else {
             showOverlay = Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS);
@@ -661,6 +677,30 @@ public class ViewMenuBar {
     }
 
     /**
+     * Create the Load image B File submenu.
+     *
+     * @param   isAnImageOpen  Whether MIPAV has an image open (determines whether the menu is enabled).
+     *
+     * @return  The new submenu
+     *
+     * @see     #makeFileMenu(boolean)
+     */
+    protected JMenu makeLoadBMenu(boolean isAnImageOpen) {
+        JMenu loadMenu = menuBuilder.makeMenu("Load image (B)", true,
+                                              new JMenuItem[] {
+                                                  menuBuilder.buildMenuItem("From frame", "ComponentLoadB", 0,
+                                                                            "frame.gif", true),
+                                                  menuBuilder.buildMenuItem("From file", "LoadB", 0, "open.gif", true),
+                                                  menuBuilder.buildMenuItem("Create blank image", "LoadBlankB", 0,
+                                                                            "open.gif", true),
+                                              });
+
+        menuBuilder.setMenuItemEnabled("Load image (B)", isAnImageOpen);
+
+        return loadMenu;
+    }
+
+    /**
      * Construct the LUT menu.
      *
      * @return  the LUT menu
@@ -679,6 +719,41 @@ public class ViewMenuBar {
                                         separator,
                                         menuBuilder.buildMenuItem("Histogram - LUT...", "DisplayLUT", 0, "histolut.gif",
                                                                   true),
+                                    });
+    }
+
+    /**
+     * Create the Scripting menu.
+     *
+     * @return  The new scripting menu
+     */
+    protected JMenu makeScriptingMenu() {
+        return menuBuilder.makeMenu("Scripts", true,
+                                    new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("Record script", "RecordScript", 0, null, false),
+                                        menuBuilder.buildMenuItem("Run script", "RunScript", 0, null, false)
+                                    });
+    }
+
+    /**
+     * Create the srb File submenu.
+     *
+     * @return  The new submenu
+     *
+     * @see     #makeFileMenu(boolean)
+     */
+    protected JMenu makeSRBMenu() {
+        boolean isAutoUploadEnabled = ((userInterface != null) && (userInterface.getNDARPipeline() != null));
+
+        return menuBuilder.makeMenu("SRB-BIRN", true,
+                                    new JMenuItem[] {
+                                        menuBuilder.buildMenuItem("Open XCEDE schema", "OpenXCEDESchema", 0, "open.gif",
+                                                                  true),
+                                        menuBuilder.buildMenuItem("Open SRB from image", "OpenSRBFile", 0, null, true),
+                                        menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile", 0, null, true),
+                                        menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
+                                        menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
+                                                                          isAutoUploadEnabled)
                                     });
     }
 
@@ -783,7 +858,7 @@ public class ViewMenuBar {
                                         menuBuilder.makeMenu("Rotate", false,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("X axis 180", "RotateX180",
-                                                                                            0, null, false),
+                                                                                           0, null, false),
                                                                  menuBuilder.buildMenuItem("X axis +90", "RotateXPlus",
                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("X axis -90", "RotateXMinus",
@@ -881,6 +956,8 @@ public class ViewMenuBar {
                                                                                            "Save all VOIs to...", 0,
                                                                                            "save.gif", true)
                                                              }), separator,
+                                        menuBuilder.buildMenuItem("Open VOI intensity graph", "OpenNewGraph", 0,
+                                                                  "open.gif", true), separator,
                                         menuBuilder.buildMenuItem("Group VOIs", "GroupVOIs", 0, null, true),
                                         menuBuilder.makeMenu("VOI order", true,
                                                              new JMenuItem[] {

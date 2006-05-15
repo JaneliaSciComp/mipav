@@ -313,10 +313,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return;
         }
 
-        if (command.equals("ShowOutput")) {
-            userInterface.toggleOutputWindow();
-        }
-
         if (command.equals("PropagatePaintPrev")) {
             propagatePaintToPreviousSlice();
         } else if (command.equals("PropagatePaintNext")) {
@@ -332,7 +328,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
-        } else if(command.equals("OpenXCEDESchema")){
+        } else if (command.equals("OpenXCEDESchema")) {
             userInterface.openXCEDESchema();
         } else if (command.equals("Zoom linearly")) {
             componentImage.zoomMode = ViewJComponentEditImage.LINEAR;
@@ -362,15 +358,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 menuBuilder.setMenuItemEnabled("DICOM database access", false);
-                
+
                 /**
                  * Also need to disable the auto upload to srb function.
                  */
-                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem)menuBuilder.getMenuItem("Auto Upload on|off");
-                if(menuItemAutoUpload.isSelected()){
+                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Auto Upload on|off");
+                if (menuItemAutoUpload.isSelected()) {
                     menuItemAutoUpload.setSelected(false);
                 }
-                if(userInterface.getNDARPipeline() != null){
+                if (userInterface.getNDARPipeline() != null) {
                     userInterface.getNDARPipeline().uninstall();
                 }
             }
@@ -381,26 +377,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.openImageFrame();
         } else if (command.equals("CreateBlankImage")) {
             userInterface.createBlankImage(null);
-        } else if (command.equals("CreateTree")) {
+        } else if (command.equals("BrowseImages")) {
             userInterface.buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
             userInterface.buildDICOMFrame();
-        } else if(command.equals("OpenSRBFile")){
+        } else if (command.equals("OpenSRBFile")) {
             userInterface.openSRBFile();
-        } else if(command.equals("SaveSRBFile")){
+        } else if (command.equals("SaveSRBFile")) {
             userInterface.saveSRBFile();
-        } else if(command.equals("TransferSRBFiles")){
+        } else if (command.equals("TransferSRBFiles")) {
             SRBFileTransferer transferer = new SRBFileTransferer();
             transferer.transferFiles();
-        } else if(command.equals("AutoUploadToSRB")){
+        } else if (command.equals("AutoUploadToSRB")) {
             NDARPipeline pipeline = userInterface.getNDARPipeline();
-            if(pipeline == null){
+            if (pipeline == null) {
                 pipeline = new NDARPipeline();
                 userInterface.setNDARPipeline(pipeline);
             }
-            if(((JCheckBoxMenuItem) source).isSelected()){
-                JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem)menuBuilder.getMenuItem("DICOM receiver on/off");
-                if(!itemDicom.isSelected()){
+            if (((JCheckBoxMenuItem) source).isSelected()) {
+                JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Enable DICOM receiver");
+                if (!itemDicom.isSelected()) {
                     if (userInterface.getDICOMCatcher() != null) {
                         userInterface.getDICOMCatcher().setStop();
                     }
@@ -409,7 +405,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 }
                 pipeline.install(userInterface.getDICOMCatcher());
-           }else{
+            } else {
                 pipeline.uninstall();
                 pipeline = null;
             }
@@ -502,7 +498,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         nTImage = imageB.getExtents()[3];
                         zSlice = (imageB.getExtents()[2] - 1) / 2;
                         nImage = imageB.getExtents()[2];
-                        menuBar = menuBarMaker.getMenuBar(4, imageB.getType());
+                        menuBar = menuBarMaker.getMenuBar(4, imageB.getType(), imageB.isDicomImage());
                         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                                               menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -537,7 +533,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     nTImage = imageB.getExtents()[3];
                     zSlice = (imageB.getExtents()[2] - 1) / 2;
                     nImage = imageB.getExtents()[2];
-                    menuBar = menuBarMaker.getMenuBar(4, imageB.getType());
+                    menuBar = menuBarMaker.getMenuBar(4, imageB.getType(), imageB.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                           menuBuilder.isMenuItemSelected("VOI toolbar"),
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -724,7 +720,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     nTImage = 0;
                     zSlice = (imageA.getExtents()[2] - 1) / 2;
                     nImage = imageA.getExtents()[2];
-                    menuBar = menuBarMaker.getMenuBar(3, imageA.getType());
+                    menuBar = menuBarMaker.getMenuBar(3, imageA.getType(), imageA.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                           menuBuilder.isMenuItemSelected("VOI toolbar"),
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -3683,7 +3679,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 nTImage = imageB.getExtents()[3];
                 zSlice = (imageB.getExtents()[2] - 1) / 2;
                 nImage = imageB.getExtents()[2];
-                menuBar = menuBarMaker.getMenuBar(4, imageB.getType());
+                menuBar = menuBarMaker.getMenuBar(4, imageB.getType(), imageB.isDicomImage());
                 controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                       menuBuilder.isMenuItemSelected("VOI toolbar"),
                                       menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -5026,8 +5022,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         menuBuilder = new ViewMenuBuilder(this);
 
         // build the menuBar based on the number of dimensions for imageA
-        menuBarMaker = new ViewMenuBar(this, menuBuilder);
-        menuBar = menuBarMaker.getMenuBar(imageA.getNDims(), imageA.getType());
+        menuBarMaker = new ViewMenuBar(menuBuilder);
+        menuBar = menuBarMaker.getMenuBar(imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
 
         menuBar.addKeyListener(this);
 

@@ -159,6 +159,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private JCheckBox showLineVOIAngleBox;
 
     /** DOCUMENT ME! */
+    private JCheckBox showOutputWindow;
+
+    /** DOCUMENT ME! */
     private JCheckBox showPaintBorderBox;
 
     /** DOCUMENT ME! */
@@ -271,6 +274,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeLaxCheckOptions(gbc, gbl);
         makeCheckOnCloseFrameOptions(gbc, gbl);
         makeLoggingOptions(gbc, gbl);
+        makeOutputWindowOptions(gbc, gbl);
         makeDebugOptions(gbc, gbl);
         makeFontOptions(gbc, gbl);
 
@@ -335,6 +339,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                                            debugMinorBox.isSelected(), debugAlgorithmBox.isSelected(),
                                            debugFileIOBox.isSelected(), debugCommsBox.isSelected()
                                        });
+
+            Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
 
             // Preferences.setProperty("DEBUG", new Integer(debugLevel.getSelectedIndex()));
             Preferences.setProperty("SplashGraphics", String.valueOf(displaySplash.isSelected()));
@@ -642,6 +648,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         if (e.getSource().equals(fontChooser)) {
             fontChooser.setFont(new Font(labels[fontChooser.getSelectedIndex()].getText(), 0, 12));
+        } else if (e.getSource().equals(showOutputWindow)) {
+            ViewUserInterface.getReference().enableOutputWindow(showOutputWindow.isSelected());
         }
     }
 
@@ -1161,6 +1169,32 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 }
             });
     } // end makeNumericsOnly
+
+    /**
+     * Makes the checkbox where the user can decide whether the output window should appear on startup.
+     *
+     * @param  gbc  the constraints used in the globalChangesPanel
+     * @param  gbl  the layout used in the globablChangesPanel
+     */
+    protected void makeOutputWindowOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        showOutputWindow = new JCheckBox("Show data/debugging output window");
+        showOutputWindow.setFont(MipavUtil.font12);
+        showOutputWindow.setForeground(Color.black);
+        showOutputWindow.addActionListener(this);
+        showOutputWindow.addItemListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbl.setConstraints(showOutputWindow, gbc);
+        otherPanel.add(showOutputWindow);
+
+        if (!Preferences.isPreferenceSet(Preferences.PREF_SHOW_OUTPUT)) {
+            Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, "true");
+        }
+
+        // preset the choices.
+        showOutputWindow.setSelected(Preferences.is(Preferences.PREF_SHOW_OUTPUT));
+    }
 
     /**
      * Makes the "Show Paint toolbar" and the "Show paint border" option lines in the globalChangesPanel.

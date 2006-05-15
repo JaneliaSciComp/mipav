@@ -19,8 +19,8 @@ public class ViewMenuBuilder {
     /** Link to the file menu so that quicklist can be rebuilt and added. */
     private JMenu fileMenu;
 
-    /** Frame to add menus to. */
-    private JFrame frame;
+    /** The class which wants to listen to the menu items generated. */
+    private ActionListener listener;
 
     /** Holder of all the menu items. */
     private Vector menuItemVector;
@@ -28,7 +28,7 @@ public class ViewMenuBuilder {
     /** List that holds the last X number of recently opened images. */
     private QuickList quickList;
 
-    /** Index for rebuilding quicklist */
+    /** Index for rebuilding quicklist. */
     private int quicklistIndex = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -36,10 +36,10 @@ public class ViewMenuBuilder {
     /**
      * Sets frame to add menus to, and initializes menu item vector.
      *
-     * @param  _UI  Frame to add menus to.
+     * @param  al  class which wants notification of interations with the generated menu items
      */
-    public ViewMenuBuilder(JFrame _UI) {
-        frame = _UI;
+    public ViewMenuBuilder(ActionListener al) {
+        listener = al;
         menuItemVector = new Vector();
     }
 
@@ -453,8 +453,8 @@ public class ViewMenuBuilder {
 
         JCheckBoxMenuItem menuEntry = new JCheckBoxMenuItem();
 
-        if ((ActionListener) frame != null) {
-            menuEntry.addActionListener((ActionListener) frame);
+        if (listener != null) {
+            menuEntry.addActionListener(listener);
         }
 
         menuEntry.setLayout(new GridBagLayout());
@@ -543,8 +543,8 @@ public class ViewMenuBuilder {
     public JMenuItem buildMenuItem(String text, String cmd, int mnemonic, String iconName, boolean useIconPadding) {
         JMenuItem menuEntry = new JMenuItem();
 
-        if ((ActionListener) frame != null) {
-            menuEntry.addActionListener((ActionListener) frame);
+        if (listener != null) {
+            menuEntry.addActionListener(listener);
         }
 
         // set Icon
@@ -652,7 +652,7 @@ public class ViewMenuBuilder {
      * @return  QuickList
      */
     public QuickList buildQuickList() {
-        return new QuickList(frame);
+        return new QuickList(listener);
     }
 
     /**
@@ -665,7 +665,23 @@ public class ViewMenuBuilder {
         }
 
         menuItemVector = null;
-        frame = null;
+        listener = null;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   menuItemName  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public JMenuItem getMenuItem(String menuItemName) {
+        for (int i = 0; i < menuItemVector.size(); i++) {
+            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(menuItemName)) {
+                return (JMenuItem) ((MipavMenuItem) (menuItemVector.elementAt(i))).getItem();
+            }
+        }
+        return null;
     }
 
     /**
@@ -690,7 +706,7 @@ public class ViewMenuBuilder {
         }
 
         if (menuItem == null) {
-            Preferences.debug("Called isEnabled on " + name + " which does not exist.");
+            Preferences.debug("Called isEnabled on " + name + " which does not exist.\n", Preferences.DEBUG_MINOR);
 
             return false;
         } else {
@@ -767,9 +783,9 @@ public class ViewMenuBuilder {
                     menu.add((JMenu) menuComponent[i]);
                 } else if (menuComponent[i] instanceof JMenuItem) {
                     menu.add((JMenuItem) menuComponent[i]);
-                } else if ((menuComponent[i] instanceof JCheckBoxMenuItem) && (frame instanceof ItemListener)) {
+                } else if ((menuComponent[i] instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
                     JCheckBoxMenuItem checkboxItem = (JCheckBoxMenuItem) menuComponent[i];
-                    checkboxItem.addItemListener((ItemListener) frame);
+                    checkboxItem.addItemListener((ItemListener) listener);
                     menu.add(checkboxItem);
                 } else if (menuComponent[i] instanceof JSeparator) {
                     menu.addSeparator();
@@ -824,16 +840,16 @@ public class ViewMenuBuilder {
                     menu.add((JMenu) menuComponent[i]);
                 } else if (menuComponent[i] instanceof JMenuItem) {
                     menu.add((JMenuItem) menuComponent[i]);
-                } else if ((menuComponent[i] instanceof JCheckBoxMenuItem) && (frame instanceof ItemListener)) {
+                } else if ((menuComponent[i] instanceof JCheckBoxMenuItem) && (listener instanceof ItemListener)) {
                     JCheckBoxMenuItem checkboxItem = (JCheckBoxMenuItem) menuComponent[i];
-                    checkboxItem.addItemListener((ItemListener) frame);
+                    checkboxItem.addItemListener((ItemListener) listener);
                     menu.add(checkboxItem);
                 } else if (menuComponent[i] instanceof JSeparator) {
                     menu.addSeparator();
                 } else if (menuComponent[i] instanceof QuickList) {
                     Vector list = ((QuickList) menuComponent[i]).getList();
 
-                    //save the index of the quicklist here for rebuilding
+                    // save the index of the quicklist here for rebuilding
                     quicklistIndex = menu.getItemCount();
 
                     if (list.size() > 0) {
@@ -887,15 +903,6 @@ public class ViewMenuBuilder {
             Preferences.debug("Unable to find menu item named " + name + "\n", Preferences.DEBUG_MINOR);
         }
     }
-    
-    public JMenuItem getMenuItem(String menuItemName){
-        for (int i = 0; i < menuItemVector.size(); i++) {
-            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(menuItemName)) {
-                return (JMenuItem) ((MipavMenuItem)(menuItemVector.elementAt(i))).getItem();
-            }
-        }
-        return null;
-    }
 
     /**
      * Provides a method for changing the status of a checkbox menu item.
@@ -920,7 +927,8 @@ public class ViewMenuBuilder {
         }
 
         if (menuItem == null) {
-            Preferences.debug("called setSelected on " + actionCommand + " which does not exist.");
+            Preferences.debug("called setSelected on " + actionCommand + " which does not exist.\n",
+                              Preferences.DEBUG_MINOR);
 
             return;
         }
@@ -928,7 +936,8 @@ public class ViewMenuBuilder {
         try {
             checkItem = (JCheckBoxMenuItem) menuItem;
         } catch (ClassCastException e) {
-            Preferences.debug("called setSelected on " + actionCommand + " which is not a checkbox.");
+            Preferences.debug("called setSelected on " + actionCommand + " which is not a checkbox.\n",
+                              Preferences.DEBUG_MINOR);
 
             return;
         }
@@ -973,7 +982,7 @@ public class ViewMenuBuilder {
         private static final long serialVersionUID = -4787325627153954566L;
 
         /** DOCUMENT ME! */
-        private JFrame listener = null;
+        private ActionListener listener = null;
 
         /** DOCUMENT ME! */
         private Vector quickListItems = null;
@@ -983,7 +992,7 @@ public class ViewMenuBuilder {
          *
          * @param  listener  DOCUMENT ME!
          */
-        public QuickList(JFrame listener) {
+        public QuickList(ActionListener listener) {
             this.listener = listener;
             this.quickListItems = new Vector();
             rebuild();
@@ -1041,15 +1050,13 @@ public class ViewMenuBuilder {
                     if (tempStr.endsWith("M")) {
                         numDims = Integer.parseInt(tempStr.substring(length - 2, length - 1));
                         tempStr = tempStr.substring(0, tempStr.indexOf(","));
-                        temp = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0,
-                                                             (ActionListener) frame, "multifile_" + numDims + "d.gif",
-                                                             true);
+                        temp = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
+                                                             "multifile_" + numDims + "d.gif", true);
                     } else {
                         numDims = Integer.parseInt(tempStr.substring(length - 1, length));
                         tempStr = tempStr.substring(0, tempStr.indexOf(","));
-                        temp = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0,
-                                                             (ActionListener) frame, "singlefile_" + numDims + "d.gif",
-                                                             true);
+                        temp = ViewMenuBuilder.buildMenuItem((i + 1) + " " + tempStr, "LastImage " + i, 0, listener,
+                                                             "singlefile_" + numDims + "d.gif", true);
                     }
 
                     temp.setToolTipText(Preferences.getLastImageAt(i));
