@@ -360,15 +360,19 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
                 if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0040") != null) {
                     sex = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0040"));
-
-                    if (sex.substring(0, 1).equalsIgnoreCase("M")) {
-                        male = true;
-                        haveSex = true;
-                    } else if (sex.substring(0, 1).equalsIgnoreCase("F")) {
-                        male = false;
-                        haveSex = true;
-                    } else {
-                        Preferences.debug("Sex not M or F.\n");
+                    if (sex.length() != 0) {
+                        if (sex.substring(0, 1).equalsIgnoreCase("M")) {
+                            male = true;
+                            haveSex = true;
+                        } else if (sex.substring(0, 1).equalsIgnoreCase("F")) {
+                            male = false;
+                            haveSex = true;
+                        } else {
+                            Preferences.debug("Sex not M or F.\n");
+                        }
+                    }
+                    else {
+                        Preferences.debug("Sex string is zero length\n");
                     }
                 } else {
                     Preferences.debug("Sex string is null\n");
