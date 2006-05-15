@@ -1610,6 +1610,35 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public float[] getOrigin() {
         return origin;
     }
+    
+    /**
+     * 
+     * @return float[] LPSOrigin
+     */
+    public float[] getLPSOrigin() {
+        float LPSOrigin[] = new float[3];
+        LPSOrigin[0] = origin[0];
+        LPSOrigin[1] = origin[1];
+        LPSOrigin[2] = origin[2];
+        for (int j = 0; j < 3; j++) {
+            if (getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
+                getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
+                LPSOrigin[0] = getOrigin()[j];
+               
+            }
+            else if (getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
+                     getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
+                LPSOrigin[1] = getOrigin()[j];
+                   
+            }
+            else if (getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
+                     getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
+                LPSOrigin[2] = getOrigin()[j];
+                   
+            }
+        }
+        return LPSOrigin;
+    }
 
     /**
      * Returns the origin value of the requested axis.
