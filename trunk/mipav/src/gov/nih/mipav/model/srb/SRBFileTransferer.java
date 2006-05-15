@@ -279,7 +279,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         this.targetDir = targetDir;
     }
     
-    public GeneralFile createTargetFile(GeneralFile targetDir,
+    public static GeneralFile createTargetFile(GeneralFile targetDir,
             GeneralFile baseSourceFile, GeneralFile sourceFile) {
         
         if(targetDir == null || baseSourceFile == null || sourceFile == null){
@@ -304,7 +304,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return null;
     }
 
-    public GeneralFile[] createTargetFiles(GeneralFile targetDir,
+    public static GeneralFile[] createTargetFiles(GeneralFile targetDir,
             GeneralFile baseSourceFile, GeneralFile[] sourceFiles) {
         if(targetDir == null || baseSourceFile == null || sourceFiles == null){
             return null;
@@ -333,6 +333,10 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     public boolean transfer(GeneralFile sourceFile, GeneralFile targetFile) {
         if(sourceFile == null || targetFile == null){
             return false;
+        }
+        GeneralFile targetDir = targetFile.getParentFile();
+        if(!targetDir.exists()){
+            recursivelyMakeDir(targetDir);
         }
         if(transferMode.equals(TRANSFER_MODE_PARELLEL)){
             try{
@@ -379,6 +383,22 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
     }
 
+    /**
+     * A helper function to create directory recursively instead of using mkdirs().
+     * @param newDir the new directory need to be created.
+     */
+    public static void recursivelyMakeDir(GeneralFile newDir){
+        if(newDir == null){
+            return;
+        }
+        if(!newDir.exists()){
+            GeneralFile parentDir = newDir.getParentFile();
+            if(!parentDir.exists()){
+                recursivelyMakeDir(parentDir);
+            }
+            newDir.mkdir();
+        }
+    }
     public boolean transfer(GeneralFile[] sourceFiles, GeneralFile[] targetFiles) {
         if(sourceFiles == null || targetFiles == null){
             return false;
@@ -608,6 +628,27 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             files[i] = (GeneralFile)fileList.get(i);
         }
         return files;
+    }
+    
+    /**
+     * A helper function which is used to create GeneralFile array based
+     * on the file system and file name list.
+     * 
+     * @param fileSystem      the file system
+     * @param fileNameList    the file name list.
+     * @return                an array of the GeneralFile.
+     */
+    public static GeneralFile[] createFiles(GeneralFileSystem fileSystem, Vector fileNameList){
+        if(fileSystem == null || fileNameList == null){
+            return null;
+        }
+        int n = fileNameList.size();
+        GeneralFile[] newFiles = new GeneralFile[n];
+        for(int i = 0; i < n; i++){
+            newFiles[i] = createFile(fileSystem, (String)fileNameList.get(i));
+        }
+        
+        return newFiles;
     }
     /**
      * A helper function which create a GeneralFile according to the <code>targetDir</code> and gived file name.
@@ -1157,7 +1198,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             PanelManager manager = new PanelManager();
 
             manager.getConstraints().insets = new Insets(3, 3, 3, 3);
-            manager.add(WidgetFactory.buildLabel("Enter Source Files "));
+            manager.add(WidgetFactory.buildLabel("Choose Source Files "));
             sourceSchemaComboBox = new JComboBox(SCHEMAS);
             sourceSchemaComboBox.setSelectedItem(SCHEMAS[0]);
 
@@ -1359,11 +1400,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
                     if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                         new JDialogLoginSRB("Connect to");
+                        if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+                            return;
+                        }
                     }
 
-                    if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
-                        return;
-                    }
 
                     /**
                      * Uses the JargonFileChooser to retrieve the file that the user wants to open.
