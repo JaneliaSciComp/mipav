@@ -8,6 +8,7 @@ import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.util.NDARPipeline;
 
 import gov.nih.mipav.plugins.*;
 
@@ -361,6 +362,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 menuBuilder.setMenuItemEnabled("DICOM database access", false);
+                
+                /**
+                 * Also need to disable the auto upload to srb function.
+                 */
+                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem)menuBuilder.getMenuItem("Auto Upload on|off");
+                if(menuItemAutoUpload.isSelected()){
+                    menuItemAutoUpload.setSelected(false);
+                }
+                if(userInterface.getNDARPipeline() != null){
+                    userInterface.getNDARPipeline().uninstall();
+                }
             }
         } else if (command.startsWith("LastImage")) {
             int number = Integer.valueOf(command.substring(10)).intValue();
@@ -381,6 +393,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             SRBFileTransferer transferer = new SRBFileTransferer();
             transferer.transferFiles();
         } else if(command.equals("AutoUploadToSRB")){
+            NDARPipeline pipeline = userInterface.getNDARPipeline();
+            if(pipeline == null){
+                pipeline = new NDARPipeline();
+                userInterface.setNDARPipeline(pipeline);
+            }
+            if(((JCheckBoxMenuItem) source).isSelected()){
+                JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem)menuBuilder.getMenuItem("DICOM receiver on/off");
+                if(!itemDicom.isSelected()){
+                    if (userInterface.getDICOMCatcher() != null) {
+                        userInterface.getDICOMCatcher().setStop();
+                    }
+                    itemDicom.setSelected(true);
+                    userInterface.setDICOMCatcher(new DICOM_Receiver());
+                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
+                }
+                pipeline.install(userInterface.getDICOMCatcher());
+           }else{
+                pipeline.uninstall();
+                pipeline = null;
+            }
         } else if (command.equals("OpenNewGraph")) {
             new ViewJFrameGraph("Graph", true);
         } else if (command.equals("QueryDatabase")) {
