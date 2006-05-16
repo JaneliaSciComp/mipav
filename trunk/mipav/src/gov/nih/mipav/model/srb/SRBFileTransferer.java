@@ -37,6 +37,8 @@ import edu.sdsc.grid.io.srb.SRBFileSystem;
 import edu.sdsc.grid.io.srb.SRBRandomAccessFile;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileWriteOptions;
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
@@ -45,6 +47,7 @@ import gov.nih.mipav.view.components.WidgetFactory;
 import gov.nih.mipav.view.srb.FileTransferSRB;
 import gov.nih.mipav.view.srb.JDialogLoginSRB;
 import gov.nih.mipav.view.srb.JargonFileChooser;
+import gov.nih.mipav.model.structures.*;
 
 public class SRBFileTransferer implements FileTransferable, Runnable, ActionListener, WindowListener {
     public static final String[] SCHEMAS = { "file", "srb" };
@@ -448,6 +451,73 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     }
 
     /**
+     * Saves the memory image to the target directory of the SRB server.
+     * @param image            the memory image.
+     * @param targetDir        the target directory of the SRB server.
+     */
+    public void saveToSRB(ModelImage image, String targetDir){
+        Vector sourceFileList = getFileList(image);
+        if(sourceFileList == null){
+            return;
+        }
+        /**
+         * Copies the local temporary files to the directory of the SRB server.
+         */
+        GeneralFile[] targetFiles = createTargetFiles(createFile(JDialogLoginSRB.srbFileSystem, targetDir),
+                ((GeneralFile) sourceFileList.get(0)).getParentFile(),
+                SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+
+        for (int i = 0; i < sourceFileList.size(); i++) {
+            LocalFile lf = (LocalFile) sourceFileList.get(i);
+            lf.deleteOnExit();
+        }
+        setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        setTargetFiles(targetFiles);
+        setThreadSeperated(true);
+        new Thread(this).start();
+    }
+    
+    /**
+     * Saves the memory image to the target directory of the SRB server.
+     * @param image            the memory image.
+     * @param targetDir        the target directory of the SRB server.
+     */
+    public void saveToSRB(ModelImage image, GeneralFile targetDir){
+        Vector sourceFileList = getFileList(image);
+        if(sourceFileList == null){
+            return;
+        }
+        /**
+         * Copies the local temporary files to the directory of the SRB server.
+         */
+        GeneralFile[] targetFiles = createTargetFiles(targetDir,
+                ((GeneralFile) sourceFileList.get(0)).getParentFile(),
+                SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+
+        for (int i = 0; i < sourceFileList.size(); i++) {
+            LocalFile lf = (LocalFile) sourceFileList.get(i);
+            lf.deleteOnExit();
+        }
+        setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        setTargetFiles(targetFiles);
+        setThreadSeperated(true);
+        new Thread(this).start();
+    }
+    
+    
+    /**
+     * Saves the memory image to the srb server, the target directory will be selected
+     * by the user.
+     * @param image  the momery image.
+     */
+    public void saveToSRB(ModelImage image){
+        GeneralFile targetDir = selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
+        if(targetDir == null){
+            return;
+        }
+        saveToSRB(image, targetDir);
+    }
+    /**
      * Constructs progress bar.
      *
      * @param  imageName  title of the toolbar
@@ -489,6 +559,113 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
     }
     
+    /**
+     * Saves the memory image to the local temporary files and
+     * returns the file name list.
+     * @param image the memory image.
+     * @return      the saved file name list of this memory image.
+     */
+    public Vector getFileList(ModelImage image){
+        return getFileList(image, DEFAULT_TEMP_DIR);
+    }
+    
+    /**
+     * Saves the memory image to the local temporary files and returns the LocalFile object list.
+     * 
+     * @param image         the memory image.
+     * @param localTempDir  the local directory that the memory image will saved to
+     * @return              the saved LocalFile object list of this memory image.
+     */
+    public static Vector getFileList(ModelImage image, String tempDir){
+        if (image == null) {
+            return null;
+        }
+
+        if(tempDir == null || tempDir.length() == 0){
+            tempDir = DEFAULT_TEMP_DIR;
+        }
+        LocalFile localTempDir = createLocalFile(tempDir);
+        if(localTempDir == null){
+            return null;
+        }
+        
+        /**
+         * Gets the file informations for the current opened images.
+         */
+        FileInfoBase[] currentFileInfoList = image.getFileInfo();
+
+        if (currentFileInfoList == null) {
+            return null;
+        }
+
+        /**
+         * Saves the current directory for recovery at the end of function.
+         *
+         * The idea is try to use the save function save the files to different directory.
+         */
+        String savedDir = currentFileInfoList[0].getFileDirectory();
+
+        /**
+         * Sets the new directory which we want the files saved to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + File.separator);
+        }
+
+        /**
+         * Creates the local temporary file list.
+         */
+        Vector fileNameList = SRBFileTransferer.getFileNameList(currentFileInfoList);
+        
+        Vector sourceFileList = new Vector();
+        for(int i = 0; i < fileNameList.size(); i++){
+            sourceFileList.add(SRBFileTransferer.createFile(localTempDir, (String)fileNameList.get(i)));
+        }
+
+        /**
+         * Constructs the FileWriteOptions to prepare the file name for save.
+         */
+        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
+                                                     localTempDir.getPath() + "//", false);
+
+
+        if (image.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(image.getExtents()[2] - 1);
+        }
+
+        opts.setOptionsSet(true);
+
+        /**
+         * Saves the opened images to the local temporary directory.
+         */
+        image.getParentFrame().saveSRB(opts, -1);
+
+        /**
+         * Recovers the original directory which these files belong to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(savedDir);
+        }
+        return sourceFileList;
+    }
+    
+    /**
+     * A helper function to create a LocalFile object based on the file name.
+     * @param fileName  a file name
+     * @return          a LocalFile object.
+     */
+    public static LocalFile createLocalFile(String fileName){
+        if(fileName == null || fileName.length() == 0){
+            return null;
+        }
+        
+        File file = new File(fileName);
+        if(!file.exists()){
+            file.mkdirs();
+        }
+        return new LocalFile(file);
+    }
     /**
      * Parses the string to extract the file informations.
      *
