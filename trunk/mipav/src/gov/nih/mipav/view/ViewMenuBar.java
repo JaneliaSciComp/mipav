@@ -493,7 +493,7 @@ public class ViewMenuBar {
      * @see     #makeFileMenu(boolean)
      */
     protected JMenu makeDicomMenu() {
-        return menuBuilder.makeMenu("Dicom", true,
+        return menuBuilder.makeMenu("DICOM", true,
                                     new JComponent[] {
                                         menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),
                                         menuBuilder.buildMenuItem("Anonymize DICOM directory", "AnonymizeDirectory", 0,
@@ -749,7 +749,7 @@ public class ViewMenuBar {
                                     new JMenuItem[] {
                                         menuBuilder.buildMenuItem("Open XCEDE schema", "OpenXCEDESchema", 0, "open.gif",
                                                                   true),
-                                        menuBuilder.buildMenuItem("Open SRB from image", "OpenSRBFile", 0, null, true),
+                                        menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile", 0, null, true),
                                         menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile", 0, null, true),
                                         menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
                                         menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
