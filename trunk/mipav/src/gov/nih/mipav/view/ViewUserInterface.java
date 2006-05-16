@@ -2157,12 +2157,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * DOCUMENT ME!
      */
     public void saveSRBFile() {
-        SRBFileTransferer transferer = new SRBFileTransferer();
-        GeneralFile targetDir = transferer.selectTargetDirectory(SRBFileTransferer.SCHEMAS[1]);
-        if (targetDir == null) {
-            return;
-        }
-
         /**
          * Gets the active ViewJFrameImage instance.
          */
@@ -2180,94 +2174,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (currentImage == null) {
             return;
         }
-
-        /**
-         * Gets the file informations for the current opened images.
-         */
-        FileInfoBase[] currentFileInfoList = currentImage.getFileInfo();
-
-        if (currentFileInfoList == null) {
-            return;
-        }
-
-        /**
-         * Gets the local temporary diretory, if it doesn't exist, then it will be created.
-         */
-        LocalFile localTempDir = null;
-
-        localTempDir = transferer.getLocalTempDir();
-        if (localTempDir == null) {
-            return;
-        }
-
-        /**
-         * Saves the current directory for recovery at the end of function.
-         *
-         * The idea is try to use the save function save the files to different directory.
-         */
-        String savedDir = currentFileInfoList[0].getFileDirectory();
-
-        /**
-         * Sets the new directory which we want the files saved to.
-         */
-        for (int i = 0; i < currentFileInfoList.length; i++) {
-            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + "\\");
-        }
-
-        /**
-         * Creates the local temporary file list.
-         */
-        Vector fileNameList = SRBFileTransferer.getFileNameList(currentFileInfoList);
-        Vector sourceFileList = new Vector();
-        if (fileNameList == null) {
-            return;
-        }
-
-        for (int i = 0; i < fileNameList.size(); i++) {
-            sourceFileList.add(SRBFileTransferer.createFile(localTempDir, (String) fileNameList.get(i)));
-        }
-
-        /**
-         * Constructs the FileWriteOptions to prepare the file name for save.
-         */
-        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
-                                                     localTempDir.getPath() + "//", false);
-
-
-        if (currentImage.getNDims() == 3) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(currentImage.getExtents()[2] - 1);
-        }
-
-        opts.setOptionsSet(true);
-
-        /**
-         * Saves the opened images to the local temporary directory.
-         */
-        currentImageFrame.saveSRB(opts, -1);
-
-        /**
-         * Recovers the original directory which these files belong to.
-         */
-        for (int i = 0; i < currentFileInfoList.length; i++) {
-            currentFileInfoList[i].setFileDirectory(savedDir);
-        }
-
-        /**
-         * Copies the local temporary files to the directory of the SRB server.
-         */
-        GeneralFile[] targetFiles = transferer.createTargetFiles(targetDir,
-                                                                 ((GeneralFile) sourceFileList.get(0)).getParentFile(),
-                                                                 SRBFileTransferer.convertFromVectorToArray(sourceFileList));
-
-        for (int i = 0; i < sourceFileList.size(); i++) {
-            LocalFile lf = (LocalFile) sourceFileList.get(i);
-            lf.deleteOnExit();
-        }
-        transferer.setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
-        transferer.setTargetFiles(targetFiles);
-        transferer.setThreadSeperated(true);
-        new Thread(transferer).start();
+        SRBFileTransferer transferer = new SRBFileTransferer();
+        transferer.saveToSRB(currentImage);
     }
 
     /**
