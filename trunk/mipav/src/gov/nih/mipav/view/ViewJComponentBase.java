@@ -1833,7 +1833,7 @@ public abstract class ViewJComponentBase extends JComponent {
                 axisOrder[1] = 0;
                 axisOrder[2] = 1;
                 axisFlip[1] = true;
-            } else if (orientation == AXIAL) {
+            } else if (orientation == CORONAL) {
                 showAxis = SHOW21R0R;
                 axisOrder[0] = 2;
                 axisOrder[1] = 1;
@@ -1934,7 +1934,7 @@ public abstract class ViewJComponentBase extends JComponent {
                 axisOrder[2] = 0;
             }
 
-            if (orientation == CORONAL) {
+            else if (orientation == CORONAL) {
                 showAxis = SHOW10R2;
                 axisOrder[0] = 1;
                 axisOrder[1] = 0;
@@ -2005,7 +2005,7 @@ public abstract class ViewJComponentBase extends JComponent {
                 axisOrder[2] = 0;
                 axisFlip[0] = true;
                 axisFlip[1] = true;
-            } else if (orientation == AXIAL) {
+            } else if (orientation == CORONAL) {
                 showAxis = SHOW1R0R2R;
                 axisOrder[0] = 1;
                 axisOrder[1] = 0;
@@ -2030,7 +2030,7 @@ public abstract class ViewJComponentBase extends JComponent {
                 axisOrder[0] = 2;
                 axisOrder[1] = 1;
                 axisOrder[2] = 0;
-            } else if (orientation == AXIAL) {
+            } else if (orientation == CORONAL) {
                 showAxis = SHOW20R1;
                 axisOrder[0] = 2;
                 axisOrder[1] = 0;
@@ -2052,7 +2052,7 @@ public abstract class ViewJComponentBase extends JComponent {
                 axisOrder[1] = 1;
                 axisOrder[2] = 0;
                 axisFlip[0] = true;
-            } else if (orientation == AXIAL) {
+            } else if (orientation == CORONAL) {
                 showAxis = SHOW2R0R1;
                 axisOrder[0] = 2;
                 axisOrder[1] = 0;
@@ -2127,7 +2127,7 @@ public abstract class ViewJComponentBase extends JComponent {
                 axisOrder[1] = 2;
                 axisOrder[2] = 0;
                 axisFlip[2] = true;
-            } else if (orientation == AXIAL) {
+            } else if (orientation == CORONAL) {
                 showAxis = SHOW102;
                 axisOrder[0] = 1;
                 axisOrder[1] = 0;
