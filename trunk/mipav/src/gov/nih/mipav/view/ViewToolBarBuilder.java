@@ -199,6 +199,11 @@ public class ViewToolBarBuilder implements ItemListener {
         tBar.add(buildButton("PrintImage", "Print image", "printer"));
         tBar.add(buildButton("CaptureTiff", "Capture image to TIFF(RGB)", "camera"));
 
+        tBar.add(buildButton("AboutImage", "View Header", "header"));
+        tBar.add(buildButton("EditImageInfo", "Edit attributes", "attributes"));
+        tBar.add(makeSeparator());
+
+
         tBar.add(makeSeparator());
 
         JButton winLevelButton = buildButton("winLevel", "Adjust window and level", "winlevel");

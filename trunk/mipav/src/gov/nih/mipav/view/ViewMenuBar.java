@@ -643,9 +643,9 @@ public class ViewMenuBar {
                                         menuBuilder.makeMenu("Attributes", true,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("View header", "AboutImage",
-                                                                                           0, null, false),
+                                                                                           0, "header.gif", false),
                                                                  menuBuilder.buildMenuItem("Edit attributes",
-                                                                                           "EditImageInfo", 0, null,
+                                                                                           "EditImageInfo", 0, "attributes.gif",
                                                                                            false)
                                                              }),
                                         menuBuilder.makeMenu("Zoom", true,
