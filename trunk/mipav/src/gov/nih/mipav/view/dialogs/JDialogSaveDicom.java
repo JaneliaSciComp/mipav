@@ -370,7 +370,7 @@ public class JDialogSaveDicom extends JDialogBase {
                 }
 
                 // dicomFileInfo.setVRType(dicomFileInfo.EXPLICIT);
-                dicomFileInfo.setValue("0002,0000", new Integer(140), 4);
+                dicomFileInfo.setValue("0002,0000", new Integer(152), 4);
 
                 Byte[] version = new Byte[2];
                 version[0] = new Byte((byte) 1);
