@@ -1,67 +1,145 @@
 package gov.nih.mipav.model.util;
 
-import java.util.Vector;
+
+import gov.nih.mipav.model.algorithms.AlgorithmScriptParser;
+import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
+import gov.nih.mipav.model.srb.*;
+import gov.nih.mipav.model.structures.ModelImage;
+
+import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.srb.*;
+
 import java.io.File;
 
-import edu.sdsc.grid.io.srb.*;
-import edu.sdsc.grid.io.local.*;
-import edu.sdsc.grid.io.*;
-import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
-import gov.nih.mipav.view.srb.*;
-import gov.nih.mipav.model.srb.*;
+import java.util.Vector;
 
+
+/**
+ * DOCUMENT ME!
+ */
 public class NDARPipeline implements Observer {
-    private String targetSRBDir;
-    private String scriptFileName;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private Observable observedObject;
-    public NDARPipeline(){
-        
-    }
-    
-    public void setTargetDir(String targetDir){
-        this.targetSRBDir = targetDir;
-    }
-    
-    public void setScriptFileName(String scriptFileName){
-        this.scriptFileName = scriptFileName;
-    }
-    
-    public void install(Observable o){
+
+    /** DOCUMENT ME! */
+    private String scriptFileName;
+
+    /** DOCUMENT ME! */
+    private String targetSRBDir;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new NDARPipeline object.
+     */
+    public NDARPipeline() { }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  o  DOCUMENT ME!
+     */
+    public void install(Observable o) {
         JDialogSetupPipeline pipelineDialog = new JDialogSetupPipeline("Setup the NDAR pipeline");
-        if(!pipelineDialog.isCancelled()){
+        if (!pipelineDialog.isCancelled()) {
             scriptFileName = pipelineDialog.getScriptFileName();
             targetSRBDir = pipelineDialog.getTargetSRBDir();
             observedObject = o;
             observedObject.addObserver(this);
         }
     }
-    
-    public void uninstall(){
-        if(observedObject != null){
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  scriptFileName  DOCUMENT ME!
+     */
+    public void setScriptFileName(String scriptFileName) {
+        this.scriptFileName = scriptFileName;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  targetDir  DOCUMENT ME!
+     */
+    public void setTargetDir(String targetDir) {
+        this.targetSRBDir = targetDir;
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void uninstall() {
+        if (observedObject != null) {
             observedObject.deleteObserver(this);
         }
     }
+
     /**
      * The implementation of the Observer interface.
-     * @param o    the observed object.
-     * @param arg  the input argument object.
+     *
+     * @param  o    the observed object.
+     * @param  arg  the input argument object.
      */
-    public void update(Observable o, Object arg){
-        if(o == null || arg == null){
+    public void update(Observable o, Object arg) {
+        if ((o == null) || (arg == null)) {
             return;
         }
-        if(o instanceof DICOM_Receiver){
-            DICOM_Receiver receiver = (DICOM_Receiver)o;
-            String baseDir = receiver.getDefaultStorageDir();
-            SRBFile targetDir = new SRBFile(JDialogLoginSRB.srbFileSystem, targetSRBDir);
-            GeneralFile[] sourceFiles = SRBFileTransferer.createFiles(new LocalFileSystem(), (Vector)arg);
-            GeneralFile[] targetFiles = SRBFileTransferer.createTargetFiles(targetDir, new LocalFile(new File(baseDir)), sourceFiles);
+
+        if (o instanceof DICOM_Receiver) {
+
+            // read in image from disk
+            Vector imageFiles = (Vector) arg;
+            ViewUserInterface.getReference().openImageFrame((String) imageFiles.elementAt(0), true);
+            // System.out.println("opened image: " + (String)imageFiles.elementAt(0));
+
+            // process image using specified script
+            if (scriptFileName == null) {
+                MipavUtil.displayError("A pre-upload script must be specified.");
+                return;
+            }
+
+            String scriptDir, scriptName;
+            int index = scriptFileName.lastIndexOf(File.separator);
+            if (index == -1) {
+                scriptDir = ".";
+                scriptName = scriptFileName;
+            } else {
+                scriptDir = scriptFileName.substring(0, index + 1);
+                scriptName = scriptFileName.substring(index + 1);
+            }
+            // System.out.println("Script file: dir = " + scriptDir + " name = " + scriptName);
+
+            AlgorithmScriptParser scriptParser = new AlgorithmScriptParser(scriptName, scriptDir);
+
+            // sanity checks on the script contents
+            int numImages = scriptParser.preParse();
+            if (numImages > 0) {
+                MipavUtil.displayError("The pre-upload script must be an active mode script (no OpenImage or LoadImage commands).\nNumber of images found: " +
+                                       numImages);
+                return;
+            }
+
+            int numActiveImages = scriptParser.preParseActiveImages();
+            if (numActiveImages != 1) {
+                MipavUtil.displayError("The pre-upload script must use exactly one active image.\nNumber of images found: " +
+                                       numActiveImages);
+                return;
+            }
+
+            // run the pre-upload script
+            scriptParser.run();
+
+            // upload image
+            ModelImage resultImage = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
             SRBFileTransferer transferer = new SRBFileTransferer();
-            transferer.setThreadSeperated(true);
-            transferer.setSourceFiles(sourceFiles);
-            transferer.setTargetFiles(targetFiles);
-            new Thread(transferer).start();
+            transferer.saveToSRB(resultImage, targetSRBDir);
         }
     }
-
 }
