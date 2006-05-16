@@ -183,7 +183,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	//ShowImage(BMarrow,"after 160-255 thresh");
     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	if(BMarrow ==null){
-	     	Open6(BMarrow);Close24(BMarrow);
+	     	Open24(BMarrow);Close24(BMarrow);
 	     	//ShowImage(BMarrow,"opened and closed");
 	     	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
     	}
@@ -277,10 +277,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		
 		progressBar.setMessage("Isolating/Labeling Bone");
 		ModelImage BoneID = threshold1(destImage3a, BACKGROUND_2);  
-		Open6(BoneID);
+		Open24(BoneID);
 		Close24(BoneID);
 		//ShowImage(BoneID, "afteropen/close");
-		IDObjects(BoneID, zDim*5000/20, zDim*20000/20);  //should be on the order or 10,000
+		IDObjects(BoneID, zDim*2000/20, zDim*20000/20);  //should be on the order or 10,000
 		//ShowImage(BoneID, "after idobjects");
 		isolatingCenterObject(BoneID); //doesn't seem to be working
 	    convert(destImage3a, BoneID, destImage3a, 1, Bone);
@@ -311,9 +311,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         //IDObjects(BoneID, zDim*3000/20, zDim*30000/20);//ShowImage(BoneID, "IDObjects"); 
         //*DELETED ASOF THIGH IMM 2BG*
         //
-        Open6(BoneID);
+        Open24(BoneID);
         Close24(BoneID);
-        IDObjects(BoneID, zDim*5000/20, zDim*20000/20);  //should be on the order or 10,000
+        IDObjects(BoneID, zDim*2000/20, zDim*20000/20);  //should be on the order or 10,000
         isolatingCenterObject(BoneID); //doesn't seem to be working
         return BoneID;
     }  
@@ -782,7 +782,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     public void cleanUp(ModelImage srcImage, int noiseIntensity, int bkrdIntensity, int sizeNoise) {
     	ModelImage tempImage = null;
         tempImage = threshold1(srcImage, noiseIntensity);
-        IDObjects(tempImage, 0, sizeNoise);
+        IDObjects(tempImage, 1, sizeNoise);
+        tempImage = threshold2(tempImage, 1f, (float)tempImage.getMax());
         convert(srcImage, tempImage, srcImage, 1, bkrdIntensity);
         tempImage.disposeLocal();
         tempImage = null;
@@ -853,9 +854,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      *
      * @param  sourceImg  DOCUMENT ME!
      */
-    public void Open6(ModelImage sourceImg) {
+    public void Open24(ModelImage sourceImg) {
         AlgorithmMorphology3D MorphOpen = null;
-        MorphOpen = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED6, 1,
+        MorphOpen = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED24, 1,
                                               AlgorithmMorphology3D.OPEN, 1, 1, 0, 0, true);
         MorphOpen.setProgressBarVisible(false);
         MorphOpen.run();
@@ -1108,7 +1109,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
     //        destImage3b = processSoftFat(FuzzySeg2[0],FuzzySeg2[1],FuzzySeg2[2]);  	//ShowImage(destImage3b, "processed fat image");
             destImage3b = processHardFat(HardSeg1);
-	        cleanUp(destImage3b, FAT, Muscle, 300*zDim/20);        				//ShowImage(destImage3b, "bundle cleanedup fat image");     
+            ShowImage(destImage3b,"before final fat filter");
+	        cleanUp(destImage3b, FAT, Muscle, 100*zDim/20);        				//ShowImage(destImage3b, "bundle cleanedup fat image");
+            ShowImage(destImage3b,"after final fat filter");
             progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
             
             voiMask.disposeLocal();voiMask = null;            obMask.disposeLocal();obMask = null;
