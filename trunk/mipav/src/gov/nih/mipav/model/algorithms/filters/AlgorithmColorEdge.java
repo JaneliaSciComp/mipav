@@ -13,7 +13,7 @@ import java.io.*;
  This algorithm uses a hypercomplex filter to find the edges between a region of two
  user specified colors.  This code is based on material in the article:
  Colour-Sensitive Edge Detection using Hypercomplex Filters by Carolyn J. Evans and
- Stephen J. Sangwine.  This filters operates in 2D.
+ Stephen J. Sangwine.  This filter operates in 2D.
  */
 public class AlgorithmColorEdge extends AlgorithmBase {
 
@@ -121,7 +121,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         int colorLen = 4*dataLen;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
-        float[] imageData;
+        double[] imageData;
         float[] realData;
         float[] vData;
         double iData;
@@ -201,7 +201,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         }
 
         try {
-            imageData = new float[colorLen];
+            imageData = new double[colorLen];
         } catch (OutOfMemoryError oome) {
             errorCleanUp("AlgorithmColorEdge: " + "out of memory creating imageData", false);
             finalize();
@@ -267,7 +267,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
                     // Perform the hypercomplex filter designed to find all horizontal
                     // edges C1 -> C2 (from top to bottom)
                     index = x + y * xDim;
-                    realData[index] = (float)-((uC2i*imageData[4*(index+xDim+1) + 1]
+                    realData[index] = -(float)((uC2i*imageData[4*(index+xDim+1) + 1]
                                         + uC2j*imageData[4*(index+xDim+1) + 2]
                                         + uC2k*imageData[4*(index+xDim+1) + 3]
                                         + uC2i*imageData[4*(index+xDim) + 1]
@@ -432,7 +432,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
             
             for (y = 1; y <= yDim - 2; y++) {
                 for (x = 1; x <= xDim - 2; x++) {
-                    // Perform the hypercomplex filter designed to find all horizontal
+                    // Perform the hypercomplex filter designed to find all vertical
                     // edges C1 -> C2 (from left to right)
                     index = x + y * xDim;
                     realData[index] = (float)-((uC2i*imageData[4*(index+xDim+1) + 1]
@@ -516,7 +516,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
             
             for (y = 1; y <= yDim - 2; y++) {
                 for (x = 1; x <= xDim - 2; x++) {
-                    // Perform the hypercomplex filter designed to find all horizontal
+                    // Perform the hypercomplex filter designed to find all vertical
                     // edges C2 -> C1 (from left to right)
                     index = x + y * xDim;
                     realData[index] = (float)-((uC1i*imageData[4*(index+xDim+1) + 1]
