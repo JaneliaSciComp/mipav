@@ -1818,7 +1818,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
         // build the menuBar based on the number of dimensions for imageA
         menuBarMaker = new ViewMenuBar(menuBuilder);
-        menuBar = menuBarMaker.getMenuBar(imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
+        menuBar = menuBarMaker.getMenuBar(this, imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
 
         // imageA.
 

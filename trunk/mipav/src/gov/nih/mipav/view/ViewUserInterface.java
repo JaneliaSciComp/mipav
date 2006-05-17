@@ -15,7 +15,6 @@ import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.xcede.*;
 
 import edu.sdsc.grid.io.*;
-import edu.sdsc.grid.io.local.LocalFile;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -705,7 +704,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         openingMenuBar = new JMenuBar();
         openingMenuBar.add(menuBar.makeFileMenu(false));
-        this.pluginsMenu = buildPlugInsMenu(this);
+        if (getRegisteredImagesNum() > 0) {
+            this.pluginsMenu = buildPlugInsMenu(getActiveImageFrame());
+        } else {
+            this.pluginsMenu = buildPlugInsMenu(this);
+        }
         openingMenuBar.add(pluginsMenu);
         openingMenuBar.add(menuBar.makeScriptingMenu());
         openingMenuBar.add(menuBar.makeHelpMenu());
@@ -2157,6 +2160,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * DOCUMENT ME!
      */
     public void saveSRBFile() {
+
         /**
          * Gets the active ViewJFrameImage instance.
          */
@@ -2174,6 +2178,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (currentImage == null) {
             return;
         }
+
         SRBFileTransferer transferer = new SRBFileTransferer();
         transferer.saveToSRB(currentImage);
     }

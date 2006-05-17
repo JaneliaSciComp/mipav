@@ -3,6 +3,8 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.structures.*;
 
+import java.awt.event.ActionListener;
+
 import javax.swing.*;
 
 
@@ -58,18 +60,19 @@ public class ViewMenuBar {
      * Creates general menus based on dimensionality and data type (byte, short, argb, etc) of image and attaches them
      * to a menu bar.
      *
+     * @param   listener            The class that wants to listen to plugin menu actions.
      * @param   numberOfDimensions  Dimensionality of image (2D, 3D, 4D...)
      * @param   type                Data type from <code>ModelStorageBase</code>, byte, short, argb, etc.
      * @param   isDicomImage        Whether the image this menu bar is for is a dicom image.
      *
      * @return  Menu bar with the menus attached.
      */
-    public JMenuBar getMenuBar(int numberOfDimensions, int type, boolean isDicomImage) {
+    public JMenuBar getMenuBar(ActionListener listener, int numberOfDimensions, int type, boolean isDicomImage) {
         JMenuBar menuBar;
 
         try {
             menuBar = new JMenuBar();
-            plugInMenu = userInterface.buildPlugInsMenu(userInterface.getActiveImageFrame());
+            plugInMenu = userInterface.buildPlugInsMenu(listener);
             menuBar.add(makeFileMenu(true));
             menuBar.add(makeEditMenu());
             menuBar.add(makeVOIMenu());
@@ -645,8 +648,8 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("View header", "AboutImage",
                                                                                            0, "header.gif", false),
                                                                  menuBuilder.buildMenuItem("Edit attributes",
-                                                                                           "EditImageInfo", 0, "attributes.gif",
-                                                                                           false)
+                                                                                           "EditImageInfo", 0,
+                                                                                           "attributes.gif", false)
                                                              }),
                                         menuBuilder.makeMenu("Zoom", true,
                                                              new JMenuItem[] {
