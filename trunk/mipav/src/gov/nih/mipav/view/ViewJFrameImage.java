@@ -498,7 +498,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         nTImage = imageB.getExtents()[3];
                         zSlice = (imageB.getExtents()[2] - 1) / 2;
                         nImage = imageB.getExtents()[2];
-                        menuBar = menuBarMaker.getMenuBar(4, imageB.getType(), imageB.isDicomImage());
+                        menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                                               menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -533,7 +533,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     nTImage = imageB.getExtents()[3];
                     zSlice = (imageB.getExtents()[2] - 1) / 2;
                     nImage = imageB.getExtents()[2];
-                    menuBar = menuBarMaker.getMenuBar(4, imageB.getType(), imageB.isDicomImage());
+                    menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                           menuBuilder.isMenuItemSelected("VOI toolbar"),
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -720,7 +720,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     nTImage = 0;
                     zSlice = (imageA.getExtents()[2] - 1) / 2;
                     nImage = imageA.getExtents()[2];
-                    menuBar = menuBarMaker.getMenuBar(3, imageA.getType(), imageA.isDicomImage());
+                    menuBar = menuBarMaker.getMenuBar(this, 3, imageA.getType(), imageA.isDicomImage());
                     controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                           menuBuilder.isMenuItemSelected("VOI toolbar"),
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -3679,7 +3679,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 nTImage = imageB.getExtents()[3];
                 zSlice = (imageB.getExtents()[2] - 1) / 2;
                 nImage = imageB.getExtents()[2];
-                menuBar = menuBarMaker.getMenuBar(4, imageB.getType(), imageB.isDicomImage());
+                menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
                 controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                       menuBuilder.isMenuItemSelected("VOI toolbar"),
                                       menuBuilder.isMenuItemSelected("Paint toolbar"),
@@ -5023,7 +5023,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // build the menuBar based on the number of dimensions for imageA
         menuBarMaker = new ViewMenuBar(menuBuilder);
-        menuBar = menuBarMaker.getMenuBar(imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
+        menuBar = menuBarMaker.getMenuBar(this, imageA.getNDims(), imageA.getType(), imageA.isDicomImage());
 
         menuBar.addKeyListener(this);
 
