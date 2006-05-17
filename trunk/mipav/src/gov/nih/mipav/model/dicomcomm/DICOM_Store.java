@@ -30,6 +30,9 @@ public class DICOM_Store implements Runnable {
 
     /** DOCUMENT ME! */
     private String instanceUID;
+    
+    /** The transfer syntax used when storing images */
+    private String transferSyntax = null;
 
     /** DOCUMENT ME! */
     private DICOM_PDUService pdu;
@@ -103,7 +106,6 @@ public class DICOM_Store implements Runnable {
 
         try {
             ddo = pdu.readDICOMDataObjectFromFile(fileName);
-
             if (ddo == null) {
                 MipavUtil.displayError("DICOMStore.sendStoreRQ(): DDO = null");
 
@@ -112,7 +114,7 @@ public class DICOM_Store implements Runnable {
 
                 // Get UIDs  and pass it as a parameter in the next method (write. )
                 getUIDs(fileName);
-                storageSOP.write(pdu, ddo, classUID, instanceUID);
+                storageSOP.write(pdu, ddo, transferSyntax, classUID, instanceUID);
                 returnVal = true;
             }
         } catch (DICOM_Exception e) {
@@ -139,6 +141,7 @@ public class DICOM_Store implements Runnable {
 
             if (fileDICOM.readHeader(true)) {
                 fInfoDicom = (FileInfoDicom) (fileDICOM.getFileInfo());
+                transferSyntax = (String) (fInfoDicom.getValue("0002,0010"));
                 classUID = (String) (fInfoDicom.getValue("0008,0016"));
                 instanceUID = (String) (fInfoDicom.getValue("0008,0018"));
 
@@ -181,6 +184,8 @@ public class DICOM_Store implements Runnable {
         } catch (IOException ioe) {
             System.out.println("DICOM_Store.getUIDs: " + ioe);
         }
+        fileDICOM.finalize();
+        fInfoDicom.finalize();
 
         return;
     }

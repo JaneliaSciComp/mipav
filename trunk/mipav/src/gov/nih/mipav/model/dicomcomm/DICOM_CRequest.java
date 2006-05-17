@@ -241,14 +241,15 @@ public class DICOM_CRequest {
      * Writes a DIMSE-C message.
      *
      * @param      pdu          the context pdu DICOMClientServer
-     * @param      classUID     the SOP Class UID
+     * @param      transferSyntax     transfer syntax.
+     * @param      classUID     the SOP Class UID.
      * @param      instanceUID  DOCUMENT ME!
      * @param      ddo          the outgoing DICOM data object (null if none required)
      * @param      AETitle      byte array to store the destination Application Entity title for C-Moves
      *
      * @exception  DICOM_Exception  DOCUMENT ME!
      */
-    public void write(DICOM_PDUService pdu, String classUID, String instanceUID, DICOM_Object ddo, byte[] AETitle)
+    public void write(DICOM_PDUService pdu, String transferSyntax, String classUID, String instanceUID, DICOM_Object ddo, byte[] AETitle)
             throws DICOM_Exception {
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
@@ -307,7 +308,7 @@ public class DICOM_CRequest {
 
         if (ddo != null) {
             Preferences.debug(DICOM_Util.timeStamper() + " CRequest.write DDO: " + ddo.toString("Data") + "  \n");
-            pdu.write(classUID, (byte) 0);
+            pdu.write(transferSyntax, classUID, (byte) 0);
         }
     }
 

@@ -43,17 +43,18 @@ public class DICOM_StdStorage extends DICOM_SOP {
      *
      * @param   pdu          PDU service object
      * @param   ddo          DICOM data object
+     * @param   transferSyntax     DOCUMENT ME!
      * @param   classUID     DOCUMENT ME!
      * @param   instanceUID  DOCUMENT ME!
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
-    public void write(DICOM_PDUService pdu, DICOM_Object ddo, String classUID, String instanceUID)
+    public void write(DICOM_PDUService pdu, DICOM_Object ddo, String transferSyntax, String classUID, String instanceUID)
             throws DICOM_Exception {
 
         DICOM_Object dco = new DICOM_Object();
 
-        cStoreRq.write(pdu, classUID, instanceUID, ddo, null);
+        cStoreRq.write(pdu, transferSyntax, classUID, instanceUID, ddo, null);
         pdu.readInObject(dco);
         cStoreRsp.read(dco, pdu, null);
     }

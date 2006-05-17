@@ -298,6 +298,11 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                         readInObject(null); // This fills the fullData buffer
                         fileDicom = new FileDicom("temp.dcm");
                         addPreambleAndGroupTwoTags(dco); // Build DICOM part 10 preample.
+                        byte[] pre_and_fullData = new byte[preambleBuffer.length + fullData.length];
+                        System.arraycopy(preambleBuffer, 0, pre_and_fullData, 0, preambleBuffer.length);
+                        System.arraycopy(fullData, 0, pre_and_fullData, preambleBuffer.length, fullData.length);
+                        fullData = pre_and_fullData;
+                        pre_and_fullData = null;
                         fileDicom.setTagBuffer(fullData);
 
                         if (fileDicom.readHeader(false) == false) {
@@ -446,10 +451,10 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                                           filePath + fileName + "\n");
                     }
 
-                    // Save preample and image data
-                    saveImageToFile(preambleBuffer, filePath + fileName);
+                    // Save image (with preample appended) data to file
+                    saveImageToFile(null, filePath + fileName);
                     fileNameList.add(filePath + fileName);
-                    preambleBuffer = null;
+                    //preambleBuffer = null;
                     fullData = null;
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
@@ -512,6 +517,8 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
             dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
             showMessage("" + e);
         }
+        fileDicom.finalize();
+        fileInfo.finalize();
         
         /**
          * Marks this object as having been changed.
@@ -645,6 +652,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         instanceUID = dco.getStr(DICOM_RTC.DD_AffectedSOPInstanceUID);
         implementationClassUID = getImplementationClassUID();
         transferSyntaxUID = getTransferSyntaxID();
+       
 
         int classUIDLength = classUID.length();
 
@@ -674,8 +682,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         int length = 132 + 12 + 10 + 8 + classUIDLength + 8 + instanceUIDLength + 8 + transferSyntaxUIDLength + 8 +
                      implementationClassUIDLength;
 
-        preambleBuffer = new byte[length];
-
+        if (preambleBuffer == null || preambleBuffer.length != length) {
+            preambleBuffer = new byte[length];
+        }
         byte[] byteArray = null;
 
         preambleBuffer[128] = 0x44; // D

@@ -689,14 +689,13 @@ public class DICOM_Comms {
 
             group = bufferToInt16(groupWord, 0, inEndianess);
             //System.out.println("Group = " + group + " Length = " + length);
-            System.out.println("length = " + length);
             
             if (group != 2) {
                 dataIndex = 132;
             } else {
                 dataIndex = dataIndex + 12 + length;
             }
-            System.out.println("dataIndex = " + dataIndex);
+            //System.out.println("dataIndex = " + dataIndex);
             trimmedBuffer = new ByteBuffer(dataBuffer.bufferSize - dataIndex);
             System.arraycopy(dataBuffer.data, dataIndex, trimmedBuffer.data, 0, trimmedBuffer.bufferSize);
             trimmedBuffer.startIndex = 0;
@@ -839,17 +838,24 @@ public class DICOM_Comms {
      *
      * @throws  Throwable  DOCUMENT ME!
      */
-    protected void finalize() throws Throwable {
+    protected void finalize() {
         srcByteArray = null;
         byteArray1 = null;
         byteArray2 = null;
         byteArray4 = null;
 
         if (incomingBuffers != null) {
+            
+            for (int i = 0; i <incomingBuffers.size(); i++ ) {
+                ((ByteBuffer) (incomingBuffers.elementAt(i))).finalize();
+            }
             incomingBuffers.removeAllElements();
         }
 
         if (outgoingBuffers != null) {
+            for (int i = 0; i <outgoingBuffers.size(); i++ ) {
+                ((ByteBuffer) (outgoingBuffers.elementAt(i))).finalize();
+            }
             outgoingBuffers.removeAllElements();
         }
 
@@ -924,6 +930,15 @@ public class DICOM_Comms {
             allocateMemory(size);
         }
 
+        /**
+         * Prepares this class for destruction.
+         *
+         * @throws  Throwable  DOCUMENT ME!
+         */
+        protected void finalize() {
+           data = null;
+        }
+        
         /**
          * Method that actually allocates the memory.
          *
