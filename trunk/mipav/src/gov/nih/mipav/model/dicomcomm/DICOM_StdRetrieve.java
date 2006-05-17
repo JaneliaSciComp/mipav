@@ -100,7 +100,7 @@ public class DICOM_StdRetrieve extends DICOM_SOP {
             Preferences.debug(DICOM_Util.timeStamper() + " DICOM_StdRetrieve.write: MOVE request.\n");
         }
 
-        cMoveRq.write(pdu, UID, null, ddo, outAETitle);
+        cMoveRq.write(pdu, null, UID, null, ddo, outAETitle);
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " DICOM_StdRetrieve.write: MOVE request completed.\n");

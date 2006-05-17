@@ -110,7 +110,7 @@ public class DICOM_Verification { // is an SOP {
 
         cEchoRQ.setMsgID(DICOM_Util.getUniqueOddID16());
         Preferences.debug("################### Before Verify.write echoRQ \n");
-        cEchoRQ.write(pdu, UID, null, null, null);
+        cEchoRQ.write(pdu, null, UID, null, null, null);
         Preferences.debug("################### Before pdu.read\n");
         pdu.readInObject(dco);
         Preferences.debug("################### cEchoRSP.read\n");

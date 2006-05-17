@@ -130,14 +130,47 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
      *
      * @exception  DICOM_Exception  unknown presentation context ID
      */
-    public byte getPresentationContextID(String absUID) throws DICOM_Exception {
+    public byte getPresentationContextID(String transferSyntax, String absUID) throws DICOM_Exception {
+        DICOM_PresentationContext pc = null;
+        DICOM_PresentationContext tpc = null;
+
+        for (int i = 0; i < presContexts.size(); i++) {
+            tpc = ((DICOM_PresentationContext) (presContexts.elementAt(i)));
+            if (tpc.absSyntax.getUID().equals(absUID)) {
+                
+                Vector  tferSyntaxVect =  ((DICOM_PresentationContext) (presContexts.elementAt(i))).trnSyntax;
+                if (tferSyntaxVect != null) {
+                    String tStr = ((DICOM_PDUItemType)(tferSyntaxVect.elementAt(0))).getUID();
+                    if ( tStr.trim().equals(transferSyntax.trim())) {
+                        pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
+                    }
+                }
+            }
+        }
+
+        if (pc == null) {
+            throw new DICOM_Exception("Unable determine presentation context ID for abstract syntax UID: " + absUID +
+                                      ".");
+        }
+
+        return (pc.presentationContextID);
+    }
+    
+    /**
+     * Gets a presentation context ID for a given abstrax syntax.
+     *
+     * @param      absUID  the abstract syntax UID
+     *
+     * @return     the presentation context ID
+     *
+     * @exception  DICOM_Exception  unknown presentation context ID
+     */
+    public byte getPresentationContextID( String absUID) throws DICOM_Exception {
         DICOM_PresentationContext pc = null;
 
         for (int i = 0; i < presContexts.size(); i++) {
 
-            if (((DICOM_PresentationContext) (presContexts.elementAt(i))).absSyntax.getUID().equals(absUID)) {
-                pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
-            }
+            pc = (DICOM_PresentationContext) (presContexts.elementAt(i));
         }
 
         if (pc == null) {

@@ -251,7 +251,7 @@ public class DICOM_PDUService extends DICOM_Comms {
         }
 
         socket.close();
-        fullData = null;
+        finalize();
         System.gc(); // try to free things up...
     }
 
@@ -280,6 +280,15 @@ public class DICOM_PDUService extends DICOM_Comms {
             DICOM_PresentationContext presContext = new DICOM_PresentationContext();
             DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
             trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIAN);
+            presContext.addTransferSyntax(trnSyntax);
+            presContext.setAbstractSyntax((DICOM_PDUItemType) e.nextElement());
+            associateRQ.addPresentationContext(presContext);
+        }
+        
+        for (Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
+            DICOM_PresentationContext presContext = new DICOM_PresentationContext();
+            DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
+            trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             presContext.addTransferSyntax(trnSyntax);
             presContext.setAbstractSyntax((DICOM_PDUItemType) e.nextElement());
             associateRQ.addPresentationContext(presContext);
@@ -561,6 +570,11 @@ public class DICOM_PDUService extends DICOM_Comms {
         DICOM_Object ddo = null;
 
         if (ioBuffer != null) {
+            try {
+                ioBuffer.finalize();
+            }
+            catch(Throwable f){}
+            
             ioBuffer.close();
         }
 
@@ -720,9 +734,10 @@ public class DICOM_PDUService extends DICOM_Comms {
         DICOM_FileIO ioBuffer = new DICOM_FileIO();
 
         if (ioBuffer.openForWrite(fileName)) {
-            ioBuffer.sendBinary(preambleBuffer, preambleBuffer.length);
+            if (preambleBuffer != null) ioBuffer.sendBinary(preambleBuffer, preambleBuffer.length);
             ioBuffer.sendBinary(fullData, fullData.length);
             ioBuffer.close();
+            ioBuffer.finalize();
         }
     }
 
@@ -802,20 +817,21 @@ public class DICOM_PDUService extends DICOM_Comms {
 
     /**
      * Writes the image (loaded into ioBuffer from file) out the port.
-     *
+     * @param   transferSyntax    Transfer syntax
      * @param   sopClassUID    SOP class UID
      * @param   messageHeader  byte
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
-    public void write(String sopClassUID, byte messageHeader) throws DICOM_Exception {
+    public void write(String transferSyntax, String sopClassUID, byte messageHeader) throws DICOM_Exception {
 
         pDataTF.getVRLinkedBuffer().setOutgoingEndianess(LITTLE_ENDIAN);
 
         // The incomming buffer should contain the DICOM file read from disk.
         pDataTF.getVRLinkedBuffer().outgoingBuffers = ioBuffer.incomingBuffers;
         pDataTF.getVRLinkedBuffer().outBuffersLength = ioBuffer.inBuffersLength;
-        pDataTF.write(this, associateRQ.getPresentationContextID(sopClassUID), messageHeader);
+        pDataTF.write(this, associateRQ.getPresentationContextID(transferSyntax, sopClassUID), 
+                messageHeader);
 
         // clean up buffers
         ioBuffer.incomingBuffers.removeAllElements();
@@ -849,8 +865,32 @@ public class DICOM_PDUService extends DICOM_Comms {
      *
      * @throws  Throwable  DOCUMENT ME!
      */
-    protected void finalize() throws Throwable {
+    protected void finalize() {
+        
+        abortRQ = null;
+        associateAC = null;
+        associateRJ = null;
+        associateRQ = null;
+        dicomMessageDisplayer = null;
+        findResults = null;
+        moveResults = null;
+        pDataTF = null;
+        releaseRQ = null;
+        releaseRSP = null;
+        socket = null;
+        
+        if (acceptedPresentationContexts != null) {
+            acceptedPresentationContexts.removeAllElements();
+            acceptedPresentationContexts = null;
+        }
 
+        if (acceptedPresentationContexts != null) {
+            proposedAbstractSyntaxs.clear();
+            proposedAbstractSyntaxs = null;
+        }
+        ioBuffer = null;
+        fullData = null;
+        
         try {
             socket.close();
         } catch (Exception e) { }
@@ -869,7 +909,6 @@ public class DICOM_PDUService extends DICOM_Comms {
 
         for (int i = 0; i < pcaVector.size(); i++) {
             pca = (DICOM_PresentationContextAccept) pcaVector.elementAt(i);
-
             if (pDataTF.PDVPresContID == pca.presentationContextID) {
                 return (pca.trnSyntax.getUID());
             }
