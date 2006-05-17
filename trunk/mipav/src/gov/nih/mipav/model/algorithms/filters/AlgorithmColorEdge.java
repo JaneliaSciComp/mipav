@@ -10,10 +10,21 @@ import java.io.*;
 
 
 /**
- This algorithm uses a hypercomplex filter to find the edges between a region of two
+     This algorithm uses a hypercomplex filter to find the edges between a region of two
  user specified colors.  This code is based on material in the article:
  Colour-Sensitive Edge Detection using Hypercomplex Filters by Carolyn J. Evans and
- Stephen J. Sangwine.  This filter operates in 2D.
+ Stephen J. Sangwine.  This filter operates in 2D.  Since the 2 colors are normalized to
+ unit vectors, the filter only responds to the color or chromaticity information and
+ ignores the luminance information.
+ 
+     One major change was made from the article. Evans and Sangwine subtract (127.5,
+ 127.5, 127.5), for midGray at the center of the color space from every color, so that
+ every color has nonzero magnitude and a well defined orientation.  I changed the
+ value of midGray from 127.5 to 0.001.  This stops 0 being as colored as 255 and prevents
+ a nonzero magnitude from occurring.
+ 
+     In this case hypercomplex filters is really just a fancy way of saying that dot 
+ products and cross products of colors are used.
  */
 public class AlgorithmColorEdge extends AlgorithmBase {
 
@@ -158,10 +169,12 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         initProgressBar();
  
         if (srcImage.getType() == ModelStorageBase.ARGB) {
-            midGray = 127.5;
+            //midGray = 127.5;
+            midGray = 0.001;
         }
         else { // ModelStorageBase.ARGB_USHORT
-            midGray = 32767.5;
+            //midGray = 32767.5;
+            midGray = 0.001;
         }
       
         red1 -= midGray;
@@ -189,7 +202,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         vDivSMax2 = Math.min((1.0/Math.sqrt(3.0)), tan12div2);
         uC1i = red1/absC1;
         uC1j = green1/absC1;
-        uC1k = blue1/absC1;
+        uC1k = blue1/absC1;     
         uC2i = red2/absC2;
         uC2j = green2/absC2;
         uC2k = blue2/absC2;
@@ -335,8 +348,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
                 for (x = 1; x <= xDim - 2; x++) {
                     index = x + y*xDim;
                     if ((realData[index] < 0) && (vData[index] < vDivSMax2) &&
-                       ((eData[index+1] != 0) || (eData[index-1] != 0) ||
-                        (eData[index-xDim] != 0) || (eData[index+xDim] != 0))) {
+                       ((eData[index+1] != 0) || (eData[index-1] != 0))) {
                            edgeData[index] = (byte)255; 
                     }
                 }
@@ -419,8 +431,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
                 for (x = 1; x <= xDim - 2; x++) {
                     index = x + y*xDim;
                     if ((realData[index] < 0) && (vData[index] < vDivSMax2) &&
-                       ((eData[index+1] != 0) || (eData[index-1] != 0) ||
-                        (eData[index-xDim] != 0) || (eData[index+xDim] != 0))) {
+                       ((eData[index+1] != 0) || (eData[index-1] != 0))) {
                            edgeData[index] = (byte)255; 
                     }
                 }
@@ -503,8 +514,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
                 for (x = 1; x <= xDim - 2; x++) {
                     index = x + y*xDim;
                     if ((realData[index] < 0) && (vData[index] < vDivSMax2) &&
-                       ((eData[index+1] != 0) || (eData[index-1] != 0) ||
-                        (eData[index-xDim] != 0) || (eData[index+xDim] != 0))) {
+                       ((eData[index-xDim] != 0) || (eData[index+xDim] != 0))) {
                            edgeData[index] = (byte)255; 
                     }
                 }
@@ -587,8 +597,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
                 for (x = 1; x <= xDim - 2; x++) {
                     index = x + y*xDim;
                     if ((realData[index] < 0) && (vData[index] < vDivSMax2) &&
-                       ((eData[index+1] != 0) || (eData[index-1] != 0) ||
-                        (eData[index-xDim] != 0) || (eData[index+xDim] != 0))) {
+                       ((eData[index-xDim] != 0) || (eData[index+xDim] != 0))) {
                            edgeData[index] = (byte)255; 
                     }
                 }
@@ -624,7 +633,6 @@ public class AlgorithmColorEdge extends AlgorithmBase {
      * procedure is turned on.
      */
     private void constructLog() {
-        String str; 
 
         historyString = "color edge(" + String.valueOf(red1) + ", " + String.valueOf(green1) + ", " +
                         String.valueOf(blue1) + ", " + String.valueOf(red2) + ", " +
