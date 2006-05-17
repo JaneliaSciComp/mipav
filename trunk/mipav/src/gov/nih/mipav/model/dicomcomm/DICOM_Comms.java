@@ -634,10 +634,12 @@ public class DICOM_Comms {
 
         int group;
         int length;
+        boolean implicit = false;
 
         int dataIndex;
         byte[] groupWord = new byte[2];
         byte[] lengthWord = new byte[] { 0, 0, 0, 0 };
+        byte[] lengthHalfWord = new byte[] { 0, 0 };
         ByteBuffer trimmedBuffer = null;
 
         ByteBuffer dataBuffer = (ByteBuffer) incomingBuffers.elementAt(0);
@@ -648,28 +650,53 @@ public class DICOM_Comms {
 
             dataIndex = 132;
 
-            for (int i = 0; i < 20; i++) {
-
-                groupWord[0] = dataBuffer.data[dataIndex];
-                groupWord[1] = dataBuffer.data[dataIndex + 1];
-
-                // elementWord[0] = dataBuffer.data[dataIndex + 2];
-                // elementWord[1] = dataBuffer.data[dataIndex + 3];
+            groupWord[0] = dataBuffer.data[dataIndex];
+            groupWord[1] = dataBuffer.data[dataIndex + 1];
+            
+            // elementWord[0] = dataBuffer.data[dataIndex + 2];
+            // elementWord[1] = dataBuffer.data[dataIndex + 3];
+            
+            // I can't be sure VR is implicit or explicit so I try to test.
+            if (((dataBuffer.data[dataIndex + 4] < 65) || (dataBuffer.data[dataIndex + 4] > 90)) && 
+                    ((dataBuffer.data[dataIndex + 5] < 65) || (dataBuffer.data[dataIndex + 5] > 90))) {
+                implicit = true;
+            } else {
+                implicit = false;
+            }
+            
+            if (implicit){
                 lengthWord[0] = dataBuffer.data[dataIndex + 4];
                 lengthWord[1] = dataBuffer.data[dataIndex + 5];
                 lengthWord[2] = dataBuffer.data[dataIndex + 6];
                 lengthWord[3] = dataBuffer.data[dataIndex + 7];
-
-                group = bufferToInt16(groupWord, 0, inEndianess);
+                //length = bufferToInt32(lengthWord, 0, inEndianess);
+                lengthWord[0] = dataBuffer.data[dataIndex + 8];
+                lengthWord[1] = dataBuffer.data[dataIndex + 9];
+                lengthWord[2] = dataBuffer.data[dataIndex + 10];
+                lengthWord[3] = dataBuffer.data[dataIndex + 11];
                 length = bufferToInt32(lengthWord, 0, inEndianess);
-
-                if (group != 2) {
-                    break;
-                } else {
-                    dataIndex = dataIndex + 8 + length;
-                }
+            }
+            else {
+                lengthHalfWord[0] = dataBuffer.data[dataIndex + 6];
+                lengthHalfWord[1] = dataBuffer.data[dataIndex + 7];
+                //length = bufferToInt16(lengthHalfWord, 0, inEndianess);
+                lengthWord[0] = dataBuffer.data[dataIndex + 8];
+                lengthWord[1] = dataBuffer.data[dataIndex + 9];
+                lengthWord[2] = dataBuffer.data[dataIndex + 10];
+                lengthWord[3] = dataBuffer.data[dataIndex + 11];
+                length = bufferToInt32(lengthWord, 0, inEndianess);
             }
 
+            group = bufferToInt16(groupWord, 0, inEndianess);
+            //System.out.println("Group = " + group + " Length = " + length);
+            System.out.println("length = " + length);
+            
+            if (group != 2) {
+                dataIndex = 132;
+            } else {
+                dataIndex = dataIndex + 12 + length;
+            }
+            System.out.println("dataIndex = " + dataIndex);
             trimmedBuffer = new ByteBuffer(dataBuffer.bufferSize - dataIndex);
             System.arraycopy(dataBuffer.data, dataIndex, trimmedBuffer.data, 0, trimmedBuffer.bufferSize);
             trimmedBuffer.startIndex = 0;
