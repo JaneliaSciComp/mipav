@@ -64,9 +64,9 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     /**
      * Reads the connection.
      *
-     * @param   connection  the DICOM buffer
+     * @param   Connection to the DICOM buffer.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws _PDV length exceeds pDataTF length_ if data is corrupted.
      */
     public void readBody(DICOM_Comms connection) throws DICOM_Exception {
         int count = length;
@@ -120,7 +120,7 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     /**
      * Writes P-DATA-TF Messages.
      *
-     * @param   PDU                    DOCUMENT ME!
+     * @param   PDU                    The PDU
      * @param   presentationContextID  DOCUMENT ME!
      * @param   msgHeader              DOCUMENT ME!
      *

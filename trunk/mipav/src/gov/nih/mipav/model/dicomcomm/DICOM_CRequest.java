@@ -12,21 +12,21 @@ public class DICOM_CRequest {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Flag indicating low priority transfer. */
     protected static int LOW = 2;
 
-    /** DOCUMENT ME! */
+    /** Flag indicating medium priority transfer. */
     protected static int MEDIUM = 0;
 
-    /** DOCUMENT ME! */
+    /** Flag indicating high priority transfer. */
     protected static int HIGH = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** This field distinguishes the DIMSE-C operation conveyed by this message. */
     int COMMAND = 0;
 
-    /** DOCUMENT ME! */
+    /** Message ID - Used to distinguish this message from other messages. */
     private int MSG_ID = 33;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -229,7 +229,7 @@ public class DICOM_CRequest {
     }
 
     /**
-     * Sets the message ID to the value given.
+     * Sets the message ID to the value given. ID is used to distinguish messages from one another.
      *
      * @param  msgID  the new message ID
      */
