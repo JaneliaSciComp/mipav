@@ -36,6 +36,10 @@ public class DICOM_Object {
         return (length);
     }
 
+    public void finalize() {
+        groups.clear();
+        groups = null;
+    }
 
     /**
      * Removes all VRs from hash table.

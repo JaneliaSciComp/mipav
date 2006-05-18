@@ -48,9 +48,9 @@ public class DICOM_PDUService extends DICOM_Comms {
 
     /** socket used to connect to server. */
     public DICOM_Socket socket = null;
-
+    
     /** Buffer used to hold image data. */
-    protected byte[] fullData = null;
+    protected ByteBuffer compData = null;
 
     /** A list of accepted Presentation contexts. */
     Vector acceptedPresentationContexts = new Vector();
@@ -725,17 +725,15 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * Saves the DDO to the file name supplied as a method parameter.
      *
-     * @param   preambleBuffer  DOCUMENT ME!
      * @param   fileName        name of the file where the ddo is to be stored
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
-    public void saveImageToFile(byte[] preambleBuffer, String fileName) throws DICOM_Exception {
+    public void saveImageToFile( ByteBuffer dataObj, String fileName) throws DICOM_Exception {
         DICOM_FileIO ioBuffer = new DICOM_FileIO();
 
         if (ioBuffer.openForWrite(fileName)) {
-            if (preambleBuffer != null) ioBuffer.sendBinary(preambleBuffer, preambleBuffer.length);
-            ioBuffer.sendBinary(fullData, fullData.length);
+            ioBuffer.sendBinary(dataObj.data, dataObj.length());
             ioBuffer.close();
             ioBuffer.finalize();
         }
@@ -874,7 +872,11 @@ public class DICOM_PDUService extends DICOM_Comms {
         dicomMessageDisplayer = null;
         findResults = null;
         moveResults = null;
-        pDataTF = null;
+        
+        if (pDataTF != null) {
+            pDataTF.finalize();
+            pDataTF = null;
+        }
         releaseRQ = null;
         releaseRSP = null;
         socket = null;
@@ -888,8 +890,15 @@ public class DICOM_PDUService extends DICOM_Comms {
             proposedAbstractSyntaxs.clear();
             proposedAbstractSyntaxs = null;
         }
+        if (ioBuffer != null){
+            ioBuffer.close();
+            ioBuffer.finalize();
+        }
         ioBuffer = null;
-        fullData = null;
+        
+        if (compData != null) 
+            compData.finalize();
+        compData = null;
         
         try {
             socket.close();
@@ -934,15 +943,18 @@ public class DICOM_PDUService extends DICOM_Comms {
     }
 
     /**
-     * Fills the fullData buffer from the vrBuffer.incomming buffers.
+     * Fills the compData buffer from the vrBuffer.incomming buffers.
      *
      * @param  vrBuffer  DICOM_Comms
      */
     private void buildRawBuffer(DICOM_Comms vrBuffer) {
 
         try {
-            fullData = new byte[vrBuffer.getIncomingSize()];
-            vrBuffer.read(fullData, vrBuffer.getIncomingSize());
+            if (compData == null || compData.length() < vrBuffer.getIncomingSize()){
+                compData = new ByteBuffer(vrBuffer.getIncomingSize());
+            }
+            compData.endIndex = vrBuffer.getIncomingSize();
+            vrBuffer.read(compData.data, vrBuffer.getIncomingSize());
         } catch (DICOM_Exception de) {
             de.printStackTrace();
         }

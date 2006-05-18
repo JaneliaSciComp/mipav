@@ -38,10 +38,23 @@ public class DICOM_FileIO extends DICOM_Comms {
                 outFileStream.close();
             } catch (Exception e) { }
         }
-        //finalize();
     }
     
     public void finalize(){
+        if (outFileStream != null){
+            try {
+                outFileStream.close();
+            } catch (Exception e) { }
+        }
+        outFileStream = null;
+        
+        if (inFileStream != null){
+            try {
+                inFileStream.close();
+            } catch (Exception e) { }
+        }
+        inFileStream = null;
+        
         super.finalize();
     }
 
