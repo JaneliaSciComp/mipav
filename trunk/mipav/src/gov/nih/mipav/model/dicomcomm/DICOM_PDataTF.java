@@ -46,6 +46,11 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     public DICOM_CommsLink getVRLinkedBuffer() {
         return vrLinkedBuffer;
     }
+    
+    public void finalize(){
+        vrLinkedBuffer.finalize();
+        vrLinkedBuffer = null;
+    }
 
     /**
      * Returns true if the reading is complete else false.

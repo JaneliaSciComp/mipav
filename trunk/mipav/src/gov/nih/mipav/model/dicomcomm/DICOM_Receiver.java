@@ -52,6 +52,8 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
     /** Reference to the DICOM verification object. */
     private DICOM_Verification verification;
 
+    ByteBuffer pre_and_fullData = null;
+    
     private String defaultStorageDir;
     private Vector fileNameList = new Vector();
     private Vector observerList = new Vector();
@@ -78,6 +80,14 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         return runner.isAlive();
     }
 
+    public void finalize() {
+        if (pre_and_fullData != null){
+            pre_and_fullData.finalize();
+        }
+        preambleBuffer = null;
+        super.finalize();
+    }
+    
     /**
      * Returns the default storage directory for the received dicom files.
      * @return the default storage directory for the received dicom files.
@@ -295,23 +305,26 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     }
 
                     try {
-                        readInObject(null); // This fills the fullData buffer
+                        readInObject(null); // This fills the compData buffer
                         fileDicom = new FileDicom("temp.dcm");
                         addPreambleAndGroupTwoTags(dco); // Build DICOM part 10 preample.
-                        byte[] pre_and_fullData = new byte[preambleBuffer.length + fullData.length];
-                        System.arraycopy(preambleBuffer, 0, pre_and_fullData, 0, preambleBuffer.length);
-                        System.arraycopy(fullData, 0, pre_and_fullData, preambleBuffer.length, fullData.length);
-                        fullData = pre_and_fullData;
-                        pre_and_fullData = null;
-                        fileDicom.setTagBuffer(fullData);
 
+                        if (pre_and_fullData == null ||
+                            pre_and_fullData.length() < preambleBuffer.length + compData.length()) {
+                            pre_and_fullData = new ByteBuffer(preambleBuffer.length + compData.length());
+                        }
+                        
+                        System.arraycopy(preambleBuffer, 0, pre_and_fullData.data, 0, preambleBuffer.length);
+                        System.arraycopy(compData.data, 0, pre_and_fullData.data, preambleBuffer.length, compData.length());
+                        pre_and_fullData.endIndex = preambleBuffer.length + compData.length();
+                        fileDicom.setTagBuffer(pre_and_fullData.data);
+                        
                         if (fileDicom.readHeader(false) == false) {
 
                             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                                 Preferences.debug(DICOM_Util.timeStamper() +
                                                   " DICOMReceiver.recieverClient: Failure reading DICOM image. \n");
                             }
-
                             break; // Should do something more expressive reporting
                         }
                     } catch (IOException ioe) {
@@ -452,10 +465,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     }
 
                     // Save image (with preample appended) data to file
-                    saveImageToFile(null, filePath + fileName);
+                    saveImageToFile(pre_and_fullData, filePath + fileName);
                     fileNameList.add(filePath + fileName);
                     //preambleBuffer = null;
-                    fullData = null;
 
                     if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                         Preferences.debug(DICOM_Util.timeStamper() +
@@ -477,7 +489,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
                     } else if ((dicomMessageDisplayer == null) && (receivedImageDialog == null)) {
 
                         // make non-modal message frame
-                        JFrame parent = new JFrame();
+                       JFrame parent = new JFrame();
 
                         try {
                             parent.setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
@@ -497,6 +509,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
 
                         receivedImageDialog.append("From: " + new String(super.getAAssociateRQ().getCallingAppTitle()) +
                                                    ": " + filePath + fileName + "\n");
+                    
                     } else if ((dicomMessageDisplayer == null) && (receivedImageDialog != null)) {
 
                         // Update message with name of newly arrived image
@@ -517,8 +530,7 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
             dicomMessageDisplayer.setMessageType(process, DICOMDisplayer.ERROR);
             showMessage("" + e);
         }
-        fileDicom.finalize();
-        fileInfo.finalize();
+        System.gc();
         
         /**
          * Marks this object as having been changed.

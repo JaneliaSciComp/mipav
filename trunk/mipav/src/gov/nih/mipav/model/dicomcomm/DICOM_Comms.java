@@ -240,7 +240,7 @@ public class DICOM_Comms {
                         sendBinary(byteBuffer.data, byteBuffer.startIndex, availableBytes);
                         nBytes -= availableBytes;
                     }
-
+                    ((ByteBuffer)(outgoingBuffers.elementAt(0))).finalize();
                     outgoingBuffers.removeElementAt(0);
                 }
             }
@@ -519,6 +519,7 @@ public class DICOM_Comms {
                 dataOffset += availableBytes;
                 inBuffersLength -= availableBytes;
                 nBytes -= availableBytes;
+                ((ByteBuffer)(incomingBuffers.elementAt(0))).finalize();
                 incomingBuffers.removeElementAt(0);
             }
         }
@@ -700,6 +701,7 @@ public class DICOM_Comms {
             System.arraycopy(dataBuffer.data, dataIndex, trimmedBuffer.data, 0, trimmedBuffer.bufferSize);
             trimmedBuffer.startIndex = 0;
             trimmedBuffer.endIndex = trimmedBuffer.bufferSize - 1;
+            ((ByteBuffer)(incomingBuffers.elementAt(0))).finalize();
             incomingBuffers.removeElementAt(0);
             incomingBuffers.insertElementAt(trimmedBuffer, 0);
             inBuffersLength = inBuffersLength - dataIndex;
@@ -836,7 +838,6 @@ public class DICOM_Comms {
     /**
      * Prepares this class for destruction.
      *
-     * @throws  Throwable  DOCUMENT ME!
      */
     protected void finalize() {
         srcByteArray = null;
@@ -933,10 +934,17 @@ public class DICOM_Comms {
         /**
          * Prepares this class for destruction.
          *
-         * @throws  Throwable  DOCUMENT ME!
          */
         protected void finalize() {
            data = null;
+        }
+        
+        /**
+         * Prepares this class for destruction.
+         *
+         */
+        public int length() {
+           return (endIndex - startIndex);
         }
         
         /**

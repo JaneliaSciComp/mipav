@@ -54,6 +54,15 @@ public class DICOM_Store implements Runnable {
         remoteAETitle = _remoteAETitle;
         frame = _frame;
     }
+    
+    public void finalize() {
+        if (pdu != null) {
+            pdu.finalize();
+        }
+        pdu = null;
+        frame = null;
+        
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
