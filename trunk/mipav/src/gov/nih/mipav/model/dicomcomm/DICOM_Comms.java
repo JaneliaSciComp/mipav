@@ -13,13 +13,13 @@ public class DICOM_Comms {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Flag used to indicate Big Endianess. */
     public static final int BIG_ENDIAN = 1;
 
-    /** DOCUMENT ME! */
+    /** Flag used to indicate Little Endianess. */
     public static final int LITTLE_ENDIAN = 2;
 
-    /** DOCUMENT ME! */
+    /** The maximum read buffer size. */
     public static final int MAX_READ_LENGTH = 32768;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

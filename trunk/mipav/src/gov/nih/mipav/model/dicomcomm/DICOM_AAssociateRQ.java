@@ -13,28 +13,28 @@ public class DICOM_AAssociateRQ extends DICOM_PDUType {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Application context PDU type.  */
     protected DICOM_PDUItemType appContext = new DICOM_PDUItemType(PDUTYPE_ApplicationContext);
 
-    /** DOCUMENT ME! */
+    /** The called application entity name, must be 16 or less characters. */
     protected byte[] calledAppTitle = new byte[16];
 
-    /** DOCUMENT ME! */
+    /** The calling application entity name, must be 16 or less characters. */
     protected byte[] callingAppTitle = new byte[16];
 
-    /** DOCUMENT ME! */
+    /** A list of presentation context objects. */
     protected Vector presContexts = new Vector();
 
-    /** DOCUMENT ME! */
+    /** Protocol version identifier. */
     protected int protocolVersion = DICOM_Constants.PROTOCOLVERSION;
 
-    /** DOCUMENT ME! */
+    /** Reserved by array. */
     protected byte[] reserved2 = new byte[2];
 
-    /** DOCUMENT ME! */
+    /** Reserved by array. */
     protected byte[] reserved3 = new byte[32];
 
-    /** DOCUMENT ME! */
+    /** User information structure. */
     protected DICOM_UserInformation userInfo = new DICOM_UserInformation();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------

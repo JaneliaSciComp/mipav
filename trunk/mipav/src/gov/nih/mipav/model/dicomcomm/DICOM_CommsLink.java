@@ -18,8 +18,8 @@ public class DICOM_CommsLink extends DICOM_Comms {
     /**
      * Send the data out the connection (pdu).
      *
-     * @param   connection  the pdu or connection (DICOM_Comms is the parent class of DICOM_PDUService)
-     * @param   length      DOCUMENT ME!
+     * @param   connection  the PDU or connection (DICOM_Comms is the parent class of DICOM_PDUService)
+     * @param   length      The length of data to be flushed out the port.
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
@@ -33,16 +33,16 @@ public class DICOM_CommsLink extends DICOM_Comms {
     /**
      * Copies data from the port buffer into the a new buffer used typically in pDataTF.
      *
-     * @param   data    buffer to store the data
-     * @param   length  number of bytes to be read
+     * @param   data    Buffer to store the data
+     * @param   length  Number of bytes to be read
      *
-     * @return  DOCUMENT ME!
+     * @return  The length of the data read in.
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
     public int readBinary(byte[] data, int length) throws DICOM_Exception {
         linkToComms.read(data, length); // this eventually finds it way to
-                                        // the pdu.sendBinary (pdu is a DICOM buffer)
+                                        // the pdu.readBinary (pdu is a DICOM buffer)
 
         return (length);
     }
@@ -50,8 +50,8 @@ public class DICOM_CommsLink extends DICOM_Comms {
     /**
      * Sets linkToComms to connection and fills(read) the connection buffer via readBinary.
      *
-     * @param   connection  the connection to the socket
-     * @param   length      the number of bytes to read
+     * @param   connection  The connection to the socket.
+     * @param   length      The number of bytes to read.
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
@@ -63,9 +63,9 @@ public class DICOM_CommsLink extends DICOM_Comms {
     /**
      * Actual binary data to be sent.
      *
-     * @param   data    buffer of data send out the port (socket)
-     * @param   offset  DOCUMENT ME!
-     * @param   length  number of bytes to be sent
+     * @param   data    Buffer of data send out the port (socket)
+     * @param   offset  The offset into the data indicating the starting point of the data to be sent.
+     * @param   length  The number of bytes to be sent.
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
