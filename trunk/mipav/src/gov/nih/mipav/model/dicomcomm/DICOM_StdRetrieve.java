@@ -11,14 +11,14 @@ public class DICOM_StdRetrieve extends DICOM_SOP {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Move request object. */
     public DICOM_CRequest cMoveRq;
 
-    /** DOCUMENT ME! */
+    /** Move response object. */
     public DICOM_CResponse cMoveRsp;
 
 
-    /** DOCUMENT ME! */
+    /** Uniquely identifies the current C-Move RQ*/
     private int MSG_ID;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -74,12 +74,12 @@ public class DICOM_StdRetrieve extends DICOM_SOP {
      *
      * @param   pdu       PDU object
      * @param   ddo       DICOM data object
-     * @param   appTitle  Appliation entity title of the
+     * @param   localAppTitle  Appliation entity title of the local entity
      * @param   dcmMove   DICOM move object - not used here
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
-    public void write(DICOM_PDUService pdu, DICOM_Object ddo, byte[] appTitle, DICOM_Move dcmMove)
+    public void write(DICOM_PDUService pdu, DICOM_Object ddo, byte[] localAppTitle, DICOM_Move dcmMove)
             throws DICOM_Exception {
 
         // int i =0;
@@ -89,12 +89,12 @@ public class DICOM_StdRetrieve extends DICOM_SOP {
         DICOM_Object dco = new DICOM_Object();
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-            Preferences.debug(DICOM_Util.timeStamper() + " DICOM_StdRetrieve.write: BEGIN to " + new String(appTitle) +
+            Preferences.debug(DICOM_Util.timeStamper() + " DICOM_StdRetrieve.write: BEGIN to " + new String(localAppTitle) +
                               ".\n");
         }
 
         DICOM_Util.clearByteArray(outAETitle);
-        DICOM_Util.copyByteArray(outAETitle, appTitle);
+        DICOM_Util.copyByteArray(outAETitle, localAppTitle);
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
             Preferences.debug(DICOM_Util.timeStamper() + " DICOM_StdRetrieve.write: MOVE request.\n");

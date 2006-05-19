@@ -100,26 +100,26 @@ public class DICOM_FileIO extends DICOM_Comms {
      * @param   data   buffer in which to store data from file stream
      * @param   count  number of bytes to read into buffer
      *
-     * @return  DOCUMENT ME!
+     * @return  The actual number of bytes read.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an exception if there was a problem readiing in the data to the port.
      */
     public int readBinary(byte[] data, int count) throws DICOM_Exception {
-        int actual = 0;
+        int actualNumOfByteRead = 0;
 
         try {
-            actual = inFileStream.read(data, 0, count);
+            actualNumOfByteRead = inFileStream.read(data, 0, count);
         } catch (Exception e) {
             close();
             throw new DICOM_Exception("DICOM_FileIO.readBinary( " + data + ", " + count + " ): " + e);
         }
 
-        if (actual < 0) {
+        if (actualNumOfByteRead < 0) {
             close();
-            throw new DICOM_Exception("DICOM_FileIO.readBinary( " + data + ", " + count + " ) = " + actual);
+            throw new DICOM_Exception("DICOM_FileIO.readBinary( " + data + ", " + count + " ) = " + actualNumOfByteRead);
         }
 
-        return (actual);
+        return (actualNumOfByteRead);
     }
 
 
@@ -129,7 +129,7 @@ public class DICOM_FileIO extends DICOM_Comms {
      * @param   data   buffer which holds the info to output
      * @param   count  number of bytes to output
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an exception if there was a problem outputting the data to the port.
      */
     public void sendBinary(byte[] data, int count) throws DICOM_Exception {
 

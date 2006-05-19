@@ -2,28 +2,42 @@ package gov.nih.mipav.model.dicomcomm;
 
 
 /**
- * DOCUMENT ME!
+ * Used to exchange application information (i.e. DICOM messages). !
  */
 public class DICOM_PDataTF extends DICOM_PDUType {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Presentation Data Value presentation context ID. */
     public byte PDVPresContID;
 
-    /** DOCUMENT ME! */
+    /** Size of the output data */
     private int outBlockSize;
 
-    /** DOCUMENT ME! */
-    private int PDVLength; // Presentation Data Value
+    /** Presentation Data Value length. */
+    private int PDVLength; 
 
-    /** DOCUMENT ME! */
+    /** Presentation Data Value message header. 
+     * 01H Accociate request. 
+     * 02H Associate ack.
+     * 03H Associate reject.
+     * 04H PData PDU
+     * 05H Release request
+     * 06H Release response
+     * 07H Abort
+     * 10H Application context item 
+     * 20H Presetation context item
+     * 21H Pr
+     * 30H Abstract Syntax sub-item
+     * 40H Trnasfer Syntax sub-item
+     * 50H User information item
+     */
     private byte PDVMsgHeader;
 
-    /** DOCUMENT ME! */
+    /** Flag used to identify read message status. Default is false. */
     private boolean readMessageStatus = false;
 
-    /** DOCUMENT ME! */
+    /** Reference to the link buffer communication link. */
     private DICOM_CommsLink vrLinkedBuffer = new DICOM_CommsLink();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -39,7 +53,7 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * DOCUMENT ME!
+     * Gets the communication linkbuffer.
      *
      * @return  DICOM_CommsLink
      */
@@ -47,6 +61,9 @@ public class DICOM_PDataTF extends DICOM_PDUType {
         return vrLinkedBuffer;
     }
     
+    /**
+     * Cleans up memory.
+     */
     public void finalize(){
         vrLinkedBuffer.finalize();
         vrLinkedBuffer = null;
@@ -101,7 +118,7 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     /**
      * Sets the outgoing block size based the the Max. Sub. Length
      *
-     * @param  outMaxSubLength  the maximum sublength
+     * @param  outMaxSubLength  The maximum sublength
      */
     public void setOutgoingBlockSize(int outMaxSubLength) {
 
@@ -121,10 +138,10 @@ public class DICOM_PDataTF extends DICOM_PDUType {
      * Writes P-DATA-TF Messages.
      *
      * @param   PDU                    The PDU
-     * @param   presentationContextID  DOCUMENT ME!
-     * @param   msgHeader              DOCUMENT ME!
+     * @param   presentationContextID  The presentation context ID.
+     * @param   msgHeader              The message header.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Indicates error writing PData information.
      */
     public void write(DICOM_PDUService PDU, byte presentationContextID, byte msgHeader) throws DICOM_Exception {
         PDVPresContID = presentationContextID;
@@ -166,11 +183,11 @@ public class DICOM_PDataTF extends DICOM_PDUType {
     }
 
     /**
-     * DOCUMENT ME!
+     * Filler because it extends DICOM_PDUType which is an abstract class
      *
-     * @param   connection  DOCUMENT ME!
+     * @param   connection  Filler
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Filler
      */
     public void writeBody(DICOM_Comms connection) throws DICOM_Exception {
         // Filler because it extends DICOM_PDUType which is an abstract class

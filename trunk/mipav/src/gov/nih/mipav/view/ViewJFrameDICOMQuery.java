@@ -3392,10 +3392,10 @@ public class ViewJFrameDICOMQuery extends JFrame
         messageTable.showMessage(serverInfo[0]);
 
         String title = storageInfo[0];
-        byte[] appTitle;
+        byte[] localAppTitle;
 
         try {
-            appTitle = new byte[16]; // Why 64 and not 16
+            localAppTitle = new byte[16]; 
             moveRequestThread = new Thread(move);
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJFrameDICOMQuery.sendMoveRequest");
@@ -3403,10 +3403,10 @@ public class ViewJFrameDICOMQuery extends JFrame
             return;
         }
 
-        DICOM_Util.fillByteArray(appTitle, ' ');
+        DICOM_Util.fillByteArray(localAppTitle, ' ');
 
         for (int i = 0; i < title.length(); i++) {
-            appTitle[i] = (byte) title.charAt(i);
+            localAppTitle[i] = (byte) title.charAt(i);
         }
 
         int id = move.setMsgID();
@@ -3417,7 +3417,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         messageTable.repaint();
         messageTable.setSucceeded(false);
 
-        move.setMoveParameters(pdu, dataObject, appTitle);
+        move.setMoveParameters(pdu, dataObject, localAppTitle);
         moveRequestThread.setPriority(Thread.NORM_PRIORITY);
         moveRequestThread.start();
 

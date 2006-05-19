@@ -21,9 +21,9 @@ public class DICOM_PDUItemType extends DICOM_PDUTypeBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * calculates the PDU item type size.
+     * Calculates the PDU item type size.
      *
-     * @return  the size = type + reserved + item length + (length)
+     * @return  The size = type + reserved + item length + (length)
      */
     public int calcSize() {
         return (1 + 1 + 2 + length());
@@ -32,7 +32,7 @@ public class DICOM_PDUItemType extends DICOM_PDUTypeBase {
     /**
      * Reads the body (i.e. UID) of the item type
      *
-     * @param   connection  to read from
+     * @param   Connection  to read from
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
@@ -43,9 +43,9 @@ public class DICOM_PDUItemType extends DICOM_PDUTypeBase {
     /**
      * Reads the PDU item header.
      *
-     * @param   connection  the connection to read from
+     * @param   Connection  the connection to read from
      *
-     * @return  the PDU item type
+     * @return  The PDU item type
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */

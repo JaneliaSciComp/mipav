@@ -17,11 +17,11 @@ public class DICOM_ObjectList extends Vector {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * toString.
+     * Converts object to string
      *
-     * @param   str  DOCUMENT ME!
+     * @param   str  Prefix string to the output of the data.
      *
-     * @return  DOCUMENT ME!
+     * @return  Concatinated string of the DICOM object list.
      */
     public String toString(String str) {
         String sumStr = new String();
