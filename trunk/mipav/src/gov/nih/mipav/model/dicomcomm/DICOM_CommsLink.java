@@ -10,7 +10,7 @@ public class DICOM_CommsLink extends DICOM_Comms {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Reference to the link communications object. */
     DICOM_Comms linkToComms = new DICOM_Comms();
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -21,12 +21,10 @@ public class DICOM_CommsLink extends DICOM_Comms {
      * @param   connection  the PDU or connection (DICOM_Comms is the parent class of DICOM_PDUService)
      * @param   length      The length of data to be flushed out the port.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception Throws an error when attempting to flush more bytes than are present!
      */
     public void flush(DICOM_Comms connection, int length) throws DICOM_Exception {
         linkToComms = connection;
-
-        // linkToComms.flush();
         flush(length);
     }
 
@@ -38,7 +36,7 @@ public class DICOM_CommsLink extends DICOM_Comms {
      *
      * @return  The length of the data read in.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there is a problem reading the port.
      */
     public int readBinary(byte[] data, int length) throws DICOM_Exception {
         linkToComms.read(data, length); // this eventually finds it way to
@@ -53,7 +51,7 @@ public class DICOM_CommsLink extends DICOM_Comms {
      * @param   connection  The connection to the socket.
      * @param   length      The number of bytes to read.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there is a problem reading the port.
      */
     public void readFill(DICOM_Comms connection, int length) throws DICOM_Exception {
         linkToComms = connection;
@@ -67,7 +65,7 @@ public class DICOM_CommsLink extends DICOM_Comms {
      * @param   offset  The offset into the data indicating the starting point of the data to be sent.
      * @param   length  The number of bytes to be sent.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there is a problem sendting via port.
      */
     public void sendBinary(byte[] data, int offset, int length) throws DICOM_Exception {
         linkToComms.write(data, offset, length);

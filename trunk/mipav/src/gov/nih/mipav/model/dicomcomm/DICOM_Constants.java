@@ -2,7 +2,7 @@ package gov.nih.mipav.model.dicomcomm;
 
 
 /**
- * DOCUMENT ME!
+ * Useful DICOM constants. Methods to convert command and UID codes to strings.
  */
 public class DICOM_Constants {
 
@@ -11,64 +11,64 @@ public class DICOM_Constants {
     /** DOCUMENT ME! */
     public static final int MAXSUBLENGTH = 32000;
 
-    /** DOCUMENT ME! */
+    /** DICOM Protocol Version - Default = 1. */
     public static final int PROTOCOLVERSION = 1;
 
-    /** DOCUMENT ME! */
+    /** Application context UID = 1.2.840.10008.3.1.1.1 */
     public static final String UID_ApplicationContext = "1.2.840.10008.3.1.1.1";
 
-    /** SOP Class UIDs ... */
+    /** Verification UID  = 1.2.840.10008.1.1 */
     public static final String UID_Verification = "1.2.840.10008.1.1";
 
-    /** DOCUMENT ME! */
+    /** CR Storage UID = 1.2.840.10008.5.1.4.1.1.1 */
     public static final String UID_CRStorage = "1.2.840.10008.5.1.4.1.1.1";
 
-    /** DOCUMENT ME! */
+    /** CT Storage UID = 1.2.840.10008.5.1.4.1.1.2 */
     public static final String UID_CTStorage = "1.2.840.10008.5.1.4.1.1.2";
 
-    /** DOCUMENT ME! */
+    /** Old US MultiframeStorage UID = 1.2.840.10008.5.1.4.1.1.3. Retired in 1998. */
     public static final String UID_OldUSMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3"; // retired 1998
 
-    /** DOCUMENT ME! */
+    /** US Multiframe Storage UID = 1.2.840.10008.5.1.4.1.1.3.1. */
     public static final String UID_USMultiframeStorage = "1.2.840.10008.5.1.4.1.1.3.1";
 
-    /** DOCUMENT ME! */
+    /** MR Storage UID =  1.2.840.10008.5.1.4.1.1.4 */
     public static final String UID_MRStorage = "1.2.840.10008.5.1.4.1.1.4";
 
-    /** DOCUMENT ME! */
+    /** Old NM Storage UID = 1.2.840.10008.5.1.4.1.1.5 */
     public static final String UID_OldNMStorage = "1.2.840.10008.5.1.4.1.1.5";
 
-    /** DOCUMENT ME! */
+    /** Old US Storage UID = 1.2.840.10008.5.1.4.1.1.6. Retired 1998 */
     public static final String UID_OldUSStorage = "1.2.840.10008.5.1.4.1.1.6"; // retired 1998
 
-    /** DOCUMENT ME! */
+    /** US Storage UID = 1.2.840.10008.5.1.4.1.1.6.1 */
     public static final String UID_USStorage = "1.2.840.10008.5.1.4.1.1.6.1";
 
-    /** DOCUMENT ME! */
+    /** SC (Secondary Capture) Storage UID = 1.2.840.10008.5.1.4.1.1.7 */
     public static final String UID_SCStorage = "1.2.840.10008.5.1.4.1.1.7";
 
-    /** DOCUMENT ME! */
+    /** Standalone Overlay Storage UID = 1.2.840.10008.5.1.4.1.1.8*/
     public static final String UID_StandaloneOverlayStorage = "1.2.840.10008.5.1.4.1.1.8";
 
-    /** DOCUMENT ME! */
+    /** Standalone Curve Storage UID = 1.2.840.10008.5.1.4.1.1.9 */
     public static final String UID_StandaloneCurveStorage = "1.2.840.10008.5.1.4.1.1.9";
 
-    /** DOCUMENT ME! */
+    /** Standalone Modality LUT Storage UID = 1.2.840.10008.5.1.4.1.1.10  */
     public static final String UID_StandaloneModalityLUTStorage = "1.2.840.10008.5.1.4.1.1.10";
 
-    /** DOCUMENT ME! */
+    /** Standalone VOI LUT Storage UID = 1.2.840.10008.5.1.4.1.1.11 */
     public static final String UID_StandaloneVOILUTStorage = "1.2.840.10008.5.1.4.1.1.11";
 
-    /** DOCUMENT ME! */
+    /** XRayAngioStorage UID = 1.2.840.10008.5.1.4.1.1.12.1 */
     public static final String UID_XRayAngioStorage = "1.2.840.10008.5.1.4.1.1.12.1";
 
-    /** DOCUMENT ME! */
+    /** XRay Fluoro Storage UID = 1.2.840.10008.5.1.4.1.1.12.2 */
     public static final String UID_XRayFluoroStorage = "1.2.840.10008.5.1.4.1.1.12.2";
 
-    /** DOCUMENT ME! */
+    /** NM (Nuclear med) Storage UID = 1.2.840.10008.5.1.4.1.1.20 */
     public static final String UID_NMStorage = "1.2.840.10008.5.1.4.1.1.20";
 
-    /** DOCUMENT ME! */
+    /** Pet Storage UID = 1.2.840.10008.5.1.4.1.1.128 */
     public static final String UID_PetStorage = "1.2.840.10008.5.1.4.1.1.128";
 
     /** DOCUMENT ME! */
@@ -193,7 +193,7 @@ public class DICOM_Constants {
     /** DOCUMENT ME! */
     public static final int DSTYPE_NODATAPRESENT = 0x0101;
 
-    /** read/write file types... */
+    /** Read/write file types... */
     public static final int FILETYPE_ACRNEMA_VR_DUMP = 1;
 
     /** DOCUMENT ME! */
@@ -309,11 +309,11 @@ public class DICOM_Constants {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * DOCUMENT ME!
+     * Converts DICOM command from and int code to a string
      *
-     * @param   command  DOCUMENT ME!
+     * @param   command  The integer representation of the DICOM command.
      *
-     * @return  DOCUMENT ME!
+     * @return  The string representation of the code.
      */
     public static String convertCommandToString(int command) {
 
