@@ -208,6 +208,29 @@ public class WidgetFactory {
         return button;
     }
 
+    /**
+     * Helper method to build a icon button.
+     *
+     * @param   icon      icon for button.
+     * @param   toolTip   Tool tip to be associated with button.
+     * @param   action    Action command for button.
+     * @param   listener  the listener for this button's actions
+     *
+     * @return  a new text button
+     */
+    public static final JButton buildIconButton(Icon icon, String toolTip, String action, ActionListener listener) {
+        JButton button = new JButton(icon);
+        button.addActionListener(listener);
+        button.setToolTipText(toolTip);
+        button.setFont(WidgetFactory.font12B);
+        button.setMinimumSize(new Dimension(20, 20));
+        button.setPreferredSize(new Dimension(90, 20));
+        button.setMargin(new Insets(2, 7, 2, 7));
+        button.setActionCommand(action);
+
+        return button;
+    }
+
     // TODO spinner
     // TODO color chooser
 
