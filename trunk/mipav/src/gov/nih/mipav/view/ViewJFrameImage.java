@@ -330,6 +330,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getActiveImage().notifyImageDisplayListeners();
         } else if (command.equals("OpenXCEDESchema")) {
             userInterface.openXCEDESchema();
+        } else if (command.equals("SaveXCEDESchema")) {
+            userInterface.saveXCEDESchema();
         } else if (command.equals("Zoom linearly")) {
             componentImage.zoomMode = ViewJComponentEditImage.LINEAR;
         } else if (command.equals("Zoom exponentially")) {
@@ -386,8 +388,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("SaveSRBFile")) {
             userInterface.saveSRBFile();
         } else if (command.equals("TransferSRBFiles")) {
-            SRBFileTransferer transferer = new SRBFileTransferer();
-            transferer.transferFiles();
+            userInterface.transferSRBFiles();
         } else if (command.equals("AutoUploadToSRB")) {
             NDARPipeline pipeline = userInterface.getNDARPipeline();
             if (pipeline == null) {

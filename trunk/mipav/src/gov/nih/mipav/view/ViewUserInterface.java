@@ -26,6 +26,7 @@ import java.util.*;
 
 import javax.swing.*;
 
+import org.w3c.dom.Document;
 
 /**
  * This class is the _glue_ keeps a record of the present structure of the application. It keeps a list of all the image
@@ -77,6 +78,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Initial menubar for MIPAV. */
     protected JMenuBar openingMenuBar;
+    
+    private JXCEDEExplorer xcedeExplorer;
 
     /** The directories where the image files set from the command line are located. */
     Vector imageFileDirs = new Vector();
@@ -423,6 +426,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             openImageFrame();
         } else if (command.equals("OpenXCEDESchema")) {
             openXCEDESchema();
+        } else if (command.equals("SaveXCEDESchema")){
+            saveXCEDESchema();
         } else if (command.equals("BrowseImages")) {
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
@@ -432,8 +437,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("SaveSRBFile")) {
             saveSRBFile();
         } else if (command.equals("TransferSRBFiles")) {
-            SRBFileTransferer transferer = new SRBFileTransferer();
-            transferer.transferFiles();
+            transferSRBFiles();
         } else if (command.equals("AutoUploadToSRB")) {
             pipeline = new NDARPipeline();
             if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
@@ -1838,6 +1842,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     }
 
+    // Transfers the files between local machine/SRB server and local machine/SRB server.
+    public void  transferSRBFiles(){
+        SRBFileTransferer transferer = new SRBFileTransferer();
+        transferer.setTransferMode(SRBFileTransferer.TRANSFER_MODE_SEQUENTIAL);
+        transferer.transferFiles();        
+    }
+    
     /**
      * Opens the srb file and display the images.
      */
@@ -1850,7 +1861,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         sourceFiles = SRBFileTransferer.createCompleteFileList(sourceFiles);
         transferer.setSourceFiles(sourceFiles);
 
-        GeneralFile tempDir = transferer.getLocalTempDir();
+        // Creates an random subdirectory under the temporary directory.
+        transferer.createTempDir();
+        
+        GeneralFile tempDir = SRBFileTransferer.createLocalFile(transferer.getTempDir().getAbsolutePath());
         if (tempDir == null) {
             MipavUtil.displayError("The local temporary directory has to be specified");
             return;
@@ -1886,70 +1900,37 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Schema.
      */
     public void openXCEDESchema() {
-        FileIO fileIO;
-        String fileName;
-        File selectedFile;
-        String currentDirectory;
-
-        XCEDEElement root = null;
-
-        /**
-         * Creates the JFileChooser object.
-         */
-        JFileChooser fileChooser = new JFileChooser();
-
-        /**
-         * Sets up the current directory of the JFileChooser.
-         */
-        if (getDefaultDirectory() != null) {
-            File file = new File(getDefaultDirectory());
-
-            if (file != null) {
-                fileChooser.setCurrentDirectory(file);
-            } else {
-                fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
-            }
-        } else {
-            fileChooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        FileXCEDE fileXCEDE = new FileXCEDE();
+        Document document = fileXCEDE.open();
+        if (document == null) {
+            return;
         }
-
         /**
-         * Sets up the file filter of the JFileChooser.
+         * Creates the JXCEDEExplorer to display the hierarchical structure of
+         * the XCEDE schema.
          */
-        fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.XCEDE));
-
-        /**
-         * Sets the title of the JFileChooser.
-         */
-        fileChooser.setDialogTitle("Open XCEDE Schema");
-
-        /**
-         * Displays the file chooser dialog and retrieves the user selection.
-         */
-        int returnValue = fileChooser.showOpenDialog(getMainFrame());
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            selectedFile = fileChooser.getSelectedFile();
-            fileName = selectedFile.getName();
-            currentDirectory = String.valueOf(fileChooser.getCurrentDirectory()) + File.separatorChar;
-            fileIO = new FileIO();
-            root = fileIO.readXCEDE(fileName, currentDirectory);
-            setDefaultDirectory(currentDirectory);
-
-            if (root == null) {
-                return;
-            }
-
-            /**
-             * Creates the JXCEDEExplorer to display the hierarchical structure of the XCEDE schema.
-             */
-            new JXCEDEExplorer(selectedFile, root);
+        if(xcedeExplorer == null){
+            xcedeExplorer = new JXCEDEExplorer(document);
+        }else{
+            xcedeExplorer.setDocument(document);
         }
-        fileChooser = null;
     }
 
+    public JXCEDEExplorer getXCEDEExplorer(){
+        return xcedeExplorer;
+    }
+    
+    public void setXCEDEExplorer(JXCEDEExplorer xcedeExplorer){
+        this.xcedeExplorer = xcedeExplorer;
+    }
+    
+    public void saveXCEDESchema() {
+        FileXCEDE xcedeFile = new FileXCEDE();
+        xcedeFile.save();
+    }
     /**
-     * Display Options dialog for all mipav options (including image specific options) to allow user to adjust display
-     * in one place.
+     * Display Options dialog for all mipav options (including image specific
+     * options) to allow user to adjust display in one place.
      */
     public void options() {
 

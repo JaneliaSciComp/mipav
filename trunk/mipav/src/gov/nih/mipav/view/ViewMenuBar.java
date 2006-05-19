@@ -541,7 +541,7 @@ public class ViewMenuBar {
 
         JMenu captureMenu = makeCaptureMenu(isAnImageOpen);
 
-        JMenu srbMenu = makeSRBMenu();
+        JMenu srbMenu = makeSRBMenu(isAnImageOpen);
 
         JMenu dicomMenu = makeDicomMenu();
 
@@ -745,25 +745,33 @@ public class ViewMenuBar {
      *
      * @see     #makeFileMenu(boolean)
      */
-    protected JMenu makeSRBMenu() {
+    protected JMenu makeSRBMenu(boolean imageOpened) {
         boolean isAutoUploadEnabled = ((userInterface != null) && (userInterface.getNDARPipeline() != null));
+        JMenuItem saveXCEDESchemaItem = menuBuilder.buildMenuItem("Save XCEDE schema",
+                "SaveXCEDESchema", 0, "save.gif", true);
+        JMenuItem saveImageToSRBItem = menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile",
+                0, "save.gif", true);
+        
+        menuBuilder.setMenuItemEnabled("Save XCEDE schema", imageOpened);
+        menuBuilder.setMenuItemEnabled("Save image to SRB", imageOpened);
 
-        return menuBuilder.makeMenu("SRB-BIRN", true,
-                                    new JMenuItem[] {
-                                        menuBuilder.buildMenuItem("Open XCEDE schema", "OpenXCEDESchema", 0, "open.gif",
-                                                                  true),
-                                        menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile", 0, null, true),
-                                        menuBuilder.buildMenuItem("Save image to SRB", "SaveSRBFile", 0, null, true),
-                                        menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles", 0, null, true),
-                                        menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload", "AutoUploadToSRB",
-                                                                          isAutoUploadEnabled)
-                                    });
+        return menuBuilder.makeMenu("SRB-BIRN", true, new JMenuItem[] {
+                menuBuilder.buildMenuItem("Open XCEDE schema",
+                        "OpenXCEDESchema", 0, "open.gif", true),
+                saveXCEDESchemaItem,
+                menuBuilder.buildMenuItem("Open image from SRB", "OpenSRBFile",
+                        0, "open.gif", true),
+                saveImageToSRBItem,
+                menuBuilder.buildMenuItem("SRB transfer", "TransferSRBFiles",
+                        0, null, true),
+                menuBuilder.buildCheckBoxMenuItem("Enable auto SRB upload",
+                        "AutoUploadToSRB", isAutoUploadEnabled) });
     }
 
     /**
      * Construct the toolbar menu.
-     *
-     * @return  the toolbar menu
+     * 
+     * @return the toolbar menu
      */
     protected JMenu makeToolbarsMenu() {
         boolean showVOIToolbar = Preferences.is(Preferences.PREF_VOI_TOOLBAR_ON);

@@ -17,7 +17,7 @@ import java.net.*;
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
-
+import javax.swing.plaf.metal.MetalIconFactory;
 
 /**
  * This JComponent is used to select file or fold of the SRB server.
@@ -65,6 +65,10 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
     /** DOCUMENT ME! */
     private String approveButtonToolTipText = null;
 
+    private JButton newFoldButton;
+    
+    private int newFoldButtonMnemonic = 1;
+    
     /** DOCUMENT ME! */
     private String defaultApproveButtonText = "Open";
 
@@ -258,6 +262,8 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
             if (dialog != null) {
                 dialog.setVisible(false);
             }
+        } else if(actionCommand.equals("newSRBFold")){
+            
         }
     }
 
@@ -380,7 +386,6 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         }
 
         if ((mode == FILES_ONLY) || (mode == DIRECTORIES_ONLY) || (mode == FILES_AND_DIRECTORIES)) {
-            int oldValue = fileSelectionMode;
             fileSelectionMode = mode;
         } else {
             throw new IllegalArgumentException("Incorrect Mode for file selection: " + mode);
@@ -397,11 +402,10 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         if (multiSelectionEnabled != b) {
             multiSelectionEnabled = b;
         }
-
-        if (multiSelectionEnabled) {
-            jsrbTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
-        } else {
-            jsrbTree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        if(multiSelectionEnabled){
+            jsrbTree.getSelectionModel().setSelectionMode(DefaultTreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+        }else{
+            jsrbTree.getSelectionModel().setSelectionMode(DefaultTreeSelectionModel.SINGLE_TREE_SELECTION);
         }
     }
 
@@ -455,10 +459,11 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
 
             if (isMultiSelectionEnabled()) {
                 selectedFileField.setText("");
-
+                long currentTime = System.currentTimeMillis();
                 for (int i = 0; i < selectedPaths.length; i++) {
                     convertSelectedPathToString(selectedPaths[i], getFileSelectionMode(), sb);
                 }
+                System.out.println(System.currentTimeMillis()-currentTime);
             } else {
                 convertSelectedPathToString(selectedPaths[selectedPaths.length - 1], getFileSelectionMode(), sb);
             }
@@ -529,7 +534,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         if (selectedObj instanceof SRBFile) {
             SRBFile srbFile = (SRBFile) selectedObj;
 
-            if (selectionMode == FILES_ONLY) {
+/*            if (selectionMode == FILES_ONLY) {
 
                 if (srbFile.isFile()) {
 
@@ -549,14 +554,14 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
                         sb.append("," + srbFile.getPath());
                     }
                 }
-            } else {
+            } else { */
 
                 if (sb.length() == 0) {
                     sb.append(srbFile.getPath());
                 } else {
                     sb.append("," + srbFile.getPath());
                 }
-            }
+//            }
         }
 
         return sb;
@@ -613,8 +618,8 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         GridBagConstraints constraints = manager.getConstraints();
         manager.getConstraints().insets = new Insets(10, 3, 0, 3);
 
-        JLabel selectedFileLabel = WidgetFactory.buildLabel("Selected File");
-        selectedFileLabel.setPreferredSize(new Dimension(40, 25));
+        JLabel selectedFileLabel = WidgetFactory.buildLabel("Selected Files : ");
+        selectedFileLabel.setPreferredSize(new Dimension(70, 25));
 
         // selectedFileLabel.setFont(new Font("serif", Font.PLAIN, 14));
         manager.add(selectedFileLabel);
@@ -622,8 +627,12 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         selectedFileField.setPreferredSize(new Dimension(20, 25));
         selectedFileField.setColumns(40);
         manager.add(selectedFileField);
-        approveButton = WidgetFactory.buildTextButton(approveButtonText, "Open srb or local file.", approveButtonText,
-                                                      this);
+        newFoldButton = WidgetFactory.buildIconButton(UIManager.getIcon("FileChooser.newFolderIcon"),
+                "Create a new fold.", "newSRBFold", this);
+        newFoldButton.setPreferredSize(new Dimension(32, 25));
+        manager.add(newFoldButton);
+        approveButton = WidgetFactory.buildTextButton(approveButtonText,
+                "Open srb file.", approveButtonText, this);
         approveButton.setPreferredSize(new Dimension(80, 25));
         manager.add(approveButton);
 

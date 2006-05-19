@@ -283,7 +283,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
             } catch (Exception ex) {
                 srbFileSystem = null;
-
+                MipavUtil.displayError("Can't log you in the SRB server: " + host + ", please try again.");
                 return;
             }
 
