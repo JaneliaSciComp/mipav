@@ -142,6 +142,11 @@ public class NDARPipeline implements Observer {
             scriptParser.preSetupActiveImages();
             scriptParser.run();
 
+            if (!scriptParser.isCompleted()) {
+                MipavUtil.displayError("Pre-upload script failed.  Skipping header anonymization and image upload.");
+                return;
+            }
+
             // TODO: make the anonymizing scriptable, add it to the ndar script
             // anonymize all tags in the image
             ModelImage resultImage = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
@@ -150,6 +155,8 @@ public class NDARPipeline implements Observer {
                 anonFields[i] = true;
             }
             resultImage.anonymize(anonFields, true);
+            resultImage.notifyImageDisplayListeners();
+            resultImage.getParentFrame().setTitle();
 
             // upload image
             SRBFileTransferer transferer = new SRBFileTransferer();

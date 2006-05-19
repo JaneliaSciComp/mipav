@@ -689,6 +689,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 while (line != null) {
 
                     if (!parseLine(line)) {
+                        setCompleted(false);
                         return;
                     }
 
@@ -700,17 +701,17 @@ public class AlgorithmScriptParser extends AlgorithmBase {
             } catch (FileNotFoundException e) {
                 MipavUtil.displayError("Error getting file.");
                 isRunning = false;
-
+                setCompleted(false);
                 return;
             } catch (NoSuchElementException e) {
                 MipavUtil.displayError("Error in the formatting in script file.");
                 isRunning = false;
-
+                setCompleted(false);
                 return;
             } catch (IOException e) {
                 MipavUtil.displayError("Error while reading script.");
                 isRunning = false;
-
+                setCompleted(false);
                 return;
             }
         } // not parsing a file, parsing a string already passed in
@@ -724,12 +725,15 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 line = st.nextToken();
 
                 if (!parseLine(line)) {
+                    setCompleted(false);
                     return;
                 }
             }
 
             isRunning = false;
         }
+
+        setCompleted(true);
     }
 
     /**
