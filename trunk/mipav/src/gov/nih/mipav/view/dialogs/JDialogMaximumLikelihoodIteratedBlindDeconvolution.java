@@ -42,19 +42,19 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
     AlgorithmMaximumLikelihoodIteratedBlindDeconvolution ibdAlgor;
 
     /** The number of iterations for calculating the deconvolution: */
-    private int numberIterations = 2;
+    private int numberIterations = 10;
     /** Display the deconvolved image every X images to show progress: */
-    private int showProgress = 10;
+    private int showProgress = 5;
 
     /** The following are physical properties of the imaging lense and
      * sample: */
     /** The object numerical aperature, a property of the lense used to image
      * the sample: */
-    private float objectiveNumericalAperature = 1.0f;
+    private float objectiveNumericalAperature = 1.4f;
     /** The reflected or fluroescence wavelength of the sample: */
-    private float wavelength = 0.6f;
+    private float wavelength = 520f;
     /** The index of refraction of the sample: */
-    private float refractiveIndex = 1.0f;
+    private float refractiveIndex = 1.518f;
 
     /** The original data image to be reconstructed: */
     private ModelImage originalImage;

@@ -908,9 +908,10 @@ public class AlgorithmFFT extends AlgorithmBase {
                 return;
             }
         } // end of if ((transformDir == FORWARD)|| (transformDir == FILTER))
-        else if ((transformDir == INVERSE) && isProgressBarVisible()) {
-            progressBar.setMessage("Storing inverse FFT in source image...");
-
+        else if (transformDir == INVERSE) {
+            if (isProgressBarVisible()) {
+                progressBar.setMessage("Storing inverse FFT in source image...");
+            }
             // back in the spatial domain so only realData is now present
             try {
                 srcImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
@@ -1183,9 +1184,10 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
 
         } // end of if ((transformDir == FORWARD) || (transformDir == FILTER))
-        else if ((transformDir == INVERSE) && isProgressBarVisible()) {
-            progressBar.setMessage("Storing inverse FFT in destination image...");
-
+        else if (transformDir == INVERSE) {
+            if (isProgressBarVisible()) {
+                progressBar.setMessage("Storing inverse FFT in destination image...");
+            }
             // back in the spatial domain so only realData is now present
             try {
                 destImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
@@ -2111,7 +2113,12 @@ public class AlgorithmFFT extends AlgorithmBase {
         }
 
         if (transformDir == INVERSE) {
-
+            /* When the srcImage = fft(imageA) fft(imageB), then on inverse,
+             * recenter: */
+            if ( srcImage.getConvolve() == true )
+            {
+                center(rData, iData);
+            }
             for (i = 0; i < newLength; i++) {
                 rData[i] = rData[i] / newLength;
                 iData[i] = iData[i] / newLength;
@@ -2140,6 +2147,12 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                 if (doCrop) {
                     zeroAround();
+                    /* When the srcImage = fft(imageA) fft(imageB), then on inverse,
+                     * recenter: */
+                    if ( srcImage.getConvolve() == true )
+                    {
+                        zeroAround();
+                    }
                 }
 
                 minimum = srcImage.getOriginalMinimum();
@@ -3253,11 +3266,12 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         } // end of if ((transformDir == FORWARD) && (doCrop))
 
-        if (zeroPad && isProgressBarVisible()) {
+        if (zeroPad) {
 
             // zero pad the data so that all dimensions are powers of 2
-            progressBar.setMessage("Zero padding source data...");
-
+            if (isProgressBarVisible()) {
+                progressBar.setMessage("Zero padding source data...");
+            }
             try {
                 tempData = new float[newArrayLength];
             } catch (OutOfMemoryError e) {
