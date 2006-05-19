@@ -16,16 +16,16 @@ public class DICOM_Move implements Runnable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private byte[] appTitle;
+    /** Local application entity of the */
+    private byte[] localAppTitle;
 
-    /** DOCUMENT ME! */
+    /** DICOM data object. */
     private DICOM_Object ddo;
 
-    /** DOCUMENT ME! */
+    /** Unique message identifier for the C-MOVE request. */
     private int MSG_ID;
 
-    /** DOCUMENT ME! */
+    /** PDU service object. */
     private DICOM_PDUService pdu;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -71,15 +71,15 @@ public class DICOM_Move implements Runnable {
      * Runs this move request in a separate thread. Calls sendMoveRQ.
      */
     public void run() {
-        sendMoveRQ(pdu, ddo, appTitle);
+        sendMoveRQ(pdu, ddo, localAppTitle);
     }
 
 
     /**
      * Sends a C-CANCEL-MOVE-RQ to the Service Class Provider; ie. Image Archive
      *
-     * @param  msgID  unique identifier for the C-MOVE request to be cancelled
-     * @param  pdu    instance of PDU_Service containing remote connect info.
+     * @param  msgID  Unique identifier for the C-MOVE request to be cancelled
+     * @param  pdu    Instance of PDU_Service containing remote connect info.
      */
     public void sendCancelRQ(int msgID, DICOM_PDUService pdu) {
 
@@ -115,11 +115,11 @@ public class DICOM_Move implements Runnable {
     /**
      * Sends a move request.
      *
-     * @param  pdu       instance of PDU_Service containing remote connect info.
-     * @param  ddo       move request identifier
-     * @param  appTitle  application title
+     * @param  pdu       Instance of PDU_Service containing remote connect info.
+     * @param  ddo       Move request identifier
+     * @param  localAppTitle  Local application entity title
      */
-    public void sendMoveRQ(DICOM_PDUService pdu, DICOM_Object ddo, byte[] appTitle) {
+    public void sendMoveRQ(DICOM_PDUService pdu, DICOM_Object ddo, byte[] localAppTitle) {
 
         DICOM_StdRetrieve mrq = new DICOM_StdRetrieve(DICOM_Constants.UID_PatientRootRetrieve);
 
@@ -130,7 +130,7 @@ public class DICOM_Move implements Runnable {
                 Preferences.debug("DICOMMove.sendMoveRQ: Message ID is: " + MSG_ID + " UID = PatientRootRetrieve \n");
             }
 
-            mrq.write(pdu, ddo, appTitle, this);
+            mrq.write(pdu, ddo, localAppTitle, this);
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                 Preferences.debug("DICOMMove.sendMoveRQ: pdu(" + pdu.hashCode() + ")  Write complete \n");
@@ -169,14 +169,14 @@ public class DICOM_Move implements Runnable {
     /**
      * Sets up the neccessary parameters for sending a move request. Must be called before the thread is started.
      *
-     * @param  pdu       instance of PDU_Service containing remote connect info.
-     * @param  ddo       move request identifier
-     * @param  appTitle  application title
+     * @param  pdu       Instance of PDU_Service containing remote connect info.
+     * @param  ddo       Move request identifier
+     * @param  appTitle  Local application entity title 
      */
-    public void setMoveParameters(DICOM_PDUService pdu, DICOM_Object ddo, byte[] appTitle) {
+    public void setMoveParameters(DICOM_PDUService pdu, DICOM_Object ddo, byte[] localAppTitle) {
         this.pdu = pdu;
         this.ddo = ddo;
-        this.appTitle = appTitle;
+        this.localAppTitle = localAppTitle;
     }
 
     /**

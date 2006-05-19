@@ -25,7 +25,7 @@ public class DICOM_MaximumSubLength extends DICOM_PDUItemType {
     /**
      * Accessor that returns the maximum sublength.
      *
-     * @return  the maximum sublength
+     * @return  The maximum sublength
      */
     public int getMaxLength() {
         return (maxLength);
@@ -43,7 +43,7 @@ public class DICOM_MaximumSubLength extends DICOM_PDUItemType {
     /**
      * Reads the maximum sublength out the connection (port).
      *
-     * @param   connection  the connection (port) where the data is read
+     * @param   connection  The connection (port) where the data is read.
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */
@@ -54,7 +54,7 @@ public class DICOM_MaximumSubLength extends DICOM_PDUItemType {
     /**
      * Sets the maximum sublength.
      *
-     * @param  maximum  the new value for the maximum sublength
+     * @param  maximum  The new value for the maximum sublength.
      */
     public void setMaxLength(int maximum) {
         maxLength = maximum;
@@ -63,7 +63,7 @@ public class DICOM_MaximumSubLength extends DICOM_PDUItemType {
     /**
      * Writes the maximum sublength out the connection (port).
      *
-     * @param   connection  the connection (port) where the data is sent
+     * @param   connection  The connection (port) where the data is sent
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */

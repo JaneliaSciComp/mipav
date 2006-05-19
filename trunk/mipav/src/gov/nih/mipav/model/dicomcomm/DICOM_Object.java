@@ -5,14 +5,14 @@ import java.util.*;
 
 
 /**
- * DOCUMENT ME!
+ * The DICOM data object for storing DICOM tags (i.e. groups, elements).
  */
 
 public class DICOM_Object {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** A hash table of the DICOM groups */
     protected Hashtable groups = new Hashtable();
 
     /** DOCUMENT ME! */
@@ -23,9 +23,9 @@ public class DICOM_Object {
     /**
      * Makes length even.
      *
-     * @param   length  value to make even
+     * @param   length  Value to make even
      *
-     * @return  the even value
+     * @return  The even value
      */
     public static final int makeEven(int length) {
 
@@ -51,7 +51,7 @@ public class DICOM_Object {
     /**
      * Makes a deep copy of the DICOM_DataObject.
      *
-     * @return  DOCUMENT ME!
+     * @return  A deep copy of the DICOM_DataObject.
      */
     public DICOM_Object copy() {
         DICOM_Object newddo;
@@ -78,7 +78,7 @@ public class DICOM_Object {
     /**
      * Retrieves an integer (16 bit) value from a DICOM object.
      *
-     * @param   ddType  DOCUMENT ME!
+     * @param   ddType  The DICOM data type to get.
      *
      * @return  the 16 bit integer value
      */
@@ -100,7 +100,7 @@ public class DICOM_Object {
     /**
      * Retrieves a string value from a DICOM object.
      *
-     * @param   ddType  DOCUMENT ME!
+     * @param   ddType  The DICOM data type to get.
      *
      * @return  the string value
      */
@@ -117,10 +117,10 @@ public class DICOM_Object {
     /**
      * Returns the string representation of the VR.
      *
-     * @param   group    group value
-     * @param   element  element value
+     * @param   group    Group value
+     * @param   element  Element value
      *
-     * @return  the string representation VR for the group and element
+     * @return  The string representation VR for the group and element
      */
     public final String getVRString(int group, int element) {
         String returnval = null;
@@ -136,7 +136,7 @@ public class DICOM_Object {
     /**
      * Pops a VR of the list.
      *
-     * @return  vr drom the lsit
+     * @return  vr The VR pop of the list.
      */
     public DICOM_VR pop() {
 
@@ -252,94 +252,80 @@ public class DICOM_Object {
     }
 
     /**
-     * Used for dicom data objects.
+     * Used for DICOM data objects.
      *
-     * @return  DOCUMENT ME!
+     * @return  String of important aspects of the data object
      */
     public String toString() {
         String returnString = "";
         String str;
 
         str = getStr(DICOM_RTC.DD_PatientName);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_PatientAge);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_PatientSex);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_PatientID);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_StudyID);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_Modality);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_StudyDescription);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_AdditionalPatientHistory);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_ReferringPhysicianName);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_OperatorName);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_SeriesNumber);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_ImageIndex);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_ContentDate);
-
         if (str != null) {
             returnString += ("|" + str);
         }
 
         str = getStr(DICOM_RTC.DD_ContentTime);
-
         if (str != null) {
             returnString += ("|" + str);
         }
@@ -350,9 +336,9 @@ public class DICOM_Object {
     /**
      * Creates a description of the entire DICOM_VR list.
      *
-     * @param   s  the str to append the debug string
+     * @param   s The str to append the debug string
      *
-     * @return  the debug string
+     * @return  The debug string
      */
     public String toString(String s) {
         String str;
@@ -379,8 +365,8 @@ public class DICOM_Object {
     /**
      * Gets the value representation.
      *
-     * @param   grp   group value
-     * @param   elem  element value
+     * @param   grp   Group value
+     * @param   elem  Element value
      *
      * @return  the VR for the group and element
      */
@@ -405,14 +391,14 @@ public class DICOM_Object {
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * DOCUMENT ME!
+     * Simple extension of the Hastable for use a GroupElements object.
      */
     private class GroupElements extends Hashtable {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = -3780517111813962572L;
 
-        /** DOCUMENT ME! */
+        /** Stores length of group. */
         public int grpLength = 0;
     }
 }
