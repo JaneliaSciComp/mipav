@@ -1984,31 +1984,31 @@ public class FileIO {
                 origin[0] = ((FileInfoDicom) myFileInfo).xLocation;
                 origin[1] = ((FileInfoDicom) myFileInfo).yLocation;
                 origin[2] = ((FileInfoDicom) myFileInfo).zLocation;
-                
-                
+
+
                 //TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
                 // Finally convert the point to axial millimeter DICOM space.
                 //dicomMatrix.transform(coord, tCoord);
-                
+
                 for (int j = 0; j < 3; j++) {
 
                     if (orient[j] == FileInfoBase.ORI_L2R_TYPE ||
                         orient[j] == FileInfoBase.ORI_R2L_TYPE){
                         newOriginPt[j] = origin[0];
-                       
+
                     }
                     else if (orient[j] == FileInfoBase.ORI_P2A_TYPE ||
                             orient[j] == FileInfoBase.ORI_A2P_TYPE){
                             newOriginPt[j] = origin[1];
-                           
+
                     }
                     else if (orient[j] == FileInfoBase.ORI_S2I_TYPE ||
                             orient[j] == FileInfoBase.ORI_I2S_TYPE){
                             newOriginPt[j] = origin[2];
-                           
+
                     }
                 }
-                
+
                 myFileInfo.setOrigin(newOriginPt);
                 image.setFileInfo(myFileInfo, location);
 
@@ -3956,7 +3956,9 @@ public class FileIO {
 
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
-                fileInfo.setMultiFile(true);
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
                 ((FileAnalyze) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
                 image.setFileInfo(fileInfo, imageCount);
@@ -5446,7 +5448,10 @@ public class FileIO {
                     }
 
                     myFileInfo.setResolutions(resols);
-                    myFileInfo.setMultiFile(true);
+
+                    if (nImages > 1) {
+                        myFileInfo.setMultiFile(true);
+                    }
                     image.setFileInfo(myFileInfo, i);
 
                     // float[] tmpBuffer = fileLSM.getImageBuffer();
@@ -5530,8 +5535,9 @@ public class FileIO {
                     }
 
                     myFileInfo.setResolutions(resols);
-                    myFileInfo.setMultiFile(true);
-
+                    if (nImages > 1) {
+                        myFileInfo.setMultiFile(true);
+                    }
                     for (j = 0; j < extents[2]; j++) {
                         image.setFileInfo(myFileInfo, (i * extents[2]) + j);
                         // float[] tmpBuffer = fileLSM.getImageBuffer();
@@ -6389,7 +6395,10 @@ public class FileIO {
 
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
-                fileInfo.setMultiFile(true);
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
                 ((FileNIFTI) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
                 image.setFileInfo(fileInfo, imageCount);
@@ -6873,7 +6882,8 @@ public class FileIO {
             fileInfo.setOffset(rawIODialog.getOffset());
         }
 
-        fileInfo.setMultiFile(true);
+
+
 
 
         i = 0;
@@ -6895,6 +6905,8 @@ public class FileIO {
 
         if (nImages == 1) {
             return readRaw(fileName, fileDir, fileInfo);
+        } else {
+            fileInfo.setMultiFile(true);
         }
 
         progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
@@ -7339,7 +7351,9 @@ public class FileIO {
                 myFileInfo = ((FileTiff) imageFile).getFileInfo();
                 myFileInfo.setExtents(extents);
                 myFileInfo.setResolutions(resols);
-                myFileInfo.setMultiFile(true);
+                if (nImages > 1) {
+                    myFileInfo.setMultiFile(true);
+                }
                 image.setFileInfo(myFileInfo, i);
 
                 // float[] tmpBuffer = fileTIFF.getImageBuffer();
@@ -7721,7 +7735,9 @@ public class FileIO {
 
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
-                fileInfo.setMultiFile(true);
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
                 ((FileImageXML) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
                 image.setFileInfo(fileInfo, imageCount);
