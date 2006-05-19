@@ -535,7 +535,9 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
         /**
          * Marks this object as having been changed.
          */
-        setChanged();
+        if(fileNameList.size() > 0){
+            setChanged();
+        }
     }
 
     /**
