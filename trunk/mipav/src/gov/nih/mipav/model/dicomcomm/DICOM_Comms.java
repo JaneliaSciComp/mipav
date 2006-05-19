@@ -87,17 +87,6 @@ public class DICOM_Comms {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * The next 4 static methods facilitate the conversion 16 bit and 32 bit values into a byte buffer for I/O (file and
-     * socket).
-     *
-     * @param   buffer     DOCUMENT ME!
-     * @param   index      DOCUMENT ME!
-     * @param   endianess  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-
-    /**
      * Copies a 2 byte array into a 16 bit integer of proper endianess.
      *
      * @param   buffer     source byte array
@@ -206,7 +195,7 @@ public class DICOM_Comms {
      *
      * @param   nBytes  number of bytes to flush
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error when attempting to flush more bytes than are present!
      */
     public void flush(int nBytes) throws DICOM_Exception {
         ByteBuffer byteBuffer;
@@ -487,7 +476,7 @@ public class DICOM_Comms {
      * @param   data    byte data array ( destination )
      * @param   nBytes  the number of bytes to read into the buffer
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception Throws error if there is an error reading data from the port.
      */
     public void read(byte[] data, int nBytes) throws DICOM_Exception {
         ByteBuffer byteBuffer;
@@ -526,19 +515,13 @@ public class DICOM_Comms {
     }
 
 
-    /**
+    /*
      * The next two methods must be overloaded. As an option 1. make next two methods abstract which requires this class
      * to be abstract. The problems with this involves DICOMCommsLink which must instantiate a a DICOM_Comms and you
      * can't instantiate an abstract class. Therefore, one must try to redesign DICOMCommsLink and others to remove this
      * dependancy. I think this is a good idea since DICOMCommsLink extends DICOMComms and has a DICOMComms - seems a
      * bit odd but it works!.
      *
-     * @param   data    DOCUMENT ME!
-     * @param   nbytes  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
      */
 
     /**
@@ -547,9 +530,9 @@ public class DICOM_Comms {
      * @param   data    Buffer to store the data.
      * @param   nbytes  Number of bytes to be read.
      *
-     * @return  DOCUMENT ME!
+     * @return  The actual number of bytes read.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws error if method is not overwritten!
      */
     public int readBinary(byte[] data, int nbytes) throws DICOM_Exception {
         throw new DICOM_Exception("DICOM_Comms.readBinary: this method should be overwritten.");
@@ -560,7 +543,7 @@ public class DICOM_Comms {
      *
      * @return  a single byte of data
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception Throws error if there is an error reading data from the port.
      */
     public final byte readByte() throws DICOM_Exception {
         read(byteArray1, 1);
@@ -870,7 +853,7 @@ public class DICOM_Comms {
      *
      * @param   useBreakSize  the recommended size of the read buffer
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception Throws error if there is an error reading data from the port.
      */
     private void readBlock(int useBreakSize) throws DICOM_Exception {
         int length, iLength;
@@ -907,23 +890,23 @@ public class DICOM_Comms {
      */
     protected class ByteBuffer {
 
-        /** DOCUMENT ME! */
+        /** Static indicating the default size of the byte buffer. */
         static final int DEFAULT_SIZE = 32500;
 
-        /** DOCUMENT ME! */
+        /** The total capacity of the buffer. */
         public int bufferSize = 0;
 
-        /** DOCUMENT ME! */
+        /** The byte type data buffer. */
         public byte[] data = null;
 
-        /** DOCUMENT ME! */
+        /** Pointer to the end of data in the buffer. Default = -1.*/
         public int endIndex = -1;
 
-        /** points the last of data in the buffer. */
+        /** Points the start of data in the buffer. Default = 0; */
         public int startIndex = 0;
 
         /**
-         * Constructor.
+         * Allocates the byte buffer of the given size.
          *
          * @param  size  size of byte buffer to allocate
          */
@@ -940,8 +923,8 @@ public class DICOM_Comms {
         }
         
         /**
-         * Prepares this class for destruction.
-         *
+         * This method returns the length of valid data in the array. Not the total capacity of the array.
+         * @return The length of data stored in the array.
          */
         public int length() {
            return (endIndex - startIndex);
