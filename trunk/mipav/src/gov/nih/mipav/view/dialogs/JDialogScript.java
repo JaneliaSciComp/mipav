@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -24,7 +25,7 @@ import javax.swing.text.*;
  *
  * @version  1.0 June 1, 2001
  * @author   Neva Cherniavsky
- * @see      AlgorithmScriptParser
+ * @see      gov.nih.mipav.model.algorithms.AlgorithmScriptParser
  */
 public class JDialogScript extends JDialogBase implements ScriptRecorderInterface, ActionListener, WindowListener {
 
@@ -197,6 +198,8 @@ public class JDialogScript extends JDialogBase implements ScriptRecorderInterfac
             }
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10703");
+        } else if (command.equals("Clear")) {
+            scriptText.setText("");
         }
     }
 
@@ -544,106 +547,23 @@ public class JDialogScript extends JDialogBase implements ScriptRecorderInterfac
         menuBar.add(fileMenu);
         setJMenuBar(menuBar);
 
-        Border pressedBorder = BorderFactory.createLoweredBevelBorder();
-        Border etchedBorder = BorderFactory.createEtchedBorder();
-        JToolBar tBar = new JToolBar();
-        tBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        tBar.setBorder(etchedBorder);
-        tBar.setBorderPainted(true);
+        JToolBar tBar = WidgetFactory.initToolbar();
 
-        JButton openButton = new JButton(MipavUtil.getIcon("open.gif"));
-        openButton.addActionListener(this);
-        openButton.setToolTipText("Open script");
-        openButton.setActionCommand("Open");
-        openButton.setBorderPainted(false);
-        openButton.setRolloverEnabled(true);
-        openButton.setRolloverIcon(MipavUtil.getIcon("openroll.gif"));
-        openButton.setBorder(pressedBorder);
-        openButton.addItemListener(this);
-        openButton.setFocusPainted(false);
-        tBar.add(openButton);
-
-        JButton saveButton = new JButton(MipavUtil.getIcon("save.gif"));
-        saveButton.addActionListener(this);
-        saveButton.setToolTipText("Save script");
-        saveButton.setActionCommand("Save");
-        saveButton.setBorderPainted(false);
-        saveButton.setRolloverEnabled(true);
-        saveButton.setRolloverIcon(MipavUtil.getIcon("saverollover.gif"));
-        saveButton.setBorder(pressedBorder);
-        saveButton.addItemListener(this);
-        saveButton.setFocusPainted(false);
-        tBar.add(saveButton);
-
-        pauseButton2 = new JButton(MipavUtil.getIcon("pause.gif"));
-        pauseButton2.addActionListener(this);
-        pauseButton2.setToolTipText("Pause scripting");
-        pauseButton2.setActionCommand("Pause");
-        pauseButton2.setBorderPainted(false);
-        pauseButton2.setRolloverEnabled(true);
-        pauseButton2.setRolloverIcon(MipavUtil.getIcon("pauseroll.gif"));
-        pauseButton2.setBorder(pressedBorder);
-        pauseButton2.addItemListener(this);
-        pauseButton2.setFocusPainted(false);
+        ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
+        tBar.add(toolbarBuilder.buildButton("Open", "Open script", "open"));
+        tBar.add(toolbarBuilder.buildButton("Save", "Save script", "save"));
+        tBar.add(toolbarBuilder.buildButton("Clear", "Clear the script recorder", "clear"));
+        pauseButton2 = toolbarBuilder.buildButton("Pause", "Pause script recording", "pause");
         tBar.add(pauseButton2);
-
         tBar.add(makeSeparator());
+        tBar.add(toolbarBuilder.buildButton("InsertComment", "Insert comment (will be ignored by parser)",
+                                            "insertcomment"));
+        tBar.add(toolbarBuilder.buildButton("InsertGC", "Insert command to collect garbage (which frees up memory)",
+                                            "insertgc"));
+        tBar.add(toolbarBuilder.buildButton("InsertExit", "Insert command to exit MIPAV", "insertexit"));
+        tBar.add(toolbarBuilder.buildButton("InsertPrefix", "Insert prefix for image file name", "insertprefix"));
 
-        JButton insertComment = new JButton(MipavUtil.getIcon("insertcomment.gif"));
-        insertComment.addActionListener(this);
-        insertComment.setToolTipText("Insert comment (will be ignored by parser)");
-        insertComment.setActionCommand("InsertComment");
-        insertComment.setBorderPainted(false);
-        insertComment.setRolloverEnabled(true);
-        insertComment.setRolloverIcon(MipavUtil.getIcon("insertcommentroll.gif"));
-        insertComment.setBorder(pressedBorder);
-        insertComment.addItemListener(this);
-        insertComment.setFocusPainted(false);
-        tBar.add(insertComment);
-
-        JButton insertGC = new JButton(MipavUtil.getIcon("insertgc.gif"));
-        insertGC.addActionListener(this);
-        insertGC.setToolTipText("Insert command to collect garbage (free memory)");
-        insertGC.setActionCommand("InsertGC");
-        insertGC.setBorderPainted(false);
-        insertGC.setRolloverEnabled(true);
-        insertGC.setRolloverIcon(MipavUtil.getIcon("insertgcroll.gif"));
-        insertGC.setBorder(pressedBorder);
-        insertGC.addItemListener(this);
-        insertGC.setFocusPainted(false);
-        tBar.add(insertGC);
-
-        JButton insertExit = new JButton(MipavUtil.getIcon("insertexit.gif"));
-        insertExit.addActionListener(this);
-        insertExit.setToolTipText("Insert command to exit MIPAV");
-        insertExit.setActionCommand("InsertExit");
-        insertExit.setBorderPainted(false);
-        insertExit.setRolloverEnabled(true);
-        insertExit.setRolloverIcon(MipavUtil.getIcon("insertexitroll.gif"));
-        insertExit.setBorder(pressedBorder);
-        insertExit.addItemListener(this);
-        insertExit.setFocusPainted(false);
-        tBar.add(insertExit);
-
-        JButton insertPrefix = new JButton(MipavUtil.getIcon("insertprefix.gif"));
-        insertPrefix.addActionListener(this);
-        insertPrefix.setToolTipText("Insert prefix for image file name");
-        insertPrefix.setActionCommand("InsertPrefix");
-        insertPrefix.setBorderPainted(false);
-        insertPrefix.setRolloverEnabled(true);
-        insertPrefix.setRolloverIcon(MipavUtil.getIcon("insertprefixroll.gif"));
-        insertPrefix.setBorder(pressedBorder);
-        insertPrefix.addItemListener(this);
-        insertPrefix.setFocusPainted(false);
-        tBar.add(insertPrefix);
-
-        /*JButton insertLoop = new JButton(MipavUtil.getIcon("insertloop.gif"));
-         * insertLoop.addActionListener(this); insertLoop.setToolTipText("Insert loop");
-         * insertLoop.setActionCommand("InsertLoop"); insertLoop.setBorderPainted(false);
-         * insertLoop.setRolloverEnabled(true); insertLoop.setRolloverIcon(MipavUtil.getIcon("insertlooproll.gif"));
-         * insertLoop.setBorder(pressedBorder); insertLoop.addItemListener(this);
-         * insertLoop.setFocusPainted(false);tBar.add(insertLoop);*/
-
+        // tBar.add(toolbarBuilder.buildButton("InsertLoop", "Insert loop", "insertloop"));
         tBar.add(makeSeparator());
 
         pauseButton = new JButton("Resume");
