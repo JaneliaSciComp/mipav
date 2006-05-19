@@ -47,6 +47,9 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     private float stiffnessBET = 0.15f;
 
     /** DOCUMENT ME! */
+    private float verticalDeletionLimit;
+
+    /** DOCUMENT ME! */
     private int volumeSize;
 
     /** DOCUMENT ME! */
@@ -66,11 +69,15 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      * @param  srcImg            The image to de-face
      * @param  faceDirection     the orientation of the patient's face, as determined by the dialog
      * @param  extraMMsToDelete  the number of millimeters to try to delete from the non-brain portions of the head
+     * @param  verticalLimit     the limit to place on the deletion of the face in the from the 'bottom' of the face.
+     *                           Should be between 0 and 1, with 0 = no deletion and 1 = full deletion (until the brain
+     *                           is hit).
      */
-    public AlgorithmFaceAnonymizerBET(ModelImage srcImg, int faceDirection, int extraMMsToDelete) {
+    public AlgorithmFaceAnonymizerBET(ModelImage srcImg, int faceDirection, int extraMMsToDelete, float verticalLimit) {
         srcImage = srcImg;
         faceOrientation = faceDirection;
         mmToDelete = extraMMsToDelete;
+        verticalDeletionLimit = verticalLimit;
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -299,43 +306,46 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             if (faceOrientation == JDialogFaceAnonymizer.FACING_RIGHT) {
                 faceLevel = (i % sliceSize) / xDim;
 
-                // in sagittal images, the face should be in the lower third of each slice (> yDim/3)
-                if (faceLevel < (yDim * .66)) {
+                // in sagittal images, the face should be in the lower third of each slice (>
+                // yDim/verticalDeletionLimit)
+                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
                     continue;
                 }
             } else if (faceOrientation == JDialogFaceAnonymizer.FACING_LEFT) {
                 faceLevel = (i % sliceSize) / xDim;
 
-                // in sagittal images, the face should be in the lower third of each slice (> yDim/3)
-                if (faceLevel < (yDim * .66)) {
+                // in sagittal images, the face should be in the lower third of each slice (>
+                // yDim/verticalDeletionLimit)
+                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
                     continue;
                 }
             } else if (faceOrientation == JDialogFaceAnonymizer.FACING_DOWN) {
                 faceLevel = i / sliceSize;
 
-                // in axial images, the face should be in the first third of the slices (< zDim/3)
-                if (faceLevel > (zDim * .33)) {
+                // in axial images, the face should be in the first third of the slices (< zDim/verticalDeletionLimit)
+                if (faceLevel > (zDim * verticalDeletionLimit)) {
                     continue;
                 }
             } else if (faceOrientation == JDialogFaceAnonymizer.FACING_UP) {
                 faceLevel = i / sliceSize;
 
-                // in axial images, the face should be in the first third of the slices (< zDim/3)
-                if (faceLevel > (zDim * .33)) {
+                // in axial images, the face should be in the first third of the slices (< zDim/verticalDeletionLimit)
+                if (faceLevel > (zDim * verticalDeletionLimit)) {
                     continue;
                 }
             } else if (faceOrientation == JDialogFaceAnonymizer.FACING_INTO_SCREEN) {
                 faceLevel = (i % sliceSize) / xDim;
 
-                // in coronal images, the face should be in the lower third of each slice (> yDim/3)
-                if (faceLevel < (yDim * .66)) {
+                // in coronal images, the face should be in the lower portion of each slice (>
+                // yDim/verticalDeletionLimit)
+                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
                     continue;
                 }
             } else if (faceOrientation == JDialogFaceAnonymizer.FACING_OUT_OF_SCREEN) {
                 faceLevel = (i % sliceSize) / xDim;
 
-                // in coronal images, the face should be in the lower third of each slice (> yDim/3)
-                if (faceLevel < (yDim * .66)) {
+                // in coronal images, the face should be in the lower third of each slice (> yDim/verticalDeletionLimit)
+                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
                     continue;
                 }
             } else {
