@@ -283,6 +283,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /** DOCUMENT ME! */
     private int writeLockCount = 0;
 
+    /** Set to true when the image is the product of the ffts of two images,
+     * so that on an inverse_fft this image will be centered properly. Default
+     * is false. */
+    private boolean m_bConvolve = false;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -9954,4 +9959,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
         disposeLocal();
         super.finalize();
     }
+
+    /**
+     * Accessor method for the m_bConvolve data memeber.
+     * @param bConvolve, true when this images is the 
+     * product of fft( imageA ) fft( imageB )
+     */
+    public void setConvolve( boolean bConvolve )
+    {
+        m_bConvolve = bConvolve;
+    }
+
+    /**
+     * Accessor method for the m_bConvolve data memeber.
+     * @return m_bConvolve, true when this images is the 
+     * product of fft( imageA ) fft( imageB )
+     */
+    public boolean getConvolve()
+    {
+        return m_bConvolve;
+    }
+
 }
