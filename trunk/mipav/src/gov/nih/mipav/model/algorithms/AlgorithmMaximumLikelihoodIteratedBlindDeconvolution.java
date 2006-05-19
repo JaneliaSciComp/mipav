@@ -102,13 +102,18 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             m_iArrayLength *= m_kSourceImage.getExtents()[ i ];
         }
         /* convert color images: */
-        if ( m_kSourceImage.isColorImage() )
+        if ( m_kSourceImage.isColorImage() && (m_iNumberIterations != 0) )
         {
-            m_kSourceImage = convertToGray( m_kSourceImage );
+            m_kSourceImage.disposeLocal();
+            m_kSourceImage = convertToGray( kSrcImg );
         }
-        try {
-            m_kSourceImage.convertToFloat();
-        } catch( java.io.IOException e ) {}
+        /* Convert to float: */
+        if ( !m_kSourceImage.isColorImage() )
+        {
+            try {
+                m_kSourceImage.convertToFloat();
+            } catch( java.io.IOException e ) {}
+        }
 
         /* The initial guess at the estimated image is the original image: */
         m_kEstimatedImage = (ModelImage)(m_kSourceImage.clone());
@@ -124,14 +129,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * Dispose of local variables that may be taking up lots of room.
      */
     public void disposeLocal() {
-        m_kSourceImage = null;
-        m_kPSFImage = null;
+        m_kEstimatedImage.disposeLocal();
         m_kEstimatedImage = null;
-        m_kOriginalSourceImage = null;
-        m_kSourceRed = null;
-        m_kSourceGreen = null;
-        m_kSourceBlue = null;
-
         System.gc();
     }
 
@@ -196,7 +195,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         } catch( java.io.IOException e ) {}
 
         /* Convert the input image kImage to gray: */
-        ModelImage kResult = new ModelImage(ModelStorageBase.FLOAT, kImage.getExtents(),
+        ModelImage kResult = new ModelImage(iType, kImage.getExtents(),
                                             null, null);
         AlgorithmRGBtoGray kRGBAlgo =
             new AlgorithmRGBtoGray( kResult, kImage );
@@ -270,8 +269,15 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         {
             kImage.set( i, fGaussData[ i ] );
         }
+        fGaussData = null;
+        fSigmas = null;
+        iDerivOrder = null;
+
         /* Apply constraints to the image and return: */
-        return constraints( kImage );
+        ModelImage kReturn = constraints( kImage );
+        kImage.disposeLocal();
+        kImage = null;
+        return kReturn;
     }
 
 
@@ -289,7 +295,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                          ModelImage kPSF,
                                          boolean bCopy )
     {
-        ModelImage tempImage;
+        ModelImage tempImageConvolve;
+        ModelImage tempImageCalc;
         ModelImage originalDividedByEstimateCPSF;
         /* estimated and psf mirror images: */
         ModelImage kEstimateMirror = mirror( kEstimate );
@@ -299,33 +306,45 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         for ( int i = 1; i <= m_iNumberIterations; i++ )
         {
             /* Convolve the current estimate with the current PSF: */
-            tempImage = convolve( kEstimate, kPSF, 1f );
+            tempImageConvolve = convolve( kEstimate, kPSF, 1f );
             
             /* Divide the original image by the result and store: */
-            originalDividedByEstimateCPSF = calc( kSource, tempImage,
+            originalDividedByEstimateCPSF = calc( kSource, tempImageConvolve,
                                                   AlgorithmImageCalculator.DIVIDE );
-            
+            tempImageConvolve.disposeLocal();
+
             /* Create new kEstimate based on original image and psf: */
             /* Convolve the divided image with the psf mirror: */
-            tempImage = convolve( originalDividedByEstimateCPSF, kPSFMirror, 0 );
+            tempImageConvolve = convolve( originalDividedByEstimateCPSF, kPSFMirror, 0 );
             /* multiply the result by the current estimated image: */
-            kEstimate = calc( tempImage, kEstimate,
-                              AlgorithmImageCalculator.MULTIPLY );
+            tempImageCalc = calc( tempImageConvolve, kEstimate,
+                                  AlgorithmImageCalculator.MULTIPLY );
+            tempImageConvolve.disposeLocal();
+            kEstimate.disposeLocal();
+            kEstimate = tempImageCalc;
             kEstimate.setImageName( "estimated" + i );
             
 
             /* Create new psf based on original image and psf: */
             /* convolve the divided image with the estimated mirror: */
-            tempImage =
+            tempImageConvolve =
                 convolve( originalDividedByEstimateCPSF, kEstimateMirror, 0 );
+            originalDividedByEstimateCPSF.disposeLocal();
+
             /* multiply the result by the current psf image: */
             /* Apply constraints to new PSF: */
-            kPSF = constraints( calc( tempImage, kPSF,
-                                      AlgorithmImageCalculator.MULTIPLY ) );
+            tempImageCalc = calc( tempImageConvolve, kPSF,
+                                  AlgorithmImageCalculator.MULTIPLY );
+            tempImageConvolve.disposeLocal();
+            kPSF.disposeLocal();
+            kPSF = constraints( tempImageCalc );
             kPSF.setImageName( "psf" + i );
+            tempImageCalc.disposeLocal();
 
             /* Mirror the new estimate and new psf: */
+            kEstimateMirror.disposeLocal();
             kEstimateMirror = mirror( kEstimate );
+            kPSFMirror.disposeLocal();
             kPSFMirror = mirror( kPSF );
             
             /* Display progression: */
@@ -337,10 +356,21 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
         if ( bCopy )
         {
-            m_kEstimatedImage = (ModelImage)kEstimate.clone();
-            m_kPSFImage = (ModelImage)kPSF.clone();
+            m_kEstimatedImage.disposeLocal();
+            m_kEstimatedImage = kEstimate;
+
+            m_kPSFImage.disposeLocal();
+            m_kPSFImage = kPSF;
         }
-        return (ModelImage)kEstimate.clone();
+        else
+        {
+            kPSF.disposeLocal();
+        }
+
+        kEstimateMirror.disposeLocal();
+        kPSFMirror.disposeLocal();
+
+        return kEstimate;
     } 
 
     /**
@@ -375,11 +405,15 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         {
             kResult.set( i, kResult.getFloat( i ) + fNoise );
         }
-        
+        /* Clean up temporary data: */
+        kImageSpectrum1.disposeLocal();
         kImageSpectrum1 = null;
+        kImageSpectrum2.disposeLocal();
         kImageSpectrum2 = null;
+        kConvolve.disposeLocal();
         kConvolve = null;
-        System.gc();
+
+        /* Return result: */
         return kResult;
     }
 
@@ -470,6 +504,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         /* 2). Hourglass constraint: */
+        /*
         float fRadius = (3 * 0.61f * m_fWavelength) / m_fObjectiveNumericalAperature;
         float fTheta = (float)Math.asin( m_fObjectiveNumericalAperature / m_fRefractiveIndex );
         float fRadiusZ = 0.0f;
@@ -492,7 +527,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                 }
             }
         }
+        */
         /* 3). Bandlimit and missing cone constraint: */
+        /*
         float fRadialBandLimit = (float)( 2.0f * m_fObjectiveNumericalAperature / m_fWavelength );
         float fAxialBandLimit = (float)(( m_fObjectiveNumericalAperature *
                                           m_fObjectiveNumericalAperature )  /
@@ -522,23 +559,26 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                 }
             }
         }
-        kImage = fft( kImageFFT, -1 );
-
+        ModelImage kImageInvFFT = fft( kImageFFT, -1 );
+        kImageFFT.disposeLocal();
+        */
+        ModelImage kImageInvFFT = (ModelImage)kImage.clone();
         /* 4). Nonnegativity constraint: */
         float fSum = 0;
         for ( int i = 0; i < m_iArrayLength; i++ )
         {
-            if ( kReturn.getFloat(i) < 0 )
+            if ( kImageInvFFT.getFloat(i) < 0 )
             {
-                kReturn.set( i, 0f );
+                kImageInvFFT.set( i, 0f );
             }
-            fSum += kReturn.getFloat( i );
+            fSum += kImageInvFFT.getFloat( i );
         }
         /* 1). Unit summation constraint: */
         for ( int i = 0; i < m_iArrayLength; i++ )
         {
-            kReturn.set( i, kReturn.getFloat( i ) / fSum );
+            kReturn.set( i, kImageInvFFT.getFloat( i ) / fSum );
         }
+        kImageInvFFT.disposeLocal();
         
         return kReturn;
     }
@@ -558,6 +598,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         flipy.setActiveImage(false);
         flipy.setSeparateThread( false );
         flipy.callAlgorithm();
+        flipy.dispose();
         flipy = null;
         JDialogFlip flipx =
             new JDialogFlip( ViewUserInterface.getReference(),
@@ -565,6 +606,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         flipx.setActiveImage(false);
         flipx.setSeparateThread( false );
         flipx.callAlgorithm();
+        flipx.dispose();
         flipx = null;
         System.gc();
         return kReturn;
@@ -583,35 +625,46 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             return;
         }
 
-        runDeconvolution( m_kSourceImage, m_kEstimatedImage, m_kPSFImage, true );
-        
-        if (threadStopped) {
-            finalize();
-
-            return;
-        }
-        if ( m_kOriginalSourceImage.isColorImage() )
+        if ( m_iNumberIterations != 0 )
         {
-            m_iNumberIterations = 1;
-            m_iNumberProgress = 2; /* doesn't matter, just has to be higher than m_iNumberIterations */
+            runDeconvolution( m_kSourceImage, m_kEstimatedImage, m_kPSFImage, true );
             
-            /* get new estimates for each color channel by runing the
-             * deconvolution with the estimates from the grayscale image --
-             * deconvolution does not iterated again: */
-            m_kSourceRed = runDeconvolution( m_kSourceRed,
-                                             (ModelImage)m_kEstimatedImage.clone(),
-                                             (ModelImage)m_kPSFImage.clone(), false );
-            m_kSourceGreen = runDeconvolution( m_kSourceGreen,
-                                               (ModelImage)m_kEstimatedImage.clone(),
-                                               (ModelImage)m_kPSFImage.clone(), false );
-            m_kSourceBlue = runDeconvolution( m_kSourceBlue,
-                                              (ModelImage)m_kEstimatedImage.clone(),
-                                              (ModelImage)m_kPSFImage.clone(), false );
-
-            /* Use the reconstructed color channels to generate new color image: */
-            m_kEstimatedImage = convertFromGray( m_kSourceRed, m_kSourceGreen, m_kSourceBlue );
-            m_kEstimatedImage.setImageName( m_kOriginalSourceImage.getImageName() + "Reconstructed" );
+            if (threadStopped) {
+                finalize();
+                
+                return;
+            }
+            if ( m_kOriginalSourceImage.isColorImage() )
+            {
+                m_iNumberIterations = 1;
+                /* doesn't matter, just has to be higher than m_iNumberIterations */
+                m_iNumberProgress = 2;
+            
+                /* get new estimates for each color channel by runing the
+                 * deconvolution with the estimates from the grayscale image --
+                 * deconvolution does not iterated again: */
+                m_kSourceRed = runDeconvolution( m_kSourceRed,
+                                                 (ModelImage)m_kEstimatedImage.clone(),
+                                                 (ModelImage)m_kPSFImage.clone(),
+                                                 false );
+                m_kSourceGreen = runDeconvolution( m_kSourceGreen,
+                                                   (ModelImage)m_kEstimatedImage.clone(),
+                                                   (ModelImage)m_kPSFImage.clone(),
+                                                   false );
+                m_kSourceBlue = runDeconvolution( m_kSourceBlue,
+                                                  (ModelImage)m_kEstimatedImage.clone(),
+                                                  (ModelImage)m_kPSFImage.clone(),
+                                                  false );
+                
+                /* Use the reconstructed color channels to generate new color image: */
+                m_kEstimatedImage.disposeLocal();
+                m_kEstimatedImage = convertFromGray( m_kSourceRed,
+                                                     m_kSourceGreen,
+                                                     m_kSourceBlue );
+            }
         }
+
+        cleanUp();
         setCompleted(true);
 
     } // end runAlgorithm
@@ -622,6 +675,37 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      */
     public ModelImage getReconstructedImage()
     {
-        return m_kEstimatedImage;
+        return (ModelImage)m_kEstimatedImage.clone();
+    }
+
+    /** 
+     * Dispose of temporary images after the deconvolution process is
+     * completed:
+     */
+    private void cleanUp()
+    {
+        m_kSourceImage.disposeLocal();
+        m_kSourceImage = null;
+        
+        m_kOriginalSourceImage = null;
+
+        m_kPSFImage.disposeLocal();
+        m_kPSFImage = null;
+
+        if ( m_kSourceRed != null )
+        {
+            m_kSourceRed.disposeLocal();
+            m_kSourceRed = null;
+        }
+        if ( m_kSourceGreen != null )
+        {
+            m_kSourceGreen.disposeLocal();
+            m_kSourceGreen = null;
+        }
+        if ( m_kSourceBlue != null )
+        {
+            m_kSourceBlue.disposeLocal();
+            m_kSourceBlue = null;
+        }
     }
 }
