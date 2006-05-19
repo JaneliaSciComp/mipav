@@ -10,15 +10,14 @@ import java.awt.event.MouseAdapter;
 import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 import javax.swing.tree.TreePath;
+import javax.swing.tree.TreeModel;
+
+import org.w3c.dom.Document;
 
 import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.view.*;
 
 public class JXCEDETree extends JTree implements ActionListener{
-    /**
-     * The root node of this tree.
-     */
-    private XCEDEElement root;
     
     private JPopupMenu popupMenu;
     
@@ -27,18 +26,18 @@ public class JXCEDETree extends JTree implements ActionListener{
      * Constructs a new JXCEDETree object.
      * @param root
      */
-    public JXCEDETree(XCEDEElement root){
-        this.root = root;
-        setModel(new JXCEDETreeModel(root));
+    public JXCEDETree(Document document){
+        this(new XCEDEDOMToTreeModelAdapter(document));        
+    }
+    
+    public JXCEDETree(TreeModel treeModel){
+        super(treeModel);
         JXCEDETreeCellRenderer renderer = new JXCEDETreeCellRenderer();
         setCellRenderer(renderer);
         setEditable(false);
-        
     }
-    
     protected void finalize() throws Throwable {
         System.out.println("Entering JXCEDETree's finalize() ... ");
-        root = null;
         popupMenu = null;
         popupListener = null;
         super.finalize();
