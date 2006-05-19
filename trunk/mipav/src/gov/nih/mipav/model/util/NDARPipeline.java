@@ -3,6 +3,7 @@ package gov.nih.mipav.model.util;
 
 import gov.nih.mipav.model.algorithms.AlgorithmScriptParser;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.srb.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
@@ -96,7 +97,11 @@ public class NDARPipeline implements Observer {
 
             // read in image from disk
             Vector imageFiles = (Vector) arg;
-            ViewUserInterface.getReference().openImageFrame((String) imageFiles.elementAt(0), true);
+            if (imageFiles.size() > 1) {
+                ViewUserInterface.getReference().openImageFrame((String) imageFiles.elementAt(0), true);
+            } else {
+                ViewUserInterface.getReference().openImageFrame((String) imageFiles.elementAt(0), false);
+            }
             // System.out.println("opened image: " + (String)imageFiles.elementAt(0));
 
             // process image using specified script
@@ -134,10 +139,19 @@ public class NDARPipeline implements Observer {
             }
 
             // run the pre-upload script
+            scriptParser.preSetupActiveImages();
             scriptParser.run();
 
-            // upload image
+            // TODO: make the anonymizing scriptable, add it to the ndar script
+            // anonymize all tags in the image
             ModelImage resultImage = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+            boolean[] anonFields = new boolean[FileInfoDicom.anonymizeTagIDs.length];
+            for (int i = 0; i < anonFields.length; i++) {
+                anonFields[i] = true;
+            }
+            resultImage.anonymize(anonFields, true);
+
+            // upload image
             SRBFileTransferer transferer = new SRBFileTransferer();
             transferer.saveToSRB(resultImage, targetSRBDir);
         }

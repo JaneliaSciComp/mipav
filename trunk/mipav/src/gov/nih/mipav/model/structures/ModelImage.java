@@ -1327,33 +1327,31 @@ public class ModelImage extends ModelStorageBase {
         coord[1] = y;
         coord[2] = z;
 
-        // Get image origin 
-        origin[0] = getFileInfo()[0].getOrigin()[0]; 
+        // Get image origin
+        origin[0] = getFileInfo()[0].getOrigin()[0];
         origin[1] = getFileInfo()[0].getOrigin()[1];
         origin[2] = getFileInfo()[0].getOrigin()[2];
         // System.out.println("Origin     "  + origin[0] + ", " + origin[1] + ", " + origin[2] );
-        
+
         for (int j = 0; j < 3; j++) {
 
-            if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
-                    getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
+            if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) ||
+                    (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
                 origin[0] = getFileInfo()[0].getOrigin()[j];
-               
-            }
-            else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
-                    getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
+
+            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) ||
+                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
                 origin[1] = getFileInfo()[0].getOrigin()[j];
-                   
-            }
-            else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
-                    getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
+
+            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) ||
+                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
                 origin[2] = getFileInfo()[0].getOrigin()[j];
-                   
+
             }
         }
         // origin in LPS order
-        
-    
+
+
         // Get voxel resolutions
         res[0] = getFileInfo(0).getResolutions()[0];
         res[1] = getFileInfo(0).getResolutions()[1];
@@ -1364,45 +1362,40 @@ public class ModelImage extends ModelStorageBase {
         coord[0] = coord[0] * res[0];
         coord[1] = coord[1] * res[1];
         coord[2] = coord[2] * res[2];
-  
+
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
         if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
-                (getFileInfo()[0].getFileFormat() == FileBase.DICOM) ){
-            
-            //System.out.println("dicomMatrix = " + dicomMatrix.toString());
+                (getFileInfo()[0].getFileFormat() == FileBase.DICOM)) {
+
+            // System.out.println("dicomMatrix = " + dicomMatrix.toString());
             TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
+
             // Finally convert the point to axial millimeter DICOM space.
             dicomMatrix.transform(coord, tCoord);
-    
+
             // Add in the
             scannerCoord[0] = origin[0] + tCoord[0];
             scannerCoord[1] = origin[1] + tCoord[1];
             scannerCoord[2] = origin[2] + tCoord[2];
-        }
-        else {
+        } else {
 
             for (int j = 0; j < 3; j++) {
 
-                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ){
-                    tCoord[0] = -coord[j]; 
-                }
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
+                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) {
+                    tCoord[0] = -coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE) {
                     tCoord[0] = coord[j];
-                }
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ){
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) {
                     tCoord[1] = -coord[j];
-                }
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE) {
                     tCoord[1] = coord[j];
-                }
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE){
-                    tCoord[2] = -coord[j]; 
-                }    
-                else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) {
+                    tCoord[2] = -coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE) {
                     tCoord[2] = coord[j];
-                }    
+                }
             }
-            
+
             scannerCoord[0] = origin[0] + tCoord[0];
             scannerCoord[1] = origin[1] + tCoord[1];
             scannerCoord[2] = origin[2] + tCoord[2];
@@ -2546,7 +2539,11 @@ public class ModelImage extends ModelStorageBase {
 
         // System.err.println("Full new name: " + name + suffix);
         for (int i = 0; i < fInfos.length; i++) {
-            fInfos[i].setFileName(name + suffix);
+            if (fInfos[i] instanceof FileInfoDicom) {
+                fInfos[i].setFileName(name + (i + 1) + suffix);
+            } else {
+                fInfos[i].setFileName(name + suffix);
+            }
         }
 
         // first check to see if the image name already equals name
@@ -3027,20 +3024,12 @@ public class ModelImage extends ModelStorageBase {
         }
 
         /**
-                System.err.println("\n\nUngrouping DEBUG INFO:");
-                VOI tempVOI = null;
-                Vector [] tempCurves = null;
-                //temp stuff for debugging purposes
-                for (i = 0; i < voiVector.size(); i++) {
-                    tempVOI = voiVector.VOIAt(i);
-                    System.err.println( i + ": VOI name: " + tempVOI.getName());
-                    tempCurves = tempVOI.getCurves();
-                    for (j = 0; j < tempCurves.length; j++) {
-                        System.err.println("\tSize: " + tempCurves[j].size());
-                        System.err.println("\t" + tempCurves[j].toString());
-                    }
-                }
-        */
+         *      System.err.println("\n\nUngrouping DEBUG INFO:");     VOI tempVOI = null;     Vector [] tempCurves =
+         * null;     //temp stuff for debugging purposes     for (i = 0; i < voiVector.size(); i++) {         tempVOI =
+         * voiVector.VOIAt(i);         System.err.println( i + ": VOI name: " + tempVOI.getName());         tempCurves =
+         * tempVOI.getCurves();         for (j = 0; j < tempCurves.length; j++) { System.err.println("\tSize: " +
+         * tempCurves[j].size());             System.err.println("\t" + tempCurves[j].toString());         }     }
+         */
 
 
         notifyImageDisplayListeners();

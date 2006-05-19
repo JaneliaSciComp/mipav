@@ -102,6 +102,12 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
     /** DOCUMENT ME! */
     private JTextField stiffnessField;
 
+    /** DOCUMENT ME! */
+    private float verticalDeletionLimit = .33f;
+
+    /** DOCUMENT ME! */
+    private JTextField verticalLimitField;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -189,7 +195,8 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
 
         try {
             System.gc();
-            defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToDelete);
+            defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToDelete,
+                                                        verticalDeletionLimit);
             defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
             defaceAlgo.addListener(this);
 
@@ -235,6 +242,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         String str = new String();
         str += faceOrientation + delim;
         str += extraMMsToDelete + delim;
+        str += verticalDeletionLimit + delim;
         str += estimateWithSphereBET + delim;
         str += imageInfluenceBET + delim;
         str += stiffnessBET;
@@ -281,6 +289,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 faceOrientation = MipavUtil.getInt(st);
                 extraMMsToDelete = MipavUtil.getInt(st);
+                verticalDeletionLimit = MipavUtil.getFloat(st);
                 estimateWithSphereBET = MipavUtil.getBoolean(st);
                 imageInfluenceBET = MipavUtil.getFloat(st);
                 stiffnessBET = MipavUtil.getFloat(st);
@@ -336,6 +345,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
             }
 
             extraMMsToDelete = parser.getNextInteger();
+            verticalDeletionLimit = parser.getNextFloat();
             estimateWithSphereBET = parser.getNextBoolean();
             imageInfluenceBET = parser.getNextFloat();
             stiffnessBET = parser.getNextFloat();
@@ -455,6 +465,13 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         JLabel extraDeletionLabel = new JLabel("Additional mms to delete from facial area");
         extraDeletionLabel.setFont(MipavUtil.font12);
 
+        verticalLimitField = new JTextField();
+        verticalLimitField.setText("" + verticalDeletionLimit);
+        verticalLimitField.setColumns(2);
+
+        JLabel verticalLimitLabel = new JLabel("Vertial limit on the face deletion (0 = no removal, 1 = no limit)");
+        verticalLimitLabel.setFont(MipavUtil.font12);
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -465,6 +482,11 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx++;
         removalPanel.add(extraDeletionField, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        removalPanel.add(verticalLimitLabel, gbc);
+        gbc.gridx++;
+        removalPanel.add(verticalLimitField, gbc);
 
         JPanel betPanel = new JPanel(new GridBagLayout());
         betPanel.setBorder(MipavUtil.buildTitledBorder("Brain extraction options"));
@@ -545,6 +567,14 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
             extraMMsToDelete = Integer.parseInt(extraDeletionField.getText());
         } else {
             MipavUtil.displayError("Number of mms to delete from facial regions should be between 0 and 500");
+
+            return false;
+        }
+
+        if (MipavUtil.testParameter(verticalLimitField.getText(), 0, 1)) {
+            verticalDeletionLimit = Float.parseFloat(verticalLimitField.getText());
+        } else {
+            MipavUtil.displayError("Vertical face deletion limit must be between 0 and 1");
 
             return false;
         }
