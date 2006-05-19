@@ -71,7 +71,8 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     public static final String TRANSFER_MODE_PARELLEL = "parellel";
 
     /** DOCUMENT ME! */
-    private static final String DEFAULT_TEMP_DIR = "c:\\temp\\srb-temp";
+    private static final String DEFAULT_TEMP_DIR = System.getProperty("java.io.tmpdir") + File.separator + "mipav-srb" +
+                                                   File.separator;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
