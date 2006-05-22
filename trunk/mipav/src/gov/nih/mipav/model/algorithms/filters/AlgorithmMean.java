@@ -43,6 +43,15 @@ import java.util.*;
  * use that portion of the kernel inside the image. Consider, for example, the upper right corner pixel in a 2D image
  * using a 3 x 3 kernel. In this case only the target pixel and its lower, left, and diagonal left low neighbors will be
  * used. The sum of these 4 pixels will be divided by 4.</p>
+ * 
+ * <p> If the image is color and separateChannels is false, then the image is decomposed into 
+ * components parallel and perpindicular to the direction (redVector, greenVector, blueVector).
+ * Only the parallel component is filtered.  After filtering the parallel component,
+ * the parallel and perpindicular components are added back together.
+ * The filtering takes place in parallel and perpindicular directions
+ * in hue-saturation space.  This algorithm is from "Linear Colour-Dependent
+ * Image Filtering based on Vector Decomposition by Stephen J. Sangwine and
+ * Barnabas N. Gatsheni.</p>
  */
 
 
@@ -88,6 +97,16 @@ public class AlgorithmMean extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int valuesPerPixel = 1; // number of elements in a pixel.  Monochrome = 1, Color = 4. (a, R, G, B)
+    // For color images if separateChannels is true, take means of red, green, and blue components
+    // separately.  If separateChannels is false, decompose image into components parallel
+    // and perpindicular to the direction given by (redVector, greenVector, and blueVector)
+    // and only filter the parallel component before adding the 2 components back together.
+    private boolean separateChannels = true;
+    private float redNorm = 0.0f;
+    private float greenNorm = 0.0f;
+    private float blueNorm  = 0.0f;
+    private float midGray = 127.5f;
+    private float colorMax = 255.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -253,20 +272,43 @@ public class AlgorithmMean extends AlgorithmBase {
     }
 
     /**
-     * RGB images are mean filtered by 'channel.' That is, each color, red, blue and green, is filtered independantly of
+     * 
+     * If separateChannels is true, RGB images are mean filtered by 'channel.' 
+     * That is, each color, red, blue and green, is filtered independently of
      * the other two colors. This mean filter permits selectively filtering any combination of the three channels
      * instead of simply filtering all three.
-     *
+     * If separateChannels is false, decompose image into components parallel
+     * and perpindicular to the direction given by (redVector, greenVector, and blueVector)
+     * and only filter the parallel component before adding the 2 components back together.
+     * @param  separateChannels
      * @param  r  Filter red channel.
      * @param  g  Filter green channel.
      * @param  b  Filter blue channel.
+     * @param  redVector
+     * @param  greenVector
+     * @param  blueVector
      */
-    public void setRGBChannelFilter(boolean r, boolean g, boolean b) {
+    public void setRGBChannelFilter(boolean separateChannels, 
+                  boolean r, boolean g, boolean b,
+                  int redVector, int greenVector, int blueVector) {
+        double offsetR, offsetG, offsetB, denom;
 
         if (isColorImage) { // just in case somebody called for a mono image
+            this.separateChannels = separateChannels;
             rChannel = r;
             gChannel = g;
             bChannel = b;
+            if (srcImage.getType() == ModelStorageBase.ARGB_USHORT) {
+                midGray = 32767.5f;
+                colorMax = 65535.0f;
+            }
+            offsetR = redVector - midGray;
+            offsetG = greenVector - midGray;
+            offsetB = blueVector - midGray;
+            denom = Math.sqrt(offsetR*offsetR + offsetG*offsetG + offsetB*offsetB);
+            redNorm = (float)(offsetR/denom);
+            greenNorm = (float)(offsetG/denom);
+            blueNorm = (float)(offsetB/denom);
         }
     }
 
@@ -335,7 +377,12 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         this.buildProgressBar(); // let user know what is going on
-        this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
+        if (isColorImage && !separateChannels) {
+            this.sliceVectorFilter(buffer, resultBuffer, 0, "image"); // filter this slice    
+        }
+        else {
+            this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
+        }
         disposeProgressBar(); // filtering work should be done.
 
         if (threadStopped) {
@@ -401,12 +448,21 @@ public class AlgorithmMean extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                if (isColorImage && !separateChannels) {
+                    sliceVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));    
+                }
+                else {
+                    sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
+                }
             }
         } else { // volume kernel requested
 
-            if (isColorImage) { // for color image
+            if (isColorImage && !separateChannels) {
+                volumeVectorFilter(buffer, resultBuffer);
+            }
+            else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
             } else { // for mono image
                 volumeFilter(buffer, resultBuffer);
@@ -483,7 +539,12 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         this.buildProgressBar();
-        sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
+        if (isColorImage && !separateChannels) {
+            sliceVectorFilter(buffer, resultBuffer, 0, "image");    
+        }
+        else {
+            sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
+        }
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
         progressBar.dispose();
 
@@ -568,12 +629,21 @@ public class AlgorithmMean extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                if (isColorImage && !separateChannels) {
+                    sliceVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));    
+                }
+                else {
+                    sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
+                }
             }
         } else { // requested volume filter
 
-            if (isColorImage) { // for color image
+            if (isColorImage && !separateChannels) {
+                volumeVectorFilter(buffer, resultBuffer);
+            }
+            else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
             } else { // for mono image
                 volumeFilter(buffer, resultBuffer);
@@ -629,7 +699,7 @@ public class AlgorithmMean extends AlgorithmBase {
         int width = 0; // width of slice in number of pixels
         int height = 0; // height of slice in number of pixels
         int depth = 0;
-        int total = 0;
+        float total = 0.0f;
         float mean;
         width = srcImage.getExtents()[0];
         height = srcImage.getExtents()[1];
@@ -652,7 +722,7 @@ public class AlgorithmMean extends AlgorithmBase {
         int aheadBound;
 
         if (isColorImage) {
-            leftBound = Math.max(-columnLoc, -4 * halfK);
+            leftBound = Math.max(-((columnLoc/4)*4), -4 * halfK);
             rightBound = Math.min(sliceWidth - 1 - columnLoc, 4 * halfK);
         } else {
             leftBound = Math.max(-columnLoc, -halfK);
@@ -883,6 +953,137 @@ public class AlgorithmMean extends AlgorithmBase {
 
         // destBuffer should now be copied over for the size of imageSliceLength.  You may return....
     }
+    
+    /**
+     * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     *
+     * @param  srcBuffer            Source buffer.
+     * @param  destBuffer           Destination Buffer.
+     * @param  bufferStartingPoint  Starting point for the buffer.
+     * @param  msgString            A text message that can be displayed as a message text in the progressBar.
+     */
+    private void sliceVectorFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
+        int i, a; // counting....   i is the offset from the bufferStartingPoint
+
+        // a adds support for 3D filtering by counting as the pixel at the starting point plus the counter offset
+        int buffStart = bufferStartingPoint; // data element at the buffer. a = bufferStartingPoint+i
+        int sliceLength = srcImage.getSliceSize();
+        int imageSliceLength = sliceLength * valuesPerPixel; // since there are 4 values for every color pixel
+        int initialIndex = 0; // first element is alpha
+        int slicePerpLength = 3 * sliceLength;
+        float perpBuffer[];
+        int index;
+        float redMult;
+        float greenMult;
+        float blueMult;
+        
+        perpBuffer = new float[slicePerpLength];
+
+        int mod; // 1% length of slice for percent complete
+
+        // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
+        buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
+                                                                     // !!!
+
+        for (a = buffStart, i = 0, index = 0; i < imageSliceLength; a += 4, i += 4, index += 3) {
+            destBuffer[a] = srcBuffer[a]; // copy alpha;
+            if ((entireImage == true) || mask.get(a / 4)) { 
+                srcBuffer[a+1] = srcBuffer[a+1] - midGray;
+                srcBuffer[a+2] = srcBuffer[a+2] - midGray;
+                srcBuffer[a+3] = srcBuffer[a+3] - midGray;
+                redMult = -redNorm*redNorm*srcBuffer[a+1]
+                          -2*redNorm*greenNorm*srcBuffer[a+2]
+                          -2*redNorm*blueNorm*srcBuffer[a+3]
+                          +blueNorm*blueNorm*srcBuffer[a+1]
+                          +greenNorm*greenNorm*srcBuffer[a+1];
+                greenMult = -2*redNorm*srcBuffer[a+1]*greenNorm
+                            -greenNorm*greenNorm*srcBuffer[a+2]
+                            -2*greenNorm*blueNorm*srcBuffer[a+3]
+                            +blueNorm*blueNorm*srcBuffer[a+2]
+                            +redNorm*redNorm*srcBuffer[a+2];
+                blueMult = -2*redNorm*srcBuffer[a+1]*blueNorm
+                           -2*greenNorm*srcBuffer[a+2]*blueNorm
+                           -blueNorm*blueNorm*srcBuffer[a+3]
+                           +greenNorm*greenNorm*srcBuffer[a+3]
+                           +redNorm*redNorm*srcBuffer[a+3];
+                perpBuffer[index] = 0.5f*(srcBuffer[a+1] + redMult);
+                srcBuffer[a+1] = 0.5f*(srcBuffer[a+1] - redMult);
+                perpBuffer[index+1] = 0.5f*(srcBuffer[a+2] + greenMult);
+                srcBuffer[a+2] = 0.5f*(srcBuffer[a+2] - greenMult);
+                perpBuffer[index+2] = 0.5f*(srcBuffer[a+3] + blueMult);
+                srcBuffer[a+3] = 0.5f*(srcBuffer[a+3] - blueMult);
+            }
+        }
+
+        mod = (imageSliceLength * numberOfSlices) / 100; // mod is 1 percent of length of slice * the number of slices.
+
+        a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
+
+        // choose i so the proper colors go
+        // copy only needed RGB values
+        initialIndex = 0; // start with alpha on each pass (routine moved so we don't do it for each pass)
+
+        while ((initialIndex < 3) && !threadStopped) { // alpha:0, R:1, G:2, B:3.  But alpha must be copied
+            ++initialIndex; // next initial index
+            a += initialIndex; // keep the pixel location up with color indexed to
+
+            if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
+
+                // do a progress bar update
+                progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), activeImage);
+            }
+
+            
+
+            // if we needed to filter the image, we dropped through the selection to filter the
+            // color given by int initialIndex
+            if (numberOfSlices == 1) {
+
+                if (initialIndex == 1) {
+                    setCopyColorText("red", true);
+                } else if (initialIndex == 2) {
+                    setCopyColorText("green", true);
+                } else if (initialIndex == 3) {
+                    setCopyColorText("blue", true);
+                }
+            } // if (numberOfSlices == 1)
+            else {
+                progressBar.setMessage("Averaging values ...");
+            }
+
+            for (i = initialIndex, index = 0; (i < imageSliceLength) && !threadStopped;
+                                           a += 4, i += 4, index += 3) {
+
+                if (numberOfSlices == 1) { // 2D image     update progressBar
+
+                    if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
+                        progressBar.updateValue(Math.round((float) (((initialIndex - 1) * sliceLength) +
+                                                                    (i / 4)) / (3 * sliceLength) * 100),
+                                                activeImage);
+                    }
+                }
+
+                if ((entireImage == true) || mask.get(a / 4)) { // may have problems in masking .....
+
+                    // in bounds
+                    destBuffer[a] = getMean(a, srcBuffer, true) 
+                                    + perpBuffer[index + initialIndex - 1] + midGray;
+                    if (destBuffer[a] < 0.0f) {
+                        destBuffer[a] = 0.0f;
+                    }
+                    else if (destBuffer[a] > colorMax) {
+                        destBuffer[a] = colorMax;
+                    }
+                } else { // not part of the VOI so just copy this into the destination buffer.
+                    destBuffer[a] = srcBuffer[a];
+                }
+            }
+
+        a = buffStart; // reset the index back to the beginning of the filterarea
+        }
+
+    // destBuffer should now be copied over for the size of imageSliceLength.  You may return....
+    }
 
     /**
      * Filter a Color 3D image with a 3D kernel. Allows mean filtering to include the picture elements at greater depths
@@ -976,6 +1177,113 @@ public class AlgorithmMean extends AlgorithmBase {
                     } else { // not part of the VOI so just copy this into the destination buffer.
                         destBuffer[i] = srcBuffer[i];
                     }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Filter a Color 3D image with a 3D kernel. Allows mean filtering to include the picture elements at greater depths
+     * than only the current slice. This method allows selected band filtering, and does not filter the alpha band.
+     *
+     * @param  srcBuffer   Source image.
+     * @param  destBuffer  Destination image.
+     *
+     * @see    volumeFilter
+     */
+    private void volumeVectorFilter(float[] srcBuffer, float[] destBuffer) {
+        int i; // counting the current element
+        int initialIndex; // reference to the color band being filtered/copied: aRBG: 0, 1, 2, 3;
+                          // it is an offset to the identified pixel, or column, of the slice
+        int width = srcImage.getExtents()[0]; // width of slice in number of pixels
+        int height = srcImage.getExtents()[1]; // height of slice in number of pixels
+        int sliceSize = width * height; // in pixels (or elements)
+        int imageSliceLength = width * height * valuesPerPixel; // in values-pixels
+        int imageSize = sliceSize * numberOfSlices; // in pixels (or elements)
+        int imageLength = imageSliceLength * numberOfSlices; // in (values-pixels)
+        int volumePerpLength = 3 * width * height * numberOfSlices;
+        float perpBuffer[];
+        int index;
+        float redMult;
+        float greenMult;
+        float blueMult;
+        
+        perpBuffer = new float[volumePerpLength];
+
+        // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
+        // these calculations are done seperately for color & mono images in sliceFilter().
+
+        int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
+
+        for (i = 0, index = 0; i < imageLength; i += 4, index += 3) {
+            destBuffer[i] = srcBuffer[i]; // copy alpha;
+            if ((entireImage == true) || mask.get(i / 4)) { 
+                srcBuffer[i+1] = srcBuffer[i+1] - midGray;
+                srcBuffer[i+2] = srcBuffer[i+2] - midGray;
+                srcBuffer[i+3] = srcBuffer[i+3] - midGray;
+                redMult = -redNorm*redNorm*srcBuffer[i+1]
+                          -2*redNorm*greenNorm*srcBuffer[i+2]
+                          -2*redNorm*blueNorm*srcBuffer[i+3]
+                          +blueNorm*blueNorm*srcBuffer[i+1]
+                          +greenNorm*greenNorm*srcBuffer[i+1];
+                greenMult = -2*redNorm*srcBuffer[i+1]*greenNorm
+                            -greenNorm*greenNorm*srcBuffer[i+2]
+                            -2*greenNorm*blueNorm*srcBuffer[i+3]
+                            +blueNorm*blueNorm*srcBuffer[i+2]
+                            +redNorm*redNorm*srcBuffer[i+2];
+                blueMult = -2*redNorm*srcBuffer[i+1]*blueNorm
+                           -2*greenNorm*srcBuffer[i+2]*blueNorm
+                           -blueNorm*blueNorm*srcBuffer[i+3]
+                           +greenNorm*greenNorm*srcBuffer[i+3]
+                           +redNorm*redNorm*srcBuffer[i+3];
+                perpBuffer[index] = 0.5f*(srcBuffer[i+1] + redMult);
+                srcBuffer[i+1] = 0.5f*(srcBuffer[i+1] - redMult);
+                perpBuffer[index+1] = 0.5f*(srcBuffer[i+2] + greenMult);
+                srcBuffer[i+2] = 0.5f*(srcBuffer[i+2] - greenMult);
+                perpBuffer[index+2] = 0.5f*(srcBuffer[i+3] + blueMult);
+                srcBuffer[i+3] = 0.5f*(srcBuffer[i+3] - blueMult);
+            }
+        }
+
+        // choose i so the proper colors go alongside the initial index
+        // so we get the right output statements in the progress bar
+        // copy only needed RGB values
+        initialIndex = 0; // start with alpha on each pass (routine moved so we don't do it for each pass)
+
+        while ((initialIndex < 3) && !threadStopped) { // alpha:0, R:1, G:2, B:3.  But alpha must be copied
+            ++initialIndex; // next initial index
+
+            
+
+            if (initialIndex == 1) {
+                setCopyColorText("red", true);
+            } else if (initialIndex == 2) {
+                setCopyColorText("green", true);
+            } else if (initialIndex == 3) {
+                setCopyColorText("blue", true);
+            }
+
+            // if we needed to filter the image, we dropped through the selection to filter the
+            // color given by int initialIndex
+            for (i = initialIndex, index = 0; (i < imageLength) && !threadStopped; i += 4,
+                                                index = 3) {
+
+                if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
+                    progressBar.updateValue(Math.round(((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
+                                                            (3 * imageSize) * 100)), activeImage);
+                }
+
+                if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
+                    destBuffer[i] = getMean(i, srcBuffer, false) +
+                    + perpBuffer[index + initialIndex - 1] + midGray;
+                    if (destBuffer[i] < 0.0f) {
+                        destBuffer[i] = 0.0f;
+                    }
+                    else if (destBuffer[i] > colorMax) {
+                        destBuffer[i] = colorMax;
+                    }
+                } else { // not part of the VOI so just copy this into the destination buffer.
+                    destBuffer[i] = srcBuffer[i];
                 }
             }
         }
