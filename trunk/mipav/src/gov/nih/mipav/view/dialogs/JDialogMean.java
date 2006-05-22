@@ -56,6 +56,20 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
 
     /** DOCUMENT ME! */
     private JCheckBox greenChannel;
+    
+    private ButtonGroup separateVectorGroup;
+    private JRadioButton separateButton;
+    private boolean separateChannels;
+    private JRadioButton vectorButton;
+    private JLabel redLabel;
+    private JTextField redText;
+    private JLabel greenLabel;
+    private JTextField greenText;
+    private JLabel blueLabel;
+    private JTextField blueText;
+    private int redVector;
+    private int greenVector;
+    private int blueVector;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -161,6 +175,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -186,6 +201,30 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
             MipavUtil.showHelp("10015");
         } else if (command.equals("Cancel")) {
             dispose();
+        }
+        else if ((source == separateButton) || (source == vectorButton)) {
+            if (separateButton.isSelected()) {
+                redChannel.setEnabled(true);
+                greenChannel.setEnabled(true);
+                blueChannel.setEnabled(true);
+                redLabel.setEnabled(false);
+                redText.setEnabled(false);
+                greenLabel.setEnabled(false);
+                greenText.setEnabled(false);
+                blueLabel.setEnabled(false);
+                blueText.setEnabled(false);
+            }
+            else {
+                redChannel.setEnabled(false);
+                greenChannel.setEnabled(false);
+                blueChannel.setEnabled(false);
+                redLabel.setEnabled(true);
+                redText.setEnabled(true);
+                greenLabel.setEnabled(true);
+                greenText.setEnabled(true);
+                blueLabel.setEnabled(true);
+                blueText.setEnabled(true);    
+            }
         }
     }
 
@@ -293,11 +332,15 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     userInterface.getScriptDialog().putVar(resultImage.getImageName());
                     userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
                                                            " " + entireImageFlag + " " + image25D + " " + kernelSize +
-                                                           " " + red + " " + green + " " + blue + "\n");
+                                                           " " + separateChannels +
+                                                           " " + red + " " + green + " " + blue + 
+                                                           " " + redVector + " " + greenVector + " " + blueVector + "\n");
                 } else {
                     userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
                                                            " " + entireImageFlag + " " + image25D + " " + kernelSize +
-                                                           " " + red + " " + green + " " + blue + "\n");
+                                                           " " + separateChannels + 
+                                                           " " + red + " " + green + " " + blue + 
+                                                           " " + redVector + " " + greenVector + " " + blueVector + "\n");
                 }
             }
         }
@@ -350,9 +393,13 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
             setEntireImageFlag(parser.getNextBoolean());
             setImage25D(parser.getNextBoolean());
             setKernelSize(parser.getNextInteger());
+            setSeparateChannels(parser.getNextBoolean());
             setRed(parser.getNextBoolean());
             setGreen(parser.getNextBoolean());
             setBlue(parser.getNextBoolean());
+            setRedVector(parser.getNextInteger());
+            setGreenVector(parser.getNextInteger());
+            setBlueVector(parser.getNextInteger());
         } catch (Exception e) {
             throw new IllegalArgumentException();
         }
@@ -434,6 +481,34 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
     public void setRed(boolean flag) {
         red = flag;
     }
+    
+    /**
+     * 
+     * @param separateChannels
+     */
+    public void setSeparateChannels(boolean separateChannels) {
+        this.separateChannels = separateChannels;
+    }
+    
+    /**
+     * 
+     * @param redVector
+     */
+    public void setRedVector(int redVector) {
+        this.redVector = redVector;
+    }
+    
+    /**
+     * 
+     * @param greenVector
+     */
+    public void setGreenVector(int greenVector) {
+        this.greenVector = greenVector;
+    }
+    
+    public void setBlueVector(int blueVector) {
+        this.blueVector = blueVector;
+    }
 
     /**
      * Creates the combo-box that allows user to select the size of the kernel (mask).
@@ -493,7 +568,8 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    meanAlgo.setRGBChannelFilter(red, green, blue);
+                    meanAlgo.setRGBChannelFilter(separateChannels, red, green, blue,
+                                                 redVector, greenVector, blueVector);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -535,7 +611,8 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     meanAlgo = new AlgorithmMean(image, kernelSize, entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    meanAlgo.setRGBChannelFilter(red, green, blue);
+                    meanAlgo.setRGBChannelFilter(separateChannels, red, green, blue,
+                                                 redVector, greenVector, blueVector);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -613,7 +690,8 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, image25D, entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    meanAlgo.setRGBChannelFilter(red, green, blue);
+                    meanAlgo.setRGBChannelFilter(separateChannels, red, green, blue,
+                                                 redVector, greenVector, blueVector);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -654,7 +732,8 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     meanAlgo = new AlgorithmMean(image, kernelSize, image25D, entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    meanAlgo.setRGBChannelFilter(red, green, blue);
+                    meanAlgo.setRGBChannelFilter(separateChannels, red, green, blue,
+                                                 redVector, greenVector, blueVector);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -768,33 +847,109 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
 
         JPanel colourPanel = new JPanel();
         colourPanel.setLayout(gbl);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        //gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         colourPanel.setForeground(Color.black);
         colourPanel.setBorder(buildTitledBorder("Color channel selection")); // set the border ... "Colour channel
                                                                              // Selection"
 
+        separateVectorGroup = new ButtonGroup();
+        separateButton = new JRadioButton("Separate components", true);
+        separateButton.setFont(serif12);
+        separateButton.setForeground(Color.black);
+        separateButton.addActionListener(this);
+        separateVectorGroup.add(separateButton);
+        //gbl.setConstraints(separateButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        colourPanel.add(separateButton, gbc);
+        
         redChannel = new JCheckBox("Red channel", true);
         redChannel.setFont(serif12);
-        gbl.setConstraints(redChannel, gbc);
-        colourPanel.add(redChannel);
+        //gbl.setConstraints(redChannel, gbc);
+        gbc.gridy = 1;
+        colourPanel.add(redChannel, gbc);
 
         greenChannel = new JCheckBox("Green channel", true);
         greenChannel.setFont(serif12);
-        gbl.setConstraints(greenChannel, gbc);
-        colourPanel.add(greenChannel);
+        //gbl.setConstraints(greenChannel, gbc);
+        gbc.gridy = 2;
+        colourPanel.add(greenChannel, gbc);
 
         blueChannel = new JCheckBox("Blue channel", true);
         blueChannel.setFont(serif12);
-        gbl.setConstraints(blueChannel, gbc);
-        colourPanel.add(blueChannel);
+        //gbl.setConstraints(blueChannel, gbc);
+        gbc.gridy = 3;
+        colourPanel.add(blueChannel, gbc);
+        
+        vectorButton = new JRadioButton("Vector decomposition", false);
+        vectorButton.setFont(serif12);
+        vectorButton.setForeground(Color.black);
+        vectorButton.addActionListener(this);
+        separateVectorGroup.add(vectorButton);
+        //gbl.setConstraints(vectorButton, gbc);
+        gbc.gridy = 4;
+        colourPanel.add(vectorButton, gbc);
+        
+        redLabel = new JLabel("Red");
+        redLabel.setForeground(Color.black);
+        redLabel.setFont(serif12);
+        redLabel.setEnabled(false);
+        gbc.gridy = 5;
+        colourPanel.add(redLabel, gbc);
+        
+        redText = new JTextField(6);
+        redText.setText("255");
+        if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+            redText.setText("65535");
+        }
+        redText.setForeground(Color.BLACK);
+        redText.setFont(serif12);
+        redText.setEnabled(false);
+        gbc.gridx = 1;
+        colourPanel.add(redText, gbc);
+        
+        greenLabel = new JLabel("Green");
+        greenLabel.setForeground(Color.black);
+        greenLabel.setFont(serif12);
+        greenLabel.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        colourPanel.add(greenLabel, gbc);
+        
+        greenText = new JTextField(6);
+        greenText.setText("0");
+        greenText.setForeground(Color.BLACK);
+        greenText.setFont(serif12);
+        greenText.setEnabled(false);
+        gbc.gridx = 1;
+        colourPanel.add(greenText, gbc);
+        
+        blueLabel = new JLabel("Blue");
+        blueLabel.setForeground(Color.black);
+        blueLabel.setFont(serif12);
+        blueLabel.setEnabled(false);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        colourPanel.add(blueLabel, gbc);
+        
+        blueText = new JTextField(6);
+        blueText.setText("0");
+        blueText.setForeground(Color.BLACK);
+        blueText.setFont(serif12);
+        blueText.setEnabled(false);
+        gbc.gridx = 1;
+        colourPanel.add(blueText, gbc);
 
         // if not a colour image, block access to the channel switches
         // since they don't mean anything
         if (image.isColorImage() == false) {
+            separateButton.setEnabled(false);
             redChannel.setEnabled(false);
             greenChannel.setEnabled(false);
             blueChannel.setEnabled(false);
+            vectorButton.setEnabled(false);
         }
 
         colourPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
@@ -895,6 +1050,11 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+        String tmpStr;
+        int colorMax = 255;
+        if (image.getType() == ModelStorageBase.ARGB_USHORT) {
+            colorMax = 65535;
+        }
 
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
@@ -911,9 +1071,55 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
         // associate kernel size with selectBox choice.
         this.determineKernelSize();
 
+        separateChannels = separateButton.isSelected();
         red = redChannel.isSelected();
         green = greenChannel.isSelected();
         blue = blueChannel.isSelected();
+        
+        tmpStr = redText.getText();
+        redVector = Integer.parseInt(tmpStr);
+        if (redVector < 0) {
+            MipavUtil.displayError("Red must be at least 0");
+            redText.requestFocus();
+            redText.selectAll();
+            return false;
+        }
+        else if (redVector > colorMax) {
+            MipavUtil.displayError("Red must not exceed " + colorMax);
+            redText.requestFocus();
+            redText.selectAll();
+            return false;
+        }
+        
+        tmpStr = greenText.getText();
+        greenVector = Integer.parseInt(tmpStr);
+        if (greenVector < 0) {
+            MipavUtil.displayError("Green must be at least 0");
+            greenText.requestFocus();
+            greenText.selectAll();
+            return false;
+        }
+        else if (greenVector > colorMax) {
+            MipavUtil.displayError("Green must not exceed " + colorMax);
+            greenText.requestFocus();
+            greenText.selectAll();
+            return false;
+        }
+        
+        tmpStr = blueText.getText();
+        blueVector = Integer.parseInt(tmpStr);
+        if (blueVector < 0) {
+            MipavUtil.displayError("Blue must be at least 0");
+            blueText.requestFocus();
+            blueText.selectAll();
+            return false;
+        }
+        else if (blueVector > colorMax) {
+            MipavUtil.displayError("Blue must not exceed " + colorMax);
+            blueText.requestFocus();
+            blueText.selectAll();
+            return false;
+        }
 
         if (bySlice != null) {
             image25D = bySlice.isSelected();
