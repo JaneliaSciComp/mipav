@@ -3,10 +3,10 @@ package gov.nih.mipav.model.dicomcomm;
 
 import gov.nih.mipav.view.*;
 
+
 import java.net.*;
 
 import java.util.*;
-
 
 /**
  * The PDU_Service class is a wrapper of all the lower level DICOM messaging classes. This class is the true implementor
@@ -60,9 +60,6 @@ public class DICOM_PDUService extends DICOM_Comms {
 
     /** Buffer used in sending DICOM image. */
     private DICOM_FileIO ioBuffer = null;
-
-    /** Server information parsed from the preference file - includes AE title, IP address, port number. */
-    private String[] serverInformation = parseServerInfo(Preferences.getProperty(Preferences.getDefaultServerKey()));
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -129,16 +126,15 @@ public class DICOM_PDUService extends DICOM_Comms {
         } catch (DICOM_Exception de) {
             de.printStackTrace();
         }
-
     }
 
     /**
      * Parses the server info string and returns a tokenized array of strings that where deliniated by ";" (See MIPAV
      * preference file).
      *
-     * @param   info  DOCUMENT ME!
+     * @param   info  A string deliniated by ";" that contains (AETitle, Alias, IP, PORT).
      *
-     * @return  server info
+     * @return  server info parsed into an array of strings (AETitle, Alias, IP, PORT).
      */
     public static String[] parseServerInfo(String info) {
 
@@ -162,7 +158,7 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * Adds proposed abstract syntax to hash table.
      *
-     * @param  SOP_UID  DOCUMENT ME!
+     * @param  SOP_UID  The abstract syntax to be added the list of proposed Abstract Syntaxs
      */
     public void addAbstractSyntax(String SOP_UID) {
         DICOM_PDUItemType abstractSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_AbstractSyntax);
@@ -213,9 +209,8 @@ public class DICOM_PDUService extends DICOM_Comms {
      * @param      dco  the received command object
      * @param      ddo  the received data object
      *
-     * @exception  DICOM_Exception  DOCUMENT ME!
      */
-    public void addFindResultToList(DICOM_Object dco, DICOM_Object ddo) throws DICOM_Exception {
+    public void addFindResultToList(DICOM_Object dco, DICOM_Object ddo) {
 
         if (dco == null) {
             findResults.removeAllElements(); // clear list for new data
@@ -252,7 +247,6 @@ public class DICOM_PDUService extends DICOM_Comms {
 
         socket.close();
         finalize();
-        System.gc(); // try to free things up...
     }
 
     /**
@@ -261,7 +255,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      * @param   remoteAppTitle  the application entity title to attempt to connect to
      * @param   verification    if true only add Verification UID syntax.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there was a problem connecting to the server.
      */
     public void connectClientToServer(String remoteAppTitle, boolean verification) throws DICOM_Exception {
         byte itemType;
@@ -370,14 +364,6 @@ public class DICOM_PDUService extends DICOM_Comms {
         return associateRQ;
     }
 
-    /**
-     * Gets the DICOM GUI display object.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public DICOMDisplayer getDICOMMessageDisplayer() {
-        return dicomMessageDisplayer;
-    }
 
     /**
      * Implementation class uid.
@@ -399,57 +385,23 @@ public class DICOM_PDUService extends DICOM_Comms {
 
 
     /**
-     * Returns the IO buffer object.
-     *
-     * @return  DICOM_FileIO
-     */
-    public DICOM_FileIO getIOBuffer() {
-        return ioBuffer;
-    }
-
-    /**
-     * Returns the IP address of the host with the given AETitle.
-     *
-     * @param   IP  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
-     */
-    public String getIPFromAppTitle(String IP) throws DICOM_Exception {
-        return (IP.trim());
-    }
-
-    /**
      * Returns the AETitle we use to identify ourself (our local AppTitle name).
      *
-     * @return  DOCUMENT ME!
+     * @return  Returns the AETitle we use to identify ourself (our local AppTitle name).
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there was a problem getting the default AETitle.
      */
     public String getLocalAppTitle() throws DICOM_Exception {
         return (parseServerInfo(Preferences.getProperty(Preferences.getDefaultStorageKey()))[0]);
     }
 
-    /**
-     * Returns the DICOM port number of the host with the given AETitle.
-     *
-     * @param   appTitle  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     *
-     * @throws  DICOM_Exception  DOCUMENT ME!
-     */
-    public int getPortFromAppTitle(String appTitle) throws DICOM_Exception {
-        return (Integer.valueOf(serverInformation[3]).intValue());
-    }
 
     /**
      * Establishes an association over a socket from the server (SCP) side.
      *
      * @param   sock  the socket (connected) to work with
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there was a problem connecting to the server.
      */
     public void handleConnectionFromServer(Socket sock) throws DICOM_Exception {
         setLocalAddress(getLocalAppTitle());
@@ -547,7 +499,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      *
      * @return  number of bytes actually read
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there was a problem reading the socket.
      */
     public int readBinary(byte[] data, int count) throws DICOM_Exception {
         int actual = socket.readBinary(data, count);
@@ -557,13 +509,13 @@ public class DICOM_PDUService extends DICOM_Comms {
 
 
     /**
-     * Loads a DICOM object from a file.
+     * Loads a DICOM image from a file.
      *
-     * @param   filename  the name of the file to load
+     * @param   filename  The name of the file to load.
      *
-     * @return  DOCUMENT ME!
+     * @return  Returns the DICOM data object (image).
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if there was a problem reading in the image.
      */
     public DICOM_Object readDICOMDataObjectFromFile(String filename) throws DICOM_Exception {
 
@@ -606,12 +558,12 @@ public class DICOM_PDUService extends DICOM_Comms {
      * The main method for reading incoming DICOM messages. true: complete PData unit received, socket still open false:
      * release request received, then close the socket
      *
-     * @param   DICOMobj  DOCUMENT ME!
+     * @param   DICOMobj  The DICOM object. Null if pDataTF.getVRLinkedBuffer holds data.
      *
      * @return  true complete PData unit received, socket still open false release request received, then close the
      *          socket
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws an error if a problem reading in the object or data is encountered.
      */
     public boolean readInObject(DICOM_Object DICOMobj) throws DICOM_Exception {
         byte itemType;
@@ -727,7 +679,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      *
      * @param   fileName        name of the file where the ddo is to be stored
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws error if a problem writing the image to file is encountered.
      */
     public void saveImageToFile( ByteBuffer dataObj, String fileName) throws DICOM_Exception {
         DICOM_FileIO ioBuffer = new DICOM_FileIO();
@@ -735,7 +687,6 @@ public class DICOM_PDUService extends DICOM_Comms {
         if (ioBuffer.openForWrite(fileName)) {
             ioBuffer.sendBinary(dataObj.data, dataObj.length());
             ioBuffer.close();
-            ioBuffer.finalize();
         }
     }
 
@@ -747,7 +698,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      * @param   offset  starting offset
      * @param   count   number of bytes to be sent
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  Throws an error when a problem is encoutered writing.
      */
     public void sendBinary(byte[] data, int offset, int count) throws DICOM_Exception {
         socket.writeBinary(data, offset, count);
@@ -756,7 +707,7 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * Sets the display viewer.
      *
-     * @param  displayer  DOCUMENT ME!
+     * @param  displayer  The GUI used to display
      */
     public void setDICOMMessageDisplayer(DICOMDisplayer displayer) {
         dicomMessageDisplayer = displayer;
@@ -769,21 +720,21 @@ public class DICOM_PDUService extends DICOM_Comms {
      *
      * @return  always returns true
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Not used at this time!
      */
     public boolean shouldWeAcceptLocalAppTitle(String AEtitle) throws DICOM_Exception {
         return (true);
     }
 
     /**
-     * Accept only AETitles listed in the server host table (remote) *** We accept all AETitles!
+     * Accept only AETitles listed in the server host table (remote) *** We accept all AETitles at this time!
      *
      * @param   remoteAETitle  - calling (remote AE Title)
      *
      * @return  true if the remoteAETitle has been found in the server host table (host table in the user preference
      *          file
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Not used at this time.
      */
     public boolean shouldWeAcceptRemoteAppTitle(String remoteAETitle) throws DICOM_Exception {
 
@@ -817,9 +768,9 @@ public class DICOM_PDUService extends DICOM_Comms {
      * Writes the image (loaded into ioBuffer from file) out the port.
      * @param   transferSyntax    Transfer syntax
      * @param   sopClassUID    SOP class UID
-     * @param   messageHeader  byte
+     * @param   messageHeader  1 = indicates command, 0 = data.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Throws error if an error is encountered writing the image out the port.
      */
     public void write(String transferSyntax, String sopClassUID, byte messageHeader) throws DICOM_Exception {
 
@@ -846,9 +797,9 @@ public class DICOM_PDUService extends DICOM_Comms {
      *
      * @param   DICOMObj       the DICOM object to be sent.
      * @param   sopClassUID    SOP class UID
-     * @param   messageHeader  DOCUMENT ME!
+     * @param   messageHeader  Value of 0 indicates data message. Value of 1 indicates command message.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Indicates erroring writing DICOM objects.
      */
     public void write(DICOM_Object DICOMObj, String sopClassUID, byte messageHeader) throws DICOM_Exception {
 
@@ -861,7 +812,6 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * Used to make sure socket has properly been closed.
      *
-     * @throws  Throwable  DOCUMENT ME!
      */
     protected void finalize() {
         
@@ -1040,11 +990,11 @@ public class DICOM_PDUService extends DICOM_Comms {
     }
 
     /**
-     * Decompose association request.
+     * Decompose association request and send proper response.
      *
      * @return     Returns false if it fails.
      *
-     * @exception  DICOM_Exception  DOCUMENT ME!
+     * @exception  DICOM_Exception  Throws error if an error is encountered writing response to association.
      */
     private boolean interrogateAAssociateRQ() throws DICOM_Exception {
         boolean atLeastOne;
@@ -1202,27 +1152,28 @@ public class DICOM_PDUService extends DICOM_Comms {
     /**
      * Sets the application context UID.
      *
-     * @param  applicationUID  DOCUMENT ME!
+     * @param  applicationUID  The application context UID.
      */
     private void setApplicationContext(String applicationUID) {
         associateRQ.setApplicationContextUID(applicationUID);
     }
 
     /**
-     * Sets the local address of the calling application title.
+     * Sets the local address of the calling application entity.
      *
-     * @param  localAddress  DOCUMENT ME!
+     * @param  localAddress  The IP address of the calling application entity.
      */
     private void setLocalAddress(String localAddress) {
         associateRQ.setCallingAppTitle(localAddress.getBytes());
     }
 
     /**
-     * Should MIPAV accept the Abstract syntax.
+     * Should MIPAV accept the abstract syntax.
      *
-     * @param   abstractSyntax  DOCUMENT ME!
+     * @param   abstractSyntax  The abstract syntax that will be compared to the list of 
+     * abstract syntaxes that is supported. 
      *
-     * @return  DOCUMENT ME!
+     * @return  True if we support the abstract syntax, otherwise false.
      */
     private boolean shouldWeAcceptAbstractSyntax(DICOM_PDUItemType abstractSyntax) {
         String str = DICOM_Util.unpadStringVal(abstractSyntax.getUID().getBytes());
@@ -1235,11 +1186,11 @@ public class DICOM_PDUService extends DICOM_Comms {
     }
 
     /**
-     * As it turn at we accept all Application contexts.
+     * As it turn out we accept all application contexts.
      *
-     * @param   applicationContext  DOCUMENT ME!
+     * @param   applicationContext The application context to be check to be accepted. Not used at this time. 
      *
-     * @return  DOCUMENT ME!
+     * @return  Always returns true.
      */
     private boolean shouldWeAcceptApplicationContext(DICOM_PDUItemType applicationContext) {
         return (true); // accept all presentation contextes !!!!!!!!
