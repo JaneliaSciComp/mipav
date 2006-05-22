@@ -220,49 +220,24 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                                 new File(dirname).mkdir();
                             } else {
 
-                                if (entry.getName().endsWith(".class")) {
-
-                                    try {
-                                        new File(pluginDir + File.separator + entry.getName()).getParentFile().mkdirs();
-                                    } catch (Exception ex) {
-                                        // do nothing...no parent dir here
-                                    }
-
-                                    fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
-
-                                    // Transfer bytes from the ZIP file to the output file
-                                    buf = new byte[1024];
-
-                                    while ((len = zIn.read(buf)) > 0) {
-                                        fw.write(buf, 0, len);
-                                    }
-
-                                    fw.close();
-                                } else {
-
-                                    // these are not .class files so put them in pluginDir/docs
-                                    String fileName = null;
-
-                                    if (new File(entry.getName()).getParentFile() != null) {
-                                        fileName = new File(entry.getName()).getName();
-                                    } else {
-                                        fileName = entry.getName();
-                                    }
-
-                                    new File(docsDir).mkdirs();
-
-                                    fw = new FileOutputStream(docsDir + File.separator + fileName);
-
-                                    // Transfer bytes from the ZIP file to the output file
-                                    buf = new byte[1024];
-
-                                    while ((len = zIn.read(buf)) > 0) {
-                                        fw.write(buf, 0, len);
-                                    }
-
-                                    fw.close();
-
+                                try {
+                                    new File(pluginDir + File.separator + entry.getName()).getParentFile().
+                                            mkdirs();
+                                } catch (Exception ex) {
+                                    // do nothing...no parent dir here
                                 }
+
+                                fw = new FileOutputStream(pluginDir + File.separator + entry.getName());
+
+                                // Transfer bytes from the ZIP file to the output file
+                                buf = new byte[1024];
+
+                                while ((len = zIn.read(buf)) > 0) {
+                                    fw.write(buf, 0, len);
+                                }
+
+                                fw.close();
+
                             }
                         }
 
