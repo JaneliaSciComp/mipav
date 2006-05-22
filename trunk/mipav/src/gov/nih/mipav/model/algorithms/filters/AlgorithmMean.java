@@ -1266,7 +1266,7 @@ public class AlgorithmMean extends AlgorithmBase {
             // if we needed to filter the image, we dropped through the selection to filter the
             // color given by int initialIndex
             for (i = initialIndex, index = 0; (i < imageLength) && !threadStopped; i += 4,
-                                                index = 3) {
+                                                index += 3) {
 
                 if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
                     progressBar.updateValue(Math.round(((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
