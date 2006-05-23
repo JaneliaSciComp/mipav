@@ -50,7 +50,7 @@ import java.util.*;
  * the parallel and perpindicular components are added back together.
  * The filtering takes place in parallel and perpindicular directions
  * in hue-saturation space.  This algorithm is from "Linear Colour-Dependent
- * Image Filtering based on Vector Decomposition" by Stephen J. Sangwine and
+ * Image Filtering based on Vector Decomposition" by Stephen J. Sangwine, Todd A. Ell, 
  * Barnabas N. Gatsheni.   In a later paper "Colour-Dependent Linear Vector Image
  * Filtering" by Stephen J. Sangwine, Todd A. Ell, and Barbabas N. Gatsheni, 3
  * major limitations of this scheme are discussed: 1.) Limited color selectivity
