@@ -706,7 +706,7 @@ public class AlgorithmMean extends AlgorithmBase {
         int width = 0; // width of slice in number of pixels
         int height = 0; // height of slice in number of pixels
         int depth = 0;
-        float total = 0.0f;
+        double total = 0.0;
         float mean;
         width = srcImage.getExtents()[0];
         height = srcImage.getExtents()[1];
@@ -772,7 +772,7 @@ public class AlgorithmMean extends AlgorithmBase {
             }
         }
 
-        mean = total / count;
+        mean = (float)(total / count);
 
         return (mean);
     }
