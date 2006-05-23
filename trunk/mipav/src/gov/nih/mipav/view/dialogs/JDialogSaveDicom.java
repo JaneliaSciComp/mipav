@@ -241,13 +241,12 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param  theParentFrame  Parent frame.
      * @param  _fileInfo       File info object to get initialization info from.
      * @param  dicomInfo       Dicom file info object.
-     * @param  ui              user interface pointer.
+     * @param  isScriptRunning Whether this dialog is being instantiated as part of the running of a script.
      */
-    public JDialogSaveDicom(Frame theParentFrame, FileInfoBase _fileInfo, FileInfoDicom dicomInfo,
-                            ViewUserInterface ui) {
+    public JDialogSaveDicom(Frame theParentFrame, FileInfoBase _fileInfo, FileInfoDicom dicomInfo, boolean isScriptRunning) {
         super(theParentFrame, true);
 
-        UI = ui;
+        UI = ViewUserInterface.getReference();
         fileInfo = _fileInfo;
         dicomFileInfo = dicomInfo;
 
@@ -314,6 +313,15 @@ public class JDialogSaveDicom extends JDialogBase {
                     tagsImportedFromNonDicomImage.remove(tag);
                 }
             }
+        }
+        
+        // if we are running a script, auto-fill the required tags and skip the dialog
+        if (isScriptRunning) {
+            autofillRequiredFields();
+            setVisible(false);
+            actionPerformed(new ActionEvent(this, 0, "OK"));
+        } else {
+            setVisible(true);
         }
     }
 
