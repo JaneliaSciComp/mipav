@@ -8315,12 +8315,7 @@ public class FileIO {
         } else { // Non DICOM images
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileBase.DICOM);
 
-            JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
-                                                           image.getUserInterface());
-
-            if (!quiet) {
-                dialog.setVisible(true);
-            }
+            JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo, options.isScript());
 
             if (dialog.isCancelled()) {
                 return false;
