@@ -62,6 +62,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
      */
     public PlugInDialogPipeline(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, false);
+    	System.out.println("name of image: "+imA.getImageName());
         imageA = imA;
         userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         System.err.println("in constructor of dialog pipe");
