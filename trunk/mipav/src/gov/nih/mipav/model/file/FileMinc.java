@@ -96,33 +96,6 @@ public class FileMinc extends FileBase {
         }
     }
 
-    /**
-     * MINC reader/writer constructor.
-     *
-     * @param       _UI    User interface reference.
-     * @param       fName  File name.
-     * @param       fDir   File directory.
-     *
-     * @exception   IOException  if there is an error constructing the files
-     *
-     * @deprecated  _UI no longer needed/used in this class
-     */
-    public FileMinc(ViewUserInterface _UI, String fName, String fDir) throws IOException {
-        fileName = fName;
-        fileDir = fDir;
-
-        try {
-
-            try {
-                raFile = new RandomAccessFile(new File(fileDir + fileName), "rw");
-            } catch (IOException e) {
-                raFile = new RandomAccessFile(new File(fileDir + fileName), "r");
-            }
-
-        } catch (OutOfMemoryError e) {
-            throw new IOException("Out of memory in FileMinc constructor.");
-        }
-    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
