@@ -56,9 +56,6 @@ public class FileDicom extends FileDicomBase {
     /** Length of the value field of data element. */
     private int elementLength;
 
-    /** DOCUMENT ME! */
-    private int elementWord;
-
     /**
      * when dicom image data is 'encapsulated,' it may be in pieces, or 'fragments.' don't know quite why, or if pieces
      * should be kept together. If in fragments, the image data may span several slices, called a 'frame.'
@@ -82,8 +79,12 @@ public class FileDicom extends FileDicomBase {
     /** location of first element. */
     private final int FIRST_ELEMENT = 132; //
 
-    /** First number in ordered pair of numbers that uniquely identifies a data element. */
+    /** First number (DICOM group) in ordered pair of numbers that uniquely identifies a data element. */
     private int groupWord;
+    
+    /** Second number (DICOM element in a group) in ordered pair of numbers that uniquely 
+     * identifies a data element. */
+    private int elementWord;
 
     /** True if the DICOM image header has been read. */
     private boolean hasHeaderBeenRead = false;
