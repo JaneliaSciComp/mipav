@@ -111,24 +111,19 @@ public class FileInfoMinc extends FileInfoBase {
         null, // admitting diagnoses description
         null, // Referenced SOP instance UID
         null, // derivation description
-
-    null, // device serial number
+        null, // device serial number
         null, // protocol name
-
-    null, // study instance UID
+        null, // study instance UID
         "study,acquisition_id", // series instance UID
         "study,study_id", // study ID
         null, // frame of reference UID
         null, // synchronization frame of reference UID
         null, // image comments
-
         // null,// request attributes sequence
         null, // UID
         null, // content sequence
-
-    null, // storage media file-set UID
-
-    null, // referenced frame of reference UID
+        null, // storage media file-set UID
+        null, // referenced frame of reference UID
         null, // related frame of reference UID
     };
 
@@ -140,10 +135,10 @@ public class FileInfoMinc extends FileInfoBase {
     /** DOCUMENT ME! */
     public int offset = 0;
 
-    /** DOCUMENT ME! */
+    /** Valid image maximum value. Default = -1. */
     public double vmax = -1.0;
 
-    /** DOCUMENT ME! */
+    /** Valid image minimum value. Default = -1. */
     public double vmin = -1.0;
 
     /** DOCUMENT ME! */
@@ -355,17 +350,6 @@ public class FileInfoMinc extends FileInfoBase {
         // this fileInfo is now an expurgated/sanitised version
     }
 
-    /**
-     * Calculates rescale intercept given a min and a slope value.
-     *
-     * @param   min    Min value.
-     * @param   slope  Slope value.
-     *
-     * @return  Rescale intercept.
-     */
-    public final double calculateIntercept(double min, double slope) {
-        return (min - (slope * vmin));
-    }
 
     /**
      * In MINC images, "real" values for pixels are calculated by taking the given image min and image max and rescaling
@@ -414,7 +398,24 @@ public class FileInfoMinc extends FileInfoBase {
      * @return  Rescale slope
      */
     public final double calculateSlope(double max, double min) {
-        return (max - min) / (vmax - vmin);
+        if ((vmax - vmin) != 0 ){
+            return (max - min) / (vmax - vmin);
+        }
+        else {
+            return 1.0;
+        }
+    }
+    
+    /**
+     * Calculates rescale intercept given a min and a slope value.
+     *
+     * @param   min    Min value.
+     * @param   slope  Slope value.
+     *
+     * @return  Rescale intercept.
+     */
+    public final double calculateIntercept(double min, double slope) {
+        return (min - (slope * vmin));
     }
 
     /**
