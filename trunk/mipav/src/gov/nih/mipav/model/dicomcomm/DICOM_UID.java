@@ -8,13 +8,13 @@ public class DICOM_UID {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** String representing the Series Instance UID */
     private String seriesInstanceUID = " ";
 
-    /** DOCUMENT ME! */
+    /** String representing the SOP Instance UID */
     private String SOPInstanceUID = " ";
 
-    /** DOCUMENT ME! */
+    /** String representing the Study Instance UID */
     private String studyInstanceUID = " ";
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
