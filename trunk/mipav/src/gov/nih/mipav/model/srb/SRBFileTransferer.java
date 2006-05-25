@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.srb;
 
 import java.util.Vector;
+import java.util.List;
+
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -26,6 +28,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JTextField;
 
 
+import edu.sdsc.grid.io.FileFactory;
 import edu.sdsc.grid.io.GeneralFile;
 import edu.sdsc.grid.io.GeneralFileSystem;
 import edu.sdsc.grid.io.GeneralRandomAccessFile;
@@ -40,6 +43,7 @@ import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.components.PanelManager;
@@ -71,43 +75,35 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     private boolean progressBarVisible = true;
     
     /**
-     * The list of the source files.
+     * The list of the source file names.
      */
+    private List sourceFileNameList;
+    
+    /**
+     * The source file system.
+     */
+    private GeneralFileSystem sourceFileSystem;
+    
     private GeneralFile[] sourceFiles;
     
     /**
-     * The list of the target files.
+     * The target file system.
      */
-    private GeneralFile[] targetFiles;
+    private GeneralFileSystem targetFileSystem;
     
+    private GeneralFile[] targetFiles;
     /**
      * The target directory the files will be transferred to.
      */
-    private GeneralFile targetDir;
+    private String targetDir;
     
     /**
      * Used to control the transferring mode.
      */
-    private String transferMode;
-    
+   
     private boolean threadSeperated;
-    private File tempDirBase;
     private File tempDir;
     public SRBFileTransferer(){
-        this(DEFAULT_TEMP_DIR_BASE);
-        System.out.println(DEFAULT_TEMP_DIR_BASE);
-    }
-    
-    public SRBFileTransferer(String localTempDir){
-        if(localTempDir == null || localTempDir.length() == 0){
-            localTempDir = DEFAULT_TEMP_DIR_BASE;
-        }
-        tempDirBase = new File(localTempDir);
-        if(!tempDirBase.exists()){
-            tempDirBase.mkdirs();
-        }
-
-        transferMode = TRANSFER_MODE_SEQUENTIAL;
         threadSeperated = true;
     }
     
@@ -127,44 +123,118 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return threadSeperated;
     }
     
+    /**
+     * Set 
+     * @param threadSeperated
+     */
     public void setThreadSeperated(boolean threadSeperated){
         this.threadSeperated = threadSeperated;
     }
     
-    public void setTransferMode(String transferMode){
-        if(transferMode.equals(TRANSFER_MODE_PARELLEL)){
-            this.transferMode = TRANSFER_MODE_PARELLEL;
-        }else{
-            this.transferMode = TRANSFER_MODE_SEQUENTIAL;
-        }
-    }
-    
+    /**
+     * Returns the temporary directory created randomly under the temporary
+     * base directory.
+     * 
+     * @returnthe temporary directory created randomly under the temporary
+     *            base directory.
+     */
     public File getTempDir(){
         return tempDir;
     }
     
+    /**
+     * Creates a random sub directory under the temporary base directory.
+     */
     public void createTempDir(){
         this.tempDir = createRandomLocalDir(getTempDirBase());
         this.tempDir.deleteOnExit();
     }
     
+    /**
+     * Returns the temporary base directory which will be used to hold
+     * memory images. if the temporary base directory has been setted up,
+     * then this temporary base directory will be used. Otherwise the
+     * default temporary base directy will be used.
+     * 
+     * @return  the temporary base directory.
+     */
     public File getTempDirBase(){
+        String tempDirBaseName = Preferences.getSRBTempDir();
+        if(tempDirBaseName == null){
+            tempDirBaseName = DEFAULT_TEMP_DIR_BASE;
+        }
+        File tempDirBase = new File(tempDirBaseName);
+        if(!tempDirBase.exists()){
+            tempDirBase.mkdirs();
+        }
         return tempDirBase;
     }
     
-    public void setTempDirBase(File tempDirBase){
-        this.tempDirBase = tempDirBase;
-    }
-    
-    
-    public GeneralFile[] getSourceFiles() {
+    /**
+     * Returns the source file list.
+     */
+    public GeneralFile[] getSourceFiles(){
         return sourceFiles;
     }
-
+    
+    /**
+     * Sets the source file list to new file list. 
+     * @param sourceFiles  the new source file list.
+     */
     public void setSourceFiles(GeneralFile[] sourceFiles){
         this.sourceFiles = sourceFiles;
     }
     
+    /**
+     * Returns the target files which can't be directories.
+     */
+    public GeneralFile[] getTargetFiles(){
+        return targetFiles;
+    }
+    
+    /**
+     * Sets the target files which can not be directories.
+     * @param targetFiles   the target files.
+     */
+    public void setTargetFiles(GeneralFile[] targetFiles){
+        this.targetFiles = targetFiles;
+    }
+    
+    /**
+     * Returns the source file name list which was selected by user. 
+     * @return the source file name list which was selected by user.
+     */
+    public List getSourceFileNameList() {
+        return sourceFileNameList;
+    }
+
+    /**
+     * Sets the source file name list which includes the directory. 
+     * @param sourceFileNameList the source file name list.
+     */
+    public void setSourceFileNameList(List sourceFileNameList){
+        this.sourceFileNameList = sourceFileNameList;
+    }
+    
+    /**
+     * Returns the transfer mode while transferring files.
+     * @return the transfer mode while transferring files.
+     */
+    public String getTransferMode(){
+        String transferMode = Preferences.getSRBTransferMode();
+        if(transferMode == null){
+            transferMode = TRANSFER_MODE_SEQUENTIAL;
+        }
+        return transferMode;
+    }
+    
+    /**
+     * According to the uri schema, uses appropriate file chooser to select the
+     * source files.
+     * 
+     * @param schema  the uri schema.
+     * @return        the user selected source files.
+     */
     public GeneralFile[] selectSourceFiles(String schema){
         if(schema == null ||schema.length() == 0){
             return null;
@@ -184,11 +254,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             if (returnValue == JargonFileChooser.APPROVE_OPTION) {
                 File[] files = chooser.getSelectedFiles();
                 if(files != null){
-                    LocalFile[] localFiles = new LocalFile[files.length];
+                    GeneralFile[] sourceFiles = new GeneralFile[files.length];
                     for(int i = 0; i < files.length; i++){
-                        localFiles[i] = new LocalFile(files[i]);
+                        sourceFiles[i] = new LocalFile(files[i]);
                     }
-                    return localFiles;
+                    return sourceFiles;
                 }
             }            
             return null;
@@ -199,11 +269,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
              */
             if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
                 new JDialogLoginSRB("Connect to");
+                if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
+                    return null;
+                }
             }
 
-            if (!JDialogLoginSRB.hasValidSRBFileSystem()) {
-                return null;
-            }
 
             /**
              * Uses the JargonFileChooser to retrieve the file that the user wants to open.
@@ -236,6 +306,13 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return null;
     }
     
+    /**
+     * According to the schema, uses appropriate file chooser to select the
+     * target directory.
+     * 
+     * @param schema   the uri schema.
+     * @return         the user selected target directory.
+     */
     public GeneralFile selectTargetDirectory(String schema) {
         if(schema == null ||schema.length() == 0){
             return null;
@@ -299,10 +376,69 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return null;
     }
 
-    public void setTargetDir(GeneralFile targetDir){
+    /**
+     * Sets the target directory to the new directory.
+     * @param targetDir  the new directory.
+     */
+    public void setTargetDir(String targetDir){
         this.targetDir = targetDir;
     }
     
+    /**
+     * A helper function to obtain the parent directory based on the given file name and
+     * the path separator string.
+     * 
+     * @param fileName        the file name.
+     * @param pathSeparator   the path separator string.
+     * @return                the parent directory string of this file name.
+     */
+    public static String getParentDirectory(String fileName, String pathSeparator){
+        if(fileName == null || pathSeparator == null){
+            return null;
+        }
+        
+        if(fileName.indexOf(pathSeparator) >= 0){
+            return fileName.substring(0, fileName.lastIndexOf(pathSeparator));
+        }
+        return null;
+    }
+    
+    /**
+     * A helper function to retrieve all files contained in this directory and subdirectory
+     * recursively and put into the <code>fileList</code>.
+     * 
+     * @param file      the given file or directory.
+     * @param fileList  the file list which stores all files included in the
+     *                  <code>file</code> and its subdirectory.
+     */
+    public static void retrieveFileList(GeneralFile file, List fileList){
+        if(file == null || fileList == null){
+            return;
+        }
+        
+        if(file.isFile()){
+            fileList.add(file);
+            return;
+        }
+        GeneralFile[] children = file.listFiles();
+        if(children == null){
+            return;
+        }
+        
+        for(int i = 0; i < children.length; i++){
+            retrieveFileList(children[i], fileList);
+        }
+    }
+
+    /**
+     * A helper function to create the target file based on the target directory,
+     * the source base directory and the source file.
+     * 
+     * @param targetDir        the target directory.
+     * @param baseSourceFile   the source base directory.
+     * @param sourceFile       the source file.
+     * @return                 the target file.
+     */
     public static GeneralFile createTargetFile(GeneralFile targetDir,
             GeneralFile baseSourceFile, GeneralFile sourceFile) {
         
@@ -313,11 +449,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         String baseSourceFileName = baseSourceFile.getAbsolutePath();
         String sourceFileName = sourceFile.getAbsolutePath();
         if(sourceFileName.indexOf(baseSourceFileName) == 0){
-            String targetFileName = sourceFileName.substring(baseSourceFileName.length());
             String sourcePathSeperator = (baseSourceFile instanceof SRBFile)?SRBFile.PATH_SEPARATOR:File.separator;
             String targetPathSeperator = (targetDir instanceof SRBFile)?SRBFile.PATH_SEPARATOR:File.pathSeparator;
+            String targetFileName = sourceFileName.substring(baseSourceFileName.length() + sourcePathSeperator.length());
             if(!sourcePathSeperator.equals(targetPathSeperator)){
-                replacePathSeparator(targetFileName, sourcePathSeperator, targetPathSeperator);
+                targetFileName = replacePathSeparator(targetFileName, sourcePathSeperator, targetPathSeperator);
             }
             if(targetDir instanceof SRBFile){
                 return new SRBFile((SRBFile)targetDir, targetFileName);
@@ -328,6 +464,15 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return null;
     }
 
+    /**
+     * A helper function to create the target file list based on the given source file list,
+     * the target directory, and the source base directory.
+     * 
+     * @param targetDir       the target directory.
+     * @param baseSourceFile  the source base directory.
+     * @param sourceFiles     the source file list.
+     * @return                the target file list.
+     */
     public static GeneralFile[] createTargetFiles(GeneralFile targetDir,
             GeneralFile baseSourceFile, GeneralFile[] sourceFiles) {
         if(targetDir == null || baseSourceFile == null || sourceFiles == null){
@@ -339,20 +484,13 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
         return targetFiles;
     }
-
-    public GeneralFile[] getTargetFiles(){
-        return targetFiles;
-    }
-    
-    public void setTargetFiles(GeneralFile[] targetFiles){
-        this.targetFiles = targetFiles;
-    }
     
     /**
+     * Transfers the source file to the target file.
      * 
-     * @param sourceFile
-     * @param targetFile
-     * @return
+     * @param sourceFile the source file
+     * @param targetFile the target file
+     * @return true if the transfer succeeded.
      */
     public boolean transfer(GeneralFile sourceFile, GeneralFile targetFile) {
         if(sourceFile == null || targetFile == null){
@@ -362,7 +500,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         if(!targetDir.exists()){
             recursivelyMakeDir(targetDir);
         }
-        if(transferMode.equals(TRANSFER_MODE_PARELLEL)){
+        if(getTransferMode().equals(TRANSFER_MODE_PARELLEL)){
             try{
                 sourceFile.copyTo(targetFile);
                 return true;
@@ -390,10 +528,13 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 }
 
                 long length = sourceRandomAccessFile.length();
-                byte[] buffer = new byte[(int) length];
+                System.out.println("Before new byte : " + length);
+                byte[] buffer = new byte[(int)length];
+                System.out.println("sourceRandomAccessFile.read(buffer, 0, (int) length) ");
                 sourceRandomAccessFile.read(buffer, 0, (int) length);
+                System.out.println("destinationRandomAccessFile.write(buffer, 0, (int) length) ");
                 destinationRandomAccessFile.write(buffer, 0, (int) length);
-
+                System.out.println("sourceRandomAccessFile.close()");
                 sourceRandomAccessFile.close();
                 destinationRandomAccessFile.close();
 
@@ -401,6 +542,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             } catch (IOException e) {
                 e.printStackTrace(System.err);
                 MipavUtil.displayError("File I/O error: " + e.getMessage());
+
+                return false;
+            } catch(OutOfMemoryError e){
+                e.printStackTrace(System.err);
+                MipavUtil.displayError("Out of memory error: " + e.getMessage());
 
                 return false;
             }
@@ -424,7 +570,101 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
     }
     
+    public void transferFiles(List sourceFileNames, String targetDir){
+        if(sourceFileNames == null || targetDir == null){
+            return;
+        }
+        
+        Vector sourceFileList = new Vector();
+        Vector targetFileList = new Vector();
+        
+        int index = 0;
+        for(int i = 0; i < sourceFileNames.size(); i++){
+            GeneralFile sourceFile = FileFactory.newFile(sourceFileSystem,
+                    (String) sourceFileNames.get(i));
+            if(sourceFile.isFile()){
+                sourceFileList.add(index, sourceFile);
+                GeneralFile targetFile = FileFactory.newFile(targetFileSystem, targetDir, sourceFile.getName());
+                targetFileList.add(index++, targetFile);
+            }else{
+                retrieveFileList(sourceFile, sourceFileList);
+                for(int j = index; j < sourceFileList.size(); j++){
+                    String baseSourceDir = getParentDirectory((String) sourceFileNames.get(i), getPathSeparator(sourceFileSystem));
+                    GeneralFile targetFile = createTargetFile(targetDir, baseSourceDir, ((GeneralFile)sourceFileList.get(j)).getAbsolutePath());
+                    targetFileList.add(targetFile);
+                }
+            }
+        }
+        
+        sourceFiles = new GeneralFile[sourceFileList.size()];
+        targetFiles = new GeneralFile[targetFileList.size()];
+        for(int i = 0; i < sourceFileList.size(); i++){
+            sourceFiles[i] = (GeneralFile)sourceFileList.get(i);
+            targetFiles[i] = (GeneralFile)targetFileList.get(i);
+        }
+        new Thread(this).start();
+        
+    }
+    
+    /**
+     * First obtains the relative file name of the source file name related to the given
+     * the source base directory name, then adjusts the path separator based on 
+     * their belonged file system, finally returns the file which used the target
+     * directory as its parent directory and uses this relative file name its
+     * file name.
+     *  
+     * @param targetDirName      the target directory name.
+     * @param baseSourceDirName  the source base directory.
+     * @param sourceFileName     the source file name.
+     * @return                   the target file consisted of the target directory
+     *                           and relative file name of the source file name related
+     *                           to the source base directory.
+     */
+    private GeneralFile createTargetFile(String targetDirName,
+            String baseSourceDirName, String sourceFileName){
+        if(targetDirName == null || baseSourceDirName == null || sourceFileName == null){
+            return null;
+        }
+        
+        if(sourceFileSystem == null || targetFileSystem == null){
+            return null;
+        }
+        
+        String sourcePathSeparator = getPathSeparator(sourceFileSystem);
+        String targetPathSeparator = getPathSeparator(targetFileSystem);
+        if(sourceFileName.indexOf(baseSourceDirName) != 0){
+            return null;
+        }
+        
+        String targetFileName = targetDirName + sourceFileName.substring(baseSourceDirName.length());
+        if(!sourcePathSeparator.equals(targetPathSeparator)){
+            targetFileName = replacePathSeparator(targetFileName, sourcePathSeparator, targetPathSeparator);
+        }
+        return FileFactory.newFile(targetFileSystem, targetFileName);
+    }
+    
+    /**
+     * A helper function to obtain the path separator based on the different file system.
+     * @param fs  the file system
+     * @return    the path separator used by the file system.
+     */
+    public static String getPathSeparator(GeneralFileSystem fs){
+        if(fs == null){
+            return null;
+        }
+        
+        if(fs instanceof LocalFileSystem){
+            return File.separator;
+        }else{
+            return SRBFile.PATH_SEPARATOR;
+        }
+    }
+    
+    /**
+     * @see FileTransferable#transfer(GeneralFile[], GeneralFile[])
+     */
     public boolean transfer(GeneralFile[] sourceFiles, GeneralFile[] targetFiles) {
+        long startTime = System.currentTimeMillis();
         if(sourceFiles == null || targetFiles == null){
             return false;
         }
@@ -461,14 +701,22 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         } catch (InterruptedException e) { }
 
         disposeProgressBar();
-
+        long spentTime = System.currentTimeMillis() - startTime;
+        Preferences.debug("The time spent on the file transfer is " + spentTime);
+        System.out.println("The time spent on the file transfer is " + spentTime);
         return ret;
     }
 
+    /**
+     * A top level function to accomplish the file transfer scenarios.
+     */
     public void transferFiles(){
         new JDialogPickFiles(null);
     }
     
+    /**
+     * @see Runnable#run()
+     */
     public void run() {
         transfer(sourceFiles, targetFiles);
     }
@@ -479,22 +727,22 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @param targetDir        the target directory of the SRB server.
      */
     public void saveToSRB(ModelImage image, String targetDir){
-        Vector sourceFileList = getFileList(image);
-        if(sourceFileList == null){
+        GeneralFile[] sourceFiles = getFileList(image);
+        if(sourceFiles == null){
             return;
         }
         /**
          * Copies the local temporary files to the directory of the SRB server.
          */
-        GeneralFile[] targetFiles = createTargetFiles(createFile(JDialogLoginSRB.srbFileSystem, targetDir),
-                ((GeneralFile) sourceFileList.get(0)).getParentFile(),
-                SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        GeneralFile[] targetFiles = createTargetFiles(FileFactory.newFile(JDialogLoginSRB.srbFileSystem, targetDir),
+                sourceFiles[0].getParentFile(),
+                sourceFiles);
 
-        for (int i = 0; i < sourceFileList.size(); i++) {
-            LocalFile lf = (LocalFile) sourceFileList.get(i);
+        for (int i = 0; i < sourceFiles.length; i++) {
+            LocalFile lf = (LocalFile) sourceFiles[i];
             lf.deleteOnExit();
         }
-        setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        setSourceFiles(sourceFiles);
         setTargetFiles(targetFiles);
         setThreadSeperated(true);
         new Thread(this).start();
@@ -506,22 +754,21 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @param targetDir        the target directory of the SRB server.
      */
     public void saveToSRB(ModelImage image, GeneralFile targetDir){
-        Vector sourceFileList = getFileList(image);
-        if(sourceFileList == null){
+        GeneralFile[] sourceFiles = getFileList(image);
+        if(sourceFiles == null){
             return;
         }
         /**
          * Copies the local temporary files to the directory of the SRB server.
          */
         GeneralFile[] targetFiles = createTargetFiles(targetDir,
-                ((GeneralFile) sourceFileList.get(0)).getParentFile(),
-                SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+                sourceFiles[0].getParentFile(), sourceFiles);
 
-        for (int i = 0; i < sourceFileList.size(); i++) {
-            LocalFile lf = (LocalFile) sourceFileList.get(i);
+        for (int i = 0; i < sourceFiles.length; i++) {
+            LocalFile lf = (LocalFile) sourceFiles[i];
             lf.deleteOnExit();
         }
-        setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
+        setSourceFiles(sourceFiles);
         setTargetFiles(targetFiles);
         setThreadSeperated(true);
         new Thread(this).start();
@@ -588,7 +835,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @param image the memory image.
      * @return      the saved file name list of this memory image.
      */
-    public Vector getFileList(ModelImage image){
+    public GeneralFile[] getFileList(ModelImage image){
         this.createTempDir();
         return getFileList(image, this.getTempDir().getAbsolutePath());
     }
@@ -600,7 +847,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
      * @param localTempDir  the local directory that the memory image will saved to
      * @return              the saved LocalFile object list of this memory image.
      */
-    public static Vector getFileList(ModelImage image, String tempDir){
+    public static GeneralFile[] getFileList(ModelImage image, String tempDir){
         if (image == null) {
             return null;
         }
@@ -643,7 +890,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         
         Vector sourceFileList = new Vector();
         for(int i = 0; i < fileNameList.size(); i++){
-            sourceFileList.add(SRBFileTransferer.createFile(localTempDir, (String)fileNameList.get(i)));
+            sourceFileList.add(FileFactory.newFile(localTempDir, (String)fileNameList.get(i)));
         }
 
         /**
@@ -671,7 +918,12 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         for (int i = 0; i < currentFileInfoList.length; i++) {
             currentFileInfoList[i].setFileDirectory(savedDir);
         }
-        return sourceFileList;
+        
+        GeneralFile[] sourceFiles = new GeneralFile[sourceFileList.size()];
+        for(int i = 0; i < sourceFiles.length; i++){
+            sourceFiles[i] = (GeneralFile)sourceFileList.get(i);
+        }
+        return sourceFiles;
     }
     
     /**
@@ -703,6 +955,37 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
         return new LocalFile(file);
     }
+    
+    /**
+     * Converts the comma separated file names string into the file name list.
+     * @param fileNames  the comma separated file names string. 
+     * @return           the list of the file names.
+     */
+    public static List converToFileNameList(String fileNames){
+        if(fileNames == null || fileNames.length() == 0){
+            return null;
+        }
+        
+        Vector newFileNameList = null;
+        if (fileNames.indexOf(",") >= 0) {
+            String[] fns = fileNames.split(",");
+
+            if ((fns == null) || (fns.length == 0)) {
+                return null;
+            }
+
+            newFileNameList = new Vector(fns.length);
+
+            for (int i = 0; i < fns.length; i++) {
+                newFileNameList.add(fns[i]);
+            }
+            
+        } else {
+            newFileNameList = new Vector(1);
+            newFileNameList.add(fileNames);
+        }
+        return newFileNameList;
+    }
     /**
      * Parses the string to extract the file informations.
      *
@@ -721,10 +1004,10 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                 return null;
             }
 
-            selectedFiles = new SRBFile[fileNames.length];
+            selectedFiles = new GeneralFile[fileNames.length];
 
             for (int i = 0; i < fileNames.length; i++) {
-                GeneralFile newFile = createFile(fileSystem, fileNames[i]);
+                GeneralFile newFile = FileFactory.newFile(fileSystem, fileNames[i]);
 
                 if (newFile == null) {
                     return null;
@@ -735,7 +1018,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         } else {
             selectedFiles = new GeneralFile[1];
 
-            GeneralFile newFile = createFile(fileSystem, fileName);
+            GeneralFile newFile = FileFactory.newFile(fileSystem, fileName);
 
             if (newFile == null) {
                 return null;
@@ -762,6 +1045,9 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
             return s;
         }
 
+        if(sourceSeparator.equals(targetSeparator)){
+            return s;
+        }
         int index = s.indexOf(sourceSeparator);
 
         while (index >= 0) {
@@ -832,6 +1118,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return sb.toString();
     }
 
+    /**
+     * A helper function to convert the GeneralFile list ot the GeneralFile array.
+     * @param fileList  the GeneralFile list
+     * @return          the GeneralFile array.
+     */
     public static GeneralFile[] convertFromVectorToArray(Vector fileList){
         if(fileList == null){
             return null;
@@ -859,63 +1150,10 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         int n = fileNameList.size();
         GeneralFile[] newFiles = new GeneralFile[n];
         for(int i = 0; i < n; i++){
-            newFiles[i] = createFile(fileSystem, (String)fileNameList.get(i));
+            newFiles[i] = FileFactory.newFile(fileSystem, (String)fileNameList.get(i));
         }
         
         return newFiles;
-    }
-    /**
-     * A helper function which create a GeneralFile according to the <code>targetDir</code> and gived file name.
-     *
-     * @param   targetDir  the parent directory.
-     * @param   fileName   the file name which could include the path.
-     *
-     * @return  the created GeneralFile object.
-     */
-    public static GeneralFile createFile(GeneralFile targetDir, String fileName) {
-
-        if ((targetDir == null) || (fileName == null) || (fileName.length() == 0)) {
-            return null;
-        }
-
-        if (targetDir instanceof SRBFile) {
-            fileName = replacePathSeparator(fileName, File.separator, SRBFile.PATH_SEPARATOR);
-
-            return new SRBFile((SRBFile) targetDir, fileName);
-        } else if (targetDir instanceof LocalFile) {
-            fileName = replacePathSeparator(fileName, SRBFile.PATH_SEPARATOR, File.separator);
-
-            return new LocalFile((LocalFile) targetDir, fileName);
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   fileSystem  DOCUMENT ME!
-     * @param   fileName    DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public static GeneralFile createFile(GeneralFileSystem fileSystem, String fileName) {
-
-        if ((fileName == null) || (fileName.length() == 0)) {
-            return null;
-        }
-
-        if ((fileSystem == null) || (fileSystem instanceof LocalFileSystem)) {
-            fileName = replacePathSeparator(fileName, SRBFile.PATH_SEPARATOR, File.separator);
-
-            return new LocalFile(new File(fileName));
-        } else if (fileSystem instanceof SRBFileSystem) {
-            fileName = replacePathSeparator(fileName, File.separator, SRBFile.PATH_SEPARATOR);
-
-            return new SRBFile((SRBFileSystem) fileSystem, fileName);
-        } else {
-            return null;
-        }
     }
 
     /**
@@ -957,50 +1195,40 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
 
         if (sourceFile.isDirectory()) {
             GeneralFile[] childrenFiles = sourceFile.listFiles();
-            /**
-             * Builds the progress bar for the file transferring.
-             */
-            if(isProgressBarVisible()){
-                buildProgressBar("Preparing for transfering " + childrenFiles[0].getName(), "Preparing for transfering files ...", 0, 100);
-            }
-            int mod = childrenFiles.length / 100;
-            if(mod < 1){
-                mod = 1;
-            }
-            
-            initProgressBar();
-            
 
             for (int i = 0; i < childrenFiles.length; i++) {
-
-                if ((((i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.setTitle("Preparing for transfering " + childrenFiles[i].getName());
-                    progressBar.updateValue(Math.round(((float) i / childrenFiles.length) * 100), false);
-                }
                 if (childrenFiles[i].isDirectory()) {
                     recursivelyCreateFileList(childrenFiles[i], targetDir, sourceRootDir, sourceFileList,
                                               targetFileList);
                 } else {
                     sourceFileList.add(childrenFiles[i]);
 
-                    GeneralFile newTargetFile = createFile(targetDir,
-                                                           childrenFiles[i].getPath().substring(sourceRootDir.getPath().length()));
+                    GeneralFile newTargetFile = FileFactory.newFile(targetDir,
+                            childrenFiles[i].getPath().substring(sourceRootDir.getPath().length()));
+                    
                     recursivelyCreateDirectory(newTargetFile.getParentFile());
                     targetFileList.add(newTargetFile);
                 }
             }
-            disposeProgressBar();
 
         } else {
             sourceFileList.add(sourceFile);
 
-            GeneralFile newTargetFile = createFile(targetDir,
-                                                   sourceFile.getPath().substring(sourceRootDir.getPath().length()));
+            GeneralFile newTargetFile = FileFactory.newFile(targetDir,
+                    sourceFile.getPath().substring(sourceRootDir.getPath().length()));
+            
             recursivelyCreateDirectory(newTargetFile.getParentFile());
             targetFileList.add(newTargetFile);
         }
     }
 
+    /**
+     * Returns the primary file which was recognized by the mipav.
+     * 
+     * @param sourceFiles  the file list which contains the whole file list of some format image.
+     * 
+     * @return the primary file list.
+     */
     public static GeneralFile[] getPrimaryFiles(GeneralFile[] sourceFiles){
         if(sourceFiles == null){
             return null;
@@ -1027,6 +1255,13 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         return primaryFiles;
     }
     
+    /**
+     * Returns the partner file of the specified file. Because some format image file can
+     * contains several files, otherwise it can not be opened.
+     * 
+     * @param sourceFile  the specified file
+     * @return            the partner file of the specified file.
+     */
     public static GeneralFile getPartnerFile(GeneralFile sourceFile){
         if(sourceFile == null){
             return null;
@@ -1117,7 +1352,11 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         }
     }
     
-    
+    /**
+     * Creates the complete file list based on the partial file list.
+     * @param sourceFiles  the partial file list.
+     * @return             the complete file list.
+     */
     public static GeneralFile[] createCompleteFileList(GeneralFile[] sourceFiles){
         if(sourceFiles == null){
             return null;
@@ -1562,68 +1801,33 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
                     return;
                 }
 
-                GeneralFile[] sourceFiles = null;
 
-                if (isFileSchema(sourceSchemaComboBox)) {
-                    sourceFiles = converToFiles((GeneralFileSystem) null,
-                                                                      sourceFilesField.getText());
-                } else if (isSRBSchema(sourceSchemaComboBox)) {
+                sourceFileNameList = converToFileNameList(sourceFilesField.getText());
 
-                    if (JDialogLoginSRB.hasValidSRBFileSystem()) {
-                        sourceFiles = converToFiles(JDialogLoginSRB.srbFileSystem,
-                                                                          sourceFilesField.getText());
-                    } else {
-                        sourceFilesField.setText("");
-                        targetFilesField.setText("");
 
-                        return;
-                    }
-                }
-
-                if ((sourceFiles == null) || (sourceFiles.length == 0)) {
+                if ((sourceFileNameList == null) || (sourceFileNameList.size() == 0)) {
                     return;
                 }
 
-                GeneralFile[] targetFiles = null;
+                targetDir = targetFilesField.getText();
 
-                if (isFileSchema(targetSchemaComboBox)) {
-                    targetFiles = converToFiles((GeneralFileSystem) null,
-                                                                      targetFilesField.getText());
-                } else if (isSRBSchema(targetSchemaComboBox)) {
 
-                    if (JDialogLoginSRB.hasValidSRBFileSystem()) {
-                        targetFiles = converToFiles(JDialogLoginSRB.srbFileSystem,
-                                                                          targetFilesField.getText());
-                    } else {
-                        sourceFilesField.setText("");
-                        targetFilesField.setText("");
-
-                        return;
-                    }
-                }
-
-                if ((targetFiles == null) || (targetFiles.length == 0) || (targetFiles.length != 1) ||
-                        !targetFiles[0].isDirectory()) {
+                if ((targetDir == null) || (targetDir.length() == 0)) {
                     return;
                 }
-
-                if (!targetFiles[0].exists()) {
-                    targetFiles[0].mkdirs();
+                
+                // Have to set up the source file system and target file system.
+                if(isFileSchema(sourceSchemaComboBox)){
+                    sourceFileSystem = new LocalFileSystem();
+                }else{
+                    sourceFileSystem = JDialogLoginSRB.srbFileSystem;
                 }
-
-                Vector sourceFileList = new Vector();
-                Vector targetFileList = new Vector();
-
-                for (int i = 0; i < sourceFiles.length; i++) {
-                    recursivelyCreateFileList(sourceFiles[i],
-                                              targetFiles[0],
-                                              sourceFiles[i].getParentFile(),
-                                              sourceFileList,
-                                              targetFileList);
+                if(isFileSchema(targetSchemaComboBox)){
+                    targetFileSystem = new LocalFileSystem();
+                }else{
+                    targetFileSystem = JDialogLoginSRB.srbFileSystem;
                 }
-                SRBFileTransferer.this.setSourceFiles(SRBFileTransferer.convertFromVectorToArray(sourceFileList));
-                SRBFileTransferer.this.setTargetFiles(SRBFileTransferer.convertFromVectorToArray(targetFileList));
-                new Thread(SRBFileTransferer.this).start();
+                transferFiles(sourceFileNameList, targetDir);
                 this.dispose();
             } else if (command.equals("Cancel")) {
                 this.dispose();
