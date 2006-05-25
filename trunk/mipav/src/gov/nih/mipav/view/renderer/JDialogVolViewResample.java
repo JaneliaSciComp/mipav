@@ -367,7 +367,7 @@ public class JDialogVolViewResample extends JDialogBase {
     /**
      * Builds the Cancel button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return  Return the noll resample button. 
      */
     public JButton buildNotResampleButton() {
         cancelButton = new JButton("Cancel");
@@ -865,7 +865,7 @@ public class JDialogVolViewResample extends JDialogBase {
      * Builds a titled border with the given title, an etched border, and the proper font and color.
      *
      * @param   title    Title of the border
-     * @param   _border  DOCUMENT ME!
+     * @param   _border  Return the border built
      *
      * @return  The titled border.
      */
@@ -876,7 +876,7 @@ public class JDialogVolViewResample extends JDialogBase {
     /**
      * Clear up memory from gc.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  Call the dispose local to dispose memory.
      */
     protected void finalize() throws Throwable {
         disposeLocal();
@@ -941,7 +941,7 @@ public class JDialogVolViewResample extends JDialogBase {
     /**
      * Builds the OK button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return  Return the resample button built.
      */
     private JButton buildResampleButton() {
         OKButton = new JButton("Resample");

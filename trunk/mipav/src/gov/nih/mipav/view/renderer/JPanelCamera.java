@@ -47,40 +47,40 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
     /** X, Y, Z labels inside the rotation panel. */
     private JLabel labelX, labelY, labelZ;
 
-    /** DOCUMENT ME! */
+    /** Left panel mouse button down. */
     private JButton leftDownButton;
 
-    /** DOCUMENT ME! */
+    /** Left panel empty button. */
     private JButton leftDownButtonEmpty;
 
-    /** DOCUMENT ME! */
+    /** Left panel mouse button left. */
     private JButton leftLeftButton;
 
-    /** DOCUMENT ME! */
+    /** Left panel mouse button right. */
     private JButton leftRightButton;
 
-    /** JButton group. */
+    /** Left panel mouse button up. */
     private JButton leftUpButton;
 
     /** Empty button group. */
     private JButton leftUpButtonEmpty;
 
-    /** DOCUMENT ME! */
+    /** Middle panel down button. */
     private JButton middleDownButton;
 
-    /** DOCUMENT ME! */
+    /** Middel panel left button. */
     private JButton middleLeftButton;
 
-    /** DOCUMENT ME! */
+    /** Middle panel empty button. */
     private JButton middleLeftButtonEmpty;
 
-    /** DOCUMENT ME! */
+    /** Middle panel right button. */
     private JButton middleRightButton;
 
-    /** DOCUMENT ME! */
+    /** Middle panel right button empty. */
     private JButton middleRightButtonEmpty;
 
-    /** DOCUMENT ME! */
+    /** Middel panel up button. */
     private JButton middleUpButton;
 
     /** Current mode std or fly. */
@@ -107,16 +107,16 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
     /** Reset button. */
     private JButton resetButton;
 
-    /** DOCUMENT ME! */
+    /** Right panel down button. */
     private JButton rightDownButton;
 
-    /** DOCUMENT ME! */
+    /** Right panel left button. */
     private JButton rightLeftButton;
 
-    /** DOCUMENT ME! */
+    /** Right panel right button. */
     private JButton rightRightButton;
 
-    /** DOCUMENT ME! */
+    /** Right panel up button. */
     private JButton rightUpButton;
 
     /** Scroll pane. */
@@ -131,7 +131,7 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
     /** Start button to auto snapshooting. */
     private JButton startButton;
 
-    /** DOCUMENT ME! */
+    /** Auto snapshot button. */
     private JRadioButton stdButton;
 
     /** Time to wait for the next mouse event. */
@@ -325,8 +325,8 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
     /**
      * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
      *
-     * @param  panelWidth   DOCUMENT ME!
-     * @param  frameHeight  DOCUMENT ME!
+     * @param  panelWidth   panel width.
+     * @param  frameHeight  parent frame height.
      */
     public void resizePanel(int panelWidth, int frameHeight) {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - buttonPanel.getHeight()));
@@ -366,7 +366,7 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
     /**
      * finalize - calls dispose.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  Call disposeLocal to free memory.
      */
     protected void finalize() throws Throwable {
         disposeLocal(false);
@@ -566,7 +566,7 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
     /**
      * Builds the cancel button. Sets it internally as well return the just-built button.
      *
-     * @return  DOCUMENT ME!
+     * @return  Return the auto snapshot button. 
      */
     private JButton buildStartButton() {
         startButton = new JButton("Start");
@@ -884,9 +884,9 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
         private static final long serialVersionUID = 9172347561422650241L;
 
         /**
-         * DOCUMENT ME!
+         * Wrapper to call the paintComponent.
          *
-         * @param  g  DOCUMENT ME!
+         * @param  g  Graphics reference.
          */
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -966,20 +966,26 @@ public class JPanelCamera extends JPanelRendererBase implements ActionListener, 
      */
     class StandardMouse extends Thread {
 
-        /** DOCUMENT ME! */
+        /** Canvas center coordinate. */
         int centerX, centerY;
 
-        /** DOCUMENT ME! */
+        /** Mouse event */
         MouseEvent evt;
 
-        /** DOCUMENT ME! */
+        /** Event source */
         Object source;
 
-        /** DOCUMENT ME! */
+        /** Event time stamp. */
         long when;
 
-        /** DOCUMENT ME! */
-        int x, y, mod, id;
+        /** Mouseevent mask */
+        int mod;
+        
+        /** Canvas center x and y. */
+        int x, y;
+        
+        /** MouseEvent id. */
+        int id;
 
         /**
          * Creates new thread and sets up mouse event variables appropriately.
