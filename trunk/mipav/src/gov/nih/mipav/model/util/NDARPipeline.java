@@ -16,19 +16,37 @@ import java.util.Vector;
 
 
 /**
- * DOCUMENT ME!
+ * The implementation of a pipeline, which observes the DICOM receiver. Once the DICOM receiver
+ * recieved dicom files, this pipeline will be initiated. The script file will executed on these
+ * dicom files and upload to the srb server(birn).
+ * 
+ * If you want to use this pipeline, you have to follow the following procedures:
+ * 
+ * 1) Constructs a NDARPipeline object.
+ * 2) Call setup function to set up the parameters of pipeline.
+ * 3) install the observable object.
+ * 
+ * For example:
+ * 
+ *      NDARPipeline pipeline = new NDARPipeline();
+ *      if(pipeline.setup()){
+ *          
+ *           // Retrieve or create the observable object o.
+ *            
+ *           pipeline.install(o);
+ *      }
  */
 public class NDARPipeline implements Observer {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** The observable object */
     private Observable observedObject;
 
-    /** DOCUMENT ME! */
+    /** The script file name which will be executed when the obervable object's status has changed. */
     private String scriptFileName;
 
-    /** DOCUMENT ME! */
+    /** The destination directory where the files will be uploaded to */
     private String targetSRBDir;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -41,40 +59,50 @@ public class NDARPipeline implements Observer {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * DOCUMENT ME!
+     * Sets up the parameters of this pipeline.
      *
-     * @param  o  DOCUMENT ME!
+     * @param  o  the observable object.
      */
-    public void install(Observable o) {
+    
+    public boolean setup(){
         JDialogSetupPipeline pipelineDialog = new JDialogSetupPipeline("Setup the NDAR pipeline");
         if (!pipelineDialog.isCancelled()) {
             scriptFileName = pipelineDialog.getScriptFileName();
             targetSRBDir = pipelineDialog.getTargetSRBDir();
-            observedObject = o;
-            observedObject.addObserver(this);
+            return true;
         }
+        return false;
+    }
+    
+    /**
+     * Installs the observable object.
+     * @param o  the observable object.
+     */
+    public void install(Observable o) {
+        observedObject = o;
+        observedObject.addObserver(this);
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets the script file which will be executed on the files.
      *
-     * @param  scriptFileName  DOCUMENT ME!
+     * @param  scriptFileName  the script file name.
      */
     public void setScriptFileName(String scriptFileName) {
         this.scriptFileName = scriptFileName;
     }
 
     /**
-     * DOCUMENT ME!
+     * Sets the destination directory where the files will be uploaded on the srb server.
      *
-     * @param  targetDir  DOCUMENT ME!
+     * @param  targetDir  the destination directory on srb server.
      */
     public void setTargetDir(String targetDir) {
         this.targetSRBDir = targetDir;
     }
 
     /**
-     * DOCUMENT ME!
+     * Uninstall the observable object.
      */
     public void uninstall() {
         if (observedObject != null) {
@@ -147,7 +175,6 @@ public class NDARPipeline implements Observer {
                 return;
             }
 
-            // TODO: make the anonymizing scriptable, add it to the ndar script
             // anonymize all tags in the image
             ModelImage resultImage = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
             boolean[] anonFields = new boolean[FileInfoDicom.anonymizeTagIDs.length];
