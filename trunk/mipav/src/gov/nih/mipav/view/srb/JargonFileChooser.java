@@ -188,6 +188,7 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
             if (f != null) {
                 init(f);
             }
+       
         }
     }
 
@@ -263,7 +264,22 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
                 dialog.setVisible(false);
             }
         } else if(actionCommand.equals("newSRBFold")){
+            Object selectedObj = jsrbTree.getLastSelectedPathComponent();
+            if(selectedObj == null){
+                MipavUtil.displayError("You have to select a collection before you can create a new fold.");
+                return;
+            }
             
+            if(selectedObj instanceof SRBFile){
+                SRBFile srbParentFile = (SRBFile)selectedObj; 
+                if (srbParentFile.isFile()) {
+                    srbParentFile = (SRBFile) srbParentFile.getParentFile();
+                }
+                new JDialogNewSRBFold("Enter new fold name", srbParentFile);
+            }else{
+                MipavUtil.displayError("Please select a collection.");
+                return;
+            }
         }
     }
 
@@ -459,11 +475,9 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
 
             if (isMultiSelectionEnabled()) {
                 selectedFileField.setText("");
-                long currentTime = System.currentTimeMillis();
                 for (int i = 0; i < selectedPaths.length; i++) {
                     convertSelectedPathToString(selectedPaths[i], getFileSelectionMode(), sb);
                 }
-                System.out.println(System.currentTimeMillis()-currentTime);
             } else {
                 convertSelectedPathToString(selectedPaths[selectedPaths.length - 1], getFileSelectionMode(), sb);
             }
@@ -641,6 +655,108 @@ public class JargonFileChooser extends JComponent implements TreeSelectionListen
         this.add(scrollPane, BorderLayout.CENTER);
         this.add(manager.getPanel(), BorderLayout.NORTH);
         jsrbTree.addTreeSelectionListener(this);
+        jsrbTree.getInputMap().put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0, false), "Delete");
+        jsrbTree.getActionMap().put("Delete", new AbstractAction("Delete"){
+            public void actionPerformed(ActionEvent e){
+                jsrbTree.delete();
+            }
+        });
     }
 
+    private class JDialogNewSRBFold extends JDialog implements ActionListener{
+        private JTextField newFoldNameField;
+        private JButton createButton;
+        private JButton cancelButton;
+        
+        private SRBFile parentDir;
+        public JDialogNewSRBFold(String title, SRBFile parent){
+            super(dialog, title, true);
+            this.parentDir = parent;
+            init();
+        }
+        
+        public void init(){
+            Container contentPane = this.getContentPane();
+            contentPane.setLayout(new BorderLayout());
+
+            PanelManager manager = new PanelManager();
+            manager.getConstraints().insets = new Insets(10, 5, 5, 5);
+
+
+            newFoldNameField = WidgetFactory.buildTextField("");
+            newFoldNameField.setPreferredSize(new Dimension(20, 25));
+            newFoldNameField.setColumns(40);
+            manager.add(newFoldNameField);
+            contentPane.add(manager.getPanel(), BorderLayout.CENTER);
+            
+            manager = new PanelManager();
+            manager.getConstraints().insets = new Insets(5, 5, 10, 5);
+
+            createButton = WidgetFactory.buildTextButton("Create",
+                    "Create new SRB fold.", "Create", this);
+            createButton.setPreferredSize(new Dimension(80, 25));
+            manager.addOnNextLine(createButton);
+            cancelButton = WidgetFactory.buildTextButton("Cancel",
+                    "Cancel the creation of new SRB fold.", "Cancel", this);
+            cancelButton.setPreferredSize(new Dimension(80, 25));
+            manager.add(cancelButton);
+            contentPane.add(manager.getPanel(), BorderLayout.SOUTH);
+            dialog.addWindowListener(new WindowAdapter() {
+                public void windowClosing(WindowEvent e) {
+                    dialog.dispose();
+                }
+            });
+            
+            // Adds the enter key response.
+            newFoldNameField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "Create");
+            newFoldNameField.getActionMap().put("Create", new AbstractAction("Create"){
+                public void actionPerformed(ActionEvent e){
+                    create();
+                }
+            });
+            cancelButton.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false), "Cancel");
+            cancelButton.getActionMap().put("Cancel", new AbstractAction("Cancel"){
+                public void actionPerformed(ActionEvent e){
+                    cancel();
+                }
+            });
+            newFoldNameField.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0, false), "Cancel");
+            newFoldNameField.getActionMap().put("Cancel", new AbstractAction("Cancel"){
+                public void actionPerformed(ActionEvent e){
+                    cancel();
+                }
+            });
+            pack();
+
+            MipavUtil.centerInComponent(JargonFileChooser.this, this);
+            setVisible(true);
+        }
+        
+        private void create(){
+            String foldName = newFoldNameField.getText();
+            if(foldName.length() > 0){
+                SRBFile newFold = new SRBFile(parentDir, foldName);
+                newFold.mkdir();
+                try{
+                    jsrbTree.refresh(jsrbTree.getSelectionPath());
+                }catch(IOException ex){
+                    MipavUtil.displayError("IOException happened: " + ex.getMessage());
+                }
+            }
+            this.dispose();
+        }
+        
+        private void cancel(){
+            this.dispose();
+        }
+        
+        public void actionPerformed(ActionEvent e){
+            String command = e.getActionCommand();
+            if(command.equals("Create")){
+                create();
+            }else if(command.equals("Cancel")){
+                cancel();
+            }
+        }
+    }
 }
