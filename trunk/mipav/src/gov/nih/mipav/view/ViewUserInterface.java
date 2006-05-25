@@ -439,26 +439,40 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("TransferSRBFiles")) {
             transferSRBFiles();
         } else if (command.equals("AutoUploadToSRB")) {
-            pipeline = new NDARPipeline();
-            if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
-                if (!menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
-                    if (DICOMcatcher != null) {
-                        DICOMcatcher.setStop();
+             if (menuBuilder.isMenuItemSelected("Enable auto SRB upload")) {
+                 if(pipeline != null){
+                     pipeline = null;
+                 }
+                 pipeline = new NDARPipeline();
+                 if (pipeline.setup()) {
+
+                    if (!menuBuilder.isMenuItemSelected("Enable DICOM receiver")) {
+                        if (DICOMcatcher != null) {
+                            DICOMcatcher.setStop();
+                        }
+
+                        DICOMcatcher = new DICOM_Receiver();
+                        menuBuilder.setMenuItemEnabled("DICOM database access",
+                                true);
+                        menuBuilder.setMenuItemSelected(
+                                "Enable DICOM receiver", true);
+
+                        pipeline.install(DICOMcatcher);
+                        // note: activating the auto srb upload does not imply
+                        // wanting the pacs to always start. the user
+                        // must still explictly enable its auto-start
+
+                        // Preferences.setProperty("EnableDICOMReceiver", "true");
                     }
-
-                    DICOMcatcher = new DICOM_Receiver();
-                    menuBuilder.setMenuItemEnabled("DICOM database access", true);
-                    menuBuilder.setMenuItemSelected("Enable DICOM receiver", true);
-
-                    // note: activating the auto srb upload does not imply wanting the pacs to always start.  the user
-                    // must still explictly enable its auto-start
-
-                    // Preferences.setProperty("EnableDICOMReceiver", "true");
-                }
-                pipeline.install(DICOMcatcher);
+                    return;
+                 }
+                 pipeline = null;
+                 menuBuilder.setMenuItemSelected("Enable auto SRB upload", false);
             } else {
-                pipeline.uninstall();
-                pipeline = null;
+                if(pipeline != null){
+                    pipeline.uninstall();
+                    pipeline = null;
+                }
             }
         } else if (command.equals("RecordScript")) {
 
@@ -1845,7 +1859,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     // Transfers the files between local machine/SRB server and local machine/SRB server.
     public void  transferSRBFiles(){
         SRBFileTransferer transferer = new SRBFileTransferer();
-        transferer.setTransferMode(SRBFileTransferer.TRANSFER_MODE_SEQUENTIAL);
         transferer.transferFiles();        
     }
     
@@ -1863,7 +1876,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         // Creates an random subdirectory under the temporary directory.
         transferer.createTempDir();
-        
         GeneralFile tempDir = SRBFileTransferer.createLocalFile(transferer.getTempDir().getAbsolutePath());
         if (tempDir == null) {
             MipavUtil.displayError("The local temporary directory has to be specified");
