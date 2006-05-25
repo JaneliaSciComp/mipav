@@ -4,6 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.icons.*;
+import gov.nih.mipav.view.srb.JargonFileChooser;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -180,6 +181,22 @@ public class MipavUtil extends JComponent {
                                 (parentTopLeftPoint.y + (parentSize.height / 2)) - (childWindow.getSize().height / 2));
     }
 
+    /**
+     * Sets the location of the dialog to the center of the parent component.
+     * @param parentComponent the parent component.
+     * @param dialog          the dialog which is to be displayed.
+     */
+    public static void centerInComponent(Component parentComponent, JDialog dialog){
+        Point loc = parentComponent.getLocationOnScreen();
+        Dimension dim = parentComponent.getSize();
+        
+        Dimension dim2 = dialog.getSize();
+        
+        int x = loc.x + (int)(dim.getWidth() - dim2.getWidth())/2;
+        int y = loc.y + (int)(dim.getHeight() - dim2.getHeight())/2;
+        dialog.setLocation(x, y);
+        
+    }
     /**
      * Sets the location of the window to the center of the screen.
      *
