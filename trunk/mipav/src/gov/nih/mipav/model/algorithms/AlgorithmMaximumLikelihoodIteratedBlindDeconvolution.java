@@ -1,9 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
-
-import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -69,6 +68,31 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** Original data size: */
     private int m_iArrayLength = 1;
 
+    /** Progress bar (no cancel) */
+    private ViewJProgressBar m_kPBar = null;
+    /** Flag indicating whether or not to update the progres bar: */
+    private boolean m_bUpdatePBar = true;
+
+    /* Boolean to use constraints: */
+    private boolean m_bUseMicroscopeConstraints = true;
+
+    /** Constraint parameters: */
+    private int m_iDimX;
+    private int m_iDimY;
+    private int m_iDimZ;
+
+    private float[] m_afResolutions = new float[]{ 1f, 1f, 1f };
+    private int[] m_aiUnits;
+
+    private float m_fRadius;
+    private float m_fTanTheta;
+
+    /* 3). Bandlimit and missing cone constraint: */
+    private float m_fRadialBandLimit;
+    private float m_fAxialBandLimit;
+    private boolean m_bConstraintsInit = false;
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -85,7 +109,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                                                  int iProgress,
                                                                  float fObjectiveNumericalAperature,
                                                                  float fWavelength,
-                                                                 float fRefractiveIndex )
+                                                                 float fRefractiveIndex,
+                                                                 boolean bUseConstraints
+                                                                 )
     {
         m_kOriginalSourceImage = kSrcImg;
         m_kSourceImage = (ModelImage)kSrcImg.clone();
@@ -94,7 +120,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         m_fObjectiveNumericalAperature = fObjectiveNumericalAperature;
         m_fWavelength = fWavelength;
         m_fRefractiveIndex = fRefractiveIndex;
-        
+        m_bUseMicroscopeConstraints = bUseConstraints;
+
         /* Determine the array length: */
         m_iArrayLength = 1;
         for ( int i = 0; i < m_kSourceImage.getNDims(); i++ )
@@ -121,6 +148,17 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         /* The initial psf is a gaussian of size 3x3: */
         m_kPSFImage = initPSF( m_kSourceImage.getNDims(), m_kSourceImage.getExtents() );
+        /*
+        new ViewJFrameImage((ModelImage)(m_kPSFImage.clone()),
+                            null, new Dimension(610, 200));
+        */
+        /* Initialize progress bar: */
+        m_kPBar = new ViewJProgressBar( "Blind Deconvolution",
+                                        "computing iterative blind deconvolution...",
+                                        0, 100,
+                                        false, null, null );
+        MipavUtil.centerOnScreen( m_kPBar );
+        m_kPBar.setVisible( true );
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -172,27 +210,41 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Create three separate ModelImages of the same type: */
         m_kSourceRed   = new ModelImage(iType,
                                         kImage.getExtents(),
-                                        null, null);
+                                        "GrayRed", null);
         m_kSourceGreen = new ModelImage(iType,
                                         kImage.getExtents(),
-                                        null, null);
+                                        "GrayGreen", null);
         m_kSourceBlue  = new ModelImage(iType,
                                         kImage.getExtents(),
-                                        null, null);
-        /* Copy the red, green, and blue components into the separate
-         * images: */
-        for ( int i = 0; i < m_iArrayLength; i++ )
-        {
-            m_kSourceRed.set( i,   kImage.get( i * 4 + 1 ) );
-            m_kSourceGreen.set( i, kImage.get( i * 4 + 2 ) );
-            m_kSourceBlue.set( i,  kImage.get( i * 4 + 3 ) );
-        }
+                                        "GrayBlue", null);
+        AlgorithmRGBtoGrays kRGBAlgoMulti =
+            new AlgorithmRGBtoGrays( m_kSourceRed,
+                                     m_kSourceGreen,
+                                     m_kSourceBlue,
+                                     kImage );
+        kRGBAlgoMulti.setActiveImage(false);
+        kRGBAlgoMulti.setProgressBarVisible(false);
+        kRGBAlgoMulti.run();
+        kRGBAlgoMulti.finalize();
+        kRGBAlgoMulti = null;
+
+        JDialogRGBtoGrays kDialogTemp =
+            new JDialogRGBtoGrays( ViewUserInterface.getReference(),
+                                   kImage );
+        kDialogTemp.updateFileInfo(kImage, m_kSourceRed);
+        kDialogTemp.updateFileInfo(kImage, m_kSourceGreen);
+        kDialogTemp.updateFileInfo(kImage, m_kSourceBlue);
+        kDialogTemp.dispose();
+        kDialogTemp = null;
         try {
             /* Convert to float: */
+            m_kSourceBlue.convertToFloat();
             m_kSourceRed.convertToFloat();
             m_kSourceGreen.convertToFloat();
-            m_kSourceBlue.convertToFloat();
         } catch( java.io.IOException e ) {}
+        m_kSourceRed.calcMinMax();
+        m_kSourceGreen.calcMinMax();
+        m_kSourceBlue.calcMinMax();
 
         /* Convert the input image kImage to gray: */
         ModelImage kResult = new ModelImage(iType, kImage.getExtents(),
@@ -223,17 +275,17 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                         ModelImage kBlue )
     {
         ModelImage kResult = (ModelImage)m_kOriginalSourceImage.clone();
-        float fRed, fGreen, fBlue;
-        for ( int i = 0; i < m_iArrayLength; i++ )
-        {
-            fRed = Math.max( Math.min( kRed.getFloat( i ), 255.0f ), 0f );
-            fGreen = Math.max( Math.min( kGreen.getFloat( i ), 255.0f ), 0f );
-            fBlue = Math.max( Math.min( kBlue.getFloat( i ), 255.0f ), 0f );
-            kResult.set( i * 4 + 0, 255f );
-            kResult.set( i * 4 + 1, fRed );
-            kResult.set( i * 4 + 2, fGreen );
-            kResult.set( i * 4 + 3, fBlue );
-        }
+
+        // Make algorithm
+        AlgorithmRGBConcat kMathAlgo =
+            new AlgorithmRGBConcat( kRed, kGreen, kBlue, kResult, false );
+        kMathAlgo.setActiveImage(false);
+        kMathAlgo.setProgressBarVisible(false);
+        kMathAlgo.run();
+        kMathAlgo.finalize();
+        kMathAlgo = null;
+        System.gc();
+
         return kResult;
     }
 
@@ -265,14 +317,27 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         kGauss.finalize();
         kGauss = null;
         /* Copy the Gaussian data into the ModelImage: */
+        float fMax = Float.MIN_VALUE;
+        float fMin = Float.MAX_VALUE;
         for ( int i = 0; i < m_iArrayLength; i++ )
         {
-            kImage.set( i, fGaussData[ i ] );
+            if ( fGaussData[i] > fMax )
+            {
+                fMax = fGaussData[i];
+            }
+            if ( fGaussData[i] < fMin )
+            {
+                fMin = fGaussData[i];
+            }
+        }
+        for ( int i = 0; i < m_iArrayLength; i++ )
+        {
+            kImage.set( i, (float)(255 * (fGaussData[ i ] - fMin)/(fMax - fMin)) );
         }
         fGaussData = null;
         fSigmas = null;
         iDerivOrder = null;
-
+        
         /* Apply constraints to the image and return: */
         ModelImage kReturn = constraints( kImage );
         kImage.disposeLocal();
@@ -298,9 +363,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         ModelImage tempImageConvolve;
         ModelImage tempImageCalc;
         ModelImage originalDividedByEstimateCPSF;
-        /* estimated and psf mirror images: */
-        ModelImage kEstimateMirror = mirror( kEstimate );
-        ModelImage kPSFMirror = mirror( kPSF );
 
         /* Loop over the number of iterations: */
         for ( int i = 1; i <= m_iNumberIterations; i++ )
@@ -308,6 +370,11 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             /* Convolve the current estimate with the current PSF: */
             tempImageConvolve = convolve( kEstimate, kPSF, 1f );
             
+            /* Uncomment to check results of convolution:
+            new ViewJFrameImage((ModelImage)(tempImageConvolve.clone()),
+                                null, new Dimension(610, 200));
+            */
+
             /* Divide the original image by the result and store: */
             originalDividedByEstimateCPSF = calc( kSource, tempImageConvolve,
                                                   AlgorithmImageCalculator.DIVIDE );
@@ -315,7 +382,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
             /* Create new kEstimate based on original image and psf: */
             /* Convolve the divided image with the psf mirror: */
+            ModelImage kPSFMirror = mirror( kPSF );
             tempImageConvolve = convolve( originalDividedByEstimateCPSF, kPSFMirror, 0 );
+            kPSFMirror.disposeLocal();
             /* multiply the result by the current estimated image: */
             tempImageCalc = calc( tempImageConvolve, kEstimate,
                                   AlgorithmImageCalculator.MULTIPLY );
@@ -327,8 +396,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
             /* Create new psf based on original image and psf: */
             /* convolve the divided image with the estimated mirror: */
+            ModelImage kEstimateMirror = mirror( kEstimate );
             tempImageConvolve =
                 convolve( originalDividedByEstimateCPSF, kEstimateMirror, 0 );
+            kEstimateMirror.disposeLocal();
             originalDividedByEstimateCPSF.disposeLocal();
 
             /* multiply the result by the current psf image: */
@@ -340,18 +411,16 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             kPSF = constraints( tempImageCalc );
             kPSF.setImageName( "psf" + i );
             tempImageCalc.disposeLocal();
-
-            /* Mirror the new estimate and new psf: */
-            kEstimateMirror.disposeLocal();
-            kEstimateMirror = mirror( kEstimate );
-            kPSFMirror.disposeLocal();
-            kPSFMirror = mirror( kPSF );
             
             /* Display progression: */
             if ( ((i%m_iNumberProgress) == 0) && (i != m_iNumberIterations) )
             {
                 new ViewJFrameImage((ModelImage)(kEstimate.clone()),
                                     null, new Dimension(610, 200));
+            }
+            if ( m_bUpdatePBar )
+            {
+                m_kPBar.updateValue( (int)(100 * ((float)i / (float)(m_iNumberIterations + 1))) );
             }
         }
         if ( bCopy )
@@ -366,9 +435,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         {
             kPSF.disposeLocal();
         }
-
-        kEstimateMirror.disposeLocal();
-        kPSFMirror.disposeLocal();
 
         return kEstimate;
     } 
@@ -390,28 +456,28 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Calculate the forward fft of the two input images: */
         ModelImage kImageSpectrum1 = fft( kImage1, 1 );
         ModelImage kImageSpectrum2 = fft( kImage2, 1 );
-        
+
         /* multiply the resulting spectrums: */
         ModelImage kConvolve = calc( kImageSpectrum1, kImageSpectrum2,
                                      AlgorithmImageCalculator.MULTIPLY );
         
+        /* Clean up temporary data: */
+        kImageSpectrum1.disposeLocal();
+        kImageSpectrum2.disposeLocal();
+
         /* Set the image Convolve flag to be true: */
         kConvolve.setConvolve( true );
         /* Calculate the inverse FFT: */
         ModelImage kResult = fft( kConvolve, -1 );
         
+        /* Clean up temporary data: */
+        kConvolve.disposeLocal();
+
         /* Add noise factor: */
         for ( int i = 0; i < m_iArrayLength; i++ )
         {
             kResult.set( i, kResult.getFloat( i ) + fNoise );
         }
-        /* Clean up temporary data: */
-        kImageSpectrum1.disposeLocal();
-        kImageSpectrum1 = null;
-        kImageSpectrum2.disposeLocal();
-        kImageSpectrum2 = null;
-        kConvolve.disposeLocal();
-        kConvolve = null;
 
         /* Return result: */
         return kResult;
@@ -430,10 +496,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
         // FFT parameters
         boolean logMagDisplay = false;
-        boolean unequalDim = false;
+        boolean unequalDim = true;
         boolean image25D = false;
         boolean imageCrop = true;
-        int kernelDiameter = 15;
+        int kernelDiameter = 0;
         int filterType = 2;
         float freq1 = 0.0f;
         float freq2 = 1.0f;
@@ -481,6 +547,76 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         return kReturn;
     }
 
+    /** Initializes the constraint variables for the PSF deconvolution, based
+     * on the microscope parameters (numerical aperature, wavelength, and
+     * refractive index). The pixel resolutions are also converted to
+     * nanometers -- the units for wavelength. */
+    private void initConstraints()
+    {
+        m_iDimX = m_kOriginalSourceImage.getExtents()[0];
+        m_iDimY = m_kOriginalSourceImage.getExtents()[1];
+        m_iDimZ = 1;
+        if ( m_kOriginalSourceImage.getNDims() > 2 )
+        {
+            m_iDimZ = m_kOriginalSourceImage.getExtents()[2];
+        }
+
+        /* convert pixel resolutions to nanometers: */
+        m_aiUnits = m_kOriginalSourceImage.getFileInfo()[0].getUnitsOfMeasure();
+        for ( int i = 0; i < m_kOriginalSourceImage.getNDims(); i++ )
+        {
+            m_afResolutions[i] = m_kOriginalSourceImage.getFileInfo()[0].getResolutions()[i];
+
+            if ( m_aiUnits[i] == FileInfoBase.INCHES )
+            {
+                m_afResolutions[i] *= 2.54e7f; //25400000f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.CENTIMETERS )
+            {
+                m_afResolutions[i] *= 1e7f; //10000000f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.ANGSTROMS )
+            {
+                m_afResolutions[i] *= 0.1f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.NANOMETERS )
+            {
+                m_afResolutions[i] *= 1f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.MICROMETERS )
+            {
+                m_afResolutions[i] *= 1e3f; //1000f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.MILLIMETERS )
+            {
+                m_afResolutions[i] *= 1e6f; //1000000f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.METERS )
+            {
+                m_afResolutions[i] *= 1e9f; //1000000000f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.KILOMETERS )
+            {
+                m_afResolutions[i] *= 1e12f; //1000000000000f;
+            }
+            else if ( m_aiUnits[i] == FileInfoBase.MILES )
+            {
+                m_afResolutions[i] *= 1.609344e12f; //1609344000000f;
+            }
+            
+        }
+
+        /* 2). Hourglass constraint: */
+        m_fRadius = (3 * 0.61f * m_fWavelength) / m_fObjectiveNumericalAperature;
+        m_fTanTheta = (float)Math.tan( Math.asin( m_fObjectiveNumericalAperature / m_fRefractiveIndex ) );
+
+        /* 3). Bandlimit and missing cone constraint: */
+        m_fRadialBandLimit = (float)( 2.0f * m_fObjectiveNumericalAperature / m_fWavelength );
+        m_fAxialBandLimit = (float)(( m_fObjectiveNumericalAperature *
+                                      m_fObjectiveNumericalAperature )  /
+                                    (2.0 * m_fRefractiveIndex * m_fWavelength ));
+    }
+
     /** Applies constraints to the input image kImage and writes the
      * constrained values into the m_kPSFImage.
      * Constraints are the following:
@@ -493,76 +629,95 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      */
     private ModelImage constraints( ModelImage kImage )
     {
+        if ( m_bConstraintsInit == false )
+        {
+            initConstraints();
+            m_bConstraintsInit = true;
+        }
         ModelImage kReturn = (ModelImage)kImage.clone();
-
-        int iDimX = kImage.getExtents()[0];
-        int iDimY = kImage.getExtents()[1];
-        int iDimZ = 1;
-        if ( kImage.getNDims() > 2 )
-        {
-            iDimZ = kImage.getExtents()[2];
-        }
-
+        ModelImage kImageInvFFT = null;
         /* 2). Hourglass constraint: */
-        /*
-        float fRadius = (3 * 0.61f * m_fWavelength) / m_fObjectiveNumericalAperature;
-        float fTheta = (float)Math.asin( m_fObjectiveNumericalAperature / m_fRefractiveIndex );
-        float fRadiusZ = 0.0f;
-        for ( int z = 1; z <= iDimZ; z++ )
+        if ( m_bUseMicroscopeConstraints )
         {
-            for ( int x = 1; x <= iDimX; x++ )
+            ModelImage kWorking = (ModelImage)kImage.clone();
+
+            float fXHalf = (m_afResolutions[0]*(m_iDimX + 1))/2f;
+            float fYHalf = (m_afResolutions[1]*(m_iDimY + 1))/2f;
+            float fZHalf = (m_afResolutions[2]*(m_iDimZ + 1))/2f;
+            float fX, fY, fZ;
+            
+            float fRadiusZ = 0.0f;
+            for ( int z = 0; z < m_iDimZ; z++ )
             {
-                for ( int y = 1; y <= iDimY; y++ )
+                for ( int y = 0; y < m_iDimY; y++ )
                 {
-                    fRadiusZ = (float)(Math.abs( z - (iDimZ+1)/2 ) * Math.tan( fTheta ));
-                    if ( ( ((x - (iDimX+1)/2) * (x - (iDimX+1)/2)) + 
-                           ((y - (iDimY+1)/2) * (y - (iDimY+1)/2))   ) > 
-                         ( ( fRadius + fRadiusZ ) * ( fRadius + fRadiusZ ) ) )
+                    for ( int x = 0; x < m_iDimX; x++ )
                     {
-                        kImage.set( (z - 1) * (iDimY * iDimX ) + 
-                                    (y - 1) * iDimX +
-                                    (x - 1),
-                                    0f );
+                        fX = m_afResolutions[0] * x;
+                        fY = m_afResolutions[1] * y;
+                        fZ = m_afResolutions[2] * z;
+                        
+                        fRadiusZ = (float)(Math.abs( fZ - fZHalf ) * m_fTanTheta);
+                        
+                        if ( ( ((fX - fXHalf) * (fX - fXHalf)) + 
+                               ((fY - fYHalf) * (fY - fYHalf))   ) > 
+                             ( ( m_fRadius + fRadiusZ ) * ( m_fRadius + fRadiusZ ) ) )
+                        {
+                            kWorking.set( (z * m_iDimY * m_iDimX) + 
+                                          (y * m_iDimX) +
+                                          x,
+                                          0f );
+                        }
                     }
                 }
             }
-        }
-        */
-        /* 3). Bandlimit and missing cone constraint: */
-        /*
-        float fRadialBandLimit = (float)( 2.0f * m_fObjectiveNumericalAperature / m_fWavelength );
-        float fAxialBandLimit = (float)(( m_fObjectiveNumericalAperature *
-                                          m_fObjectiveNumericalAperature )  /
-                                        (2.0 * m_fRefractiveIndex * m_fWavelength ));
-        ModelImage kImageFFT = fft( kImage, 1 );
-        for ( int z = 1; z <= iDimZ; z++ )
-        {
-            for ( int x = 1; x <= iDimX; x++ )
+            /* 3). Bandlimit and missing cone constraint: */
+            ModelImage kImageFFT = fft( kWorking, 1 );
+            kWorking.disposeLocal();
+            for ( int z = 0; z < m_iDimZ; z++ )
             {
-                for ( int y = 1; y <= iDimY; y++ )
+                for ( int y = 0; y < m_iDimY; y++ )
                 {
-                    fRadiusZ = (float)(Math.abs( z - (iDimZ+1)/2 ) * Math.tan( fTheta ));
-                    if ( ( ( ((x - (iDimX+1)/2) * (x - (iDimX+1)/2)) + 
-                             ((y - (iDimY+1)/2) * (y - (iDimY+1)/2))   ) > 
-                           fRadialBandLimit ) ||
-                         ( (float)(Math.abs( z - (iDimZ+1)/2 )) > fAxialBandLimit ) ||
-                         ( ( ((x - (iDimX+1)/2) * (x - (iDimX+1)/2)) + 
-                                ((y - (iDimY+1)/2) * (y - (iDimY+1)/2))   ) <  
-                              fRadius )
-                         )
+                    for ( int x = 0; x < m_iDimX; x++ )
                     {
-                        kImageFFT.set( (z - 1) * (iDimY * iDimX ) + 
-                                       (y - 1) * iDimX +
-                                       (x - 1),
-                                       0f );
+                        fX = m_afResolutions[0] * x;
+                        fY = m_afResolutions[1] * y;
+                        fZ = m_afResolutions[2] * z;
+                        
+                        fRadiusZ = (float)(Math.abs( fZ - fZHalf ) * m_fTanTheta);
+                        if ( ( ( ((fX - fXHalf) * (fX - fXHalf)) + 
+                                 ((fY - fYHalf) * (fY - fYHalf))   ) > 
+                               (m_fRadialBandLimit * m_fRadialBandLimit) )
+                             ||
+                             ( (float)(Math.abs( fZ - fZHalf )) > m_fAxialBandLimit )
+                             ||
+                             ( ( ((fX - fXHalf) * (fX - fXHalf)) + 
+                                 ((fY - fYHalf) * (fY - fYHalf))   ) < 
+                               (fRadiusZ * fRadiusZ) )
+                             )
+                        {
+                            /* Set real value to 0: */
+                            kImageFFT.set( (z * m_iDimY * m_iDimX ) + 
+                                           (y * m_iDimX) +
+                                           (x) + 0,
+                                           0f );
+                            /* Set imaginary value to 0: */
+                            kImageFFT.set( (z * m_iDimY * m_iDimX ) + 
+                                           (y * m_iDimX) +
+                                           (x) + 1,
+                                           0f );
+                        }
                     }
                 }
             }
+            kImageInvFFT = fft( kImageFFT, -1 );
+            kImageFFT.disposeLocal();
         }
-        ModelImage kImageInvFFT = fft( kImageFFT, -1 );
-        kImageFFT.disposeLocal();
-        */
-        ModelImage kImageInvFFT = (ModelImage)kImage.clone();
+        else
+        {
+            kImageInvFFT = kImage;
+        }
+
         /* 4). Nonnegativity constraint: */
         float fSum = 0;
         for ( int i = 0; i < m_iArrayLength; i++ )
@@ -573,13 +728,30 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             }
             fSum += kImageInvFFT.getFloat( i );
         }
+        if ( fSum == 0 )
+        {
+            MipavUtil.displayInfo( "Microscope settings inappropriate for the image resolutions, deconvolving without microscope settings." );
+            /* Don't use microscope constraints: */
+            m_bUseMicroscopeConstraints = false;
+            /* Recalculate sum based on no constraints: */
+            kImageInvFFT = kImage;
+            for ( int i = 0; i < m_iArrayLength; i++ )
+            {
+                if ( kImageInvFFT.getFloat(i) < 0 )
+                {
+                    kImageInvFFT.set( i, 0f );
+                }
+                fSum += kImageInvFFT.getFloat( i );
+            }
+        }
         /* 1). Unit summation constraint: */
         for ( int i = 0; i < m_iArrayLength; i++ )
         {
             kReturn.set( i, kImageInvFFT.getFloat( i ) / fSum );
         }
         kImageInvFFT.disposeLocal();
-        
+
+        kReturn.calcMinMax();
         return kReturn;
     }
 
@@ -592,6 +764,17 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     private ModelImage mirror( ModelImage kImage )
     {
         ModelImage kReturn = (ModelImage)(kImage.clone());
+        if ( kImage.getNDims() == 3 )
+        {
+            JDialogFlip flipz =
+                new JDialogFlip( ViewUserInterface.getReference(),
+                                 kReturn, AlgorithmFlip.Z_AXIS);
+            flipz.setActiveImage(false);
+            flipz.setSeparateThread( false );
+            flipz.callAlgorithm();
+            flipz.dispose();
+            flipz = null;
+        }
         JDialogFlip flipy =
             new JDialogFlip( ViewUserInterface.getReference(),
                              kReturn, AlgorithmFlip.Y_AXIS);
@@ -639,10 +822,15 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                 m_iNumberIterations = 1;
                 /* doesn't matter, just has to be higher than m_iNumberIterations */
                 m_iNumberProgress = 2;
+                m_bUpdatePBar = false;
             
                 /* get new estimates for each color channel by runing the
                  * deconvolution with the estimates from the grayscale image --
                  * deconvolution does not iterated again: */
+                m_kSourceBlue = runDeconvolution( m_kSourceBlue,
+                                                  (ModelImage)m_kEstimatedImage.clone(),
+                                                  (ModelImage)m_kPSFImage.clone(),
+                                                  false );
                 m_kSourceRed = runDeconvolution( m_kSourceRed,
                                                  (ModelImage)m_kEstimatedImage.clone(),
                                                  (ModelImage)m_kPSFImage.clone(),
@@ -651,11 +839,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                                    (ModelImage)m_kEstimatedImage.clone(),
                                                    (ModelImage)m_kPSFImage.clone(),
                                                    false );
-                m_kSourceBlue = runDeconvolution( m_kSourceBlue,
-                                                  (ModelImage)m_kEstimatedImage.clone(),
-                                                  (ModelImage)m_kPSFImage.clone(),
-                                                  false );
-                
+
                 /* Use the reconstructed color channels to generate new color image: */
                 m_kEstimatedImage.disposeLocal();
                 m_kEstimatedImage = convertFromGray( m_kSourceRed,
@@ -663,6 +847,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                                      m_kSourceBlue );
             }
         }
+        m_kPBar.updateValue( 100 );
 
         cleanUp();
         setCompleted(true);
@@ -707,5 +892,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             m_kSourceBlue.disposeLocal();
             m_kSourceBlue = null;
         }
+        m_kPBar.dispose();
+        m_kPBar = null;
     }
 }

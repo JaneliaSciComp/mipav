@@ -27,6 +27,9 @@ public class AlgorithmFlip extends AlgorithmBase {
     /** Flip along X axis. */
     public static final int X_AXIS = 1;
 
+    /** Flip along Z axis. */
+    public static final int Z_AXIS = 2;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Axis to flip along. */
@@ -43,7 +46,7 @@ public class AlgorithmFlip extends AlgorithmBase {
     public AlgorithmFlip(ModelImage srcImg, int flipMode) {
         super(null, srcImg);
 
-        if ((flipMode == Y_AXIS) || (flipMode == X_AXIS)) {
+        if ((flipMode == Y_AXIS) || (flipMode == X_AXIS) || (flipMode == Z_AXIS)) {
             flipAxis = flipMode;
         } else {
             flipAxis = Y_AXIS;
@@ -172,7 +175,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                             resultBuffer[start + index] = buffer[(y * xDim) + (xDim - 1 - x)];
                         }
                     }
-                } else {
+                } else if (flipAxis == X_AXIS) {
 
                     for (y = 0; (y < yDim) && !threadStopped; y++) {
 
@@ -185,6 +188,14 @@ public class AlgorithmFlip extends AlgorithmBase {
                             }
 
                             resultBuffer[start + index] = buffer[((yDim - 1 - y) * xDim) + x];
+                        }
+                    }
+                } else {
+                    for (y = 0; (y < yDim) && !threadStopped; y++) {
+
+                        for (x = 0; (x < xDim) && !threadStopped; x++) {
+                            index = ( (y * xDim) + x);
+                            resultBuffer[((nImages - 1)*length) - start + index] = buffer[index];
                         }
                     }
                 }
@@ -209,7 +220,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                             }
                         }
                     }
-                } else {
+                } else if (flipAxis == X_AXIS) {
 
                     for (y = 0; (y < yDim) && !threadStopped; y++) {
 
@@ -227,7 +238,19 @@ public class AlgorithmFlip extends AlgorithmBase {
                             }
                         }
                     }
+                } else {
+                    for (y = 0; (y < yDim) && !threadStopped; y++) {
+
+                        for (x = 0; (x < xDim) && !threadStopped; x++) {
+
+                            for (j = 0; (j < cf) && !threadStopped; j++) {
+                                index = ( (cf * y * xDim) + (cf * x) + j);
+                                resultBuffer[((nImages - 1)*length) - start + index] = buffer[index];
+                            }
+                        }
+                    }
                 }
+
             } // end of else for cf == 2 or 4
         }
 
@@ -274,8 +297,10 @@ public class AlgorithmFlip extends AlgorithmBase {
 
         if (flipAxis == Y_AXIS) {
             index = 0;
-        } else {
+        } else if (flipAxis == X_AXIS) {
             index = 1;
+        } else {
+            index = 2;
         }
 
         float loc = fileInfo[0].getOrigin(index);
@@ -307,8 +332,10 @@ public class AlgorithmFlip extends AlgorithmBase {
 
         if (flipAxis == Y_AXIS) {
             historyString = new String("Flip(Y_AXIS)\n");
-        } else {
+        } else if (flipAxis == X_AXIS) {
             historyString = new String("Flip(X_AXIS)\n");
+        } else {
+            historyString = new String("Flip(Z_AXIS)\n");
         }
     }
 
