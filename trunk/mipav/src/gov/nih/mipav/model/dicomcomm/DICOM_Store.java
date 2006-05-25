@@ -193,8 +193,7 @@ public class DICOM_Store implements Runnable {
         } catch (IOException ioe) {
             System.out.println("DICOM_Store.getUIDs: " + ioe);
         }
-        fileDICOM.finalize();
-        fInfoDicom.finalize();
+
 
         return;
     }

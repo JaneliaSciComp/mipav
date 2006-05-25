@@ -2222,7 +2222,6 @@ public class FileIO {
         }
 
         pInterface.dispose();
-        imageFile.finalize();
         imageFile = null;
         matrix = null;
 
