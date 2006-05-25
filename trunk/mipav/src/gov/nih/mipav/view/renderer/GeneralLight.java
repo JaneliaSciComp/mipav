@@ -36,34 +36,34 @@ public class GeneralLight {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** Enumeration of light types. */
+    /** Ambient light constant. */
     private static final int TYPE_AMBIENT = 0;
 
-    /** DOCUMENT ME! */
+    /** Spot light constant. */
     private static final int TYPE_SPOT = 1;
 
-    /** DOCUMENT ME! */
+    /** Point light constant. */
     private static final int TYPE_POINT = 2;
 
-    /** DOCUMENT ME! */
+    /** Directinal light constant. */
     private static final int TYPE_DIRECTIONAL = 3;
 
-    /** DOCUMENT ME! */
+    /** Light constant types array. */
     private static final String[] sakTypeName = new String[] { "ambient", "spot", "point", "directional" };
 
     /** Bit mask used to identify light types in combination. */
     public static final int MASK_AMBIENT = 1 << TYPE_AMBIENT;
 
-    /** DOCUMENT ME! */
+    /** Spot light mask. */
     public static final int MASK_SPOT = 1 << TYPE_SPOT;
 
-    /** DOCUMENT ME! */
+    /** Point light mask. */
     public static final int MASK_POINT = 1 << TYPE_POINT;
 
-    /** DOCUMENT ME! */
+    /** Directional light mask */
     public static final int MASK_DIRECTIONAL = 1 << TYPE_DIRECTIONAL;
 
-    /** DOCUMENT ME! */
+    /** All light types mask */
     public static final int MASK_ALL = MASK_AMBIENT | MASK_SPOT | MASK_POINT | MASK_DIRECTIONAL;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -78,70 +78,62 @@ public class GeneralLight {
      */
     private boolean m_bFixTarget = false;
 
-    /** DOCUMENT ME! */
+    /** Attenuation factor red channel. */
     private float m_fAttenuationC0 = 1.0f;
 
-    /** DOCUMENT ME! */
+    /** Attenuation factor green channel. */
     private float m_fAttenuationC1 = 0.0f;
 
-    /** DOCUMENT ME! */
+    /** Attenuation factor blue channel. */
     private float m_fAttenuationC2 = 0.0f;
 
-    /** DOCUMENT ME! */
+    /** Light intensity scale factor. */
     private float m_fIntensity = 0.5f;
 
-    /** DOCUMENT ME! */
+    /** Shinness factor, exponential power value for Phong type shading model. */
     private float m_fShininess = 5f;
 
-    /** DOCUMENT ME! */
+    /** Maximum coordinate scale factor for real positions. */
     private final float m_fSizeMax;
 
     /** Scale factors for placing [-1,+1] normalized positions and targets into real world space with dimensions. */
     private final float m_fSizeX;
 
-    /** DOCUMENT ME! */
+    /** float Y coordinate scale factor for real positions. */
     private final float m_fSizeY;
 
-    /** DOCUMENT ME! */
+    /** float Y coordinate scale factor for real positions. */
     private final float m_fSizeZ;
 
     /** Properties for spot lights only. */
     private float m_fSpotAngle = (float) (Math.toRadians(45.0));
 
-    /** DOCUMENT ME! */
+    /** Spot light exponential factor. */
     private float m_fSpotExponent = (float) (Math.log(0.1) / Math.log(Math.cos(m_fSpotAngle)));
 
     /** Type of light and limit for available light types which can be selected. */
     private int m_iType;
 
-    /** DOCUMENT ME! */
+    /** Light type mask. */
     private final int m_iTypeMask;
 
-    /** DOCUMENT ME! */
+    /** Description associated with this light. */
     private String m_kDescription = new String("");
 
-    /** DOCUMENT ME! */
+    /** Light direction. */
     private Vector3f m_kDirection = new Vector3f(0.0f, 0.0f, 1.0f);
 
-    /** DOCUMENT ME! */
+    /** Light color. */
     private Color m_kLightColor = new Color(1.0f, 1.0f, 1.0f);
 
     /** Properties shared by point and spot lights. */
     private Point3f m_kPosition = new Point3f(0.0f, 0.0f, 0.0f);
 
-    /** DOCUMENT ME! */
+    /** Light shooting target position. */
     private Point3f m_kTarget = new Point3f(0.0f, 0.0f, 0.0f);
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
-     * Constructor.
-     *
-     * @param  iTypeMask  DOCUMENT ME!
-     * @param  fSizeX     DOCUMENT ME!
-     * @param  fSizeY     DOCUMENT ME!
-     * @param  fSizeZ     DOCUMENT ME!
-     */
     /**
      * Constructor. Note that the scale factors may be negative.
      *
@@ -384,9 +376,9 @@ public class GeneralLight {
     }
 
     /**
-     * DOCUMENT ME!
+     * Get the light color scaled with the intensity factor.
      *
-     * @return  DOCUMENT ME!
+     * @return  Light color!
      */
     public final Color3f getIntensifiedColor() {
         Color3f kColor = new Color3f(m_kLightColor);

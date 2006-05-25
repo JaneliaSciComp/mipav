@@ -27,16 +27,16 @@ public class JDialogRendererAVI extends JDialogBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Flag to indicate to apply window level or not. */
     private boolean applyWindowLevel;
 
-    /** DOCUMENT ME! */
+    /** Frame rate. */
     private double rate;
 
-    /** DOCUMENT ME! */
+    /** Frame rate textbox. */
     private JTextField rateBox;
 
-    /** DOCUMENT ME! */
+    /** Window level check box. */
     private JCheckBox windowLevelCheckBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
