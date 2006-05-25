@@ -138,6 +138,12 @@ public class Preferences {
     /** DOCUMENT ME! */
     public static final String PREF_STORAGE_RESOURCE_SRB = "defaultStorageResource";
 
+    public static final String PREF_SRB_VERSION = "srbVersion";
+    
+    public static final String PREF_SRB_TRANSFER_MODE = "srbTransferMode";
+    
+    public static final String PREF_SRB_TEMP_DIR = "srbTempDir";
+    
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
@@ -1409,11 +1415,34 @@ public class Preferences {
 
         return str;
     }
-
+    
     /**
-     * Retrieves the SRB server authentication schema.
+     * Sets the scripts directory to the new scripts directory.
+     * @param scriptsDirectory  the new scripts directory
+     */
+    public static final void setScriptsDirectory(String scriptsDirectory) {
+        if (scriptsDirectory != null) {
+            setProperty("ScriptsDir", scriptsDirectory);
+        }
+    }
+    
+    public static final String getScriptFile(){
+        String s = getProperty("ScriptFile");
+        if(s == null){
+            s = "";
+        }
+        return s;
+    }
+
+    public static final void setScriptFile(String scriptFile){
+        if(scriptFile != null){
+            setProperty("ScriptFile", scriptFile);
+        }
+    }
+    /**
+     * Retrieves the SRB server authentication scheme.
      *
-     * @return  DOCUMENT ME!
+     * @return  the srb server's authentication scheme.
      */
     public static String getServerAuthSRB() {
 
@@ -2456,7 +2485,7 @@ public class Preferences {
     /**
      * Sets the default storage resource for the user.
      *
-     * @param  storageResource  DOCUMENT ME!
+     * @param  storageResource  the new storage resource.
      */
     public static void setStorageResourceSRB(String storageResource) {
         setProperty(PREF_STORAGE_RESOURCE_SRB, storageResource);
@@ -2465,7 +2494,7 @@ public class Preferences {
     /**
      * Sets the user name to login the SRB server.
      *
-     * @param  userNameSRB  DOCUMENT ME!
+     * @param  userNameSRB  the user name of the srb server.
      */
     public static void setUserNameSRB(String userNameSRB) {
 
@@ -2476,7 +2505,80 @@ public class Preferences {
         setProperty(PREF_USERNAME_SRB, userNameSRB);
     }
 
+    /**
+     * Returns the transfer mode of srb server.
+     * @return the transfer mode of srb server.
+     */
+    public static String getSRBTransferMode(){
 
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_SRB_TRANSFER_MODE);
+    }
+    
+    /**
+     * Sets the transfer mode of srb server to the new transfer mode.
+     * @param transferMode the new transfer mode.
+     */
+    public static void setSRBTransferMode(String transferMode){
+        if(transferMode == null){
+            return;
+        }
+        setProperty(PREF_SRB_TRANSFER_MODE, transferMode);
+    }
+    
+    /**
+     * Returns the srb server version which Jargon need to be adapted to.
+     * @return  the srb server version which Jargon need to be adapted to.
+     */
+    public static String getSRBVersion(){
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_SRB_VERSION);
+        
+    }
+    
+    /**
+     * Sets the srb server version which Jargon need to be adapted to.
+     * @param srbVersion  the new srb server version.
+     */
+    public static void setSRBVersion(String srbVersion){
+        if(srbVersion == null){
+            return;
+        }
+        setProperty(PREF_SRB_VERSION, srbVersion);
+    }
+    
+    /**
+     * Returns the temporary directory which is used during file transfer.
+     * @return the temporary directory which is used during file transfer.
+     */
+    public static String getSRBTempDir(){
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_SRB_TEMP_DIR);
+        
+    }
+
+    /**
+     * Sets the temporary directory which is used during file transfer to the
+     * new temporary directory.
+     * @param tempDir the temporary directory.
+     */
+    public static void setSRBTempDir(String tempDir){
+        if(tempDir == null){
+            return;
+        }
+        setProperty(PREF_SRB_TEMP_DIR, tempDir);
+    }
     /**
      * DOCUMENT ME!
      *
