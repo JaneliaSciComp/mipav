@@ -272,6 +272,10 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
             SRBAccount srbAccount = new SRBAccount(host, port, name, new String(password), "", domain, storageResource);
             // srbAccount.setMcatZone("birnzone");
 
+            if(Preferences.getSRBVersion() != null){
+                System.out.println(Preferences.getSRBVersion());
+                SRBAccount.setVersion(Preferences.getSRBVersion());
+            }
             if (auth.equals(auth_schemas[0])) {
                 srbAccount.setOptions(SRBAccount.ENCRYPT1);
             } else if (auth.equals(auth_schemas[1])) {
@@ -280,6 +284,7 @@ public class JDialogLoginSRB extends JDialog implements ActionListener, KeyListe
 
             try {
                 srbFileSystem = new SRBFileSystem(srbAccount);
+                System.out.println(srbFileSystem.getVersion());
 
             } catch (Exception ex) {
                 srbFileSystem = null;
