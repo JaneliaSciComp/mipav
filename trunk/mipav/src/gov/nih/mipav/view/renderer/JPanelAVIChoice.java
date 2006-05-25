@@ -42,10 +42,10 @@ public class JPanelAVIChoice extends JDialogBase {
     /** Combo box to select compression. */
     private JComboBox compressionBox;
 
-    /** DOCUMENT ME! */
+    /** Indicator for OK button pressed. */
     private boolean okayPressed = false;
 
-    /** DOCUMENT ME! */
+    /** Operating system type windows or Mac. */
     private int operating_system = 0; // 0 = cross platform... default
 
     /** Text Field for M-JPEG quality. */
@@ -66,8 +66,8 @@ public class JPanelAVIChoice extends JDialogBase {
     /**
      * Creates a new JPanelAVIChoice object.
      *
-     * @param  theParentFrame  DOCUMENT ME!
-     * @param  isColor         DOCUMENT ME!
+     * @param  theParentFrame  Parent frame reference.
+     * @param  isColor  is image color image or not.       
      */
     public JPanelAVIChoice(Frame theParentFrame, boolean isColor) {
         super(theParentFrame, true);
