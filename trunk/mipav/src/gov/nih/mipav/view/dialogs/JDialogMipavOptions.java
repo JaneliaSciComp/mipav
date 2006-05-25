@@ -14,6 +14,9 @@ import java.util.*;
 
 import javax.swing.*;
 
+import edu.sdsc.grid.io.srb.SRBAccount;
+
+import gov.nih.mipav.model.srb.SRBFileTransferer;
 
 /**
  * This dialog contains access to MIPAV preferences.
@@ -188,6 +191,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private Color voiDrawColor;
 
+    // SRB panel contents
+    private JPanel srbPanel;
+    private JComboBox srbVersionComboBox;
+    private JComboBox srbTransferModeComboBox;
+    private JTextField srbBaseTempDirField;
+    private JButton srbTempDirBrowseButton;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -264,7 +273,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayPanel.setLayout(new BoxLayout(displayPanel, BoxLayout.Y_AXIS));
         displayPanel.add(displayUserInterfacePanel);
         displayPanel.add(displayColorPanel);
-
+        
         // make the other options
         otherPanel.setLayout(gbl);
         gbc.fill = GridBagConstraints.NONE;
@@ -277,11 +286,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeOutputWindowOptions(gbc, gbl);
         makeDebugOptions(gbc, gbl);
         makeFontOptions(gbc, gbl);
-
+        makeSRBOptions(gbc, gbl);
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(MipavUtil.font12B);
         tabbedPane.addTab("Display", displayPanel);
         tabbedPane.addTab("File", filePanel);
+        tabbedPane.addTab("SRB", srbPanel);
         tabbedPane.addTab("Other", otherPanel);
 
         this.getContentPane().add(tabbedPane, BorderLayout.CENTER);
@@ -523,6 +533,13 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             // set the cancel button text to 'close' since the changes were accepted
             cancelButton.setText("Close");
+            
+            // Store the srb related preference information.
+            if(srbBaseTempDirField.getText().length() > 0){
+                Preferences.setSRBTempDir(srbBaseTempDirField.getText());
+            }
+            Preferences.setSRBTransferMode((String)srbTransferModeComboBox.getSelectedItem());
+            Preferences.setSRBVersion((String)srbVersionComboBox.getSelectedItem());
 
         } else if (command.equalsIgnoreCase("active color")) {
             colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
@@ -597,6 +614,18 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             }
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10247");
+        } else if(command.equals("srbTempDirBrowse")){
+            JFileChooser chooser = new JFileChooser();
+            if(Preferences.getSRBTempDir() != null){
+                chooser.setCurrentDirectory(new File(Preferences.getSRBTempDir()));
+            }
+            chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setMultiSelectionEnabled(false);
+            int retValue = chooser.showOpenDialog(srbPanel);
+            if(retValue == JFileChooser.APPROVE_OPTION){
+                File file = chooser.getSelectedFile();
+                srbBaseTempDirField.setText(file.getAbsolutePath());
+            }
         } else {
             // any other button on the dialog: allow user to select "apply"
             // OKButton.setEnabled(true);  // doesn't act correctly when open and then new image frame is added.
@@ -1616,6 +1645,80 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     }
 
+
+    // make srb options
+    protected void makeSRBOptions(GridBagConstraints gbc, GridBagLayout gbl){
+        srbPanel = new JPanel();
+        srbPanel.setLayout(gbl);
+        
+        JLabel jargonVersionLabel = new JLabel("Jargon Verion : ");
+        String[] availableVersions = {SRBAccount.SRB_VERSION_1_1_8, 
+                                      SRBAccount.SRB_VERSION_2, 
+                                      SRBAccount.SRB_VERSION_3, 
+                                      SRBAccount.SRB_VERSION_3_0_2, 
+                                      SRBAccount.SRB_VERSION_3_3, 
+                                      SRBAccount.SRB_VERSION_3_3_1, 
+                                      SRBAccount.SRB_VERSION_3_4};
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.LINE_END;
+
+        gbl.setConstraints(jargonVersionLabel, gbc);
+        srbPanel.add(jargonVersionLabel);
+        srbVersionComboBox = new JComboBox(availableVersions);
+        if(Preferences.getSRBVersion() != null){
+            srbVersionComboBox.setSelectedItem(Preferences.getSRBVersion());
+        }else{
+            srbVersionComboBox.setSelectedItem(availableVersions[6]);
+        }
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(srbVersionComboBox, gbc);
+        srbPanel.add(srbVersionComboBox);
+        
+        JLabel transferModeLabel = new JLabel("Transfer Mode : ");
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbl.setConstraints(transferModeLabel, gbc);
+        srbPanel.add(transferModeLabel);
+        String[] transferModes = {SRBFileTransferer.TRANSFER_MODE_PARELLEL, 
+                                  SRBFileTransferer.TRANSFER_MODE_SEQUENTIAL};
+        srbTransferModeComboBox = new JComboBox(transferModes);
+        if(Preferences.getSRBTransferMode() != null){
+            srbTransferModeComboBox.setSelectedItem(Preferences.getSRBTransferMode());
+        }else{
+            srbTransferModeComboBox.setSelectedItem(transferModes[1]);
+        }
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbl.setConstraints(srbTransferModeComboBox, gbc);
+        srbPanel.add(srbTransferModeComboBox);
+        
+        JLabel tempDirLabel = new JLabel("Temporary Directory : ");
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(tempDirLabel, gbc);
+        srbPanel.add(tempDirLabel);
+
+        srbBaseTempDirField = new JTextField("");
+        if(Preferences.getSRBTempDir() != null){
+            srbBaseTempDirField.setText(Preferences.getSRBTempDir());
+        }
+        srbBaseTempDirField.setColumns(16);
+        srbBaseTempDirField.setEditable(false);
+        gbc.gridwidth = 1;
+        gbl.setConstraints(srbBaseTempDirField, gbc);
+        srbPanel.add(srbBaseTempDirField);
+
+        srbTempDirBrowseButton = new JButton("Browse");
+        srbTempDirBrowseButton.addActionListener(this);
+        srbTempDirBrowseButton.setActionCommand("srbTempDirBrowse");
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.LAST_LINE_END;
+        gbl.setConstraints(srbTempDirBrowseButton, gbc);
+        srbPanel.add(srbTempDirBrowseButton);
+        
+    }
+    
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
