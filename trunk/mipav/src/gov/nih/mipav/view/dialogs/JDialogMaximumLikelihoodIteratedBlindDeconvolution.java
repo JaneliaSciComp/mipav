@@ -56,6 +56,10 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
     /** The index of refraction of the sample: */
     private float refractiveIndex = 1.518f;
 
+    /** When true the lense NA, wavelength, and refractive index are used in
+     * the deconvolution process*/
+    private boolean useMicroscopeSettings = true;
+
     /** The original data image to be reconstructed: */
     private ModelImage originalImage;
 
@@ -111,7 +115,14 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         else if (command.equals("Help"))
         {
             MipavUtil.showHelp("10086");
-        } // end if()-else
+        } 
+        else if (command.equals("MicroscopeOptions") )
+        {
+            useMicroscopeSettings = ((JCheckBox)event.getSource()).isSelected();
+            textObjectiveNumericalAperature.setEnabled( useMicroscopeSettings );
+            textWavelength.setEnabled( useMicroscopeSettings );
+            textRefractiveIndex.setEnabled( useMicroscopeSettings );
+        }// end if()-else
     } // end actionPerformed(...)
 
 
@@ -215,7 +226,8 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
                                                                          showProgress,
                                                                          objectiveNumericalAperature,
                                                                          wavelength,
-                                                                         refractiveIndex
+                                                                         refractiveIndex,
+                                                                         useMicroscopeSettings
                                                                          );
             
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -292,7 +304,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
 
         // Wavelength
         JLabel labelWavelength =
-            new JLabel("Wavelength");
+            new JLabel("Wavelength (nm)");
         labelWavelength.setFont(serif12);
 
         textWavelength = new JTextField();
@@ -313,6 +325,12 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         textRefractiveIndex.setHorizontalAlignment(JTextField.RIGHT);
         textRefractiveIndex.setText(Float.toString(refractiveIndex));
         textRefractiveIndex.setFont(serif12);
+
+        JCheckBox checkAdvancedOptions = new JCheckBox( "Use microscope settings" );
+        checkAdvancedOptions.setEnabled( true );
+        checkAdvancedOptions.setSelected( true );
+        checkAdvancedOptions.addActionListener( this );
+        checkAdvancedOptions.setActionCommand( "MicroscopeOptions" );
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = gbc.WEST;
@@ -349,6 +367,10 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         parameterPanel.add(labelRefractiveIndex, gbc);
         gbc.gridx = 1;
         parameterPanel.add(textRefractiveIndex, gbc);
+
+        gbc.gridy++;
+        gbc.gridx = 0;
+        parameterPanel.add(checkAdvancedOptions, gbc);
 
         gbc.gridx = 0;
         gbc.weightx = 1.0;
