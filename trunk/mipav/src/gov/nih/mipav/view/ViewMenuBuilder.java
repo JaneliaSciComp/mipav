@@ -723,17 +723,8 @@ public class ViewMenuBuilder {
      */
     public boolean isMenuItemSelected(String name) {
 
-        JMenuItem menuItem = null;
+        JMenuItem menuItem = getMenuItem(name);
         JCheckBoxMenuItem checkItem;
-
-        for (int i = 0; i < menuItemVector.size(); i++) {
-
-            if (((MipavMenuItem) menuItemVector.elementAt(i)).getName().equals(name)) {
-                menuItem = ((MipavMenuItem) (menuItemVector.elementAt(i))).getItem();
-
-                break;
-            }
-        }
 
         if (menuItem == null) {
             System.err.println("called isSelected on " + name + " which does not exist.");
@@ -910,24 +901,14 @@ public class ViewMenuBuilder {
      * @param  actionCommand  The name of the action command whose state needs to be checked.
      * @param  val            whether the checkbox should be selected.
      */
-    public void setMenuItemSelected(String actionCommand, boolean val) {
-        JMenuItem menuItem = null;
+    public void setMenuItemSelected(String name, boolean val) {
+        JMenuItem menuItem = getMenuItem(name);
         JCheckBoxMenuItem checkItem;
         MipavMenuItem mipavItem = null;
 
-        for (int i = 0; i < menuItemVector.size(); i++) {
-            mipavItem = (MipavMenuItem) menuItemVector.elementAt(i);
-
-            if ((mipavItem.getItem().getActionCommand() != null) &&
-                    mipavItem.getItem().getActionCommand().equals(actionCommand)) {
-                menuItem = mipavItem.getItem();
-
-                break;
-            }
-        }
 
         if (menuItem == null) {
-            Preferences.debug("called setSelected on " + actionCommand + " which does not exist.\n",
+            Preferences.debug("called setSelected on " + name + " which does not exist.\n",
                               Preferences.DEBUG_MINOR);
 
             return;
@@ -936,7 +917,7 @@ public class ViewMenuBuilder {
         try {
             checkItem = (JCheckBoxMenuItem) menuItem;
         } catch (ClassCastException e) {
-            Preferences.debug("called setSelected on " + actionCommand + " which is not a checkbox.\n",
+            Preferences.debug("called setSelected on " + name + " which is not a checkbox.\n",
                               Preferences.DEBUG_MINOR);
 
             return;
