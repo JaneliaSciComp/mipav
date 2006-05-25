@@ -2,7 +2,7 @@ package gov.nih.mipav.model.srb;
 
 import edu.sdsc.grid.io.*;
 
-import java.util.Vector;
+import java.util.List;
 
 /**
  * An interface for transfering files between different machines.
@@ -31,4 +31,6 @@ public interface FileTransferable {
      * @return true if the file was transferred successfully.
      */
     public boolean transfer(GeneralFile[] sourceFiles, GeneralFile[] targetFiles);
+    
+    public boolean transfer(GeneralFile sourceFile, GeneralFile targetFile);
 }
