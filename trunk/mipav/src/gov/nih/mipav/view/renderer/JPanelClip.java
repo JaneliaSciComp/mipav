@@ -99,16 +99,16 @@ public class JPanelClip extends JPanelRendererBase
     /** The BranchGroup to which the arbitrary behaviors are attached and rotate. */
     private BranchGroup behaviorBG;
 
-    /** DOCUMENT ME! */
+    /** Arbitrary and static clipping plane check box. */
     private JCheckBox boundingCheckA, boundingCheckStatic, boundingCheckStaticInv;
 
     /** Check box to turn the clipping plane frame on and off. */
     private JCheckBox boundingCheckX, boundingCheckY, boundingCheckZ;
 
-    /** DOCUMENT ME! */
+    /** X,Y,Z inverse clipping plane check box. */
     private JCheckBox boundingCheckXInv, boundingCheckYInv, boundingCheckZInv;
 
-    /** DOCUMENT ME! */
+    /**  Static and static inverse, arbitrary clipping plane check box. */
     private JCheckBox boxStatic, boxStaticInv, boxA;
 
     /** Check boxes that turn the image plane and the sliders on and off. */
@@ -120,19 +120,19 @@ public class JPanelClip extends JPanelRendererBase
     /** Mouse event vector that record the clipping plane sliders changes. */
     private MouseEventVector clipEvents;
 
-    /** DOCUMENT ME! */
+    /** Arbitrary clipping plane yellow boundary indicator box. */
     private ViewJComponentBoxSlice clipSliceAIndicator, clipSliceA;
 
-    /** DOCUMENT ME! */
+    /** Static clipping plane boundary box. */
     private ViewJComponentBoxSlice clipSliceStatic, clipSliceStaticInv;
 
     /** The bounding box frame around the clipping planes. */
     private ViewJComponentBoxSlice clipSliceX, clipSliceY, clipSliceZ;
 
-    /** DOCUMENT ME! */
+    /** X, Y, Z inverse clipping slice boundary box. */
     private ViewJComponentBoxSlice clipSliceXInv, clipSliceYInv, clipSliceZInv;
 
-    /** DOCUMENT ME! */
+    /** Static, static inverse and arbitrary clipping plane boundary box. */
     private JSlider clipSliderStatic, clipSliderStaticInv, sliderA;
 
     /** Sliders for the image planes. */
@@ -189,16 +189,16 @@ public class JPanelClip extends JPanelRendererBase
     /** Flag to indicate tranformChanged event invoked. */
     private boolean isTransformChanged = false;
 
-    /** DOCUMENT ME! */
+    /** Arbitrary clipping slider labels. */
     private JLabel labelAStart, labelAMid, labelAEnd;
 
-    /** DOCUMENT ME! */
+    /** Static cliiping slider labels. */
     private JLabel labelStatic, labelStaticInv, labelA;
 
-    /** DOCUMENT ME! */
+    /** Static inverse clipping plane labels. */
     private JLabel labelStaticInvStart, labelStaticInvMid, labelStaticInvEnd;
 
-    /** DOCUMENT ME! */
+    /** Static clipping plane labels. */
     private JLabel labelStaticStart, labelStaticMid, labelStaticEnd;
 
     /** Sliders labels. */
@@ -207,25 +207,25 @@ public class JPanelClip extends JPanelRendererBase
     /** Slider tick labels. */
     private JLabel labelXStart, labelXMid, labelXEnd;
 
-    /** DOCUMENT ME! */
+    /** X clipping slider labels. */
     private JLabel labelXStartInv, labelXMidInv, labelXEndInv;
 
-    /** DOCUMENT ME! */
+    /** Y clipping slider labels. */
     private JLabel labelYStart, labelYMid, labelYEnd;
 
-    /** DOCUMENT ME! */
+    /** Y inverse clipping slider labels. */
     private JLabel labelYStartInv, labelYMidInv, labelYEndInv;
 
-    /** DOCUMENT ME! */
+    /** Z clipping slider labels. */
     private JLabel labelZStart, labelZMid, labelZEnd;
 
-    /** DOCUMENT ME! */
+    /** Z clipping slider labels. */
     private JLabel labelZStartInv, labelZMidInv, labelZEndInv;
 
     /** Backup of the data for undo:. */
     private int[] m_aiImageA_backup;
 
-    /** DOCUMENT ME! */
+    /** ImageB backup buffer. */
     private int[] m_aiImageB_backup;
 
     /** Parent of each light bulb. */
@@ -264,13 +264,13 @@ public class JPanelClip extends JPanelRendererBase
     /** Branch group of the static clipping plane. */
     private BranchGroup mcStaticBG;
 
-    /** DOCUMENT ME! */
+    /** Arbitrary clipping branch group. */
     private BranchGroup objClipSliceA_BG, clipSliceA_BG, clipSliceAIndicator_BG;
 
     /** root of all the clipping slices branch group. */
     private BranchGroup objClipSlices_BG;
 
-    /** DOCUMENT ME! */
+    /** Static clipping branch group. */
     private BranchGroup objClipSliceStatic_BG, objClipSliceStaticInv_BG;
 
     /** Parent for each individual clip slices branch group, childen of objClipSlices_BG. */
@@ -279,7 +279,7 @@ public class JPanelClip extends JPanelRendererBase
     /** Parent of the -x, -y, -z clip slices branchgroup. */
     private BranchGroup objClipSliceXInv_BG, objClipSliceYInv_BG, objClipSliceZInv_BG;
 
-    /** DOCUMENT ME! */
+    /** Arbitrary and static control panels. */
     private JPanel panelA, panelS, panelSInv;
 
     /** Declare each clipping plane control panel. */
@@ -312,13 +312,13 @@ public class JPanelClip extends JPanelRendererBase
     /** Tabbed Panel that hold the each clipping planes control box. */
     private JTabbedPane tabbedPane;
 
-    /** DOCUMENT ME! */
+    /** Static and arbitrary text field. */
     private JTextField textStatic, textStaticInv, textA;
 
     /** Text fields that display the slice number when slider moves. */
     private JTextField textX, textY, textZ;
 
-    /** DOCUMENT ME! */
+    /** X, Y, Z inverse text field. */
     private JTextField textXInv, textYInv, textZInv;
 
     /** xBox, yBox, zBox from the parent scene. */
@@ -2704,7 +2704,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get arbitray slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  Arbitrary slider value.
      */
     public int getSliceA() {
         return aSlice;
@@ -2713,7 +2713,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get x slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  X clipping slider value.
      */
     public int getSliceX() {
         return xSlice;
@@ -2722,7 +2722,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get x negative slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  Get y clipping slider value
      */
     public int getSliceXInv() {
         return xSliceInv;
@@ -2731,7 +2731,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get y slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  Get y clipping slider value.
      */
     public int getSliceY() {
         return ySlice;
@@ -2740,7 +2740,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get y negative slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  Get y inverse clipping slider value.
      */
     public int getSliceYInv() {
         return ySliceInv;
@@ -2749,7 +2749,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get z slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  Get Z clippig slider value.
      */
     public int getSliceZ() {
         return zSlice;
@@ -2758,7 +2758,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get z negative slider value.
      *
-     * @return  DOCUMENT ME!
+     * @return  get z inverse clipping slider value.
      */
     public int getSliceZInv() {
         return zSliceInv;
@@ -2767,7 +2767,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get arbitrary slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get arbitrary clipping slider value.
      */
     public JSlider getSliderA() {
         return sliderA;
@@ -2776,7 +2776,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get x slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get x clipping slider value.
      */
     public JSlider getSliderX() {
         return clipSliderX;
@@ -2785,7 +2785,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get x negative slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get X inverse clipping slider value. 
      */
     public JSlider getSliderXInv() {
         return sliderXInv;
@@ -2794,7 +2794,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get y slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get Y clipping slider value. 
      */
     public JSlider getSliderY() {
         return clipSliderY;
@@ -2803,7 +2803,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get y negative slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get y inverse clipping slider value. 
      */
     public JSlider getSliderYInv() {
         return sliderYInv;
@@ -2812,7 +2812,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get z slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get z clipping slider value. 
      */
     public JSlider getSliderZ() {
         return clipSliderZ;
@@ -2821,7 +2821,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Get z negative slider.
      *
-     * @return  DOCUMENT ME!
+     * @return  get z inverse clipping slider value.  
      */
     public JSlider getSliderZInv() {
         return sliderZInv;
@@ -3628,8 +3628,8 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
      *
-     * @param  panelWidth   DOCUMENT ME!
-     * @param  frameHeight  DOCUMENT ME!
+     * @param  panelWidth   panel width
+     * @param  frameHeight  parent frame height. 
      */
     public void resizePanel(int panelWidth, int frameHeight) {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight));
@@ -4891,8 +4891,8 @@ public class JPanelClip extends JPanelRendererBase
      * Called by the TextureSculptor or VolumeSculptor objects. The function stores the original volume data back to the
      * original values in the m_aiImage_backup data members.
      *
-     * @param  kImageA  DOCUMENT ME!
-     * @param  kImageB  DOCUMENT ME!
+     * @param  kImageA  image A reference.
+     * @param  kImageB  image B reference.
      */
     protected void backupImage(ModelImage kImageA, ModelImage kImageB) {
 
@@ -4987,7 +4987,7 @@ public class JPanelClip extends JPanelRendererBase
     /**
      * Helper method that adds components to the control panel for the grid bag layout.
      *
-     * @param  panel  DOCUMENT ME!
+     * @param  panel  control panel.
      * @param  c      Component added to the control panel.
      * @param  gbc    GridBagConstraints of added component.
      * @param  x      Gridx location
@@ -5150,7 +5150,7 @@ public class JPanelClip extends JPanelRendererBase
         /**
          * Does nothing.
          *
-         * @param  e  DOCUMENT ME!
+         * @param  e  event handler
          */
         public void actionPerformed(ActionEvent e) { }
     }
@@ -5165,9 +5165,9 @@ public class JPanelClip extends JPanelRendererBase
         private static final long serialVersionUID = -7735741437177785055L;
 
         /**
-         * DOCUMENT ME!
+         * Wrapper to repaint the panel.
          *
-         * @param  g  DOCUMENT ME!
+         * @param  g  graphics reference. 
          */
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
@@ -5181,13 +5181,13 @@ public class JPanelClip extends JPanelRendererBase
      */
     class OkColorListener implements ActionListener {
 
-        /** DOCUMENT ME! */
+        /** Button reference.  */
         JButton button;
 
         /**
          * Creates a new OkColorListener object.
          *
-         * @param  _button  DOCUMENT ME!
+         * @param  _button  button reference. 
          */
         OkColorListener(JButton _button) {
             super();
