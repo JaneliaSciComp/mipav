@@ -734,6 +734,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             /* Don't use microscope constraints: */
             m_bUseMicroscopeConstraints = false;
             /* Recalculate sum based on no constraints: */
+            kImageInvFFT.disposeLocal();
             kImageInvFFT = kImage;
             for ( int i = 0; i < m_iArrayLength; i++ )
             {
