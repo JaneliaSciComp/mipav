@@ -61,13 +61,13 @@ public class JPanelHistoLUT
     /** Panel containing the histogram and lut components for image B. */
     private ViewJPanelHistoLUT histoPanelB;
 
-    /** Model Image A, B. */
+    /** image A reference. */
     private ModelImage imageA;
 
-    /** DOCUMENT ME! */
+    /** image B reference. */
     private ModelImage imageB;
 
-    /** DOCUMENT ME! */
+    /** Color LUT A, B textfield. */
     private JTextField indexColorATextF, indexColorBTextF;
 
     /** Historgram dialog slider labels of the imageA, B and GM imageA, B. */
@@ -76,16 +76,16 @@ public class JPanelHistoLUT
     /** The historgram log view Check box. */
     private JCheckBox logCheckBoxA, logCheckBoxB;
 
-    /** Model LUT A, B. */
+    /** Model LUT A. */
     private ModelLUT LUTa;
 
-    /** DOCUMENT ME! */
+    /** LutA table adjust check box. */
     private JCheckBox lutAdjustCheckboxA;
 
-    /** DOCUMENT ME! */
+    /** LutB table adjust check box. */
     private JCheckBox lutAdjustCheckboxB;
 
-    /** DOCUMENT ME! */
+    /** Model LUT B. */
     private ModelLUT LUTb;
 
     /** The main GUI control panel. */
@@ -113,8 +113,6 @@ public class JPanelHistoLUT
     /** Tabbed panel B. */
     private JPanel panelB = null;
 
-    // private JDialogCT ctDialogA, ctDialogB;
-
     /** X range text field in the imageA, B historgram dialog. */
     private JTextField rangeText, rangeTextB;
 
@@ -136,13 +134,13 @@ public class JPanelHistoLUT
     /** threshold related. */
     private JTextField threshLowerF, threshUpperF;
 
-    /** DOCUMENT ME! */
+    /** Bottom toolbar. */
     private JToolBar toolBarBottom;
 
     /** Toolbar that hold the linear, horizontal mode control buttons. */
     private ViewToolBarBuilder toolBarObj;
 
-    /** DOCUMENT ME! */
+    /** Top toolbar */
     private JToolBar toolBarTop;
 
     /** Toolbar panel. */
@@ -777,7 +775,7 @@ public class JPanelHistoLUT
     /**
      * Focus Events:
      *
-     * @param  e  DOCUMENT ME!
+     * @param  e  event handler.
      */
     public void focusGained(FocusEvent e) { // do nothing
     }
@@ -927,7 +925,7 @@ public class JPanelHistoLUT
     /**
      * Returns which LUT is currently visible.
      *
-     * @return  DOCUMENT ME!
+     * @return  return the currently selcted LUT table index.
      */
     public int getSelectedLUT() {
 
@@ -1007,14 +1005,14 @@ public class JPanelHistoLUT
     /**
      * Unchanged.
      *
-     * @param  e  DOCUMENT ME!
+     * @param  e  key press event handler.
      */
     public void keyPressed(KeyEvent e) { }
 
     /**
      * Unchanged.
      *
-     * @param  e  DOCUMENT ME!
+     * @param  e  kay release event handler.
      */
     public void keyReleased(KeyEvent e) { }
 
@@ -1259,8 +1257,8 @@ public class JPanelHistoLUT
     /**
      * Resizig the control panel with ViewJFrameVolumeView's frame width and height.
      *
-     * @param  panelWidth   DOCUMENT ME!
-     * @param  frameHeight  DOCUMENT ME!
+     * @param  panelWidth   panel width.
+     * @param  frameHeight  parent frame height.
      */
     public void resizePanel(int panelWidth, int frameHeight) {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - (topPanel.getHeight() * 2)));
@@ -1508,12 +1506,6 @@ public class JPanelHistoLUT
     }
 
     /**
-     * HistoLUTParent interface.
-     *
-     * @param  LUT  DOCUMENT ME!
-     */
-
-    /**
      * {@inheritDoc}
      */
     public void setLUT(ModelLUT LUT) {
@@ -1657,9 +1649,9 @@ public class JPanelHistoLUT
     }
 
     /**
-     * Does nothing in this //.
+     * Does nothing in this.
      *
-     * @param  slice  DOCUMENT ME!
+     * @param  slice  slice value.
      */
     public void setSlice(int slice) { }
 
@@ -1845,7 +1837,7 @@ public class JPanelHistoLUT
      * This methods calls the componentImage's REPAINT method to redraw the screen. The extents on this image have
      * changed, so the extents need to be read in again and menus, panes and slide bars adjusted accordingly.
      *
-     * @return  DOCUMENT ME!
+     * @return  return false. 
      */
     public boolean updateImageExtents() {
         return false;
@@ -1857,7 +1849,7 @@ public class JPanelHistoLUT
     /**
      * This methods calls the componentImage's REPAINT method to redraw the screen. Without LUT changes or image changes
      *
-     * @return  DOCUMENT ME!
+     * @return  return false.
      */
     public boolean updateImages() {
         return false;
@@ -1912,7 +1904,7 @@ public class JPanelHistoLUT
     /**
      * Calls dispose.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable dispose memory.
      */
     protected void finalize() throws Throwable {
         this.disposeLocal();
@@ -2439,9 +2431,9 @@ public class JPanelHistoLUT
         private static final long serialVersionUID = -7791172507789867643L;
 
         /**
-         * DOCUMENT ME!
+         * Wrapper to repaint the panel.
          *
-         * @param  g  DOCUMENT ME!
+         * @param  g  graphics reference.
          */
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
