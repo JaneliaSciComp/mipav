@@ -33,10 +33,10 @@ public class FileInfoDicom extends FileInfoBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3072660161266896186L;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the DICOM tags are explicit (i.e they have VRs). */
     public static final boolean EXPLICIT = false;
 
-    /** DOCUMENT ME! */
+    /** Used to indicate that the DICOM tags are implicit (i.e. they use the DICOM dictionary).  */
     public static final boolean IMPLICIT = true;
 
     /**
@@ -144,7 +144,7 @@ public class FileInfoDicom extends FileInfoBase {
     /** Type of image - color, monochrome etc. */
     public String photometricInterp = "MONOCHROME2";
 
-    /** DOCUMENT ME! */
+    /** Pixel Padding Value (0028, 0120). Value of pixels added to non-rectangular image to pad to rectangular format. */
     public Short pixelPaddingValue = null;
 
     /** Data type. */
