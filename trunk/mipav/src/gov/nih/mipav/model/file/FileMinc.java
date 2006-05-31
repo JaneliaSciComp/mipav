@@ -648,13 +648,13 @@ public class FileMinc extends FileBase {
 
                     if (fileInfo.getExtents().length == 3) {
                         rawFile.readImage(buffer,
-                                          fileInfo.offset + (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac),
+                                          fileInfo.getOffset() + (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac),
                                           fileInfo.getDataType());
                     } else {
-                        rawFile.readImage(buffer, fileInfo.offset, fileInfo.getDataType());
+                        rawFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                     }
                 } else {
-                    rawFile.readImage(buffer, fileInfo.offset + (n * buffer.length * imgTypeFac),
+                    rawFile.readImage(buffer, fileInfo.getOffset() + (n * buffer.length * imgTypeFac),
                                       fileInfo.getDataType());
                 }
 

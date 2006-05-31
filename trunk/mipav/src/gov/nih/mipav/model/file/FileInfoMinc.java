@@ -132,9 +132,6 @@ public class FileInfoMinc extends FileInfoBase {
     /** DOCUMENT ME! */
     public int numrecs;
 
-    /** DOCUMENT ME! */
-    public int offset = 0;
-
     /** Valid image maximum value. Default = -1. */
     public double vmax = -1.0;
 
@@ -858,8 +855,8 @@ public class FileInfoMinc extends FileInfoBase {
         for (int i = 0; i < varArray.length; i++) {
 
             if (varArray[i].name.equals("image")) {
-                offset = varArray[i].begin;
-                Preferences.debug("Image offset = " + offset + "\n");
+                setOffset( varArray[i].begin );
+                Preferences.debug("Image offset = " + getOffset() + "\n");
 
                 switch (varArray[i].nc_type) {
 
