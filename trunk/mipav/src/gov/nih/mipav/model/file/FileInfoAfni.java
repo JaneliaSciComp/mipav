@@ -323,8 +323,8 @@ public class FileInfoAfni extends FileInfoBase {
     private Point3Df TalairachCenter = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY,
                                                     Float.POSITIVE_INFINITY);
 
-    /** DOCUMENT ME! */
-    private float[] tAxisOffsets = null; // if TAXIS_NUMS[1] > 0, then this array gives the time offsets of the
+    /** If TAXIS_NUMS[1] > 0, then this array gives the time offsets of the */
+    private float[] tAxisOffsets = null; 
 
     // slices defined by TAXIS_FLOATS[3..4].  The time offset at
     // z = TAXIS_FLOATS[3] + k*TAXIS_FLOATS[4]
