@@ -22,6 +22,16 @@ import java.io.*;
  * NIFTI uses a routine to derive axis orientations from the upper 3 by 3 parameters of the 4 by 4 matrix. The 4 by 4
  * matrix in NIFTI transforms i,j,k indexes to (x,y,z) coordinates where +x = Right, +y = Anterior, +z = Superior. In
  * MIPAV the 4 by 4 matrix does not imply the axis orientations.</p>
+ * 
+ * For qform_code > 0, which should be the normal case the NIFTI definition is:
+ * [x]    [R11 R12 R13] [       pixdim[1] * i]   [qoffset_x]
+ * [y] =  [R21 R22 R23] [       pixdim[2] * j] + [qoffset_y]
+ * [z]    [R31 R32 R33] [qfac * pixdim[3] * k]   [qoffset_z]
+ * Now in going to MIPAV 2 changes must occur.
+ * 1.) NIFTI has X L->R and Y P->A while MIPAV uses X R->L and Y A->P, so this would cause
+ * R11, R12, R13, qoffset_x, R21, R22, R23, and qoffset_y to be multiplied by -1.
+ * 2.) The NIFTI image is flipped along the j axis, so this would cause R12, R22, R32, and
+ * qoffset_y to be multiplied by -1.
  *
  * <p>MIPAV ANALYZE uses 6 for 16 bit unsigned short in the datatype field while NIFTI uses 512 for 16 bit unsigned
  * short in the datatype field. NIFTI also has a signed char at 256, an unsigned int at 768, a LONG at 1024, an unsigned
@@ -1510,17 +1520,17 @@ public class FileNIFTI extends FileBase {
                 r00 = (a * a) + (b * b) - (c * c) - (d * d);
                 matrix.setMatrix(-r00 * resolutions[0], 0, 0);
                 r01 = 2.0 * ((b * c) - (a * d));
-                matrix.setMatrix(-r01 * resolutions[1], 0, 1);
+                matrix.setMatrix(r01 * resolutions[1], 0, 1);
                 r02 = 2.0 * ((b * d) + (a * c));
-                matrix.setMatrix(r02 * qfac * resolutions[2], 0, 2);
+                matrix.setMatrix(-r02 * qfac *resolutions[2], 0, 2);
                 r10 = 2.0 * ((b * c) + (a * d));
                 matrix.setMatrix(-r10 * resolutions[0], 1, 0);
                 r11 = (a * a) + (c * c) - (b * b) - (d * d);
-                matrix.setMatrix(-r11 * resolutions[1], 1, 1);
+                matrix.setMatrix(r11 * resolutions[1], 1, 1);
                 r12 = 2.0 * ((c * d) - (a * b));
-                matrix.setMatrix(r12 * qfac * resolutions[2], 1, 2);
+                matrix.setMatrix(-r12 * qfac * resolutions[2], 1, 2);
                 r20 = 2.0 * ((b * d) - (a * c));
-                matrix.setMatrix(-r20 * resolutions[0], 2, 0);
+                matrix.setMatrix(r20 * resolutions[0], 2, 0);
                 r21 = 2.0 * ((c * d) + (a * b));
                 matrix.setMatrix(-r21 * resolutions[1], 2, 1);
                 r22 = (a * a) + (d * d) - (c * c) - (b * b);
@@ -1530,7 +1540,7 @@ public class FileNIFTI extends FileBase {
                 qoffset_z = getBufferFloat(bufferByte, 276, endianess);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -qoffset_x;
-                LPSOrigin[1] = -qoffset_y;
+                LPSOrigin[1] = qoffset_y;
                 LPSOrigin[2] = qoffset_z;
                 axisOrientation = getAxisOrientation(matrix);
                 Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
@@ -1601,17 +1611,17 @@ public class FileNIFTI extends FileBase {
                 srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
                 srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
                 matrix.setMatrix((double) -srow_x[0], 0, 0);
-                matrix.setMatrix((double) -srow_x[1], 0, 1);
-                matrix.setMatrix((double) srow_x[2], 0, 2);
+                matrix.setMatrix((double) srow_x[1], 0, 1);
+                matrix.setMatrix((double) -srow_x[2], 0, 2);
                 matrix.setMatrix((double) -srow_y[0], 1, 0);
-                matrix.setMatrix((double) -srow_y[1], 1, 1);
-                matrix.setMatrix((double) srow_y[2], 1, 2);
-                matrix.setMatrix((double) -srow_z[0], 2, 0);
+                matrix.setMatrix((double) srow_y[1], 1, 1);
+                matrix.setMatrix((double) -srow_y[2], 1, 2);
+                matrix.setMatrix((double) srow_z[0], 2, 0);
                 matrix.setMatrix((double) -srow_z[1], 2, 1);
                 matrix.setMatrix((double) srow_z[2], 2, 2);
                 LPSOrigin = new float[3];
                 LPSOrigin[0] = -srow_x[3];
-                LPSOrigin[1] = -srow_y[3];
+                LPSOrigin[1] = srow_y[3];
                 LPSOrigin[2] = srow_z[3];
 
                 axisOrientation = getAxisOrientation(matrix);
@@ -3260,8 +3270,9 @@ public class FileNIFTI extends FileBase {
         }
         
         matrix = fileInfo.getMatrix();
+        Preferences.debug("Matrix on write entry = " + matrix + "\n");
         matrix.set(0, 3, -LPSOrigin[0]);
-        matrix.set(1, 3, -LPSOrigin[1]);
+        matrix.set(1, 3, LPSOrigin[1]);
         matrix.set(2, 3, LPSOrigin[2]);
 
         
@@ -3370,12 +3381,12 @@ public class FileNIFTI extends FileBase {
 
         if (matrix != null) {
             r00 = -matrix.get(0, 0);
-            r01 = -matrix.get(0, 1);
-            r02 = matrix.get(0, 2);
+            r01 = matrix.get(0, 1);
+            r02 = -matrix.get(0, 2);
             r10 = -matrix.get(1, 0);
-            r11 = -matrix.get(1, 1);
-            r12 = matrix.get(1, 2);
-            r20 = -matrix.get(2, 0);
+            r11 = matrix.get(1, 1);
+            r12 = -matrix.get(1, 2);
+            r20 = matrix.get(2, 0);
             r21 = -matrix.get(2, 1);
             r22 = matrix.get(2, 2);
         } else {
@@ -3383,7 +3394,7 @@ public class FileNIFTI extends FileBase {
             r01 = 0.0;
             r02 = 0.0;
             r10 = 0.0;
-            r11 = -1.0;
+            r11 = 1.0;
             r12 = 0.0;
             r20 = 0.0;
             r21 = 0.0;
@@ -3637,42 +3648,52 @@ public class FileNIFTI extends FileBase {
 
             // sform_code
             setBufferShort(bufferByte, fileInfo.getCoordCode(), 254, endianess);
-
+            Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
             setBufferFloat(bufferByte, quatern_b, 256, endianess);
+            Preferences.debug("Writing quatern_c = " + quatern_c + "\n");
             setBufferFloat(bufferByte, quatern_c, 260, endianess);
+            Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
             setBufferFloat(bufferByte, quatern_d, 264, endianess);
 
             // qoffset_x
             setBufferFloat(bufferByte, -LPSOrigin[0], 268, endianess);
 
             // qoffset_y
-            setBufferFloat(bufferByte, -LPSOrigin[1], 272, endianess);
+            setBufferFloat(bufferByte, LPSOrigin[1], 272, endianess);
 
             // qoffset_z
             setBufferFloat(bufferByte, LPSOrigin[2], 276, endianess);
 
             if (matrix != null) {
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 1)), 284, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(0, 2)), 288, endianess);
+
+                // System.out.println("matrix = " + matrix.toString());
+                // srow_x
+                setBufferFloat(bufferByte, (float) (-matrix.get(0,0)), 280, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(0,1)), 284, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(0,2)), 288, endianess);
                 setBufferFloat(bufferByte, -LPSOrigin[0], 292, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 1)), 300, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, -LPSOrigin[1], 308, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2, 0)), 312, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
+                // srow_y
+                setBufferFloat(bufferByte, (float) (-matrix.get(1,0)), 296, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(1,1)), 300, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(1,2)), 304, endianess);
+                setBufferFloat(bufferByte, LPSOrigin[1], 308, endianess);
+                // srow_z
+                setBufferFloat(bufferByte, (float) (matrix.get(2,0)), 312, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(2,1)), 316, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(2,2)), 320, endianess);
                 setBufferFloat(bufferByte, LPSOrigin[2], 324, endianess);
             } else {
+                // srow_x
                 setBufferFloat(bufferByte, -1.0f, 280, endianess);
                 setBufferFloat(bufferByte, 0.0f, 284, endianess);
                 setBufferFloat(bufferByte, 0.0f, 288, endianess);
                 setBufferFloat(bufferByte, 0.0f, 292, endianess);
+                // srow_y
                 setBufferFloat(bufferByte, 0.0f, 296, endianess);
-                setBufferFloat(bufferByte, -1.0f, 300, endianess);
+                setBufferFloat(bufferByte, 1.0f, 300, endianess);
                 setBufferFloat(bufferByte, 0.0f, 304, endianess);
                 setBufferFloat(bufferByte, 0.0f, 308, endianess);
+                // srow_z
                 setBufferFloat(bufferByte, 0.0f, 312, endianess);
                 setBufferFloat(bufferByte, 0.0f, 316, endianess);
                 setBufferFloat(bufferByte, 1.0f, 320, endianess);
@@ -3875,15 +3896,18 @@ public class FileNIFTI extends FileBase {
             // sform_code
             setBufferShort(bufferByte, FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT, 254, endianess);
 
+            Preferences.debug("Writing quatern_b = " + quatern_b + "\n");
             setBufferFloat(bufferByte, quatern_b, 256, endianess);
+            Preferences.debug("Writing quatern_c = " + quatern_c + "\n");
             setBufferFloat(bufferByte, quatern_c, 260, endianess);
+            Preferences.debug("Writing quatern_d = " + quatern_d + "\n");
             setBufferFloat(bufferByte, quatern_d, 264, endianess);
 
             // qoffset_x
             setBufferFloat(bufferByte, -LPSOrigin[0], 268, endianess);
 
             // qoffset_y
-            setBufferFloat(bufferByte, -LPSOrigin[1], 272, endianess);
+            setBufferFloat(bufferByte, LPSOrigin[1], 272, endianess);
 
             // qoffset_z
             setBufferFloat(bufferByte, LPSOrigin[2], 276, endianess);
@@ -3891,27 +3915,33 @@ public class FileNIFTI extends FileBase {
             if (matrix != null) {
 
                 // System.out.println("matrix = " + matrix.toString());
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 0)), 280, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(0, 1)), 284, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(0, 2)), 288, endianess);
+                // srow_x
+                setBufferFloat(bufferByte, (float) (-matrix.get(0,0)), 280, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(0,1)), 284, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(0,2)), 288, endianess);
                 setBufferFloat(bufferByte, -LPSOrigin[0], 292, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 0)), 296, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(1, 1)), 300, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(1, 2)), 304, endianess);
-                setBufferFloat(bufferByte, -LPSOrigin[1], 308, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2, 0)), 312, endianess);
-                setBufferFloat(bufferByte, (float) (-matrix.get(2, 1)), 316, endianess);
-                setBufferFloat(bufferByte, (float) (matrix.get(2, 2)), 320, endianess);
+                // srow_y
+                setBufferFloat(bufferByte, (float) (-matrix.get(1,0)), 296, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(1,1)), 300, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(1,2)), 304, endianess);
+                setBufferFloat(bufferByte, LPSOrigin[1], 308, endianess);
+                // srow_z
+                setBufferFloat(bufferByte, (float) (matrix.get(2,0)), 312, endianess);
+                setBufferFloat(bufferByte, (float) (-matrix.get(2,1)), 316, endianess);
+                setBufferFloat(bufferByte, (float) (matrix.get(2,2)), 320, endianess);
                 setBufferFloat(bufferByte, LPSOrigin[2], 324, endianess);
             } else {
+                // srow_x
                 setBufferFloat(bufferByte, -1.0f, 280, endianess);
                 setBufferFloat(bufferByte, 0.0f, 284, endianess);
                 setBufferFloat(bufferByte, 0.0f, 288, endianess);
                 setBufferFloat(bufferByte, 0.0f, 292, endianess);
+                // srow_y
                 setBufferFloat(bufferByte, 0.0f, 296, endianess);
-                setBufferFloat(bufferByte, -1.0f, 300, endianess);
+                setBufferFloat(bufferByte, 1.0f, 300, endianess);
                 setBufferFloat(bufferByte, 0.0f, 304, endianess);
                 setBufferFloat(bufferByte, 0.0f, 308, endianess);
+                // srow_z
                 setBufferFloat(bufferByte, 0.0f, 312, endianess);
                 setBufferFloat(bufferByte, 0.0f, 316, endianess);
                 setBufferFloat(bufferByte, 1.0f, 320, endianess);
