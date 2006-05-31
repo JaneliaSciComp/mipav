@@ -27,11 +27,20 @@ import java.io.*;
  * [x]    [R11 R12 R13] [       pixdim[1] * i]   [qoffset_x]
  * [y] =  [R21 R22 R23] [       pixdim[2] * j] + [qoffset_y]
  * [z]    [R31 R32 R33] [qfac * pixdim[3] * k]   [qoffset_z]
- * Now in going to MIPAV 2 changes must occur.
+ * Now in going to MIPAV 3 changes must occur.
  * 1.) NIFTI has X L->R and Y P->A while MIPAV uses X R->L and Y A->P, so this would cause
  * R11, R12, R13, qoffset_x, R21, R22, R23, and qoffset_y to be multiplied by -1.
  * 2.) The NIFTI image is flipped along the j axis, so this would cause R12, R22, R32, and
  * qoffset_y to be multiplied by -1.
+ * 3.) R13, R23, and R33 are multiplied by qfac.
+ * So we in going to MIPAV we use -R11, -R13*qfac, -qoffset_x, -R21,
+ * -R23*qfac, -R32, and R33*qfac.
+ * If qform_code == 0 and sform_code > 0:
+ * x = srow_x[0]* i + srow_x[1] * j + srow_x[2] * k + srow_x[3]
+ * y = srow_y[0]* i + srow_y[1] * j + srow_y[2] * k + srow_y[3]
+ * z = srow_z[0]* i + srow_z[1] * j + srow_z[2] * k + srow_z[3]
+ * In going to MIPAV we use -srow_x[0], -srow_x[2], -srow_x[3],
+ * -srow_y[0], -srow_y[2], and -srow_z[1].
  *
  * <p>MIPAV ANALYZE uses 6 for 16 bit unsigned short in the datatype field while NIFTI uses 512 for 16 bit unsigned
  * short in the datatype field. NIFTI also has a signed char at 256, an unsigned int at 768, a LONG at 1024, an unsigned
