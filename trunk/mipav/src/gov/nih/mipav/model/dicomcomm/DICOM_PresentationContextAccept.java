@@ -8,13 +8,13 @@ public class DICOM_PresentationContextAccept extends DICOM_PDUItemType {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Presentation Context ID */
     public byte presentationContextID;
 
-    /** DOCUMENT ME! */
+    /** Result default to 2. */
     public byte result = 2; // 2 = no reason
 
-    /** DOCUMENT ME! */
+    /** PDU item type transfer syntax. */
     public DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(PDUTYPE_TransferSyntax);
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
