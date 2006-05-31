@@ -506,6 +506,44 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public abstract void displayAboutInfo(JDialogBase dialog, TransMatrix matrix);
 
     /**
+     * Returns the number of bytes per pixel based on the data type.
+     * 
+     * @param dataType  the data type.
+     * @return          the number of bytes per pixel.
+     */
+    public static int getNumOfBytesPerPixel(int dataType) {
+        switch (dataType) {
+        case ModelStorageBase.BOOLEAN:
+        case ModelStorageBase.BYTE:
+        case ModelStorageBase.UBYTE:
+            return 1;
+        case ModelStorageBase.SHORT:
+        case ModelStorageBase.USHORT:
+            return 2;
+        case ModelStorageBase.INTEGER:
+        case ModelStorageBase.UINTEGER:
+            return 4;
+        case ModelStorageBase.LONG:
+            return 8;
+        case ModelStorageBase.FLOAT:
+            return 4;
+        case ModelStorageBase.DOUBLE:
+            return 8;
+        case ModelStorageBase.ARGB: // 4 * UBYTE(8 bits) = 4 bytes
+            return 4;
+        case ModelStorageBase.ARGB_USHORT: // 4 * USHORT(16 bits) = 8 bytes
+            return 8;
+        case ModelStorageBase.ARGB_FLOAT: // 4 * FLOAT(32 bits) = 16 bytes
+            return 16;
+        case ModelStorageBase.COMPLEX: // 2 * FLOAT(32 bits) = 8 bytes
+            return 8;
+        case ModelStorageBase.DCOMPLEX: // 2 * DOUBLE(64 bits) = 16 bytes
+            return 16;
+        default:
+            throw new IllegalArgumentException("The data type is illegal argument : " + dataType);
+        }
+    }
+    /**
      * Helper method to copy important file info type to another file info type.
      *
      * @param  originalInfo  source file info.
@@ -1752,6 +1790,21 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         return dimResolutions;
     }
 
+    /**
+     * Returns the size of the slice image in byte which represented by this object.
+     * @return the size of the slice image in byte which represented by this object.
+     */
+    public int getSize(){
+        int[] extents = this.getExtents();
+        if(extents == null || extents.length < 2){
+            return -1;
+        }
+        int dataType = getDataType();
+        
+        return extents[0] * extents[1] * getNumOfBytesPerPixel(getDataType());
+    }
+    
+    
     /**
      * Returns the space between neighboring slices.
      *
