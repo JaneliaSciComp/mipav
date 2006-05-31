@@ -11,74 +11,75 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 
 
 /**
- * <p>The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored by the National Institutes of Health, that will help us better understand how to prevent and treat knee osteoarthritis, one of the most common causes of disability in adults. It is a four-year study and will recruit men and women aged 45 and above at high risk for developing symptomatic knee osteoarthritis. Osteoarthritis causes more health problems and medical expenses than any other form of arthritis. Symptoms of osteoarthritis can range from stiffness and mild pain to severe joint pain and even disability. The OAI cohort will be 5000 participants with clinically significant knee OA or at high risk for developing incident OA and obtain the appropriate images and bio-specimens needed for investigation and validation of OA biomarkers. The large number of images that results from the OAI is a major obstacle to overcome. Manual image segmentation is laborious and subject to inter and intra-observer variability when performing volumetric analysis. Therefore, BIRSS has started a multistage segmentation and quantification technique to automatically or semi-automatically process the entire cohort.</p>
+ * ------------------ Static fields/initializers --------------------------
+ * <p>The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored by the National Institutes of Health,
+ *  that will help us better understand how to prevent and treat knee osteoarthritis, one of the most common causes of disability 
+ *  in adults. It is a four-year study and will recruit men and women aged 45 and above at high risk for developing symptomatic 
+ *  knee osteoarthritis. Osteoarthritis causes more health problems and medical expenses than any other form of arthritis. 
+ *  Symptoms of osteoarthritis can range from stiffness and mild pain to severe joint pain and even disability. The OAI cohort 
+ *  will be 5000 participants with clinically significant knee OA or at high risk for developing incident OA and obtain the 
+ *  appropriate images and bio-specimens needed for investigation and validation of OA biomarkers. The large number of images 
+ *  that results from the OAI is a major obstacle to overcome. Manual image segmentation is laborious and subject to inter and 
+ *  intra-observer variability when performing volumetric analysis. Therefore, BIRSS has started a multistage segmentation and 
+ *  quantification technique to automatically or semi-automatically process the entire cohort.</p>
  */
 public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
-    //~ Static fields/initializers ----------------------------------------
-    
-	/** final segmentation intensity values (interstitial fat, subcutaneous fat, 
-	 * muscle, bone, bone marrow, background) */
-    /** DOCUMENT ME! */
-    public static int FAT = 255; //interstitial fat    
+	/** FINAL SEGMENTATION INTENSITY VALUES*/
+	
+	/** interstitial fat*/
+    public static int FAT = 255;    
 
-    /** DOCUMENT ME! */
-    public static int SUB_CUT_FAT = 225; //subcutaneous fat
+    /** subcutaneous fat */
+    public static int SUB_CUT_FAT = 225;
     
-    /** DOCUMENT ME! */
+    /** muscle*/
     public static int Muscle = 170;
 
-    /** DOCUMENT ME! */
+    /** bone */
     public static int Bone = 100;
 
-    /** DOCUMENT ME! */
+    /** bone marrow */
     public static int BoneMarrow = 200;
 
-    /** DOCUMENT ME! */
+    /** background */
     public static int BACKGROUND_NEW = 0;
 
 
-    /** intermediate segmentation intensity values (fat1, fat2, muscle, background) ~4class fuzzy */
-    /** DOCUMENT ME! */
-    public static int BACKGROUND_2 = 63;
-
-    /** DOCUMENT ME! */
+    /** INTERMEDIATE SEGMENTATION INTENSITY VALUES (4 CLASS HARD FUZZY SEGMENTATION)*/
+     
+    /** interstitial fat intensityA */
     public static int FAT_2_A = 189;
 
-    /** DOCUMENT ME! */
+    /** interstitial fat intensityB */
     public static int FAT_2_B = 252;
 
-    /** DOCUMENT ME! */
+    /** muscle */
     public static int Muscle_2 = 126;
 
-
-    /** DOCUMENT ME! */
-    public static int xDim, yDim, zDim, sliceSize, volSize, aa, bb, cc, i;
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** background */
+    public static int BACKGROUND_2 = 63;
     
-    /** DOCUMENT ME! */
-    //input leg image
+
+    /** GENERAL IMAGE VARIABLES */
+    public static int xDim, yDim, zDim, sliceSize, volSize, aa, bb, cc, i;
+    
+    /** input leg image */
     private ModelImage destImage1 = null;
 
-    /** DOCUMENT ME! */
-    //input leg image (isn'd)
+    /** input leg image (isn'd) */
     private ModelImage destImage2 = null;
 
-    /** DOCUMENT ME! */
-    //image of only bone and bone marrow
+    /** image of only bone and bone marrow */
     private ModelImage destImage3a = null;
 
-    /** DOCUMENT ME! */
-    //image of only fat
+    /** image of only fat */
     private ModelImage destImage3b = null;
 
-    /** DOCUMENT ME! */
-    //input AND output 'right' image
+    /** input AND output 'right' image */
     private ModelImage destImageA = null;
 
-    /** DOCUMENT ME! */
-    //input AND output 'left' image
+    /** input AND output 'left' image */
     private ModelImage destImageB = null;
     
     /** DOCUMENT ME! */
@@ -87,30 +88,29 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int[] imgBuffer2 = null;
 
-    /** DOCUMENT ME! */
-    //outer boundary mask (obMask). --mask of individual leg boundaries
-    private ModelImage obMask = null; //obMask template used in code (for left and right legs)
+    /** outer boundary mask (obMask). --mask of individual leg boundaries
+     * obMask template used in code (for left and right legs) */
+    private ModelImage obMask = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage obMaskA = null; //obMask input into pipelineB (right leg)
+    /** obMask input into pipelineB (right leg) */
+    private ModelImage obMaskA = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage obMaskB = null; //obMask input into pipelineB (left leg)
+    /** obMask input into pipelineB (left leg) */
+    private ModelImage obMaskB = null;
 
-    /** DOCUMENT ME! */
-    //muscle bundle contour voi mask
-    private ModelImage voiMask = null; //voiMask template used in code (for left and right legs)
+    /** muscle bundle contour voi mask
+     *  voiMask template used in code (for left and right legs)*/
+    private ModelImage voiMask = null;
     
-    /** DOCUMENT ME! */
-    //flag for bone/bonemarrow processing, to indicate whether or not bone is continuous
+    /** flag for bone/bonemarrow processing, to indicate whether or not bone is continuous */
     private boolean continuousBone = false; 
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI = ViewUserInterface.getReference();
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * ~ Constructors ----------------------------------------------------------------
      * Creates a new PlugInAlgorithmPipelineB object.
      */
     public PlugInAlgorithmPipelineB() {
@@ -124,13 +124,14 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * Default constructor.
      *
-     * @param  destImageA  the source image
-     * @param  destImageB  DOCUMENT ME!
-     * @param  obMaskA     DOCUMENT ME!
-     * @param  obMaskB     DOCUMENT ME!
+     * @param  destImageA  --the source image (RIGHT THIGH)
+     * @param  destImageB  --the source image (LEFT THIGH)
+     * @param  obMaskA     --the source image thigh outer boundary mask(RIGHT THIGH)
+     * @param  obMaskB     --the source image thigh outer boundary mask(LEFT THIGH)
+     * 
+     * To run algorithm --destImageA, destImageB are the input cropped left/right thighs.
+     * obMaskA,obMaskB corresponding outer boundary masks
      */
-    //To run algorithm --destImageA, destImageB are the input cropped left/right thighs.
-    //obMaskA,obMaskB corresponding outer boundary masks
     public PlugInAlgorithmPipelineB(ModelImage destImageA, ModelImage destImageB, ModelImage obMaskA,
                                     ModelImage obMaskB) {
         this.obMaskA = obMaskA;
@@ -138,17 +139,19 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         this.destImageA = destImageA;
         this.destImageB = destImageB;
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
+   
+    
+    /** ---------- METHODS ---------- */
     /**
-     * DOCUMENT ME!
+     * GET IMAGE VARIABLES
+     * 
+     * 1. Initialize image dimensions(xyz).
+     * 2. Makes copy of input image to put through processing.
+     * 3. Initializes outer boundary mask, and intermediate processing images.
      *
-     * @param  destImageA  DOCUMENT ME!
-     * @param  obMaskA     DOCUMENT ME!
+     * @param  destImageA  --source image
+     * @param  obMaskA     --source image thigh outer boundary mask
      */
-    //1. Initialize image dimensions(xyz). 
-    //2. Makes copy of input image to put through processing.
-    //3. Initializes outer boundary mask, and intermediate processing images.
     public void getVariables(ModelImage destImageA, ModelImage obMaskA) {
         xDim = destImageA.getExtents()[0];
         yDim = destImageA.getExtents()[1];
@@ -159,45 +162,46 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
         destImage1 = (ModelImage) destImageA.clone();
         destImage1.setVOIs(destImageA.getVOIs());
+
+        destImage2 = (ModelImage) destImageA.clone();
+        destImage2.setVOIs(destImageA.getVOIs());
+        
         obMask = (ModelImage) obMaskA.clone();
         destImage3a = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3a",
                                      destImageA.getUserInterface());
         destImage3b = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3b",
                                      destImageA.getUserInterface());
     }
-    
-    
-
-   
+        
    /**
-    * DOCUMENT ME!
+    * LABELING BONE
+    * Loop check ending once morphpological open/close operations leave a resultant 'bone'
+    * that is continuous. Continuity test done by differencing bone marrow before and after 'FillHole' operation.
     *
-    * @param  SegmentedImage  DOCUMENT ME!
+    * @param  SegmentedImage  --4class hard fuzzy segmented image
     */
-   // Loop check ending once morphpological open/close operations leave a resultant 'bone'
-   // that is continuous. Continuity test done by differencing bone marrow before and after 'FillHole' operation.
-   public ModelImage processBone(ModelImage SegmentedImage){
-	   // residual image to check difference between image before and after 'FillHole'
+    public ModelImage processBone(ModelImage SegmentedImage){
+	   /** residual image to check difference between image before and after 'FillHole'*/
 	   ModelImage residual = new ModelImage(SegmentedImage.getType(), SegmentedImage.getExtents(), "Residual",
 	    		SegmentedImage.getUserInterface());
 		progressBar.setMessage("Isolating/Labeling Bone");
 		continuousBone=false;
 		
-		//round1 most rigorous bone isolation (open24,close24)
-		ModelImage BoneID = threshold1(SegmentedImage, BACKGROUND_2);//isolate bone intensity --threshold
+		/**round1 most rigorous bone isolation (open24,close24)*/
+		ModelImage BoneID = threshold1(SegmentedImage, BACKGROUND_2);/**isolate bone intensity --threshold*/
 		ModelImage BoneIDtemp = (ModelImage) BoneID.clone();
 		Open(BoneIDtemp, 24);
 		Close(BoneIDtemp, 24);
-		IDObjects(BoneIDtemp, zDim*2000/20, zDim*10000/20);  //isolate bone size
-		isolatingCenterObject(BoneIDtemp); //returns binary image of center object
-		ModelImage BoneIDtemp1 = (ModelImage)BoneIDtemp.clone(); //BoneIDtemp retains binary image of BONE
+		IDObjects(BoneIDtemp, zDim*2000/20, zDim*10000/20);  /**isolate bone size*/
+		isolatingCenterObject(BoneIDtemp); /**returns binary image of center object*/
+		ModelImage BoneIDtemp1 = (ModelImage)BoneIDtemp.clone(); /**BoneIDtemp retains binary image of BONE*/
 		FillHole(BoneIDtemp1);
-		ImgSubtract(residual,BoneIDtemp1,BoneIDtemp); //Residual receives what's to be seen as BONE MARROW
-		Erode(residual, 24); 	//just to make sure residual is actually of bone marrow size. 
-								//(too small a residual will be eaten away with erosion)
+		ImgSubtract(residual,BoneIDtemp1,BoneIDtemp); /**Residual receives what's to be seen as BONE MARROW*/
+		Erode(residual, 24); 	/**just to make sure residual is actually of bone marrow size. 
+								(too small a residual will be eaten away with erosion)*/
 		if(residual.getMax() == 0){
-			//If no hole was filled.. 
-			//round2 second a little less rigorous bone isolation (open6, close24)
+			/**If no hole was filled.. 
+			round2 second a little less rigorous bone isolation (open6, close24)*/
 			BoneIDtemp.disposeLocal();		BoneIDtemp = null;
 			BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
 			System.out.println("Round1, FillBoneMarrow doesnt work");
@@ -211,8 +215,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			ImgSubtract(residual,BoneIDtemp1,BoneIDtemp);
 			Erode(residual, 24);			
 			if(residual.getMax() == 0){
-				//round 3, no morphological operations --less rigorous bone isolation
-				BoneIDtemp.disposeLocal();	BoneIDtemp=null;
+				/**round 3, no morphological operations --less rigorous bone isolation*/
+				BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 				BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
 				System.out.println("Round2, FillBoneMarrow doesnt work");
 				BoneIDtemp = (ModelImage)BoneID.clone();
@@ -223,9 +227,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 				ImgSubtract(residual,BoneIDtemp1,BoneIDtemp);
 				Erode(residual, 24);
 				if(residual.getMax() == 0){
-					//round4, if bone too faint, a simple morphological close to make it continuous --least rigorous bone isolation
+					/**round4, if bone too faint, a simple morphological close to make it continuous --least rigorous bone isolation*/
 					System.out.println("Round3, FillBoneMarrow didnt work -using bone with artificially filled marrow");
-					BoneIDtemp.disposeLocal();	BoneIDtemp=null;
+					BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 					BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
 					BoneIDtemp = (ModelImage)BoneID.clone();
 					Close(BoneIDtemp,24);
@@ -236,17 +240,20 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 					ImgSubtract(residual,BoneIDtemp1,BoneIDtemp);
 					Erode(residual, 24);
 					if(residual.getMax() == 0){
-						//cannot find continuous bone to fill with marrow. convert bone image to bone intensity.
+						/**cannot find continuous bone to fill with marrow. convert bone image to bone intensity.*/
 						System.out.println("Round4, FillBoneMarrow unsuccessful. Bone not continuous and therefore no marrow labeled in ProcessBone. " +
 								"Bone however IS labeled.");
 						convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp, 1, Bone);
+						BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 					}
 					else{
-						//however if bone continuous (filled), convert filling to bonemarrow. then on top of bone marrow convert unfilled image to bone.
+						/**however if bone continuous (filled), convert filling to bonemarrow.
+						 *  then on top of bone marrow convert unfilled image to bone.*/
 						continuousBone = true;
 						System.out.println("Round4, FillBoneMarrow successful");
 						convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BoneMarrow);
 					    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, Bone);
+						BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 					}
 				}
 				else{
@@ -254,6 +261,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 					System.out.println("Round3, FillBoneMarrow successful");
 					convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BoneMarrow);
 				    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, Bone);
+					BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 				}				
 			}
 			else{
@@ -261,6 +269,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 				System.out.println("Round2, FillBoneMarrow successful");
 				convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BoneMarrow);
 			    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, Bone);
+				BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 			}
 		}
 		else{
@@ -268,38 +277,42 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			System.out.println("Round1, FillBoneMarrow successful");
 			convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BoneMarrow);
 		    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, Bone);
+			BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 		}		
-	    progressBar.updateValue(50 * (aa - 1) + 43, activeImage);	   	    
-	    return BoneIDtemp1;
+	    progressBar.updateValue(50 * (aa - 1) + 43, activeImage);
+	    residual.disposeLocal();	    residual=null;
+	    BoneID.disposeLocal();			BoneID=null;
+	    return BoneIDtemp1;   
+	    
    }
-
-   
    
    /**
-    * DOCUMENT ME!
+    * LABELING BONE MARROW (1. artificially, 2.filling gaps between bone)
+    * case1: NO BONE. no bone marrow. (we create artificial bone)
+    * case2: DISCONTINUOUS BONE. no bone marrow. (we fill in the gaps between discontinuous bone and marrow.
+    * case3: CONTINUOUS BONE. bone marrow to fill. and NOISY BONE MARROW. also NOISY BONE. (processed in the end, not this method)
+    * case4: CONTINUOUS BONE. CONTINUOUS BONE MARROW. (not processed at all)
+    * 
+    * *ALGORITHM USED ONLY IF BONE NOT CONTINUOUS* 
     *
-    * @param  srcImage  DOCUMENT ME!
+    * @param  srcImage  --image with labeled bone
     */
-   public void processBoneMarrow(ModelImage srcImage, ModelImage SegmentedImg){
+    public void processBoneMarrow(ModelImage srcImage, ModelImage SegmentedImg){
 	   progressBar.setMessage("Processing Bone Marrow (for discontinuous bone images)");
-	   //case1: NO BONE. no bone marrow. (we create artificial bone)
-	   //case2: DISCONTINUOUS BONE. no bone marrow. (we fill in the gaps between discontinuous bone and marrow.
-	   //case3: CONTINUOUS BONE. bone marrow to fill. and NOISY BONE MARROW. also NOISY BONE. (processed in the end, not this method)
-	   //case4: CONTINUOUS BONE. CONTINUOUS BONE MARROW. (not processed at all)
-	   
-	   //*ALGORITHM USED ONLY IF BONE NOT CONTINUOUS* 
-	   //First, check case 1 or case 2--is there labeled bone?*
-	   
+
+	   /**First, check case 1 or case 2--is there labeled bone?*/	   
 	   progressBar.setMessage("Is there bone at all?");
 	   int bb, cc, dd, i;
 	   boolean thereisBone = false;
        for (bb = 0; bb < zDim; bb++) {
            try {
                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-               for (cc = 0; cc < imgBuffer1.length; cc++) {
-	               	if(imgBuffer1[cc]==Bone){
-	               		thereisBone = true;
-	               	}
+               while(thereisBone=false){
+	               for (cc = 0; cc < imgBuffer1.length; cc++) {	            	   
+		               	if(imgBuffer1[cc]==Bone){
+		               		thereisBone = true;
+		               	}
+	               }
                }
            } catch (IOException ex) {
                System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP7");
@@ -308,21 +321,21 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
               
        
        progressBar.setMessage("Locating Bone Marrow");
-	   //Second, using srcImage (HardSeg1 4class hard fuzzy segmentation),  
-	   //isolate pixels of intensities 160-255 to locate 'bone marrow', and label.
-	   ModelImage BMarrow = extractedBoneMarrow(SegmentedImg); //BMarrow should be binary image (extracted from fuzzyImg)
+       /**Second, using srcImage (HardSeg1 4class hard fuzzy segmentation),  
+	   isolate pixels of intensities 160-255 to locate 'bone marrow', and label.*/
+	   ModelImage BMarrow = extractedBoneMarrow(SegmentedImg); /**BMarrow should be binary image (extracted from fuzzyImg)*/
        convert(srcImage, BMarrow, srcImage, 1, BoneMarrow);       
        BMarrow.disposeLocal();BMarrow=null;
 
-       //*LOOP FOR WHEN THERE IS BONE.*
-	   //Fill gaps between discontinuous bone and 'bone marrow'
+       /***LOOP FOR WHEN THERE IS BONE.*
+	   Fill gaps between discontinuous bone and 'bone marrow'*/
 	   if(thereisBone ==true){
 		   progressBar.setMessage("Growing out Bone Marrow to Bone exterior");
 		        for (bb = 0; bb < zDim; bb++) {
 		            try {
 		                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
 		                for (cc = 0; cc < imgBuffer1.length-10*xDim; cc++) {
-		                	//gap between 'bone to marrow', fill with bonemarrow --L to R
+		                	/**gap between 'bone to marrow', fill with bonemarrow --L to R*/
 		                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+1]!=Bone){
 		                		for(dd=10;dd>0;dd--){
 			                    	if(imgBuffer1[cc+dd]==BoneMarrow && imgBuffer1[cc+dd-1]!=BoneMarrow){
@@ -332,7 +345,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			                    	}
 		                		}
 		                	}
-		                	// -- bone 1 row below marrow
+		                	/** -- bone 1 row below marrow*/
 		                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc+xDim]!=Bone){
 		                		for(dd=10;dd>0;dd--){
 			                    	if(imgBuffer1[cc+dd*xDim]==BoneMarrow && imgBuffer1[cc+(dd-1)*xDim]!=BoneMarrow){
@@ -355,7 +368,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		            try {
 		                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
 		                for (cc = 10*xDim; cc < imgBuffer1.length; cc++) {
-		                	// gap between 'marrow to bone', fill with bonemarrow --L to R
+		                	/** gap between 'marrow to bone', fill with bonemarrow --L to R*/
 		                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-1]!=Bone){
 		                		for(dd=10;dd>0;dd--){
 			                    	if(imgBuffer1[cc-dd]==BoneMarrow && imgBuffer1[cc-dd+1]!=BoneMarrow){
@@ -365,7 +378,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			                    	}
 		                		}
 		                	}
-		                	//-- bone 1 row above marrow
+		                	/**-- bone 1 row above marrow*/
 		                	if(imgBuffer1[cc]==Bone && imgBuffer1[cc-xDim]!=Bone){
 		                		for(dd=10;dd>0;dd--){
 			                    	if(imgBuffer1[cc-dd*xDim]==BoneMarrow && imgBuffer1[cc-(dd-1)*xDim]!=BoneMarrow){
@@ -385,7 +398,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		        //ShowImage(srcImage, "after second bone loop");
 	   	}
 	   
-	   //if there is no bone, create artificial bone around bone marrow extracted from 4class fuzzy
+	   /**if there is no bone, create artificial bone around bone marrow extracted from 4class fuzzy*/
 	   	if(thereisBone==false){
 	   		progressBar.setMessage("There is no bone. Creating artificial bone around marrow.");
         	System.out.println("There is no bone");
@@ -440,56 +453,53 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
    }
    
   /**
+   	* LABELING INTERSTITIAL FAT, SUBCUTANEOUS FAT, BACKGROUND AND MUSCLE
+  *  1.convert everything inside voi to muscle
+  *  2.convert fat1 (from 4class hard fuzzy segmentation)to fat
+  *  3.convert fat2 (from 4class hard fuzzy segmentation)to fat
+  *  4.convert everything outside voi to subcutaneous fat
+  *  5.convert everything outside outer boundary mask (obMask) to background
   *
-  * @param   Hard4Classes  DOCUMENT ME!
+  * @param   Hard4Classes  --4class hard fuzzy segmented image
   *
-  * @return  DOCUMENT ME!
+  * @return  --image with labeled interstitial fat, subcutaneous fat, background and muscle (all but bone/bone marrow)
   */
-   //1.convert everything inside voi to muscle
-   //2.convert fat1 (from 4class hard fuzzy segmentation)to fat
-   //3.convert fat2 (from 4class hard fuzzy segmentation)to fat
-   //4.convert everything outside voi to subcutaneous fat
-   //5.convert everything outside outer boundary mask (obMask) to background
- public ModelImage processHardFat(ModelImage Hard4Classes){	 
+   	public ModelImage processHardFat(ModelImage Hard4Classes){	 
 	 progressBar.setMessage("Processing bundle fat");
 	 	ModelImage fatImage = (ModelImage)Hard4Classes.clone();
-		convert(fatImage, voiMask, fatImage, 1, Muscle);	//fill voi with muscle
+		convert(fatImage, voiMask, fatImage, 1, Muscle);	/**fill voi with muscle*/
 		convert(fatImage, Hard4Classes, fatImage, 189, FAT);		
 		convert(fatImage, Hard4Classes, fatImage, 252, FAT);		
-		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);	//all outside voi labeled subcutfat
-		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	//all outside obMask labeled background
+		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);	/**all outside voi labeled subcutfat*/
+		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	/**all outside obMask labeled background*/
 				
-		cleanUp(destImage3b, FAT, Muscle, 60*zDim/20); //FAT FILTER (eliminates fat smaller than 60 pixels --for 20 slices)
+		//cleanUp(destImage3b, FAT, Muscle, 60*zDim/20); /**FAT FILTER (eliminates fat smaller than 60 pixels --for 20 slices)*/
+		cleanUp(fatImage, FAT, Muscle, 60*zDim/20); /**FAT FILTER (eliminates fat smaller than 60 pixels --for 20 slices)*/
 		return fatImage;
  }  
     
- 
- 
- 
  /**
+  	* LABELING BONE MARROW (Extracts the bone marrow from 4 class hard fuzzy segmentation)
  *
- * @param   srcImage  DOCUMENT ME!
+ * @param   SegmentedImg  --4class hard fuzzy segmented image
  *
- * @return  DOCUMENT ME!
+ * @return  --output image with bone marrow as extracted from fuzzy segmentation
  */
- //Extracts the bone marrow from 4 class hard fuzzy segmentation
- public ModelImage extractedBoneMarrow(ModelImage SegmentedImg){
+   	public ModelImage extractedBoneMarrow(ModelImage SegmentedImg){
 	 ModelImage SegmentedImg1 = (ModelImage)SegmentedImg.clone();
- 	ModelImage BMarrow = threshold2(SegmentedImg1, 160f,255f);
+ 	ModelImage BMarrow = threshold2(SegmentedImg1, 160f,255f); //160-255 encloses fat1, fat2
+ 	SegmentedImg1.disposeLocal();SegmentedImg1=null;
  	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
- 	isolatingCenterObject(BMarrow);   	//returns binary image
+ 	isolatingCenterObject(BMarrow);   	/**returns binary image*/
  	return BMarrow;
  }
- 
- 
- 
+  
     /**
-     * DOCUMENT ME!
+     * Returns binary image at center object
      *
-     * @param   srcImage       DOCUMENT ME!
+     * @param   srcImage       --image with center object to be isolated
      *
      */
-	//Returns binary image at center object
     public void isolatingCenterObject(ModelImage srcImage){
     	if(srcImage.getMax()>1){
 	        int[] numObjects = new int[zDim];
@@ -501,13 +511,13 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	        	BoneObject[bb] = 999999999;
 	            try {
 	                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-	                //get numObjects per Slice. ~SLICE maximum.
+	                /**get numObjects per Slice. ~SLICE maximum.*/
 	                for (cc = 0; cc < imgBuffer1.length; cc++) {
 	                    if (imgBuffer1[cc]>numObjects[bb]) {
 	                        numObjects[bb] = imgBuffer1[cc];		
 	                    }
 	                }
-	                //initialize centroid variables (for particular slice)
+	                /**initialize centroid variables (for particular slice)*/
 	                float[] centroidX = new float[numObjects[bb]];
 	                float[] centroidY = new float[numObjects[bb]];
 	                float[] distFromCent = new float[numObjects[bb]];                    
@@ -515,7 +525,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                    centroidX[cc] = 0;
 	                    centroidY[cc] = 0;
 	                }
-	                //obtain centroid per slice & obtain distance between center and centroid of each object (per slice)                
+	                /**obtain centroid per slice & obtain distance between center and centroid of each object (per slice)*/                
 	                for (cc = 1; cc <= numObjects[bb]; cc++) {
 	                	n=1;
 	                    for (x = 0; x < xDim; x++) {
@@ -528,21 +538,21 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 	                            }
 	                        }
 	                    }
-	                    centroidX[cc-1] = centroidX[cc-1] / n;			//System.out.println("centroidx of object: "+cc+", is: "+centroidX[cc-1]);
-	                    centroidY[cc-1] = centroidY[cc-1] / n;			//System.out.println("centroidy of object: "+cc+", is: "+centroidY[cc-1]);
+	                    centroidX[cc-1] = centroidX[cc-1] / n;			
+	                    centroidY[cc-1] = centroidY[cc-1] / n;			
 	                    distFromCent[cc-1] = Math.abs((centroidX[cc-1] - (xDim / 2))*(centroidX[cc-1] - (xDim / 2))
 	                    		+ (centroidY[cc-1] - (yDim / 2))*(centroidY[cc-1] - (yDim / 2)));
 	                }
-	                //use centroids to find center Bone object. (object with minimum distFromCent)
-	                min = 10000; //beginning distance from center. element with distance smaller than this becomes bone object.
+	                /**use centroids to find center Bone object. (object with minimum distFromCent)*/
+	                min = 10000; /**beginning distance from center. element with distance smaller than this becomes bone object.*/
 	                for(cc=1;cc<=numObjects[bb];cc++){
 	                	if(distFromCent[cc-1]<min && distFromCent[cc-1]<1000){
-	                		//1000: threshold min distance to ensure object close enough to center to be considered bone
+	                		/**1000: threshold min distance to ensure object close enough to center to be considered bone*/
 	                		BoneObject[bb] = cc;
 	                		min=distFromCent[cc-1];
 	                	}
 	                }
-	                //eliminate incorrect Bone objects
+	                /**eliminate incorrect Bone objects*/
 	                if(BoneObject[bb]!=999999999){
 		                for(i = 0; i < imgBuffer1.length; i++){
 		                        if (imgBuffer1[i] == BoneObject[bb]) {
@@ -561,22 +571,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	}
     }
     
-    
-    
-    
-
 //  **NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED**
 //  **NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED****NOT USED**
     /**
-     * DOCUMENT ME!
-     *
-     * @param  destImage  DOCUMENT ME!
-     * @param  BoneID       DOCUMENT ME!
+     * artificial 'filling' of bone marrow ~need not be continuous
+     * requres there be labeled bone outside the marrow
+     * 
+     * @param  destImage  --destination image with artificially filled/labeled bone marrow
+     * @param  BoneID     --image with labeled bone
      */
     public void fillBoneMarrow(ModelImage destImage, ModelImage BoneID){
-    	//artificial 'filling' of bone marrow ~need not be continuous
-    	//requres there be labeled bone outside the marrow
-        //ShowImage(BoneID, "BoneID BEFORE");
+    	//ShowImage(BoneID, "BoneID BEFORE");
         int bb, cc, dd, i, x, y, xmin, xmax;
     	   for (bb = 1; bb < zDim; bb++) {
     	           try {
@@ -588,15 +593,18 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	                   for (x = 3; x < xDim-3; x++) {
     	                       i = x + y * xDim;
     	                       if (imgBuffer2[i - 3] == 0 && imgBuffer2[i - 2] == 0 && imgBuffer2[i - 1] == 0 
-    	                       && imgBuffer2[i] == 1 && imgBuffer2[i + 1] == 1 && imgBuffer2[i + 2] == 1) {	//outside bkgrd to Bone boundary
-    	                           for(cc=0;cc<xDim-x-1;cc++){	//go up til edge of image
+    	                       && imgBuffer2[i] == 1 && imgBuffer2[i + 1] == 1 && imgBuffer2[i + 2] == 1) {	
+    	                    	   /**outside bkgrd to Bone boundary*/
+    	                           for(cc=0;cc<xDim-x-1;cc++){	/**go up til edge of image*/
     	                        	   if(imgBuffer2[i+cc-3]==1 && imgBuffer2[i+cc-2]==1 &&imgBuffer2[i+cc-1]==1 
-    	                        	   && imgBuffer2[i+cc]==0 && imgBuffer2[i+cc+1]==0 && imgBuffer2[i+cc+2]==0){	//inner bone to bkgrd boundary
+    	                        	   && imgBuffer2[i+cc]==0 && imgBuffer2[i+cc+1]==0 && imgBuffer2[i+cc+2]==0){	
+    	                        		   /**inner bone to bkgrd boundary*/
     	                        		   xmin = cc;
     	                        		   xmax = 0;
     	                        		   for(dd=0;dd<xDim-x-cc-1;dd++){
     	                        			   if(imgBuffer2[i+cc+dd-3]==0 &&imgBuffer2[i+cc+dd-2]==0 &&imgBuffer2[i+cc+dd-1]==0 
-    	                        			   && imgBuffer2[i+cc+dd]==1 && imgBuffer2[i+cc+dd+1]==1&& imgBuffer2[i+cc+dd+2]==1){	//2nd inner bkgrd to Bone boundary
+    	                        			   && imgBuffer2[i+cc+dd]==1 && imgBuffer2[i+cc+dd+1]==1&& imgBuffer2[i+cc+dd+2]==1){	
+    	                        				   /**2nd inner bkgrd to Bone boundary*/
     	                        				   xmax = cc+dd;
     		                                	   cc=xDim;
     		                                	   dd=xDim;
@@ -637,22 +645,20 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * -------- BASIC STEPS ---------
      *
-     * @param   destImage1  DOCUMENT ME!
+     * @param   destImage1  --image with user input VOI
      *
-     * @return  DOCUMENT ME!
+     * @return  --outputs binary mask with 1 where VOI is.
      */
-    //Takes destImage1 with user input VOI and outputs binary mask with 1 where VOI is.
     public ModelImage makeVOI(ModelImage destImage1) {
     	progressBar.setMessage("Converting VOI to Mask");
         return destImage1.generateBinaryImage(false, false);
     }
     
     /**
-     * DOCUMENT ME!
+     * NORMALIZES INTENSITIES BETWEEN SLICES
      *
-     * @param  srcImage  DOCUMENT ME!
+     * @param  srcImage  --source image with intensity inhomogeneities between slices 
      */
-    //Normalizes intensity between slices
     public void ISN(ModelImage srcImage){
     	progressBar.setMessage("Taking ISN");
         PlugInAlgorithmISN isnAlgo = null;
@@ -664,12 +670,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         isnAlgo = null;        
         }
     
-
-    
     /**
-     * DOCUMENT ME!
+     * ELIMINATES MRI SHADING ARTIFACT - 'nonparametric intensity nonuniformity normalization' ~N3
      *
-     * @param   destImage1  DOCUMENT ME!
+     * @param   destImage1  input/output image with artifact/N3'd
      *
      */
     public void N3(ModelImage destImage1){
@@ -688,14 +692,13 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
     }
 
-    
     /**
-     * DOCUMENT ME!
+     * HARD FUZZY SEGMENTATION
      *
-     * @param   srcImage  DOCUMENT ME!
-     * @param   nClasses  DOCUMENT ME!
+     * @param   srcImage  --regular unlabeled input image
+     * @param   nClasses  --number of classes into which image will be segmented
      *
-     * @return  DOCUMENT ME!
+     * @return  --output Hard Fuzzy segmentation of srcImage into nClasses classes. 
      */
     public ModelImage HardFuzzy(ModelImage srcImage, int nClasses){
     	progressBar.setMessage("Taking "+nClasses+"class Hard Fuzzy Segmentation.");
@@ -712,9 +715,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		HardSeg[0].setFileInfo(fileInfo1, 0);
 
 		AlgorithmFuzzyCMeans firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses,4, 1, 2, 2.0f, 20000, 200000, false,
-        		AlgorithmFuzzyCMeans.HARD_ONLY, false, 0.0f, 200, 0.01f, true);
-
-
+        		AlgorithmFuzzyCMeans.HARD_ONLY, true, 0.0f, 200, 0.01f,true);
+		/*   public AlgorithmFuzzyCMeans(ModelImage[] destImg, ModelImage srcImg, int _nClass, int _pyramidLevels,
+                   int _jacobiIters1, int _jacobiIters2, float _q, float _smooth1, float _smooth2,
+                   boolean _outputGainField, int _segmentation, boolean _cropBackground, float _threshold,
+                   int _max_iter, float _tolerance, boolean _wholeImage)  ---wholeImage =true, means whole image*/
 
         firstFuzz.setCentroids(centroid_array);
         firstFuzz.setProgressBarVisible(false);
@@ -724,15 +729,14 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         
         return HardSeg[0];
         }
-    
-
+  
     /**
-     * DOCUMENT ME!
+     * SOFT FUZZY SEGMENTATION
      *
-     * @param   srcImage  DOCUMENT ME!
-     * @param   nClasses  DOCUMENT ME!
+     * @param   srcImage  --regular unlabeled input image
+     * @param   nClasses  --number of classes into which image will be segmented.
      *
-     * @return  DOCUMENT ME!
+     * @return  --output Soft Fuzzy segmentation of srcImage into nClasses classes.
      */
     public ModelImage[] SoftFuzzy(ModelImage srcImage, int nClasses){
     	float centroid_array[] = new float[nClasses];
@@ -762,11 +766,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         }
     
     /**
-     * DOCUMENT ME!
+     * OBTAINS IMAGE CENTROIDS GIVEN NUMBER OF SEGMENTATION CLASSES
      *
-     * @param  centroid_array  DOCUMENT ME!
-     * @param  srcImage        DOCUMENT ME!
-     * @param  nClasses        DOCUMENT ME!
+     * @param  centroid_array  --array of centroids
+     * @param  srcImage        --image to be segmented
+     * @param  nClasses        --number of classes into which image will be segmented
      */
 	public void getCentroid(float[] centroid_array, ModelImage srcImage, int nClasses){
 		int dd;
@@ -776,14 +780,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	}
 	}
     
-   
-    
     /**
-     * DOCUMENT ME!
+     * MERGING BONE/BONEMARROW IMAGE WITH BKGRD, FAT,SUBCUTFAT,MUSCLE IMAGE
      *
-     * @param  mergedImage  DOCUMENT ME!
-     * @param  BoneImage    DOCUMENT ME!
-     * @param  bundleImage  DOCUMENT ME!
+     * @param  mergedImage  --resultant image with labeled bone/bonemarrow, background, interstitial fat, subcutfat, muscle
+     * @param  BoneImage    --image with labeled bone and bone marrow
+     * @param  bundleImage  --image with labeled background, interstitial fat, subcutaneous fat, muscle
      */
     public void mergeImages(ModelImage mergedImage, ModelImage BoneImage, ModelImage bundleImage){
     	progressBar.setMessage("Merging Processed Thigh Images");
@@ -797,39 +799,36 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     
     
     /**
-     * DOCUMENT ME!
+     * srcImage with noiseIntensity of size up to sizeNoise converted to bkrdIntensity
      *
-     * @param  srcImage        DOCUMENT ME!
-     * @param  noiseIntensity  DOCUMENT ME!
-     * @param  bkrdIntensity   DOCUMENT ME!
-     * @param  sizeNoise       DOCUMENT ME!
+     * @param  srcImage        --image to be cleaned up
+     * @param  noiseIntensity  --intensity classified as 'noise'
+     * @param  bkrdIntensity   --intensity to which noise changed when cleaned up
+     * @param  sizeNoise       --size of noise filter
      */
-    //srcImage with noiseIntensity of size up to sizeNoise converted to bkrdIntensity
     public void cleanUp(ModelImage srcImage, int noiseIntensity, int bkrdIntensity, int sizeNoise) {
-    	ModelImage tempImage = null;
-        tempImage = threshold1(srcImage, noiseIntensity);
+        ModelImage tempImage = threshold1(srcImage, noiseIntensity);
         IDObjects(tempImage, 1, sizeNoise);
-        tempImage = threshold2(tempImage, 1f, (float)tempImage.getMax());
-        convert(srcImage, tempImage, srcImage, 1, bkrdIntensity);
+        ModelImage tempImage1 = threshold2(tempImage, 1f, (float)tempImage.getMax());
         tempImage.disposeLocal();
-        tempImage = null;
+        tempImage=null;
+        convert(srcImage, tempImage1, srcImage, 1, bkrdIntensity);
+        tempImage1.disposeLocal();
+        tempImage1 = null;
     }
     
-    
-    /**
-     * DOCUMENT ME!
+        /**
+     * whenever templateImage = tempIntensity, srcImage converted to newDestIntensity
      *
-     * @param  destImage      DOCUMENT ME!
-     * @param  templateImage   DOCUMENT ME!
-     * @param  srcImage       DOCUMENT ME!
-     * @param  templateIntensity  DOCUMENT ME!
-     * @param  newDestIntensity   DOCUMENT ME!
+     * @param  destImage      --destination image
+     * @param  templateImage  
+     * @param  srcImage       --source image
+     * @param  templateIntensity 
+     * @param  newDestIntensity   
      */
-    //whenever templateImage = tempIntensity, srcImage converted to newIntensity
     public void convert(ModelImage destImage, ModelImage templateImage, ModelImage srcImage, int templateIntensity, int newDestIntensity){
     	int bb, cc;
     	if(srcImage!=null){
-    		//System.out.println("srcImage in convert algorithm is NOT null");
 			for (bb = 0; bb < zDim; bb++) {
 			    try {
 			    	srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
@@ -853,9 +852,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     
 
     /**
-     * DOCUMENT ME!
+     * morphological FILL_HOLES
      *
-     * @param  srcImage  DOCUMENT ME!
+     * @param  srcImage  --source image
      */
     public void FillHole(ModelImage srcImage) {
         AlgorithmMorphology3D MorphFILL = null;
@@ -864,13 +863,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         MorphFILL.run();
     }
     
-    
     /**
-     * DOCUMENT ME!
+     * morphological ID_OBJECTS
      *
-     * @param  srcImage  DOCUMENT ME!
-     * @param  min        DOCUMENT ME!
-     * @param  max        DOCUMENT ME!
+     * @param  srcImage  --source image
+     * @param  min       --smallest object to let through
+     * @param  max       --largest object to let through
      */
     public void IDObjects(ModelImage srcImage, int min, int max) {
         AlgorithmMorphology3D MorphIDObj = null;
@@ -880,11 +878,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         MorphIDObj.run();
     }
     
-    
     /**
-     * DOCUMENT ME!
+     * morphological OPEN
      *
-     * @param  sourceImg  DOCUMENT ME!
+     * @param  sourceImg  --source image
      */
     public void Open(ModelImage sourceImg, int kernalSize) {
     	
@@ -901,12 +898,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         MorphOpen.run();
     }
     
-
-    
     /**
-     * DOCUMENT ME!
+     * morphological CLOSE
      *
-     * @param  sourceImg  DOCUMENT ME!
+     * @param  sourceImg  --source image
+     * @param  kernalSize --kernal size for closure
      */
     public void Close(ModelImage sourceImg, int kernalSize) {
     	
@@ -923,13 +919,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         MorphClose.run();
     }
 
-    
-    
-    
     /**
-     * DOCUMENT ME!
+     * morphological DILATE
      *
-     * @param  srcImage  DOCUMENT ME!
+     * @param  srcImage  	--source image
+     * @param  kernalSize	--kernal size for dilation
      */
     public void Dilate(ModelImage sourceImg, int kernalSize) {
     	
@@ -946,11 +940,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         MorphDilate.run();
     }
     
-
     /**
-     * DOCUMENT ME!
+     * morphological ERODE
      *
-     * @param  srcImage  DOCUMENT ME!
+     * @param  srcImage  	--source image
+     * @param  kernalSize 	--kernal size for erosion
      */
     public void Erode(ModelImage sourceImg, int kernalSize) {
     	
@@ -968,11 +962,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     }
     
     
-    
     /**
-     * DOCUMENT ME!
+     * AlgorithmImageCalculator IMAGE SUBTRACT
      *
-     * @param  srcImage  DOCUMENT ME!
+     * @param   srcImageA	--source image
+     * @param   srcImageB	--source image by A is subtracted
+     * @param 	destImage	--destination image
      */
     public void ImgSubtract(ModelImage destImage,ModelImage srcImageA,ModelImage srcImageB) {
     	AlgorithmImageCalculator MorphSubtract = null;
@@ -986,12 +981,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     
 
     /**
-     * DOCUMENT ME!
+     * THRESHOLD through given intensity
      *
-     * @param   threshSourceImg  DOCUMENT ME!
-     * @param   intensity        DOCUMENT ME!
+     * @param   threshSourceImg  --source image
+     * @param   intensity        --intensity to be let through
      *
-     * @return  DOCUMENT ME!
+     * @return  return image of given intensity
      */
     public ModelImage threshold1(ModelImage threshSourceImg, float intensity) {
         float[] thresh = { intensity - 5, intensity + 5 };
@@ -1002,13 +997,13 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * THRESHOLD through a range of intensities
      *
-     * @param   threshSourceImg  DOCUMENT ME!
-     * @param   intensity1       DOCUMENT ME!
-     * @param   intensity2       DOCUMENT ME!
+     * @param   threshSourceImg  --source image
+     * @param   intensity1       --lower threshold
+     * @param   intensity2       --upper threshold
      *
-     * @return  DOCUMENT ME!
+     * @return  returns image of intensities from intensity1 to intensity2
      */
     public ModelImage threshold2(ModelImage threshSourceImg, float intensity1, float intensity2) {
     	float thresh[] = {intensity1, intensity2};    	
@@ -1019,12 +1014,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     }
     
     /**
-     * DOCUMENT ME!
+     * THRESHOLD everything above 'thresh'
      *
-     * @param   threshSourceImg  DOCUMENT ME!
-     * @param   thresh        DOCUMENT ME!
+     * @param   threshSourceImg		--source image
+     * @param   thresh        		--lower/upper bound intensities
      *
-     * @return  DOCUMENT ME!
+     * @return  returns image of intensities in range 'thresh'
      */
     public ModelImage threshold(ModelImage threshSourceImg, float[] thresh) {
         ModelImage resultImage = null;
@@ -1039,12 +1034,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         return resultImage;
     }
 
-
+    
     /**
-     * DOCUMENT ME!
+     * Creates new screen to show image
      *
-     * @param  sourceImg  DOCUMENT ME!
-     * @param  Name       DOCUMENT ME!
+     * @param  sourceImg  --source image
+     * @param  Name       --name that appears in image window
      */
     public void ShowImage(ModelImage sourceImg, String Name) {
         ModelImage cloneImg = (ModelImage) sourceImg.clone();
@@ -1057,7 +1052,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @return  returns result image A (right thigh)
      */
     public ModelImage getResultImageA() {
         return this.destImageA;
@@ -1066,12 +1061,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @return  returns result image B (left thigh)
      */
     public ModelImage getResultImageB() {
         return this.destImageB;
     }
-
 
     /**
      * DOCUMENT ME!
@@ -1080,7 +1074,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
     private void jbInit() throws Exception { }
     
-
     /**
      * DOCUMENT ME!
      */
@@ -1108,7 +1101,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
     }
     
-
     /**
      * DOCUMENT ME!
      */
@@ -1138,7 +1130,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             volSize = xDim * yDim * zDim;
             imgBuffer1 = new int[sliceSize];
             imgBuffer2 = new int[sliceSize];
-            destImage2 = (ModelImage)destImage1.clone();
             
             /********************************************************
              **************** general processing ********************
@@ -1157,6 +1148,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
 
             //STEP 3: FUZZY SEGMENT ENTIRE IMAGE
+            destImage2.setVOIs(destImage1.getVOIs());
             ModelImage HardSeg1 = HardFuzzy(destImage2, 4);				//ShowImage(HardSeg1,"4class hard fuzzy segmentation");
             progressBar.updateValue(50 * (aa - 1) + 18, activeImage);
 
@@ -1179,13 +1171,14 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             //STEP 6: PROCESS FAT
             destImage3b = processHardFat(HardSeg1);        				//ShowImage(destImage3b, "bundle cleanedup fat image");
             progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
+            HardSeg1.disposeLocal();HardSeg1=null;
             voiMask.disposeLocal();voiMask = null;
             obMask.disposeLocal();obMask = null;
 
             
             //STEP 7: MERGING PROCESSED THIGH IMAGES
             mergeImages(destImage3b, destImage3a, destImage3b);			//ShowImage(destImage3b, "after 'merge'");
-            progressBar.updateValue(50 * (aa - 1) + 53, activeImage);
+            progressBar.updateValue(50 * (aa - 1) + 50, activeImage);
             destImage3a.disposeLocal();destImage3a = null;
             
             
