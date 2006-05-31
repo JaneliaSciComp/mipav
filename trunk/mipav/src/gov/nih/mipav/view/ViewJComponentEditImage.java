@@ -11178,7 +11178,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
             }
 
-            drawGradicules(g, fileInfo.resolutions[0], fileInfo.resolutions[1]);
+            drawGradicules(g, fileInfo.getResolutions()[0], fileInfo.getResolutions()[1]);
 
             // At the momment we are using the reconDimension - why not use
             // ~reconDim = imageActive.getExtents()[0]*imageActive.getResolutions()[0]; ??

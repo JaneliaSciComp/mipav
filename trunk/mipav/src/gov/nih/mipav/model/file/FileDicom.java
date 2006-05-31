@@ -872,7 +872,6 @@ public class FileDicom extends FileDicomBase {
                 }
 
                 fileInfo.setExtents(extents);
-                fileInfo.setResolutions(fileInfo.resolutions);
                 flag = false; // break loop
             } else if (type.equals("typeUnknown")) { // Private tag, may not be reading in correctly.
 
@@ -888,7 +887,6 @@ public class FileDicom extends FileDicomBase {
                             Preferences.debug("Group = " + groupWord + " element = " + elementWord + " Type unknown" +
                                               "; value = " + strValue + "; element length = " + elementLength + "\n");
                         }
-
                     }
                 } catch (OutOfMemoryError e) {
 
@@ -1722,7 +1720,6 @@ public class FileDicom extends FileDicomBase {
                 }
             } else if (name.equals("7FE0,0010")) {
                 fileInfo.setExtents(extents);
-                fileInfo.setResolutions(fileInfo.resolutions);
                 flag = false; // break loop
             } else if (type.equals("typeUnknown")) { // Private tag, may not be reading in correctly.
 
