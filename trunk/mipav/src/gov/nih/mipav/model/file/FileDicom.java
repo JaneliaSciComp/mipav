@@ -851,12 +851,12 @@ public class FileDicom extends FileDicomBase {
                     }
 
                     if ((imageLength + getFilePointer()) <= fileEnd) {
-                        fileInfo.offset = (int) getFilePointer(); // Mark where the image is
+                        fileInfo.setOffset ((int) getFilePointer()); // Mark where the image is
                     }
                     // I think the extra 4 bytes is for explicit tags!!
                     // see Part 5 page 27 1998
                     else if ((imageLength + getFilePointer() + 4) <= fileEnd) {
-                        fileInfo.offset = (int) getFilePointer() + 4;
+                        fileInfo.setOffset((int) getFilePointer() + 4);
                     } else {
 
                         // Preferences.debug( "File Dicom: readHeader: xDim = " + extents[0] + " yDim = " + extents[1] +
@@ -868,7 +868,7 @@ public class FileDicom extends FileDicomBase {
                         throw new IOException("Error while reading header");
                     }
                 } else { // encapsulated
-                    fileInfo.offset = (int) (getFilePointer() - 12);
+                    fileInfo.setOffset((int) (getFilePointer() - 12));
                 }
 
                 fileInfo.setExtents(extents);
@@ -1154,11 +1154,11 @@ public class FileDicom extends FileDicomBase {
 
                 if (ModelImage.isColorImage(imageType)) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
-                    rawFile.readImage(buffer, fileInfo.offset + (imageNo * buffer.length), imageType); // ***** Read image
+                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * buffer.length), imageType); // ***** Read image
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else {
-                    rawFile.readImage(buffer, fileInfo.offset + (imageNo * buffer.length * fileInfo.bytesPerPixel),
+                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel),
                                       imageType); // ***** Read image
                     rawFile.raFile.close();
                     rawFile.raFile = null;
@@ -1316,11 +1316,11 @@ public class FileDicom extends FileDicomBase {
 
                 if (ModelImage.isColorImage(imageType)) {
                     rawFile.setPlanarConfig(fileInfo.planarConfig);
-                    rawFile.readImage(buffer, fileInfo.offset + (imageNo * (buffer.length / 4 * 3)), imageType);
+                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * (buffer.length / 4 * 3)), imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
                 } else {
-                    rawFile.readImage(buffer, fileInfo.offset + (imageNo * buffer.length * fileInfo.bytesPerPixel),
+                    rawFile.readImage(buffer, fileInfo.getOffset() + (imageNo * buffer.length * fileInfo.bytesPerPixel),
                                       imageType);
                     rawFile.raFile.close();
                     rawFile.raFile = null;
@@ -2129,7 +2129,7 @@ public class FileDicom extends FileDicomBase {
         }
 
         initializeFullRead();
-        seek(fileInfo.offset);
+        seek(fileInfo.getOffset());
 
         boolean endianess = fileInfo.getEndianess();
         getNextElement(endianess); // gets group, element, length

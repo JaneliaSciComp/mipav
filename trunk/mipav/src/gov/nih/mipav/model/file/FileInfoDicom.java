@@ -132,9 +132,6 @@ public class FileInfoDicom extends FileInfoBase {
     // NOT be used when writing images to file since some of the info may not
     // be up to data. Might clean this up at some time in the future.
 
-    /** Offset in the file where the image begins. */
-    public int offset = 0;
-
     /** True is image format < DICOM 3.0. */
     public boolean olderVersion = false; // an older version is a version < DICOM v3.0
 
@@ -253,7 +250,6 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public Object cloneItself() {
         FileInfoDicom cloned = (FileInfoDicom) super.cloneItself();
-        cloned.offset = offset;
         cloned.VR = VR;
         cloned.sliceLocation = sliceLocation;
         cloned.xLocation = xLocation;

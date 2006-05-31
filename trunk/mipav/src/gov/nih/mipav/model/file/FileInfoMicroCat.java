@@ -56,9 +56,6 @@ public class FileInfoMicroCat extends FileInfoBase {
     private int numberOfProjections; // 181
 
     /** DOCUMENT ME! */
-    private int offset; // 400
-
-    /** DOCUMENT ME! */
     private String projectionDataAlreadyOnCBR; // No
 
     /** DOCUMENT ME! */
@@ -165,7 +162,7 @@ public class FileInfoMicroCat extends FileInfoBase {
         dialog.append("Volume origin Z:                       " + volumeOriginZ + "\n");
         dialog.append("Log scale:                             " + logScale + "\n");
         dialog.append("Start angle:                           " + startAngle + "\n");
-        dialog.append("Offset:                                " + offset + "\n");
+        dialog.append("Offset:                                " + getOffset() + "\n");
         dialog.append("Cylinder reconstruction:               " + cylinderReconstruction + "\n");
         dialog.append("Enable step size:                      " + enableStepSize + "\n");
         dialog.append("Step size file:                        " + stepSizeFile + "\n");
@@ -345,15 +342,6 @@ public class FileInfoMicroCat extends FileInfoBase {
      */
     public void setNumberOfProjections(int x) {
         numberOfProjections = x;
-    }
-
-    /**
-     * Accessor to set offset.
-     *
-     * @param  x  Int to set it to.
-     */
-    public void setOffset(int x) {
-        offset = x;
     }
 
     /**

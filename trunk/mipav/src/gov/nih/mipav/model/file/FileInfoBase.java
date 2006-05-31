@@ -2070,7 +2070,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *
      * @param  off  the header offset
      */
-    public void setOffset(int off) {
+    public final void setOffset(int off) {
         offset = off;
     }
 
