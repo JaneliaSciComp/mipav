@@ -580,7 +580,7 @@ public class FileAnalyze extends FileBase {
         fileInfo.setResolutions(resolutions);
 
         vox_offset = getBufferFloat(bufferImageHeader, 108, endianess);
-        fileInfo.setVoxOffset(vox_offset);
+        fileInfo.setOffset((int)vox_offset);
 
         // MIPAV is hacking the analyze format to use the unused
         // variables to store start locations.
