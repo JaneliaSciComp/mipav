@@ -153,14 +153,8 @@ public class FileInfoDicom extends FileInfoBase {
     /** 0 = RGB, RGB, 1 = R R R, G G G, B B B. */
     public short planarConfig = 0; //
 
-    /** Stores image resolution. */
-    public float[] resolutions = new float[3]; // pixel resolution (units are (unit-of-measure per pixel))
-
     /** DICOM slice location. */
     public float sliceLocation;
-
-    /** DICOM tag indicating spacing between image planes. */
-    public float sliceSpacing = 0;
 
     /** VR is Value Representation and specifies the data type and format of the values. */
     public String VR = "--";
@@ -198,10 +192,6 @@ public class FileInfoDicom extends FileInfoBase {
     public FileInfoDicom(String name, String directory, int format) {
         super(name, directory, format);
         tagsList = DICOMDictionaryBuilder.getDicomTagTable();
-        resolutions[0] = (float) 1.0;
-        resolutions[1] = (float) 1.0;
-        resolutions[2] = (float) 1.0;
-        sliceSpacing = (float) 0.0;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -273,7 +263,6 @@ public class FileInfoDicom extends FileInfoBase {
         cloned.orientation = orientation;
         cloned.olderVersion = olderVersion;
         cloned.containsDICM = containsDICM;
-        cloned.sliceSpacing = sliceSpacing;
         cloned.pixelRepresentation = pixelRepresentation;
         cloned.pixelPaddingValue = pixelPaddingValue;
         cloned.bitsAllocated = bitsAllocated;
@@ -284,7 +273,6 @@ public class FileInfoDicom extends FileInfoBase {
         cloned.vr_type = vr_type;
         cloned.displayType = displayType;
 
-        cloned.resolutions = (float[]) (resolutions.clone());
         cloned.tagsList = (Hashtable) (tagsList.clone());
 
         return cloned;
@@ -308,7 +296,6 @@ public class FileInfoDicom extends FileInfoBase {
      * Prepares this class for cleanup.
      */
     public void finalize() {
-        resolutions = null;
         orientation = null;
         photometricInterp = null;
 
@@ -654,7 +641,7 @@ public class FileInfoDicom extends FileInfoBase {
         if (!key.equals("")) {
 
             if (key.equals("0018,0050")) { // type 2
-                resolutions[2] = Float.parseFloat(((String) value).trim());
+                setResolutions(Float.parseFloat(((String) value).trim()), 2);
             } else if (key.equals("0020,0032")) { // type 2c
                 orientation = ((String) value).trim();
 
@@ -716,15 +703,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f1 = new Float(firstHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[0] = 1.0f;
+                        setResolutions(1.0f, 0);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f1 != null) {
-                        resolutions[0] = f1.floatValue();
+                        setResolutions(f1.floatValue(), 0);
                     }
                 } else {
-                    resolutions[0] = 1.0f;
+                    setResolutions(1.0f, 0);
                 }
 
                 if ((secondHalf != null) && (secondHalf.length() > 0)) {
@@ -732,15 +719,13 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[1] = resolutions[0];
-                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                        setResolutions(getResolutions()[0], 1);
                     }
-
                     if (f2 != null) {
-                        resolutions[1] = f2.floatValue();
+                        setResolutions(f2.floatValue(), 1);
                     }
                 } else {
-                    resolutions[1] = 1.0f;
+                    setResolutions(1.0f, 1);
                 }
             } else if (key.equals("0018,1164")) { // type 2
 
@@ -765,15 +750,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f1 = new Float(firstHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[0] = 1.0f;
+                        setResolutions(1.0f, 0);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f1 != null) {
-                        resolutions[0] = f1.floatValue();
+                        setResolutions(f1.floatValue(), 0);
                     }
                 } else {
-                    resolutions[0] = 1.0f;
+                    setResolutions(1.0f, 0);
                 }
 
                 if ((secondHalf != null) && (secondHalf.length() > 0)) {
@@ -781,15 +766,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[1] = resolutions[0];
+                        setResolutions(getResolutions()[0], 1);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f2 != null) {
-                        resolutions[1] = f2.floatValue();
+                        setResolutions(f2.floatValue(), 1);
                     }
                 } else {
-                    resolutions[1] = 1.0f;
+                    setResolutions(1.0f, 1);
                 }
             } else if (key.equals("0028,0120")) { // type 3
                 pixelPaddingValue = (Short) value;
@@ -874,11 +859,11 @@ public class FileInfoDicom extends FileInfoBase {
         if (length != 0) {
 
             if (key.equals("0018,0050")) { // type 2
-                resolutions[2] = Float.parseFloat(((String) value).trim());
+                setResolutions(Float.parseFloat(((String) value).trim()), 2);
             } else if (key.equals("0018,602C")) {
-                resolutions[0] = ((Double) value).floatValue();
+                setResolutions(((Double) value).floatValue(), 0);
             } else if (key.equals("0018,602E")) {
-                resolutions[1] = ((Double) value).floatValue();
+                setResolutions(((Double) value).floatValue(), 1);
             } else if (key.equals("0020,0032")) { // type 2c
                 orientation = ((String) value).trim();
 
@@ -940,15 +925,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f1 = new Float(firstHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[0] = 1.0f;
+                        setResolutions(1.0f, 0);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f1 != null) {
-                        resolutions[0] = f1.floatValue();
+                        setResolutions(f1.floatValue(), 0);
                     }
                 } else {
-                    resolutions[0] = 1.0f;
+                    setResolutions(1.0f, 0);
                 }
 
                 if ((secondHalf != null) && (secondHalf.length() > 0)) {
@@ -956,15 +941,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[1] = resolutions[0];
+                        setResolutions(getResolutions()[0], 1);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f2 != null) {
-                        resolutions[1] = f2.floatValue();
+                        setResolutions(f2.floatValue(), 1);
                     }
                 } else {
-                    resolutions[1] = 1.0f;
+                    setResolutions(1.0f, 1);
                 }
 
             } else if (key.equals("0018,1164")) { // type 2
@@ -990,15 +975,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f1 = new Float(firstHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[0] = 1.0f;
+                        setResolutions(1.0f, 0);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f1 != null) {
-                        resolutions[0] = f1.floatValue();
+                        setResolutions(f1.floatValue(), 0);
                     }
                 } else {
-                    resolutions[0] = 1.0f;
+                    setResolutions(1.0f, 0);
                 }
 
                 if ((secondHalf != null) && (secondHalf.length() > 0)) {
@@ -1006,15 +991,15 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        resolutions[1] = resolutions[0];
+                        setResolutions(getResolutions()[0], 1);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
                     if (f2 != null) {
-                        resolutions[1] = f2.floatValue();
+                        setResolutions(f2.floatValue(), 0);
                     }
                 } else {
-                    resolutions[1] = 1.0f;
+                    setResolutions(1.0f, 1);
                 }
             } else if (key.equals("0028,0120")) { // type 3
                 pixelPaddingValue = (Short) value;
