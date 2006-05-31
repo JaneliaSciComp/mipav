@@ -228,7 +228,7 @@ public class FileInfoAnalyze extends FileInfoBase {
      * Byte offset in the ".img" file at which voxels start This value can be negative to specify that the absolute
      * value is applied for every image in the file.
      */
-    private float vox_offset = -1;
+    //private float vox_offset = -1;
 
     // public     short   dim[]  = new short[8]; // image dimension data
     // stored in FileInfoBase
@@ -252,6 +252,7 @@ public class FileInfoAnalyze extends FileInfoBase {
      */
     public FileInfoAnalyze(String name, String directory, int format) {
         super(name, directory, format);
+        setOffset(-1);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -349,11 +350,11 @@ public class FileInfoAnalyze extends FileInfoBase {
             dialog.appendSecondaryData("Data Type", "", editorChoice);
         }
 
-        if (vox_offset != -1) { // vox offset
+        if (getOffset() != -1) { // vox offset
 
             // dialog.append("voxel offset: " + vox_offset + "\n");
             editorChoice[0] = JDialogEditor.FLOAT_STRING;
-            dialog.appendSecondaryData("Voxel Offset", Float.toString(vox_offset), editorChoice);
+            dialog.appendSecondaryData("Voxel Offset", Float.toString(getOffset()), editorChoice);
         }
 
         try { // vox units
@@ -872,15 +873,6 @@ public class FileInfoAnalyze extends FileInfoBase {
      */
     public int getVolsAdded() {
         return vols_added;
-    }
-
-    /**
-     * Accessor to the vox offset value.
-     *
-     * @return  float vox_offset
-     */
-    public float getVoxOffset() {
-        return vox_offset;
     }
 
     /**
@@ -1507,14 +1499,6 @@ public class FileInfoAnalyze extends FileInfoBase {
         vols_added = vols;
     }
 
-    /**
-     * Sets vox offset value.
-     *
-     * @param  vox  DOCUMENT ME!
-     */
-    public void setVoxOffset(float vox) {
-        vox_offset = vox;
-    }
 
     /**
      * Allows no more than 4 characters for the string describing the vox units.
@@ -1571,7 +1555,7 @@ public class FileInfoAnalyze extends FileInfoBase {
         } else if (tname.equalsIgnoreCase("cal units")) {
             setCalUnits(tvalue);
         } else if (tname.equalsIgnoreCase("voxel offset")) {
-            setVoxOffset(Float.parseFloat((String) tcvalue.elementAt(0)));
+            setOffset((int)(Float.parseFloat((String) tcvalue.elementAt(0))));
         } else if (tname.equalsIgnoreCase("cal_min")) {
             setCalMin(Float.parseFloat((String) tcvalue.elementAt(0)));
         } else if (tname.equalsIgnoreCase("cal_max")) {
@@ -1688,7 +1672,7 @@ public class FileInfoAnalyze extends FileInfoBase {
         fInfo.setVerified(this.getVerified());
         fInfo.setViews(this.getViews());
         fInfo.setVolsAdded(this.getVolsAdded());
-        fInfo.setVoxOffset(this.getVoxOffset());
+        fInfo.setOffset(this.getOffset());
         fInfo.setVoxUnits(this.getVoxUnits());
     }
 
