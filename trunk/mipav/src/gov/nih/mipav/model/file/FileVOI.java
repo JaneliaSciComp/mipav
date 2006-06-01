@@ -538,13 +538,13 @@ public class FileVOI extends FileBase {
      * @throws  IOException  DOCUMENT ME!
      */
     public void writeXML(VOI voi, boolean saveAllContours) throws IOException {
-        int i, j, k;
+        int i, j, k, m;
         int length;
         int nPts;
         int nContours, nActiveContours;
-        float[] x;
-        float[] y;
-        float[] z;
+        float[] x = new float[100];
+        float[] y = new float[100];
+        float[] z = new float[100];
         Vector[] contours;
 
         FileWriter fw;
@@ -578,117 +578,160 @@ public class FileVOI extends FileBase {
             }
         }
 
-        fw = new FileWriter(file);
-        bw = new BufferedWriter(fw);
+        try {
 
-        contours = voi.getCurves();
-        length = voi.getCurves().length;
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
 
-        bw.write(XML_HEADER);
-        bw.newLine();
-        bw.write(MIPAV_HEADER);
-        bw.newLine();
+            contours = voi.getCurves();
+            length = voi.getCurves().length;
 
-        openTag(bw, "VOI xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
-        closedTag(bw, "Unique-ID", Integer.toString(voi.getUID()));
-        closedTag(bw, "Curve-type", Integer.toString(voi.getCurveType()));
-        closedTag(bw, "Color",
-                  Integer.toString(voi.getColor().getAlpha()) + "," + Integer.toString(voi.getColor().getRed()) + "," +
-                  Integer.toString(voi.getColor().getGreen()) + "," + Integer.toString(voi.getColor().getBlue()));
+            bw.write(XML_HEADER);
+            bw.newLine();
+            bw.write(MIPAV_HEADER);
+            bw.newLine();
 
-        if ((voi.getCurveType() == VOI.CONTOUR) || (voi.getCurveType() == VOI.POLYLINE) ||
+            openTag(bw, "VOI xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+            closedTag(bw, "Unique-ID", Integer.toString(voi.getUID()));
+            closedTag(bw, "Curve-type", Integer.toString(voi.getCurveType()));
+            closedTag(bw, "Color",
+                      Integer.toString(voi.getColor().getAlpha()) + "," +
+                      Integer.toString(voi.getColor().getRed()) + "," +
+                      Integer.toString(voi.getColor().getGreen()) + "," +
+                      Integer.toString(voi.getColor().getBlue()));
+
+            if ((voi.getCurveType() == VOI.CONTOUR) ||
+                (voi.getCurveType() == VOI.POLYLINE) ||
                 (voi.getCurveType() == VOI.POINT)) {
 
-            // run through once and count how many TOTAL contours are there
-            int totalContours = 0;
+                // run through once and count how many TOTAL contours are there
+                int totalContours = 0;
 
-            for (i = 0; i < length; i++) {
-                nContours = contours[i].size();
+                long totalPoints = 0;
+                int index;
+                for (i = 0; i < length; i++) {
+                    nContours = contours[i].size();
+                    totalContours += nContours;
 
-                totalContours += nContours;
-            }
+                    for (index = 0; index < nContours; index++ ){
+                        totalPoints += ((VOIBase)contours[i].elementAt(index)).size();
+                    }
 
-            i = 0;
+                }
 
-            while (i < totalContours) {
+              //  System.err.println("TOTAL CONTOURS of VOI " + voi.getName() + ": " + totalContours);
+             //   System.err.println("Number of points for all contours combined: " + totalPoints);
 
-                for (j = 0; j < contours.length; j++) {
-                    nContours = contours[j].size();
+                Vector pointVector = new Vector();
 
+
+
+                //add all contours to a vector for sorting
+
+                for (i = 0; i < contours.length; i++) {
+                    nContours = contours[i].size();
                     for (k = 0; k < nContours; k++) {
 
-                        if (Integer.parseInt(((VOIBase) contours[j].elementAt(k)).getLabel()) == (i + 1)) {
+                        if ((saveAllContours || ((VOIBase) contours[i].elementAt(k)).isActive())) {
+                          pointVector.add(new VOISortItem((VOIBase) contours[i].elementAt(k),
+                                                          Integer.parseInt(((VOIBase) contours[i].elementAt(k)).getLabel()), i));
 
-                            if ((saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive())) {
+                        }
+                    }
+                }
 
+                Collections.sort(pointVector, new VOIComparator());
+
+                int pSize = pointVector.size();
+                VOISortItem tempVOIItem = null;
+                VOIBase tempBase = null;
+
+                for (i = 0; i < pSize; i++) {
+
+                    tempVOIItem = (VOISortItem)pointVector.elementAt(i);
+                    tempBase = tempVOIItem.getVOIBase();
+
+                    openTag(bw, "Contour", true);
+                    closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
+
+                    nPts = tempBase.size();
+                    if (nPts > x.length) {
+                        x = new float[nPts];
+                        y = new float[nPts];
+                        z = new float[nPts];
+                    }
+
+                    tempBase.exportArrays(x, y, z);
+
+                    for (m = 0; m < nPts; m++) {
+                        closedTag(bw, "Pt",
+                                  Float.toString(x[m]) + "," +
+                                  Float.toString(y[m]));
+                    }
+
+                    openTag(bw, "Contour", false);
+                }
+                pointVector.removeAllElements();
+                pointVector = null;
+
+            } else {
+                for (i = 0; i < length; i++) {
+                    nContours = contours[i].size();
+                    nActiveContours = 0;
+
+                    if (saveAllContours) {
+                        nActiveContours = nContours;
+                    } else {
+
+                        for (j = 0; j < nContours; j++) {
+
+                            if (((VOIBase) contours[i].elementAt(j)).isActive()) {
+                                nActiveContours++;
+                            }
+                        }
+                    }
+
+                    if (nActiveContours > 0) {
+
+                        for (j = 0; j < nContours; j++) {
+
+                            if (saveAllContours ||
+                                ((VOIBase) contours[i].elementAt(j)).isActive()) {
                                 openTag(bw, "Contour", true);
-                                closedTag(bw, "Slice-number", Integer.toString(j));
 
-                                nPts = ((Vector) (contours[j].elementAt(k))).size();
-                                x = new float[nPts];
-                                y = new float[nPts];
-                                z = new float[nPts];
-                                ((VOIBase) (contours[j].elementAt(k))).exportArrays(x, y, z);
+                                closedTag(bw, "Slice-number", Integer.toString(i));
 
-                                for (int m = 0; m < nPts; m++) {
-                                    closedTag(bw, "Pt", Float.toString(x[m]) + "," + Float.toString(y[m]));
+                                nPts = ((Vector) (contours[i].elementAt(j))).size();
+
+                                if (x.length < nPts) {
+                                    x = new float[nPts];
+                                    y = new float[nPts];
+                                    z = new float[nPts];
+                                }
+
+
+                                ((VOIBase) (contours[i].elementAt(j))).exportArrays(x,
+                                        y, z);
+
+                                for (k = 0; k < nPts; k++) {
+                                    closedTag(bw, "Pt",
+                                              Float.toString(x[k]) + "," +
+                                              Float.toString(y[k]));
                                 }
 
                                 openTag(bw, "Contour", false);
                             }
-
-                            i++;
-                        }
-                    }
-                }
-
-            }
-        } else {
-
-            for (i = 0; i < length; i++) {
-                nContours = contours[i].size();
-                nActiveContours = 0;
-
-                if (saveAllContours) {
-                    nActiveContours = nContours;
-                } else {
-
-                    for (j = 0; j < nContours; j++) {
-
-                        if (((VOIBase) contours[i].elementAt(j)).isActive()) {
-                            nActiveContours++;
-                        }
-                    }
-                }
-
-                if (nActiveContours > 0) {
-
-                    for (j = 0; j < nContours; j++) {
-
-                        if (saveAllContours || ((VOIBase) contours[i].elementAt(j)).isActive()) {
-                            openTag(bw, "Contour", true);
-
-                            closedTag(bw, "Slice-number", Integer.toString(i));
-
-                            nPts = ((Vector) (contours[i].elementAt(j))).size();
-                            x = new float[nPts];
-                            y = new float[nPts];
-                            z = new float[nPts];
-                            ((VOIBase) (contours[i].elementAt(j))).exportArrays(x, y, z);
-
-                            for (k = 0; k < nPts; k++) {
-                                closedTag(bw, "Pt", Float.toString(x[k]) + "," + Float.toString(y[k]));
-                            }
-
-                            openTag(bw, "Contour", false);
                         }
                     }
                 }
             }
+
+            openTag(bw, "VOI", false);
+            bw.close();
+        } catch (Exception e) {
+            System.err.println("CAUGHT EXCEPTION WITHIN writeXML() of FileVOI");
+            e.printStackTrace();
         }
-
-        openTag(bw, "VOI", false);
-        bw.close();
     }
 
     /**
@@ -1212,5 +1255,42 @@ public class FileVOI extends FileBase {
         }
 
     }
+
+    private class VOISortItem {
+
+        private VOIBase vBase;
+        private int index;
+        private int slice;
+
+        public VOISortItem(VOIBase base, int idx, int z) {
+            vBase = base;
+            index = idx;
+            slice = z;
+        }
+
+        public int getIndex() { return index; }
+        public int getSlice() { return slice; }
+        public VOIBase getVOIBase() { return vBase; }
+
+
+    }
+
+    private class VOIComparator implements Comparator {
+
+        public int compare(Object o1, Object o2) {
+            int a = ((VOISortItem)o1).getIndex();
+            int b = ((VOISortItem)o2).getIndex();
+
+            if (a < b) {
+                return -1;
+            } else if (a > b) {
+                return 1;
+            } else {
+                return 0;
+            }
+        }
+
+    }
+
 
 }
