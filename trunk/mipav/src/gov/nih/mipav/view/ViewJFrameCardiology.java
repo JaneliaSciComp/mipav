@@ -360,7 +360,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             }
 
             // livewire grad mag. should be recalculated for the new slice
-            componentImage.resetLivewire();
+            componentImage.getVOIHandler().resetLivewire();
             setTitle();
 
             if (linkFrame != null) {
@@ -592,7 +592,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             }
 
             // livewire grad mag. should be recalculated for the new slice
-            componentImage.resetLivewire();
+            componentImage.getVOIHandler().resetLivewire();
             setTitle();
 
             if (linkFrame != null) {
@@ -670,7 +670,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 break;
 
             case KeyEvent.VK_DELETE:
-                componentImage.deleteSelectedContours();
+                componentImage.getVOIHandler().deleteSelectedContours();
                 break;
 
             case KeyEvent.VK_B:
@@ -932,7 +932,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             updateImages(true);
 
             // livewire grad mag. should be recalculated for the new slice
-            componentImage.resetLivewire();
+            componentImage.getVOIHandler().resetLivewire();
             setTitle();
 
             if (linkFrame != null) {
@@ -958,7 +958,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 tSlice = slice;
 
                 // livewire grad mag. should be recalculated for the new slice
-                componentImage.resetLivewire();
+                componentImage.getVOIHandler().resetLivewire();
                 setTitle();
                 updateImages(true);
 
@@ -977,7 +977,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 tSlice = slice;
 
                 // livewire grad mag. should be recalculated for the new slice
-                componentImage.resetLivewire();
+                componentImage.getVOIHandler().resetLivewire();
                 setTitle();
                 updateImages(true);
 

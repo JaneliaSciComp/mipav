@@ -2143,6 +2143,8 @@ public abstract class ViewJFrameBase extends JFrame
 
             nVOI = VOIs.size();
 
+            System.err.println("Number of VOIs: " + nVOI);
+
             for (i = 0; i < nVOI; i++) {
 
                 fileVOI = new FileVOI(VOIs.VOIAt(i).getName() + ".xml", voiDir, currentImage);
