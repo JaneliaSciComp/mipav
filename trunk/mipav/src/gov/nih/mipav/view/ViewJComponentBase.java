@@ -398,15 +398,7 @@ public abstract class ViewJComponentBase extends JComponent {
     /** DOCUMENT ME! */
     private int[] imgDataB;
 
-    /**
-     * created to handle VOI updates. Must fireVOIUpdate(...) to get listeners to handle the update. Perhaps better
-     * location for the VOIupdate is in <code>ViewJCompoenentEditImage</code>, but this listenerlist will handle
-     * listeners of more than one type.
-     */
-    private EventListenerList listenerList = new EventListenerList();
 
-    /** an update event for the VOI. */
-    private UpdateVOIEvent voiUpdate = null;
 
     /** DOCUMENT ME! */
     private int xOld, yOld;
@@ -528,21 +520,7 @@ public abstract class ViewJComponentBase extends JComponent {
         setDoubleBuffered(false);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    // --------- Event-handling routines:
-    // to add this object to send out events for listening
-    // objects, at least the following 3 methods must be
-    // present: addListener, removeListener, fireEvent as
-    // present below.
-    /**
-     * adds the update listener.
-     *
-     * @param  listener  DOCUMENT ME!
-     */
-    public void addVOIUpdateListener(UpdateVOISelectionListener listener) {
-        listenerList.add(UpdateVOISelectionListener.class, listener);
-    }
 
     /**
      * DOCUMENT ME!
@@ -576,47 +554,6 @@ public abstract class ViewJComponentBase extends JComponent {
         imgData = null;
         imgDataB = null;
         imDataR = imDataG = imDataB = null;
-
-        listenerList = null;
-    }
-
-    /**
-     * Fires a VOI selection change event based on the VOI and curve.
-     *
-     * @param  voi    DOCUMENT ME!
-     * @param  curve  DOCUMENT ME!
-     */
-    public void fireVOISelectionChange(VOI voi, VOIBase curve) {
-
-        try {
-
-            // only if there are listeners to send events to should we
-            // bother with creating an event and bothering the event queue.
-            if (listenerList.getListenerCount(UpdateVOISelectionListener.class) == 0) {
-                return;
-            }
-        } catch (NullPointerException npe) {
-            listenerList = new EventListenerList();
-            Preferences.debug("Why did we need to make a new listener list??");
-
-            return;
-        }
-
-        // always create a new Event, since we need to carry
-        // the changed VOI around.
-        voiUpdate = new UpdateVOIEvent(this, voi, curve);
-
-        // Guaranteed to return a non-null array
-        Object[] listeners = listenerList.getListenerList();
-
-        // Process the listeners last to first, notifying
-        // those that are interested in this event
-        for (int i = listeners.length - 2; i >= 0; i -= 2) {
-
-            if (listeners[i] == UpdateVOISelectionListener.class) {
-                ((UpdateVOISelectionListener) listeners[i + 1]).selectionChanged(voiUpdate);
-            }
-        }
     }
 
     /**
@@ -1058,14 +995,7 @@ public abstract class ViewJComponentBase extends JComponent {
                            this);
     }
 
-    /**
-     * removes the update listener.
-     *
-     * @param  listener  DOCUMENT ME!
-     */
-    public void removeVOIUpdateListener(UpdateVOISelectionListener listener) {
-        listenerList.remove(UpdateVOISelectionListener.class, listener);
-    }
+
 
     /**
      * Sets the interpolation mode.
@@ -1144,20 +1074,6 @@ public abstract class ViewJComponentBase extends JComponent {
     protected void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
-    }
-
-    // Notify all listeners that have registered interest for
-    // notification on this event type.  The event instance
-    // is lazily created using the parameters passed into
-    // the fire method.
-
-    /**
-     * Fires a VOI selection change event based on the VOI.
-     *
-     * @param  voi  DOCUMENT ME!
-     */
-    protected void fireVOISelectionChange(VOI voi) {
-        fireVOISelectionChange(voi, null);
     }
 
     /**

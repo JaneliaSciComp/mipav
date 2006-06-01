@@ -6,6 +6,8 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import static gov.nih.mipav.view.MipavUtil.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -250,8 +252,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         triComponentOrientation = _triComponentOrientation;
 
-        removeMouseListener(popup);
-        removeMouseListener(popupPt);
+        removeMouseListener(voiHandler.getPopupVOI());
+        removeMouseListener(voiHandler.getPopupPt());
 
         res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
         res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
@@ -468,11 +470,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         if (imageActive.getNDims() == 2) {
-            deleteContour(VOIs.VOIAt(i), 0);
+            getVOIHandler().deleteContour(VOIs.VOIAt(i), 0);
         } else if (imageActive.getNDims() >= 3) {
 
             for (s = 0; s < imageActive.getExtents()[2]; s++) {
-                deleteContour(VOIs.VOIAt(i), s);
+                getVOIHandler().deleteContour(VOIs.VOIAt(i), s);
             }
         }
 
@@ -691,9 +693,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * This indicates which of the 3 tri-image components we are currently in; either AXIAL, SAGITTAL, or CORONAL. 
+     * This indicates which of the 3 tri-image components we are currently in; either AXIAL, SAGITTAL, or CORONAL.
      *
-     * @return  The orientation, either AXIAL, SAGITTAL, or CORONAL. 
+     * @return  The orientation, either AXIAL, SAGITTAL, or CORONAL.
      */
     public int getTriComponentOrientation() {
         return triComponentOrientation;
@@ -858,7 +860,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         return pt;
     }
-    
+
     /**
      * Translate a point on the x-y tri-image component into image volume space. Assumes input parameters have zoom and
      * voxel resolution already factored out.
@@ -2059,7 +2061,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 }
 
                 // lastPointVOI is a protected variable in ViewJComponentEditImage
-                lastPointVOI = voiID;
+                voiHandler.setLastPointVOI_ID(voiID);
 
                 imageActive.registerVOI(newPointVOI);
 
@@ -2107,9 +2109,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         float xS = (crosshairPt.x / (getZoomX() * resolutionX));
         float yS = (crosshairPt.y / (getZoomY() * resolutionY));
-        
+
         triImageFrame.setCrosshairs(xS, yS, slice, this);
-        
+
         Point3Df newLabel = null;
 
         int coronalSlice = triImageFrame.getCoronalComponentSlice();
@@ -2341,7 +2343,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (newMode == MOVE_POINT) {
             this.mode = newMode;
-            rubberband.setActive(false);
+            voiHandler.getRubberband().setActive(false);
             setCursor(crosshairCursor);
         } else if (newMode == LINE) {
 
@@ -2473,8 +2475,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             return;
         }
 
-        // lastPointVOI is a protected variable in ViewJComponentEditImage
-        lastPointVOI = voiID;
+        // lastPointVOI is now handled by VOIHandler
+        voiHandler.setLastPointVOI_ID(voiID);
+
         imageActive.registerVOI(newPointVOI);
         triImageFrame.updatevoiID(voiID);
         ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setFixed(true);
@@ -3980,7 +3983,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
-        
+
 
         Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
         Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
@@ -4004,10 +4007,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                           int highDX;
                           int lowDZ;
                           int highDZ;
-                  
+
                           graphics.setColor(Color.red.darker());
-                  
-                  
+
+
                           // not doing - 1 on reversal, but i don't quite know why (and my head hurts too much to think about it more)
                           switch (axisOrder[0])
                           {
@@ -4089,7 +4092,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   }
                                   break;
                           }
-                  
+
                           graphics.drawLine(lowDX, lowDZ, highDX, lowDZ);
                           graphics.drawLine(highDX, lowDZ, highDX, highDZ);
                           graphics.drawLine(highDX, highDZ, lowDX, highDZ);
@@ -4098,27 +4101,27 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                           graphics.fillRect(highDX - 2, lowDZ - 2, 5, 5);
                           graphics.fillRect(highDX - 2, highDZ - 2, 5, 5);
                           graphics.fillRect(lowDX - 2, highDZ - 2, 5, 5);
-                  
+
                           // display the height/width of the bounding box above (or below) the top
                           // midpoint and to the right of (or left of) the right midpoint
-                  
+
                           int width = (int) (highX - lowX);
                           int height = (int) (highZ - lowZ);
-                  
+
                           String widthString = String.valueOf(width);
                           String heightString = String.valueOf(height);
-                  
+
                           float measuredWidth = (highX - lowX) * res[0];
                           float measuredHeight = (highZ - lowZ) * res[1];
-                  
+
                           String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
                           String yUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]);
-                  
+
                           String measuredWidthString = String.valueOf(measuredWidth) + " " + xUnitsString;
                           String measuredHeightString = String.valueOf(measuredHeight) + " " + yUnitsString;
-                  
+
                           graphics.setColor(Color.black);
-                  
+
                           if (!hasOrientation)
                           {
                               if ( (lowDZ - 45) < 0)
@@ -4131,7 +4134,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 34);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDZ + 35);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDZ + 35);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 20);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 35);
@@ -4146,12 +4149,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 11);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDZ - 10);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDZ - 10);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 25);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 10);
                               }
-                  
+
                               graphics.setColor(Color.black);
                               if ( (lowDX - 40) < 0)
                               {
@@ -4163,7 +4166,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(heightString, lowDX + 10, lowDZ + 25 + (highDZ - lowDZ) / 2 - 1);
                                   graphics.drawString(heightString, lowDX + 9, lowDZ + 25 + (highDZ - lowDZ) / 2);
                                   graphics.drawString(heightString, lowDX + 11, lowDZ + 25 + (highDZ - lowDZ) / 2);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredHeightString, lowDX + 10, lowDZ + 10 + (highDZ - lowDZ) / 2);
                                   graphics.drawString(heightString, lowDX + 10, lowDZ + 25 + (highDZ - lowDZ) / 2);
@@ -4178,7 +4181,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(heightString, lowDX - 35, lowDZ + 25 + (highDZ - lowDZ) / 2 - 1);
                                   graphics.drawString(heightString, lowDX - 36, lowDZ + 25 + (highDZ - lowDZ) / 2);
                                   graphics.drawString(heightString, lowDX - 34, lowDZ + 25 + (highDZ - lowDZ) / 2);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredHeightString, lowDX - 35, lowDZ + 10 + (highDZ - lowDZ) / 2);
                                   graphics.drawString(heightString, lowDX - 35, lowDZ + 25 + (highDZ - lowDZ) / 2);
@@ -4196,7 +4199,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 34);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, highDZ + 35);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, highDZ + 35);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 20);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 35);
@@ -4211,12 +4214,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 11);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, highDZ - 10);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, highDZ - 10);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 25);
                                   graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 10);
                               }
-                  
+
                               graphics.setColor(Color.black);
                               if ( (lowDX - 40) < 0)
                               {
@@ -4228,7 +4231,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(heightString, lowDX + 10, highDZ + 25 + (lowDZ - highDZ) / 2 - 1);
                                   graphics.drawString(heightString, lowDX + 9, highDZ + 25 + (lowDZ - highDZ) / 2);
                                   graphics.drawString(heightString, lowDX + 11, highZ + 25 + (lowDZ - highDZ) / 2);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredHeightString, lowDX + 10, highDZ + 10 + (lowDZ - highDZ) / 2);
                                   graphics.drawString(heightString, lowDX + 10, highDZ + 25 + (lowDZ - highDZ) / 2);
@@ -4243,7 +4246,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                   graphics.drawString(heightString, lowDX - 35, highDZ + 25 + (lowDZ - highDZ) / 2 - 1);
                                   graphics.drawString(heightString, lowDX - 36, highDZ + 25 + (lowDZ - highDZ) / 2);
                                   graphics.drawString(heightString, lowDX - 34, highDZ + 25 + (lowDZ - highDZ) / 2);
-                  
+
                                   graphics.setColor(Color.white);
                                   graphics.drawString(measuredHeightString, lowDX - 35, highDZ + 10 + (lowDZ - highDZ) / 2);
                                   graphics.drawString(heightString, lowDX - 35, highDZ + 25 + (lowDZ - highDZ) / 2);
