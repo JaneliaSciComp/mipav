@@ -77,17 +77,62 @@ public class MipavUtil extends JComponent {
     /** A 12 point, bold, courier font. */
     public static Font courier12B = new Font("Courier", Font.BOLD, 12);
 
+    /** Standard cursor: default. */
+    public static final Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+
     /** A crosshair cursor. */
     public static final Cursor crosshairCursor = new Cursor(Cursor.CROSSHAIR_CURSOR);
 
     /** A move cursor. */
     public static final Cursor moveCursor = new Cursor(Cursor.MOVE_CURSOR);
 
+    /** Standard cursor: point (resize, NE). */
+    public static final Cursor pointCursor = new Cursor(Cursor.NE_RESIZE_CURSOR);
+
     /** A resizing cursor. */
     public static final Cursor resizeCursor = new Cursor(Cursor.E_RESIZE_CURSOR);
 
     /** A hand cursor. */
     public static final Cursor handCursor = new Cursor(Cursor.HAND_CURSOR);
+
+    /** Custom cursor: no cursor. */
+    public static Cursor blankCursor;
+
+    /** Custom cursor: magnify region. */
+    public static Cursor magRegionCursor;
+
+    /** Standard cursor: add a point (hand). */
+    public static final Cursor addPointCursor = new Cursor(Cursor.HAND_CURSOR);
+
+    /** Custom cursor: small pointer. */
+    public static Cursor smallPointerCursor;
+
+    /** DOCUMENT ME! */
+    public static Cursor probeCursor;
+
+    /** DOCUMENT ME! */
+    public static Cursor magnifyCursor;
+
+    /** DOCUMENT ME! */
+    public static Cursor unmagnifyCursor;
+
+    /** Custom cursor: quick LUT. */
+    public static Cursor quickLUTcursor = defaultCursor; // be sure to change when there is a decent image available.
+
+
+    /** Cursor for doing annotations. */
+    public static final Cursor textCursor = new Cursor(Cursor.TEXT_CURSOR);
+
+    /** Standard cursor: wait. */
+    public static final Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
+
+    /** Standard cursor: wand (hand). */
+    public static final Cursor wandCursor = new Cursor(Cursor.HAND_CURSOR);
+
+    /** DOCUMENT ME! */
+    public static Cursor winLevelCursor;
+
+
 
     /** The current version number, coded as a String, read and then cached by getVersion(). */
     protected static String version = null;
@@ -115,6 +160,78 @@ public class MipavUtil extends JComponent {
                                              };
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+
+
+    public static void buildCursors() {
+            // build custom mouse pointer cursors
+            Image cursorImage = null;
+
+            // magnify region cursor : TRY to get the image cursor.
+            // if you can't (and coders may have EXTRA probs with this!)
+            // then notify the user of the prob and get a default.
+            // This try must be seperate for all diff cursors
+            try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
+
+                // img = Toolkit.getDefaultToolkit().getImage(PlaceHolder.class.getResource("emptycursor.gif"));
+                cursorImage = getIconImage("emptycursor.gif");
+                magRegionCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+                                                                                 "Magnification");
+                blankCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12),
+                        "Blank Cursor");
+                //System.err.println("created blank cursor");
+            } catch (FileNotFoundException error) {
+                Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                                  ">.  Check that this file is available.\n");
+                magRegionCursor = crosshairCursor;
+                blankCursor = crosshairCursor;
+            }
+
+            // small pointer cursor : TRY to get the image cursor.  if you can't (and coders may have EXTRA probs with
+        // this!) then notify the user of the prob and get a default.  This try must be seperate for all diff cursors
+        try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
+            cursorImage = getIconImage("smpointercursor.gif");
+            smallPointerCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(0, 0),
+                                                                                "SmallPointer");
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            smallPointerCursor = pointCursor;
+        }
+
+        try { // this try does not work... sun didn't bother to propogate the exception ... maybe someday ...
+            cursorImage = getIconImage("qkwinlevel.gif");
+
+            winLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(12, 12), "WinLevel");
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            winLevelCursor = crosshairCursor;
+        }
+
+        try {
+            cursorImage = getIconImage("probepoint.gif");
+
+            probeCursor = Toolkit.getDefaultToolkit().createCustomCursor(cursorImage, new Point(15, 15), "Probe");
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            probeCursor = crosshairCursor;
+        }
+        try {
+            Toolkit toolkit = Toolkit.getDefaultToolkit();
+            magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon(
+                    "zoomin.gif").getImage(),
+                    new Point(10, 10), "zoomin");
+            unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(),
+                                                                    new Point(10, 10), "zoomout");
+        } catch (Exception error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            magnifyCursor = crosshairCursor;
+        }
+
+
+    }
 
     /**
      * This should only be called once when MIPAV starts, and then if the user changes the font options through Program
