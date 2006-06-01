@@ -93,7 +93,12 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         constructLog();
 
         if (destImage != null) { // if there exists a destination image
-            calcStoreInDest();
+            if (srcImage.getNDims() == 2) {
+                calcStoreInDest2D();
+            }
+            else {
+                calcStoreInDest3D();
+            }
         } else { // there is no image but the original source.
             calcInPlace();
         }
@@ -122,9 +127,9 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
     }
 
     /**
-     * This function produces a density based clustering image that does not replace the original image-data.
+     * This function produces a 2D density based clustering image that does not replace the original image-data.
      */
-    private void calcStoreInDest() {
+    private void calcStoreInDest2D() {
         
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
@@ -145,6 +150,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         byte byteBuffer[];
         Color colorTable[];
         boolean found;
+        int centerIter = 0;
         
         
         buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
@@ -226,6 +232,8 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         if (!isArbitrary) {
             found = true;
             while (found) {
+                centerIter++;
+                progressBar.setMessage("Center based iteration " + centerIter);
                 found = false;
                 for (y = 0; y < yDim; y++) {
                     for (x = 0; x < xDim; x++) {
@@ -258,7 +266,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         }
         catch(IOException error) {
             byteBuffer = null;
-            errorCleanUp("Error on grayImage.importData", true);
+            errorCleanUp("Error on destImage.importData", true);
             return;    
         }
         density = null;
@@ -274,7 +282,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         }
 
         progressBar.setMessage("Extracting VOIs");
-        progressBar.updateValueImmed(50);
+        progressBar.updateValueImmed(80);
         colorTable = new Color[1];
         colorTable[0] = Color.RED;
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
@@ -286,13 +294,198 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         System.gc();
 
         srcImage.setVOIs(grayImage.getVOIs());
+        Preferences.debug(srcImage.getVOIs().size() +  " VOIs put in source image\n");
         grayImage.disposeLocal();
         grayImage = null;
         disposeProgressBar();
 
         setCompleted(true);
 
-    } // end calcStoreInDest()
+    } // calcStoreInDest2D()
+    
+    /**
+     * This function produces a 3D density based clustering image that does not replace the original image-data.
+     */
+    private void calcStoreInDest3D() {
+        
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int zDim = srcImage.getExtents()[2];
+        int sliceSize = xDim * yDim;
+        int length = sliceSize * zDim;
+        float buffer[];
+        float density[];
+        int maxDistance;
+        int x, y, z;
+        int j, k, m;
+        int index;
+        int indexS;
+        int distInt;
+        double localPart;
+        ModelImage grayImage;
+        AlgorithmVOIExtraction algoVOIExtraction;
+        byte byteBuffer[];
+        Color colorTable[];
+        boolean found;
+        int centerIter = 0;
+        
+        
+        buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
+        initProgressBar();
+        
+        buffer = new float[length];
+        density = new float[length];
+        
+        try {
+            srcImage.exportData(0, length, buffer);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("Error on srcImage.exportData");
+            disposeProgressBar();
+            setCompleted(false);
+        }
+        
+        if (isGaussian) {
+            maxDistance = Math.max(1, (int)(5.0 * distance + 0.5f));
+            for (z = 0; z < zDim; z++) {
+                progressBar.updateValueImmed(z * 30/zDim);
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        index = z*sliceSize + y*xDim + x;
+                        for (m = z - maxDistance; m <= z + maxDistance; m++) {
+                            if ((m >= 0) && (m < zDim)) {
+                                for (k = y - maxDistance; k <= y + maxDistance; k++) {
+                                    if ((k >= 0) && (k < yDim)) {
+                                        for (j = x - maxDistance; j <= x + maxDistance; j++) {
+                                            if ((j >= 0) && (j < xDim)) {
+                                                indexS = m*sliceSize + k*xDim + j;
+                                                localPart = buffer[indexS] * Math.exp
+                                                (-((m-z)*(m-z) + (k-y)*(k-y) + (j-x)*(j-x))/(2.0*distance*distance));
+                                                density[index] += (float)localPart;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+        } // if (isGaussian)
+        else { // Square wave
+            distInt = (int)distance;
+            for (z = 0; z < zDim; z++) {
+                progressBar.updateValueImmed(z * 30/zDim);
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        index = z*sliceSize + y*xDim + x;
+                        for (m = z - distInt; m <= z + distInt; m++) {
+                            if ((m >= 0) && (m < zDim)) {
+                                for (k = y - distInt; k <= y + distInt; k++) {
+                                    if ((k >= 0) && (k < yDim)) {
+                                        for (j = x - distInt; j <= x + distInt; j++) {
+                                            if ((j >= 0) && (j < xDim)) {
+                                                if (((m - z) * (m - z) + (k - y)*(k - y) + (j - x)*(j - x)) <=
+                                                    distance*distance) {
+                                                    indexS = m*sliceSize + k*xDim + j;
+                                                    density[index] += buffer[indexS];
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // for (z = 0; z < zDim; z++)
+        } // else Square wave
+        
+        byteBuffer = new byte[length];
+        
+        for (index = 0; index < length; index++) {
+            if (density[index] >= threshold) {
+                byteBuffer[index] = 1;
+            }
+        }
+        if (!isArbitrary) {
+            found = true;
+            while (found) {
+                found = false;
+                centerIter++;
+                progressBar.setMessage("Center based iteration " + centerIter);
+                for (z = 0; z < zDim; z++) {
+                    for (y = 0; y < yDim; y++) {
+                        for (x = 0; x < xDim; x++) {
+                            index = z*sliceSize + y*xDim + x;
+                            if (byteBuffer[index] == 0) {
+                                for (m = z - 1; m <= z + 1; m++) {
+                                    if ((m >= 0) && (m < zDim)) {
+                                        for (k = y - 1; k <= y + 1; k++) {
+                                            if ((k >= 0) && (k < yDim)) {
+                                                for (j = x - 1; j <= x + 1; j++) {
+                                                    if ((j >= 0) && (j < xDim)) {
+                                                        indexS = m*sliceSize + k*xDim + j;
+                                                        if ((byteBuffer[indexS] == 1) &&
+                                                            (density[indexS] >= density[index])) {
+                                                            byteBuffer[index] = 1;
+                                                            found = true;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } // if (byteBuffer[index] == 0)
+                        } // for (x = 0; x < xDim; x++)
+                    } // for (y = 0; y < yDim; y++)
+                } // for (z = 0; z < zDim; z++)
+            } // while (found)
+        } // if (!isArbitrary)
+        
+        try {
+            destImage.importData(0, density, true);
+        }
+        catch(IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on destImage.importData", true);
+            return;    
+        }
+        density = null;
+        
+        grayImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), srcImage.getImageName() + "_gray",
+                srcImage.getUserInterface());
+        
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
+
+        progressBar.setMessage("Extracting VOIs");
+        progressBar.updateValueImmed(80);
+        colorTable = new Color[1];
+        colorTable[0] = Color.RED;
+        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+        algoVOIExtraction.setProgressBarVisible(false);
+        algoVOIExtraction.setColorTable(colorTable);
+        algoVOIExtraction.run();
+        algoVOIExtraction.finalize();
+        algoVOIExtraction = null;
+        System.gc();
+
+        srcImage.setVOIs(grayImage.getVOIs());
+        Preferences.debug(srcImage.getVOIs().size() +  " VOIs put in source image\n");
+        grayImage.disposeLocal();
+        grayImage = null;
+        disposeProgressBar();
+
+        setCompleted(true);
+
+    } // calcStoreInDest3D()
 
     /**
      * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
