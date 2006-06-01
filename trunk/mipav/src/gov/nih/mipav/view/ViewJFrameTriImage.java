@@ -173,16 +173,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     public static int zoomMode = ViewJComponentEditImage.EXPONENTIAL;
 
     /** Maximum number of tri-images! */
-    public static final int MAX_TRI_IMAGES = 9; 
+    public static final int MAX_TRI_IMAGES = 9;
 
     /** A constant for which to test in the actionPerformed */
-    protected static final String OLD_LAYOUT = "OldLayout"; 
+    protected static final String OLD_LAYOUT = "OldLayout";
 
     /** A constant for which to test in the actionPerformed */
-    protected static final String PANEL_PLUGIN = "PanelPlugin"; 
+    protected static final String PANEL_PLUGIN = "PanelPlugin";
 
     /** Constant to determine how many pixels would be optimal for the image to be initially zoomed to */
-    protected static final int DEFAULT_OPTIMAL_ZOOM = 256; 
+    protected static final int DEFAULT_OPTIMAL_ZOOM = 256;
 
     /**
      * These constants are used to index into the boundingBoxPoints[] array, and represent the corners of the bounding
@@ -232,10 +232,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected boolean centerButtonSelected = false;
 
     /** "Show talairach grid" checkbox */
-    protected JCheckBox chkShowTalairachGrid; 
+    protected JCheckBox chkShowTalairachGrid;
 
     /** "Show talairach gridmarkers" checkbox */
-    protected JCheckBox chkShowTalairachGridMarkers; 
+    protected JCheckBox chkShowTalairachGridMarkers;
 
     /** Color of the paint. */
     protected Color color = new Color(225, 0, 0);
@@ -265,7 +265,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected Point3D currentAbsolutePositionLabels;
 
     /** The default hight of the window, if it cannot be calculated */
-    protected int defaultPreferredHeight = 1000; 
+    protected int defaultPreferredHeight = 1000;
 
     /** Extents of image. */
     protected int[] extents;
@@ -282,34 +282,34 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected JToolBar imageToolBar;
 
     /** Spinner component for the paint intensity */
-    protected JSpinner intensitySpinner; 
+    protected JSpinner intensitySpinner;
 
     /** Label the absolute x value in the image volume. */
-    protected JLabel labelXPos; 
+    protected JTextField labelXPos;
 
     /** Label the anatomical position x value in the image volume. */
-    protected JLabel labelXRef;
+    protected JTextField labelXRef;
 
     /** Label the Talairach position x value in the image volume. */
-    protected JLabel labelXTal; 
+    protected JTextField labelXTal;
 
     /** Label the absolute y value in the image volume. */
-    protected JLabel labelYPos; 
+    protected JTextField labelYPos;
 
     /** Label the anatomical position y value in the image volume. */
-    protected JLabel labelYRef;
+    protected JTextField labelYRef;
 
     /** Label the Talairach position y value in the image volume. */
-    protected JLabel labelYTal; 
+    protected JTextField labelYTal;
 
     /** Label the absolute z value in the image volume. */
-    protected JLabel labelZPos; 
+    protected JTextField labelZPos;
 
     /** Label the anatomical position z value in the image volume. */
-    protected JLabel labelZRef;
+    protected JTextField labelZRef;
 
     /** Label the Talairach position z value in the image volume. */
-    protected JLabel labelZTal; 
+    protected JTextField labelZTal;
 
     /** Menu items storage. */
     protected ViewMenuBuilder menuObj;
@@ -344,10 +344,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected JPanel panelToolbar = new JPanel();
 
     /** Reference to the parent window */
-    protected ViewJFrameImage parentFrame; 
+    protected ViewJFrameImage parentFrame;
 
     /** Reference to the plug-in panel in the 2x2 (old) layout */
-    protected Component pluginPanel; 
+    protected Component pluginPanel;
 
     /** Label heading for the anatomical position x, y, z values in the image volume. */
     protected JLabel posLabel;
@@ -416,11 +416,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected int[] volumeCenter = new int[3];
 
     /** Reference to the volume coordinate frame */
-    protected VolumePositionFrame volumePositionFrame; 
+    protected VolumePositionFrame volumePositionFrame;
 
     /** Reference to the volume coordinate panel when it is in the plug-in position */
-    protected JPanel volumePositionPanel; 
-    
+    protected JPanel volumePositionPanel;
+
     /** Magnification for image. */
     protected float zoom = 1.0f;
 
@@ -428,7 +428,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     private JToggleButton addPointToggleButton;
 
     /** Array of points that specify the corners of the bounding box */
-    private Point3Df[] boundingBoxPoints = new Point3Df[8]; 
+    private Point3Df[] boundingBoxPoints = new Point3Df[8];
 
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
@@ -757,7 +757,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage[AXIAL_A].eraseAllPaint(false);
 
             imageA.notifyImageDisplayListeners(null, true);
-            imageB.notifyImageDisplayListeners(null, true);
+            if (imageB != null) {
+                imageB.notifyImageDisplayListeners(null, true);
+            }
         } else if (command.equals("PaintMask")) {
 
             if (triImage[AXIAL_AB] != null) {
@@ -5165,37 +5167,49 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         absLabel.setForeground(Color.black);
         absLabel.setFont(MipavUtil.font12B);
 
-        labelXPos = new JLabel("");
+        labelXPos = new JTextField("", 5);
         labelXPos.setForeground(Color.black);
         labelXPos.setFont(MipavUtil.font12B);
+        labelXPos.setBorder(BorderFactory.createEmptyBorder());
+        labelXPos.setEditable(false);
 
-        labelYPos = new JLabel("");
+        labelYPos = new JTextField("", 5);
         labelYPos.setForeground(Color.black);
         labelYPos.setFont(MipavUtil.font12B);
+        labelYPos.setBorder(BorderFactory.createEmptyBorder());
+        labelYPos.setEditable(false);
 
-        labelZPos = new JLabel("");
+        labelZPos = new JTextField("", 5);
         labelZPos.setForeground(Color.black);
         labelZPos.setFont(MipavUtil.font12B);
+        labelZPos.setBorder(BorderFactory.createEmptyBorder());
+        labelZPos.setEditable(false);
 
         posLabel = new JLabel("Position");
         posLabel.setForeground(Color.black);
         posLabel.setFont(MipavUtil.font12B);
         posLabel.setEnabled(false);
 
-        labelXRef = new JLabel("  X:");
+        labelXRef = new JTextField("  X:", 5);
         labelXRef.setForeground(Color.black);
         labelXRef.setFont(MipavUtil.font12B);
         labelXRef.setEnabled(false);
+        labelXRef.setBorder(BorderFactory.createEmptyBorder());
+        labelXRef.setEditable(false);
 
-        labelYRef = new JLabel("  Y:");
+        labelYRef = new JTextField("  Y:", 5);
         labelYRef.setForeground(Color.black);
         labelYRef.setFont(MipavUtil.font12B);
         labelYRef.setEnabled(false);
+        labelYRef.setBorder(BorderFactory.createEmptyBorder());
+        labelYRef.setEditable(false);
 
-        labelZRef = new JLabel("  Z:");
+        labelZRef = new JTextField("  Z:", 5);
         labelZRef.setForeground(Color.black);
         labelZRef.setFont(MipavUtil.font12B);
         labelZRef.setEnabled(false);
+        labelZRef.setBorder(BorderFactory.createEmptyBorder());
+        labelZRef.setEditable(false);
 
         if ((imageA.getFileInfo(0).getOrigin(0) != 0) || (imageA.getFileInfo(0).getOrigin(1) != 0) ||
                 (imageA.getFileInfo(0).getOrigin(2) != 0)) {
@@ -5210,20 +5224,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         // talLabel.setFont( MipavUtil.font12B );
         // talLabel.setEnabled( showTalairachPosition );
 
-        labelXTal = new JLabel("");
+        labelXTal = new JTextField("", 5);
         labelXTal.setForeground(Color.black);
         labelXTal.setFont(MipavUtil.font12B);
         labelXTal.setEnabled(showTalairachPosition);
+        labelXTal.setBorder(BorderFactory.createEmptyBorder());
+        labelXTal.setEditable(false);
 
-        labelYTal = new JLabel("");
+        labelYTal = new JTextField("", 5);
         labelYTal.setForeground(Color.black);
         labelYTal.setFont(MipavUtil.font12B);
         labelYTal.setEnabled(showTalairachPosition);
+        labelYTal.setBorder(BorderFactory.createEmptyBorder());
+        labelYTal.setEditable(false);
 
-        labelZTal = new JLabel("");
+        labelZTal = new JTextField("", 5);
         labelZTal.setForeground(Color.black);
         labelZTal.setFont(MipavUtil.font12B);
         labelZTal.setEnabled(showTalairachPosition);
+        labelZTal.setBorder(BorderFactory.createEmptyBorder());
+        labelZTal.setEditable(false);
 
         scannerLabelX = new JLabel();
         scannerLabelY = new JLabel();

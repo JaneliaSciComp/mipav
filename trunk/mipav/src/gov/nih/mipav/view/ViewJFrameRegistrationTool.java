@@ -560,11 +560,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 VOIs.VOIAt(i).setAllActive(true);
             }
 
-            if (componentImageA.copyVOItoClipBrd()) {
+            if (componentImageA.getVOIHandler().copyVOItoClipBrd()) {
                 componentImageB.getActiveImage().getVOIs().removeAllElements();
                 this.defaultModeButton.setSelected(true);
                 actionPerformed(new ActionEvent("DummySource", 0, "defaultMode"));
-                componentImageB.pasteVOI();
+                componentImageB.getVOIHandler().pasteVOI();
             }
 
             for (int i = 0; i < VOIs.size(); i++) {
@@ -579,11 +579,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 VOIs.VOIAt(i).setAllActive(true);
             }
 
-            if (componentImageB.copyVOItoClipBrd()) {
+            if (componentImageB.getVOIHandler().copyVOItoClipBrd()) {
                 componentImageA.getActiveImage().getVOIs().removeAllElements();
                 this.defaultModeButton.setSelected(true);
                 actionPerformed(new ActionEvent("DummySource", 0, "defaultMode"));
-                componentImageA.pasteVOI();
+                componentImageA.getVOIHandler().pasteVOI();
             }
 
             for (int i = 0; i < VOIs.size(); i++) {

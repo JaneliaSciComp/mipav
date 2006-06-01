@@ -23,21 +23,22 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private JMenu editSubMenu;
     private JMenu graphSubMenu;
     private JMenu propSubMenu;
-    private ViewJComponentEditImage component;
+    private VOIHandler voiHandler;
     private JMenuItem itemProps;
     private JMenuItem itemClose;
     private JMenuItem itemShowVOIName;
     private JMenuItem itemOutputDistance;
     private JMenuItem itemCrop;
 
-    public ViewJPopupVOI(ViewJComponentEditImage comp) {
+    public ViewJPopupVOI(VOIHandler handler) {
+        voiHandler = handler;
+
         popup           = new JPopupMenu();
         graphSubMenu    = ViewMenuBuilder.buildMenu("Graph", 0, true);
         orderSubMenu    = ViewMenuBuilder.buildMenu("VOI Order", 0, true);
         contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, true);
         editSubMenu     = ViewMenuBuilder.buildMenu("Edit", 0, true);
         propSubMenu     = ViewMenuBuilder.buildMenu("Propagate", 0, true);
-        component       = comp;
         itemShowVOIName      = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
             Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
 
@@ -47,7 +48,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Contour boundary intensity","boundaryIntensity", 0, this, null, false));
 
-        if(comp.getActiveImage().getNDims() == 3 || comp.getActiveImage().getNDims() == 4) {
+        if(handler.getComponentImage().getActiveImage().getNDims() == 3 || handler.getComponentImage().getActiveImage().getNDims() == 4) {
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity","totalIntensity", 0, this, null, false));
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Average intensity","avgIntensity", 0, this, null, false));
             graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Total intensity with threshold","totalIntensityThreshold", 0, this, null, false));
@@ -143,7 +144,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
 
             itemShowVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
-            popup.show(component, event.getX(), event.getY());
+            popup.show(voiHandler.getComponentImage(), event.getX(), event.getY());
        }
     }
 
@@ -152,25 +153,27 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
         try {
             if (event.getActionCommand().equals("boundaryIntensity")) {
-                component.graphVOI();
+                voiHandler.graphVOI();
             }
             else if (event.getActionCommand().equals("totalIntensity")) {
-                component.graph25VOI_CalcInten(true, false, 0);
+                voiHandler.graph25VOI_CalcInten(true, false, 0);
             }
             else if (event.getActionCommand().equals("avgIntensity")) {
-                component.graph25VOI_CalcInten(false, false, 0);
+                voiHandler.graph25VOI_CalcInten(false, false, 0);
             }
             else if (event.getActionCommand().equals("totalIntensityThreshold")) {
-              new JDialogIntensityThreshold(component.getFrame(), component.getActiveImage().getUserInterface(),
-                                            component, false);
+              new JDialogIntensityThreshold(voiHandler.getComponentImage().getFrame(),
+                                            voiHandler.getComponentImage().getActiveImage().getUserInterface(),
+                                            voiHandler.getComponentImage(), false);
             }
             else if (event.getActionCommand().equals("avgIntensityThreshold")) {
-              new JDialogIntensityThreshold(component.getFrame(), component.getActiveImage().getUserInterface(),
-                                            component, true);
+              new JDialogIntensityThreshold(voiHandler.getComponentImage().getFrame(),
+                                            ViewUserInterface.getReference(),
+                                            voiHandler.getComponentImage(), true);
             }
 
             else if (event.getActionCommand().equals("Properties")) {
-                component.showVOIProperties(false);
+                voiHandler.showVOIProperties(false);
             }
 
             /*
@@ -179,7 +182,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             */
 
             else if (event.getActionCommand().equals("BringToFront")) {
-                component.bringVOIFront();
+                voiHandler.changeVOIOrder(false, VOIHandler.FRONT);
             }
 
 
@@ -188,7 +191,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             * (Moves the selected VOI to the last element of the vector.)
             */
             else if (event.getActionCommand().equals("SendToBack")) {
-                component.sendVOIBack();
+                voiHandler.changeVOIOrder(false, VOIHandler.BACK);
             }
 
             /*
@@ -196,7 +199,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             * (moves the selected VOI to the one element higher (index number decreases by one) in the list)
             */
             else if (event.getActionCommand().equals("BringForward")) {
-                component.bringVOIForward();
+                voiHandler.changeVOIOrder(false, VOIHandler.FORWARD);
             }
 
             /*
@@ -204,7 +207,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             * (moves the selected VOI to the one element lower (index number increases by one) in the list)
             */
             else if (event.getActionCommand().equals("SendBackward")) {
-                component.sendVOIBackward();
+                voiHandler.changeVOIOrder(false, VOIHandler.BACKWARD);
             }
 
             /*
@@ -213,7 +216,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             */
 
             else if (event.getActionCommand().equals("BringContourToFront")) {
-                component.bringVOIContourFront();
+                voiHandler.changeVOIOrder(true, VOIHandler.FRONT);
             }
 
 
@@ -222,7 +225,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             * (Moves the selected VOI's contour to the last element of the vector.)
             */
             else if (event.getActionCommand().equals("SendContourToBack")) {
-                component.sendVOIContourBack();
+                voiHandler.changeVOIOrder(true, VOIHandler.BACK);
             }
 
             /*
@@ -230,7 +233,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             * (moves the selected VOI's contour to the one element higher (index number decreases by one) in the list)
             */
             else if (event.getActionCommand().equals("BringContourForward")) {
-                component.bringVOIContourForward();
+                voiHandler.changeVOIOrder(true, VOIHandler.FORWARD);
             }
 
             /*
@@ -238,52 +241,50 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             * (moves the selected VOI's contour to the one element lower (index number increases by one) in the list)
             */
             else if (event.getActionCommand().equals("SendContourBackward")) {
-                component.sendVOIContourBackward();
+                voiHandler.changeVOIOrder(true, VOIHandler.BACKWARD);
             }
 
-
-
             else if (event.getActionCommand().equals("cutVOI")){
-                     if (component.copyVOItoClipBrd())
-                         component.deleteSelectedContours();
+                     if (voiHandler.copyVOItoClipBrd())
+                         voiHandler.deleteSelectedContours();
 
                 }
             else if (event.getActionCommand().equals("copyVOI")){
-                    component.copyVOItoClipBrd();
+                    voiHandler.copyVOItoClipBrd();
 
                 }
             else if (event.getActionCommand().equals("pasteVOI")){
-                    component.pasteVOI();
+                    voiHandler.pasteVOI();
                 }
             else if (event.getActionCommand().equals("deleteVOI")){
-                    component.deleteSelectedContours();
+                    voiHandler.deleteSelectedContours();
             }
             else if (event.getActionCommand().equals("PropVOIUp")){
-                if (component.propVOI(1, false) == true ) {
-                    component.getActiveImage().getParentFrame().incSlice();
+                if (voiHandler.propVOI(1, false) == true ) {
+                    voiHandler.getComponentImage().getActiveImage().getParentFrame().incSlice();
                 }
             }
             else if (event.getActionCommand().equals("PropVOIDown")){
-                if (component.propVOI(-1, false) == true) {
-                    component.getActiveImage().getParentFrame().decSlice();
+                if (voiHandler.propVOI(-1, false) == true) {
+                    voiHandler.getComponentImage().getActiveImage().getParentFrame().decSlice();
                 }
             }
             else if (event.getActionCommand().equals("PropVOIAll")){
-                component.propVOIAll();
+                voiHandler.propVOIAll();
             }
             else if (event.getActionCommand().equals("closeVOI")) {
                 closeVOI();
             }
             else if (event.getActionCommand().equals("cropImage")) {
-                new JDialogCrop( component.getActiveImage().getParentFrame(),
-                                 component.getActiveImage(),
-                                 component.getActiveImage().getParentFrame().getViewableSlice() );
+                new JDialogCrop( voiHandler.getComponentImage().getActiveImage().getParentFrame(),
+                                 voiHandler.getComponentImage().getActiveImage(),
+                                 voiHandler.getComponentImage().getActiveImage().getParentFrame().getViewableSlice() );
             }
             else if (event.getActionCommand().equals("ShowName")) {
                 ViewUserInterface.getReference().setUseVOIName(itemShowVOIName.isSelected());
             }
             else if (event.getActionCommand().equals("calcDistances")) {
-                component.calcPLineSliceDistances();
+                voiHandler.calcPLineSliceDistances();
             }
 
         }
@@ -312,7 +313,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
     private boolean isPLineSliceVOI() {
 
-        VOIVector VOIs = component.getActiveImage().getVOIs();
+        VOIVector VOIs = voiHandler.getComponentImage().getActiveImage().getVOIs();
 
         Vector [] curves = null;
         VOIBase tester = null;
@@ -333,7 +334,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      * @return boolean is the active VOI a polyline (not polygon)
      */
     private boolean isVOIOpen() {
-        VOIVector VOIs = component.getActiveImage().getVOIs();
+        VOIVector VOIs = voiHandler.getComponentImage().getActiveImage().getVOIs();
 
         Vector [] curves = null;
         VOIBase tester = null;
@@ -353,7 +354,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      * Sets a POLYLINE VOI to closed CONTOUR(changes from polyline to polygon)
      */
     private void closeVOI() {
-        VOIVector VOIs = component.getActiveImage().getVOIs();
+        VOIVector VOIs = voiHandler.getComponentImage().getActiveImage().getVOIs();
 
         Vector [] curves = null;
         VOIBase tester = null;
@@ -373,7 +374,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                     }
 
                 }
-                component.getActiveImage().notifyImageDisplayListeners( null, true );
+                voiHandler.getComponentImage().getActiveImage().notifyImageDisplayListeners( null, true );
                 return;
             }
         }
