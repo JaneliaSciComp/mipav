@@ -102,6 +102,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      *  voiMask template used in code (for left and right legs)*/
     private ModelImage voiMask = null;
     
+    /*use N3 checkbox*/
+    private boolean useN3 = false;
+    
     /** flag for bone/bonemarrow processing, to indicate whether or not bone is continuous */
     private boolean continuousBone = false; 
 
@@ -133,11 +136,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * obMaskA,obMaskB corresponding outer boundary masks
      */
     public PlugInAlgorithmPipelineB(ModelImage destImageA, ModelImage destImageB, ModelImage obMaskA,
-                                    ModelImage obMaskB) {
+                                    ModelImage obMaskB, boolean useN3) {
         this.obMaskA = obMaskA;
         this.obMaskB = obMaskB;
         this.destImageA = destImageA;
         this.destImageB = destImageB;
+        this.useN3 = useN3;
     }
    
     
@@ -465,15 +469,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
   * @return  --image with labeled interstitial fat, subcutaneous fat, background and muscle (all but bone/bone marrow)
   */
    	public ModelImage processHardFat(ModelImage Hard4Classes){	 
+   		//ShowImage(obMask,"obMask");
+   		//ShowImage(voiMask,"voiMask");
 	 progressBar.setMessage("Processing bundle fat");
 	 	ModelImage fatImage = (ModelImage)Hard4Classes.clone();
 		convert(fatImage, voiMask, fatImage, 1, Muscle);	/**fill voi with muscle*/
 		convert(fatImage, Hard4Classes, fatImage, 189, FAT);		
 		convert(fatImage, Hard4Classes, fatImage, 252, FAT);		
 		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);	/**all outside voi labeled subcutfat*/
+		//ShowImage(fatImage,"after subcut/ before background");
 		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	/**all outside obMask labeled background*/
-				
-		//cleanUp(destImage3b, FAT, Muscle, 60*zDim/20); /**FAT FILTER (eliminates fat smaller than 60 pixels --for 20 slices)*/
+		
 		cleanUp(fatImage, FAT, Muscle, 60*zDim/20); /**FAT FILTER (eliminates fat smaller than 60 pixels --for 20 slices)*/
 		return fatImage;
  }  
@@ -1143,8 +1149,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             // STEP 2: ISN and N3 inside VOI
             ISN(destImage2);											//ShowImage(destImage2,"intensity slice normalized image");
             progressBar.updateValue((50 * (aa - 1)) + 9, activeImage);
-            //N3(destImage2);								
-            //progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
+            N3(destImage2);								
+            progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
 
 
             //STEP 3: FUZZY SEGMENT ENTIRE IMAGE
@@ -1175,7 +1181,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             voiMask.disposeLocal();voiMask = null;
             obMask.disposeLocal();obMask = null;
 
-            
             //STEP 7: MERGING PROCESSED THIGH IMAGES
             mergeImages(destImage3b, destImage3a, destImage3b);			//ShowImage(destImage3b, "after 'merge'");
             progressBar.updateValue(50 * (aa - 1) + 50, activeImage);
