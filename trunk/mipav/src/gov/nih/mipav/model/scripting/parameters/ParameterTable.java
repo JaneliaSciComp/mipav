@@ -8,7 +8,7 @@ import java.util.Hashtable;
 
 
 /**
- * DOCUMENT ME!
+ * A lookup table containing Parameters keyed by a label/name.  Can be filled by the parser with Parameters for a script action execution, or filled by a scriptable dialog and used to record the parameters in a script.
  */
 public class ParameterTable {
 
@@ -27,20 +27,20 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Checks to see if there is an entry in the parameter table for a particular label.
      *
      * @param   paramLabel  The label/name of the variable parameter to check for.
      *
-     * @return  DOCUMENT ME!
+     * @return  <code>True</code> if there is an entry in the table with the given label, <code>false</code> otherwise.
      */
     public boolean containsParameter(String paramLabel) {
         return paramTable.containsKey(paramLabel);
     }
 
     /**
-     * DOCUMENT ME!
+     * Converts all of the parameters in the table into a comma delimited list of parameters, suitable for inclusion in a script.
      *
-     * @return  DOCUMENT ME!
+     * @return  The information on the parameters in the table in string form. 
      */
     public String convertToString() {
         String str = new String();
@@ -60,7 +60,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the parameter to retrieve.
      *
@@ -71,7 +71,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the boolean value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the boolean parameter to retrieve.
      *
@@ -82,7 +82,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the double value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the double parameter to retrieve.
      *
@@ -93,7 +93,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the float value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the float parameter to retrieve.
      *
@@ -104,7 +104,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the model image assigned to one of the image parameters from the table.
      *
      * @param   paramLabel  The label/name of the image variable parameter to retrieve.
      *
@@ -115,7 +115,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the integer value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the integer parameter to retrieve.
      *
@@ -126,7 +126,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the one of the parameters from the table (cast as a ParameterList).
      *
      * @param   paramLabel  The label/name of the list parameter to retrieve.
      *
@@ -137,7 +137,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the long value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the long parameter to retrieve.
      *
@@ -148,9 +148,9 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Get an array containing all of the parameters in the parameter table.
      *
-     * @return  DOCUMENT ME!
+     * @return  The parameters in the table, in no particular order.
      */
     public Parameter[] getParameters() {
         Parameter[] paramsArray = new Parameter[size()];
@@ -167,7 +167,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the signed short value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the signed short parameter to retrieve.
      *
@@ -178,7 +178,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the string value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the string parameter to retrieve.
      *
@@ -189,7 +189,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return the unsigned short value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the unsigned short parameter to retrieve.
      *
@@ -200,7 +200,7 @@ public class ParameterTable {
     }
 
     /**
-     * DOCUMENT ME!
+     * Return one of the parameters from the table (cast as a ParameterVariable).
      *
      * @param   paramLabel  The label/name of the variable parameter to retrieve.
      *
