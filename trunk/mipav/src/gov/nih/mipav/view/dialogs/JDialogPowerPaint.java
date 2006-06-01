@@ -2584,7 +2584,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "PaintMask"));
 
         // remove the VOI
-        image.getParentFrame().getComponentImage().deleteSelectedContours();
+        image.getParentFrame().getComponentImage().getVOIHandler().deleteSelectedContours();
     }
 
     /**

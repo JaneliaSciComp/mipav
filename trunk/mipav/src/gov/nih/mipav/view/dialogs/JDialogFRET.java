@@ -182,9 +182,9 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         } else if (command.equals("Cancel")) {
 
             if (image.getNDims() == 2) {
-                componentPostImage.setPresetHue(-1.0f);
+                componentPostImage.getVOIHandler().setPresetHue(-1.0f);
             } else {
-                componentImage.setPresetHue(-1.0f);
+                componentImage.getVOIHandler().setPresetHue(-1.0f);
             }
 
             dispose();
@@ -194,28 +194,28 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
                 if (image.getNDims() == 2) {
                     componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentPostImage.setPresetHue(0.0f); // red
+                    componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
                 } else {
                     componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.setPresetHue(0.0f); // red
+                    componentImage.getVOIHandler().setPresetHue(0.0f); // red
                 }
             } else if (backgroundButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
                     componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentPostImage.setPresetHue(2.0f / 3.0f); // blue
+                    componentPostImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 } else {
                     componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.setPresetHue(2.0f / 3.0f); // blue
+                    componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 }
             } else if (signalButton.isSelected()) {
 
                 if (image.getNDims() == 2) {
                     componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentPostImage.setPresetHue(1.0f / 3.0f); // green
+                    componentPostImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
                 } else {
                     componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.setPresetHue(1.0f / 3.0f); // green
+                    componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
                 }
 
             }
@@ -345,9 +345,9 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
     public void windowClosing(WindowEvent event) {
 
         if (image.getNDims() == 2) {
-            componentPostImage.setPresetHue(-1.0f);
+            componentPostImage.getVOIHandler().setPresetHue(-1.0f);
         } else {
-            componentImage.setPresetHue(-1.0f);
+            componentImage.getVOIHandler().setPresetHue(-1.0f);
         }
 
         cancelFlag = true;
@@ -412,9 +412,9 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
         try {
 
             if (image.getNDims() == 2) {
-                componentPostImage.setPresetHue(-1.0f);
+                componentPostImage.getVOIHandler().setPresetHue(-1.0f);
             } else {
-                componentImage.setPresetHue(-1.0f);
+                componentImage.getVOIHandler().setPresetHue(-1.0f);
             }
             // Make algorithm
 
@@ -558,11 +558,11 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
 
         if (image.getNDims() == 2) {
             componentPostImage.setMode(ViewJComponentEditImage.NEW_VOI);
-            componentPostImage.setPresetHue(0.0f); // red
+            componentPostImage.getVOIHandler().setPresetHue(0.0f); // red
         } // if (image.getNDims() == 2)
         else {
             componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-            componentImage.setPresetHue(0.0f); // red
+            componentImage.getVOIHandler().setPresetHue(0.0f); // red
         }
 
         backgroundButton = new JRadioButton("Add optional background VOI", false);

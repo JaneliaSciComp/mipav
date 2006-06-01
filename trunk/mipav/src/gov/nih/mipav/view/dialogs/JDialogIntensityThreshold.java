@@ -89,7 +89,7 @@ public class JDialogIntensityThreshold extends JDialogBase {
             }
 
             setVisible(false);
-            component.graph25VOI_CalcInten(!doAverage, true, threshold);
+            component.getVOIHandler().graph25VOI_CalcInten(!doAverage, true, threshold);
             this.dispose();
         } else if (source == cancelButton) {
             setVisible(false);
