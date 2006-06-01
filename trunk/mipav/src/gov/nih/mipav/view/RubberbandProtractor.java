@@ -178,7 +178,7 @@ public class RubberbandProtractor extends Rubberband {
                     ((ViewJComponentEditImage) (component)).setMode(((ViewJComponentEditImage) (component)).DEFAULT);
                 }
 
-                ((ViewJComponentEditImage) (component)).setVOI_IDs(newVOI.getID(), newVOI.getUID());
+                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
 
             } // end if this is a *new* VOI
             else { // this is not a *new* VOI ... add to existing VOI

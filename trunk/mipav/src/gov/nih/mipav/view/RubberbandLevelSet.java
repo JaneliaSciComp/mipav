@@ -359,7 +359,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
 
                 image.registerVOI(newVOI);
                 image.notifyImageDisplayListeners();
-                ((ViewJComponentEditImage) (component)).setVOI_IDs(newVOI.getID(), newVOI.getUID());
+                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
 
 
                 System.gc();

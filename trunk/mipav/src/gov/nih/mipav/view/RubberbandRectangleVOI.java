@@ -230,7 +230,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                         }
 
                         image.registerVOI(newVOI);
-                        ((ViewJComponentEditImage) (component)).setVOI_IDs(newVOI.getID(), newVOI.getUID());
+                        ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
                     }
                 } catch (OutOfMemoryError error) {
                     System.gc();

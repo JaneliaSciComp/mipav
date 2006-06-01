@@ -908,7 +908,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         graphics.drawPolyline(xPointsDraw, yPointsDraw, count + 1);
 
         /*
-        
+
                 // compute the RMS distance between corresponding points
                 // the thought is that when the contour jumps we should see
                 // a significant change in the RMS distance
@@ -945,7 +945,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         //              }
                     }
                 }
-        
+
                 // We have the total squared distance between corresponding contour points
                 // find the square root of the mean
                 rmsDistance = (float)Math.sqrt(totalSquaredDistance / numContourPoints);
@@ -1283,7 +1283,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
                 }
 
-                ((ViewJComponentEditImage) (component)).setVOI_IDs(newVOI.getID(), newVOI.getUID());
+                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
 
                 // setup for next time this class is used
                 firstPoint = true;
