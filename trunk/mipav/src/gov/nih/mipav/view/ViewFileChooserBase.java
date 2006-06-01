@@ -45,9 +45,6 @@ public class ViewFileChooserBase {
     protected String fileName;
 
     /** DOCUMENT ME! */
-    protected boolean multiFile = false;
-
-    /** DOCUMENT ME! */
     protected File openedFile;
 
     /** DOCUMENT ME! */

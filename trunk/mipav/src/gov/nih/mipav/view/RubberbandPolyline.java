@@ -375,7 +375,7 @@ public class RubberbandPolyline extends Rubberband {
                     ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
                 }
 
-                ((ViewJComponentEditImage) (component)).setVOI_IDs(newVOI.getID(), newVOI.getUID());
+                ((ViewJComponentEditImage) (component)).getVOIHandler().setVOI_IDs(newVOI.getID(), newVOI.getUID());
 
                 // setup for next time this class is used
                 firstPoint = true;
