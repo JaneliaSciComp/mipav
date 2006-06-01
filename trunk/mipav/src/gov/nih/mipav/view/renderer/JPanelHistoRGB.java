@@ -48,7 +48,7 @@ public class JPanelHistoRGB
     /** Update Blue channel histogram check box A, B. Updating during mouse dragging */
     private JCheckBox blueCheckBoxA, blueCheckBoxB;
 
-    /** DOCUMENT ME! */
+    /** Flag indicating if histogram should be done on all of image or not. */
     private boolean entireFlag = true;
 
     /** Update Green channel histogram check box A, B. Updating during mouse dragging */
@@ -81,7 +81,7 @@ public class JPanelHistoRGB
     /** Model image A, B. Define inside this class in order to get rid of the JFrame */
     private ModelImage imageA;
 
-    /** DOCUMENT ME! */
+    /** ImageB reference.f */
     private ModelImage imageB;
 
     /** The histogram log view check box. */
@@ -108,13 +108,13 @@ public class JPanelHistoRGB
     /** Not used now. */
     private ViewJComponentRegistration regComponent = null;
 
-    /** DOCUMENT ME! */
+    /** RGB extents. */
     private int[] RGBExtents = new int[2];
 
-    /** Model RGB tables. */
+    /** Model RGB table A reference. */
     private ModelRGB RGBTA;
 
-    /** DOCUMENT ME! */
+    /** Model RGB table B reference. */
     private ModelRGB RGBTB;
 
     /** Scroll pane. */
@@ -132,7 +132,7 @@ public class JPanelHistoRGB
     /** Object which generates the toolbar. */
     private ViewToolBarBuilder toolBarObj;
 
-    /** DOCUMENT ME! */
+    /** Toggle buttons for transfer, threshold and threshold inverse. */
     private JToggleButton transferButton, thresholdButton, inverseThresholdButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -206,7 +206,7 @@ public class JPanelHistoRGB
      * @param  _imageB        Model of imageB
      * @param  _RGBTA         Model RGB
      * @param  _RGBTB         Model RGB
-     * @param  _entireFlag    DOCUMENT ME!
+     * @param  _entireFlag    Flag indicating if histogram should be done on all of image.
      */
     public JPanelHistoRGB(ViewJComponentRegistration _regComponent, ModelImage _imageA, ModelImage _imageB,
                           ModelRGB _RGBTA, ModelRGB _RGBTB, boolean _entireFlag) {
@@ -825,7 +825,7 @@ public class JPanelHistoRGB
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mouseClicked(MouseEvent mouseEvent) { }
 
@@ -836,42 +836,42 @@ public class JPanelHistoRGB
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mouseDragged(MouseEvent mouseEvent) { }
 
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mouseEntered(MouseEvent mouseEvent) { }
 
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mouseExited(MouseEvent mouseEvent) { }
 
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mouseMoved(MouseEvent mouseEvent) { }
 
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mousePressed(MouseEvent mouseEvent) { }
 
     /**
      * Unchanged.
      *
-     * @param  mouseEvent  DOCUMENT ME!
+     * @param  mouseEvent  mouse event handler.
      */
     public void mouseReleased(MouseEvent mouseEvent) { }
 
@@ -1052,7 +1052,7 @@ public class JPanelHistoRGB
     /**
      * The following 2 functions set the RGB tables for images A and B.
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  RGB table reference.
      */
     public void setRGBTA(ModelRGB RGBT) {
         RGBTA = RGBT;
@@ -1061,7 +1061,7 @@ public class JPanelHistoRGB
     /**
      * DOCUMENT ME!
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  RGB table reference.
      */
     public void setRGBTB(ModelRGB RGBT) {
         RGBTB = RGBT;
@@ -1258,7 +1258,7 @@ public class JPanelHistoRGB
     /**
      * Calls dispose.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable   throw exception.
      */
     protected void finalize() throws Throwable {
         this.disposeLocal();
@@ -1468,14 +1468,6 @@ public class JPanelHistoRGB
     }
 
     /**
-     * end HistoLUTParent interface.
-     *
-     * @param  imageAorB     DOCUMENT ME!
-     * @param  entireFlag    DOCUMENT ME!
-     * @param  progressFlag  DOCUMENT ME!
-     */
-
-    /**
      * Calculates histogram for the image(s).
      *
      * @param  imageAorB     flag to indicate if histogram is to be calculated for imageA or imageB.
@@ -1591,9 +1583,9 @@ public class JPanelHistoRGB
         private static final long serialVersionUID = -1286961329861675276L;
 
         /**
-         * DOCUMENT ME!
+         * Wrapper to repaing the panel.
          *
-         * @param  g  DOCUMENT ME!
+         * @param  g  graphics reference. 
          */
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
