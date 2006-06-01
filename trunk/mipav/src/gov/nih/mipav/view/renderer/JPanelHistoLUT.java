@@ -46,7 +46,7 @@ public class JPanelHistoLUT
     /** Active mouse cursor index of the imageA, B and GM image A, B. */
     private int cursorIndex, cursorIndexB;
 
-    /** DOCUMENT ME! */
+    /** Flag indicating if histogram should be done on all of image or not. */
     private boolean entireFlag = true;
 
     /** Model histogram A. */
@@ -1658,7 +1658,7 @@ public class JPanelHistoLUT
     /**
      * Does nothing in this class.
      *
-     * @param  tSlice  DOCUMENT ME!
+     * @param  tSlice  time slice value.
      */
     public void setTimeSlice(int tSlice) { }
 
