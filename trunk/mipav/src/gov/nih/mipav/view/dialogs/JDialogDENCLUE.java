@@ -303,17 +303,10 @@ public class JDialogDENCLUE extends JDialogBase implements AlgorithmInterface, S
     private void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_DENCLUE");
 
-        
-
-        int[] destExtents = new int[2];
-        destExtents[0] = image.getExtents()[0]; // X dim
-        destExtents[1] = image.getExtents()[1]; // Y dim
-
-
         try {
 
             // Make result image of float type
-            resultImage     = new ModelImage(ModelStorageBase.FLOAT, destExtents, name, userInterface);
+            resultImage     = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name, userInterface);
 
             // Make algorithm
             denAlgo = new AlgorithmDENCLUE(resultImage, image, isGaussian, distance,
