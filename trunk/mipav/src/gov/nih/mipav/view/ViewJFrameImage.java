@@ -1732,6 +1732,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else if (command.equals("histTwoDim")) {
             new JDialogHistogram2Dim(this, getActiveImage());
+        } else if (command.equals("DENCLUE")) {
+            new JDialogDENCLUE(this, getActiveImage());
         } else if (command.equals("colocDENCLUE")) {
             new JDialogColocalizationDENCLUE(this, getActiveImage());
         } else if (command.equals("colocEM")) {
