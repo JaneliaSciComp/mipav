@@ -4,6 +4,8 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import static gov.nih.mipav.view.MipavUtil.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -107,11 +109,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
         System.err.println("VOI is selectled, index: " + i);
 
         if (imageActive.getNDims() == 2) {
-            deleteContour(VOIs.VOIAt(i), 0);
+            getVOIHandler().deleteContour(VOIs.VOIAt(i), 0);
         } else if (imageActive.getNDims() >= 3) {
 
             for (s = 0; s < imageActive.getExtents()[2]; s++) {
-                deleteContour(VOIs.VOIAt(i), s);
+                getVOIHandler().deleteContour(VOIs.VOIAt(i), s);
             }
         }
 
@@ -125,7 +127,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
             int lastUID = (getActiveImage().getVOIs().size() > 0)
                           ? (((VOI) (getActiveImage().getVOIs().lastElement())).getUID() + 1) : -1;
 
-            this.updateVOIColor(id, lastUID);
+            getVOIHandler().updateVOIColor(id, lastUID);
             voiID = -1;
         }
 
@@ -538,8 +540,8 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
             }
         }
 
-        distX = xS - anchorPt.x; // distance from original to cursor
-        distY = yS - anchorPt.y;
+        distX = xS - voiHandler.getAnchorPt().x; // distance from original to cursor
+        distY = yS - voiHandler.getAnchorPt().y;
 
         int end = 1;
 
@@ -649,11 +651,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
                                                             if (!foundCurve) {
                                                                 imageActive.exportData(s * length * 4, length * 4,
-                                                                                       graphImgBuff);
+                                                                                       voiHandler.getImageGraphBuffer());
                                                             } // locks and releases lock
 
                                                             intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(graphImgBuff,
+                                                                                .calcRGBIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                       imageActive.getExtents()[0],
                                                                                                       c);
                                                             numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
@@ -708,11 +710,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                                                     if (isActive || foundCurve) {
 
                                                         if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, graphImgBuff);
+                                                            imageActive.exportData(s * length, length, voiHandler.getImageGraphBuffer());
                                                         } // locks and releases lock
 
                                                         intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(graphImgBuff,
+                                                                            .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                imageActive.getExtents()[0]);
                                                         numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                          .getLastNumPixels();
@@ -760,11 +762,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
                                             for (s = 0, intensitySum = 0; s < imageActive.getExtents()[2]; s++) {
                                                 imageActive.exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, graphImgBuff); // locks and releases lock
+                                                                       length, voiHandler.getImageGraphBuffer()); // locks and releases lock
 
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
                                                     intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(graphImgBuff,
+                                                                        .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                            imageActive.getExtents()[0]);
                                                     numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                      .getLastNumPixels();
@@ -827,9 +829,9 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
                                                 for (int c = 0; c < 3; c++) {
 
-                                                    if ((ptRGBPositions != null) && (ptRGBIntensities != null)) {
-                                                        ptRGBPositions[c][s] = s;
-                                                        ptRGBIntensities[c][s] = imageActive.getFloat((int) ((4 *
+                                                    if ((voiHandler.getPointRGBPositions() != null) && (voiHandler.getPointRGBIntensities() != null)) {
+                                                        voiHandler.getPointRGBPositions()[c][s] = s;
+                                                        voiHandler.getPointRGBIntensities()[c][s] = imageActive.getFloat((int) ((4 *
                                                                                                                   ((s *
                                                                                                                         imageActive.getExtents()[0] *
                                                                                                                         imageActive.getExtents()[1]) +
@@ -842,7 +844,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                                             }
 
                                             if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                                VOIs.VOIAt(i).getContourGraph().update(ptRGBPositions, ptRGBIntensities,
+                                                VOIs.VOIAt(i).getContourGraph().update(voiHandler.getPointRGBPositions(), voiHandler.getPointRGBIntensities(),
                                                                                        j);
                                                 VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                             }
@@ -853,9 +855,9 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                                                 pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j)))
                                                          .exportPoint();
 
-                                                if ((ptPosition != null) && (ptIntensity != null)) {
-                                                    ptPosition[s] = s;
-                                                    ptIntensity[s] = imageActive.getFloat((int) ((s *
+                                                if ((voiHandler.getPointPositions() != null) && (voiHandler.getPointIntensities() != null)) {
+                                                    voiHandler.getPointPositions()[s] = s;
+                                                    voiHandler.getPointIntensities()[s] = imageActive.getFloat((int) ((s *
                                                                                                       imageActive.getExtents()[0] *
                                                                                                       imageActive.getExtents()[1]) +
                                                                                                  (pt.y *
@@ -865,7 +867,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                                             }
 
                                             if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                                VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
+                                                VOIs.VOIAt(i).getContourGraph().update(voiHandler.getPointPositions(), voiHandler.getPointIntensities(), j);
                                                 VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                             }
                                         }
@@ -875,16 +877,16 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                                             pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j)))
                                                      .exportPoint();
 
-                                            if ((ptPosition != null) && (ptIntensity != null)) {
-                                                ptPosition[t] = t;
-                                                ptIntensity[t] = imageActive.getFloat((int) ((t * xDim * yDim * zDim) +
+                                            if ((voiHandler.getPointPositions() != null) && (voiHandler.getPointIntensities() != null)) {
+                                                voiHandler.getPointPositions()[t] = t;
+                                                voiHandler.getPointIntensities()[t] = imageActive.getFloat((int) ((t * xDim * yDim * zDim) +
                                                                                              (pt.z * xDim * yDim) +
                                                                                              (pt.y * xDim) + pt.x));
                                             }
                                         }
 
                                         if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                            VOIs.VOIAt(i).getContourGraph().update(ptPosition, ptIntensity, j);
+                                            VOIs.VOIAt(i).getContourGraph().update(voiHandler.getPointPositions(), voiHandler.getPointIntensities(), j);
                                             VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
                                         }
                                     }
@@ -897,8 +899,8 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                 }
             }
 
-            anchorPt.x = xS;
-            anchorPt.y = yS;
+            voiHandler.getAnchorPt().x = xS;
+            voiHandler.getAnchorPt().y = yS;
 
             if (i == nVOI) {
                 g.dispose();
@@ -1059,11 +1061,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
                                                             if (!foundCurve) {
                                                                 imageActive.exportData(s * length * 4, length * 4,
-                                                                                       graphImgBuff);
+                                                                                       voiHandler.getImageGraphBuffer());
                                                             } // locks and releases lock
 
                                                             intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(graphImgBuff,
+                                                                                .calcRGBIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                       imageActive.getExtents()[0],
                                                                                                       c);
                                                             numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
@@ -1117,11 +1119,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                                                             .isActive() || foundCurve) {
 
                                                         if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, graphImgBuff);
+                                                            imageActive.exportData(s * length, length, voiHandler.getImageGraphBuffer());
                                                         } // locks and releases lock
 
                                                         intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(graphImgBuff,
+                                                                            .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                imageActive.getExtents()[0]);
                                                         numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                          .getLastNumPixels();
@@ -1169,11 +1171,11 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
                                             for (s = 0, intensitySum = 0; s < imageActive.getExtents()[2]; s++) {
                                                 imageActive.exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, graphImgBuff); // locks and releases lock
+                                                                       length, voiHandler.getImageGraphBuffer()); // locks and releases lock
 
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
                                                     intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(graphImgBuff,
+                                                                        .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                            imageActive.getExtents()[0]);
                                                     numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                      .getLastNumPixels();
@@ -1250,7 +1252,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
             if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
 
                 if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
-
+                    VOI newPtVOI = null;
                     try {
                         float[] x = new float[1];
                         float[] y = new float[1];
@@ -1293,16 +1295,16 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                         return;
                     }
 
-                    lastPointVOI = voiID;
+                    voiHandler.setLastPointVOI_ID(voiID);
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
-                    updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
+                    getVOIHandler().updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
                     ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
 
-                    graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
+                    getVOIHandler().graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
 
                 } // end of if (voiID == -1)
                 else { // voiID != -1 add point to existing VOI
@@ -1359,7 +1361,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                     imageActive.notifyImageDisplayListeners();
 
                     if (!((VOIs.VOIAt(i).getContourGraph() != null) && (imageActive.isColorImage() == true))) {
-                        graphPointVOI(VOIs.VOIAt(i),
+                        getVOIHandler().graphPointVOI(VOIs.VOIAt(i),
                                       ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))), index - 1);
                     }
 
@@ -1415,7 +1417,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                             // System.err.println("Got a shift down");
                             // if true set all points in VOI active - move all points
                             VOIs.VOIAt(i).setAllActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                            getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             voiID = VOIs.VOIAt(i).getID();
 
                             // and we are done with this VOI.
@@ -1424,7 +1426,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                         } else {
                             allActive = false;
                             VOIs.VOIAt(i).setActive(true);
-                            updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+                            getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             ((VOIPoint) (selectedCurve)).setActive(true);
                             voiID = VOIs.VOIAt(i).getID();
                         }

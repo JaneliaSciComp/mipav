@@ -8,6 +8,8 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
+import static gov.nih.mipav.view.MipavUtil.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -129,11 +131,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
               _orientation, _axialOrientation, _orient);
 
-        removeMouseListener(popupPt);
-        removeMouseListener(popup);
-        popupPt.setEnabled(false);
-        popup.setEnabled(false);
-        removeVOIUpdateListener(voiDialog);
+        removeMouseListener(voiHandler.getPopupPt());
+        removeMouseListener(voiHandler.getPopupVOI());
+        voiHandler.getPopupPt().setEnabled(false);
+        voiHandler.getPopupVOI().setEnabled(false);
+      //  getVOIHandler().removeVOIUpdateListener(getVOIHandler().getVOIDialog());
         popupCard = new ViewJPopupCardiologyVOI(this);
     }
 
@@ -174,10 +176,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
         int sliceSize = imageActive.getSliceSize();
 
-        this.graphImgBuff = new float[sliceSize];
+        float [] imageGraphBuffer = new float[sliceSize];
+
 
         try {
-            imageActive.exportData(0, sliceSize, graphImgBuff);
+            imageActive.exportData(0, sliceSize, imageGraphBuffer);
         } catch (Exception ex) {
             System.err.println("exception, woohoo");
         }
@@ -185,16 +188,17 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         for (int i = 0; i < activeArray.length; i++) {
 
             if (activeArray[i]) {
-                avgIntensities = cardioVOI.calcAverageIntensity(graphImgBuff, i, imageActive.getExtents()[0],
+                avgIntensities = cardioVOI.calcAverageIntensity(imageGraphBuffer, i, imageActive.getExtents()[0],
                                                                 imageActive.getUserInterface());
 
                 System.err.println(i + " entire section: " + avgIntensities[0] + ", infarction: " + avgIntensities[1]);
 
-                //        System.err.println("i: " + cardioVOI.calcAverageIntensity(graphImgBuff, i,
+                //        System.err.println("i: " + cardioVOI.calcAverageIntensity(voiHandler.getImageGraphBuffer(), i,
                 // imageActive.getExtents()[0],
                 // imageActive.getUserInterface()));
             }
         }
+        voiHandler.setImageGraphBuffer(imageGraphBuffer);
     }
 
     /**
@@ -338,7 +342,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
             for (int k = 0; k < nVOI; k++) { // deactivate all VOIs except last point VOI
 
-                if (k != lastPointVOI) {
+                if (k != voiHandler.getLastPointVOI_ID()) {
                     VOIs.VOIAt(k).setAllActive(false); // and mouseClick is often immediately entered
                 }
             }
@@ -365,51 +369,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         imageA = null;
         imageB = null;
 
-        if (rubberband != null) {
-            rubberband.dispose();
-        }
-
-        if (rbRect != null) {
-            rbRect.dispose();
-        }
-
-        if (rbPolyline != null) {
-            rbPolyline.dispose();
-        }
-
-        if (rbEllipse != null) {
-            rbEllipse.dispose();
-        }
-
-        if (rbLine != null) {
-            rbLine.dispose();
-        }
-
-        if (rbLivewire != null) {
-            rbLivewire.dispose();
-        }
-
-        if (rbProtractor != null) {
-            rbProtractor.dispose();
-        }
-
-        rubberband = null;
-        rbRect = rbPolyline = rbEllipse = rbLine = rbProtractor = rbLivewire = null;
-        crosshairCursor = null;
-        defaultCursor = null;
-        moveCursor = null;
-        rectCursor = null;
-        pointCursor = null;
-        addPointCursor = null;
-        removePointCursor = null;
-        wandCursor = null;
-        waitCursor = null;
-
-        if (voiDialog != null) {
-            removeVOIUpdateListener(voiDialog); // just in case....
-            voiDialog.dispose();
-            voiDialog = null;
-        }
 
         if (imageStatList != null) {
 
@@ -421,14 +380,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         if (magSettings != null) {
             magSettings.dispose();
             magSettings = null;
-        }
-
-        if (popup != null) {
-            popup = null;
-        }
-
-        if (popupPt != null) {
-            popupPt = null;
         }
 
         if (growDialog != null) {
@@ -447,8 +398,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
         LUTa = null;
         LUTb = null;
-        anchorPt = null;
-        newPtVOI = null;
 
         if (flag == true) {
             super.disposeLocal();
@@ -660,7 +609,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             // System.out.println("Deactivating all VOIs");
 
             deactivateAllVOI();
-            lastPointVOI = -1; // next mouseClick will deactivate point VOI unless reselected
+            voiHandler.setLastPointVOI_ID(-1); // next mouseClick will deactivate point VOI unless reselected
 
             imageActive.notifyImageDisplayListeners();
         }
@@ -910,8 +859,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             }
         }
 
-        distX = xS - anchorPt.x; // distance from original to cursor
-        distY = yS - anchorPt.y;
+        distX = xS - voiHandler.getAnchorPt().x; // distance from original to cursor
+        distY = yS - voiHandler.getAnchorPt().y;
 
         int end = 1;
 
@@ -1137,7 +1086,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 if (VOIs.VOIAt(i).isActive() == true) {
 
                     // System.out.println("Start of mouse pressed: Coping VOI to clip board for Undo");
-                    copyVOIforUndo();
+                    getVOIHandler().copyVOIforUndo();
 
                     break;
                 }
@@ -1508,7 +1457,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         }
 
         if (mode == MOVE) {
-            anchorPt.setLocation(xS, yS); // For use in dragging VOIs
+            voiHandler.getAnchorPt().setLocation(xS, yS); // For use in dragging VOIs
 
             // the actual selecting was moved to mouseReleased()
         }
@@ -1649,10 +1598,13 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                 if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
 
+                    VOI newPtVOI = null;
                     try {
                         float[] x = new float[1];
                         float[] y = new float[1];
                         float[] z = new float[1];
+
+
 
                         voiID = imageActive.getVOIs().size();
 
@@ -1684,7 +1636,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         return;
                     }
 
-                    lastPointVOI = voiID;
+                    voiHandler.setLastPointVOI_ID(voiID);
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
@@ -1693,7 +1645,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     imageActive.notifyImageDisplayListeners();
 
-                    graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
+                    voiHandler.graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
@@ -1754,7 +1706,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                     imageActive.notifyImageDisplayListeners();
 
                     if (!((VOIs.VOIAt(i).getContourGraph() != null) && (imageActive.isColorImage() == true))) {
-                        graphPointVOI(VOIs.VOIAt(i),
+                        voiHandler.graphPointVOI(VOIs.VOIAt(i),
                                       ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))), index - 1);
                     }
 
@@ -1884,11 +1836,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                                             if (!foundCurve) {
                                                                 imageActive.exportData(s * length * 4, length * 4,
-                                                                                       graphImgBuff);
+                                                                                       voiHandler.getImageGraphBuffer());
                                                             } // locks and releases lock
 
                                                             intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(graphImgBuff,
+                                                                                .calcRGBIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                       imageActive.getExtents()[0],
                                                                                                       c);
                                                             numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
@@ -1942,11 +1894,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                             .isActive() || foundCurve) {
 
                                                         if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, graphImgBuff);
+                                                            imageActive.exportData(s * length, length, voiHandler.getImageGraphBuffer());
                                                         } // locks and releases lock
 
                                                         intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(graphImgBuff,
+                                                                            .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                imageActive.getExtents()[0]);
                                                         numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                          .getLastNumPixels();
@@ -1995,11 +1947,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                             for (s = 0, intensitySum = 0; s < imageActive.getExtents()[2]; s++) {
                                                 imageActive.exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, graphImgBuff); // locks and releases lock
+                                                                       length, voiHandler.getImageGraphBuffer()); // locks and releases lock
 
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
                                                     intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(graphImgBuff,
+                                                                        .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                            imageActive.getExtents()[0]);
                                                     numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                      .getLastNumPixels();
@@ -2120,7 +2072,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             voiID = VOIs.VOIAt(i).getID();
                         }
 
-                        fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
+                        getVOIHandler().fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
 
                     } else if ((selectedCurve instanceof VOIText) &&
                                    ((VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
@@ -2168,7 +2120,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             voiID = VOIs.VOIAt(i).getID();
                         }
 
-                        fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
+                        getVOIHandler().fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
                     } else { // selected curve was not selected, so set false.
                         selectedCurve.setActive(false);
                     }
@@ -2220,375 +2172,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             }
 
             imageActive.notifyImageDisplayListeners();
-        } else if (mode == QUICK_LUT) {
-            int wS, hS;
-            float min = Float.MAX_VALUE;
-            float max = -100000000;
-            float minR = Float.MAX_VALUE;
-            float maxR = -Float.MAX_VALUE;
-            float minG = Float.MAX_VALUE;
-
-            ;
-
-            float maxG = -Float.MAX_VALUE;
-            float minB = Float.MAX_VALUE;
-            float maxB = -Float.MAX_VALUE;
-
-            float[] x = new float[4];
-            float[] y = new float[4];
-            float[] z = new float[4];
-            Dimension dim = new Dimension(256, 256);
-            float minImage, maxImage;
-
-            xS = Math.round(rubberband.getBounds().x / (getZoomX() * resolutionX));
-            yS = Math.round(rubberband.getBounds().y / (getZoomY() * resolutionY));
-            wS = Math.round(rubberband.getBounds().width / (getZoomX() * resolutionX));
-            hS = Math.round(rubberband.getBounds().height / (getZoomY() * resolutionY));
-
-            if (imageA.isColorImage() == false) {
-
-                if (imageA == imageActive) {
-
-                    for (j = yS; j < (yS + hS); j++) {
-
-                        for (i = xS; i < (xS + wS); i++) {
-
-                            if (imageBufferA[(j * xDim) + i] > max) {
-                                max = imageBufferA[(j * xDim) + i];
-                            }
-
-                            if (imageBufferA[(j * xDim) + i] < min) {
-                                min = imageBufferA[(j * xDim) + i];
-                            }
-                        }
-                    }
-
-                    if (imageA.getType() == ModelStorageBase.UBYTE) {
-                        minImage = 0;
-                        maxImage = 255;
-                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
-                        minImage = -128;
-                        maxImage = 127;
-                    } else {
-                        minImage = (float) imageA.getMin();
-                        maxImage = (float) imageA.getMax();
-                    }
-
-                    // Set LUT min max values;
-                    x[0] = minImage;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    x[1] = min;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    x[2] = max;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = maxImage;
-                    y[3] = 0;
-                    z[3] = 0;
-                    LUTa.getTransferFunction().importArrays(x, y, 4);
-                } else if ((imageB != null) && (imageActive == imageB)) {
-
-                    if (imageB.getType() == ModelStorageBase.UBYTE) {
-                        minImage = 0;
-                        maxImage = 255;
-                    } else if (imageB.getType() == ModelStorageBase.BYTE) {
-                        minImage = -128;
-                        maxImage = 127;
-                    } else {
-                        minImage = (float) imageB.getMin();
-                        maxImage = (float) imageB.getMax();
-                    }
-
-                    if (imageBufferB != null) {
-                        min = Float.MAX_VALUE;
-                        max = -100000000;
-
-                        for (j = yS; j < (yS + hS); j++) {
-
-                            for (i = xS; i < (xS + wS); i++) {
-
-                                if (imageBufferB[(j * xDim) + i] > max) {
-                                    max = imageBufferB[(j * xDim) + i];
-                                }
-
-                                if (imageBufferB[(j * xDim) + i] < min) {
-                                    min = imageBufferB[(j * xDim) + i];
-                                }
-                            }
-                        }
-
-                        x[0] = minImage;
-                        y[0] = dim.height - 1;
-                        z[0] = 0;
-                        x[1] = min;
-                        y[1] = dim.height - 1;
-                        z[1] = 0;
-                        x[2] = max;
-                        y[2] = 0;
-                        z[2] = 0;
-                        x[3] = maxImage;
-                        y[3] = 0;
-                        z[3] = 0;
-                        LUTb.getTransferFunction().importArrays(x, y, 4);
-                    }
-                }
-            } else { // RGB image
-
-                if (imageA == imageActive) {
-
-                    for (j = yS; j < (yS + hS); j++) {
-
-                        for (i = xS; i < (xS + wS); i++) {
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 1] > maxR) {
-                                maxR = imageBufferA[(j * xDim * 4) + (i * 4) + 1];
-                            }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 1] < minR) {
-                                minR = imageBufferA[(j * xDim * 4) + (i * 4) + 1];
-                            }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 2] > maxG) {
-                                maxG = imageBufferA[(j * xDim * 4) + (i * 4) + 2];
-                            }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 2] < minG) {
-                                minG = imageBufferA[(j * xDim * 4) + (i * 4) + 2];
-                            }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 3] > maxB) {
-                                maxB = imageBufferA[(j * xDim * 4) + (i * 4) + 3];
-                            }
-
-                            if (imageBufferA[(j * xDim * 4) + (i * 4) + 3] < minB) {
-                                minB = imageBufferA[(j * xDim * 4) + (i * 4) + 3];
-                            }
-                        }
-                    }
-
-                    max = Math.max(maxR, maxG);
-                    max = Math.max(maxB, max);
-
-                    // Set LUT min max values;
-                    // if (imageA.isColorImage() == true) {
-                    if (imageA.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minR;
-                        x[2] = maxR;
-                    } else {
-                        x[1] = minR * 255 / max;
-                        x[2] = maxR * 255 / max;
-                    }
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTA.getRedFunction().importArrays(x, y, 4);
-
-                    if (imageA.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minG;
-                        x[2] = maxG;
-                    } else {
-                        x[1] = minG * 255 / max;
-                        x[2] = maxG * 255 / max;
-                    }
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTA.getGreenFunction().importArrays(x, y, 4);
-
-                    if (imageA.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minB;
-                        x[2] = maxB;
-                    } else {
-                        x[1] = minB * 255 / max;
-                        x[2] = maxB * 255 / max;
-                    }
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTA.getBlueFunction().importArrays(x, y, 4);
-                    RGBTA.makeRGB(-1);
-                } else if ((imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
-                    minR = Float.MAX_VALUE;
-                    maxR = -Float.MAX_VALUE;
-                    minG = Float.MAX_VALUE;
-                    maxG = -Float.MAX_VALUE;
-                    minB = Float.MAX_VALUE;
-                    maxB = -Float.MAX_VALUE;
-
-                    for (j = yS; j < (yS + hS); j++) {
-
-                        for (i = xS; i < (xS + wS); i++) {
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 1] > maxR) {
-                                maxR = imageBufferB[(j * xDim * 4) + (i * 4) + 1];
-                            }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 1] < minR) {
-                                minR = imageBufferB[(j * xDim * 4) + (i * 4) + 1];
-                            }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 2] > maxG) {
-                                maxG = imageBufferB[(j * xDim * 4) + (i * 4) + 2];
-                            }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 2] < minG) {
-                                minG = imageBufferB[(j * xDim * 4) + (i * 4) + 2];
-                            }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 3] > maxB) {
-                                maxB = imageBufferB[(j * xDim * 4) + (i * 4) + 3];
-                            }
-
-                            if (imageBufferB[(j * xDim * 4) + (i * 4) + 3] < minB) {
-                                minB = imageBufferB[(j * xDim * 4) + (i * 4) + 3];
-                            }
-                        }
-                    }
-
-                    max = Math.max(maxR, maxG);
-                    max = Math.max(maxB, max);
-
-                    // Set LUT min max values;
-                    if (imageB.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minR;
-                        x[2] = maxR;
-                    } else {
-                        x[1] = minR * 255 / max;
-                        x[2] = maxR * 255 / max;
-                    }
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTB.getRedFunction().importArrays(x, y, 4);
-
-                    if (imageB.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minG;
-                        x[2] = maxG;
-                    } else {
-                        x[1] = minG * 255 / max;
-                        x[2] = maxG * 255 / max;
-                    }
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTB.getGreenFunction().importArrays(x, y, 4);
-
-                    if (imageB.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minB;
-                        x[2] = maxB;
-                    } else {
-                        x[1] = minB * 255 / max;
-                        x[2] = maxB * 255 / max;
-                    }
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTB.getBlueFunction().importArrays(x, y, 4);
-                    RGBTB.makeRGB(-1);
-                }
-            }
-
-            if (!imageActive.isColorImage()) {
-                imageA.notifyImageDisplayListeners(LUTa, false);
-
-                if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(LUTb, false);
-                }
-            } else {
-                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTA);
-
-                if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTB);
-                }
-            }
-
-            if (imageB == null) {
-
-                if (imageA.isColorImage()) {
-
-                    if (imageA.getHistoRGBFrame() != null) {
-                        imageA.getHistoRGBFrame().update();
-                    }
-                } else if (imageA.getHistoLUTFrame() != null) {
-
-                    if (imageA.getHistoLUTFrame() != null) {
-                        imageA.getHistoLUTFrame().update();
-                    }
-                }
-            } else {
-
-                if (imageB.isColorImage()) {
-
-                    if (imageB.getHistoRGBFrame() != null) {
-                        imageB.getHistoRGBFrame().update();
-                    }
-                } else if (imageB.getHistoLUTFrame() != null) {
-
-                    if (imageB.getHistoLUTFrame() != null) {
-                        imageB.getHistoLUTFrame().update();
-                    }
-                }
-            }
-
-            if (mouseEvent.isShiftDown() != true) {
-                setMode(DEFAULT);
-            }
         }
 
         g.dispose();
@@ -2597,76 +2180,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         mousePressIsShiftDown = false;
 
     } // end mouseReleased()
-
-
-    /**
-     * Paints the image and calls drawSelf for all VOIs.
-     *
-     * @param  g  graphics
-     */
-    public void paintComponent(Graphics g) {
-        int i;
-        int nVOI;
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        try {
-
-            if (g == null) {
-                MipavUtil.displayError("ComponentEditImage.paintComponent: graphics = null");
-
-                return;
-            }
-
-            super.paintComponent(g);
-
-            // paintPaintBorder();
-
-            // Draw VOIs
-            if (orientation == NA) {
-
-                if (VOIs != null) {
-                    nVOI = VOIs.size();
-
-                    if (slice != -99) {
-                        float originX = (float) imageActive.getFileInfo(0).getOrigin()[0];
-                        float originY = (float) imageActive.getFileInfo(0).getOrigin()[1];
-
-                        for (i = 0; i < nVOI; i++) {
-                            VOIs.VOIAt(i).drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, originX, originY,
-                                                   imageActive.getFileInfo(0).getResolutions(),
-                                                   imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, orientation,
-                                                   imageActive.getFileInfo(0), imageActive.getNDims(), g);
-
-                        }
-                    }
-                } // if (VOIs != null)
-
-                if (mode == LEVELSET) {
-
-                    if (rbLevelSet.getLevelSetPolygon() != null) {
-                        g.setColor(Color.yellow);
-                        g.drawPolygon(zoomPolygon(rbLevelSet.getLevelSetPolygon(), getZoomX() * resolutionX,
-                                                  getZoomY() * resolutionY));
-                    }
-                }
-
-                if (overlayOn) {
-                    showOverlay(g);
-                }
-            }
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImge.paintComponent.");
-        }
-
-        visRect = getVisibleRect();
-        g.setClip(visRect);
-
-        if (onTop) { // paint the on-top notifier for the user when this component is on the top of the user-interface
-            g.setColor(toppedColor);
-            g.drawRect(visRect.x, visRect.y, visRect.width - 1, visRect.height - 1);
-        }
-    }
 
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
@@ -3198,248 +2711,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         imageActive.notifyImageDisplayListeners();
     }
 
-
-    /**
-     * Enables or disables the component for modification.
-     *
-     * @param  flag  true = modify, and false = locked
-     */
-    public void setEnabled(boolean flag) {
-        modifyFlag = flag;
-        rubberband.setActive(flag);
-    }
-
-
-    /**
-     * Switches modes based on the variable mode. Sets rubberband activity and the cursor.
-     *
-     * @param  mode  the integer mode
-     */
-    public void setMode(int mode) {
-
-        this.mode = mode;
-
-        switch (mode) {
-
-            case DEFAULT:
-                rubberband.setActive(false);
-                setCursor(smallPointerCursor);
-                if (frame instanceof ViewJFrameImage) {
-                    frame.getControls().getTools().setPointerSelected();
-                }
-
-                break;
-
-            case PROBE:
-                rubberband.setActive(false);
-                setCursor(probeCursor);
-                if (frame instanceof ViewJFrameImage) {
-                    frame.getControls().getTools().setPointerSelected();
-                }
-
-                break;
-
-            case SELECT:
-                rubberband.setActive(false);
-                rubberband = rbRect;
-                rubberband.setActive(true);
-                setCursor(defaultCursor);
-                break;
-
-            case POINT_VOI:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-
-                // setCursor(smallPointerCursor);
-                break;
-
-            case RECTANGLE:
-                rubberband.setActive(false);
-                rubberband = rbRect;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case ELLIPSE:
-                rubberband.setActive(false);
-                rubberband = rbEllipse;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case RECTANGLE3D:
-                rubberband.setActive(false);
-                rubberband = rbRect;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case NEW_VOI:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                if (frame instanceof ViewJFrameImage) {
-                    frame.getControls().getTools().setPointerSelected();
-                }
-
-                // deselect VOIs !!!!!!!
-                ViewVOIVector VOIs = imageActive.getVOIs();
-                int nVOI = VOIs.size();
-
-                for (int i = 0; i < nVOI; i++) { // deactivate all VOIs
-                    VOIs.VOIAt(i).setAllActive(false);
-                }
-
-                imageActive.notifyImageDisplayListeners();
-
-                voiID = -1; // -1 indicates new VOI should be created
-                rbLivewire = null;
-                break;
-
-            case POLYLINE:
-                rubberband.setActive(false);
-                rubberband = rbPolyline;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case LIVEWIRE:
-                rubberband.setActive(false);
-                rubberband = rbLivewire;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case LEVELSET:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-
-            case LINE:
-                rubberband.setActive(false);
-                rubberband = rbLine;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case PROTRACTOR:
-                rubberband.setActive(false);
-                rubberband = rbProtractor;
-                rubberband.setActive(true);
-                setCursor(crosshairCursor);
-                break;
-
-            case MOVE:
-                rubberband.setActive(false);
-                setCursor(moveCursor);
-                break;
-
-            case MOVE_POINT:
-                rubberband.setActive(false);
-                setCursor(moveCursor);
-                break;
-
-            case NEW_POINT:
-                rubberband.setActive(false);
-                setCursor(addPointCursor);
-                break;
-
-            case DELETE_POINT:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-
-            case WAND:
-                rubberband.setActive(false);
-                setCursor(wandCursor); // Hand cursor
-                break;
-
-            case RETRACE:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-
-            case PAINT_VOI:
-                rubberband.setActive(false);
-                setCursor(blankCursor);
-                break;
-
-            case PAINT_CAN:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-
-            case PAINT_VASC:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-
-            case DROPPER_PAINT:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-
-            case ERASER_PAINT:
-                rubberband.setActive(false);
-                setCursor(blankCursor);
-                break;
-
-            case MAG_REGION:
-                rubberband.setActive(false);
-                setCursor(magRegionCursor);
-                break;
-
-            case WIN_REGION:
-                rubberband.setActive(false);
-
-                // setCursor(crosshairCursor);
-                setCursor(magRegionCursor);
-                break;
-
-            case QUICK_LUT:
-                rubberband.setActive(false);
-                rubberband = rbRectQuick;
-                rubberband.setActive(true);
-                setCursor(quickLUTcursor);
-                break;
-
-            case ANNOTATION:
-                rubberband.setActive(false);
-
-                // rubberband = rbText
-                setCursor(textCursor);
-                break;
-
-            case MOVE_INTERSECTION_POINT:
-                rubberband.setActive(false);
-                setCursor(crosshairCursor);
-                break;
-        }
-
-        rubberband.setPresetHue(presetHue);
-    }
-
-    /**
-     * Switches modes based on the variable mode. Sets the number of pixels to be drawn when painting.
-     *
-     * @param  paintBrushSize  the integer mode
-     */
-    public void setPaintBrushSize(int paintBrushSize) {
-        this.paintBrushSize = paintBrushSize;
-    }
-
-    /**
-     * Sets the paint mask.
-     *
-     * @param  mask  the new paint mask
-     */
-    public void setPaintMask(BitSet mask) {
-
-        // System.err.println("setting paint bitmap");
-        paintBitmap = mask;
-        // paintChangeFlag = true;
-    }
-
-
     /**
      * For generating the display of 1 or 2 RGB images.
      *
@@ -3740,185 +3011,5 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         }
     }
 
-    /**
-     * Sets the overlay data based on data from the DICOM header.
-     *
-     * @param   orient  the image orientation
-     * @param   x       x coordinate
-     * @param   y       y coordinate
-     * @param   z       z coordinate
-     * @param   dim     reconstruction diameter
-     *
-     * @return  returns an array of strings that represent patient position
-     */
-    private String[] setOverlayValues(int orient, long x, long y, long z, int dim) {
-        String up, down, right, left, stable;
-
-        if (orient == FileInfoBase.SAGITTAL) {
-
-            if (y > 0) {
-                left = "A " + String.valueOf(dim - y);
-                right = "P " + String.valueOf(y);
-            } else {
-                left = "A " + String.valueOf(-y);
-                right = "P " + String.valueOf(dim + y);
-            }
-
-            if (z > 0) {
-                up = "S " + String.valueOf(z);
-                down = "I " + String.valueOf(dim - z);
-            } else {
-                up = "S " + String.valueOf(dim + z);
-                down = "I " + String.valueOf(-z);
-            }
-
-            if (x > 0) {
-                stable = "L " + String.valueOf(x);
-            } else {
-                stable = "R " + String.valueOf(-x);
-            }
-        } else if (orient == FileInfoBase.CORONAL) {
-
-            if (x > 0) {
-                right = "L " + String.valueOf(x);
-                left = "R " + String.valueOf(dim - x);
-            } else {
-                right = "L " + String.valueOf(dim + x);
-                left = "R " + String.valueOf(-x);
-            }
-
-            if (z > 0) {
-                up = "S " + String.valueOf(z);
-                down = "I " + String.valueOf(dim - z);
-            } else {
-                up = "S " + String.valueOf(dim + z);
-                down = "I " + String.valueOf(-z);
-            }
-
-            if (y > 0) {
-                stable = "P " + String.valueOf(y);
-            } else {
-                stable = "A " + String.valueOf(-y);
-            }
-        } else if (orient == FileInfoBase.AXIAL) {
-
-            if (y > 0) {
-                down = "P " + String.valueOf(y);
-                up = "A " + String.valueOf(dim - y);
-            } else {
-                down = "P " + String.valueOf(dim + y);
-                up = "A " + String.valueOf(-y);
-            }
-
-            if (x > 0) {
-                right = "L " + String.valueOf(x);
-                left = "R " + String.valueOf(dim - x);
-            } else {
-                right = "L " + String.valueOf(dim + x);
-                left = "R " + String.valueOf(-x);
-            }
-
-            if (z > 0) {
-                stable = "S " + String.valueOf(z);
-            } else {
-                stable = "I " + String.valueOf(-z);
-            }
-        } else {
-            FileInfoDicom fileInfo2;
-
-            if (slice != 0) {
-                fileInfo2 = (FileInfoDicom) (imageActive.getFileInfo())[slice - 1];
-            } else {
-
-                try {
-                    fileInfo2 = (FileInfoDicom) (imageActive.getFileInfo())[slice + 1];
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    return new String[] { "", "", "", "", "" };
-                }
-            }
-
-            long x2 = Math.round(fileInfo2.xLocation);
-            long y2 = Math.round(fileInfo2.yLocation);
-            long z2 = Math.round(fileInfo2.zLocation);
-
-            if (x == x2) { // this is definitely correct
-
-                if (x > 0) {
-                    right = "L " + String.valueOf(x);
-                    left = "R " + String.valueOf(dim - x);
-                } else {
-                    right = "L " + String.valueOf(dim + x);
-                    left = "R " + String.valueOf(-x);
-                }
-
-                up = "AS";
-                down = "PI";
-                stable = "";
-            } else if (y == y2) { // completely guessing at this
-
-                if (y > 0) {
-                    left = "A " + String.valueOf(dim - y);
-                    right = "P " + String.valueOf(y);
-                } else {
-                    left = "A " + String.valueOf(-y);
-                    right = "P " + String.valueOf(dim + y);
-                }
-
-                up = "RS";
-                down = "LI";
-                stable = "";
-            } else if (z == z2) { // completely guessing at this
-
-                if (z > 0) {
-                    up = "S " + String.valueOf(dim - y);
-                    down = "I " + String.valueOf(y);
-                } else {
-                    up = "S " + String.valueOf(-y);
-                    down = "I " + String.valueOf(dim + y);
-                }
-
-                right = "LA";
-                left = "RP";
-                stable = "";
-            } else {
-                return new String[] { "", "", "", "", "" };
-            }
-        }
-
-        return new String[] { left, right, up, down, stable };
-    }
-
-    /**
-     * Scales the points of the polygon so that it is displayed at the correct size.
-     *
-     * @param   gon    the original polygon
-     * @param   zoomX  the scale in the x dimension
-     * @param   zoomY  the scale in the y dimension
-     *
-     * @return  returns the zoomed polygon
-     */
-    private Polygon zoomPolygon(Polygon gon, float zoomX, float zoomY) {
-        int i;
-        Polygon zoomedGon = null;
-
-        if ((zoomX == 1.0f) && (zoomY == 1.0f)) {
-            return gon;
-        }
-
-        try {
-            zoomedGon = new Polygon();
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.zoomPolygon");
-
-            return null;
-        }
-
-        for (i = 0; i < gon.npoints; i++) {
-            zoomedGon.addPoint(Math.round(gon.xpoints[i] * zoomX), Math.round(gon.ypoints[i] * zoomY));
-        }
-
-        return zoomedGon;
-    }
 
 }
