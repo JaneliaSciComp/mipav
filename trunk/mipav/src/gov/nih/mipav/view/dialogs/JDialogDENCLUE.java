@@ -141,7 +141,7 @@ public class JDialogDENCLUE extends JDialogBase implements AlgorithmInterface, S
 
         ViewJFrameImage imageFrame = null;
 
-        if (algorithm instanceof AlgorithmMean) {
+        if (algorithm instanceof AlgorithmDENCLUE) {
             image.clearMask();
 
             if ((denAlgo.isCompleted() == true) && (resultImage != null)) {
