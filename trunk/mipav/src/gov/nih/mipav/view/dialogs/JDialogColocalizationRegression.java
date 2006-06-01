@@ -308,10 +308,10 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10052");
         } else if (command.equals("Cancel")) {
-            componentImage1.setPresetHue(-1.0f);
+            componentImage1.getVOIHandler().setPresetHue(-1.0f);
 
             if (componentImage2 != null) {
-                componentImage2.setPresetHue(-1.0f);
+                componentImage2.getVOIHandler().setPresetHue(-1.0f);
             }
 
             dispose();
@@ -554,18 +554,18 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
 
             if (VOICheckBox.isSelected()) {
                 componentImage1.setMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage1.setPresetHue(2.0f / 3.0f); // blue
+                componentImage1.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
 
                 if (componentImage2 != null) {
                     componentImage2.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage2.setPresetHue(2.0f / 3.0f); // blue
+                    componentImage2.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
                 }
             } // if (VOICheckBox.isSelected())
             else {
-                componentImage1.setPresetHue(-1.0f);
+                componentImage1.getVOIHandler().setPresetHue(-1.0f);
 
                 if (componentImage2 != null) {
-                    componentImage2.setPresetHue(-1.0f);
+                    componentImage2.getVOIHandler().setPresetHue(-1.0f);
                 }
             }
         } // if (source == VOICheckBox)
@@ -1118,10 +1118,10 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
      * @param  event  DOCUMENT ME!
      */
     public void windowClosing(WindowEvent event) {
-        componentImage1.setPresetHue(-1.0f);
+        componentImage1.getVOIHandler().setPresetHue(-1.0f);
 
         if (componentImage2 != null) {
-            componentImage2.setPresetHue(-1.0f);
+            componentImage2.getVOIHandler().setPresetHue(-1.0f);
         }
 
         cancelFlag = true;
@@ -1184,10 +1184,10 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
      * DOCUMENT ME!
      */
     private void callAlgorithm() {
-        componentImage1.setPresetHue(-1.0f);
+        componentImage1.getVOIHandler().setPresetHue(-1.0f);
 
         if (componentImage2 != null) {
-            componentImage2.setPresetHue(-1.0f);
+            componentImage2.getVOIHandler().setPresetHue(-1.0f);
         }
 
         String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
