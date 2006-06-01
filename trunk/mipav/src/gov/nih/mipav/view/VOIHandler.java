@@ -5192,7 +5192,7 @@ public class VOIHandler extends JComponent
                 }
             }
 
-            compImage.drawGradicules(g, fileInfo.resolutions[0], fileInfo.resolutions[1]);
+            compImage.drawGradicules(g, fileInfo.getResolutions()[0], fileInfo.getResolutions()[1]);
 
             // At the momment we are using the reconDimension - why not use
             // ~reconDim = compImage.getActiveImage().getExtents()[0]*compImage.getActiveImage().getResolutions()[0]; ??
