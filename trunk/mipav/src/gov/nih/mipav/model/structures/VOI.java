@@ -1269,7 +1269,8 @@ public class VOI extends ModelSerialCloneable {
             MipavUtil.displayError("Out of memory: unable to export Polygon.");
             return null;
         }
-        if (curveType == LINE || curveType == POINT || curveType == PROTRACTOR || curveType == ANNOTATION)
+        if (curveType == LINE || curveType == POINT || curveType == PROTRACTOR || curveType == ANNOTATION ||
+                curveType == POLYLINE_SLICE)
             return null;
         for (int i = 0; i < curves[slice].size(); i++ ) {
             polygons[i] = ((VOIContour) (curves[slice].elementAt(i))).exportPolygon(1, 1, 1, 1);
@@ -1426,7 +1427,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                 }
             }
-            if (curveType == LINE) {
+            else if (curveType == LINE) {
                 for (i = 0; i < nContours; i++ ) {
                     ((VOILine) (curves[slice].elementAt(i))).getBounds(x, y, z);
                     if (x[0] < xStart)
@@ -1439,7 +1440,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                 }
             }
-            if (curveType == PROTRACTOR) {
+            else if (curveType == PROTRACTOR) {
                 for (i = 0; i < nContours; i++ ) {
                     ((VOIProtractor) (curves[slice].elementAt(i))).getBounds(x, y, z);
                     if (x[0] < xStart)
@@ -1452,7 +1453,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                 }
             }
-            if (curveType == POINT) {
+            else if (curveType == POINT || curveType == POLYLINE_SLICE) {
                 for (i = 0; i < nContours; i++ ) {
                     ((VOIPoint) (curves[slice].elementAt(i))).getBounds(x, y, z);
                     if (x[0] < xStart)
@@ -1465,7 +1466,7 @@ public class VOI extends ModelSerialCloneable {
                         yEnd = y[1];
                 }
             }
-            if (curveType == ANNOTATION) {
+            else if (curveType == ANNOTATION) {
                 for (i = 0; i < nContours; i++ ) {
                     ((VOIText) (curves[slice].elementAt(i))).getBounds(x, y, z);
                     if (x[0] < xStart)
@@ -2793,176 +2794,193 @@ public class VOI extends ModelSerialCloneable {
 
 
         if (curveType == POLYLINE_SLICE) {
-            boolean is25D = fileInfo.getIs2_5D();
-            double distance = 0;
-            Vector distanceVector = new Vector();
-            Point3Df firstPoint, secondPoint;
 
-            //first calculate the total distance from pt->pt (even in !visible Points)
+            try {
+                // break this into other function (for calculating distance...2.5D or 3D
 
-            int numSlices = fileInfo.getExtents()[2];
-            int sliceCounter;
-            int pointNumber = 0;
-            for (sliceCounter = 0; sliceCounter < numSlices; sliceCounter++) {
-                for (i = 0; i < curves[sliceCounter].size(); i++) {
+                boolean is25D = fileInfo.getIs2_5D();
+                double distance = 0;
+                Vector distanceVector = new Vector();
+                Point3Df firstPoint, secondPoint;
 
-                    try {
-                        pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].elementAt(i)).getLabel());
-                        firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).
-                                     exportPoint();
-                        if (is25D) {
-                            firstPoint.z = 0;
-                        } else {
-                            firstPoint.z = sliceCounter;
+                //first calculate the total distance from pt->pt (even in !visible Points)
+
+                int numSlices = fileInfo.getExtents()[2];
+                int sliceCounter;
+                int pointNumber = 0;
+                for (sliceCounter = 0; sliceCounter < numSlices; sliceCounter++) {
+                    for (i = 0; i < curves[sliceCounter].size(); i++) {
+
+                        try {
+                            pointNumber = Integer.parseInt(((VOIPoint) curves[sliceCounter].
+                                                            elementAt(i)).getLabel());
+                            firstPoint = ((VOIPoint) curves[sliceCounter].elementAt(i)).
+                                         exportPoint();
+                            if (is25D) {
+                                firstPoint.z = 0;
+                            } else {
+                                firstPoint.z = sliceCounter;
+                            }
+                            distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                        distanceVector.add(new PolyPointHolder(firstPoint, pointNumber));
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
                 }
-            }
 
-            Collections.sort(distanceVector, new PointComparator());
+                Collections.sort(distanceVector, new PointComparator());
 
-            double dTemp = 0;
-            String sDistStr = "";
-            double sDist = 0;
+                double dTemp = 0;
+                String sDistStr = "";
+                double sDist = 0;
 
-            for (i = 0; i < distanceVector.size() - 1; i++) {
-                firstPoint = ((PolyPointHolder)distanceVector.elementAt(i)).getPoint();
-                secondPoint = ((PolyPointHolder)distanceVector.elementAt(i+1)).getPoint();
-                dTemp = MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z,
-                                               secondPoint.x, secondPoint.y, secondPoint.z, resols);
-                distance += dTemp;
+                for (i = 0; i < distanceVector.size() - 1; i++) {
+                    firstPoint = ((PolyPointHolder) distanceVector.elementAt(i)).getPoint();
+                    secondPoint = ((PolyPointHolder) distanceVector.elementAt(i + 1)).
+                                  getPoint();
+                    dTemp = MipavMath.distance(firstPoint.x, firstPoint.y, firstPoint.z,
+                                               secondPoint.x, secondPoint.y, secondPoint.z,
+                                               resols);
+                    distance += dTemp;
 
-                if (i == activePolylineSlicePoint) {
-                    sDist = dTemp;
-                }
-
-            }
-
-            //next draw lines between the points of the visible slice
-            if (visible) {
-                int xS, yS, xS2, yS2;
-                int firstPointLabel;
-                int secondPointLabel;
-
-                for (i = 0; i < curves[slice].size() - 1; i++) {
-                    g.setColor(color);
-
-                    firstPointLabel = 0;
-                    secondPointLabel = 0;
-                    try {
-                        firstPointLabel = Integer.parseInt(((VOIPoint) curves[slice].elementAt(
-                                i)).getLabel());
-                        secondPointLabel = Integer.parseInt(((VOIPoint) curves[slice].elementAt(
-                                i + 1)).getLabel());
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if (i == activePolylineSlicePoint) {
+                        sDist = dTemp;
                     }
 
-                    if (secondPointLabel - firstPointLabel == 1) {
-                        firstPoint = ((VOIPoint) curves[slice].elementAt(i)).exportPoint();
-                        secondPoint = ((VOIPoint) curves[slice].elementAt(i + 1)).exportPoint();
-
-                        if (orientation == VOIBase.NA || orientation == VOIBase.XY) {
-                            // 1 -> imageDim instead of 0 -> imageDim - 1
-                            xS = Math.round(firstPoint.x * zoomX * resolutionX);
-                            yS = Math.round(firstPoint.y * zoomY * resolutionY);
-
-                            xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
-                            yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
-
-                        } else if (orientation == VOIBase.ZY) {
-                            // 1 -> imageDim instead of 0 -> imageDim - 1
-                            xS = Math.round(firstPoint.z * zoomX * resolutionX);
-                            yS = Math.round(firstPoint.y * zoomY * resolutionY);
-
-                            xS2 = Math.round(secondPoint.z * zoomX * resolutionX);
-                            yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
-
-                        } else if (orientation == VOIBase.XZ) {
-                            // 1 -> imageDim instead of 0 -> imageDim - 1
-                            xS = Math.round(firstPoint.x * zoomX * resolutionX);
-                            yS = Math.round(firstPoint.z * zoomY * resolutionY);
-
-                            xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
-                            yS2 = Math.round(secondPoint.z * zoomY * resolutionY);
-
-                        } else {
-                            // 1 -> imageDim instead of 0 -> imageDim - 1
-                            xS = Math.round(firstPoint.x * zoomX * resolutionX);
-                            yS = Math.round(firstPoint.y * zoomY * resolutionY);
-
-                            xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
-                            yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
-                        }
-                        g.drawLine(xS, yS, xS2, yS2);
-                    }
                 }
-            }
-            DecimalFormat n = new DecimalFormat("0.00");
-            sDistStr = n.format(sDist);
-            String tmpString = n.format(distance);
 
-            switch (unitsOfMeasure[0]) {
-            case FileInfoBase.INCHES:
-                tmpString = tmpString + " in";
-                break;
-            case FileInfoBase.ANGSTROMS:
-                tmpString = tmpString + " A";
-                break;
-            case FileInfoBase.NANOMETERS:
-                tmpString = tmpString + " nm";
-                break;
-            case FileInfoBase.MICROMETERS:
-                tmpString = tmpString + " um";
-                break;
-            case FileInfoBase.MILLIMETERS:
-                tmpString = tmpString + " mm";
-                break;
-            case FileInfoBase.CENTIMETERS:
-                tmpString = tmpString + " cm";
-                break;
-            case FileInfoBase.METERS:
-                tmpString = tmpString + " m";
-                break;
-            case FileInfoBase.KILOMETERS:
-                tmpString = tmpString + " km";
-                break;
-            case FileInfoBase.MILES:
-                tmpString = tmpString + " miles";
-                break;
-            default:
-                tmpString += " Unknown";
-            }
-
-            sDistStr += tmpString.substring(tmpString.indexOf(" ") + 1, tmpString.length());
-
-            //finally draw the points
-            for (i = 0; i < curves[slice].size(); i++) {
+                //next draw lines between the points of the visible slice
                 if (visible) {
-                    g.setColor(color);
-                    if (i == 0 && i == pLineSliceIndex) {
-                        ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(true, true, tmpString, sDistStr);
-                    } else if (i == 0) {
-                        ((VOIPoint) (curves[slice].elementAt(i))).
-                                setFirstPoint(true, false, tmpString, null);
-                    }
-                    else if (i == pLineSliceIndex) {
-                        ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(false, true, null, sDistStr);
-                    }
-                    else {
-                        ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(false, false, null, null);
-                    }
-                    ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
-                            resolutionX, resolutionY, originX,
-                            originY, resols, unitsOfMeasure, orientation, g,
-                            isSolid);
+                    int xS, yS, xS2, yS2;
+                    int firstPointLabel;
+                    int secondPointLabel;
 
+                    for (i = 0; i < curves[slice].size() - 1; i++) {
+                        g.setColor(color);
+
+                        firstPointLabel = 0;
+                        secondPointLabel = 0;
+                        try {
+                            firstPointLabel = Integer.parseInt(((VOIPoint) curves[slice].
+                                    elementAt(
+                                            i)).getLabel());
+                            secondPointLabel = Integer.parseInt(((VOIPoint) curves[slice].
+                                    elementAt(
+                                            i + 1)).getLabel());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        if (secondPointLabel - firstPointLabel == 1) {
+                            firstPoint = ((VOIPoint) curves[slice].elementAt(i)).
+                                         exportPoint();
+                            secondPoint = ((VOIPoint) curves[slice].elementAt(i + 1)).
+                                          exportPoint();
+
+                            if (orientation == VOIBase.NA || orientation == VOIBase.XY) {
+                                // 1 -> imageDim instead of 0 -> imageDim - 1
+                                xS = Math.round(firstPoint.x * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.y * zoomY * resolutionY);
+
+                                xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+
+                            } else if (orientation == VOIBase.ZY) {
+                                // 1 -> imageDim instead of 0 -> imageDim - 1
+                                xS = Math.round(firstPoint.z * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.y * zoomY * resolutionY);
+
+                                xS2 = Math.round(secondPoint.z * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+
+                            } else if (orientation == VOIBase.XZ) {
+                                // 1 -> imageDim instead of 0 -> imageDim - 1
+                                xS = Math.round(firstPoint.x * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.z * zoomY * resolutionY);
+
+                                xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.z * zoomY * resolutionY);
+
+                            } else {
+                                // 1 -> imageDim instead of 0 -> imageDim - 1
+                                xS = Math.round(firstPoint.x * zoomX * resolutionX);
+                                yS = Math.round(firstPoint.y * zoomY * resolutionY);
+
+                                xS2 = Math.round(secondPoint.x * zoomX * resolutionX);
+                                yS2 = Math.round(secondPoint.y * zoomY * resolutionY);
+                            }
+                            g.drawLine(xS, yS, xS2, yS2);
+                        }
+                    }
                 }
+                DecimalFormat n = new DecimalFormat("0.00");
+                sDistStr = n.format(sDist);
+                String tmpString = n.format(distance);
+
+                switch (unitsOfMeasure[0]) {
+                case FileInfoBase.INCHES:
+                    tmpString = tmpString + " in";
+                    break;
+                case FileInfoBase.ANGSTROMS:
+                    tmpString = tmpString + " A";
+                    break;
+                case FileInfoBase.NANOMETERS:
+                    tmpString = tmpString + " nm";
+                    break;
+                case FileInfoBase.MICROMETERS:
+                    tmpString = tmpString + " um";
+                    break;
+                case FileInfoBase.MILLIMETERS:
+                    tmpString = tmpString + " mm";
+                    break;
+                case FileInfoBase.CENTIMETERS:
+                    tmpString = tmpString + " cm";
+                    break;
+                case FileInfoBase.METERS:
+                    tmpString = tmpString + " m";
+                    break;
+                case FileInfoBase.KILOMETERS:
+                    tmpString = tmpString + " km";
+                    break;
+                case FileInfoBase.MILES:
+                    tmpString = tmpString + " miles";
+                    break;
+                default:
+                    tmpString += " Unknown";
+                }
+
+                sDistStr +=
+                        tmpString.substring(tmpString.indexOf(" ") + 1, tmpString.length());
+
+                //finally draw the points
+                for (i = 0; i < curves[slice].size(); i++) {
+                    if (visible) {
+                        g.setColor(color);
+                        if (i == 0 && i == pLineSliceIndex) {
+                            ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(true, true,
+                                    tmpString, sDistStr);
+                        } else if (i == 0) {
+                            ((VOIPoint) (curves[slice].elementAt(i))).
+                                    setFirstPoint(true, false, tmpString, null);
+                        } else if (i == pLineSliceIndex) {
+                            ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(false, true, null,
+                                    sDistStr);
+                        } else {
+                            ((VOIPoint) (curves[slice].elementAt(i))).setFirstPoint(false, false, null, null);
+                        }
+                        ((VOIPoint) (curves[slice].elementAt(i))).drawSelf(zoomX, zoomY,
+                                resolutionX, resolutionY, originX,
+                                originY, resols, unitsOfMeasure, orientation, g,
+                                isSolid);
+
+                    }
+                }
+                //   System.err.println("Distance IS: " + distance);
+            } catch (Exception e) {
+                System.err.println("ERROR ERROR ERROR.....exception thrown in VOI drawSelf");
+                e.printStackTrace();
+                System.err.println("CURVES @ slice size: " + curves[slice].size());
             }
-         //   System.err.println("Distance IS: " + distance);
         }
         else {
             for (i = 0; i < curves[slice].size(); i++) {
@@ -3357,21 +3375,24 @@ public class VOI extends ModelSerialCloneable {
             Point3Df pt2;
             int x1, y1, x2, y2;
 
-            for (i = 0; i < curves[slice].size() - 1; i++) {
-                pt1 = ((VOIPoint)curves[slice].elementAt(i)).exportPoint();
-                pt2 = ((VOIPoint)curves[slice].elementAt(i + 1)).exportPoint();
+            try {
+                for (i = 0; i < curves[slice].size() - 1; i++) {
+                    pt1 = ((VOIPoint) curves[slice].elementAt(i)).exportPoint();
+                    pt2 = ((VOIPoint) curves[slice].elementAt(i + 1)).exportPoint();
 
-                x1 = MipavMath.round( pt1.x);
-                y1 = MipavMath.round( pt1.y);
-                x2 = MipavMath.round( pt2.x);
-                y2 = MipavMath.round( pt2.y);
+                    x1 = MipavMath.round(pt1.x);
+                    y1 = MipavMath.round(pt1.y);
+                    x2 = MipavMath.round(pt2.x);
+                    y2 = MipavMath.round(pt2.y);
 
-                if (VOIBase.testDistance(x, x1, x2, y, y1, y2, 3)) {
-                    polygonIndex = i;
-                    return true;
+                    if (VOIBase.testDistance(x, x1, x2, y, y1, y2, 3)) {
+                        polygonIndex = i;
+                        return true;
+                    }
                 }
+            } catch (Exception e) {
+                return false;
             }
-
         }
         polygonIndex = -99;
         return false;
