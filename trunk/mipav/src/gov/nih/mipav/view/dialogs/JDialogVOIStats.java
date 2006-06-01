@@ -926,7 +926,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                         }
                         else {
                             UI.setDataText("  Volume                       \t= " +
-                                    algoVOI.getVolume() + "\n");   
+                                    algoVOI.getVolume() + "\n");
                         }
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[2])) {
@@ -938,7 +938,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                         }
                         else {
                             UI.setDataText("  Area                         \t= " +
-                                    algoVOI.getArea() + "\n");    
+                                    algoVOI.getArea() + "\n");
                         }
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[3])) {
@@ -952,7 +952,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                         else {
                             UI.setDataText(
                                     "  Perimeter                         \t= " +
-                                    algoVOI.getPerimeter() + "\n");    
+                                    algoVOI.getPerimeter() + "\n");
                         }
                     } else if (statsList[i].getString().equals(algoVOI.
                             makeStatisticListDescriptions()[4])) {
@@ -1252,7 +1252,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
             treeSelectionChange = true;
             ((ViewJFrameImage) parentFrame).getComponentImage().
-                    fireVOISelectionChange(currentVOI, null);
+                    getVOIHandler().fireVOISelectionChange(currentVOI, null);
             image.notifyImageDisplayListeners();
             //System.err.println("notifying of change");
         }
