@@ -23,7 +23,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ViewJComponentEditImage component;
+    private VOIHandler voiHandler;
 
     /** DOCUMENT ME! */
     private JMenuItem itemBuildPolyline;
@@ -53,7 +53,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
      *
      * @param  comp  DOCUMENT ME!
      */
-    public ViewJPopupPt(ViewJComponentEditImage comp) {
+    public ViewJPopupPt(VOIHandler handler) {
 
         try {
             ptPopup = new JPopupMenu();
@@ -66,7 +66,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
             itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
                                                                     Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
             itemProps = ViewMenuBuilder.buildMenuItem("Properties", "Properties", 0, this, null, true);
-            component = comp;
+            voiHandler = handler;
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ViewJPopupPt Constructor");
@@ -105,28 +105,28 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
 
         try {
             if (event.getActionCommand().equals("ShowGraph")) {
-                component.setGraphVisible();
+                voiHandler.setGraphVisible();
             } else if (event.getActionCommand().equals("PropVOIUp")) {
 
-                if (component.propVOI(1, false) == true) {
-                    ((ViewJFrameImage) component.getFrame()).incSlice();
+                if (voiHandler.propVOI(1, false) == true) {
+                    ((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).incSlice();
                 }
             } else if (event.getActionCommand().equals("PropVOIDown")) {
 
-                if (component.propVOI(-1, false) == true) {
-                    ((ViewJFrameImage) component.getFrame()).decSlice();
+                if (voiHandler.propVOI(-1, false) == true) {
+                    ((ViewJFrameImage) voiHandler.getComponentImage().getFrame()).decSlice();
                 }
             } else if (event.getActionCommand().equals("PropVOIAll")) {
-                component.propVOIAll();
+                voiHandler.propVOIAll();
             } else if (event.getActionCommand().equals("PAAI")) {
-                component.setPAAIGraphVisible();
+                voiHandler.setPAAIGraphVisible();
             } else if (event.getActionCommand().equals("ShowName")) {
                 Preferences.setProperty(Preferences.PREF_SHOW_VOI_NAME, Boolean.toString(itemShowVOIName.isSelected()));
-                component.getFrame().updateImages();
+                voiHandler.getComponentImage().getFrame().updateImages();
             } else if (event.getActionCommand().equals("Properties")) {
-                component.showVOIProperties(false);
+                voiHandler.showVOIProperties(false);
             } else if (event.getActionCommand().equals("BuildPoly")) {
-                component.convertPointToPoly();
+                voiHandler.convertPointToPoly();
             }
 
         } catch (OutOfMemoryError error) {
@@ -232,7 +232,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
 
         if (event.isPopupTrigger()) {
             itemShowVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
-            ptPopup.show(component, event.getX(), event.getY());
+            ptPopup.show(voiHandler.getComponentImage(), event.getX(), event.getY());
         }
     }
 }

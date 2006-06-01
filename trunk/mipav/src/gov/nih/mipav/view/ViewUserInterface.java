@@ -1434,6 +1434,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void initialize() {
         initPrefsFile();
         MipavUtil.buildDefaultFonts();
+        MipavUtil.buildCursors();
         initSetMainFrameDefaults(new BorderLayout(), true);
         buildMessageFrame();
         Preferences.setMessageFrame(messageFrame);
