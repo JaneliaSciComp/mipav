@@ -50,6 +50,10 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private JCheckBox n3Box=null;
+    
+    private boolean useN3 = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -240,7 +244,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
             userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID);
 
             // Make algorithm
-            PipelineAlgoB = new PlugInAlgorithmPipelineB(resultImageA, resultImageB, obMaskA, obMaskB);
+            PipelineAlgoB = new PlugInAlgorithmPipelineB(resultImageA, resultImageB, obMaskA, obMaskB, useN3);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -273,7 +277,14 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
         JLabel instruction = new JLabel(" Please enter VOIs, then press OK.");
         JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.add(instruction, BorderLayout.CENTER);
+        n3Box = new JCheckBox("Apply N3 to cropped image");
+        n3Box.setFont(serif12);
+
+        
+        mainPanel.add(instruction, BorderLayout.NORTH);
+        mainPanel.add(n3Box, BorderLayout.SOUTH);
+        
+        
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(this.buildButtons(), BorderLayout.SOUTH);
@@ -281,5 +292,12 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
         pack();
         setVisible(true);
     }
+    
+    private boolean setVariables() {
+    	useN3 = n3Box.isSelected();
+    	
+    	return true;
+    }
+    
 }
 

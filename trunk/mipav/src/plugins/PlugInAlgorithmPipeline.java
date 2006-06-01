@@ -416,6 +416,29 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         new ViewJFrameImage(cloneImg);
     }
     
+    
+    /**
+     * morphological CLOSE
+     *
+     * @param  sourceImg  --source image
+     * @param  kernalSize --kernal size for closure
+     */
+    public void Close(ModelImage sourceImg, int kernalSize) {
+    	
+        AlgorithmMorphology3D MorphClose = null;
+        if(kernalSize ==6){
+        MorphClose = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED6, 1,
+                                              AlgorithmMorphology3D.CLOSE, 1, 1, 0, 0, true);
+        }
+        if(kernalSize==24){
+            MorphClose = new AlgorithmMorphology3D(sourceImg, AlgorithmMorphology3D.CONNECTED24, 1,
+                    AlgorithmMorphology3D.CLOSE, 1, 1, 0, 0, true);        	
+        }
+        MorphClose.setProgressBarVisible(false);
+        MorphClose.run();
+    }
+    
+    
     /**
      * DOCUMENT ME!
      */
@@ -560,6 +583,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline2");
             }
         }
+        Close(obMask, 24);  /*section added to eliminate results of shading artifact on obMask*/
 
         int[] extentA = new int[3];
         int[] extentB = new int[3];
