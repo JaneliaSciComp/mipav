@@ -57,8 +57,8 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
     public static final String TRANSFER_MODE_SEQUENTIAL = "sequential";
     public static final String TRANSFER_MODE_PARELLEL = "parellel";
     
-    private static final String DEFAULT_TEMP_DIR_BASE = System.getProperty("user.dir") + File.separator + "mipav-temp" +
-                                                   File.separator;
+    private static final String DEFAULT_TEMP_DIR_BASE = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "srb-temp" + File.separator;
+    
     /**
      * The progress bar used to indicate the progress of reading or writing.
      */
