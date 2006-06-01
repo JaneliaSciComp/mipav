@@ -298,19 +298,19 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
-            componentImage.setPresetHue(-1.0f);
+            componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
         } else if ((source == photoBleachedButton) || (source == wholeOrganButton) || (source == backgroundButton)) {
 
             if (photoBleachedButton.isSelected()) {
                 componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.setPresetHue(0.0f); // red
+                componentImage.getVOIHandler().setPresetHue(0.0f); // red
             } else if (wholeOrganButton.isSelected()) {
                 componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.setPresetHue(1.0f / 3.0f); // green
+                componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             } else if (backgroundButton.isSelected()) {
                 componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                componentImage.setPresetHue(2.0f / 3.0f); // blue
+                componentImage.getVOIHandler().setPresetHue(2.0f / 3.0f); // blue
             }
         } else if ((source == bandButton) || (source == circleButton) || (source == oneDButton) ||
                        (source == singleExpButton)) {
@@ -403,7 +403,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                     wholeOrganButton.setSelected(false);
                     photoBleachedButton.setSelected(true);
                     componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-                    componentImage.setPresetHue(0.0f); // red
+                    componentImage.getVOIHandler().setPresetHue(0.0f); // red
                 }
             }
         } // else if (source == wholeOrganCheckBox)
@@ -472,7 +472,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
      * @param  event  DOCUMENT ME!
      */
     public void windowClosing(WindowEvent event) {
-        componentImage.setPresetHue(-1.0f);
+        componentImage.getVOIHandler().setPresetHue(-1.0f);
         cancelFlag = true;
         dispose();
     }
@@ -484,7 +484,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
         try {
 
-            componentImage.setPresetHue(-1.0f);
+            componentImage.getVOIHandler().setPresetHue(-1.0f);
             // Make algorithm
             frapAlgo = new AlgorithmFRAP(image, useRed, useGreen, useBlue, firstSliceNum, photoBleachedIndex,
                                          wholeOrganIndex, backgroundIndex, model, register, cost, createRegImage,
@@ -561,7 +561,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         VOIGroup.add(photoBleachedButton);
         VOIPanel.add(photoBleachedButton, gbc4);
         componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
-        componentImage.setPresetHue(0.0f); // red
+        componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
         wholeOrganButton = new JRadioButton("Add required whole organ VOI", false);
         wholeOrganButton.setForeground(Color.green.darker());

@@ -83,7 +83,6 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
         return super.toString();
     }
 
-
     /**
      * Returns this node's user object.
      *
