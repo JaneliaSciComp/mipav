@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import java.awt.*;
 
 import java.io.*;
 
@@ -130,16 +131,31 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         int length = xDim * yDim;
         float buffer[];
         float density[];
+        //float gradX[] = null;
+        //float gradY[] = null;
         int maxDistance;
         int x, y;
         int j, k;
         int index;
+        int indexS;
+        int distInt;
+        double localPart;
+        ModelImage grayImage;
+        AlgorithmVOIExtraction algoVOIExtraction;
+        byte byteBuffer[];
+        Color colorTable[];
+        boolean found;
+        
         
         buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
         initProgressBar();
         
         buffer = new float[length];
         density = new float[length];
+        if (!isArbitrary) {
+            //gradX = new float[length];
+            //gradY = new float[length];
+        }
         
         try {
             srcImage.exportData(0, length, buffer);
@@ -159,8 +175,14 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
                         if ((k >= 0) && (k < yDim)) {
                             for (j = x - maxDistance; j <= x + maxDistance; j++) {
                                 if ((j >= 0) && (j < xDim)) {
-                                    density[index] += Math.exp
+                                    indexS = k*xDim + j;
+                                    localPart = buffer[indexS] * Math.exp
                                     (-((k-y)*(k-y) + (j-x)*(j-x))/(2.0*distance*distance));
+                                    density[index] += (float)localPart;
+                                    //if (!isArbitrary) {
+                                        //gradX[index] += (float)(localPart * (j - x));
+                                        //gradY[index] += (float)(localPart * (k - y));
+                                    //}
                                 }
                             }
                         }
@@ -169,7 +191,103 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
             }
         } // if (isGaussian)
         else { // Square wave
+            distInt = (int)distance;
+            for (y = 0; y < yDim; y++) {
+                for (x = 0; x < xDim; x++) {
+                    index = y*xDim + x;
+                    for (k = y - distInt; k <= y + distInt; k++) {
+                        if ((k >= 0) && (k < yDim)) {
+                            for (j = x - distInt; j <= x + distInt; j++) {
+                                if ((j >= 0) && (j < xDim)) {
+                                    if (((k - y)*(k - y) + (j - x)*(j - x)) <=
+                                        distance*distance) {
+                                        indexS = k*xDim + j;
+                                        density[index] += buffer[indexS];
+                                        //if (!isArbitrary) {
+                                            //gradX[index] += (buffer[indexS] * (j - x));
+                                            //gradY[index] += (buffer[indexS] * (k - y));
+                                        //}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         } // else Square wave
+        
+        byteBuffer = new byte[length];
+        
+        for (index = 0; index < length; index++) {
+            if (density[index] >= threshold) {
+                byteBuffer[index] = 1;
+            }
+        }
+        if (!isArbitrary) {
+            found = true;
+            while (found) {
+                found = false;
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
+                        index = y*xDim + x;
+                        if (byteBuffer[index] == 0) {
+                            for (k = y - 1; k <= y + 1; k++) {
+                                if ((k >= 0) && (k < yDim)) {
+                                    for (j = x - 1; j <= x + 1; j++) {
+                                        if ((j >= 0) && (j < xDim)) {
+                                            indexS = k*xDim + j;
+                                            if ((byteBuffer[indexS] == 1) &&
+                                                (density[indexS] >= density[index])) {
+                                                byteBuffer[index] = 1;
+                                                found = true;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } // if (byteBuffer[index] == 0)
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
+            } // while (found)
+        } // if (!isArbitrary)
+        //gradX = null;
+        //gradY = null;
+        
+        try {
+            destImage.importData(0, density, true);
+        }
+        catch(IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;    
+        }
+        density = null;
+        
+        grayImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(), srcImage.getImageName() + "_gray",
+                srcImage.getUserInterface());
+        try {
+            grayImage.importData(0, byteBuffer, true);
+        } catch (IOException error) {
+            byteBuffer = null;
+            errorCleanUp("Error on grayImage.importData", true);
+            return;
+        }
+
+        progressBar.setMessage("Extracting VOIs");
+        progressBar.updateValueImmed(50);
+        colorTable = new Color[1];
+        colorTable[0] = Color.RED;
+        algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
+        algoVOIExtraction.setProgressBarVisible(false);
+        algoVOIExtraction.setColorTable(colorTable);
+        algoVOIExtraction.run();
+        algoVOIExtraction.finalize();
+        algoVOIExtraction = null;
+        System.gc();
+
+        srcImage.setVOIs(grayImage.getVOIs());
+        grayImage.disposeLocal();
+        grayImage = null;
         disposeProgressBar();
 
         setCompleted(true);
