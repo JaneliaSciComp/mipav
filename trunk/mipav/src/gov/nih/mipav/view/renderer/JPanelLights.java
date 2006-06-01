@@ -30,37 +30,37 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 8549491288085975699L;
 
-    /** DOCUMENT ME! */
+    /** Static light index. */
     public static final int LIGHT_INDEX_STATIC = 0;
 
-    /** DOCUMENT ME! */
+    /** Ambient light index. */
     public static final int LIGHT_INDEX_AMBIENT = 1;
 
-    /** DOCUMENT ME! */
+    /** light for corner X0Y0Z0. */
     public static final int LIGHT_INDEX_MODEL_X0Y0Z0 = 2;
 
-    /** DOCUMENT ME! */
+    /** light for corner X1Y0Z0. */
     public static final int LIGHT_INDEX_MODEL_X1Y0Z0 = 3;
 
-    /** DOCUMENT ME! */
+    /** light for corner X0Y1Z0. */
     public static final int LIGHT_INDEX_MODEL_X0Y1Z0 = 4;
 
-    /** DOCUMENT ME! */
+    /** light for corner X1Y1Z0. */
     public static final int LIGHT_INDEX_MODEL_X1Y1Z0 = 5;
 
-    /** DOCUMENT ME! */
+    /** light for corner X0Y0Z1. */
     public static final int LIGHT_INDEX_MODEL_X0Y0Z1 = 6;
 
-    /** DOCUMENT ME! */
+    /** light for corner X1Y0Z1. */
     public static final int LIGHT_INDEX_MODEL_X1Y0Z1 = 7;
 
-    /** DOCUMENT ME! */
+    /** light for corner X0Y1Z1. */
     public static final int LIGHT_INDEX_MODEL_X0Y1Z1 = 8;
 
-    /** DOCUMENT ME! */
+    /** light for corner X1Y1Z1. */
     public static final int LIGHT_INDEX_MODEL_X1Y1Z1 = 9;
 
-    /** DOCUMENT ME! */
+    /** Max number of light. */
     public static final int LIGHT_INDEX_MAX = 10;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -80,10 +80,10 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** Color button, checkBox On/Off. */
     private JButton colorButton;
 
-    /** DOCUMENT ME! */
+    /** Color choose dialog reference. */
     private ViewJColorChooser colorChooser;
 
-    /** DOCUMENT ME! */
+    /** Color label. */
     private JLabel colorLabel;
 
     /** Control panel. */
@@ -92,7 +92,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** Control panel box that hold the control panel. */
     private Box controlPanelBox;
 
-    /** DOCUMENT ME! */
+    /** Directional light radio botton. */
     private JRadioButton directionalRadio;
 
     /** Scroll panel reference. */
@@ -104,67 +104,67 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** index of currently selected one. */
     private int iSelect = 0;
 
-    /** DOCUMENT ME! */
+    /** Light intensity label. */
     private JLabel labelIntensity;
 
-    /** DOCUMENT ME! */
+    /** Light intensity label begin. */
     private JLabel labelIntensityBegin;
 
-    /** DOCUMENT ME! */
+    /** Light intensity label end. */
     private JLabel labelIntensityEnd;
 
-    /** DOCUMENT ME! */
+    /** Light intensity label middle. */
     private JLabel labelIntensityMid;
 
-    /** DOCUMENT ME! */
+    /** Light shinness label. */
     private JLabel labelShininess;
 
-    /** DOCUMENT ME! */
+    /** Shinness label begin. */
     private JLabel labelShininessBegin;
 
-    /** DOCUMENT ME! */
+    /** Shinness label end. */
     private JLabel labelShininessEnd;
 
-    /** DOCUMENT ME! */
+    /** Shinness lable middle. */
     private JLabel labelShininessMid;
 
     /** List of lights. */
     private JList list;
 
-    /** DOCUMENT ME! */
+    /** Light scale factor array. */
     private int[] m_aiLightScale;
 
     /** The structure for the light bulbs. */
     private GeneralLight[] m_akLights;
 
-    /** DOCUMENT ME! */
+    /** General light array. */
     private GeneralLight[] m_akModelLights;
 
-    /** DOCUMENT ME! */
+    /** Soft light array. */
     private SoftwareLight[] m_akSoftwareLightsModel = new SoftwareLight[0];
 
     /** Lighting objects needed for software rendering. */
     private SoftwareLight[] m_akSoftwareLightsWorld = new SoftwareLight[0];
 
-    /** DOCUMENT ME! */
+    /** World general light array. */
     private GeneralLight[] m_akWorldLights;
 
-    /** DOCUMENT ME! */
+    /** Label for slider X position. */
     private JLabel m_kLabelPosX;
 
-    /** DOCUMENT ME! */
+    /** Label for slider Y position. */
     private JLabel m_kLabelPosY;
 
-    /** DOCUMENT ME! */
+    /** Label for slider Z position. */
     private JLabel m_kLabelPosZ;
 
-    /** DOCUMENT ME! */
+    /** Label for X light target position. */
     private JLabel m_kLabelTrgX;
 
-    /** DOCUMENT ME! */
+    /** Label for Y light target position. */
     private JLabel m_kLabelTrgY;
 
-    /** DOCUMENT ME! */
+    /** Label for Z light target position.*/
     private JLabel m_kLabelTrgZ;
 
     /** surface panel reference. */
@@ -173,49 +173,49 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** Parent render frame reference. */
     private SurfaceRender m_kRenderSurface;
 
-    /** slider position controls. */
+    /** Light x position slider. */
     private JSlider m_kSliderPosX;
 
-    /** DOCUMENT ME! */
+    /** Light y position slider. */
     private JSlider m_kSliderPosY;
 
-    /** DOCUMENT ME! */
+    /**  Light z position slider. */
     private JSlider m_kSliderPosZ;
 
-    /** Target controls. */
+    /**  Light x target position slider. */
     private JSlider m_kSliderTrgX;
 
-    /** DOCUMENT ME! */
+    /** Light y target position slider.  */
     private JSlider m_kSliderTrgY;
 
-    /** DOCUMENT ME! */
+    /** Light z target position slider. */
     private JSlider m_kSliderTrgZ;
 
-    /** DOCUMENT ME! */
+    /** X position text field. */
     private JTextField m_kTextPosX;
 
-    /** DOCUMENT ME! */
+    /** Y position text field. */
     private JTextField m_kTextPosY;
 
-    /** DOCUMENT ME! */
+    /** Z position text field. */
     private JTextField m_kTextPosZ;
 
-    /** DOCUMENT ME! */
+    /** X target position text field. */
     private JTextField m_kTextTrgX;
 
-    /** DOCUMENT ME! */
+    /** Y target position text field. */
     private JTextField m_kTextTrgY;
 
-    /** DOCUMENT ME! */
+    /** Z target position text field. */
     private JTextField m_kTextTrgZ;
 
-    /** DOCUMENT ME! */
+    /** Light turn on/off check box. */
     private JCheckBox onOffCheckBox;
 
-    /** DOCUMENT ME! */
+    /** Light turn on/off label. */
     private JLabel onOffLabel;
 
-    /** DOCUMENT ME! */
+    /** Point light radio button. */
     private JRadioButton pointRadio;
 
     /** Scroll pane. */
@@ -230,13 +230,13 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /** Shininess slider. */
     private JSlider shininessSlider;
 
-    /** DOCUMENT ME! */
+    /** Spot light radio button. */
     private JRadioButton spotRadio;
 
-    /** DOCUMENT ME! */
+    /** Light intensity textfield. */
     private JTextField textIntensity;
 
-    /** DOCUMENT ME! */
+    /** Light shinness textfield. */
     private JTextField textShininess;
 
     /** x, y, z box size. */
@@ -437,7 +437,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /**
      * Clear memory and garbage collection.
      *
-     * @param  flag  DOCUMENT ME!
+     * @param  flag  calling super dispose or not.
      */
     /**
      * Clear memory and garbage collection.
@@ -756,7 +756,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /**
      * Calls dispose.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  throw exception.
      */
     protected void finalize() throws Throwable {
         disposeLocal(false);
@@ -766,7 +766,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     /**
      * Helper method that adds components to the control panel for the grid bag layout.
      *
-     * @param  panelControl  DOCUMENT ME!
+     * @param  panelControl  control panel reference.
      * @param  c             Component added to the control panel.
      * @param  gbc           GridBagConstraints of added component.
      * @param  x             Gridx location
@@ -1067,7 +1067,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * DOCUMENT ME!
+     * Build the shinness control panel. 
      */
     private void buildShininessPanel() {
         shininessPanel = new JPanel(new GridBagLayout());
@@ -1311,7 +1311,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         /**
          * Unchanged.
          *
-         * @param  e  DOCUMENT ME!
+         * @param  e  action event handler. 
          */
         public void actionPerformed(ActionEvent e) { }
     }
