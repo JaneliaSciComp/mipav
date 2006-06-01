@@ -3657,7 +3657,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         buffer = null;
         secondBuffer = null;
 
-        srcImage.getParentFrame().getComponentImage().removeVOIUpdateListener(this);
+        srcImage.getParentFrame().getComponentImage().getVOIHandler().removeVOIUpdateListener(this);
         srcImage.clearMask();
         baseImage = null;
         destImage = null;
@@ -3672,7 +3672,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
     public void removeVOIUpdateListener() {
 
         if (subtractedSrcImage != null) {
-            subtractedSrcImage.getParentFrame().getComponentImage().removeVOIUpdateListener(this);
+            subtractedSrcImage.getParentFrame().getComponentImage().getVOIHandler().removeVOIUpdateListener(this);
         }
     }
 
@@ -4074,7 +4074,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 registeredSrcImage.calcMinMax();
                 registeredSrcImage.setImageName(srcImage.getImageName() + "_register");
                 transform.disposeLocal();
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
                 transform = null;
@@ -4157,7 +4157,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     return;
                 }
 
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
 
@@ -4218,7 +4218,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     return;
                 }
 
-                baseImage.getParentFrame().getComponentImage().deleteVOIs();
+                baseImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 baseImage.clearMask();
                 baseImage.notifyImageDisplayListeners();
 
@@ -4235,7 +4235,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else if (!redo)
 
             if ((!entireImage) && (!maskSupplied) && (!redo)) {
-                subtractedSrcImage.getParentFrame().getComponentImage().addVOIUpdateListener(this);
+                subtractedSrcImage.getParentFrame().getComponentImage().getVOIHandler().addVOIUpdateListener(this);
             }
 
             try {
@@ -6373,7 +6373,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 registeredSrcImage.calcMinMax();
                 registeredSrcImage.setImageName(srcImage.getImageName() + "_register");
                 registeredSrcImage.setVOIs(srcImage.getVOIs());
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
                 bin1 = Math.min(bin1, (int) Math.round(registeredSrcImage.getMax() - registeredSrcImage.getMin() + 1));
@@ -6464,7 +6464,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     return;
                 }
 
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
 
@@ -6530,7 +6530,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     return;
                 }
 
-                baseImage.getParentFrame().getComponentImage().deleteVOIs();
+                baseImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 baseImage.clearMask();
                 baseImage.notifyImageDisplayListeners();
 
@@ -6547,7 +6547,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else if (!redo)
 
             if ((!entireImage) && (!maskSupplied) && (!redo)) {
-                subtractedSrcImage.getParentFrame().getComponentImage().addVOIUpdateListener(this);
+                subtractedSrcImage.getParentFrame().getComponentImage().getVOIHandler().addVOIUpdateListener(this);
             }
 
             try {
@@ -8819,7 +8819,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 updateFileInfo(srcImage, registeredSrcImage);
                 registeredSrcImage.calcMinMax();
                 registeredSrcImage.setVOIs(srcImage.getVOIs());
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
 
@@ -8936,7 +8936,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     return;
                 }
 
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
 
@@ -8966,7 +8966,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else if (!redo)
 
             if ((!entireImage) && (!maskSupplied) && (!redo)) {
-                subtractedSrcImage.getParentFrame().getComponentImage().addVOIUpdateListener(this);
+                subtractedSrcImage.getParentFrame().getComponentImage().getVOIHandler().addVOIUpdateListener(this);
             }
 
             try {
@@ -11342,7 +11342,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 updateFileInfo(srcImage, registeredSrcImage);
                 registeredSrcImage.calcMinMax();
                 registeredSrcImage.setVOIs(srcImage.getVOIs());
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
 
@@ -11484,7 +11484,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     return;
                 }
 
-                srcImage.getParentFrame().getComponentImage().deleteVOIs();
+                srcImage.getParentFrame().getComponentImage().getVOIHandler().deleteVOIs();
                 srcImage.clearMask();
                 srcImage.notifyImageDisplayListeners();
 
@@ -11514,7 +11514,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             } // else if (!redo)
 
             if ((!entireImage) && (!maskSupplied) && (!redo)) {
-                subtractedSrcImage.getParentFrame().getComponentImage().addVOIUpdateListener(this);
+                subtractedSrcImage.getParentFrame().getComponentImage().getVOIHandler().addVOIUpdateListener(this);
             }
 
             try {
