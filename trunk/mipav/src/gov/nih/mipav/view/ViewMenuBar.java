@@ -141,6 +141,7 @@ public class ViewMenuBar {
                                                                                            "Midsagittal", 0, null,
                                                                                            false),
                                                              }),
+                                        menuBuilder.buildMenuItem("Density based clustering", "DENCLUE", 0, null, false),
                                         menuBuilder.makeMenu("Edge detection", false,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Zero X laplacian", null, 0,
@@ -1087,6 +1088,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
         if (numberOfDimensions == 4) {
+            menuBuilder.setMenuItemEnabled("Density based clustering", false);
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Evaluate segmentation", false); // vois
             menuBuilder.setMenuItemEnabled("Entropy minimization", false);
@@ -1217,6 +1219,7 @@ public class ViewMenuBar {
         if (ModelImage.isColorImage(type)) {
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
+            menuBuilder.setMenuItemEnabled("Density based clustering", false);
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Evolve surface", false);
             menuBuilder.setMenuItemEnabled("Extract brain", false);
