@@ -955,6 +955,7 @@ public class VOIHandler extends JComponent
 
     public void mouseMoved(MouseEvent mouseEvent) {
         //System.err.println("handler mouse moved, mode: " + mode);
+
         int i, j;
         int x, y;
         int xS, yS;
