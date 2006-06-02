@@ -1508,8 +1508,8 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 ViewVOIVector VOIs = UI.getRegisteredImageByName(name).getVOIs();
 
                 VOIs.VOIAt(0).setAllActive(true);
-                getFrameFromName(name).getComponentImage().setVOI_IDs(VOIs.VOIAt(0).getID(), VOIs.VOIAt(0).getUID());
-                getFrameFromName(name).getComponentImage().fireVOISelectionChange(VOIs.VOIAt(0),
+                getFrameFromName(name).getComponentImage().getVOIHandler().setVOI_IDs(VOIs.VOIAt(0).getID(), VOIs.VOIAt(0).getUID());
+                getFrameFromName(name).getComponentImage().getVOIHandler().fireVOISelectionChange(VOIs.VOIAt(0),
                                                                                   ((VOIBase)
                                                                                        VOIs.VOIAt(0).getCurves()[getFrameFromName(name).getComponentImage().getSlice()].elementAt(0)));
                 ;
