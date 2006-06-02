@@ -2287,12 +2287,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             mean = sumValue / numVoxels;
             stddev = (float) Math.sqrt((sum2Value / numVoxels) - (mean * mean));
 
-        } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)); iters++)
+        } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++)
 
         if (threadStopped) {
-            finalize();
-
-            return;
+           Preferences.debug("Stopped after iteration " + (iters-1) + " due to cancellation\n");
         }
 
         progressBar.setMessage("Last iteration was = " + (iters - 1));
@@ -2960,9 +2958,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             } // for (i = 0; i < newVolSize; i++)
 
             if (threadStopped) {
-                finalize();
-
-                return;
+                break;
             }
 
             for (i = 0; i < newVolSize; i++) {
@@ -2982,17 +2978,13 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             fitSplinesToVolumeLookup3D();
 
             if (threadStopped) {
-                finalize();
-
-                return;
+                break;
             }
 
             smoothVolumeLookup3D();
 
             if (threadStopped) {
-                finalize();
-
-                return;
+                break;
             }
 
 
@@ -3017,12 +3009,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
             mean = sumValue / numVoxels;
             stddev = (float) Math.sqrt((sum2Value / numVoxels) - (mean * mean));
-        } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)); iters++)
+        } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++)
 
         if (threadStopped) {
-            finalize();
-
-            return;
+            Preferences.debug("Stopped during iteration " + (iters-1) + " due to cancellation\n");
         }
 
         if (progressBar != null) {
