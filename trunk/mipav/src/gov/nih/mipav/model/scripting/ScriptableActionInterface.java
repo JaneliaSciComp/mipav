@@ -21,7 +21,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
  * @author   Evan McCreedy
  * @version  1.0 June 23, 2004
  */
-public interface ScriptableInterface {
+public interface ScriptableActionInterface {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
