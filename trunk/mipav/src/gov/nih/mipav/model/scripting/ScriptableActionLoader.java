@@ -24,10 +24,10 @@ public class ScriptableActionLoader {
      *
      * @throws  ParserException  If an associated class was not found or could not be loaded.
      */
-    public static final ScriptableInterface getScriptableAction(String action) throws ParserException {
+    public static final ScriptableActionInterface getScriptableAction(String action) throws ParserException {
 
         try {
-            return (ScriptableInterface) ScriptableActionLoader.loadClass(action).newInstance();
+            return (ScriptableActionInterface) ScriptableActionLoader.loadClass(action).newInstance();
         } catch (IllegalAccessException err) {
             throw new ParserException("Access denied -- " + err.getMessage());
         } catch (InstantiationException err) {
@@ -56,7 +56,7 @@ public class ScriptableActionLoader {
 
             // plugin does not implement scriptable interface
             throw new ParserException(packageString + action +
-                                      " does not allow itself to be scripted.  See ScriptableInterface.");
+                                      " does not allow itself to be scripted.  See ScriptableActionInterface.");
         } catch (Exception err) {
 
             // can't load class

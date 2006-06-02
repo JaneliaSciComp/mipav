@@ -127,7 +127,7 @@ public class Parser {
             if (parsedLine != null) {
                 Preferences.debug("\t" + parsedLine.convertToString(), Preferences.DEBUG_MINOR);
 
-                ScriptableInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine.getAction());
+                ScriptableActionInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine.getAction());
                 scriptAction.scriptRun(parsedLine.getParameterTable());
             }
         }

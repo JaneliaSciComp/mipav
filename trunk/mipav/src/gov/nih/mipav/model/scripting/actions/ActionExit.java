@@ -8,7 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 /**
  * A script action which causes MIPAV to exit completely.
  */
-public class ActionExit implements ScriptableInterface {
+public class ActionExit implements ScriptableActionInterface {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
