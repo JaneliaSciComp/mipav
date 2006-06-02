@@ -9,7 +9,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import static gov.nih.mipav.view.MipavUtil.*;
+//import static gov.nih.mipav.view.MipavUtil.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -1757,7 +1757,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     // increases the window when going from left to right.
                     // Dragging the mouse with the right mouse button pressed
                     // increases the level when going from down to up.
-                    setCursor(winLevelCursor);
+                    setCursor(MipavUtil.winLevelCursor);
                     if (!winLevelSet) {
                         winLevelSet = true;
 
@@ -2173,7 +2173,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         } else if (mode == RECTANGLE || mode == ELLIPSE || mode == LINE || mode == RECTANGLE3D || mode == POINT_VOI
             || mode == POLYLINE || mode == LEVELSET || mode == PAINT_VOI || mode == DROPPER_PAINT
             || mode == ERASER_PAINT || mode == QUICK_LUT || mode == PROTRACTOR || mode == LIVEWIRE
-            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI || mode == MOVE || mode == MOVE_POINT) {
+            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI || mode == MOVE || mode == MOVE_POINT || mode == NEW_POINT) {
             g.dispose();
             return;
         }
@@ -2296,7 +2296,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (mouseEvent.isShiftDown() == false) {
                 mode = DEFAULT;
-                setCursor(defaultCursor);
+                setCursor(MipavUtil.defaultCursor);
             }
 
             return;
@@ -3355,7 +3355,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void regionGrow(short x, short y, short z, float value, String str, boolean click) {
         Cursor cursor = getCursor();
 
-        setCursor(waitCursor);
+        setCursor(MipavUtil.waitCursor);
 
         int count;
         BitSet tempBitmap = null;
@@ -3491,7 +3491,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void regionGrow(short x, short y, short z, float value, ModelImage image, String leadString, boolean click) {
         Cursor cursor = getCursor();
 
-        setCursor(waitCursor);
+        setCursor(MipavUtil.waitCursor);
 
         int count;
 
@@ -3633,7 +3633,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                            boolean click) {
         Cursor cursor = getCursor();
 
-        setCursor(waitCursor);
+        setCursor(MipavUtil.waitCursor);
 
         int count;
         BitSet tempBitmap = null;
@@ -3777,7 +3777,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                            String leadString, boolean click) {
         Cursor cursor = getCursor();
 
-        setCursor(waitCursor);
+        setCursor(MipavUtil.waitCursor);
 
         int count;
 

@@ -6,7 +6,7 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import static gov.nih.mipav.view.MipavUtil.*;
+//import static gov.nih.mipav.view.MipavUtil.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -1229,7 +1229,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         {
 
             if (doCenter) {
-                setCursor(blankCursor);
+                setCursor(MipavUtil.blankCursor);
 
                 Point3D point3d = getVolumePosition(xS, yS, slice);
 
@@ -1272,7 +1272,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             // Hides the cursor during dragging so it doesn't get in the way.
             if (showCrosshairs == true) {
-                setCursor(blankCursor);
+                setCursor(MipavUtil.blankCursor);
             }
 
             updateFrameLabels(frame, xfS, yfS);

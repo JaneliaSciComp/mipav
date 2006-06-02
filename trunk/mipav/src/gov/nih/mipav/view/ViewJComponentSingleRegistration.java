@@ -4,7 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import static gov.nih.mipav.view.MipavUtil.*;
+//import static gov.nih.mipav.view.MipavUtil.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -362,7 +362,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                     // increases the window when going from left to right.
                     // Dragging the mouse with the right mouse button pressed
                     // increases the level when going from down to up.
-                    setCursor(winLevelCursor);
+                    setCursor(MipavUtil.winLevelCursor);
 
                     if (!winLevelSet) {
                         winLevelSet = true;
@@ -920,7 +920,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                     if (VOIs.VOIAt(i).isActive() && (VOIs.VOIAt(i).getCurveType() != VOI.POINT)) {
 
                         // Hides the cursor during dragging so it doesn't get in the way.
-                        setCursor(blankCursor);
+                        setCursor(MipavUtil.blankCursor);
 
                         VOIs.VOIAt(i).rubberbandVOI(xS, yS, slice, xDim, yDim, false);
 

@@ -8,7 +8,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
-import static gov.nih.mipav.view.MipavUtil.*;
+//import static gov.nih.mipav.view.MipavUtil.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -681,7 +681,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                     // increases the window when going from left to right.
                     // Dragging the mouse with the right mouse button pressed
                     // increases the level when going from down to up.
-                    setCursor(winLevelCursor);
+                    setCursor(MipavUtil.winLevelCursor);
 
                     if (!winLevelSet) {
                         winLevelSet = true;
@@ -871,7 +871,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             if ((nVOI == 1) && (VOIs.VOIAt(0).getCurveType() == VOI.CARDIOLOGY)) {
                 xS = Math.round((mouseEvent.getX() / (getZoomX() * resolutionX)));
                 yS = Math.round((mouseEvent.getY() / (getZoomY() * resolutionY)));
-                setCursor(blankCursor);
+                setCursor(MipavUtil.blankCursor);
 
                 VOIs.VOIAt(0).rubberbandVOI(xS, yS, slice, xDim, yDim, false);
                 imageActive.notifyImageDisplayListeners(null, true);
@@ -2213,7 +2213,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
         Cursor cursor = getCursor();
 
-        setCursor(waitCursor);
+        setCursor(MipavUtil.waitCursor);
 
         int count;
         BitSet tempBitmap = null;
@@ -2343,7 +2343,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
     public void regionGrow(short x, short y, short z, float value, ModelImage image, String leadString, boolean click) {
         Cursor cursor = getCursor();
 
-        setCursor(waitCursor);
+        setCursor(MipavUtil.waitCursor);
 
         int count;
 

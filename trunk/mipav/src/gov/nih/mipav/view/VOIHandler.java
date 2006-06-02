@@ -15,8 +15,8 @@ import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIText;
 import java.util.Vector;
 
-import static gov.nih.mipav.view.ViewJComponentEditImage.*;
-import static gov.nih.mipav.view.MipavUtil.*;
+//import static gov.nih.mipav.view.ViewJComponentEditImage.*;
+//import static gov.nih.mipav.view.MipavUtil.*;
 
 import javax.swing.*;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
@@ -292,7 +292,7 @@ public class VOIHandler extends JComponent
 
         nVOI = VOIs.size();
 
-        if (mode == MOVE) {
+        if (mode == ViewJComponentEditImage.MOVE) {
             for (i = 0; i < nVOI; i++) {
                 int curveType = VOIs.VOIAt(i).getCurveType();
 
@@ -649,7 +649,7 @@ public class VOIHandler extends JComponent
 
             return;
         }
-        else if (mode == MOVE_POINT) { // rubberband a point
+        else if (mode == ViewJComponentEditImage.MOVE_POINT) { // rubberband a point
 //System.err.println("move point");
             xS = compImage.getScaledX(mouseEvent.getX());
             yS = compImage.getScaledY(mouseEvent.getY());
@@ -659,7 +659,7 @@ public class VOIHandler extends JComponent
                 for (i = 0; i < nVOI; i++) {
                     if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() != VOI.POINT) {
                         // Hides the cursor during dragging so it doesn't get in the way.
-                        compImage.setCursor(blankCursor);
+                        compImage.setCursor(MipavUtil.blankCursor);
 
                         VOIs.VOIAt(i).rubberbandVOI(xS, yS, compImage.getSlice(), xDim, yDim, false, compImage.getZoomX(), compImage.getZoomY(),
                                 compImage.getResolutionX(), compImage.getResolutionY(), g);
@@ -974,7 +974,7 @@ public class VOIHandler extends JComponent
         xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = compImage.getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
-        if (mode == PAINT_VOI && mouseEvent.isShiftDown()) {
+        if (mode == ViewJComponentEditImage.PAINT_VOI && mouseEvent.isShiftDown()) {
             compImage.performPaint(mouseEvent, false);
             compImage.getActiveImage().notifyImageDisplayListeners(null, true);
             return;
@@ -1002,25 +1002,30 @@ public class VOIHandler extends JComponent
 
         //System.err.println("got here....past graphics dispose for extents prob");
 
-        if (mode == MAG_REGION) {
+        if (mode == ViewJComponentEditImage.MAG_REGION) {
             compImage.repaint();
             return;
-        } else if (mode == WIN_REGION) {
+        } else if (mode == ViewJComponentEditImage.WIN_REGION) {
             compImage.repaint();
             return;
-        } else if (mode == PAINT_VOI || mode == ERASER_PAINT) {
+        } else if (mode == ViewJComponentEditImage.PAINT_VOI || mode == ViewJComponentEditImage.ERASER_PAINT) {
             //repaint();
             //System.err.println("calling compImage.paintComponent from VOIHandler mouseMoved");
             compImage.paintComponent(g);
             return;
         }
 
-        if (mode == RECTANGLE || mode == ELLIPSE || mode == LINE || mode == RECTANGLE3D || mode == POINT_VOI
-            || mode == POLYLINE || mode == LEVELSET || mode == PAINT_VOI || mode == DROPPER_PAINT
-            || mode == ERASER_PAINT || mode == QUICK_LUT || mode == PROTRACTOR || mode == LIVEWIRE
-            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI || mode == PAINT_CAN) {
+        if (mode == ViewJComponentEditImage.RECTANGLE || mode == ViewJComponentEditImage.ELLIPSE ||
+            mode == ViewJComponentEditImage.LINE || mode == ViewJComponentEditImage.RECTANGLE3D ||
+            mode == ViewJComponentEditImage.POINT_VOI
+            || mode == ViewJComponentEditImage.POLYLINE || mode == ViewJComponentEditImage.LEVELSET ||
+            mode == ViewJComponentEditImage.PAINT_VOI || mode == ViewJComponentEditImage.DROPPER_PAINT
+            || mode == ViewJComponentEditImage.ERASER_PAINT ||
+            mode == ViewJComponentEditImage.QUICK_LUT || mode == ViewJComponentEditImage.PROTRACTOR || mode == ViewJComponentEditImage.LIVEWIRE
+            || mode == ViewJComponentEditImage.ANNOTATION || mode == ViewJComponentEditImage.POLYLINE_SLICE_VOI || mode == ViewJComponentEditImage.PAINT_CAN) {
             compImage.getGraphics().dispose();
             //System.err.println("returning from mouseMoved() with rectangle of VOIHandler");
+         //   System.err.println("returning from mouseMoved with mode of: " + mode);
             return;
         }
 
@@ -1046,7 +1051,7 @@ public class VOIHandler extends JComponent
                             }
                             // BEN LINK CHANGE can delete point from bounding box'd contour
                             // if ( VOIs.VOIAt( i ).getBoundingBoxFlag() == false ) {
-                            compImage.setMode(DELETE_POINT);
+                            compImage.setMode(ViewJComponentEditImage.DELETE_POINT);
                             // } else {
                             // compImage.setMode( MOVE_POINT );
                             // }
@@ -1067,7 +1072,7 @@ public class VOIHandler extends JComponent
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
                             //System.err.println("setting polyslice to move point mode");
-                            compImage.setMode(MOVE_POINT);
+                            compImage.setMode(ViewJComponentEditImage.MOVE_POINT);
                             compImage.getGraphics().dispose();
                             return;
                         } else {
@@ -1081,7 +1086,7 @@ public class VOIHandler extends JComponent
                             if (j == nCurves) {
                                 return;
                             }
-                            compImage.setMode(MOVE_POINT);
+                            compImage.setMode(ViewJComponentEditImage.MOVE_POINT);
 
                             // don't bother redrawing for a line ... point is not highlighted
                             if (VOIs.VOIAt(i).getCurveType() != VOI.LINE) {
@@ -1101,7 +1106,7 @@ public class VOIHandler extends JComponent
                         for (j = 0; j < nCurves; j++) {
                             if (VOIs.VOIAt(i).nearOuterPoint(x, y, compImage.getSlice(), j, compImage.getZoomX(), compImage.getResolutionX(), compImage.getResolutionY())
                                 && mouseEvent.isShiftDown() == false && mouseEvent.isAltDown() == false) {
-                                compImage.setMode(MOVE_POINT);
+                                compImage.setMode(ViewJComponentEditImage.MOVE_POINT);
                                 VOIs.VOIAt(i).drawSelf(compImage.getZoomX(), compImage.getZoomY(), compImage.getResolutionX(), compImage.getResolutionY(), 0f, 0f,
                                     compImage.getActiveImage().getFileInfo(0).getResolutions(),
                                     compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(), compImage.getSlice(), compImage.getOrientation(), g);
@@ -1113,7 +1118,6 @@ public class VOIHandler extends JComponent
                     //see if the mouse is near the line in between the points of the contour/polyline/polyline_slice
                     else if ( (VOIs.VOIAt(i)).nearLine(xS, yS, compImage.getSlice())
                              && mouseEvent.isAltDown() == false) {
-
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
                             || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
                             for (j = 0; j < nCurves; j++) {
@@ -1125,11 +1129,11 @@ public class VOIHandler extends JComponent
                             if (j == nCurves) {
                                 return;
                             }
-                            compImage.setMode(NEW_POINT);
+                            compImage.setMode(ViewJComponentEditImage.NEW_POINT);
                             compImage.getGraphics().dispose();
                             return;
                         } else if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE && mouseEvent.isShiftDown()) {
-                            compImage.setMode(NEW_POINT);
+                            compImage.setMode(ViewJComponentEditImage.NEW_POINT);
                             compImage.getGraphics().dispose();
                             return;
                         }
@@ -1137,7 +1141,7 @@ public class VOIHandler extends JComponent
                     else if (mouseEvent.isAltDown() == true) {
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
                             || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
-                            compImage.setMode(RETRACE);
+                            compImage.setMode(ViewJComponentEditImage.RETRACE);
                             compImage.getGraphics().dispose();
                             return;
                         }
@@ -1172,7 +1176,7 @@ public class VOIHandler extends JComponent
                     }
 
                     if (VOIs.VOIAt(i).isVisible() && isContained) {
-                        compImage.setMode(MOVE);
+                        compImage.setMode(ViewJComponentEditImage.MOVE);
                         if (curveType == VOI.CONTOUR || curveType == VOI.POLYLINE) {
                             popup.setEnabledProps(true);
                             compImage.addMouseListener(popup);
@@ -1187,7 +1191,7 @@ public class VOIHandler extends JComponent
             else if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                 if (VOIs.VOIAt(i).isVisible()
                     && VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(), compImage.getResolutionX(), compImage.getResolutionY())) {
-                    compImage.setMode(MOVE);
+                    compImage.setMode(ViewJComponentEditImage.MOVE);
 
                     compImage.addMouseListener(popupPt);
 
@@ -1200,7 +1204,7 @@ public class VOIHandler extends JComponent
                     (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(), compImage.getResolutionX(), compImage.getResolutionY()) ||
                 //VOIs.VOIAt(i).nearLinePoint(
                      VOIs.VOIAt(i).nearLine(xS, yS, compImage.getSlice()) )) {
-                    compImage.setMode(MOVE);
+                    compImage.setMode(ViewJComponentEditImage.MOVE);
 
                     popup.setEnabledProps(true);
                     compImage.addMouseListener(popup);
@@ -1212,7 +1216,7 @@ public class VOIHandler extends JComponent
             }
         }
 
-        compImage.setMode(DEFAULT);
+        compImage.setMode(ViewJComponentEditImage.DEFAULT);
     } //end mouseMoved
 
 
@@ -1238,7 +1242,7 @@ public class VOIHandler extends JComponent
         // save the state of the shift button
         mousePressIsShiftDown = mouseEvent.isShiftDown();
 
-        if (mode != DEFAULT) {
+        if (mode != ViewJComponentEditImage.DEFAULT) {
             VOIs = compImage.getActiveImage().getVOIs();
             nVOI = VOIs.size();
 
@@ -1268,21 +1272,21 @@ public class VOIHandler extends JComponent
                 return;
             }
 
-            if (mode == DROPPER_PAINT) {
+            if (mode == ViewJComponentEditImage.DROPPER_PAINT) {
                     //shouldnt be here
             }
 
-            if (mode == ERASER_PAINT) {
+            if (mode == ViewJComponentEditImage.ERASER_PAINT) {
               //shouldnt be here
-            } else if (mode == PAINT_VOI) {
+            } else if (mode == ViewJComponentEditImage.PAINT_VOI) {
                     //shouldnt be here
             }
 
-            if ((mode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+            if ((mode == ViewJComponentEditImage.MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
 //shouldnt be here
             }
 
-            if ((mode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+            if ((mode == ViewJComponentEditImage.WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
               //shouldnt be here
             }
 
@@ -1480,12 +1484,12 @@ public class VOIHandler extends JComponent
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentEditImage.mousePressed");
-            compImage.setMode(DEFAULT);
+            compImage.setMode(ViewJComponentEditImage.DEFAULT);
 
             return;
         }
 
-        if (mode == MOVE) {
+        if (mode == ViewJComponentEditImage.MOVE) {
             anchorPt.setLocation(xS, yS); // For use in dragging VOIs
 
             // the actual selecting was moved to mouseReleased()
@@ -1527,7 +1531,7 @@ public class VOIHandler extends JComponent
             return;
         }
 
-        if (mode != MOVE) {
+        if (mode != ViewJComponentEditImage.MOVE) {
             compImage.setPixelInformationAtLocation(xS, yS);
         }
 
@@ -1541,7 +1545,7 @@ public class VOIHandler extends JComponent
             }
         }
 
-        if (mode == POINT_VOI) {
+        if (mode == ViewJComponentEditImage.POINT_VOI) {
             if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
                 if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
                     VOI newPtVOI = null;
@@ -1575,7 +1579,7 @@ public class VOIHandler extends JComponent
                     catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: ComponentEditImage.mouseReleased");
-                        compImage.setMode(DEFAULT);
+                        compImage.setMode(ViewJComponentEditImage.DEFAULT);
                         return;
                     }
                     lastPointVOI = voiID;
@@ -1590,7 +1594,7 @@ public class VOIHandler extends JComponent
                     graphPointVOI(newPtVOI, ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[compImage.getSlice()].elementAt(0))), 0);
 
                     if (mouseEvent.isShiftDown() != true) {
-                        compImage.setMode(DEFAULT);
+                        compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
 
                 } // end of if (voiID == -1)
@@ -1646,14 +1650,14 @@ public class VOIHandler extends JComponent
                     }
 
                     if (mouseEvent.isShiftDown() != true) {
-                        compImage.setMode(DEFAULT);
+                        compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
                     return;
                 } // end of else for if voiID != -1 add point to existing VOI
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
         } // end of else if (mode == POINT_VOI)
 
-        else if (mode == POLYLINE_SLICE_VOI) {
+        else if (mode == ViewJComponentEditImage.POLYLINE_SLICE_VOI) {
             if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
                 if (isNewVoiNeeded(VOI.POLYLINE_SLICE)) { // create new VOI
                     try {
@@ -1686,7 +1690,7 @@ public class VOIHandler extends JComponent
                     catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: ComponentEditImage.mouseReleased");
-                        compImage.setMode(DEFAULT);
+                        compImage.setMode(ViewJComponentEditImage.DEFAULT);
                         return;
                     }
                     lastPolysliceVOI = voiID;
@@ -1703,7 +1707,7 @@ public class VOIHandler extends JComponent
                     //System.err.println("click count: " + mouseEvent.getClickCount());
 
                     if (mouseEvent.isShiftDown() != true) {
-                        compImage.setMode(DEFAULT);
+                        compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
 
                 } // end of if (voiID == -1)
@@ -1738,14 +1742,14 @@ public class VOIHandler extends JComponent
                     compImage.getActiveImage().notifyImageDisplayListeners();
 
                     if (mouseEvent.isShiftDown() != true) {
-                        compImage.setMode(DEFAULT);
+                        compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
                     return;
                 } // end of else for if voiID != -1 add point to existing VOI
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
 
         }
-        else if (mode == ANNOTATION) {
+        else if (mode == ViewJComponentEditImage.ANNOTATION) {
             if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
 
                 VOI newTextVOI = null;
@@ -1788,24 +1792,23 @@ public class VOIHandler extends JComponent
                 new JDialogAnnotation(compImage.getActiveImage(), newTextVOI, compImage.getSlice(), false);
 
                 if (mouseEvent.isShiftDown() != true) {
-                    compImage.setMode(DEFAULT);
+                    compImage.setMode(ViewJComponentEditImage.DEFAULT);
                 }
 
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
 
         }
-        else if (mode == POLYLINE || mode == LIVEWIRE) {
+        else if (mode == ViewJComponentEditImage.POLYLINE || mode == ViewJComponentEditImage.LIVEWIRE) {
             return;
             // compImage.setMode(DEFAULT);
         }
-        else if (mode == LEVELSET) {}
-        else if (mode == RECTANGLE) {}
-        else if (mode == RECTANGLE3D) {}
-        else if (mode
-                 == ELLIPSE) {}
-        else if (mode == LINE) {}
-        else if (mode == PROTRACTOR) {}
-        else if (mode == NEW_POINT) { // impossible for LINE
+        else if (mode == ViewJComponentEditImage.LEVELSET) {}
+        else if (mode == ViewJComponentEditImage.RECTANGLE) {}
+        else if (mode == ViewJComponentEditImage.RECTANGLE3D) {}
+        else if (mode == ViewJComponentEditImage.ELLIPSE) {}
+        else if (mode == ViewJComponentEditImage.LINE) {}
+        else if (mode == ViewJComponentEditImage.PROTRACTOR) {}
+        else if (mode == ViewJComponentEditImage.NEW_POINT) { // impossible for LINE
 
             if (mouseEvent.isShiftDown()) {
                 nVOI = VOIs.size();
@@ -2027,7 +2030,7 @@ public class VOIHandler extends JComponent
                 }
             }
         }
-        else if (mode == DELETE_POINT) { // impossible for LINE
+        else if (mode == ViewJComponentEditImage.DELETE_POINT) { // impossible for LINE
             nVOI = VOIs.size();
             for (i = 0; i < nVOI; i++) {
                 if (VOIs.VOIAt(i).isActive()) {
@@ -2043,13 +2046,13 @@ public class VOIHandler extends JComponent
             ( (VOIContour) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(index))).removeElement();
 
             compImage.getActiveImage().notifyImageDisplayListeners();
-            compImage.setMode(MOVE_POINT);
+            compImage.setMode(ViewJComponentEditImage.MOVE_POINT);
         }
-        else if (mode == PAINT_CAN ||
-                 mode == PAINT_VASC) {
+        else if (mode == ViewJComponentEditImage.PAINT_CAN ||
+                 mode == ViewJComponentEditImage.PAINT_VASC) {
             return;
         }
-        else if (mode == MOVE) {
+        else if (mode == ViewJComponentEditImage.MOVE) {
             Graphics g = compImage.getGraphics();
             nVOI = VOIs.size();
             if (!mouseEvent.isControlDown()) {
@@ -2184,7 +2187,7 @@ public class VOIHandler extends JComponent
             compImage.getGraphics().dispose();
             compImage.getActiveImage().notifyImageDisplayListeners();
         }
-        else if (mode == MOVE_POINT) {
+        else if (mode == ViewJComponentEditImage.MOVE_POINT) {
 
             nVOI = VOIs.size();
 
@@ -2226,7 +2229,7 @@ public class VOIHandler extends JComponent
             }
             compImage.getActiveImage().notifyImageDisplayListeners(null, true);
         }
-        else if (mode == RETRACE) {
+        else if (mode == ViewJComponentEditImage.RETRACE) {
             nVOI = VOIs.size();
             for (i = 0; i < nVOI; i++) {
                 if (VOIs.VOIAt(i).isActive()) {
@@ -2239,7 +2242,7 @@ public class VOIHandler extends JComponent
             }
             compImage.getActiveImage().notifyImageDisplayListeners();
         }
-        else if (mode == QUICK_LUT) {
+        else if (mode == ViewJComponentEditImage.QUICK_LUT) {
 
             //should not be here
         }
@@ -4712,68 +4715,68 @@ public class VOIHandler extends JComponent
         boolean isImageFrame = compImage.getFrame() instanceof ViewJFrameImage;
         switch (mode) {
 
-            case DEFAULT:
-                compImage.setCursor(smallPointerCursor);
+            case ViewJComponentEditImage.DEFAULT:
+                compImage.setCursor(MipavUtil.smallPointerCursor);
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setPointerSelected();
                 }
 
                 break;
 
-            case PROBE:
-                compImage.setCursor(probeCursor);
+            case ViewJComponentEditImage.PROBE:
+                compImage.setCursor(MipavUtil.probeCursor);
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setPointerSelected();
                 }
 
                 break;
 
-            case SELECT:
+            case ViewJComponentEditImage.SELECT:
                 rubberband = rbRect;
                 rubberband.setActive(true);
-                compImage.setCursor(defaultCursor);
+                compImage.setCursor(MipavUtil.defaultCursor);
                 break;
 
-            case POINT_VOI:
+            case ViewJComponentEditImage.POINT_VOI:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("point");
                 }
 
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case RECTANGLE:
+            case ViewJComponentEditImage.RECTANGLE:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("rectvoi");
                 }
 
                 rubberband = rbRect;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case ELLIPSE:
+            case ViewJComponentEditImage.ELLIPSE:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("ellipsevoi");
                 }
 
                 rubberband = rbEllipse;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case RECTANGLE3D:
+            case ViewJComponentEditImage.RECTANGLE3D:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("rect3dvoi");
                 }
 
                 rubberband = rbRect;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case NEW_VOI:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.NEW_VOI:
+                compImage.setCursor(compImage.crosshairCursor);
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setPointerSelected();
                 }
@@ -4792,127 +4795,127 @@ public class VOIHandler extends JComponent
                 rbLivewire = null;
                 break;
 
-            case POLYLINE:
+            case ViewJComponentEditImage.POLYLINE:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("polyline");
                 }
 
                 rubberband = rbPolyline;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case LIVEWIRE:
+            case ViewJComponentEditImage.LIVEWIRE:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("livewirevoi");
                 }
 
                 rubberband = rbLivewire;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case LEVELSET:
+            case ViewJComponentEditImage.LEVELSET:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("levelsetvoi");
                 }
 
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case LINE:
+            case ViewJComponentEditImage.LINE:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("line");
                 }
 
                 rubberband = rbLine;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case PROTRACTOR:
+            case ViewJComponentEditImage.PROTRACTOR:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("protractor");
                 }
 
                 rubberband = rbProtractor;
                 rubberband.setActive(true);
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case MOVE:
-                compImage.setCursor(moveCursor);
+            case ViewJComponentEditImage.MOVE:
+                compImage.setCursor(MipavUtil.moveCursor);
                 break;
 
-            case MOVE_POINT:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.MOVE_POINT:
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case NEW_POINT:
-                compImage.setCursor(addPointCursor);
+            case ViewJComponentEditImage.NEW_POINT:
+                compImage.setCursor(MipavUtil.addPointCursor);
                 break;
 
-            case POLYLINE_SLICE_VOI:
+            case ViewJComponentEditImage.POLYLINE_SLICE_VOI:
                 if (isImageFrame) {
                     compImage.getFrame().getControls().getTools().setVOIButtonSelected("polyslice");
                 }
 
-                compImage.setCursor(crosshairCursor);
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case DELETE_POINT:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.DELETE_POINT:
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case WAND:
-                compImage.setCursor(wandCursor); // Hand cursor
+            case ViewJComponentEditImage.WAND:
+                compImage.setCursor(MipavUtil.wandCursor); // Hand cursor
                 break;
 
-            case RETRACE:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.RETRACE:
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case PAINT_VOI:
-                compImage.setCursor(blankCursor);
+            case ViewJComponentEditImage.PAINT_VOI:
+                compImage.setCursor(MipavUtil.blankCursor);
                 compImage.getFrame().requestFocus();
                 break;
 
-            case PAINT_CAN:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.PAINT_CAN:
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case PAINT_VASC:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.PAINT_VASC:
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case DROPPER_PAINT:
-                compImage.setCursor(crosshairCursor);
+            case ViewJComponentEditImage.DROPPER_PAINT:
+                compImage.setCursor(compImage.crosshairCursor);
                 break;
 
-            case ERASER_PAINT:
-                compImage.setCursor(blankCursor);
+            case ViewJComponentEditImage.ERASER_PAINT:
+                compImage.setCursor(MipavUtil.blankCursor);
                 compImage.getFrame().requestFocus();
                 break;
 
-            case MAG_REGION:
-                compImage.setCursor(magRegionCursor);
+            case ViewJComponentEditImage.MAG_REGION:
+                compImage.setCursor(MipavUtil.magRegionCursor);
                 break;
 
-            case WIN_REGION:
-                compImage.setCursor(magRegionCursor);
+            case ViewJComponentEditImage.WIN_REGION:
+                compImage.setCursor(MipavUtil.magRegionCursor);
                 break;
 
-            case QUICK_LUT:
+            case ViewJComponentEditImage.QUICK_LUT:
                 rubberband = rbRectQuick;
                 rubberband.setActive(true);
-                compImage.setCursor(quickLUTcursor);
+                compImage.setCursor(MipavUtil.quickLUTcursor);
                 break;
 
-            case ANNOTATION:
-                compImage.setCursor(textCursor);
+            case ViewJComponentEditImage.ANNOTATION:
+                compImage.setCursor(MipavUtil.textCursor);
                 break;
 
-            case ZOOMING_IN:
+            case ViewJComponentEditImage.ZOOMING_IN:
 
                 Toolkit toolkit = Toolkit.getDefaultToolkit();
                 Cursor magnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomin.gif").getImage(),
@@ -4921,7 +4924,7 @@ public class VOIHandler extends JComponent
                 compImage.setCursor(magnifyCursor);
                 break;
 
-            case ZOOMING_OUT:
+            case ViewJComponentEditImage.ZOOMING_OUT:
                 toolkit = Toolkit.getDefaultToolkit();
 
                 Cursor unmagnifyCursor = toolkit.createCustomCursor(MipavUtil.getIcon("zoomout.gif").getImage(),
@@ -4949,13 +4952,13 @@ public class VOIHandler extends JComponent
      * @param  selection  Cost function selection.
      */
     public void setModeLivewire(int selection) {
-        this.mode = LIVEWIRE;
+        this.mode = ViewJComponentEditImage.LIVEWIRE;
         rubberband.setActive(false);
         rbLivewire = new RubberbandLivewire(compImage, selection);
         rbLivewire.setPresetHue(presetHue);
         rubberband = rbLivewire;
         rubberband.setActive(true);
-        compImage.setCursor(crosshairCursor);
+        compImage.setCursor(compImage.crosshairCursor);
     }
 
     /**
@@ -4969,14 +4972,14 @@ public class VOIHandler extends JComponent
      */
     public void setModeLivewire(float gradSigma, float edgeLap, float gradWeight, float kernWeight,
                                 boolean smoothVOIFlag) {
-        this.mode = LIVEWIRE;
+        this.mode = ViewJComponentEditImage.LIVEWIRE;
         rubberband.setActive(false);
         rbLivewire = new RubberbandLivewire(this, new float[] { gradSigma, gradSigma },
                                             new float[] { edgeLap, edgeLap }, kernWeight, gradWeight, -(edgeLap),
                                             edgeLap, smoothVOIFlag);
         rubberband = rbLivewire;
         rubberband.setActive(true);
-        compImage.setCursor(crosshairCursor);
+        compImage.setCursor(compImage.crosshairCursor);
     }
 
     /**
@@ -5004,7 +5007,7 @@ public class VOIHandler extends JComponent
     public void drawVOIs(Graphics graphics, boolean overlayOn, boolean gridOverlayOn) {
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
-        if (compImage.getOrientation() == NA) {
+        if (compImage.getOrientation() == ViewJComponentEditImage.NA) {
 
             if (VOIs != null) {
                 int nVOI = VOIs.size();
@@ -5022,7 +5025,7 @@ public class VOIHandler extends JComponent
                 }
             } // if (VOIs != null)
 
-            if (mode == LEVELSET) {
+            if (mode == ViewJComponentEditImage.LEVELSET) {
 
                 if (rbLevelSet.getLevelSetPolygon() != null) {
                     graphics.setColor(Color.yellow);
