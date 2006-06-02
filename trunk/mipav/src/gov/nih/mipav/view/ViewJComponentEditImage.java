@@ -598,8 +598,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         voiHandler = new VOIHandler(this);
 
-        addMouseListener(voiHandler);
-        addMouseMotionListener(voiHandler);
+        if ( ! (this instanceof ViewJComponentTriImage)) {
+            addMouseListener(voiHandler);
+            addMouseMotionListener(voiHandler);
+        }
 
         addMouseMotionListener(this);
         addMouseListener(this);
