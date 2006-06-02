@@ -2178,18 +2178,14 @@ public class FileIO {
                                                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0))
                                                                 .getTagsList().get("0020,1041")).getValue(true));
 
-                    System.err.println("Slice difference: " + sliceDifference);
+                    //System.err.println("Slice difference: " + sliceDifference);
 
                     if ((Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
                         ((FileInfoDicom) image.getFileInfo(0)).getResolutions()[2] = sliceDifference;
 
                         for (int m = 0; m < (nImages - 1); m++) {
-                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = Float.parseFloat((String)
-                                                                                                              ((FileDicomTag)
-                                                                                                                   ((FileInfoDicom)
-                                                                                                                        image.getFileInfo(m +
-                                                                                                                                          1))
-                                                                                                                       .getTagsList().get("0020,1041"))
+                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = 
+                                Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m + 1)).getTagsList().get("0020,1041"))
                                                                                                                   .getValue(true)) -
                                                                                          Float.parseFloat((String)
                                                                                                               ((FileDicomTag)
@@ -8383,18 +8379,100 @@ public class FileIO {
             }
 
             myFileInfo.setDataType(image.getType());
-
+            
+ 
+            Object obj = null;
+            float slLoc = 0;
+            float xLocOrig = 0;
+            float yLocOrig = 0;
+            float zLocOrig = 0;
+            float xLoc = 0;
+            float yLoc = 0;
+            float zLoc = 0;
+            String [] origins;
+            
+            FileDicomTag tag = myFileInfo.getTag("0020,1041");
+            
+            if (tag != null) { 
+                obj = tag.getValue(false);
+            }
+            if (obj != null) { 
+                slLoc = Float.valueOf((String)obj).floatValue();
+            }
+            float sliceResolution = myFileInfo.getResolutions()[2];
+            
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
-
                 FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
-
-                for (int k = 0; k < image.getExtents()[2]; k++) { // I think this is OK for saving via secondary
-                                                                  // capture.
+                
+                if ( myFileInfo.getTag("0020,0032") != null) {
+                    tag = myFileInfo.getTag("0020,0032");
+                    if (tag != null) { 
+                        obj = tag.getValue(false);
+                    }
+                    if (obj != null) {
+                        origins = ((String)(obj)).split("\\\\");
+                        xLoc = Float.valueOf(origins[0]).floatValue();
+                        yLoc = Float.valueOf(origins[1]).floatValue();
+                        zLoc = Float.valueOf(origins[2]).floatValue();
+                    }
+                    else {
+                        xLoc = 0;
+                        yLoc = 0;
+                        zLoc = 0;
+                    }
+                        
+                    xLocOrig = xLoc;
+                    yLocOrig = yLoc;
+                    zLocOrig = zLoc;
+                }
+                
+                for (int k = 0; k < image.getExtents()[2]; k++) { 
 
                     // System.err.println("FileIO k = " + k);
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
+                    
+                    // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
+                    myFileInfo.setValue("0020,1041", Float.toString(slLoc), Float.toString(slLoc).length()); 
+                    slLoc += sliceResolution;
+                    
+                    String tmpStr = new String (Float.toString(xLoc) + "\\" + 
+                            Float.toString(yLoc) + "\\" +
+                            Float.toString(zLoc) );
+                    myFileInfo.setValue("0020,0032", tmpStr, tmpStr.length());
+                        
+                    if( image.getFileInfo()[0].getImageOrientation() == FileInfoBase.AXIAL ){
+                        if (zLocOrig <= 0 ){
+                            zLoc += sliceResolution;
+                        }
+                        else {
+                            zLoc -= sliceResolution;
+                        }
+                    }
+                    else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.CORONAL){
+                        if (yLocOrig <= 0 ){
+                            yLoc += sliceResolution;
+                        }
+                        else {
+                            yLoc -= sliceResolution;
+                        }
+                    }
+                    else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.SAGITTAL){
+                        if (xLocOrig <= 0 ){
+                            xLoc += sliceResolution;
+                        }
+                        else {
+                            xLoc -= sliceResolution;
+                        }
+                    }
+                    else {
+                        if (zLoc <= 0 ){
+                            zLoc += sliceResolution;
+                        }
+                        else {
+                            zLoc -= sliceResolution;
+                        }
+                    }
                 }
-
                 image.setFileInfo(fBase);
             } else {
                 image.setFileInfo(myFileInfo, 0);
