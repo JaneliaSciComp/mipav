@@ -8,10 +8,10 @@ public class DICOM_StdStorage extends DICOM_SOP {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Store request object. */
     public DICOM_CRequest cStoreRq;
 
-    /** DOCUMENT ME! */
+    /** Store response object. */
     public DICOM_CResponse cStoreRsp;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -43,11 +43,11 @@ public class DICOM_StdStorage extends DICOM_SOP {
      *
      * @param   pdu          PDU service object
      * @param   ddo          DICOM data object
-     * @param   transferSyntax     DOCUMENT ME!
-     * @param   classUID     DOCUMENT ME!
-     * @param   instanceUID  DOCUMENT ME!
+     * @param   transferSyntax     The DICOM transfer syntax.
+     * @param   classUID     The class UID.
+     * @param   instanceUID  The instance UID.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Indicates error when writing data.
      */
     public void write(DICOM_PDUService pdu, DICOM_Object ddo, String transferSyntax, String classUID, String instanceUID)
             throws DICOM_Exception {

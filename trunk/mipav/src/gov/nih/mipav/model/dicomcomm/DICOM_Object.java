@@ -15,7 +15,7 @@ public class DICOM_Object {
     /** A hash table of the DICOM groups */
     protected Hashtable groups = new Hashtable();
 
-    /** DOCUMENT ME! */
+    /** Flag used to support processing of GroupLength tags (XXXX, 0000) */
     private boolean popGroupLength = true;
 
     //~ Methods --------------------------------------------------------------------------------------------------------

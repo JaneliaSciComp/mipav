@@ -12,16 +12,16 @@ public class DICOM_TransferSyntaxUtil {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Static that defines IMPLICIT_LITTLE_ENDIAN. */
     public static final int IMPLICIT_LITTLE_ENDIAN = 100;
 
-    /** DOCUMENT ME! */
+    /** Static that defines EXPLICIT_LITTLE_ENDIAN. */
     public static final int EXPLICIT_LITTLE_ENDIAN = 101;
 
-    /** DOCUMENT ME! */
+    /** Static that defines EXPLICIT_BIG_ENDIAN. */
     public static final int EXPLICIT_BIG_ENDIAN = 102;
 
-    /** DOCUMENT ME! */
+    /** Static that defines UNKNOWN. */
     public static final int UNKNOWN = 0;
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -31,7 +31,7 @@ public class DICOM_TransferSyntaxUtil {
      *
      * @param   transferSyntaxUID  UID to be converted
      *
-     * @return  the converted UID id.
+     * @return  the converted UID ID.
      */
     public static int convertToAlias(String transferSyntaxUID) {
 
