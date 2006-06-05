@@ -2,16 +2,17 @@ package gov.nih.mipav.model.dicomcomm;
 
 
 /**
- * DICOM AsyncOpWindowSubItem PDU Item Type - Not supported but we read it in. This is an optional support item in DICOM
+ * DICOM AsyncOpWindowSubItem PDU Item Type - Not supported but we read it in. 
+ * This is an optional support item in DICOM
  */
 public class DICOM_AsyncOpWindowSubItem extends DICOM_PDUItemType {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Indicates the maximum number of operations invoked. */
     protected short maxNumOpsInvoked = 0;
 
-    /** DOCUMENT ME! */
+    /** Indicates the maximum number of operations performed. */
     protected short maxNumOpsPerformed = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -42,7 +43,6 @@ public class DICOM_AsyncOpWindowSubItem extends DICOM_PDUItemType {
      * @exception  DICOM_Exception  unknown PDUType
      */
     public void readBody(DICOM_Comms connection) throws DICOM_Exception {
-        int length;
 
         maxNumOpsInvoked = (short) connection.readShort16();
         maxNumOpsPerformed = (short) connection.readShort16();
