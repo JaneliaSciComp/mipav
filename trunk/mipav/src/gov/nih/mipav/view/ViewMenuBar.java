@@ -906,6 +906,9 @@ public class ViewMenuBar {
                                                                                            false),
                                                                  menuBuilder.buildMenuItem("Remove slices", null, 0,
                                                                                            null, false),
+                                                                 menuBuilder.buildMenuItem("Replace blanks with averages",
+                                                                                           "ReplaceBlankWithAvg", 0, null,
+                                                                                           false),
                                                                  menuBuilder.buildMenuItem("Replace slice", null, 0,
                                                                                            null, false),
                                                              }),
@@ -1157,6 +1160,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad with slices", false);
+            menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
@@ -1214,6 +1218,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemSelected("ShowSliceNum", false);
             menuBuilder.setMenuItemEnabled("Show slice number overlay", false);
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
+            menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
         }
 
         if (ModelImage.isColorImage(type)) {
