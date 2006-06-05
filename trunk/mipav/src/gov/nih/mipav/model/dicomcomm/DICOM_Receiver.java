@@ -52,12 +52,13 @@ public class DICOM_Receiver extends DICOM_PDUService implements Runnable, Observ
     /** Reference to the DICOM verification object. */
     private DICOM_Verification verification;
 
-    ByteBuffer pre_and_fullData = null;
+    private ByteBuffer pre_and_fullData = null;
     
     private String defaultStorageDir;
     private Vector fileNameList = new Vector();
     private Vector observerList = new Vector();
     private boolean changed = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**

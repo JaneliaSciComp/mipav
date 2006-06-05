@@ -2,8 +2,9 @@ package gov.nih.mipav.model.dicomcomm;
 
 
 /**
- * This class implements a 2 byte item length (DICOM_PDUType implements 4 byte item length. See DICOM_PDUTypeBase for
- * the methods that are required for new classes that extend this class.
+ * This class implements a 2 byte item length (DICOM_PDUType implements 4 byte item length. 
+ * See DICOM_PDUTypeBase for the methods that are required for new classes that 
+ * extend this class.
  */
 public class DICOM_PDUItemType extends DICOM_PDUTypeBase {
 
@@ -12,7 +13,7 @@ public class DICOM_PDUItemType extends DICOM_PDUTypeBase {
     /**
      * Creates a new DICOM_PDUItemType object.
      *
-     * @param  itemType  DOCUMENT ME!
+     * @param  itemType  The PDU item type.
      */
     public DICOM_PDUItemType(byte itemType) {
         this.itemType = itemType;

@@ -9,8 +9,8 @@ import java.net.*;
 import java.util.*;
 
 /**
- * The PDU_Service class is a wrapper of all the lower level DICOM messaging classes. This class is the true implementor
- * of the DICOM networking protocol.
+ * The Protocol Data Units (PDU) - PDU_Service class is a wrapper of all the lower level 
+ * DICOM messaging classes. This class is the true implementor of the DICOM networking protocol.
  */
 public class DICOM_PDUService extends DICOM_Comms {
 

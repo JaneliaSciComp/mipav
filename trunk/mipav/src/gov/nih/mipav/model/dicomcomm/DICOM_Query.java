@@ -15,31 +15,31 @@ public class DICOM_Query extends DICOM_SOP implements Runnable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** cFind request object. */
     public DICOM_CRequest cFindRq;
 
-    /** DOCUMENT ME! */
+    /** CResponse (Find response) object. */
     public DICOM_CResponse cFindRsp;
 
-    /** DOCUMENT ME! */
+    /** The DICOM message ID. */
     protected int MSG_ID;
 
-    /** DOCUMENT ME! */
+    /** If true then the DICOM query is cancelled. */
     private boolean cancelFlag = false;
 
-    /** DOCUMENT ME! */
+    /** The DICOM data object. */
     private DICOM_Object ddo;
 
-    /** boolean that tells the thread whether or not it should keep going. */
+    /** Boolean that tells the thread whether or not it should keep going. */
     private boolean keepGoing = true;
 
-    /** DOCUMENT ME! */
+    /** The PDU service object. */
     private DICOM_PDUService pdu;
 
-    /** DOCUMENT ME! */
+    /** The GUI frame to starting queries.  */
     private ViewJFrameDICOMQuery queryFrame;
 
-    /** DOCUMENT ME! */
+    /** Indicates the type of query (i.e. STUDY, SERIES ...) */
     private int queryType;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------

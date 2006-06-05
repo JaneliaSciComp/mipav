@@ -23,9 +23,9 @@ public abstract class DICOM_PDUType extends DICOM_PDUTypeBase {
      *
      * @param   connection  the connection to read from
      *
-     * @return  DOCUMENT ME!
+     * @return  The PDU item type read.
      *
-     * @throws  DICOM_Exception  DOCUMENT ME!
+     * @throws  DICOM_Exception  Indicates reading error.
      */
     public byte readHeader(DICOM_Comms connection) throws DICOM_Exception {
         itemType = connection.readByte();

@@ -8,10 +8,10 @@ public class DICOM_SCPSCURoleSelect extends DICOM_PDUItemType {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Indicates the Serivce Class Provider (SCP) (i.e. Server).  */
     protected byte SCPRole = 0;
 
-    /** DOCUMENT ME! */
+    /** Indicates the Serivce Class User (SCU) (i.e. Client).  */
     protected byte SCURole = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------

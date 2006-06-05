@@ -230,7 +230,7 @@ public abstract class DICOM_PDUTypeBase {
     /**
      * Reads the header and body of the PDU message from the connection.
      *
-     * @param   connection  DOCUMENT ME!
+     * @param   connection  the connection where the data is read in
      *
      * @throws  DICOM_Exception  DOCUMENT ME!
      */

@@ -9,8 +9,8 @@ import java.io.*;
 
 
 /**
- * This is the DICOM store class that defines functions to compose and send a store request to a DICOM image file
- * archive such as the image file server located in NIH's Clinical Center.
+ * This is the DICOM store class that defines functions to compose and send a store request 
+ * to a DICOM image file archive such as the image file server located in NIH's Clinical Center.
  *
  * @version  1.0
  */
@@ -19,25 +19,25 @@ public class DICOM_Store implements Runnable {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Class UID  */
     private String classUID;
 
-    /** DOCUMENT ME! */
+    /** File name of the image to be stored. */
     private String fileName;
 
-    /** DOCUMENT ME! */
+    /** Reference to the Query/Retrieve GUI object. */
     private ViewJFrameDICOMQuery frame;
 
-    /** DOCUMENT ME! */
+    /** The instance UID.  */
     private String instanceUID;
     
     /** The transfer syntax used when storing images */
     private String transferSyntax = null;
 
-    /** DOCUMENT ME! */
+    /** Protocol Data Units (PDU) object */
     private DICOM_PDUService pdu;
 
-    /** DOCUMENT ME! */
+    /** The remote Application Entity Title  */
     private String remoteAETitle;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
