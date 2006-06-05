@@ -1558,6 +1558,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 // Axis information is already present so user need not enter it on the dialog
                 dOrder.callAlgorithm();
             }
+        } else if (command.equals("ReplaceBlankWithAvg")) {
+            JDialogReplaceBlankSlicesWithAverages rBlankWithAvg =
+                new JDialogReplaceBlankSlicesWithAverages(this, getActiveImage());
+            rBlankWithAvg.callAlgorithm();
+            
         } else if (command.equals("FlipY")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS);
 
