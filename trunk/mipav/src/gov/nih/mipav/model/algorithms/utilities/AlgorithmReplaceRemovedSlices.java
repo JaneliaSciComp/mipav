@@ -3,8 +3,11 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.text.*;
 
 
 /**
@@ -29,17 +32,24 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
     /** DOCUMENT ME! */
     private boolean destFlag = false;
 
+    /** DOCUMENT ME! */
+    private boolean isSplit = false;
+ 
     /**
      * every false value in the array corresponds to a slice within the movie passed in. true values represent removed
      * slices
      */
-    private boolean isSplit = false;
-
-    /** DOCUMENT ME! */
     private boolean[] removedSlices = null; // shows which slices were removed from the original.
 
     /** DOCUMENT ME! */
     private ModelImage resultImage;
+    
+    /** If true, insert a blank rather than a weighted average */
+    private boolean insertBlank;
+    
+    private float imageMin;
+    
+    private boolean isDicom;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -50,13 +60,15 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
      * @param  removedSlices  an array showing which slices were removed
      * @param  isSplit        DOCUMENT ME!
      * @param  destFlag       DOCUMENT ME!
+     * @param  insertBlank    If true, insert a blank rather than a weighted average
      */
     public AlgorithmReplaceRemovedSlices(ModelImage srcImage, boolean[] removedSlices, boolean isSplit,
-                                         boolean destFlag) {
+                                         boolean destFlag, boolean insertBlank) {
         super(null, srcImage);
         this.removedSlices = removedSlices;
         this.isSplit = isSplit;
         this.destFlag = destFlag;
+        this.insertBlank = insertBlank;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -92,6 +104,19 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
      * Function called by thread to run the algorithm.
      */
     public void runAlgorithm() {
+        int i, j, k, m, p;
+        float newOrg2[];
+        int consecutiveRemove;
+        float deltaOrg2;
+        float imagePositionCoords[][] = null;
+        float deltaPos;
+        DecimalFormat nf;
+        Object obj;
+        String s;
+        float sliceLocation[] = null;
+        float deltaSliceLoc;
+        boolean ignoreSliceLocation = false;
+        boolean ignoreImagePositionCoords = false;
 
         if (srcImage == null) {
             displayError("AlgorithmReplaceRemovedSlices.run(): Source Image is null");
@@ -102,10 +127,21 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
             return;
         }
+        
+        if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.DICOM) {
+            isDicom = true;
+        }
+        else {
+            isDicom = false;
+        }
+        
+        nf = new DecimalFormat("##0.000000");
 
         int[] destExtents = new int[3];
         destExtents[0] = srcImage.getExtents()[0];
         destExtents[1] = srcImage.getExtents()[1];
+        srcImage.calcMinMax();
+        imageMin = (float)srcImage.getMin();  
 
         // System.err.println("Length of removedSlices array: " + removedSlices.length);
 
@@ -121,7 +157,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             boolean foundStart = false;
 
             // find the first good and last good (kept) slices
-            for (int i = 0; i < removedSlices.length; i++) {
+            for (i = 0; i < removedSlices.length; i++) {
 
                 if (!foundStart && (removedSlices[i] == false)) {
                     foundStart = true;
@@ -146,6 +182,73 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             destExtents[2] = (lastSlice - firstSlice) + 1;
 
             // System.err.println("New extents for " + srcImage.getImageName() + ": " + destExtents[2]);
+            
+            newOrg2 = new float[destExtents[2]];
+            if (isDicom) {
+                imagePositionCoords = new float[destExtents[2]][3];
+                sliceLocation = new float[destExtents[2]];
+            }
+            consecutiveRemove = 0;
+            for (i = firstSlice, j = 0, m = 0; i <= lastSlice; i++, j++) {
+                if (!removedSlices[i]) {
+                    newOrg2[j] = srcImage.getFileInfo()[m].getOrigin()[2];
+                    if (isDicom) {
+                        imagePositionCoords[j] = convertIntoFloat(((FileInfoDicom)
+                                srcImage.getFileInfo(m)).parseTagValue("0020,0032"));
+                        if (imagePositionCoords[j] == null) {
+                            ignoreImagePositionCoords = true;
+                        }
+                        obj = ((FileInfoDicom)(srcImage.getFileInfo(m))).
+                              getValue("0020,1041");
+                        if (obj != null) {
+                            s = ((String)obj).trim();
+                            try {
+                                sliceLocation[j] = Float.valueOf(s).floatValue();
+                            }
+                            catch (NumberFormatException e) {
+                                Preferences.debug("Number format error: slice location " +
+                                        (i+1) + " = " + s);    
+                            }
+                        } // if (obj != null)
+                        else {
+                            ignoreSliceLocation = true;
+                        }
+                    }
+                    m++;
+                    if (consecutiveRemove > 0) {
+                        deltaOrg2 = (newOrg2[j] - newOrg2[j-consecutiveRemove-1])/
+                                    (consecutiveRemove + 1.0f);
+                        for (k = 0; k < consecutiveRemove; k++) {
+                            newOrg2[j-consecutiveRemove+k] = newOrg2[j - consecutiveRemove - 1]
+                                                             + (k+1)*deltaOrg2;
+                        }
+                        if (isDicom) {
+                            if (!ignoreImagePositionCoords) {
+                                for (p = 0; p < 3; p++) {
+                                    deltaPos = (imagePositionCoords[j][p] - imagePositionCoords[j-consecutiveRemove-1][p])/
+                                                  (consecutiveRemove + 1.0f);
+                                    for (k = 0; k < consecutiveRemove; k++) {
+                                        imagePositionCoords[j-consecutiveRemove+k][p] =
+                                            imagePositionCoords[j-consecutiveRemove-1][p] + (k+1)*deltaPos;
+                                    }
+                                }
+                            } // if (!ignoreImagePositionCoords)
+                            if (!ignoreSliceLocation) {
+                                deltaSliceLoc = (sliceLocation[j] - sliceLocation[j-consecutiveRemove-1])/
+                                                (consecutiveRemove + 1.0f);
+                                for (k = 0; k < consecutiveRemove; k++) {
+                                    sliceLocation[j-consecutiveRemove+k] = sliceLocation[j-consecutiveRemove-1] 
+                                                                           + (k+1)*deltaSliceLoc;
+                                }
+                            } // if (!ignoreLocationLocation)
+                        } // (isDicom)
+                        consecutiveRemove = 0;
+                    } // if (consecutiveRemove > 0)
+                }
+                else {
+                    consecutiveRemove++;
+                }
+            } // for (i = firstSlice, j = 0, m = 0; i <= lastSlice; i++, j++)
 
             resultImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "_replaced_slices",
                                          srcImage.getUserInterface());
@@ -165,7 +268,12 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             int srcIndex = 0;
             int resultIndex = 0;
 
-            buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+            if (insertBlank) {
+                buildProgressBar(resultImage.getImageName(), "Inserting Blank Slice...", 0, 100);    
+            }
+            else {
+                buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+            }
             progressBar.updateValue(0, activeImage);
             initProgressBar();
 
@@ -207,7 +315,12 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 } else if (foundStart && (removedSlices[x] == false)) {
 
                     // System.err.println("end slice for insertion found: " + (resultIndex+1));
-                    insertAveragedSlices(imageBuffer, imageBuffer2, start, resultIndex);
+                    if (insertBlank) {
+                        insertBlankSlices(imageBuffer, start, resultIndex);
+                    }
+                    else { 
+                        insertAveragedSlices(imageBuffer, imageBuffer2, start, resultIndex);
+                    }
                     foundStart = false;
                 }
 
@@ -226,7 +339,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             boolean foundStart = false;
 
             // find the first good and last good (kept) slices
-            for (int i = 0; i < removedSlices.length; i++) {
+            for (i = 0; i < removedSlices.length; i++) {
 
                 if (!foundStart && (removedSlices[i] == false)) {
                     foundStart = true;
@@ -241,12 +354,134 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             extents[2] = removedSlices.length;
 
             // System.err.println("ExtentsZ: " + extents[2]);
+            
+            newOrg2 = new float[extents[2]];
+            if (isDicom) {
+                imagePositionCoords = new float[extents[2]][3];
+                sliceLocation = new float[extents[2]];
+            }
+            for (i = 0; i < firstSlice; i++) {
+                newOrg2[i] = srcImage.getFileInfo()[0].getOrigin()[2];
+                if (isDicom) {
+                    imagePositionCoords[i] = convertIntoFloat(((FileInfoDicom)
+                            srcImage.getFileInfo(0)).parseTagValue("0020,0032"));
+                    if (imagePositionCoords[i] == null) {
+                        ignoreImagePositionCoords = true;
+                    }
+                    obj = ((FileInfoDicom)(srcImage.getFileInfo(0))).
+                    getValue("0020,1041");
+                    if (obj != null) {
+                        s = ((String)obj).trim();
+                        try {
+                            sliceLocation[i] = Float.valueOf(s).floatValue();
+                        }
+                        catch (NumberFormatException e) {
+                            Preferences.debug("Number format error: slice location 1 = " + s);    
+                        }
+                    } //if (obj != null)
+                    else {
+                        ignoreSliceLocation = true;
+                    }
+                }
+            }
+            consecutiveRemove = 0;
+            for (i = firstSlice, m = 0; i <= lastSlice; i++) {
+                if (!removedSlices[i]) {
+                    newOrg2[i] = srcImage.getFileInfo()[m].getOrigin()[2];
+                    if (isDicom) {
+                        imagePositionCoords[i] = convertIntoFloat(((FileInfoDicom)
+                                srcImage.getFileInfo(m)).parseTagValue("0020,0032"));
+                        if (imagePositionCoords[i] == null) {
+                            ignoreImagePositionCoords = true;
+                        }
+                        obj = ((FileInfoDicom)(srcImage.getFileInfo(m))).
+                        getValue("0020,1041");
+                        if (obj != null) {
+                            s = ((String)obj).trim();
+                            try {
+                                sliceLocation[i] = Float.valueOf(s).floatValue();
+                            }
+                            catch (NumberFormatException e) {
+                                Preferences.debug("Number format error: slice location " +
+                                      (i+1) + " = " + s);    
+                            }
+                        }
+                        else {
+                            ignoreSliceLocation = true;
+                        }
+                    }
+                    m++;
+                    if (consecutiveRemove > 0) {
+                        deltaOrg2 = (newOrg2[i] - newOrg2[i-consecutiveRemove-1])/
+                                    (consecutiveRemove + 1.0f);
+                        for (k = 0; k < consecutiveRemove; k++) {
+                            newOrg2[i-consecutiveRemove+k] = newOrg2[i - consecutiveRemove - 1]
+                                                             + (k+1)*deltaOrg2;
+                        }
+                        if (isDicom) {
+                            if (!ignoreImagePositionCoords) {
+                                for (p = 0; p < 3; p++) {
+                                    deltaPos = (imagePositionCoords[i][p] - imagePositionCoords[i-consecutiveRemove-1][p])/
+                                                  (consecutiveRemove + 1.0f);
+                                    for (k = 0; k < consecutiveRemove; k++) {
+                                        imagePositionCoords[i-consecutiveRemove+k][p] =
+                                            imagePositionCoords[i-consecutiveRemove-1][p] + (k+1)*deltaPos;
+                                    }
+                                }
+                            } // if (!ignoreImagePositionCoords)
+                            if (!ignoreSliceLocation) {
+                                deltaSliceLoc = (sliceLocation[i] - sliceLocation[i-consecutiveRemove-1])/
+                                    (consecutiveRemove + 1.0f);
+                                for (k = 0; k < consecutiveRemove; k++) {
+                                    sliceLocation[i-consecutiveRemove+k] = sliceLocation[i-consecutiveRemove-1] 
+                                                               + (k+1)*deltaSliceLoc;
+                                }
+                            } // if (!ignoreSliceLocation)
+                        } // (isDicom)
+                        consecutiveRemove = 0;
+                    } // if (consecutiveRemove > 0)
+                }
+                else {
+                    consecutiveRemove++;
+                }
+            } // for (i = firstSlice, j = 0, m = 0; i <= lastSlice; i++, j++)
+            for (i = lastSlice+1; i < extents[2]; i++) {
+                newOrg2[i] = srcImage.getFileInfo()[srcImage.getExtents()[2]-1].getOrigin()[2];
+                if (isDicom) {
+                    imagePositionCoords[i] = convertIntoFloat(((FileInfoDicom)
+                            srcImage.getFileInfo(srcImage.getExtents()[2]-1)).parseTagValue("0020,0032"));
+                    if (imagePositionCoords[i] == null) {
+                        ignoreImagePositionCoords = true;
+                    }
+                    obj = ((FileInfoDicom)(srcImage.getFileInfo(srcImage.getExtents()[2]-1))).
+                    getValue("0020,1041");
+                    if (obj != null) {
+                        s = ((String)obj).trim();
+                        try {
+                            sliceLocation[i] = Float.valueOf(s).floatValue();
+                        }
+                        catch (NumberFormatException e) {
+                            Preferences.debug("Number format error: slice location " +
+                                    (srcImage.getExtents()[2] -1) + " = " + s);    
+                        }
+                    } // if (obj != null)
+                    else {
+                        ignoreSliceLocation = true;
+                    }
+                }
+            }
+            
 
             resultImage = new ModelImage(srcImage.getType(), extents, srcImage.getImageName() + "_replaced_slices",
                                          srcImage.getUserInterface());
 
 
-            buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+            if (insertBlank) {
+                buildProgressBar(resultImage.getImageName(), "Inserting Blank Slice...", 0, 100);    
+            }
+            else {
+                buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+            }
             progressBar.updateValue(0, activeImage);
             initProgressBar();
 
@@ -316,7 +551,12 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 } else if (foundStart && (removedSlices[x] == false)) {
 
                     // System.err.println("end slice for insertion found: " + (resultIndex+1));
-                    insertAveragedSlices(imageBuffer, imageBuffer2, start, x);
+                    if (insertBlank) {
+                        insertBlankSlices(imageBuffer, start, x);   
+                    }
+                    else {
+                        insertAveragedSlices(imageBuffer, imageBuffer2, start, x);
+                    }
                     foundStart = false;
                 }
 
@@ -327,24 +567,44 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             imageBuffer2 = null;
         }
 
-        float res2 = srcImage.getFileInfo()[0].getResolutions()[2];
-        float start2 = srcImage.getFileInfo()[0].getOrigin(2);
-
-        // fix the fileinfos to match
-        for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-
-            for (int j = 0; j < 3; j++) {
-                resultImage.getFileInfo()[i].getResolutions()[j] = srcImage.getFileInfo()[0].getResolutions()[j];
-            }
-
-            resultImage.getFileInfo()[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
-            resultImage.getFileInfo()[i].setModality(srcImage.getFileInfo()[0].getModality());
-            resultImage.getFileInfo()[i].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
-            resultImage.getFileInfo()[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
-            resultImage.getFileInfo()[i].setOrigin(srcImage.getFileInfo()[0].getOrigin());
-            resultImage.getFileInfo()[i].setOrigin(start2 - (res2 * i), 2);
-            resultImage.getFileInfo()[i].setSliceSpacing(srcImage.getFileInfo()[0].getSliceSpacing());
+        
+        if (isDicom) {
+            FileInfoDicom fileInfoBuffer;
+//          fix the fileinfos to match
+            for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                fileInfoBuffer = (FileInfoDicom)srcImage.getFileInfo()[0].clone();
+                fileInfoBuffer.setOrigin(newOrg2[i], 2);
+                if (!ignoreImagePositionCoords) {
+                    fileInfoBuffer.setValue("0020,0032",imagePositionCoords[i][0] +
+                        "\\" + imagePositionCoords[i][1] + "\\" +
+                        imagePositionCoords[i][2], ((FileDicomTag)fileInfoBuffer.getEntry("0020,0032")).
+                        getLength());
+                }
+                // Image slice numbers start at 1; index starts at 0, so
+                // compensate by adding 1
+                fileInfoBuffer.setValue("0020,0013", String.valueOf(i+1),
+                        ((FileDicomTag)fileInfoBuffer.getEntry("0020,0013")).getLength());
+                if (!ignoreSliceLocation) {
+                    s = nf.format(sliceLocation[i]);
+                    fileInfoBuffer.setValue("0020,1041", s, s.length());
+                }
+                resultImage.setFileInfo(fileInfoBuffer, i);
+            }    
         }
+        else { // not DICOM
+
+            // fix the fileinfos to match
+            for (i = 0; i < resultImage.getExtents()[2]; i++) {
+    
+                resultImage.getFileInfo()[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+                resultImage.getFileInfo()[i].setModality(srcImage.getFileInfo()[0].getModality());
+                resultImage.getFileInfo()[i].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
+                resultImage.getFileInfo()[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+                resultImage.getFileInfo()[i].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+                resultImage.getFileInfo()[i].setOrigin(newOrg2[i], 2);
+                resultImage.getFileInfo()[i].setSliceSpacing(srcImage.getFileInfo()[0].getSliceSpacing());
+            }
+        } // else not DICOM
 
         resultImage.calcMinMax();
 
@@ -354,7 +614,9 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
             // System.err.println("importing result back into srcImage (calcInPlace)");
             srcImage.changeExtents(resultImage.getExtents());
-            System.err.println("new extents: " + resultImage.getExtents());
+            System.err.println("new extents: " + resultImage.getExtents()[0] + 
+                    ", " + resultImage.getExtents()[1] + ", " +
+                    resultImage.getExtents()[2]);
             srcImage.recomputeDataSize();
 
             // import the result buffer from the resultImage into the srcImage
@@ -397,7 +659,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 resultBuffer = null;
                 resultImage = null;
                 System.gc();
-                displayError("Algorithm Remove Slices reports: Out of memory getting results.");
+                displayError("Algorithm Replace Removed Slices reports: Out of memory getting results.");
                 srcImage.releaseLock();
                 setCompleted(false);
                 disposeProgressBar();
@@ -468,6 +730,35 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
         }
 
         newSliceBuffer = null;
+    }
+    
+    /**
+     * Insert blank slices between the two indices.
+     *
+     * @param  buffer1  empty buffer to hold the minimum value
+     * @param  start    start index
+     * @param  end      end index
+     */
+    private void insertBlankSlices(float[] buffer1, int start, int end) {
+        int i;
+
+        int numToAdd = end - start - 1;
+
+        // System.err.println("Adding " + numToAdd + " slices between slice " + (start+1) + " and " + (end+1));
+
+        try {
+            for (i = 0; i < buffer1.length; i++) {
+                buffer1[i] = imageMin;
+            }
+
+            for (i = 0; i < numToAdd; i++) {
+
+                resultImage.importData((start + i + 1) * buffer1.length, buffer1, false);
+            }
+        } catch (Exception ex) {
+            System.err.println("Caught exception: " + ex.toString());
+        }
+
     }
 
 }
