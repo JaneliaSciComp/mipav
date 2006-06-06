@@ -65,7 +65,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Maximum iterations to generate new boundary. */
-    private int boundaryIterations = 1000;
+    protected int boundaryIterations = 1000;
 
     /** Only applies to 3D, if true do slice by slice. */
     private boolean do25D = true;
@@ -74,7 +74,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
     private float[] expGvfBuffer;
 
     /** DOCUMENT ME! */
-    private int[] extents;
+    protected int[] extents;
 
     /** DOCUMENT ME! */
     private float[] fx;
@@ -143,7 +143,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
     private float[] wVal;
 
     /** DOCUMENT ME! */
-    private int xDim, yDim, zDim;
+    protected int xDim, yDim, zDim;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -270,7 +270,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private static float getBilinear(int i, float dx, float dy, int[] iExtents, float[] image) {
+    protected static float getBilinear(int i, float dx, float dy, int[] iExtents, float[] image) {
 
         int xDim = iExtents[0];
         float x1, x2;
@@ -1940,7 +1940,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    private Vector cleanLine(float[] xPts, float[] yPts) {
+    protected Vector cleanLine(float[] xPts, float[] yPts) {
         int i;
         double distance;
         float midX, midY;
@@ -2024,7 +2024,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
     /**
      * Sets structures to null.
      */
-    private void cleanup() {
+    protected void cleanup() {
         uVal = null;
         vVal = null;
         wVal = null;
@@ -2176,7 +2176,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
      * @param  v          y component of the GVF
      * @param  resultGon  resultant polygon
      */
-    private void runSnake(float[] xPoints, float[] yPoints, float[] u, float[] v, Polygon resultGon) {
+    protected void runSnake(float[] xPoints, float[] yPoints, float[] u, float[] v, Polygon resultGon) {
         int i, j;
         int nPts;
         Point2Df interpPt = new Point2Df();
