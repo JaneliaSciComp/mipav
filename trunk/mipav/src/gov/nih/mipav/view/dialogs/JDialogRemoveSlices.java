@@ -142,6 +142,9 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    /** If true, insert a blank rather than a weighted average */
+    private boolean insertBlank = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -380,9 +383,11 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
             if (doReplace && successful) {
 
                 if (displayLoc == REPLACE) {
-                    replaceSlicesAlgo = new AlgorithmReplaceRemovedSlices(image, checkListRemove, false, false);
+                    replaceSlicesAlgo = new AlgorithmReplaceRemovedSlices(image, checkListRemove, false, false,
+                                                                          insertBlank);
                 } else {
-                    replaceSlicesAlgo = new AlgorithmReplaceRemovedSlices(resultImage, checkListRemove, false, false);
+                    replaceSlicesAlgo = new AlgorithmReplaceRemovedSlices(resultImage, checkListRemove, false, false,
+                                                                          insertBlank);
                 }
 
                 replaceSlicesAlgo.addListener(this);
