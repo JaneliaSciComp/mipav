@@ -894,6 +894,9 @@ public class ViewMenuBar {
                                                                                            null, false),
                                                                  menuBuilder.buildMenuItem("Extract slices / volumes",
                                                                                            null, 0, null, false),
+                                                                 menuBuilder.buildMenuItem("Insert missing slices",
+                                                                                           "InsertMSlices", 0,
+                                                                                            null, false),
                                                                  menuBuilder.buildMenuItem("Insert slice", null, 0,
                                                                                            null, false),
                                                                  menuBuilder.buildMenuItem("Inverse slice order",
@@ -1161,6 +1164,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad with slices", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
+            menuBuilder.setMenuItemEnabled("Insert missing slices", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
@@ -1219,6 +1223,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Show slice number overlay", false);
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
+            menuBuilder.setMenuItemEnabled("Insert missing slices", false);
         }
 
         if (ModelImage.isColorImage(type)) {
