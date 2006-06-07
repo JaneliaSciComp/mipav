@@ -410,19 +410,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Visible rectangle to draw topped. */
     protected Rectangle visRect;
 
-
-
-    /** VOI ID. */
-    protected int voiID = -1;
-
-    /** VOI ID for image A. */
-    protected int voiIDa = -1;
-
-    /** VOI ID for image B. */
-    protected int voiIDb = -1;
-
-
-
     /** User invokes window and level adjustment with right mouse drag in DEFAULT mode. */
     protected boolean winLevelSet = false;
 
@@ -1457,15 +1444,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         return timeSlice;
     }
 
-    /**
-     * Returns the VOI ID in which to add an ID.
-     *
-     * @return  VOI ID to add new contour to.
-     */
-    public int getVOI_ID() {
-        return voiID;
-    }
-
     public VOIHandler getVOIHandler() {
         return this.voiHandler;
     }
@@ -1479,43 +1457,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         return ((rowCheckers > 1) && (columnCheckers > 1));
     }
 
-
-    /**
-     * Compares the current VOI ID and its type to the given voi type. If the types are different, then set the voi ID
-     * to -1, and return true (to indicate changing the type). If the types are the same, then it's not necessary to
-     * change types so return false.
-     *
-     * @param   voiType  this should be one of the static ints from <code>VOI</code> (for instance <code>
-     *                   VOI.LINE</code>).
-     *
-     * @return  whether or not a *new* voi must be created.
-     */
-    public boolean isNewVoiNeeded(int voiType) {
-
-        // if voiID = -1, then a new VOI is needed
-        if (voiID == -1) {
-            return true;
-        }
-
-        ViewVOIVector VOIs = imageActive.getVOIs();
-        int nVOI = VOIs.size();
-
-        for (int i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).getID() == voiID) {
-
-                if (VOIs.VOIAt(i).getCurveType() == voiType) {
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-        }
-
-        // if the current voiID was never matched, then a newVOI
-        // needs to be created, so return true
-        return true;
-    }
 
     // ************************************************************************
     // **************************** Key Events *****************************
@@ -4240,7 +4181,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setActiveImage(int active) {
         winLevelSet = false;
-
+        voiHandler.setActiveVOI_ID(active);
         if ((active == IMAGE_A) || (imageB == null)) {
             imageActive = imageA;
             imageBufferActive = imageBufferA;
@@ -4248,14 +4189,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (!paintBitmapSwitch) {
                 paintBitmap = imageA.getMask();
             }
-
-            voiIDb = voiID;
-            voiID = voiIDa;
         } else if (active == IMAGE_B) {
             imageActive = imageB;
             imageBufferActive = imageBufferB;
-            voiIDa = voiID;
-            voiID = voiIDb;
         }
     }
 
@@ -5891,17 +5827,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void setVariableThresholds(boolean variableThresholds) {
         this.variableThresholds = variableThresholds;
     }
-
-    /**
-     * Used ONLY by ViewJFrameDualTriImage.
-     *
-     * @param  ID  The VOI ID number.
-     */
-    public void setVOI_ID(int ID) {
-        voiID = ID;
-    }
-
-
 
     /**
      * For generating the display of 1 or 2 RGB images.

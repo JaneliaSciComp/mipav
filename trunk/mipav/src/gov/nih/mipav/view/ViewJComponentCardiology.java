@@ -328,27 +328,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         }
     }
 
-
-    /**
-     * deactivates, or deselects, all active VOIs. will not deselect the VOI which is set at Last Point.
-     */
-    public void deactivateAllVOI() {
-        int nVOI = 0;
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        // go through the
-        if (VOIs != null) {
-            nVOI = VOIs.size();
-
-            for (int k = 0; k < nVOI; k++) { // deactivate all VOIs except last point VOI
-
-                if (k != voiHandler.getLastPointVOI_ID()) {
-                    VOIs.VOIAt(k).setAllActive(false); // and mouseClick is often immediately entered
-                }
-            }
-        } // if (VOIs != null)
-    }
-
     /**
      * Sets all variables to null, disposes, and garbage collects.
      *
@@ -608,8 +587,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         if ((mouseEvent.getClickCount() == 1) && (mode == DEFAULT)) {
             // System.out.println("Deactivating all VOIs");
 
-            deactivateAllVOI();
-            voiHandler.setLastPointVOI_ID(-1); // next mouseClick will deactivate point VOI unless reselected
+            voiHandler.selectAllVOIs(false);
+           // voiHandler.setLastPointVOI_ID(-1); // next mouseClick will deactivate point VOI unless reselected
 
             imageActive.notifyImageDisplayListeners();
         }
@@ -1596,7 +1575,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
             if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
 
-                if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
+                if (voiHandler.isNewVoiNeeded(VOI.POINT)) { // create new VOI
 
                     VOI newPtVOI = null;
                     try {
@@ -1606,7 +1585,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
 
 
-                        voiID = imageActive.getVOIs().size();
+                        voiHandler.setVOI_ID(imageActive.getVOIs().size());
 
                         int colorID = 0;
 
@@ -1636,16 +1615,16 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         return;
                     }
 
-                    voiHandler.setLastPointVOI_ID(voiID);
+                  //  voiHandler.setLastPointVOI_ID(voiID);
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
                     updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
-                    ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
+                    ((VOIPoint) (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
 
-                    voiHandler.graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
+                    voiHandler.graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))), 0);
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
@@ -1670,7 +1649,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     for (i = 0; i < nVOI; i++) {
 
-                        if (VOIs.VOIAt(i).getID() == voiID) {
+                        if (VOIs.VOIAt(i).getID() == voiHandler.getVOI_ID()) {
 
                             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
                                 VOIs.VOIAt(i).importCurve(x, y, z, slice);
@@ -1741,7 +1720,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 float[] y = new float[1];
                 float[] z = new float[1];
 
-                voiID = imageActive.getVOIs().size();
+                voiHandler.setVOI_ID(imageActive.getVOIs().size());
 
                 int sliceNum = 0;
 
@@ -2059,7 +2038,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             // if true set all points in VOI active - move all points
                             VOIs.VOIAt(i).setAllActive(true);
                             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                            voiID = VOIs.VOIAt(i).getID();
+                            voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
                             // and we are done with this VOI.
                             // skip the rest of the curves
@@ -2069,7 +2048,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             VOIs.VOIAt(i).setActive(true);
                             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             ((VOIPoint) (selectedCurve)).setActive(true);
-                            voiID = VOIs.VOIAt(i).getID();
+                            voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                         }
 
                         getVOIHandler().fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);
@@ -2083,7 +2062,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         VOIs.VOIAt(i).setActive(true);
                         updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                         ((VOIText) (selectedCurve)).setActive(true);
-                        voiID = VOIs.VOIAt(i).getID();
+                        voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
                         // if the Text was double-clicked, bring up the editor
                         if (mouseEvent.getClickCount() == 2) {
@@ -2101,7 +2080,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             allActive = true;
                             VOIs.VOIAt(i).setAllActive(true);
                             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                            voiID = VOIs.VOIAt(i).getID();
+                            voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
                             // and we are done with this VOI. Skip the rest of the curves
                             j = VOIs.VOIAt(i).getCurves()[slice].size();
@@ -2117,7 +2096,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             VOIs.VOIAt(i).setActive(true); // set the current active // move single contour
                             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             selectedCurve.setActive(true); // set its courve to active (for display)
-                            voiID = VOIs.VOIAt(i).getID();
+                            voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                         }
 
                         getVOIHandler().fireVOISelectionChange(VOIs.VOIAt(i), selectedCurve);

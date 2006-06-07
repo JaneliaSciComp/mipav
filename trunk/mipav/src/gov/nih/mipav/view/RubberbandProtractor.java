@@ -119,7 +119,7 @@ public class RubberbandProtractor extends Rubberband {
             }
 
             // check to see if this is a *new* VOI
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(VOI.PROTRACTOR)) {
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.PROTRACTOR)) {
 
                 try {
                     VOIs = image.getVOIs();
@@ -189,7 +189,7 @@ public class RubberbandProtractor extends Rubberband {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
                             VOIs.VOIAt(i).importCurve(x, y, z, slice);

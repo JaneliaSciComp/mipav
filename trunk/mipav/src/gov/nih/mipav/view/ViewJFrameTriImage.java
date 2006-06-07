@@ -3205,7 +3205,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
             if (triImage[i] != null) {
-                triImage[i].setVOI_ID(voiID);
+                triImage[i].getVOIHandler().setVOI_ID(voiID);
             }
         }
     }

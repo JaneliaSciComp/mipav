@@ -283,8 +283,7 @@ public class RubberbandEllipse extends Rubberband {
                 return;
             }
 
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(VOI.CONTOUR)) {
-
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.CONTOUR)) {
                 try {
                     VOIs = (ViewVOIVector) image.getVOIs();
                     index = VOIs.size();
@@ -342,7 +341,7 @@ public class RubberbandEllipse extends Rubberband {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                             VOIs.VOIAt(i).importCurve(xFinal, yFinal, zFinal, slice);

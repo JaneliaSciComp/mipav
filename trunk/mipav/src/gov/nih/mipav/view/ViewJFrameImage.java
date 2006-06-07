@@ -504,7 +504,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                                               menuBuilder.isMenuItemSelected("Paint toolbar"),
                                               menuBuilder.isMenuItemSelected("Scripting toolbar"),
-                                              componentImage.getVOI_ID());
+                                              componentImage.getVOIHandler().getVOI_ID());
                     }
 
                     if (this.canCloseImageBAfterLoad()) {
@@ -539,7 +539,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                           menuBuilder.isMenuItemSelected("VOI toolbar"),
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
                                           menuBuilder.isMenuItemSelected("Scripting toolbar"),
-                                          componentImage.getVOI_ID());
+                                          componentImage.getVOIHandler().getVOI_ID());
                 }
 
                 if (this.canCloseImageBAfterLoad()) {
@@ -726,7 +726,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                           menuBuilder.isMenuItemSelected("VOI toolbar"),
                                           menuBuilder.isMenuItemSelected("Paint toolbar"),
                                           menuBuilder.isMenuItemSelected("Scripting toolbar"),
-                                          componentImage.getVOI_ID());
+                                          componentImage.getVOIHandler().getVOI_ID());
                 }
 
                 closeImageB();
@@ -801,7 +801,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.setProperty(Preferences.PREF_IMAGE_TOOLBAR_ON, String.valueOf(showImage));
             Preferences.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, String.valueOf(showPaint));
 
-            controls.buildToolbar(showImage, showVOI, showPaint, showScript, componentImage.getVOI_ID());
+            controls.buildToolbar(showImage, showVOI, showPaint, showScript, componentImage.getVOIHandler().getVOI_ID());
             setControls();
         } else if (command.equals("PaintBrush")) {
             componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
@@ -932,16 +932,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("cutVOI")) {
 
             if (componentImage.getVOIHandler().copyVOItoClipBrd()) {
-                componentImage.getVOIHandler().deleteSelectedContours();
+                componentImage.getVOIHandler().deleteSelectedVOI(true);
             }
         } else if (command.equals("copyVOI")) {
             componentImage.getVOIHandler().copyVOItoClipBrd();
         } else if (command.equals("pasteVOI")) {
             componentImage.getVOIHandler().pasteVOI();
         } else if (command.equals("selectAllVOIs")) {
-            componentImage.getVOIHandler().selectAllVOIs();
+            componentImage.getVOIHandler().selectAllVOIs(true);
         } else if (command.equals("deleteVOI")) {
-            componentImage.getVOIHandler().deleteSelectedContours();
+            componentImage.getVOIHandler().deleteSelectedVOI(true);
         } else if (command.equals("BringToFront")) {
             componentImage.getVOIHandler().changeVOIOrder(false, VOIHandler.FRONT);
         } else if (command.equals("SendToBack")) {
@@ -1059,7 +1059,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             try {
 
                 if (componentImage.getVOIHandler().getActiveVOICount() == 0) {
-                    componentImage.getVOIHandler().selectAllVOIs();
+                    componentImage.getVOIHandler().selectAllVOIs(true);
                 }
 
                 maskImage = getActiveImage().generateBinaryImage(useXOR, true);
@@ -1091,7 +1091,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             try {
 
                 if (componentImage.getVOIHandler().getActiveVOICount() == 0) {
-                    componentImage.getVOIHandler().selectAllVOIs();
+                    componentImage.getVOIHandler().selectAllVOIs(true);
                 }
 
                 shortImage = getActiveImage().generateShortImage(1, useXOR, true);
@@ -1123,7 +1123,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             try {
 
                 if (componentImage.getVOIHandler().getActiveVOICount() == 0) {
-                    componentImage.getVOIHandler().selectAllVOIs();
+                    componentImage.getVOIHandler().selectAllVOIs(true);
                 }
 
                 uByteImage = getActiveImage().generateUnsignedByteImage(1, useXOR, true);
@@ -1218,10 +1218,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if ((short) componentImage.getVOI_ID() == -1) {
+            if ((short) componentImage.getVOIHandler().getVOI_ID() == -1) {
                 voiID = (short) getActiveImage().getVOIs().size();
             } else {
-                voiID = (short) componentImage.getVOI_ID();
+                voiID = (short) componentImage.getVOIHandler().getVOI_ID();
             }
 
             AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(getActiveImage(),
@@ -3439,7 +3439,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (e.isShiftDown()) {
                     componentImage.getVOIHandler().deleteVOIActivePt();
                 } else {
-                    componentImage.getVOIHandler().deleteSelectedContours();
+                    componentImage.getVOIHandler().deleteSelectedVOI(true);
 
                 }
 
@@ -3472,7 +3472,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 if (e.isControlDown()) {
 
                     if (componentImage.getVOIHandler().copyVOItoClipBrd()) {
-                        componentImage.getVOIHandler().deleteSelectedContours();
+                        componentImage.getVOIHandler().deleteSelectedVOI(true);
                     }
                 }
 
@@ -3480,7 +3480,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             case KeyEvent.VK_A:
                 if (e.isControlDown()) {
-                    componentImage.getVOIHandler().selectAllVOIs();
+                    componentImage.getVOIHandler().selectAllVOIs(true);
                 }
 
                 return;
@@ -3693,7 +3693,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                       menuBuilder.isMenuItemSelected("VOI toolbar"),
                                       menuBuilder.isMenuItemSelected("Paint toolbar"),
-                                      menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOI_ID());
+                                      menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
@@ -4167,7 +4167,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                               menuBuilder.isMenuItemSelected("Paint toolbar"),
-                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOI_ID());
+                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
 
         // controls.setZSlider(zSlice);
         setControls();
@@ -5042,7 +5042,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                               menuBuilder.isMenuItemSelected("Paint toolbar"),
-                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOI_ID());
+                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
 
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileBase.DICOM) {
 

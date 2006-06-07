@@ -1174,7 +1174,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 constant = VOI.CONTOUR;
             }
 
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(constant)) {
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(constant)) {
 
                 try {
                     VOIs = image.getVOIs();
@@ -1308,7 +1308,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == constant) {
 

@@ -246,7 +246,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
             else if (event.getActionCommand().equals("cutVOI")){
                      if (voiHandler.copyVOItoClipBrd())
-                         voiHandler.deleteSelectedContours();
+                         voiHandler.deleteSelectedVOI(true);
 
                 }
             else if (event.getActionCommand().equals("copyVOI")){
@@ -257,7 +257,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                     voiHandler.pasteVOI();
                 }
             else if (event.getActionCommand().equals("deleteVOI")){
-                    voiHandler.deleteSelectedContours();
+                    voiHandler.deleteSelectedVOI(true);
             }
             else if (event.getActionCommand().equals("PropVOIUp")){
                 if (voiHandler.propVOI(1, false) == true ) {

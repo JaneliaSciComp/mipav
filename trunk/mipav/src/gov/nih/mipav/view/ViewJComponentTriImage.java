@@ -440,7 +440,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             VOIs.removeElementAt(i);
         }
 
-        voiID = -1;
+        voiHandler.setVOI_ID(-1);
         imageActive.notifyImageDisplayListeners(null, true);
     }
 
@@ -480,7 +480,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         if (VOIs.VOIAt(i).isEmpty() == true) {
             imageActive.unregisterVOI(VOIs.VOIAt(i));
-            voiID = -1;
+            voiHandler.setVOI_ID(-1);
         }
 
         imageActive.notifyImageDisplayListeners(null, true);
@@ -2045,8 +2045,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 VOI newPointVOI;
 
                 try {
-                    voiID = imageActive.getVOIs().size();
-                    newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (voiID + 1),
+                    voiHandler.setVOI_ID(imageActive.getVOIs().size());
+                    newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (voiHandler.getVOI_ID() + 1),
                                           imageActive.getExtents()[2], VOI.POINT, -1.0f);
                     x[0] = xOrg;
                     y[0] = yOrg;
@@ -2060,8 +2060,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     return;
                 }
 
-                // lastPointVOI is a protected variable in ViewJComponentEditImage
-                voiHandler.setLastPointVOI_ID(voiID);
+                // lastPointVOI is now handled by VOIHandler
+                //voiHandler.setLastPointVOI_ID(voiID);
 
                 imageActive.registerVOI(newPointVOI);
 
@@ -2073,7 +2073,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                  * image registration.
                  */
                 triImageFrame.updateImageSubset(this);
-                triImageFrame.updatevoiID(voiID);
+                triImageFrame.updatevoiID(voiHandler.getVOI_ID());
 
                 if (mouseEvent.isShiftDown() != true) {
                     triImageFrame.setTraverseButton();
@@ -2463,8 +2463,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // if (triComponentOrientation == XY)
 
         try {
-            voiID = imageActive.getVOIs().size();
-            newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (voiID + 1),
+            voiHandler.setVOI_ID(imageActive.getVOIs().size());
+            newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (voiHandler.getVOI_ID() + 1),
                                   imageActive.getExtents()[2], VOI.POINT, -1.0f);
             newPointVOI.importCurve(x, y, z, (int) z[0]);
         } catch (OutOfMemoryError error) {
@@ -2476,10 +2476,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         // lastPointVOI is now handled by VOIHandler
-        voiHandler.setLastPointVOI_ID(voiID);
+        //voiHandler.setLastPointVOI_ID(voiID);
 
         imageActive.registerVOI(newPointVOI);
-        triImageFrame.updatevoiID(voiID);
+        triImageFrame.updatevoiID(voiHandler.getVOI_ID());
         ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setFixed(true);
 
         switch (pointType) {
@@ -6072,7 +6072,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                                                                                               AXIAL)) {
                                 VOIs.VOIAt(i).setActive(true);
                                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
-                                voiID = VOIs.VOIAt(i).getID();
+                                voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                                 pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
                             }
                         }
@@ -6089,7 +6089,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                                                                                               CORONAL)) {
                                 VOIs.VOIAt(i).setActive(true);
                                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
-                                voiID = VOIs.VOIAt(i).getID();
+                                voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                                 pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
                             }
                         }
@@ -6106,7 +6106,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                                                                                               SAGITTAL)) {
                                 VOIs.VOIAt(i).setActive(true);
                                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).setActive(true);
-                                voiID = VOIs.VOIAt(i).getID();
+                                voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                                 pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[p].elementAt(j))).exportPoint();
                             }
                         }

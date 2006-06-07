@@ -112,7 +112,7 @@ public class RubberbandLine extends Rubberband {
             }
 
             // check to see if this is a *new* VOI
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(VOI.LINE)) {
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.LINE)) {
 
                 try {
                     VOIs = image.getVOIs();
@@ -182,7 +182,7 @@ public class RubberbandLine extends Rubberband {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
                             VOIs.VOIAt(i).importCurve(x, y, z, slice);
