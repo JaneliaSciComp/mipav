@@ -2133,6 +2133,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogRegVOILandmark(this, getActiveImage());
         } else if (command.equals("Insert slice")) {
             new JDialogInsertSlice(this, getActiveImage());
+        } else if (command.equals("InsertMSlices")) {
+            new JDialogInsertMissingSlices(this, getActiveImage());
         } else if (command.equals("Add margins")) {
             new JDialogAddMargins(this, getActiveImage());
         } else if (command.equals("Point area")) {
