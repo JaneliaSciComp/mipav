@@ -130,6 +130,15 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
           spacing = image.getFileInfo(z+1).getOrigin()[2] 
                     - image.getFileInfo(z).getOrigin()[2];
           numSlices = Math.max(1,Math.round(spacing/averageSpacing));
+          
+          if (numSlices == 2) {
+              Preferences.debug("1 slice is missing between " + (z+1) +
+                  " and " + (z+2) + "\n");
+          }
+          else if (numSlices > 2) {
+              Preferences.debug((numSlices-1) + " are missing between " + (z+1) +
+                  " and " + (z+2) + "\n");
+          }
           totalSlices += numSlices;
         }
         
@@ -140,12 +149,13 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
           spacing = image.getFileInfo(z+1).getOrigin()[2] 
                     - image.getFileInfo(z).getOrigin()[2];
           numSlices = Math.max(1,Math.round(spacing/averageSpacing));
+          
           for (i = 0; i < numSlices - 1; i++) {
               checkListInsert[m++] = true;
               allPresent = false;
           }
           checkListInsert[m++] = false;
-        }   
+        }
     }
     
     /**
@@ -419,10 +429,17 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
         int z, i, m, k;
         int numSlices;
         int yPos = 0;
-        JLabel statusLabel = null;
+        JLabel statusLabel[] = new JLabel[10];
+        int numStatusLabels = 0;
         int missingSlices;
-        int missingArray[];
+        int missingPositions = 0;
+        int missingSliceArray[];
+        int missingNumberArray[];
         nSlices = image.getExtents()[2];
+        
+        for (i = 0; i < 10; i++) {
+            statusLabel[i] = null;
+        }
 
         setTitle("Insert missing slices");
         setForeground(Color.black);
@@ -439,18 +456,9 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
           spacing = image.getFileInfo(z+1).getOrigin()[2] 
                     - image.getFileInfo(z).getOrigin()[2];
           numSlices = Math.max(1,Math.round(spacing/averageSpacing));
-          totalSlices += numSlices;
-        }
-        missingSlices = totalSlices - nSlices;
-        missingArray = new int[missingSlices];
-        
-        allPresent = true;
-        checkListInsert = new boolean[totalSlices];
-        checkListInsert[0] = false;
-        for (z = 0, m = 1, k = 0; z < nSlices - 1; z++) {
-          spacing = image.getFileInfo(z+1).getOrigin()[2] 
-                    - image.getFileInfo(z).getOrigin()[2];
-          numSlices = Math.max(1,Math.round(spacing/averageSpacing));
+          if (numSlices >= 2) {
+              missingPositions++;
+          }
           if (numSlices == 2) {
               Preferences.debug("1 slice is missing between " + (z+1) +
                   " and " + (z+2) + "\n");
@@ -459,25 +467,58 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
               Preferences.debug((numSlices-1) + " are missing between " + (z+1) +
                   " and " + (z+2) + "\n");
           }
+          totalSlices += numSlices;
+        }
+        missingSlices = totalSlices - nSlices;
+        missingSliceArray = new int[missingPositions];
+        missingNumberArray = new int[missingPositions];
+        
+        allPresent = true;
+        checkListInsert = new boolean[totalSlices];
+        checkListInsert[0] = false;
+        for (z = 0, m = 1, k = 0; z < nSlices - 1; z++) {
+          spacing = image.getFileInfo(z+1).getOrigin()[2] 
+                    - image.getFileInfo(z).getOrigin()[2];
+          numSlices = Math.max(1,Math.round(spacing/averageSpacing));
+          if (numSlices >= 2) {
+              missingSliceArray[k] = z;
+              missingNumberArray[k++] = (numSlices-1);
+          }
           for (i = 0; i < numSlices - 1; i++) {
               checkListInsert[m++] = true;
               allPresent = false;
-              missingArray[k++] = z;
           }
           checkListInsert[m++] = false;
         }
         
         if (allPresent) {
-            statusLabel = new JLabel("No slices are missing");
+            statusLabel[0] = new JLabel("No slices are missing");
+            numStatusLabels = 1;
         }
-        else if (missingSlices == 1){
-            statusLabel = new JLabel("Slice between " + (missingArray[0]+1) +
-                                     " and " + (missingArray[0]+2) + " is missing");
-        }
+        else if (missingPositions <= 10) {
+                for (i = 0; i < missingPositions; i++) {
+                    if (missingNumberArray[i] == 1) {
+                        statusLabel[i] = new JLabel("1 slice between " +
+                                (missingSliceArray[i]+1) +
+                                " and " + (missingSliceArray[i]+2) + " is missing");
+                    }
+                    else {
+                        statusLabel[i] = new JLabel(missingNumberArray[i] + 
+                                " slices between " +
+                                (missingSliceArray[i]+1) +
+                                " and " + (missingSliceArray[i]+2) + " are missing");   
+                    }
+                    
+                }
+            numStatusLabels = missingPositions;
+        } // else if (missingPositions <= 10)
         else {
-            statusLabel = new JLabel(missingSlices + " slices are missing");
+            statusLabel[0] = new JLabel(missingSlices + " slices are missing");
+            numStatusLabels = 1;
         }
-        statusLabel.setFont(serif12);
+        for (i = 0; i < numStatusLabels; i++) {
+            statusLabel[i].setFont(serif12);
+        }
 
         ButtonGroup sliceGroup = new ButtonGroup();
         average = new JRadioButton("Average", true);
@@ -499,7 +540,10 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        slicePanel.add(statusLabel, gbc);
+        for (i = 0; i < numStatusLabels; i++) {
+            gbc.gridy = yPos++;
+            slicePanel.add(statusLabel[i], gbc);
+        }
 
         gbc.gridx = 0;
         gbc.gridy = yPos++;
