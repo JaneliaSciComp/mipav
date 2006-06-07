@@ -451,6 +451,14 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
           spacing = image.getFileInfo(z+1).getOrigin()[2] 
                     - image.getFileInfo(z).getOrigin()[2];
           numSlices = Math.max(1,Math.round(spacing/averageSpacing));
+          if (numSlices == 2) {
+              Preferences.debug("1 slice is missing between " + (z+1) +
+                  " and " + (z+2) + "\n");
+          }
+          else if (numSlices > 2) {
+              Preferences.debug((numSlices-1) + " are missing between " + (z+1) +
+                  " and " + (z+2) + "\n");
+          }
           for (i = 0; i < numSlices - 1; i++) {
               checkListInsert[m++] = true;
               allPresent = false;
