@@ -416,11 +416,12 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     private void init() {
         float averageSpacing;
         float spacing;
-        int z, i, m;
+        int z, i, m, k;
         int numSlices;
         int yPos = 0;
         JLabel statusLabel = null;
         int missingSlices;
+        int missingArray[];
         nSlices = image.getExtents()[2];
 
         setTitle("Insert missing slices");
@@ -440,27 +441,30 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
           numSlices = Math.max(1,Math.round(spacing/averageSpacing));
           totalSlices += numSlices;
         }
+        missingSlices = totalSlices - nSlices;
+        missingArray = new int[missingSlices];
         
         allPresent = true;
         checkListInsert = new boolean[totalSlices];
         checkListInsert[0] = false;
-        for (z = 0, m = 1; z < nSlices - 1; z++) {
+        for (z = 0, m = 1, k = 0; z < nSlices - 1; z++) {
           spacing = image.getFileInfo(z+1).getOrigin()[2] 
                     - image.getFileInfo(z).getOrigin()[2];
           numSlices = Math.max(1,Math.round(spacing/averageSpacing));
           for (i = 0; i < numSlices - 1; i++) {
               checkListInsert[m++] = true;
               allPresent = false;
+              missingArray[k++] = z;
           }
           checkListInsert[m++] = false;
         }
-        missingSlices = totalSlices - nSlices;
         
         if (allPresent) {
             statusLabel = new JLabel("No slices are missing");
         }
         else if (missingSlices == 1){
-            statusLabel = new JLabel("1 slice is missing");
+            statusLabel = new JLabel("Slice between " + (missingArray[0]+1) +
+                                     " and " + (missingArray[0]+2) + " is missing");
         }
         else {
             statusLabel = new JLabel(missingSlices + " slices are missing");
