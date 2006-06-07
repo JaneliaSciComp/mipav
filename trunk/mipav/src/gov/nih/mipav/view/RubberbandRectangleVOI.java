@@ -145,7 +145,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
 
             ModelImage image = ((ViewJComponentEditImage) (component)).getActiveImage();
 
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(VOI.CONTOUR)) {
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.CONTOUR)) {
 
                 try {
                     VOIs = image.getVOIs();
@@ -280,7 +280,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
 
                     for (i = 0; i < nVOI; i++) {
 
-                        if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                        if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
 

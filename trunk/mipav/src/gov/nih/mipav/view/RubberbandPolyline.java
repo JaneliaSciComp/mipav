@@ -308,7 +308,7 @@ public class RubberbandPolyline extends Rubberband {
                 constant = VOI.CONTOUR;
             }
 
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(constant)) {
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(constant)) {
 
                 try {
                     VOIs = image.getVOIs();
@@ -397,7 +397,7 @@ public class RubberbandPolyline extends Rubberband {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == constant) {
                             // System.err.println("adding element");

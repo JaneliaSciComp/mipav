@@ -128,7 +128,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                           ? (((VOI) (getActiveImage().getVOIs().lastElement())).getUID() + 1) : -1;
 
             getVOIHandler().updateVOIColor(id, lastUID);
-            voiID = -1;
+            voiHandler.setVOI_ID(-1);
         }
 
         imageActive.notifyImageDisplayListeners(null, true);
@@ -153,7 +153,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
             VOIs.removeElementAt(i);
         }
 
-        voiID = -1;
+        voiHandler.setVOI_ID(-1);
         centerPtLocation = -1;
     }
 
@@ -289,7 +289,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
      */
     public boolean isNewVoiNeeded(int voiType) {
 
-        if (voiID == -1) {
+        if (voiHandler.getVOI_ID() == -1) {
             return true;
         }
 
@@ -1258,7 +1258,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                         float[] y = new float[1];
                         float[] z = new float[1];
 
-                        voiID = imageActive.getVOIs().size();
+                        voiHandler.setVOI_ID(imageActive.getVOIs().size());
 
                         int colorID = 0;
 
@@ -1295,16 +1295,16 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                         return;
                     }
 
-                    voiHandler.setLastPointVOI_ID(voiID);
+                   // voiHandler.setLastPointVOI_ID(voiID);
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
                     getVOIHandler().updateVOIColor(newPtVOI.getColor(), newPtVOI.getUID());
-                    ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))).setActive(true);
+                    ((VOIPoint) (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))).setActive(true);
 
                     imageActive.notifyImageDisplayListeners();
 
-                    getVOIHandler().graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiID).getCurves()[slice].elementAt(0))), 0);
+                    getVOIHandler().graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))), 0);
 
                 } // end of if (voiID == -1)
                 else { // voiID != -1 add point to existing VOI
@@ -1325,7 +1325,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
                     for (i = 0; i < nVOI; i++) {
 
-                        if (VOIs.VOIAt(i).getID() == voiID) {
+                        if (VOIs.VOIAt(i).getID() == voiHandler.getVOI_ID()) {
 
                             if ((VOIs.VOIAt(i).getCurveType() == VOI.POINT) && (centerPtLocation != i)) {
                                 VOIs.VOIAt(i).importCurve(x, y, z, slice);
@@ -1418,7 +1418,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                             // if true set all points in VOI active - move all points
                             VOIs.VOIAt(i).setAllActive(true);
                             getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
-                            voiID = VOIs.VOIAt(i).getID();
+                            voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
 
                             // and we are done with this VOI.
                             // skip the rest of the curves
@@ -1428,7 +1428,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
                             VOIs.VOIAt(i).setActive(true);
                             getVOIHandler().updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                             ((VOIPoint) (selectedCurve)).setActive(true);
-                            voiID = VOIs.VOIAt(i).getID();
+                            voiHandler.setVOI_ID(VOIs.VOIAt(i).getID());
                         }
                     } else { // selected curve was not selected, so set false.
                         selectedCurve.setActive(false);

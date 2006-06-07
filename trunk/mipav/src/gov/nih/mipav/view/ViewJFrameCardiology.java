@@ -670,7 +670,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 break;
 
             case KeyEvent.VK_DELETE:
-                componentImage.getVOIHandler().deleteSelectedContours();
+                componentImage.getVOIHandler().deleteSelectedVOI(true);
                 break;
 
             case KeyEvent.VK_B:
@@ -1823,7 +1823,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
         // imageA.
 
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), false, false, false,
-                              componentImage.getVOI_ID());
+                              componentImage.getVOIHandler().getVOI_ID());
 
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileBase.DICOM) {
 

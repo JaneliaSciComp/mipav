@@ -304,7 +304,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                 return;
             }
 
-            if (((ViewJComponentEditImage) (component)).isNewVoiNeeded(VOI.CONTOUR)) {
+            if (((ViewJComponentEditImage) (component)).getVOIHandler().isNewVoiNeeded(VOI.CONTOUR)) {
 
                 try {
                     VOIs = image.getVOIs();
@@ -372,7 +372,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
 
                 for (i = 0; i < nVOI; i++) {
 
-                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOI_ID()) {
+                    if (VOIs.VOIAt(i).getID() == ((ViewJComponentEditImage) (component)).getVOIHandler().getVOI_ID()) {
 
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                             VOIs.VOIAt(i).importPolygon(levelSet, component.getSlice());

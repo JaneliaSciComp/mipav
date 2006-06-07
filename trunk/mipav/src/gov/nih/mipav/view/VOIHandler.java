@@ -30,6 +30,9 @@ import gov.nih.mipav.model.file.FileInfoDicom;  //imports all static variables..
 
 
 /**
+ * VOIHandler class is used to handle all aspects of VOI movement from the
+ * ViewJComponentEditImage.  It functions as a mouse listener and also handles
+ * Popup-menus and VOI graph displays.
  * <p> </p>
  *
  * <p> </p>
@@ -44,55 +47,59 @@ import gov.nih.mipav.model.file.FileInfoDicom;  //imports all static variables..
 public class VOIHandler extends JComponent
         implements MouseListener, MouseMotionListener{
 
-    /** DOCUMENT ME! */
-  protected int lastPointVOI = -1;
-
-  /** DOCUMENT ME! */
-  protected int lastPolysliceVOI = -1;
-
-
-    /** VOI ID. */
+    /** Active VOI's ID. */
     protected int voiID = -1;
 
+    /** VOI ID for image A. */
+   protected int voiIDa = -1;
+
+   /** VOI ID for image B. */
+   protected int voiIDb = -1;
+
+
+    /** Current mode for mouse behavior (VOI manipulation)*/
     private int mode;
 
+    /** Whether all counters of the currently selected VOI are active*/
     private boolean allActive; //?
 
-    private boolean wasDragging;  //was the VOI being dragged
-    private boolean shiftDown;
+    /** Whether the VOI was being dragged */
+    private boolean wasDragging;
 
+    /** Anchor point used in calculated VOI movement distances */
     private Point anchorPt = new Point(0, 0);
 
-    /** DOCUMENT ME! */
+    /** The preset hue for the livewire VOI rubberband */
     private float presetHue = -1.0f;
 
     /** Keep track of state of shift for mouse Pressed events. */
     protected boolean mousePressIsShiftDown = false;
 
-    /** used when graphing a VOI. */
+    /** Buffer for holding VOI graphing information */
     protected float[] graphImgBuff;
 
-    /** DOCUMENT ME! */
+    /** Buffer for holding intensities at specific points */
     protected float[] ptIntensity;
 
-    /** used when graphing a VOIPoint. */
+    /** buffer used when graphing a VOIPoint on a grayscale image. */
     protected float[] ptPosition;
 
-    /** DOCUMENT ME! */
+    /** Buffer for holding RGB intensities [0,1,2] at specific points */
     protected float[][] ptRGBIntensities = null;
 
-    /** DOCUMENT ME! */
+    /** Buffer used for graphing VOIPoints for an RGB image */
     protected float[][] ptRGBPositions = null;
 
+    /** The component image that owns this class*/
     private ViewJComponentEditImage compImage;
 
-    /** I/O - seperate. Move elsewhere?? */
+    /** Dialog for displaying/calculating VOI statistics as well as the VOI Browser*/
     protected JDialogVOIStats voiDialog;
 
-    /** DOCUMENT ME! */
+    /** Popup Menu for VOIs (non-point) */
    protected ViewJPopupVOI popup = null;
 
-   /** DOCUMENT ME! */
+   /** Popup Menu for VOIPoints */
    protected ViewJPopupPt popupPt = null;
 
    /** New polyline slice VOI. */
@@ -226,6 +233,10 @@ public class VOIHandler extends JComponent
        listenerList = null;
     }
 
+    /**
+     *
+     * @param mouseEvent MouseEvent
+     */
     public void mouseClicked(MouseEvent mouseEvent) {
         int xS, yS;
         xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
@@ -237,40 +248,34 @@ public class VOIHandler extends JComponent
         }
 
         if ((mouseEvent.getClickCount() == 1) && (mode == compImage.DEFAULT)) {
-            deactivateAllVOI();
+            selectAllVOIs(false);
             //fireVOISelectionChange(null);
-            lastPointVOI = -1; // next mouseClick will deactivate point VOI unless reselected
+            //lastPointVOI = -1; // next mouseClick will deactivate point VOI unless reselected
 
             compImage.getActiveImage().notifyImageDisplayListeners();
         }
     }
 
+
+    /**
+     * Mouse handling for mouse being dragged
+     * @param mouseEvent MouseEvent the mouse event
+     */
     public void mouseDragged(MouseEvent mouseEvent) {
         int mouseMods = mouseEvent.getModifiers();
         int i, j, m;
         int nVOI;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-        FileInfoBase fileInfo;
         int xS, yS;
         int distX, distY;
         int xDim, yDim;
         int zDim = 1;
-        Color dropperColor;
         float[] lineX = new float[2];
         float[] lineY = new float[2];
         float[] lineZ = new float[2];
         float[] position;
         float[] intensity;
-        String str;
         int sliceNum;
-        int windowChange, levelChange;
-        int sliceSize;
-        float minR;
-        float maxR;
-        float minG;
-        float maxG;
-        float minB;
-        float maxB;
 
 
         xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
@@ -278,7 +283,6 @@ public class VOIHandler extends JComponent
 
         xDim = compImage.getActiveImage().getExtents()[0];
         yDim = compImage.getActiveImage().getExtents()[1];
-        sliceSize = xDim * yDim;
         if (compImage.getActiveImage().getNDims() >= 3) {
             zDim = compImage.getActiveImage().getExtents()[2];
         }
@@ -940,22 +944,27 @@ public class VOIHandler extends JComponent
         }
     }
 
-    // nada for now
-     public void mouseExited(MouseEvent mouseEvent) {
-
-     }
-
-     /**
-     * Unchanged.
-     *
-     * @param  mouseEvent  event
+    /**
+     * Does nothing
+     * @param mouseEvent MouseEvent
      */
-    public void mouseEntered(MouseEvent mouseEvent) {
+    public void mouseExited(MouseEvent mouseEvent) {
+
     }
 
-    public void mouseMoved(MouseEvent mouseEvent) {
-        //System.err.println("handler mouse moved, mode: " + mode);
+    /**
+     * Does nothing
+     * @param mouseEvent MouseEvent
+     */
+    public void mouseEntered(MouseEvent mouseEvent) {
 
+    }
+
+    /**
+     * Mouse handling for Mouse Moved
+     * @param mouseEvent MouseEvent
+     */
+    public void mouseMoved(MouseEvent mouseEvent) {
         int i, j;
         int x, y;
         int xS, yS;
@@ -964,7 +973,6 @@ public class VOIHandler extends JComponent
         int nCurves;
         Vector[] curves;
         Graphics g = compImage.getGraphics();
-        shiftDown = mouseEvent.isShiftDown();
 
         if (mode == compImage.ZOOMING_IN || mode == compImage.ZOOMING_OUT) {
             // if we are in zoom mode, we don't care about any of the other things
@@ -1221,11 +1229,13 @@ public class VOIHandler extends JComponent
     } //end mouseMoved
 
 
-
+    /**
+     * Mouse handling for Mouse Pressed
+     * @param mouseEvent MouseEvent the mouse event
+     */
     public void mousePressed(MouseEvent mouseEvent) {
         int xS, yS;
         int x, y;
-        Color dropperColor;
         float[] lineX = null;
         float[] lineY = null;
         float[] lineZ = null;
@@ -1583,7 +1593,7 @@ public class VOIHandler extends JComponent
                         compImage.setMode(ViewJComponentEditImage.DEFAULT);
                         return;
                     }
-                    lastPointVOI = voiID;
+                    //lastPointVOI = voiID;
                     compImage.getActiveImage().registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
@@ -1694,7 +1704,6 @@ public class VOIHandler extends JComponent
                         compImage.setMode(ViewJComponentEditImage.DEFAULT);
                         return;
                     }
-                    lastPolysliceVOI = voiID;
                     compImage.getActiveImage().registerVOI(newPolySliceVOI);
                     newPolySliceVOI.setActive(true);
                     allActive = true;
@@ -1812,6 +1821,7 @@ public class VOIHandler extends JComponent
         else if (mode == ViewJComponentEditImage.NEW_POINT) { // impossible for LINE
 
             if (mouseEvent.isShiftDown()) {
+                System.err.println("SHIFT IS DOWN!");
                 nVOI = VOIs.size();
                 for (i = 0; i < nVOI; i++) {
                     if (VOIs.VOIAt(i).isActive()) {
@@ -2254,64 +2264,119 @@ public class VOIHandler extends JComponent
     } // end mouseReleased()
 
 
+    /**
+    * Returns the VOI ID in which to add an ID.
+    *
+    * @return  VOI ID to add new contour to.
+    */
+   public int getVOI_ID() {
+       return voiID;
+   }
+
+   /**
+     * Used ONLY by ViewJFrameDualTriImage.
+     *
+     * @param  ID  The VOI ID number.
+     */
+    public void setVOI_ID(int ID) {
+        voiID = ID;
+    }
+
+    public void setActiveVOI_ID(int active) {
+        if (active == ViewJComponentEditImage.IMAGE_A) {
+            voiIDb = voiID;
+            voiID = voiIDa;
+        } else {
+            voiIDa = voiID;
+            voiID = voiIDb;
+        }
+    }
 
 
-
+    /**
+     * Returns the component image to which this class is linked
+     * @return ViewJComponentEditImage
+     */
     public ViewJComponentEditImage getComponentImage() {
         return this.compImage;
     }
 
+    /**
+     * Gets the anchor point used for calculating VOI movement distances
+     * @return Point
+     */
     public Point getAnchorPt() {
         return this.anchorPt;
     }
 
+    /**
+     * Returns the buffer for the image's VOI graph
+     * @return float[]
+     */
     public float[] getImageGraphBuffer() {
         return this.graphImgBuff;
     }
 
+    /**
+     * Sets the image's VOI graph buffer
+     * @param buf float[]
+     */
     public void setImageGraphBuffer(float [] buf) {
         this.graphImgBuff = buf;
     }
 
-    public int getLastPointVOI_ID() {
-        return lastPointVOI;
-    }
-
-    public void setLastPointVOI_ID(int id) {
-        this.lastPointVOI = id;
-    }
-
-    public int getLastPolysliceVOI_ID() {
-        return lastPolysliceVOI;
-    }
-    public void setLastPolysliceVOI_ID(int id) {
-        this.lastPolysliceVOI = id;
-    }
-
+    /**
+     *  Gets the VOI Popup menu (used for enabling/disabling and mouse listening)
+     * @return ViewJPopupVOI popup VOI menu
+     */
     public ViewJPopupVOI getPopupVOI() {
         return this.popup;
     }
 
+    /**
+     * Gets the VOI Rubberband currently in use (or set)
+     * @return Rubberband current VOI rubberband
+     */
     public Rubberband getRubberband() {
         return rubberband;
     }
 
+    /**
+     * Gets the point intensity buffer
+     * @return float[] buffer of intensities
+     */
     public float [] getPointIntensities() {
         return ptIntensity;
     }
 
+    /**
+     * Gets the point position buffer
+     * @return float[] buffer of positions
+     */
     public float[] getPointPositions() {
         return ptPosition;
     }
 
+    /**
+     * Gets the RGB Point intensity buffer
+     * @return float[][] buffer of rgb point intensities [0,1,2]
+     */
     public float [][] getPointRGBIntensities() {
         return ptRGBIntensities;
     }
 
+    /**
+     * Gets the RGB point position buffer
+     * @return float[][] buffer of rgb point positions
+     */
     public float [][] getPointRGBPositions() {
         return ptRGBPositions;
     }
 
+    /**
+     * Gets the popup menu for VOI points
+     * @return ViewJPopupPt
+     */
     public ViewJPopupPt getPopupPt() {
         return this.popupPt;
     }
@@ -2462,25 +2527,8 @@ public class VOIHandler extends JComponent
         return true;
     }
 
-    /**
-     * deactivates, or deselects, all active VOIs. will not deselect the VOI which is set at Last Point.
-     */
-    public void deactivateAllVOI() {
-        int nVOI = 0;
-        ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
-        // go through the
-        if (VOIs != null) {
-            nVOI = VOIs.size();
 
-            for (int k = 0; k < nVOI; k++) { // deactivate all VOIs except last point VOI
-
-                if (k != lastPointVOI) {
-                    VOIs.VOIAt(k).setAllActive(false); // and mouseClick is often immediately entered
-                }
-            }
-        } // if (VOIs != null)
-    }
 
     /**
      * Deletes the active contour, line, protractor, point of a VOI.
@@ -2550,42 +2598,10 @@ public class VOIHandler extends JComponent
     }
 
     /**
-     * Deletes the entire active VOI.
+     * Deletes selected VOIs or VOI contours (boolean)
+     * @param contoursOnly boolean (true = only delete selected contours, false = delete entire selected VOI)
      */
-    public void deleteEntireVOI() {
-        int i;
-        int nVOI;
-
-        ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return;
-        }
-
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).isActive() == true) {
-                break;
-            } // Set i
-        }
-
-        if (i == nVOI) {
-            MipavUtil.displayError("VOI must be selected.");
-
-            return; // No VOI to delete
-        }
-
-        VOIs.removeElementAt(i);
-        fireVOISelectionChange(null);
-        compImage.getActiveImage().notifyImageDisplayListeners(null, true);
-    }
-
-    /**
-     * Deletes the selected contour of an VOI.
-     */
-    public void deleteSelectedContours() {
+    public void deleteSelectedVOI(boolean contoursOnly) {
         int i, s, nVOI;
 
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
@@ -2610,57 +2626,52 @@ public class VOIHandler extends JComponent
             return; // No VOI to delete
         }
 
-        if (compImage.getActiveImage().getNDims() == 2) {
-            deleteContour(VOIs.VOIAt(i), 0);
-        } else if (compImage.getActiveImage().getNDims() >= 3) {
 
-            for (s = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
-                deleteContour(VOIs.VOIAt(i), s);
+        if (contoursOnly) {
+            if (compImage.getActiveImage().getNDims() == 2) {
+                deleteContour(VOIs.VOIAt(i), 0);
+            } else if (compImage.getActiveImage().getNDims() >= 3) {
+
+                for (s = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
+                    deleteContour(VOIs.VOIAt(i), s);
+                }
             }
-        }
 
-        if (VOIs.VOIAt(i).isEmpty() == true) {
-            compImage.getActiveImage().unregisterVOI(VOIs.VOIAt(i));
+            if (VOIs.VOIAt(i).isEmpty() == true) {
+                compImage.getActiveImage().unregisterVOI(VOIs.VOIAt(i));
 
-            int id = (compImage.getActiveImage().getVOIs().size() > 0)
-                     ? (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).getID() + 1) : 0;
-            int lastUID = (compImage.getActiveImage().getVOIs().size() > 0)
-                          ? (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).getUID() + 1) : -1;
+                int id = (compImage.getActiveImage().getVOIs().size() > 0)
+                         ?
+                         (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).getID() +
+                          1) : 0;
+                int lastUID = (compImage.getActiveImage().getVOIs().size() > 0)
+                              ?
+                              (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).
+                               getUID() + 1) : -1;
 
-            this.updateVOIColor(id, lastUID);
-            voiID = -1;
-            this.fireVOISelectionChange(null);
+                this.updateVOIColor(id, lastUID);
+                voiID = -1;
+                this.fireVOISelectionChange(null);
+            } else {
+                VOIs.VOIAt(i).setAllActive(false);
+            }
         } else {
-            VOIs.VOIAt(i).setAllActive(false);
-            this.fireVOISelectionChange(null);
+            VOIs.removeElementAt(i);
+             voiID = -1;
         }
 
+        fireVOISelectionChange(null);
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
 
-    }
 
+    }
 
     /**
      * Deletes all VOIs.
      */
     public void deleteVOIs() {
-        int i;
-        int nVOI;
-
-        ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return;
-        }
-
-        for (i = (nVOI - 1); i >= 0; i--) {
-            VOIs.removeElementAt(i);
-        }
-
+        compImage.getActiveImage().unregisterAllVOIs();
         fireVOISelectionChange(null);
-
         voiID = -1;
     }
 
@@ -3538,7 +3549,7 @@ public class VOIHandler extends JComponent
                 }
             }
 
-            if (i == nVOI || !foundActive) {
+            if (!foundActive) {
                 MipavUtil.displayError("Please select a VOI!");
             }
         } catch (OutOfMemoryError error) {
@@ -3553,9 +3564,10 @@ public class VOIHandler extends JComponent
     }
 
     /**
-     * Change all VOIs to setActive(true).
+     * Selects (or de-selects) all VOIs
+     * @param doSelect boolean select all or deselect all
      */
-    public void selectAllVOIs() {
+    public void selectAllVOIs( boolean doSelect ) {
         int i;
         int nVOI;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
@@ -3563,9 +3575,12 @@ public class VOIHandler extends JComponent
         nVOI = VOIs.size();
 
         for (i = 0; i < nVOI; i++) {
-            VOIs.VOIAt(i).setAllActive(true);
-        }
 
+            //if deselecting, leave last point VOI as selected
+            if (!doSelect) {
+                VOIs.VOIAt(i).setAllActive(doSelect);
+            }
+        }
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
     }
 
@@ -4649,37 +4664,6 @@ public class VOIHandler extends JComponent
         return (rbLivewire == null);
     }
 
-
-    /**
-     * Finds and returns the active Point VOI if there is one.
-     *
-     * @return  the active point VOI (if one exists)
-     */
-    public VOI getActivePointVOI() {
-        int i;
-        int nVOI;
-        ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            MipavUtil.displayError("No Point VOI found to add treatment details");
-
-            return null;
-        }
-
-        for (i = 0; i < nVOI; i++) {
-
-            if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.POINT)) {
-                return VOIs.VOIAt(i);
-            }
-        }
-
-        MipavUtil.displayError("Please select a Point VOI for treatment details");
-
-        return null;
-    }
-
     /**
      * Get the number of active VOIS.
      *
@@ -4705,8 +4689,10 @@ public class VOIHandler extends JComponent
 
 
     /**
-     *
-     * @param mode int
+     * Function called to set the mode/drawing state for the VOIHandler/VJCompEditImage
+     * The mode change will trigger cursor changes and rubberbanding actions, as well as
+     * prepare the mouse listening for actions (moving a VOI, adding points to a VOI etc)
+     * @param mode int the current mode
      */
     public void setMode(int mode) {
         this.mode = mode;

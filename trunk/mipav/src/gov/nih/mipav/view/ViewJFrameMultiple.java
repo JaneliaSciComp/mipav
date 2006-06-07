@@ -1203,7 +1203,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
         boolean showPaint = menuBuilder.isMenuItemSelected("Paint toolbar");
         boolean showScript = menuBuilder.isMenuItemSelected("Scripting toolbar");
 
-        newControls.buildToolbar(showImage, showVOI, showPaint, showScript, getComponentImage(key).getVOI_ID());
+        newControls.buildToolbar(showImage, showVOI, showPaint, showScript, getComponentImage(key).getVOIHandler().getVOI_ID());
 
         controlsTable.put(key, newControls);
     }
