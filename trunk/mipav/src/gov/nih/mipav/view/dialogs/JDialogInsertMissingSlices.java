@@ -74,6 +74,8 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     /** Number of slices that will be present in the 3D image after the
      *  missing slices have been inserted */
     private int totalSlices;
+    
+    private boolean destFlag;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -194,18 +196,20 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
             
             if (displayLoc == NEW) {
 
-                if ((rSliceAlgo.isCompleted() == true) && (resultImage != null)) {
+                if (rSliceAlgo.isCompleted() == true) {
+                    resultImage = rSliceAlgo.getResultImage();
+                    if (resultImage != null) {
 
-                    try {
-
-                        // put the new image into a new frame
-                        new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
-
-                    } catch (OutOfMemoryError error) {
-                        MipavUtil.displayError("Insert missing Slices reports: out of memory; " + "unable to open a new frame");
-                        return;
+                        try {
+    
+                            // put the new image into a new frame
+                            new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+    
+                        } catch (OutOfMemoryError error) {
+                            MipavUtil.displayError("Insert missing Slices reports: out of memory; " + "unable to open a new frame");
+                            return;
+                        }
                     }
-
                 }
             } else {
 
@@ -379,10 +383,12 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
 
             // Make algorithm:
             if (displayLoc == REPLACE) {
-                rSliceAlgo = new AlgorithmReplaceRemovedSlices(image, checkListInsert, false, false,
+                destFlag = false;
+                rSliceAlgo = new AlgorithmReplaceRemovedSlices(image, checkListInsert, false, destFlag,
                                                                       insertBlank);
             } else {
-                rSliceAlgo = new AlgorithmReplaceRemovedSlices(resultImage, checkListInsert, false, false,
+                destFlag = true;
+                rSliceAlgo = new AlgorithmReplaceRemovedSlices(resultImage, checkListInsert, false, destFlag,
                                                                       insertBlank);
             }
 
