@@ -879,6 +879,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int length;
         int colorFactor;
         double buffer[];
+        double bufferI[];
 
         imageACopy = (ModelImage) imageA.clone();
 
@@ -969,10 +970,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageACopy.isColorImage()) {
                         colorFactor = 4;
                     }
-                    else if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
-                             (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
-                        colorFactor = 2;
-                    }
                     else {
                         colorFactor = 1;
                     }
@@ -986,9 +983,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
     
                     buffer = new double[length];
-                    imageACopy.exportData(0, length, buffer); // locks and releases lock
-                    imageACopy.reallocate(ModelStorageBase.SHORT);
-                    imageACopy.importData(0, buffer, true);
+                    if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
+                            (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                       bufferI = new double[length];
+                       imageACopy.exportDComplexData(0, length, buffer, bufferI);
+                       imageACopy.reallocate(ModelStorageBase.SHORT);
+                       imageACopy.importData(0, buffer, true);
+                   }
+                    else {
+                        imageACopy.exportData(0, length, buffer); // locks and releases lock
+                        imageACopy.reallocate(ModelStorageBase.SHORT);
+                        imageACopy.importData(0, buffer, true);
+                    }
                 } catch (IOException error) {
                     buffer = null;
                     MipavUtil.displayError("IO Exception");
@@ -1014,10 +1020,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageBCopy.isColorImage()) {
                         colorFactor = 4;
                     }
-                    else if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
-                             (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
-                        colorFactor = 2;
-                    }
                     else {
                         colorFactor = 1;
                     }
@@ -1031,9 +1033,18 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
     
                     buffer = new double[length];
-                    imageBCopy.exportData(0, length, buffer); // locks and releases lock
-                    imageBCopy.reallocate(ModelStorageBase.SHORT);
-                    imageBCopy.importData(0, buffer, true);
+                    if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
+                            (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                       bufferI = new double[length];
+                       imageBCopy.exportDComplexData(0, length, buffer, bufferI);
+                       imageBCopy.reallocate(ModelStorageBase.SHORT);
+                       imageBCopy.importData(0, buffer, true);
+                   }
+                    else {
+                        imageBCopy.exportData(0, length, buffer); // locks and releases lock
+                        imageBCopy.reallocate(ModelStorageBase.SHORT);
+                        imageBCopy.importData(0, buffer, true);
+                    }
                 } catch (IOException error) {
                     buffer = null;
                     MipavUtil.displayError("IO Exception");
