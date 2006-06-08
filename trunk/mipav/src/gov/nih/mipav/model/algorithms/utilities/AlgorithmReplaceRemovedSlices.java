@@ -677,8 +677,62 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 return;
             }
 
-            AlgorithmRemoveSlices.updateFileInfo(resultImage, srcImage);
-
+            if (isDicom) {
+                FileInfoDicom fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoDicom)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }
+            }
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.MINC) {
+                FileInfoMinc fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoMinc)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }   
+            }
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+                FileInfoAfni fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoAfni)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }   
+            }
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.NIFTI) {
+                FileInfoNIFTI fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoNIFTI)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }   
+            }
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.ANALYZE) {
+                FileInfoAnalyze fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoAnalyze)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }   
+            }
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.XML) {
+                FileInfoXML fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoXML)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }   
+            }
+            else {
+                FileInfoBase fileInfoBuffer;
+//              fix the fileinfos to match
+                for (i = 0; i < resultImage.getExtents()[2]; i++) {
+                    fileInfoBuffer = (FileInfoBase)resultImage.getFileInfo()[i].clone(); 
+                    srcImage.setFileInfo(fileInfoBuffer, i);
+                }    
+            }
             // Clean up and let the calling dialog know that algorithm did its job
             srcImage.releaseLock();
 
