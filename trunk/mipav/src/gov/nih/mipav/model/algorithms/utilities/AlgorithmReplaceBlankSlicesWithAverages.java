@@ -64,12 +64,12 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
 
         float[] sliceData = new float[sliceSize];
         
-        buildProgressBar(srcImage.getImageName(), "Repalcing blanks with averages...", 0, 100);
+        buildProgressBar(srcImage.getImageName(), "Replacing blanks with averages...", 0, 100);
         progressBar.updateValue(0, activeImage);
         initProgressBar();
 
         for (z = 0; z < zDim; z++) {
-            progressBar.updateValueImmed(100 * z/zDim);
+            progressBar.updateValue(100 * z/zDim);
             try {
                 srcImage.exportData(z*sliceSize, sliceSize, sliceData);
             } catch (Exception ex) {
