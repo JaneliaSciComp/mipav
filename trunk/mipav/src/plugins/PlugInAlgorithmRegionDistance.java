@@ -28,7 +28,7 @@ import javax.vecmath.*;
  *           PlugInAlgorithmRegionDistance is used to find the distances between geometric cell centers and cell
  *           boundaries, geometric cell centers and voi geometric centers, geometric cell centers and voi centers of
  *           mass, voi geometric centers and cell boundaries, and voi centers of mass and cell boundaries. The geometric
- *           center is a zero order moment not using intensity multiplications. The center of mass if a first order
+ *           center is a zero order moment not using intensity multiplications. The center of mass is a first order
  *           moment mutliplying position by intensity. The cells are blue and the chromosome regions of interest
  *           outlined by the vois are predominantly red or green. Images can be 2D or 3D. VOIs can be supplied by the
  *           user, but if no VOI is supplied by the user the program will automatically generate red VOIs and green VOIs
@@ -105,7 +105,7 @@ import javax.vecmath.*;
  *           from the center of the VOI to the edge of the object as the square root of lowestSquare.</p>
  *
  *           <p>Scheme for automatic VOI generation: 1.) Create a red image. 2.) Median filter the red image. 3.) Obtain
- *           histogram information on the green image. Set the threshold so that the greenFraction portion of the
+ *           histogram information on the red image. Set the threshold so that the redFraction portion of the
  *           cumulative histogram is at or above threshold for the fuzzy c means. 4.) Perform a 3 level fuzzy c means
  *           segmentation on the red image. 5.) Convert the red max to 1 and the other values to 0. 6.) Remove holes
  *           from red VOIs. 7.) Smooth red with a morphological opening followed by a closing. 8.) ID objects in red
@@ -115,8 +115,8 @@ import javax.vecmath.*;
  *           cumulative histogram is at or above threshold for the fuzzy c means. 12.) Perform a 3 level fuzzy c means
  *           segmentation on the green image. 13.) Convert the green max to 1 and the other values to 0. 15.) Remove
  *           holes from green VOIs. 15.) Smooth green with a morphological opening followed by a closing. 16.) ID
- *           objects in green segmented image which have at least greenMin pixels. Split redIDArray objects apart into 2
- *           or 3 redIDArray objects if they go between 2 or 3 cells. 17.) Sort red objects by red intensity count into
+ *           objects in green segmented image which have at least greenMin pixels. Split greenIDArray objects apart into 2
+ *           or 3 greenIDArray objects if they go between 2 or 3 cells. 17.) Sort red objects by red intensity count into
  *           a sorted red array. Have a separate sorted array for each nucleus. Put no more than 10 red objects into the
  *           sorted red array for each nucleus. 18.) Sort green objects by green intensity count into a sorted green
  *           array. Have a separate sorted green array for each nucleus. 19.) Create byteBuffer with value = 0 if no
