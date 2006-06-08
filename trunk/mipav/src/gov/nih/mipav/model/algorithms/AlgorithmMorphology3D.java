@@ -303,7 +303,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         try {
             tempBuffer = new short[imgBuffer.length];
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm Morphology2D: Out of memory");
+            displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
             disposeProgressBar();
 
@@ -638,7 +638,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             endpoints = new Vector();
             branchesVector = new Vector();
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm Morphology2D: Out of memory");
+            displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
             disposeProgressBar();
 
@@ -848,7 +848,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             srcImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
-            displayError("Algorithm Morphology2D: Image(s) locked");
+            displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
             disposeProgressBar();
 
@@ -890,7 +890,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
 
             imgBuffer = new short[length];
-            processBuffer = new short[length];
+            if (algorithm != FILL_HOLES) {
+                processBuffer = new short[length];
+            }
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
             buildProgressBar(srcImage.getImageName(), "Morph 3D ...", 0, 100);
         } catch (IOException error) {
@@ -2245,13 +2247,13 @@ kernelLoop:
 
             srcImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
-            displayError("Algorithm Morphology2D: Image(s) locked");
+            displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
             disposeProgressBar();
 
             return;
         } catch (OutOfMemoryError e) {
-            displayError("Algorithm Morphology2D: Out of memory");
+            displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
             disposeProgressBar();
 
@@ -2263,9 +2265,9 @@ kernelLoop:
                                                   srcImage.getUserInterface());
 
             try {
-                tempImage.importData(0, processBuffer, true);
+                tempImage.importData(0, imgBuffer, true);
             } catch (IOException error) {
-                displayError("Algorithm Morphology2D: Image(s) locked in Fill Objects");
+                displayError("Algorithm Morphology3D: Image(s) locked in Fill Objects");
                 setCompleted(false);
                 disposeProgressBar();
 
