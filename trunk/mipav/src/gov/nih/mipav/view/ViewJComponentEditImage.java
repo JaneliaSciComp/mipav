@@ -876,6 +876,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         AlgorithmMask maskAlgo = null;
         Color fillColor;
         ModelImage imageACopy = null, imageBCopy = null;
+        int length;
+        int colorFactor;
+        double buffer[];
 
         imageACopy = (ModelImage) imageA.clone();
 
@@ -961,8 +964,94 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if (imageACopy != null) {
+            if (imageACopy.getType() != ModelStorageBase.SHORT) {
+                try {
+                    if (imageACopy.isColorImage()) {
+                        colorFactor = 4;
+                    }
+                    else if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
+                             (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                        colorFactor = 2;
+                    }
+                    else {
+                        colorFactor = 1;
+                    }
+                    length = imageACopy.getSliceSize() * colorFactor;
+                    if (imageACopy.getNDims() >= 3) {
+                        length = length * imageACopy.getExtents()[2];
+                    }
+    
+                    if (imageACopy.getNDims() == 4) {
+                        length = length * imageACopy.getExtents()[3];
+                    }
+    
+                    buffer = new double[length];
+                    imageACopy.exportData(0, length, buffer); // locks and releases lock
+                    imageACopy.reallocate(ModelStorageBase.SHORT);
+                    imageACopy.importData(0, buffer, true);
+                } catch (IOException error) {
+                    buffer = null;
+                    MipavUtil.displayError("IO Exception");
+                    if (imageACopy != null) {
+                        imageACopy.disposeLocal();
+                        imageACopy = null;
+                    }
+                    return null;
+                } catch (OutOfMemoryError e) {
+                    buffer = null;
+                    MipavUtil.displayError("Out of memory error");
+                    if (imageACopy != null) {
+                        imageACopy.disposeLocal();
+                        imageACopy = null;
+                    }
+                    return null;
+                }
+            } // if (imageACopy.getType != ModelStorageBase.SHORT)
             return imageACopy.getImageName();
         } else {
+            if (imageBCopy.getType() != ModelStorageBase.SHORT) {
+                try {
+                    if (imageBCopy.isColorImage()) {
+                        colorFactor = 4;
+                    }
+                    else if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
+                             (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                        colorFactor = 2;
+                    }
+                    else {
+                        colorFactor = 1;
+                    }
+                    length = imageBCopy.getSliceSize() * colorFactor;
+                    if (imageBCopy.getNDims() >= 3) {
+                        length = length * imageBCopy.getExtents()[2];
+                    }
+    
+                    if (imageBCopy.getNDims() == 4) {
+                        length = length * imageBCopy.getExtents()[3];
+                    }
+    
+                    buffer = new double[length];
+                    imageBCopy.exportData(0, length, buffer); // locks and releases lock
+                    imageBCopy.reallocate(ModelStorageBase.SHORT);
+                    imageBCopy.importData(0, buffer, true);
+                } catch (IOException error) {
+                    buffer = null;
+                    MipavUtil.displayError("IO Exception");
+                    if (imageBCopy != null) {
+                        imageBCopy.disposeLocal();
+                        imageBCopy = null;
+                    }
+                    return null;
+                } catch (OutOfMemoryError e) {
+                    buffer = null;
+                    MipavUtil.displayError("Out of memory error");
+                    if (imageBCopy != null) {
+                        imageBCopy.disposeLocal();
+                        imageBCopy = null;
+                    }
+                    return null;
+                }
+            } // if (imageBCopy.getType != ModelStorageBase.SHORT)
             return imageBCopy.getImageName();
         }
     }
