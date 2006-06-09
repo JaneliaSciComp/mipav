@@ -798,8 +798,6 @@ public class AlgorithmMask extends AlgorithmBase {
         } // if (srcImage.getType() != ModelStorageBase.COMPLEX)
         else { // COMPLEX
 
-            // For complex numbers don't use a fill value - just nearly zero the
-            // painted areas.
             logMagDisplay = srcImage.getLogMagDisplay();
 
             try {
@@ -860,15 +858,13 @@ public class AlgorithmMask extends AlgorithmBase {
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
                     }
+                    
+//                  Must preserve phase information so make values 1000 times the
+                    // minimum float instead of zero
+                    mag = (float) (Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
 
                     if (((mask.get(offset + i) == true) && (polarity == true)) ||
                             ((mask.get(offset + i) == false) && (polarity == false))) {
-
-                        // Must preserve phase information so make values 1000 times the
-                        // minimum float instead of zero
-                        mag = (float) (Math.sqrt((buffer[i] * buffer[i]) + (bufferI[i] * bufferI[i])));
-
-                        if (mag > 1000.0f) {
 
                             boolean locked = false;
 
@@ -883,13 +879,25 @@ public class AlgorithmMask extends AlgorithmBase {
                             }
 
                             if (locked == false) {
-                                norm = 1000.0f * Float.MIN_VALUE / mag;
-                                buffer[i] = buffer[i] * norm;
-                                bufferI[i] = bufferI[i] * norm;
+                                if (mag != 0.0f) {
+                                    norm = fillValue / mag;
+                                    buffer[i] = buffer[i] * norm;
+                                    bufferI[i] = bufferI[i] * norm;
+                                }
+                                else {
+                                    buffer[i] = fillValue;
+                                    bufferI[i] = 0.0f;
+                                }
                             }
-                        }
-                    }
-                }
+                    } // if (((mask.get(offset + i) == true) && (polarity == true)) ||
+                    else if ((mask.get(offset + i) == false) && (polarity == true)) {
+                        if (mag > 1000.0f*Float.MIN_VALUE) {
+                            norm = 1000.0f * Float.MIN_VALUE / mag;
+                            buffer[i] = buffer[i] * norm;
+                            bufferI[i] = bufferI[i] * norm;
+                        } // if (mag > 1000.0f*Float.MIN_VALUE)    
+                    } // else if ((mask.get(offset + i) == false) && (polarity == true))
+                } // for (i = 0; (i < imgLength) && !threadStopped; i++)
 
                 try {
                     srcImage.importComplexData(2 * ((tSlice * volLength) + (z * imgLength)), buffer, bufferI, false,
