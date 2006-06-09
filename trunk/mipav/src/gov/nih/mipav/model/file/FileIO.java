@@ -8399,6 +8399,7 @@ public class FileIO {
             if (obj != null) { 
                 slLoc = Float.valueOf((String)obj).floatValue();
             }
+            
             float sliceResolution = myFileInfo.getResolutions()[2];
             
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
@@ -8432,13 +8433,13 @@ public class FileIO {
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
                     
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
-                    myFileInfo.setValue("0020,1041", Float.toString(slLoc), Float.toString(slLoc).length()); 
+                    ((FileInfoDicom)(fBase[k])).setValue("0020,1041", Float.toString(slLoc), Float.toString(slLoc).length()); 
                     slLoc += sliceResolution;
                     
                     String tmpStr = new String (Float.toString(xLoc) + "\\" + 
                             Float.toString(yLoc) + "\\" +
                             Float.toString(zLoc) );
-                    myFileInfo.setValue("0020,0032", tmpStr, tmpStr.length());
+                    ((FileInfoDicom)(fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
                         
                     if( image.getFileInfo()[0].getImageOrientation() == FileInfoBase.AXIAL ){
                         if (zLocOrig <= 0 ){
