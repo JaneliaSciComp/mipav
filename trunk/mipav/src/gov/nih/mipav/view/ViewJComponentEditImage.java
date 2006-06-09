@@ -880,6 +880,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int colorFactor;
         double buffer[];
         double bufferI[];
+        int i;
 
         imageACopy = (ModelImage) imageA.clone();
 
@@ -988,6 +989,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                        bufferI = new double[length];
                        imageACopy.exportDComplexData(0, length, buffer, bufferI);
                        imageACopy.reallocate(ModelStorageBase.SHORT);
+                       for (i = 0; i < length; i++) {
+                           buffer[i] = Math.round(Math.sqrt(buffer[i]*buffer[i] +
+                                                            bufferI[i]*bufferI[i]));
+                       }
                        imageACopy.importData(0, buffer, true);
                    }
                     else {
