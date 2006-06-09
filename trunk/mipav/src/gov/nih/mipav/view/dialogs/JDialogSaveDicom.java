@@ -747,7 +747,9 @@ public class JDialogSaveDicom extends JDialogBase {
                 }
 
                 // Some of these tags seem to be hard coded - why ??
-                dicomFileInfo.setValue("0020,0013", "1 ", 2); // Instance number, reset in FileIO
+                if (dicomFileInfo.getValue("0020,0013") == null) {
+                    dicomFileInfo.setValue("0020,0013", "1 ", 2); // Instance number, reset in FileIO
+                }
 
                 Short samples = new Short((short) 1);
 
