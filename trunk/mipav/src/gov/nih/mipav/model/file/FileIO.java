@@ -8379,7 +8379,6 @@ public class FileIO {
             }
 
             myFileInfo.setDataType(image.getType());
-            
  
             Object obj = null;
             float slLoc = 0;
@@ -8427,6 +8426,19 @@ public class FileIO {
                     zLocOrig = zLoc;
                 }
                 
+                // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the instance number it had
+                int baseInstanceNumber = -1;
+                if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
+                    tag = myFileInfo.getTag("0020,0013");
+                    if (tag != null) {
+                        obj = tag.getValue(false);
+                    }
+                    if (obj != null) {
+                        baseInstanceNumber = Integer.parseInt(((String)obj).trim());
+                        options.setRecalculateInstanceNumber(false);
+                    }
+                }
+                
                 for (int k = 0; k < image.getExtents()[2]; k++) { 
 
                     // System.err.println("FileIO k = " + k);
@@ -8472,6 +8484,11 @@ public class FileIO {
                         else {
                             zLoc -= sliceResolution;
                         }
+                    }
+                    
+                    if (baseInstanceNumber != -1) {
+                        String instanceStr = "" + (baseInstanceNumber + k);
+                        ((FileInfoDicom)(fBase[k])).setValue("0020,0013", instanceStr, instanceStr.length());
                     }
                 }
                 image.setFileInfo(fBase);
