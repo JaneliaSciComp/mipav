@@ -48,26 +48,47 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     /** Constraint factor for the cell shape: */
-    private double m_dLambda1 = 1;
+    private float m_fLambda1 = 1;
     /** Constraint factor for the cell size: */
-    private double m_dLambda2 = 1;
+    private float m_fLambda2 = 1;
     /** Constraint factor for sampling: */
-    private double m_dLambda3 = 1;
+    private float m_fLambda3 = 1;
     /** expected cell radius: */
-    private double m_dK = 110;
+    private float m_fK = 110;
     /** Previous snake results (X-position): */    
-    private double[] m_adX = null;
+    private float[] m_afX = null;
     /** Previous snake results (Y-position): */    
-    private double[] m_adY = null;
+    private float[] m_afY = null;
     /** Velocity vector (either the initial user-defined guess, or the
      * calculated velocity (new snake center - previous snake center): */
-    private Vector2d m_kVelocity = null;
+    private Vector2f m_kVelocity = null;
     /** boolean when true, use the velocit vector: */
     private boolean m_bUseVelocity = true;
     /** Previous snake polygon: */
     private Polygon m_kPreviousSnake = null;
-    /** counter: */
-    private int m_iCount = 0;
+    /** tolerance factor for snake evolution: */
+    private float m_fTolerance = 0.02f;
+
+    /** matrices that are initialized on the first frame, constant across
+     * frames. n is the number of points in the voi (snake) contour: */
+    /** Cos matrix: = cos( 2*pi*i/n) */
+    private Matrix m_kC = null;
+    /** Sin matrix: = sin( 2*pi*i/n) */
+    private Matrix m_kS = null;
+    /** H Matrix, equation 19: */
+    private Matrix m_kH = null;
+    /** G Matrix, equation 19: */
+    private Matrix m_kG = null;
+    /** Q Matrix, equation 24 (inverse calculated once per image sequence on
+     * the iniital frame): */
+    private Matrix m_kQ = null;
+
+    /** whether or not to dialate the cell contour before solving for the cell
+     * on the next frame (dilation helps capture cells that are moving
+     * fast)  */
+    private boolean m_bDilate = true;
+    /** Amount to dialate the cell (multiple of the cell radius)*/
+    private float m_fDilationFactor = 2.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -80,13 +101,15 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
      * @param  gvfIterations       iterations in calculating GVF field
      * @param  boundaryIterations  iterations in calculating boundary
      * @param  k                   GVF constant
-     * @param  smoothness          DOCUMENT ME!
+     * @param  smoothness          factor for smoothing points on contour (see AlgorithmAGVF)
      * @param  srcVOI              VOI that is to be evolved
      * @param  do25D               only applies to 3D, if true do slice by slice
      * @param  radiusConstraint    The user-defined cell radius
      * @param  shapeConstraint     The contribution of the shape constraint in the minimization
      * @param  sizeConstraint      The contribution of the size constraint in the minimization
      * @param  resamplingConstraint The contribution of the resampling constraint in the minimization
+     * @param  bDilate             Whether to dialate the cell radius before optimizing
+     * @param  fDilation           dilation factor (multiple of the cell radius)
      * @param  fDx                 The initial cell velocity (x-component)
      * @param  fDy                 The initial cell velocity (y-component)
      */
@@ -97,16 +120,20 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
                                      float radiusConstraint,
                                      float shapeConstraint, float sizeConstraint,
                                      float resamplingConstraint,
+                                     boolean bDilate,
+                                     float fDilation,
                                      float fDx, float fDy  ) {
         super(resultImage, srcImg, sigmas,
               gvfIterations, boundaryIterations, k,
               smoothness, srcVOI, do25D);
         /* set the constraint variables: */
-        m_dLambda1 = shapeConstraint;
-        m_dLambda2 = sizeConstraint;
-        m_dLambda3 = resamplingConstraint;
-        m_dK = radiusConstraint;
-        m_kVelocity = new Vector2d( fDx, fDy );
+        m_fLambda1 = shapeConstraint;
+        m_fLambda2 = sizeConstraint;
+        m_fLambda3 = resamplingConstraint;
+        m_fK = radiusConstraint;
+        m_bDilate = bDilate;
+        m_fDilationFactor = fDilation;
+        m_kVelocity = new Vector2f( fDx, fDy );
         if ( (fDx == 0) && (fDy == 0) )
         {
             m_bUseVelocity = false;
@@ -124,8 +151,8 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
      */
     public void finalize()
     {
-        m_adX = null;
-        m_adY = null;
+        m_afX = null;
+        m_afY = null;
         m_kVelocity = null;
         m_kPreviousSnake.reset();
         m_kPreviousSnake = null;
@@ -145,17 +172,14 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
                             float[] u, float[] v,
                             Polygon resultGon)
     {
-        if ( (m_adX != null) && (m_adY != null) )
-        {
-            System.err.println( "Previous SNAKE" + m_iCount++ );
-        }
-        else
-        {
-            System.err.println( "First SNAKE" );
-            m_kPreviousSnake = new Polygon();
-        }
         /* Get the number of points in the snake, iNPoints: */
         int iNPoints = xPoints.length - 2;
+        if ( (m_afX == null) && (m_afY == null) )
+        {
+            m_kPreviousSnake = new Polygon();
+            initSnakeConstants( iNPoints );
+        }
+
         /* Create matrix-representations (Nx1) for the snake x-position,
          * y-position, x-component of the GVF, y-component of the GVF, Cosine
          * and Sine functions of the number of points: */
@@ -163,17 +187,16 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         Matrix kY = new Matrix( iNPoints, 1 );
         Matrix kFx = new Matrix( iNPoints, 1 );
         Matrix kFy = new Matrix( iNPoints, 1 );
-        Matrix kC = new Matrix( iNPoints, 1 );
-        Matrix kS = new Matrix( iNPoints, 1 );
         int position;
+        float fX, fY;
         for ( int i = 0; i < iNPoints; i++ )
         {
             /* kX and kY store the x and y coordinates of the snake: */ 
-            if ( (m_adX != null) && (m_adY != null) )
+            if ( (m_afX != null) && (m_afY != null) )
             {
                 /* Not first snake, use snake from previous frame: */
-                kX.set( i, 0, m_adX[i] );
-                kY.set( i, 0, m_adY[i] );
+                kX.set( i, 0, m_afX[i] );
+                kY.set( i, 0, m_afY[i] );
             }
             else
             {
@@ -196,38 +219,30 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
             }
             else
             {
+                fX = (float)Math.min( xDim - 1, Math.max( kX.get(i,0), 0 ) );
+                fY = (float)Math.min( yDim - 1, Math.max( kY.get(i,0), 0 ) );
                 /* kFx and kFy store the GVF for each of the points on the snake
                  * (updated each time the snake points move) */
-                position = (int) kX.get(i,0) + (xDim * (int) kY.get(i,0));
+                position = (int) fX + (xDim * (int) fY);
                 kFx.set( i, 0,
                          getBilinear(position,
-                                     (float)(kX.get(i,0) - (int) kX.get(i,0)),
-                                     (float)(kY.get(i,0) - (int) kY.get(i,0)),
+                                     (float)(fX - (int) fX),
+                                     (float)(fY - (int) fY),
                                      extents, u) );
                 kFy.set( i, 0,
                          getBilinear(position,
-                                     (float)(kX.get(i,0) - (int) kX.get(i,0)),
-                                     (float)(kY.get(i,0) - (int) kY.get(i,0)),
+                                     (float)(fX - (int) fX),
+                                     (float)(fY - (int) fY),
                                      extents, v) );
             }
-
-            /* kC and kS are the cosine and sine functions of the snake
-             * point(i), calculated once and stored: */
-            kC.set( i, 0, Math.cos( (2 * Math.PI * i) / (float)iNPoints ) );
-            kS.set( i, 0, Math.sin( (2 * Math.PI * i) / (float)iNPoints ) );
         }
-        /* dXBar = the average x-position over all points on the snake: */
-        double dXBar = kX.norm1() / (float)iNPoints;
-        /* dYBar = the average y-position over all points on the snake: */
-        double dYBar = kY.norm1() / (float)iNPoints;
+        /* fXBar = the average x-position over all points on the snake: */
+        float fXBar = (float)(kX.norm1() / (float)iNPoints);
+        /* fYBar = the average y-position over all points on the snake: */
+        float fYBar = (float)(kY.norm1() / (float)iNPoints);
 
         /* Store the center point of the current snake: */
-        Point2d kCenter = new Point2d( dXBar, dYBar );
-
-        /* kXBarM is the value of dXBar replicated in a Nx1 matrix: */ 
-        Matrix kXBarM = new Matrix( iNPoints, 1 );
-        /* kYBarM is the value of dYBar replicated in a Nx1 matrix: */ 
-        Matrix kYBarM = new Matrix( iNPoints, 1 );
+        Point2f kCenter = new Point2f( fXBar, fYBar );
 
         /* Equation 11: */
         /* kR used to compute the average radius: */
@@ -236,16 +251,14 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         {
             /* Equation 11: */
             kR.set( i, 0,
-                          Math.sqrt( (kX.get( i, 0 ) - dXBar) *
-                                     (kX.get( i, 0 ) - dXBar) +
-                                     (kY.get( i, 0 ) - dYBar) *
-                                     (kY.get( i, 0 ) - dYBar)   ) );
-            kXBarM.set( i, 0, dXBar );
-            kYBarM.set( i, 0, dYBar );
+                    (float)Math.sqrt( (kX.get( i, 0 ) - fXBar) *
+                                      (kX.get( i, 0 ) - fXBar) +
+                                      (kY.get( i, 0 ) - fYBar) *
+                                      (kY.get( i, 0 ) - fYBar)   ) );
         }
         /* Equation 11: */
         /* dRBar is the averate radius over all points on the snake: */
-        double dRBar = kR.norm1() / (float)iNPoints;
+        float fRBar = (float)(kR.norm1() / (float)iNPoints);
 
         /* Equations 22, 23, 24: */
         /* kXr and kYr: */
@@ -253,8 +266,8 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         Matrix kYr = new Matrix( iNPoints, 1 );
         for ( int i = 0; i < iNPoints; i++ )
         {
-            kXr.set( i, 0, (kX.get( i, 0 ) - dXBar)/kR.get( i, 0 ) );
-            kYr.set( i, 0, (kY.get( i, 0 ) - dYBar)/kR.get( i, 0 ) );
+            kXr.set( i, 0, (kX.get( i, 0 ) - fXBar)/kR.get( i, 0 ) );
+            kYr.set( i, 0, (kY.get( i, 0 ) - fYBar)/kR.get( i, 0 ) );
         }
 
         /* Equations 15, 16: */
@@ -265,101 +278,75 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
         for ( int i = 0; i < iNPoints; i++ )
         {
             int iIndexI = ( i + 1 ) >= iNPoints ? 0: i + 1;
-            kDx.set( i, 0, dRBar * (kC.get( i, 0 ) - kC.get( iIndexI, 0 )) );
-            kDy.set( i, 0, dRBar * (kS.get( i, 0 ) - kS.get( iIndexI, 0 )) );
+            kDx.set( i, 0, fRBar * (m_kC.get( i, 0 ) - m_kC.get( iIndexI, 0 )) );
+            kDy.set( i, 0, fRBar * (m_kS.get( i, 0 ) - m_kS.get( iIndexI, 0 )) );
         }
 
-        /* Equations 17, 18, 19: */
-        /* Matrix kH and kG are NxN matrices: */
-        Matrix kH = new Matrix( iNPoints, iNPoints, 0 );
-        Matrix kG = new Matrix( iNPoints, iNPoints, 0 );
-        for ( int i = 0; i < iNPoints; i++ )
-        {
-            for ( int j = 0; j < iNPoints; j++ )
-            {
-                if ( i == j )
-                {
-                    kH.set( i, j, 2 );
-                    int iIndexI = ( i - 1 ) < 0 ? iNPoints - 1: i - 1;
-                    int iIndexJ = ( j - 1 ) < 0 ? iNPoints - 1: j - 1;
-                    kH.set( iIndexI, j, -1 );
-                    kH.set( i, iIndexJ, -1 );
+        float fDeltaT = 1.0f/((float)boundaryIterations);
 
-                    kG.set( i, j, 1 );
-                    kG.set( i, iIndexJ, -1 );
-                }
-            }
-        }        
-        /* Equation 24: Calculate and store Q matrix: */
-        double dDeltaT = 1.0/((double)boundaryIterations);
-        Matrix kQ = Matrix.identity( iNPoints, iNPoints );
-        kQ.timesEquals(  dDeltaT );
-        Matrix kLambda1 = Matrix.identity( iNPoints, iNPoints );
-        kLambda1.timesEquals( m_dLambda1 );
-        kQ.plusEquals( kLambda1 );
-        kH.timesEquals( m_dLambda3 );
-        kQ.plusEquals( kH );
-        kQ.invert();
-        
+        /* Temporary variables, declared outside the loop:*/
+        Matrix kXInc, kYInc, kDiffX, kDiffY;
+        Matrix kXTemp = new Matrix( iNPoints, 1 );
+        Matrix kYTemp = new Matrix( iNPoints, 1 );
+
         /* Iterate and minimize the constraints to find the optimal snake: */
         for (int t = 0; (t < boundaryIterations) && (!threadStopped); t++)
         {
-            /* Calculate lambda1 * ( xbar + rbar * C ): */
-            /* Calculate lambda1 * ( ybar + rbar * S ): */
-            Matrix kRC = kC.times( dRBar );
-            Matrix kRS = kS.times( dRBar );
-            Matrix kLXRC = kXBarM.plus( kRC );
-            Matrix kLYRC = kYBarM.plus( kRS );
-            kLXRC.timesEquals( m_dLambda1 );
-            kLYRC.timesEquals( m_dLambda1 );
-            
-            /* Calculate lambda2 * ( rbar - K ) * xr: */
-            /* Calculate lambda2 * ( rbar - K ) * yr: */
-            kXr.timesEquals( m_dLambda2 * ( dRBar - m_dK ) );
-            kYr.timesEquals( m_dLambda2 * ( dRBar - m_dK ) );
-
-            /* Calculate lambda3 * G * dx: */
-            kDx = kG.times( kDx ); 
-            kDx.timesEquals( m_dLambda3 );
-            /* Calculate lambda3 * G * dy: */
-            kDy = kG.times( kDy ); 
-            kDy.timesEquals( m_dLambda3 );
-
             /* Xt+1 = Q-1 ( 1/dt * Xt + fx + lambda1 * (xbar + rbar * C) -
              * lambda2 (rbar - k) * xr + lambda3 * G * dx ) */
-            Matrix kXInc = kX.times( dDeltaT );
-            kXInc.plusEquals( kFx );
-            kXInc.plusEquals( kLXRC );
-            kXInc.minusEquals( kXr );
-            kXInc.plusEquals( kDx );
-            kXInc = kQ.times( kXInc );
-
             /* Yt+1 = Q-1 ( 1/dt * Yt + fy + lambda1 * (ybar + rbar * S) -
              * lambda2 (rbar - k) * yr + lambda3 * G * dy ) */
-            Matrix kYInc = kY.times( dDeltaT );
-            kYInc.plusEquals( kFy );
-            kYInc.plusEquals( kLYRC );
-            kYInc.minusEquals( kYr );
-            kYInc.plusEquals( kDy );
-            kYInc = kQ.times( kYInc );
 
-            /* Copy into X, Y: */
-            try {
-                kX.finalize();
-                System.gc();
-            } catch ( Throwable error ) {}
-            kX = kXInc;
-            try {
-                kY.finalize();
-                System.gc();
-            } catch ( Throwable error ) {}
-            kY = kYInc;
-            
-            /* Update vars: */
-            dXBar = kX.norm1() / (float)iNPoints;
-            dYBar = kY.norm1() / (float)iNPoints;
+            /* Calculate lambda3 * G * dx: */
+            kDx = m_kG.times( kDx ); 
+            /* Calculate lambda3 * G * dy: */
+            kDy = m_kG.times( kDy ); 
+
             for ( int i = 0; i < iNPoints; i++ )
             {
+                /* 1 / dt * xt + fx + 
+                   lambda1 * ( xbar + rbar * C ) -
+                   lambda2 * ( rbar - K ) * xr + 
+                   lambda3 * G * dx */
+                kXTemp.set( i, 0, 
+                            kX.get( i, 0 ) * fDeltaT + kFx.get( i, 0 ) + 
+                            m_fLambda1 * ( fXBar + fRBar * m_kC.get( i, 0 ) ) -
+                            m_fLambda2 * ( fRBar - m_fK ) * kXr.get( i, 0 ) + 
+                            kDx.get( i, 0 ) );
+                /* 1 / dt * yt + fy + 
+                   lambda1 * ( ybar + rbar * S ) -
+                   lambda2 * ( rbar - K ) * yr +
+                   lambda3 * G * dy */
+                kYTemp.set( i, 0,
+                            kY.get( i, 0 ) * fDeltaT + kFy.get( i, 0 ) + 
+                            m_fLambda1 * ( fYBar + fRBar * m_kS.get( i, 0 ) ) -
+                            m_fLambda2 * ( fRBar - m_fK ) * kYr.get( i, 0 ) + 
+                            kDy.get( i, 0 ) );
+            }
+
+            kXInc = m_kQ.times( kXTemp );
+            kYInc = m_kQ.times( kYTemp );
+
+            /* Calculate difference vector, to see if the snake has moved <
+             * tolerance: */
+            kDiffX = kXInc.minus( kX );
+            kDiffY = kYInc.minus( kY );
+
+            if ( ( (kDiffX.norm1()/(float)iNPoints) < m_fTolerance ) &&
+                 ( (kDiffY.norm1()/(float)iNPoints) < m_fTolerance ) )
+            {
+                break;
+            }
+
+            /* Update vars: */
+            fXBar = (float)(kXInc.norm1() / (float)iNPoints);
+            fYBar = (float)(kYInc.norm1() / (float)iNPoints);
+            for ( int i = 0; i < iNPoints; i++ )
+            {
+                /* Copy into X, Y: */
+                kX.set( i, 0, kXInc.get( i, 0 ) );
+                kY.set( i, 0, kYInc.get( i, 0 ) );
+
                 /* Constrained Gradient Vector Flow: Check if the new point is
                  * inside the initial snake, if so set the value of the Fx and
                  * Fy to be the velocity vector, otherwise use the calculated
@@ -371,65 +358,133 @@ public class AlgorithmCellTrackingAGVF extends AlgorithmAGVF {
                 }
                 else
                 {
-                    position = (int) kX.get(i,0) + (xDim * (int) kY.get(i,0));
+                    fX = (float)Math.min( xDim - 1, Math.max( kX.get(i,0), 0 ) );
+                    fY = (float)Math.min( yDim - 1, Math.max( kY.get(i,0), 0 ) );
+                    /* kFx and kFy store the GVF for each of the points on the snake
+                     * (updated each time the snake points move) */
+                    position = (int) fX + (xDim * (int) fY);
                     kFx.set( i, 0,
                              getBilinear(position,
-                                         (float)(kX.get(i,0) - (int) kX.get(i,0)),
-                                         (float)(kY.get(i,0) - (int) kY.get(i,0)),
+                                         (float)(fX - (int) fX),
+                                         (float)(fY - (int) fY),
                                          extents, u) );
                     kFy.set( i, 0,
                              getBilinear(position,
-                                         (float)(kX.get(i,0) - (int) kX.get(i,0)),
-                                         (float)(kY.get(i,0) - (int) kY.get(i,0)),
+                                         (float)(fX - (int) fX),
+                                         (float)(fY - (int) fY),
                                          extents, v) );
                     kR.set( i, 0,
-                            Math.sqrt( (kX.get( i, 0 ) - dXBar) *
-                                       (kX.get( i, 0 ) - dXBar) +
-                                       (kY.get( i, 0 ) - dYBar) *
-                                       (kY.get( i, 0 ) - dYBar)   ) );
-                    kXBarM.set( i, 0, dXBar );
-                    kYBarM.set( i, 0, dYBar );
+                            (float)Math.sqrt( (kX.get( i, 0 ) - fXBar) *
+                                              (kX.get( i, 0 ) - fXBar) +
+                                              (kY.get( i, 0 ) - fYBar) *
+                                              (kY.get( i, 0 ) - fYBar)   ) );
+
+                    kXr.set( i, 0, (kX.get( i, 0 ) - fXBar)/kR.get( i, 0 ) );
+                    kYr.set( i, 0, (kY.get( i, 0 ) - fYBar)/kR.get( i, 0 ) );
                 }
             }
-            dRBar = kR.norm1() / (float)iNPoints;
-            
-            for ( int i = 0; i < iNPoints; i++ )
-            {
-                kXr.set( i, 0, (kX.get( i, 0 ) - dXBar)/kR.get( i, 0 ) );
-                kYr.set( i, 0, (kY.get( i, 0 ) - dYBar)/kR.get( i, 0 ) );
-            }
+            fRBar = (float)(kR.norm1() / (float)iNPoints);
             for ( int i = 0; i < iNPoints; i++ )
             {
                 int iIndexI = ( i + 1 ) >= iNPoints ? 0: i + 1;
-                kDx.set( i, 0, dRBar * (kC.get( i, 0 ) - kC.get( iIndexI, 0 )) );
-                kDy.set( i, 0, dRBar * (kS.get( i, 0 ) - kS.get( iIndexI, 0 )) );
+                kDx.set( i, 0, fRBar * (m_kC.get( i, 0 ) - m_kC.get( iIndexI, 0 )) );
+                kDy.set( i, 0, fRBar * (m_kS.get( i, 0 ) - m_kS.get( iIndexI, 0 )) );
             }
         }
 
+        /* Calculate new centers: */
+        fXBar = (float)(kX.norm1() / (float)iNPoints);
+        fYBar = (float)(kY.norm1() / (float)iNPoints);
+
         /* Store the final results to initialize snake for the next frame: */
-        if ( m_adX == null )
+        if ( m_afX == null )
         {
-            m_adX = new double[ iNPoints ];
-            m_adY = new double[ iNPoints ];
+            m_afX = new float[ iNPoints ];
+            m_afY = new float[ iNPoints ];
         }
         /* Copy the final results into the snake: */
         resultGon.reset();
         m_kPreviousSnake.reset();
+        Vector2f kVec = new Vector2f();
+        float fLength;
         for ( int i = 0; i < iNPoints; i++ )
         {
             resultGon.addPoint(Math.round((float)kX.get(i, 0)),
                                Math.round((float)kY.get(i, 0)));
             m_kPreviousSnake.addPoint(Math.round((float)kX.get(i, 0)),
                                       Math.round((float)kY.get(i, 0)));
-            m_adX[i] = kX.get(i, 0);
-            m_adY[i] = kY.get(i, 0);
+            if ( m_bDilate )
+            {
+                kVec.x = (float)kX.get(i,0) - fXBar;
+                kVec.y = (float)kY.get(i,0) - fYBar;
+                fLength = kVec.length();
+                kVec.normalize();
+                
+                m_afX[i] = fXBar + kVec.x * fLength * m_fDilationFactor;
+                m_afY[i] = fYBar + kVec.y * fLength * m_fDilationFactor;
+            }
+            else 
+            {
+                m_afX[i] = (float)kX.get(i, 0);
+                m_afY[i] = (float)kY.get(i, 0);
+            }
         }
         /* update velocity: */
-        dXBar = kX.norm1() / (float)iNPoints;
-        dYBar = kY.norm1() / (float)iNPoints;
-        m_kVelocity.x = dXBar - kCenter.x;
-        m_kVelocity.y = dYBar - kCenter.y;
+        m_kVelocity.x = fXBar - kCenter.x;
+        m_kVelocity.y = fYBar - kCenter.y;
         m_kVelocity.normalize();
         return;
     }
+
+    /** Initializes the H, G, and Q matrices once per image sequence on the
+     * first frame. The matrix inverse only has to be computed once. 
+     * @param iNPoints, the number of points in the initial VOI (snake)
+     */
+    private void initSnakeConstants( int iNPoints )
+    {
+        /* The cosine and sine matrices:  */
+        m_kC = new Matrix( iNPoints, 1 );
+        m_kS = new Matrix( iNPoints, 1 );
+
+        /* Equations 17, 18, 19: */
+        /* Matrix m_kH and m_kG are NxN matrices: */
+        m_kH = new Matrix( iNPoints, iNPoints, 0 );
+        m_kG = new Matrix( iNPoints, iNPoints, 0 );
+        for ( int i = 0; i < iNPoints; i++ )
+        {
+            /* m_kC and m_kS are the cosine and sine functions of the snake
+             * point(i), calculated once and stored: */
+            m_kC.set( i, 0, (float)Math.cos( (2 * Math.PI * i) / (float)iNPoints ) );
+            m_kS.set( i, 0, (float)Math.sin( (2 * Math.PI * i) / (float)iNPoints ) );
+
+            for ( int j = 0; j < iNPoints; j++ )
+            {
+                if ( i == j )
+                {
+                    m_kH.set( i, j, 2 );
+                    int iIndexI = ( i - 1 ) < 0 ? iNPoints - 1: i - 1;
+                    int iIndexJ = ( j - 1 ) < 0 ? iNPoints - 1: j - 1;
+                    m_kH.set( iIndexI, j, -1 );
+                    m_kH.set( i, iIndexJ, -1 );
+
+                    m_kG.set( i, j, 1 );
+                    m_kG.set( i, iIndexJ, -1 );
+                }
+            }
+        }        
+        /* pre-multiply: lambda3 * G: */
+        m_kG.timesEquals( m_fLambda3 );
+
+        /* Equation 24: Calculate and store Q matrix: */
+        float fDeltaT = 1.0f/((float)boundaryIterations);
+        m_kQ = Matrix.identity( iNPoints, iNPoints );
+        m_kQ.timesEquals(  fDeltaT );
+        Matrix kLambda1 = Matrix.identity( iNPoints, iNPoints );
+        kLambda1.timesEquals( m_fLambda1 );
+        m_kQ.plusEquals( kLambda1 );
+        m_kH.timesEquals( m_fLambda3 );
+        m_kQ.plusEquals( m_kH );
+        m_kQ.invert();
+    }
+
 }
