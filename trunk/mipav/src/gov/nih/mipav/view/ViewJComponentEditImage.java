@@ -874,12 +874,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public String commitPaintToMask() {
         AlgorithmMask maskAlgo = null;
-        Color fillColor;
+        Color fillColor = null;
         ModelImage imageACopy = null, imageBCopy = null;
         int length;
         int colorFactor;
         double buffer[];
         double bufferI[];
+        int lengthShort;
+        short bufferShort[];
+        byte red, green, blue;
         int i;
 
         imageACopy = (ModelImage) imageA.clone();
@@ -931,6 +934,144 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maskAlgo.setActiveImage(false);
             maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
+        
+        if (imageACopy != null) {
+            if (imageACopy.getType() != ModelStorageBase.SHORT) {
+                try {
+                    if (imageACopy.isColorImage()) {
+                        colorFactor = 4;
+                    }
+                    else {
+                        colorFactor = 1;
+                    }
+                    length = imageACopy.getSliceSize() * colorFactor;
+                    if (imageACopy.getNDims() >= 3) {
+                        length = length * imageACopy.getExtents()[2];
+                    }
+    
+                    if (imageACopy.getNDims() == 4) {
+                        length = length * imageACopy.getExtents()[3];
+                    }
+    
+                    buffer = new double[length];
+                    if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
+                            (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                       bufferI = new double[length];
+                       imageACopy.exportDComplexData(0, length, buffer, bufferI);
+                       imageACopy.reallocate(ModelStorageBase.SHORT);
+                       for (i = 0; i < length; i++) {
+                           buffer[i] = Math.round(Math.sqrt(buffer[i]*buffer[i] +
+                                                            bufferI[i]*bufferI[i]));
+                       }
+                       imageACopy.importData(0, buffer, true);
+                   }
+                    else if (imageA.isColorImage()) {
+                        imageACopy.exportData(0, length, buffer); // locks and releases lock
+                        imageACopy.reallocate(ModelStorageBase.SHORT);  
+                        lengthShort = length/4;
+                        bufferShort = new short[lengthShort];
+                        red = (byte) Math.round(fillColor.getRed());
+                        green = (byte) Math.round(fillColor.getGreen());
+                        blue = (byte) Math.round(fillColor.getBlue());
+                        for (i = 0; i < lengthShort; i++) {
+                            if ((Math.round((byte)buffer[4*i+1]) == red) &&
+                                (Math.round((byte)buffer[4*i+2]) == green) &&
+                                (Math.round((byte)buffer[4*i+3]) == blue)) {
+                                bufferShort[i] = 1;
+                            }
+                        }
+                        imageACopy.importData(0, bufferShort, true);
+                    }
+                    else {
+                        imageACopy.exportData(0, length, buffer); // locks and releases lock
+                        imageACopy.reallocate(ModelStorageBase.SHORT);
+                        imageACopy.importData(0, buffer, true);
+                    }
+                } catch (IOException error) {
+                    buffer = null;
+                    MipavUtil.displayError("IO Exception");
+                    if (imageACopy != null) {
+                        imageACopy.disposeLocal();
+                        imageACopy = null;
+                    }
+                    return null;
+                } catch (OutOfMemoryError e) {
+                    buffer = null;
+                    MipavUtil.displayError("Out of memory error");
+                    if (imageACopy != null) {
+                        imageACopy.disposeLocal();
+                        imageACopy = null;
+                    }
+                    return null;
+                }
+            } // if (imageACopy.getType != ModelStorageBase.SHORT)
+        } else {
+            if (imageBCopy.getType() != ModelStorageBase.SHORT) {
+                try {
+                    if (imageBCopy.isColorImage()) {
+                        colorFactor = 4;
+                    }
+                    else {
+                        colorFactor = 1;
+                    }
+                    length = imageBCopy.getSliceSize() * colorFactor;
+                    if (imageBCopy.getNDims() >= 3) {
+                        length = length * imageBCopy.getExtents()[2];
+                    }
+    
+                    if (imageBCopy.getNDims() == 4) {
+                        length = length * imageBCopy.getExtents()[3];
+                    }
+    
+                    buffer = new double[length];
+                    if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
+                            (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
+                       bufferI = new double[length];
+                       imageBCopy.exportDComplexData(0, length, buffer, bufferI);
+                       imageBCopy.reallocate(ModelStorageBase.SHORT);
+                       imageBCopy.importData(0, buffer, true);
+                    }
+                    else if (imageB.isColorImage()) {
+                        imageBCopy.exportData(0, length, buffer); // locks and releases lock
+                        imageBCopy.reallocate(ModelStorageBase.SHORT);  
+                        lengthShort = length/4;
+                        bufferShort = new short[lengthShort];
+                        red = (byte) Math.round(fillColor.getRed());
+                        green = (byte) Math.round(fillColor.getGreen());
+                        blue = (byte) Math.round(fillColor.getBlue());
+                        for (i = 0; i < lengthShort; i++) {
+                            if ((Math.round((byte)buffer[4*i+1]) == red) &&
+                                (Math.round((byte)buffer[4*i+2]) == green) &&
+                                (Math.round((byte)buffer[4*i+3]) == blue)) {
+                                bufferShort[i] = 1;
+                            }
+                        }
+                        imageBCopy.importData(0, bufferShort, true);
+                    }
+                    else {
+                        imageBCopy.exportData(0, length, buffer); // locks and releases lock
+                        imageBCopy.reallocate(ModelStorageBase.SHORT);
+                        imageBCopy.importData(0, buffer, true);
+                    }
+                } catch (IOException error) {
+                    buffer = null;
+                    MipavUtil.displayError("IO Exception");
+                    if (imageBCopy != null) {
+                        imageBCopy.disposeLocal();
+                        imageBCopy = null;
+                    }
+                    return null;
+                } catch (OutOfMemoryError e) {
+                    buffer = null;
+                    MipavUtil.displayError("Out of memory error");
+                    if (imageBCopy != null) {
+                        imageBCopy.disposeLocal();
+                        imageBCopy = null;
+                    }
+                    return null;
+                }
+            } // if (imageBCopy.getType != ModelStorageBase.SHORT)
+        }
 
         try {
 
@@ -966,108 +1107,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if (imageACopy != null) {
-            if (imageACopy.getType() != ModelStorageBase.SHORT) {
-                try {
-                    if (imageACopy.isColorImage()) {
-                        colorFactor = 4;
-                    }
-                    else {
-                        colorFactor = 1;
-                    }
-                    length = imageACopy.getSliceSize() * colorFactor;
-                    if (imageACopy.getNDims() >= 3) {
-                        length = length * imageACopy.getExtents()[2];
-                    }
-    
-                    if (imageACopy.getNDims() == 4) {
-                        length = length * imageACopy.getExtents()[3];
-                    }
-    
-                    buffer = new double[length];
-                    if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
-                            (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
-                       bufferI = new double[length];
-                       imageACopy.exportDComplexData(0, length, buffer, bufferI);
-                       imageACopy.reallocate(ModelStorageBase.SHORT);
-                       for (i = 0; i < length; i++) {
-                           buffer[i] = Math.round(Math.sqrt(buffer[i]*buffer[i] +
-                                                            bufferI[i]*bufferI[i]));
-                       }
-                       imageACopy.importData(0, buffer, true);
-                   }
-                    else {
-                        imageACopy.exportData(0, length, buffer); // locks and releases lock
-                        imageACopy.reallocate(ModelStorageBase.SHORT);
-                        imageACopy.importData(0, buffer, true);
-                    }
-                } catch (IOException error) {
-                    buffer = null;
-                    MipavUtil.displayError("IO Exception");
-                    if (imageACopy != null) {
-                        imageACopy.disposeLocal();
-                        imageACopy = null;
-                    }
-                    return null;
-                } catch (OutOfMemoryError e) {
-                    buffer = null;
-                    MipavUtil.displayError("Out of memory error");
-                    if (imageACopy != null) {
-                        imageACopy.disposeLocal();
-                        imageACopy = null;
-                    }
-                    return null;
-                }
-            } // if (imageACopy.getType != ModelStorageBase.SHORT)
             return imageACopy.getImageName();
         } else {
-            if (imageBCopy.getType() != ModelStorageBase.SHORT) {
-                try {
-                    if (imageBCopy.isColorImage()) {
-                        colorFactor = 4;
-                    }
-                    else {
-                        colorFactor = 1;
-                    }
-                    length = imageBCopy.getSliceSize() * colorFactor;
-                    if (imageBCopy.getNDims() >= 3) {
-                        length = length * imageBCopy.getExtents()[2];
-                    }
-    
-                    if (imageBCopy.getNDims() == 4) {
-                        length = length * imageBCopy.getExtents()[3];
-                    }
-    
-                    buffer = new double[length];
-                    if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
-                            (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
-                       bufferI = new double[length];
-                       imageBCopy.exportDComplexData(0, length, buffer, bufferI);
-                       imageBCopy.reallocate(ModelStorageBase.SHORT);
-                       imageBCopy.importData(0, buffer, true);
-                   }
-                    else {
-                        imageBCopy.exportData(0, length, buffer); // locks and releases lock
-                        imageBCopy.reallocate(ModelStorageBase.SHORT);
-                        imageBCopy.importData(0, buffer, true);
-                    }
-                } catch (IOException error) {
-                    buffer = null;
-                    MipavUtil.displayError("IO Exception");
-                    if (imageBCopy != null) {
-                        imageBCopy.disposeLocal();
-                        imageBCopy = null;
-                    }
-                    return null;
-                } catch (OutOfMemoryError e) {
-                    buffer = null;
-                    MipavUtil.displayError("Out of memory error");
-                    if (imageBCopy != null) {
-                        imageBCopy.disposeLocal();
-                        imageBCopy = null;
-                    }
-                    return null;
-                }
-            } // if (imageBCopy.getType != ModelStorageBase.SHORT)
             return imageBCopy.getImageName();
         }
     }
