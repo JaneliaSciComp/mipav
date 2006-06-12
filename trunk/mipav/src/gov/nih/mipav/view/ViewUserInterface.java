@@ -1621,13 +1621,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // if open failed, then imageNames will be null
         if (openImageNames == null) {
             return;
-        } else {
-
-            // here we will add this to the recently opened image list
-            // because we now know if this was a multifile as well as the dimensionality
-            int numDim = openFile.getImage().getExtents().length;
-
-        }
+        } 
 
         boolean sizeChanged = false;
 
