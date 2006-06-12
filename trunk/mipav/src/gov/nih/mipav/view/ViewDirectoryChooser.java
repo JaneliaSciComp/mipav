@@ -12,6 +12,8 @@ import javax.swing.*;
 
 
 /**
+ * THIS CLASS IS MOST LIKELY TO BE DESTROYED!!!!!!!!!!
+ * 
  * Displays a chooser for selecting a directory.
  *
  * @version  0.1 Dec. 6, 2001
