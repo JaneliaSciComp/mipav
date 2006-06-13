@@ -937,7 +937,22 @@ public class VOIHandler extends JComponent
             }
 
             return;
+        } else if (mode == ViewJComponentEditImage.RETRACE) {
+            Graphics g = compImage.getGraphics();
+            for (i = 0; i < nVOI; i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(compImage.getSlice()))).retraceContour(compImage.getZoomX(),
+                        compImage.getZoomY(), compImage.getResolutionX(), compImage.getResolutionY(),
+                        compImage.getActiveImage().getFileInfo(0).getResolutions(), xS, yS,
+                        g);
+                    compImage.setMode(ViewJComponentEditImage.RETRACE);
+                    break;
+                }
+            }
+            g.dispose();
+            return;
         }
+
         else if (mode == compImage.PAINT_VOI) {
             compImage.performPaint(mouseEvent, mouseMods == MouseEvent.BUTTON3_MASK);
             compImage.getActiveImage().notifyImageDisplayListeners();

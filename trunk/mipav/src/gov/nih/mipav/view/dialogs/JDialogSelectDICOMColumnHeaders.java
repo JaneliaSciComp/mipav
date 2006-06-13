@@ -188,7 +188,7 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
         leftTableModel.addColumn("Value", tagsVector);
 
         // todo: un-hard-code this value
-        leftTable.getColumn("Key").setMaxWidth(70);
+        leftTable.getColumn("Key").setPreferredWidth(70);
 
         JPanel mainPanel = new JPanel(new GridLayout(1, 1));
 
