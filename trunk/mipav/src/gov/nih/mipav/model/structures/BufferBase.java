@@ -31,201 +31,201 @@ public abstract class BufferBase implements Serializable {
     /**
      * Clean up memory.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  indicates error in while finalizing.
      */
     protected abstract void finalize() throws Throwable;
 
     /**
-     * DOCUMENT ME!
+     * Gets a Number object at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  Number object of the data
      */
     protected abstract Number get(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a boolean value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  boolean value of the data
      */
     protected abstract boolean getBoolean(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a byte value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  byte value of the data
      */
     protected abstract byte getByte(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a double value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  double value of the data
      */
     protected abstract double getDouble(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a float value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  float value of the data
      */
     protected abstract float getFloat(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a int value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  int value of the data
      */
     protected abstract int getInt(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a long value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  long value of the data
      */
     protected abstract long getLong(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a short value at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  short value of the data
      */
     protected abstract short getShort(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a short value (unsigned byte[0:255]) at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  short(unsigned byte[0:255]) value of the data
      */
     protected abstract short getUByte(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a long value (unsigned int) at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  long(unsigned int) value of the data
      */
     protected abstract long getUInt(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets a int value (unsigned short) at position in the data array.
      *
-     * @param   position  DOCUMENT ME!
+     * @param   position  index into the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  int(unsigned short) value of the data
      */
     protected abstract int getUShort(int position);
 
     /**
-     * DOCUMENT ME!
+     * Gets the length of the data array.
      *
-     * @return  DOCUMENT ME!
+     * @return  the length of the data array
      */
     protected abstract int length();
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void set(int position, Number value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setBoolean(int position, boolean value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setByte(int position, byte value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setDouble(int position, double value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setFloat(int position, float value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setInt(int position, int value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setLong(int position, long value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setShort(int position, short value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setUByte(int position, short value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setUInt(int position, long value);
 
     /**
-     * DOCUMENT ME!
+     * Sets the data array at the specified index to the specified value.
      *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
+     * @param  position  position in data array
+     * @param  value     the new data value to be placed in the data array
      */
     protected abstract void setUShort(int position, int value);
 }
