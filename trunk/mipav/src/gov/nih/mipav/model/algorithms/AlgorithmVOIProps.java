@@ -646,6 +646,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                              String.valueOf(tmpMinorAxis[0]));
 
                     Point3Df centerOfMass = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass();
+                    centerOfMass.x *= srcImage.getFileInfo(0).getResolutions()[0];
+                    centerOfMass.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                    if (srcImage.getNDims() > 2) {
+                        centerOfMass.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
                     String comStr = centerOfMass.x + "\t" + centerOfMass.y + "\t" + centerOfMass.z;
                     statProperty.setProperty(statProperty.centerDescription + "0;" + r, comStr);
 
@@ -870,6 +876,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 statProperty.setProperty(statProperty.majorAxisDescription + "Total", String.valueOf(totalMajorAxis));
                 statProperty.setProperty(statProperty.minorAxisDescription + "Total", String.valueOf(totalMinorAxis));
 
+                totalC.x *= srcImage.getFileInfo(0).getResolutions()[0];
+                totalC.y *= srcImage.getFileInfo(0).getResolutions()[1];
+
                 String comStr = totalC.x + "\t" + totalC.y;
 
                 statProperty.setProperty(statProperty.centerDescription + "Total", comStr);
@@ -926,6 +935,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(statProperty.minorAxisDescription + "0;", String.valueOf(tmpMinorAxis[0]));
 
             Point3Df selectedCOM = selectedVOI.getCenterOfMass();
+
+            selectedCOM.x *= srcImage.getFileInfo(0).getResolutions()[0];
+            selectedCOM.y *= srcImage.getFileInfo(0).getResolutions()[1];
+
             String comStr = selectedCOM.x + "\t" + selectedCOM.y;
             statProperty.setProperty(statProperty.centerDescription + "0;", comStr);
 
@@ -1228,6 +1241,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statProperty.setProperty( statProperty.minorAxisDescription + end, String.valueOf( tmpMinorAxis[0] ) );
 
                     Point3Df centerOfMass = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass();
+                    centerOfMass.x *= srcImage.getFileInfo(0).getResolutions()[0];
+                    centerOfMass.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                    if (srcImage.getNDims() > 2) {
+                        centerOfMass.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                    }
+
                     String comStr = centerOfMass.x + "\t" + centerOfMass.y + "\t" + centerOfMass.z;
 
                     statProperty.setProperty( statProperty.centerDescription + end, comStr );
@@ -1458,6 +1477,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
             }
             if ( showTotals == true ) {
+
+                totalC.x *= srcImage.getFileInfo(0).getResolutions()[0];
+                totalC.y *= srcImage.getFileInfo(0).getResolutions()[1];
+                if (srcImage.getNDims() > 2) {
+                    totalC.z *= srcImage.getFileInfo(0).getResolutions()[2];
+                }
+
                 String comStr = totalC.x + "\t" + totalC.y + "\t" + totalC.z;
 
                 statProperty.setProperty( statProperty.axisDescription + "Total", String.valueOf( totalAxis ) );
@@ -1525,6 +1551,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty( statProperty.minorAxisDescription, String.valueOf( tmpMinorAxis[0] ) );
 
             Point3Df selectedCOM = selectedVOI.getCenterOfMass();
+            selectedCOM.x *= srcImage.getFileInfo(0).getResolutions()[0];
+            selectedCOM.y *= srcImage.getFileInfo(0).getResolutions()[1];
+            if (srcImage.getNDims() > 2) {
+                selectedCOM.z *= srcImage.getFileInfo(0).getResolutions()[2];
+            }
+
             String comStr = selectedCOM.x + "\t" + selectedCOM.y + "\t" + selectedCOM.z;
 
             statProperty.setProperty( statProperty.centerDescription, comStr );
