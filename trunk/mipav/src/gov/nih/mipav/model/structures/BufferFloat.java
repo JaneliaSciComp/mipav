@@ -61,7 +61,7 @@ public class BufferFloat extends BufferBase {
     }
 
     /**
-     * Gets the data in byte format.
+     * Gets the data in Number format.
      *
      * @param   position  position in dataArray
      *
@@ -189,16 +189,9 @@ public class BufferFloat extends BufferBase {
 
 
     /**
-     * Set methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
-
-    /**
      * Sets the data in float format.
      *
-     * @param  position  position in dataArray
+     * @param  position  position in data array
      * @param  value     the new data value to be placed in the data array
      */
     protected final void set(int position, Number value) {
@@ -208,7 +201,7 @@ public class BufferFloat extends BufferBase {
     /**
      * Sets the data in float format.
      *
-     * @param  position  position in dataArray
+     * @param  position  position in data array
      * @param  value     the new data value to be placed in the data array
      */
     protected final void set(int position, float value) {
