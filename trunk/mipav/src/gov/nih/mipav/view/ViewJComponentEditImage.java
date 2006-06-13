@@ -2174,21 +2174,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
 
-        if (mode == RETRACE) { // (mouseEvent.isControlDown() ) {
-            Graphics g = getGraphics();
-            for (i = 0; i < nVOI; i++) {
-                if (VOIs.VOIAt(i).isActive()) {
-                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).retraceContour(getZoomX(),
-                        getZoomY(), resolutionX, resolutionY, imageActive.getFileInfo(0).getResolutions(), xS, yS,
-                        g);
-                    setMode(RETRACE);
-                    break;
-                }
-            }
-            g.dispose();
-            return;
-        }
-        else if (mode == DROPPER_PAINT) {
+
+        if (mode == DROPPER_PAINT) {
             if (imageActive.isColorImage() == true) {
                 dropperColor = new Color( (int) imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1],
                                          (int) imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2],
@@ -2262,7 +2249,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         } else if (mode == RECTANGLE || mode == ELLIPSE || mode == LINE || mode == RECTANGLE3D || mode == POINT_VOI
             || mode == POLYLINE || mode == LEVELSET || mode == PAINT_VOI || mode == DROPPER_PAINT
             || mode == ERASER_PAINT || mode == QUICK_LUT || mode == PROTRACTOR || mode == LIVEWIRE
-            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI || mode == MOVE || mode == MOVE_POINT || mode == NEW_POINT) {
+            || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI || mode == MOVE || mode == MOVE_POINT || mode == NEW_POINT
+            || mode == RETRACE) {
             g.dispose();
             return;
         }
@@ -2575,19 +2563,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             ( (ViewJFrameImage) ( (ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars(
                 (short) xS, (short) yS, (short) z, value);
             imageActive.notifyImageDisplayListeners(null, true);
-        }
-        else if (mode == RETRACE) {
-            nVOI = VOIs.size();
-            for (i = 0; i < nVOI; i++) {
-                if (VOIs.VOIAt(i).isActive()) {
-                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).trimPoints(Preferences.getTrim(),
-                        true);
-                    ( (VOIContour) (VOIs.VOIAt(i).getActiveContour(slice))).resetIndex();
-
-                    break;
-                }
-            }
-            imageActive.notifyImageDisplayListeners();
         }
         else if (mode == QUICK_LUT) {
             int wS, hS;

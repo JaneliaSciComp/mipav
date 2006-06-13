@@ -317,6 +317,7 @@ public class JDialogVOIStatistics extends JDialogBase
                             str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
                             logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                         } else {
+                            System.err.println("YO");
                             logModel.addColumn(VOIStatisticList.statisticDescription[i]);
                         }
                     }
@@ -368,7 +369,6 @@ public class JDialogVOIStatistics extends JDialogBase
 
                         // for each column in the row, print the statistic:
                         for (int k = 0; k < statisticDescription.length; k++) {
-
                             if (logModel.getColumnBaseIndex(VOIStatisticList.statisticDescription[k]) != -1) {
                                 count++;
                             }
@@ -392,10 +392,13 @@ public class JDialogVOIStatistics extends JDialogBase
                                         totalData[count] = temp;
                                     }
                                 } else {
-                                    rowData[count] = properties.getProperty(statisticDescription[k] + end);
 
+                                    rowData[count] = properties.getProperty(statisticDescription[k] + end);
+                                    rowData[count] = rowData[count].replaceAll("\t", " ");
+                                    //System.err.println("ROW DATA of [" + count + "] is: " + rowData[count]);
                                     if (outputOptionsPanel.isShowTotals()) {
                                         totalData[count] = properties.getProperty(statisticDescription[k] + "Total");
+                                        totalData[count] = totalData[count].replaceAll("\t"," ");
                                     }
                                 }
                             }
@@ -1277,6 +1280,7 @@ public class JDialogVOIStatistics extends JDialogBase
      * @param  logentry  DOCUMENT ME!
      */
     private void writeLogfileEntry(String logentry) {
+        System.err.println(logentry);
         logFileText.append(logentry);
         logFileText.append('\n');
     }
