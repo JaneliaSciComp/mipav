@@ -10,8 +10,8 @@ import gov.nih.mipav.view.dialogs.*;
 import java.io.*;
 
 import java.util.*;
-
 import javax.swing.*;
+import java.text.*;
 
 
 /**
@@ -58,6 +58,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
     /** DOCUMENT ME! */
     private JPanelStatisticsList statisticList; // collection of items to perform stats on
+    
+    /** */
+    private NumberFormat nf;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -68,7 +71,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  srcImg  image model that contain the VOI
      */
     public AlgorithmVOIProps(ModelImage srcImg) {
-        this(srcImg, false);
+        this(srcImg, false); 
     }
 
     /**
@@ -93,6 +96,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      */
     public AlgorithmVOIProps(ModelImage srcImg, JPanelStatisticsList list, boolean sliceBySlice, int rangeFlag) {
 
+        nf = NumberFormat.getInstance();
+        nf.setMaximumFractionDigits(4);
+        nf.setMinimumFractionDigits(4);
         this.rangeFlag = rangeFlag;
         this.srcImage = srcImg;
         this.statisticList = list;
@@ -652,7 +658,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         centerOfMass.z *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    String comStr = centerOfMass.x + "\t" + centerOfMass.y + "\t" + centerOfMass.z;
+                    
+                    String comStr = nf.format(centerOfMass.x) + "\t" + nf.format(centerOfMass.y) + "\t" + nf.format(centerOfMass.z);
                     statProperty.setProperty(statProperty.centerDescription + "0;" + r, comStr);
 
 
@@ -879,7 +886,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 totalC.x *= srcImage.getFileInfo(0).getResolutions()[0];
                 totalC.y *= srcImage.getFileInfo(0).getResolutions()[1];
 
-                String comStr = totalC.x + "\t" + totalC.y;
+                String comStr = nf.format(totalC.x) + "\t" + nf.format(totalC.y);
 
                 statProperty.setProperty(statProperty.centerDescription + "Total", comStr);
                 statProperty.setProperty(statProperty.areaDescription + "Total", String.valueOf(totalArea));
@@ -939,7 +946,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             selectedCOM.x *= srcImage.getFileInfo(0).getResolutions()[0];
             selectedCOM.y *= srcImage.getFileInfo(0).getResolutions()[1];
 
-            String comStr = selectedCOM.x + "\t" + selectedCOM.y;
+            String comStr = nf.format(selectedCOM.x) + "\t" + nf.format(selectedCOM.y);
             statProperty.setProperty(statProperty.centerDescription + "0;", comStr);
 
             statProperty.setProperty(statProperty.axisDescription, String.valueOf(tmpPAxis[0]));
@@ -1247,7 +1254,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         centerOfMass.z *= srcImage.getFileInfo(0).getResolutions()[2];
                     }
 
-                    String comStr = centerOfMass.x + "\t" + centerOfMass.y + "\t" + centerOfMass.z;
+                    String comStr = nf.format(centerOfMass.x) + "\t" + nf.format(centerOfMass.y) + "\t" + nf.format(centerOfMass.z);
 
                     statProperty.setProperty( statProperty.centerDescription + end, comStr );
 
@@ -1484,7 +1491,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     totalC.z *= srcImage.getFileInfo(0).getResolutions()[2];
                 }
 
-                String comStr = totalC.x + "\t" + totalC.y + "\t" + totalC.z;
+                String comStr = nf.format(totalC.x) + "\t" + nf.format(totalC.y) + "\t" + nf.format(totalC.z);
 
                 statProperty.setProperty( statProperty.axisDescription + "Total", String.valueOf( totalAxis ) );
                 statProperty.setProperty( statProperty.eccentricityDescription + "Total", String.valueOf( totalEcc ) );
@@ -1557,7 +1564,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 selectedCOM.z *= srcImage.getFileInfo(0).getResolutions()[2];
             }
 
-            String comStr = selectedCOM.x + "\t" + selectedCOM.y + "\t" + selectedCOM.z;
+            String comStr = nf.format(selectedCOM.x) + "\t" + nf.format(selectedCOM.y) + "\t" + nf.format(selectedCOM.z);
 
             statProperty.setProperty( statProperty.centerDescription, comStr );
 

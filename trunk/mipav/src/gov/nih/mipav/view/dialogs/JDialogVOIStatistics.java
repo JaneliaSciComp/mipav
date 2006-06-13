@@ -398,7 +398,7 @@ public class JDialogVOIStatistics extends JDialogBase
                                     //System.err.println("ROW DATA of [" + count + "] is: " + rowData[count]);
                                     if (outputOptionsPanel.isShowTotals()) {
                                         totalData[count] = properties.getProperty(statisticDescription[k] + "Total");
-                                        totalData[count] = totalData[count].replaceAll("\t"," ");
+                                        totalData[count] = totalData[count].replaceAll("\t", " ");
                                     }
                                 }
                             }
