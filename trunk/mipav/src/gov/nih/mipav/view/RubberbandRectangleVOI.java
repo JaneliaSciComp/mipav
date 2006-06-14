@@ -226,6 +226,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                                 newVOI.importCurve(x, y, z, i);
                             }
                         } else {
+                            z[0] = ((ViewJComponentEditImage) (component)).getSlice();
                             newVOI.importCurve(x, y, z, ((ViewJComponentEditImage) (component)).getSlice());
                         }
 
@@ -295,6 +296,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                                             VOIs.VOIAt(i).importCurve(x, y, z, j);
                                         }
                                     } else {
+                                        z[0] = ((ViewJComponentEditImage) (component)).getSlice();
                                         VOIs.VOIAt(i).importCurve(x, y, z,
                                                                   ((ViewJComponentEditImage) (component)).getSlice());
                                     }
