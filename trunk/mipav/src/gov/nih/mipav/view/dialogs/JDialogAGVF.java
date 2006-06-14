@@ -875,7 +875,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
         gbc2.gridx = 1;
         float[] xBounds = new float[2], yBounds = new float[2], zBounds = new float[2];
         srcVOI.getBounds( xBounds, yBounds, zBounds );
-        radiusConstraint = Math.max( xBounds[1] - xBounds[0], 
+        radiusConstraint = Math.max( xBounds[1] - xBounds[0],
                                      yBounds[1] - yBounds[0] );
         radiusConstraint /= 2.0f;
         textRadius = new JTextField( new String( "" + radiusConstraint ), 5 );
@@ -907,7 +907,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         gbc2.gridx = 0;
         gbc2.gridy++;
-        labelResampling = new JLabel( "Implcit Resampling Constraint factor (0-1):" );
+        labelResampling = new JLabel( "Implicit Resampling Constraint factor (0-1):" );
         labelResampling.setEnabled( false );
         cellTrackingPanel.add(labelResampling, gbc2);
         gbc2.gridx = 1;
