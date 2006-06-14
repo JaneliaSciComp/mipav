@@ -3591,10 +3591,7 @@ public class VOIHandler extends JComponent
 
         for (i = 0; i < nVOI; i++) {
 
-            //if deselecting, leave last point VOI as selected
-            if (!doSelect) {
-                VOIs.VOIAt(i).setAllActive(doSelect);
-            }
+            VOIs.VOIAt(i).setAllActive(doSelect);
         }
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
     }

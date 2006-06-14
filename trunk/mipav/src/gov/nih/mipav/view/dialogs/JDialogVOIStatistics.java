@@ -317,7 +317,6 @@ public class JDialogVOIStatistics extends JDialogBase
                             str = FileInfoBase.getUnitsOfMeasureAbbrevStr(xUnits);
                             logModel.addColumn(VOIStatisticList.statisticDescription[i] + " (" + str + ")");
                         } else {
-                            System.err.println("YO");
                             logModel.addColumn(VOIStatisticList.statisticDescription[i]);
                         }
                     }
@@ -339,6 +338,9 @@ public class JDialogVOIStatistics extends JDialogBase
 
                 String[] rowData = new String[logModel.getColumnCount()];
                 String[] totalData = new String[logModel.getColumnCount()];
+
+                String[] logRowData = new String[rowData.length];
+                String[] logTotalData = new String[rowData.length];
 
                 for (int slice = 0; slice < contours.length; slice++) {
                     int count = 0;
@@ -363,6 +365,9 @@ public class JDialogVOIStatistics extends JDialogBase
                                      ((VOIBase) contours[slice].get(num)).getLabel(); // contour #, held in label
                         totalData[0] = "Totals:";
 
+                        logRowData[0] = new String(rowData[0]);
+                        logTotalData[0] = new String(totalData[0]);
+
                         if (calculator.isCalculatedByContour()) {
                             end = slice + ";" + num;
                         }
@@ -384,21 +389,23 @@ public class JDialogVOIStatistics extends JDialogBase
                                     temp += " G: " + properties.getProperty(statisticDescription[k] + "Green" + end);
                                     temp += " B: " + properties.getProperty(statisticDescription[k] + "Blue" + end);
                                     rowData[count] = temp;
+                                    logRowData[count] = temp;
 
                                     if (outputOptionsPanel.isShowTotals()) {
                                         temp = " R: " + properties.getProperty(statisticDescription[k] + "RedTotal");
                                         temp += " G: " + properties.getProperty(statisticDescription[k] + "GreenTotal");
                                         temp += " B: " + properties.getProperty(statisticDescription[k] + "BlueTotal");
                                         totalData[count] = temp;
+                                        logTotalData[count] = temp;
                                     }
                                 } else {
 
-                                    rowData[count] = properties.getProperty(statisticDescription[k] + end);
-                                    rowData[count] = rowData[count].replaceAll("\t", " ");
-                                    //System.err.println("ROW DATA of [" + count + "] is: " + rowData[count]);
+                                    rowData[count] = properties.getProperty(statisticDescription[k] + end).replaceAll("\t", ", ");
+                                    logRowData[count] = properties.getProperty(statisticDescription[k] + end);
+
                                     if (outputOptionsPanel.isShowTotals()) {
-                                        totalData[count] = properties.getProperty(statisticDescription[k] + "Total");
-                                        totalData[count] = totalData[count].replaceAll("\t", " ");
+                                        totalData[count] = properties.getProperty(statisticDescription[k] + "Total").replaceAll("\t", ", ");
+                                        logTotalData[count] = properties.getProperty(statisticDescription[k] + "Total");
                                     }
                                 }
                             }
@@ -410,8 +417,9 @@ public class JDialogVOIStatistics extends JDialogBase
                         String logText = "";
 
                         for (int j = 0; j < rowData.length; j++) {
-                            logText += rowData[j] + "\t";
+                            logText += logRowData[j] + "\t";
                         }
+
 
                         writeLogfileEntry(logText);
                     } // end for contours
@@ -419,6 +427,11 @@ public class JDialogVOIStatistics extends JDialogBase
 
                 if (outputOptionsPanel.isShowTotals()) {
                     logModel.addRow(totalData);
+                    String logText = "";
+                    for (int j = 0; j < logTotalData.length; j++) {
+                        logText += logTotalData[j] + "\t";
+                    }
+                    writeLogfileEntry(logText);
                 }
 
                 for (int k = 0; k < rowData.length; k++) {
@@ -1280,7 +1293,6 @@ public class JDialogVOIStatistics extends JDialogBase
      * @param  logentry  DOCUMENT ME!
      */
     private void writeLogfileEntry(String logentry) {
-        System.err.println(logentry);
         logFileText.append(logentry);
         logFileText.append('\n');
     }
