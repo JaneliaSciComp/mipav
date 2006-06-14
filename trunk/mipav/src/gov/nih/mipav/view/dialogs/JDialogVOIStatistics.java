@@ -134,6 +134,13 @@ public class JDialogVOIStatistics extends JDialogBase
     /** DOCUMENT ME! */
     private int xUnits, yUnits, zUnits;
 
+    /** Number of digits after decimal place to allow*/
+    private int precision = 4;
+
+    /** force precision to display at maximum */
+    private boolean doForce = false;
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1031,6 +1038,7 @@ public class JDialogVOIStatistics extends JDialogBase
     private void callAlgorithm() {
         AlgorithmVOIProps da = new AlgorithmVOIProps(ui.getActiveImageFrame().getComponentImage().getActiveImage(),
                                                      checkBoxPanel, outputOptionsPanel.isBySlice(), rangeFlag);
+        da.setPrecisionDisplay(precision, doForce);
         da.addListener(this);
 
         da.setVOIList(selectedList.getModel());
@@ -1283,6 +1291,9 @@ public class JDialogVOIStatistics extends JDialogBase
                 ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(-Float.MAX_VALUE);
             }
         }
+
+        precision = outputOptionsPanel.getPrecision();
+        doForce = outputOptionsPanel.doForcePrecision();
 
         return true;
     }
@@ -1816,6 +1827,11 @@ public class JDialogVOIStatistics extends JDialogBase
         /** A check box to opt for VOI totals. */
         JCheckBox showTotals;
 
+        /** User can choose the precision to display */
+        JComboBox precisionBox;
+
+        JCheckBox forceDecimal;
+
         /**
          * Creates a default view of the panel, including all options displayed. The option to calculate for the total
          * VOI only is selected.
@@ -1833,6 +1849,23 @@ public class JDialogVOIStatistics extends JDialogBase
             showTotals = new JCheckBox("Show all totals");
             showTotals.setFont(MipavUtil.font12);
 
+            String [] precisionStr = new String[11];
+            for (int i = 0; i < precisionStr.length; i++) {
+                precisionStr[i] = String.valueOf(i);
+            }
+            precisionBox = new JComboBox(precisionStr);
+            precisionBox.setFont(MipavUtil.font12);
+            precisionBox.setSelectedIndex(4);
+
+            forceDecimal = new JCheckBox("Force decimal display", false);
+            forceDecimal.setFont(MipavUtil.font12);
+
+            JPanel precisionPanel = new JPanel();
+            precisionPanel.setBorder(buildTitledBorder("Precision"));
+            precisionPanel.add(precisionBox);
+            precisionPanel.add(forceDecimal);
+
+
             ButtonGroup group = new ButtonGroup();
             group.add(bySlice);
             group.add(byContour);
@@ -1843,6 +1876,7 @@ public class JDialogVOIStatistics extends JDialogBase
             add(bySlice);
             add(byTotalVOI);
             add(showTotals);
+            add(precisionPanel);
             add(excluder);
         }
 
@@ -1970,6 +2004,14 @@ public class JDialogVOIStatistics extends JDialogBase
          */
         public void setShowTotals(boolean flag) {
             showTotals.setSelected(flag);
+        }
+
+        public boolean doForcePrecision() {
+            return forceDecimal.isSelected();
+        }
+
+        public int getPrecision() {
+            return precisionBox.getSelectedIndex();
         }
 
     }
