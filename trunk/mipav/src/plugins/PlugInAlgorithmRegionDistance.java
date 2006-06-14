@@ -79,7 +79,7 @@ import javax.vecmath.*;
  *
  *           <p>13.) Process each VOI one at a time. a.) For each VOI find the sum of the red intensity values, the sum
  *           of the green intensity values, and the pixel count for each ID object. b.) Look at all the object pixel
- *           counts and assign the ID of the object with the most pixels in the VOI to objectID. c.) Find the center of
+ *           counts and assign the ID of the object with the most pixels in the VOI to the VOI's objectID. c.) Find the center of
  *           the VOI. If redCount >= greenCount, find the red center, otherwise find the green center. Both the zero
  *           order geometric centers and the first order centers of mass are found. d.) Expand the nucleus to which the
  *           VOI belongs to include the VOI.</p>
@@ -309,8 +309,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float distSqr;
         float lowestSqr;
         float highestSqr;
-        int xEdge = -1;
-        int yEdge = -1;
+        //int xEdge = -1;
+        //int yEdge = -1;
         int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         FileInfoBase fileInfo;
@@ -341,8 +341,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] xArr = new float[1];
         float[] yArr = new float[1];
         float[] zArr = new float[1];
-        boolean removeRed;
-        boolean removeGreen;
         int numVOIObjects;
         Color[] colorTable = null;
         boolean removeID;
@@ -357,13 +355,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] blueCountTotal = null;
         AlgorithmMorphology2D fillHolesAlgo2D;
         int[] voiCount;
-        int j1;
+        //int j1;
         int redFound;
         int greenFound;
         char voiType;
-        char voiNumber;
         float nuclearArea;
-        float equivalentRadius;
+        //float equivalentRadius;
         float voiArea;
         NumberFormat nf;
         float initialdx;
@@ -1487,11 +1484,11 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             for (i = 0; i < numObjects; i++) {
 
                 if (redNumber > 0) {
-                    numRedVOIObjects += Math.min(redNumber, redNucleusNumber[i]);
+                    numRedVOIObjects += redNucleusNumber[i];
                 }
 
                 if (greenNumber > 0) {
-                    numGreenVOIObjects += Math.min(greenNumber, greenNucleusNumber[i]);
+                    numGreenVOIObjects += greenNucleusNumber[i];
                 }
             }
 
@@ -1923,7 +1920,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 if (objectID[j] == (i + 1)) {
                     voiType = VOIs.VOIAt(j).getName().charAt(1);
-                    voiNumber = VOIs.VOIAt(j).getName().charAt(2);
 
                     if (voiType == 'R') {
                         redFound++;
@@ -2188,8 +2184,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] greenBuffer = null;
         ViewVOIVector VOIs = null;
         int nVOIs;
-        ViewVOIVector VOIbls = null;
-        int nVOIbls;
         short[] shortMask;
         int index;
         int redCount;
@@ -2212,9 +2206,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float distSqr;
         float lowestSqr;
         float highestSqr;
-        int xEdge = -1;
-        int yEdge = -1;
-        int zEdge = -1;
+        //int xEdge = -1;
+        //int yEdge = -1;
+        //int zEdge = -1;
         int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         int zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
@@ -2249,8 +2243,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] xArr = new float[1];
         float[] yArr = new float[1];
         float[] zArr = new float[1];
-        boolean removeRed;
-        boolean removeGreen;
         int numVOIObjects;
         Color[] colorTable = null;
         boolean removeID;
@@ -2270,14 +2262,13 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         AlgorithmMorphology2D fillHolesAlgo2D;
         AlgorithmMorphology3D fillHolesAlgo3D;
         int[] voiCount;
-        int j1;
-        int k1;
+        //int j1;
+        //int k1;
         int redFound;
         int greenFound;
         char voiType;
-        char voiNumber;
         float nuclearVolume;
-        float equivalentRadius;
+        //float equivalentRadius;
         NumberFormat nf;
         float voiVolume;
         float initialdx;
@@ -2695,7 +2686,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        System.out.println("111111Number of Objects = " + numObjects);
+        System.out.println("Number of Objects = " + numObjects);
 
         progressBar.setMessage("Zeroing overgrowth of dilated objects");
 
@@ -3611,15 +3602,15 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             for (i = 0; i < numObjects; i++) {
 
                 if (redNumber > 0) {
-                    numRedVOIObjects += Math.min(redNumber, redNucleusNumber[i]);
+                    numRedVOIObjects += redNucleusNumber[i];
                 } // if (redNumber > 0)
 
                 if (greenNumber > 0) {
-                    numGreenVOIObjects += Math.min(greenNumber, greenNucleusNumber[i]);
+                    numGreenVOIObjects += greenNucleusNumber[i];
                 } // if (greenNumber > 0)
             }
 
-            numVOIObjects = Math.max(numRedVOIObjects, numGreenObjects);
+            numVOIObjects = Math.max(numRedVOIObjects, numGreenVOIObjects);
             colorTable = new Color[numVOIObjects];
             nameTable = new String[numVOIObjects];
 
@@ -3836,6 +3827,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                     zPosGrav[i] += buffer[index] * z;
                                     colorCount += buffer[index];
                                     voiCount[i]++;
+                                    // Expand blue nuclei to include VOI
                                     IDArray[index] = (byte) objectID[i];
                                 }
                             }
@@ -3868,6 +3860,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                     zPosGrav[i] += greenBuffer[index] * z;
                                     colorCount += greenBuffer[index];
                                     voiCount[i]++;
+                                    // Expand blue nuclei to include VOI
                                     IDArray[index] = (byte) objectID[i];
                                 }
                             }
@@ -4101,7 +4094,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 byteBuffer = null;
                 IDArray = null;
                 dilateArray = null;
-                errorCleanUp("Error on grayImage.importData", true);
+                errorCleanUp("Error on grayImage.exportData", true);
 
                 return;
             }
@@ -4156,7 +4149,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     if (sAxisPer[id - 1][n] < sAxisPer[id - 1][index]) {
                         index = n;
                     }
-                } // for (m = m+1; n < 3; n++)
+                } // for (n = m+1; n < 3; n++)
 
                 if (index != m) {
                     tempf = sAxisPer[id - 1][m];
@@ -4185,7 +4178,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         srcImage.notifyImageDisplayListeners();
 
-        UI.setDataText("Plugin 02/06/06 version\n");
+        UI.setDataText("Plugin 06/14/06 version\n");
         UI.setDataText(srcImage.getFileInfo(0).getFileName() + "\n");
 
         if (xUnits != FileInfoBase.UNKNOWN_MEASURE) {
@@ -4270,7 +4263,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 if (objectID[j] == (i + 1)) {
                     voiType = VOIs.VOIAt(j).getName().charAt(1);
-                    voiNumber = VOIs.VOIAt(j).getName().charAt(2);
 
                     if (voiType == 'R') {
                         redFound++;
