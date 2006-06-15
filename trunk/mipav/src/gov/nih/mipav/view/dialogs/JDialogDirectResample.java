@@ -111,7 +111,7 @@ public class JDialogDirectResample extends JDialogBase {
                 originalVolPowerOfTwo = false;
             }
 
-            newRes[i] = (res[i] * (extents[i] - 1)) / (volExtents[i] - 1);
+            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
         }
     }
 
@@ -146,7 +146,7 @@ public class JDialogDirectResample extends JDialogBase {
                 originalVolPowerOfTwo = false;
             }
 
-            newRes[i] = (res[i] * (extents[i] - 1)) / (volExtents[i] - 1);
+            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
         }
 
         init();
