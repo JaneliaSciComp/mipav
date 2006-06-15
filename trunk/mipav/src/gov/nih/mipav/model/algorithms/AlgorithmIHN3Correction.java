@@ -45,10 +45,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** inverse FFT */
     public static final int INVERSE = -1;
 
-    /** DOCUMENT ME! */
+    /** forward FFT */
     public static final int FORWARD = 1;
 
     /** DOCUMENT ME! */
@@ -69,7 +69,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private double[][] AtF;
 
     /**
-     * Determines the threshold by histogram analysis If true a VOI cannot be used and the input threshold is ignored.
+     * If true determines the threshold by histogram analysis.
+     * If true a VOI cannot be used and the input threshold is ignored.
      */
     private boolean autoThreshold = false;
 
@@ -240,7 +241,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float incr, value_k;
 
     /** DOCUMENT ME! */
-    private int index, tIndex;
+    private int index;
 
     /** DOCUMENT ME! */
     private int index1;
@@ -288,9 +289,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /** DOCUMENT ME! */
     private BitSet mask;
 
-    /** DOCUMENT ME! */
-    private float max_change;
-
     /** Maximum number of iterations. */
     private int maxIters = 50;
 
@@ -331,16 +329,13 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float noise = 0.01f;
 
     /** DOCUMENT ME! */
-    private int notNumber;
-
-    /** DOCUMENT ME! */
     private int nProduct, four;
 
     /** DOCUMENT ME! */
     private int offset;
 
     /** DOCUMENT ME! */
-    private int offset1, offset2, ivalue;
+    private int offset1, offset2;
 
     /** DOCUMENT ME! */
     private int[][] offsetSp;
@@ -385,7 +380,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /**
      * The factor by which the data is subsampled to a lower resolution in estimating the slowly varying non-uniformity
      * field. Reduce sampling in the finest sampling direction by the shrink factor. Reduce other sampling directions
-     * only if reduced sampling is less.
+     * only if resolution is less than shrink times original minimum resolution.  Uses nearest neighbor resampling.
      */
     private float shrink = 4.0f;
 
@@ -480,7 +475,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     private float value;
 
     /** DOCUMENT ME! */
-    private float value1, value2, result, frac, rfrac;
+    private float value1, value2, frac, rfrac;
 
     /** DOCUMENT ME! */
     private float[] values;
@@ -535,20 +530,29 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
      * @param  destImg         image model where result image is to stored
      * @param  fieldImg        image model where used field is stored
      * @param  srcImg          source image model
-     * @param  _threshold      DOCUMENT ME!
-     * @param  _maxIters       DOCUMENT ME!
-     * @param  _endTol         DOCUMENT ME!
-     * @param  _fieldDistance  DOCUMENT ME!
-     * @param  _shrink         DOCUMENT ME!
-     * @param  _kernelfwhm     DOCUMENT ME!
-     * @param  _noise          DOCUMENT ME!
-     * @param  maskFlag        DOCUMENT ME!
-     * @param  _autoThreshold  DOCUMENT ME!
-     * @param  useScript       DOCUMENT ME!
+     * @param  _threshold      Values at less than _threshold are treated as part of the background
+     * @param  _maxIters       Maximum number of iterations
+     * @param  _endTol         The measure used to terminate the iterations is the coefficient of variation
+     *                         of change in field estimates between successive iterations.
+     * @param  _fieldDistance  Characteristic distance over which the field varies. The distance between
+     *                         adjacent knots in bspline fitting with at least 4 knots going in every dimension.
+     *                         The default in the dialog is one third the distance (resolution * extents) of the
+     *                         smallest dimension.
+     * @param  _shrink         The factor by which the data is subsampled to a lower resolution in estimating
+     *                         the slowly varying non-uniformity field. Reduce sampling in the finest sampling
+     *                         direction by the shrink factor.
+     * @param  _kernelfwhm     Width of deconvolution kernel used to sharpen the histogram. Larger values give
+     *                         faster convergence while smaller values give greater accuracy.
+     * @param  _noise          Noise used in Weiner filter
+     * @param  _entireImage    If true, the N3 method is applied to the entire image.
+     *                         If false, the N3 method is applied only to the region of interest.
+     * @param  _autoThreshold  If true determines the threshold by histogram analysis.
+     *                         If true a VOI cannot be used and the input threshold is ignored.
+     * @param  useScript       If true, the program is run from a script
      */
     public AlgorithmIHN3Correction(ModelImage destImg, ModelImage fieldImg, ModelImage srcImg, float _threshold,
                                    int _maxIters, float _endTol, float _fieldDistance, float _shrink, float _kernelfwhm,
-                                   float _noise, boolean maskFlag, boolean _autoThreshold, boolean useScript) {
+                                   float _noise, boolean _entireImage, boolean _autoThreshold, boolean useScript) {
 
         super(destImg, srcImg);
         fieldImage = fieldImg;
@@ -559,7 +563,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         shrink = _shrink;
         kernelfwhm = _kernelfwhm;
         noise = _noise;
-        entireImage = maskFlag;
+        entireImage = _entireImage;
         autoThreshold = _autoThreshold;
         this.useScript = useScript;
         orgResol = new float[srcImage.getNDims()];
@@ -683,8 +687,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     /**
      * This is the method that calculates the FFT.
      *
-     * @param  rData  DOCUMENT ME!
-     * @param  iData  DOCUMENT ME!
+     * @param  rData  real data
+     * @param  iData  imaginary data
      */
     private void fft(float[] rData, float[] iData) {
 
@@ -1709,7 +1713,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
     }
 
     /**
-     * IHN3COrrection2().
+     * IHN3Correction2().
+     * Derived from PERL file nu_estimate_np_and_em.in
+     * Iteratively estimates intensity non-uniformity artifacts in MRI areas.
      */
     private void IHN3Correction2() {
         int i, j, k;
@@ -2406,6 +2412,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
     /**
      * IHN3Correction3.
+     * Derived from PERL file nu_estimate_np_and_em.in
+     * Iteratively estimates intensity non-uniformity artifacts in MRI volumes.
      */
     private void IHN3Correction3() {
         int i, j, k;
@@ -3325,16 +3333,13 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         // int length = orgDim[0]*orgDim[1];
         // int mod = orgDim[0]/50;
         // int counter = 0; //used for progress bar
-        float T00, T01, T02, T10, T11, T12, T20, T21, T22;
+        float T00, T01, T02, T10, T11, T12;
         T00 = (float) xfrm[0][0];
         T01 = (float) xfrm[0][1];
         T02 = (float) xfrm[0][2];
         T10 = (float) xfrm[1][0];
         T11 = (float) xfrm[1][1];
         T12 = (float) xfrm[1][2];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
 
         for (i = 0; i < orgDim[0]; i++) {
 
@@ -3403,7 +3408,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
         // int mod = newDim[0]/50;
         // int   counter = 0; //used for progress bar
-        float T00, T01, T02, T10, T11, T12, T20, T21, T22;
+        float T00, T01, T02, T10, T11, T12;
 
         T00 = (float) xfrm[0][0];
         T01 = (float) xfrm[0][1];
@@ -3411,9 +3416,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         T10 = (float) xfrm[1][0];
         T11 = (float) xfrm[1][1];
         T12 = (float) xfrm[1][2];
-        T20 = (float) xfrm[2][0];
-        T21 = (float) xfrm[2][1];
-        T22 = (float) xfrm[2][2];
 
         sBuffer = new float[newSliceSize];
 
@@ -3478,7 +3480,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
         // int mod = newDim[0]/50;
         // int counter = 0; //used for progress bar
-        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23, T30, T31, T32, T33;
+        float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
 
         T00 = (float) xfrm[0][0];
         T01 = (float) xfrm[0][1];
@@ -3492,10 +3494,6 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         T21 = (float) xfrm[2][1];
         T22 = (float) xfrm[2][2];
         T23 = (float) xfrm[2][3];
-        T30 = (float) xfrm[3][0];
-        T31 = (float) xfrm[3][1];
-        T32 = (float) xfrm[3][2];
-        T33 = (float) xfrm[3][3];
 
         sBuffer = new float[newVolSize];
 
