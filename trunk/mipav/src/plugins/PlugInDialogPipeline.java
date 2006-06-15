@@ -101,6 +101,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
         if (command.equals("OK")) {
 
             // user has said okay to having input the VOIs
+        	setVariables();
             setVisible(false);
             callAlgorithm(false);
 
@@ -273,7 +274,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
     private void init() {
         this.setSize(100, 80);
 
-        setTitle("VOI INPUT PLEASE");
+        setTitle("PLEASE INPUT VOIs");
 
         JLabel instruction = new JLabel(" Please enter VOIs, then press OK.");
         JPanel mainPanel = new JPanel(new BorderLayout());
