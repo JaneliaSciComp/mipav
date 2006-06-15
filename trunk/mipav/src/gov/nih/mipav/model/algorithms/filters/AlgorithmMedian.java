@@ -56,6 +56,12 @@ public class AlgorithmMedian extends AlgorithmBase {
 
     /** vertical (2D only). */
     public static final int VERT_KERNEL = 4;
+    
+    public static final int COMPONENT_FILTER = 1;
+    
+    public static final int VECTOR_MAGNITUDE_FILTER = 2;
+    
+    public static final int VECTOR_DIRECTION_FILTER = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -76,10 +82,6 @@ public class AlgorithmMedian extends AlgorithmBase {
 
     /** Source buffer number of columns. */
     int srcBufferWidth;
-    
-    /** For color images if true vector filter all colors at once */
-    /** Then new red, green, and blue will all come from the same pixel */
-    private boolean vectorFilter = true;
 
     /** the blue channel. */
     private boolean bChannel = true;
@@ -138,6 +140,10 @@ public class AlgorithmMedian extends AlgorithmBase {
 
     /** number of elements in a pixel. Monochrome = 1, Color = 4. (a, R, G, B) */
     private int valuesPerPixel = 1;
+    
+    /** Either COMPONENT_FILTER, VECTOR_MAGNITUDE_FILTER, or VECTOR_DIRECTION_FILTER
+     *  For a vector filter the new red, green, and blue will all come from the same pixel. */
+    private int filterType = COMPONENT_FILTER;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -401,15 +407,15 @@ public class AlgorithmMedian extends AlgorithmBase {
      * of the other two colors. This median filter permits selectively filtering any combination of the three channels
      * instead of simply filtering all three.
      *
-     * @param  vectorFilter If true, vector filter all channels at once
+     * @param  filterType Either COMPONENT_FILTER, VECTOR_MAGNITUDE_FILTER, or VECTOR_DIRECTION_FILTER
      * @param  r  Filter red channel.
      * @param  g  Filter green channel.
      * @param  b  Filter blue channel.
      */
-    public void setRGBChannelFilter(boolean vectorFilter, boolean r, boolean g, boolean b) {
+    public void setRGBChannelFilter(int filterType, boolean r, boolean g, boolean b) {
 
         if (isColorImage) { // just in case somebody called for a mono image
-            this.vectorFilter = vectorFilter;
+            this.filterType = filterType;
             rChannel = r;
             gChannel = g;
             bChannel = b;
@@ -457,8 +463,8 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100); // let user know what is going on
         initProgressBar();
-        if (isColorImage && vectorFilter) {
-            this.sliceVectorFilter(buffer, resultBuffer, 0, "image");    
+        if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+            this.sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
         else {
             this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
@@ -529,8 +535,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && vectorFilter) {
-                    sliceVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+                    sliceVectorMagnitudeFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
                 else {
@@ -540,8 +546,8 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
         } else { // volume kernel requested
 
-            if (isColorImage && vectorFilter) {
-                volumeVectorColorFilter(buffer, resultBuffer);
+            if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+                volumeVectorMagnitudeColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) {
                 volumeColorFilter(buffer, resultBuffer);
@@ -827,8 +833,8 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         this.buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100);
         initProgressBar();
-        if (isColorImage && vectorFilter) {
-            sliceVectorFilter(buffer, resultBuffer, 0, "image");    
+        if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+            sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
         else {
             sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
@@ -918,8 +924,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && vectorFilter) {
-                    sliceVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
+                    sliceVectorMagnitudeFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
                 else {
@@ -929,8 +935,8 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
         } else { // requested volume filter
 
-            if (vectorFilter && isColorImage) {
-                volumeVectorColorFilter(buffer, resultBuffer);
+            if ((filterType == VECTOR_MAGNITUDE_FILTER) && isColorImage) {
+                volumeVectorMagnitudeColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
@@ -2230,7 +2236,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  bufferStartingPoint  Starting point for the buffer.
      * @param  msgString            A text message that can be displayed as a message text in the progressBar.
      */
-    private void sliceVectorFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
+    private void sliceVectorMagnitudeFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
         int i, a, pass; // counting....   i is the offset from the bufferStartingPoint
 
         // a adds support for 3D filtering by counting as the pixel at the starting point plus the counter offset
@@ -2600,7 +2606,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      *
      * @see    volumeFilter
      */
-    private void volumeVectorColorFilter(float[] srcBuffer, float[] destBuffer) {
+    private void volumeVectorMagnitudeColorFilter(float[] srcBuffer, float[] destBuffer) {
         int i, pass; // counting the current element
         int index;
 
