@@ -475,11 +475,14 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         progressBar.updateValue(5, activeImage);        progressBar.setMessage("Taking Fuzzy");
         nClasses=3;
         HardSeg = HardFuzzy(srcImage, nClasses);
-
+        
+// PFH        ShowImage(HardSeg, "HardSeg Image");
         
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
         progressBar.updateValue(15, activeImage);        progressBar.setMessage("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
+        
+ // PFH       ShowImage(obMask, "obmask Image");
         
         // ----------------------STEP 2: THIGH SEPARATION -----------------------
         progressBar.updateValue(25, activeImage); 		progressBar.setMessage("Doing Thigh Segmentation");
