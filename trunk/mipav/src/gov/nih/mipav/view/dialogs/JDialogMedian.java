@@ -29,6 +29,12 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7749097890204237664L;
+    
+    public static final int COMPONENT_FILTER = 1;
+    
+    public static final int VECTOR_MAGNITUDE_FILTER = 2;
+    
+    public static final int VECTOR_DIRECTION_FILTER = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -97,11 +103,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     
     private ButtonGroup vectorGroup;
     
-    private JRadioButton vectorButton;
+    private JRadioButton vectorMagnitudeButton;
+    
+    private JRadioButton vectorDirectionButton;
     
     private JRadioButton componentButton;
     
-    private boolean vectorFilter = true;
+    private int filterType = COMPONENT_FILTER;
 
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
@@ -201,8 +209,9 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
             if (setVariables()) {
                 callAlgorithm();
             }
-        } else if ((source == vectorButton) || (source == componentButton)) {
-            if (vectorButton.isSelected()) {
+        } else if ((source == vectorMagnitudeButton) || (source == vectorDirectionButton) ||
+                   (source == componentButton)) {
+            if ((vectorMagnitudeButton.isSelected()) || (vectorDirectionButton.isSelected())){
                 redChannel.setSelected(true);
                 redChannel.setEnabled(false);
                 greenChannel.setSelected(true);
@@ -362,13 +371,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
                                                            " " + entireImageFlag + " " + image25D + " " + iters + " " +
                                                            stdDev + " " + kernelSize + " " + kernelShape + " " + 
-                                                           vectorFilter + " " + red +
+                                                           filterType + " " + red +
                                                            " " + green + " " + blue + "\n");
                 } else {
                     userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
                                                            " " + entireImageFlag + " " + image25D + " " + iters + " " +
                                                            stdDev + " " + kernelSize + " " + kernelShape + " " +
-                                                           vectorFilter + " " + red +
+                                                           filterType + " " + red +
                                                            " " + green + " " + blue + "\n");
                 }
             }
@@ -425,7 +434,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
             setStdDev(parser.getNextFloat());
             setKernelSize(parser.getNextInteger());
             setKernelShape(parser.getNextInteger());
-            setVectorFilter(parser.getNextBoolean());
+            setFilterType(parser.getNextInteger());
             setRed(parser.getNextBoolean());
             setGreen(parser.getNextBoolean());
             setBlue(parser.getNextBoolean());
@@ -521,11 +530,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     }
     
     /**
-     * Accessor that sets if all colors are vector filtered at once
-     * @param vectorFilter
+     * Accessor that sets if all colors are component 
+     * filtered, vector magnitude filtered, or
+     * vector direction filtered
+     * @param filterType
      */
-    public void setVectorFilter(boolean vectorFilter) {
-        this.vectorFilter = vectorFilter;
+    public void setFilterType(int filterType) {
+        this.filterType = filterType;
     }
 
     /**
@@ -623,7 +634,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                                                      entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(vectorFilter, red, green, blue);
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -665,7 +676,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(vectorFilter, red, green, blue);
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -740,7 +751,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                                                      image25D, entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(vectorFilter, red, green, blue);
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -782,7 +793,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                                                      entireImageFlag);
 
                     // only if the src image is colour will any channel checkboxes be enabled
-                    medianAlgo.setRGBChannelFilter(vectorFilter, red, green, blue);
+                    medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -967,18 +978,31 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                                                                              // Selection"
         
         vectorGroup = new ButtonGroup();
-        vectorButton = new JRadioButton("Vector filter on all colors together", true);
-        vectorButton.setFont(serif12);
-        vectorGroup.add(vectorButton);
-        gbl.setConstraints(vectorButton, gbc);
-        colourPanel.add(vectorButton);
+        vectorMagnitudeButton = new JRadioButton("Vector filter on all colors together in magnitude domain", true);
+        vectorMagnitudeButton.setFont(serif12);
+        vectorGroup.add(vectorMagnitudeButton);
+        gbl.setConstraints(vectorMagnitudeButton, gbc);
+        colourPanel.add(vectorMagnitudeButton);
         if (image.isColorImage()) {
-            vectorButton.setEnabled(true);
+            vectorMagnitudeButton.setEnabled(true);
         }
         else {
-            vectorButton.setEnabled(false);
+            vectorMagnitudeButton.setEnabled(false);
         }
-        vectorButton.addActionListener(this);
+        vectorMagnitudeButton.addActionListener(this);
+        
+        vectorDirectionButton = new JRadioButton("Vector filter on all colors together in direction domain", false);
+        vectorDirectionButton.setFont(serif12);
+        vectorGroup.add(vectorDirectionButton);
+        gbl.setConstraints(vectorDirectionButton, gbc);
+        colourPanel.add(vectorDirectionButton);
+        if (image.isColorImage()) {
+            vectorDirectionButton.setEnabled(true);
+        }
+        else {
+            vectorDirectionButton.setEnabled(false);
+        }
+        vectorDirectionButton.addActionListener(this);
         
         componentButton = new JRadioButton("Filter on each color separately", false);
         componentButton.setFont(serif12);
@@ -1152,7 +1176,15 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
             return false;
         }
 
-        vectorFilter = vectorButton.isSelected();
+        if (componentButton.isSelected()) {
+            filterType = COMPONENT_FILTER;
+        }
+        else if (vectorMagnitudeButton.isSelected()) {
+            filterType = VECTOR_MAGNITUDE_FILTER;
+        }
+        else {
+            filterType = VECTOR_DIRECTION_FILTER;
+        }
         red = redChannel.isSelected();
         green = greenChannel.isSelected();
         blue = blueChannel.isSelected();
