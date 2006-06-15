@@ -63,24 +63,22 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
     /** GENERAL IMAGE VARIABLES */
     public static int xDim, yDim, zDim, sliceSize, volSize, aa, bb, cc, i;
-    
-    /** input leg image */
-    private ModelImage destImage1 = null;
-
+  
     /** input leg image (isn'd) */
-    private ModelImage destImage2 = null;
+    private ModelImage processedImage = null;
 
-    /** image of only bone and bone marrow */
-    private ModelImage destImage3a = null;
-
-    /** image of only fat */
-    private ModelImage destImage3b = null;
-
-    /** input AND output 'right' image */
+    /** result image 'right thigh' */
     private ModelImage destImageA = null;
 
-    /** input AND output 'left' image */
+    /** result image 'left thigh' */
     private ModelImage destImageB = null;
+    
+    /** input AND output 'right' image */
+    private ModelImage srcImageA = null;
+
+    /** input AND output 'left' image */
+    private ModelImage srcImageB = null;
+   
     
     /** DOCUMENT ME! */
     private int[] imgBuffer1 = null;
@@ -127,20 +125,20 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * Default constructor.
      *
-     * @param  destImageA  --the source image (RIGHT THIGH)
-     * @param  destImageB  --the source image (LEFT THIGH)
+     * @param  srcImageA  --the source image (RIGHT THIGH)
+     * @param  srcImageB  --the source image (LEFT THIGH)
      * @param  obMaskA     --the source image thigh outer boundary mask(RIGHT THIGH)
      * @param  obMaskB     --the source image thigh outer boundary mask(LEFT THIGH)
      * 
      * To run algorithm --destImageA, destImageB are the input cropped left/right thighs.
      * obMaskA,obMaskB corresponding outer boundary masks
      */
-    public PlugInAlgorithmPipelineB(ModelImage destImageA, ModelImage destImageB, ModelImage obMaskA,
+    public PlugInAlgorithmPipelineB(ModelImage srcImageA, ModelImage srcImageB, ModelImage obMaskA,
                                     ModelImage obMaskB, boolean useN3) {
         this.obMaskA = obMaskA;
         this.obMaskB = obMaskB;
-        this.destImageA = destImageA;
-        this.destImageB = destImageB;
+        this.srcImageA = srcImageA;
+        this.srcImageB = srcImageB;
         this.useN3 = useN3;
     }
    
@@ -156,25 +154,19 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * @param  destImageA  --source image
      * @param  obMaskA     --source image thigh outer boundary mask
      */
-    public void getVariables(ModelImage destImageA, ModelImage obMaskA) {
-        xDim = destImageA.getExtents()[0];
-        yDim = destImageA.getExtents()[1];
+    public void getVariables(ModelImage srcImageA, ModelImage obMaskA) {
+        xDim = srcImageA.getExtents()[0];
+        yDim = srcImageA.getExtents()[1];
 
-        if (destImageA.getNDims() == 3) {
-            zDim = destImageA.getExtents()[2];
+        if (srcImageA.getNDims() == 3) {
+            zDim = srcImageA.getExtents()[2];
         }
 
-        destImage1 = (ModelImage) destImageA.clone();
-        destImage1.setVOIs(destImageA.getVOIs());
-
-        destImage2 = (ModelImage) destImageA.clone();
-        destImage2.setVOIs(destImageA.getVOIs());
+        processedImage = (ModelImage) srcImageA.clone();
+        processedImage.setVOIs(srcImageA.getVOIs());
         
         obMask = (ModelImage) obMaskA.clone();
-        destImage3a = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3a",
-                                     destImageA.getUserInterface());
-        destImage3b = new ModelImage(destImageA.getType(), destImageA.getExtents(), "destImage3b",
-                                     destImageA.getUserInterface());
+
     }
         
    /**
@@ -666,7 +658,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * @param  srcImage  --source image with intensity inhomogeneities between slices 
      */
     public void ISN(ModelImage srcImage){
-    	progressBar.setMessage("Taking ISN");
+    	progressBar.setMessage("Executing ISN");
         PlugInAlgorithmISN isnAlgo = null;
         isnAlgo = new PlugInAlgorithmISN(srcImage, srcImage);
         isnAlgo.setProgressBarVisible(false);
@@ -679,22 +671,25 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     /**
      * ELIMINATES MRI SHADING ARTIFACT - 'nonparametric intensity nonuniformity normalization' ~N3
      *
-     * @param   destImage1  input/output image with artifact/N3'd
+     * @param   srcImage1  source image with artifact/N3'd
      *
      */
-    public void N3(ModelImage destImage1){
-    	progressBar.setMessage("Taking N3 inside VOI");
-        ModelImage fieldImage = new ModelImage(destImageA.getType(), destImageA.getExtents(), "fieldImage",
-                destImageA.getUserInterface());
-    	ModelImage destImage2 = new ModelImage(destImage1.getType(), destImage1.getExtents(),
-    			"destImage2", destImage1.getUserInterface());
+    public ModelImage N3(ModelImage srcImage1){
+    	progressBar.setMessage("Executing N3 on image");
+        ModelImage fieldImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(), "fieldImage",
+        		srcImage1.getUserInterface());
+        ModelImage n3ProcessedImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(),
+    			"n3ProcessedImage", srcImage1.getUserInterface());
 	    AlgorithmIHN3Correction ihn3Algo1 = null;
-	    ihn3Algo1 = new AlgorithmIHN3Correction(destImage2, fieldImage,destImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, false, false, false);
+	    ihn3Algo1 = new AlgorithmIHN3Correction(n3ProcessedImage, fieldImage, srcImage1,100f, 150, 0.0001f, 33.3f, 4f, 0.2f, 0.01f, true, false, false);
 	    ihn3Algo1.setProgressBarVisible(false);
 	    ihn3Algo1.run();
-	    progressBar.setMessage("Taking Fuzzy-C Means over entire image");
-	
-	    ihn3Algo1.finalize();ihn3Algo1 = null;	    fieldImage.disposeLocal();fieldImage = null;	    
+	  
+	    ihn3Algo1.finalize();
+	    ihn3Algo1 = null;	    
+	    fieldImage.disposeLocal();
+	    fieldImage = null;	    
+	    return n3ProcessedImage;
 
     }
 
@@ -1112,7 +1107,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("Pipeline_Segmentation", "Operating source images...", 0, 100);
+        buildProgressBar("OAI Thigh Segmentation 6/14/06", "Processing images...", 0, 100);
         initProgressBar();
 
         xDim = 1;        yDim = 1;        zDim = 1;
@@ -1127,9 +1122,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         //aa=1 RIGHT THIGH, aa=2 LEFT THIGH
         for (aa = 1; aa <= 2; aa++) {
             if (aa == 1) {
-                getVariables(destImageA, obMaskA);
+                getVariables(srcImageA, obMaskA);
             } else if (aa == 2) {
-                getVariables(destImageB, obMaskB);
+                getVariables(srcImageB, obMaskB);
             }
 
             sliceSize = xDim * yDim;
@@ -1142,50 +1137,60 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
              ********************************************************/            
             
             // STEP 1: VOI to Mask
-            voiMask = makeVOI(destImage2);								//ShowImage(voiMask,"voi binary mask");
+            voiMask = makeVOI(processedImage);								//ShowImage(voiMask,"voi binary mask");
             progressBar.updateValue((50 * (aa - 1)) + 4, activeImage);
 
 
             // STEP 2: ISN and N3 inside VOI
-            ISN(destImage2);											//ShowImage(destImage2,"intensity slice normalized image");
+            ISN(processedImage);											//ShowImage(destImage2,"intensity slice normalized image");
             progressBar.updateValue((50 * (aa - 1)) + 9, activeImage);
-            N3(destImage2);								
-            progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
-
+            if(useN3) {
+            	ModelImage tmp = processedImage;
+            	processedImage = N3(processedImage);
+            	processedImage.setVOIs(tmp.getVOIs());
+            	tmp.disposeLocal();
+            	tmp = null;
+            	//ViewJFrameImage dif = new ViewJFrameImage(destImage2);
+            }
+           	progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
+                       
 
             //STEP 3: FUZZY SEGMENT ENTIRE IMAGE
-            destImage2.setVOIs(destImage1.getVOIs());
-            ModelImage HardSeg1 = HardFuzzy(destImage2, 4);				//ShowImage(HardSeg1,"4class hard fuzzy segmentation");
+            ModelImage HardSeg1 = HardFuzzy(processedImage, 4);				//ShowImage(HardSeg1,"4class hard fuzzy segmentation");
             progressBar.updateValue(50 * (aa - 1) + 18, activeImage);
 
             
             //STEP 4: ISOLATE BONE
             //(and if bone continuous fill with bone marrow)
-            destImage3a = processBone(HardSeg1);						//ShowImage(destImage3a,"isolated bone");
+            ModelImage boneSeg = processBone(HardSeg1);						//ShowImage(destImage3a,"isolated bone");
             progressBar.updateValue(50 * (aa - 1) + 27, activeImage);
 
             
             //STEP 5: PROCESS BONE MARROW --(given none found in step 4) 
             //(and if bone nonexistant, create thin artifical bone around bone marrow)
             if(continuousBone==false){
-	            processBoneMarrow(destImage3a, HardSeg1);				//ShowImage(destImage3a,"bone with bone marrow");
+	            processBoneMarrow(boneSeg, HardSeg1);				//ShowImage(destImage3a,"bone with bone marrow");
 	            progressBar.updateValue(50 * (aa - 1) + 36, activeImage);
             }            
-            destImage2.disposeLocal();destImage2 = null;
+            processedImage.disposeLocal();
+            processedImage = null;
             
             
             //STEP 6: PROCESS FAT
-            destImage3b = processHardFat(HardSeg1);        				//ShowImage(destImage3b, "bundle cleanedup fat image");
+            ModelImage fatSeg = processHardFat(HardSeg1);        				//ShowImage(destImage3b, "bundle cleanedup fat image");
             progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
-            HardSeg1.disposeLocal();HardSeg1=null;
-            voiMask.disposeLocal();voiMask = null;
-            obMask.disposeLocal();obMask = null;
+            HardSeg1.disposeLocal();
+            HardSeg1=null;
+            voiMask.disposeLocal();
+            voiMask = null;
+            obMask.disposeLocal();
+            obMask = null;
 
             //STEP 7: MERGING PROCESSED THIGH IMAGES
-            mergeImages(destImage3b, destImage3a, destImage3b);			//ShowImage(destImage3b, "after 'merge'");
+            mergeImages(fatSeg, boneSeg, fatSeg);			//ShowImage(destImage3b, "after 'merge'");
             progressBar.updateValue(50 * (aa - 1) + 50, activeImage);
-            destImage3a.disposeLocal();destImage3a = null;
-            
+            boneSeg.disposeLocal();
+            boneSeg = null;
             
             //------------------STEP8: counting tissue types -------------------
             //outputData(destImage3b);
@@ -1212,8 +1217,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
         	    for (bb = 0; bb < zDim; bb++) {
         	        try {
-        	            destImage3b.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-        	            destImage1.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer2);
+        	        	fatSeg.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
         	            for (cc = 0; cc < imgBuffer1.length; cc++) {
         	                if (imgBuffer1[cc] == SUB_CUT_FAT) {
         	                	AVGsubcutfatCount+=imgBuffer2[cc];
@@ -1248,11 +1252,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         	        }
         	    }
         	    if(a!=0 && b!=0 && c!=0 && d!=0 && e!=0){
-        	    AVGsubcutfatCount=AVGsubcutfatCount/a;
-        	    AVGfatCount=AVGfatCount/b;
-        	    AVGMuscleCount=AVGMuscleCount/c;
-        	    AVGBoneCount=AVGBoneCount/d;
-        	    AVGBoneMarrowCount=AVGBoneMarrowCount/e;
+	        	    AVGsubcutfatCount=AVGsubcutfatCount/a;
+	        	    AVGfatCount=AVGfatCount/b;
+	        	    AVGMuscleCount=AVGMuscleCount/c;
+	        	    AVGBoneCount=AVGBoneCount/d;
+	        	    AVGBoneMarrowCount=AVGBoneMarrowCount/e;
         	    }
         	    
         	    AVGsubcutfatCountTOTAL+= AVGsubcutfatCount/2; 
@@ -1262,17 +1266,17 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         	    AVGBoneMarrowCountTOTAL+= AVGBoneMarrowCount/2;
         	    
         	    float realpixelSize = 1;
-        	    float[] res = destImage3b.getFileInfo()[0].getResolutions();
+        	    float[] res = fatSeg.getFileInfo()[0].getResolutions();
                 float pixelSize = res[0] * res[1] * res[2];
                 if (aa == 1) {
-                    destImageA = (ModelImage) destImage3b.clone();
+                    destImageA = fatSeg;
                     destImageA.calcMinMax();
                     realpixelSize = pixelSize;
                     UI.getMessageFrame().append("Segmented Images - Results:  " +
                                                 PlugInAlgorithmPipeline.patientID,
                                                 "Right thigh ");
                 } else {
-                    destImageB = (ModelImage) destImage3b.clone();
+                    destImageB = fatSeg;
                     destImageB.calcMinMax();
                     UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "Left thigh ");
                 }
@@ -1303,13 +1307,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         	    		"BoneMarrow\t\t"+AVGBoneMarrowCountTOTAL);
                 	}
 
-                destImage3b.disposeLocal();
-                destImage3b = null;
                 progressBar.updateValue(50*aa, activeImage);
             }
-        System.out.println("thigh cleanup done --destImage");
-        setCompleted(true);
-        disposeProgressBar();
+	        System.out.println("thigh cleanup done --destImage");
+	        setCompleted(true);
+	        disposeProgressBar();
             
         }
 
