@@ -205,7 +205,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
         if (transformVOI) {
             float[][] xfrm = null;
             int imgLength;
-            int bufferFactor;
             float[] imgBuf;
             progressBar.setMessage("Subsample on VOIs");
             xfrm = AlgorithmTransform.matrixtoInverseArray(transMatrix);
@@ -216,10 +215,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 imgLength = srcImage.getExtents()[0] * srcImage.getExtents()[1];
             }
 
-            bufferFactor = 1;
 
             if (srcImage.isColorImage()) {
-                bufferFactor = 4;
                 imgLength = imgLength * 4;
             }
 
@@ -313,9 +310,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         for (int i = 0; i < srcImage.getNDims(); i++) {
 
-            // resNew[i]*(extentsNew[i]-1) = resOld[i]*(extentsOld[i]-1)
-            // Remember the number of resolution units used = extents - 1
-            posRatios[i] = ((double) (srcImage.getExtents()[i] - 1) / (double) (resultExtents[i] - 1));
+            // resNew[i]*(extentsNew[i]) = resOld[i]*(extentsOld[i])
+            posRatios[i] = ((double) (srcImage.getExtents()[i]) / (double) (resultExtents[i]));
         }
     }
 
@@ -631,7 +627,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         int rowSize = result.xDim;
         int sliceSize = result.xDim * result.yDim;
-        int slice = src.xDim * src.yDim;
         int row = src.xDim;
 
         int nextRow, nextCol;
@@ -1643,8 +1638,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
         ModelImage tmpMask;
         ModelImage maskImage;
 
-        int mod = Math.max(1, resultExtents[0] / 50);
-
         T00 = (float) xfrm[0][0];
         T01 = (float) xfrm[0][1];
         T02 = (float) xfrm[0][2];
@@ -1748,8 +1741,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         ModelImage tmpMask;
         ModelImage maskImage;
-
-        int mod = Math.max(1, resultExtents[0] / 50);
 
         T00 = (float) xfrm[0][0];
         T01 = (float) xfrm[0][1];
