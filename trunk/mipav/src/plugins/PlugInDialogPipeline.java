@@ -99,8 +99,14 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
-
+            
             // user has said okay to having input the VOIs
+            if (resultImageA.getVOIs() == null || resultImageA.getVOIs().size() == 0 ||
+                resultImageB.getVOIs() == null || resultImageB.getVOIs().size() == 0    ) {
+                JOptionPane.showMessageDialog(null, "OSI plugin requires VOIs!", "Warning",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
         	setVariables();
             setVisible(false);
             callAlgorithm(false);
@@ -139,10 +145,6 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
                 updateFileInfo(imageA, resultImageA);
                 updateFileInfo(imageA, resultImageB);
-
-                float[] res1 = imageA.getFileInfo()[0].getResolutions();
-                float[] resA = resultImageA.getFileInfo()[0].getResolutions();
-                float[] resB = resultImageB.getFileInfo()[0].getResolutions();
 
                 ViewJFrameImage f1 = new ViewJFrameImage(resultImageA);
                 ViewJFrameImage f2 = new ViewJFrameImage(resultImageB, null,
@@ -242,6 +244,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
         }
         // finished stage one, has VOIs, go to stage 2
         else {
+             
             userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID);
 
             // Make algorithm
