@@ -82,9 +82,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     private int DIM;
 
     /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
     private boolean do25D = false;
 
     /** DOCUMENT ME! */
@@ -116,7 +113,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                    labelSKz;
 
     /** DOCUMENT ME! */
-    private JLabel labelUserResDim, maximum, minimum, current;
+    private JLabel maximum, minimum, current;
 
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
@@ -278,7 +275,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmTransform) {
             resultImage = algoTrans.getTransformedImage();
@@ -288,7 +284,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -306,7 +302,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -3269,15 +3265,15 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0] - 1) /
-                        (float) (oXdim - 1);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1] - 1) /
-                        (float) (oYdim - 1);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]) /
+                        (float) (oXdim);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) /
+                        (float) (oYdim);
 
             if ((DIM >= 3) && (!do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2] - 1) /
-                            (float) (oZdim - 1);
+                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
+                            (float) (oZdim);
             } else if ((DIM >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];
@@ -3485,20 +3481,20 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
             if ((DIM >= 3) && (!do25D)) {
 
-                if (((iXres * (float) (iXdim - 1)) != (oXres * (float) (oXdim - 1))) ||
-                        ((iYres * (float) (iYdim - 1)) != (oYres * (float) (oYdim - 1))) ||
-                        ((iZres * (float) (iZdim - 1)) != ((float) (oZdim - 1) * oZres))) {
-                    Sx = ((float) (oXdim - 1) * oXres) / ((float) (iXdim - 1) * iXres);
-                    Sy = ((float) (oYdim - 1) * oYres) / ((float) (iYdim - 1) * iYres);
-                    Sz = ((float) (oZdim - 1) * oZres) / ((float) (iZdim - 1) * iZres);
+                if (((iXres * (float) (iXdim)) != (oXres * (float) (oXdim))) ||
+                        ((iYres * (float) (iYdim)) != (oYres * (float) (oYdim))) ||
+                        ((iZres * (float) (iZdim)) != ((float) (oZdim) * oZres))) {
+                    Sx = ((float) (oXdim) * oXres) / ((float) (iXdim) * iXres);
+                    Sy = ((float) (oYdim) * oYres) / ((float) (iYdim) * iYres);
+                    Sz = ((float) (oZdim) * oZres) / ((float) (iZdim) * iZres);
                     xfrm.setZoom(Sx, Sy, Sz);
                 }
             } else { // ((DIM == 2) || (do25D))
 
-                if (((iXres * (float) (iXdim - 1)) != (oXres * (float) (oXdim - 1))) ||
-                        ((iYres * (float) (iYdim - 1)) != (oYres * (float) (oYdim - 1)))) {
-                    Sx = ((float) (oXdim - 1) * oXres) / ((float) (iXdim - 1) * iXres);
-                    Sy = ((float) (oYdim - 1) * oYres) / ((float) (iYdim - 1) * iYres);
+                if (((iXres * (float) (iXdim)) != (oXres * (float) (oXdim))) ||
+                        ((iYres * (float) (iYdim)) != (oYres * (float) (oYdim)))) {
+                    Sx = ((float) (oXdim) * oXres) / ((float) (iXdim) * iXres);
+                    Sy = ((float) (oYdim) * oYres) / ((float) (iYdim) * iYres);
                     xfrm.setZoom(Sx, Sy);
                 }
             }
