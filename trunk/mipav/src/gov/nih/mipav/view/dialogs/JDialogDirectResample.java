@@ -164,13 +164,13 @@ public class JDialogDirectResample extends JDialogBase {
 
         if (command.equals("Resample")) {
             volExtents[0] = dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
-            newRes[0] = (float) ((extents[0] - 1) * res[0]) / (float) (volExtents[0] - 1);
+            newRes[0] = (float) ((extents[0]) * res[0]) / (float) (volExtents[0]);
             volExtents[1] = dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
-            newRes[1] = (float) ((extents[1] - 1) * res[1]) / (float) (volExtents[1] - 1);
+            newRes[1] = (float) ((extents[1]) * res[1]) / (float) (volExtents[1]);
 
             if (dim >= 3) {
                 volExtents[2] = dimPowerOfTwo(Integer.parseInt(extZOutput.getText()));
-                newRes[2] = (float) ((extents[2] - 1) * res[2]) / (float) (volExtents[2] - 1);
+                newRes[2] = (float) ((extents[2]) * res[2]) / (float) (volExtents[2]);
             }
 
             if (dim >= 3) {
