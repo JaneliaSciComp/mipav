@@ -2,6 +2,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.*;
 import java.io.*;
+import java.text.NumberFormat;
 
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmFuzzyCMeans;
@@ -151,21 +152,21 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * 2. Makes copy of input image to put through processing.
      * 3. Initializes outer boundary mask, and intermediate processing images.
      *
-     * @param  destImageA  --source image
-     * @param  obMaskA     --source image thigh outer boundary mask
+     * @param  srcImage  --source image
+     * @param  obMask     --source image thigh outer boundary mask
      */
-    public void getVariables(ModelImage srcImageA, ModelImage obMaskA) {
-        xDim = srcImageA.getExtents()[0];
-        yDim = srcImageA.getExtents()[1];
+    public void getVariables(ModelImage srcImage, ModelImage obMask) {
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
 
-        if (srcImageA.getNDims() == 3) {
-            zDim = srcImageA.getExtents()[2];
+        if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
         }
 
-        processedImage = (ModelImage) srcImageA.clone();
-        processedImage.setVOIs(srcImageA.getVOIs());
+        processedImage = (ModelImage) srcImage.clone();
+        processedImage.setVOIs(srcImage.getVOIs());
         
-        obMask = (ModelImage) obMaskA.clone();
+        this.obMask = (ModelImage) obMask.clone();
 
     }
         
@@ -702,7 +703,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * @return  --output Hard Fuzzy segmentation of srcImage into nClasses classes. 
      */
     public ModelImage HardFuzzy(ModelImage srcImage, int nClasses){
-    	progressBar.setMessage("Taking "+nClasses+"class Hard Fuzzy Segmentation.");
+    	progressBar.setMessage("Calculating "+nClasses+" class Hard Fuzzy Segmentation.");
 
     	float centroid_array[] = new float[nClasses];
     	getCentroid(centroid_array, srcImage, nClasses);
@@ -1107,17 +1108,24 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("OAI Thigh Segmentation 6/14/06", "Processing images...", 0, 100);
+        buildProgressBar("OAI Thigh Seg. 6/15/06", "Processing images...", 0, 100);
         initProgressBar();
-
+        
         xDim = 1;        yDim = 1;        zDim = 1;
         
     	//initialize totals to zero if on first thigh, else add on
-        int AVGsubcutfatCountTOTAL= 0; 
-        int AVGfatCountTOTAL= 0; 
-        int AVGMuscleCountTOTAL= 0; 
-        int AVGBoneCountTOTAL= 0; 
-        int AVGBoneMarrowCountTOTAL= 0;
+        int subcutfatIntensityTotal= 0; 
+        int fatIntensityTotal= 0; 
+        int muscleIntensityTotal= 0; 
+        int boneIntensityTotal= 0; 
+        int boneMarrowIntensityTotal= 0;
+        
+        int subcutfatCountTotal = 0;
+        int fatCountTotal = 0;
+        int muscleCountTotal = 0;
+        int boneCountTotal = 0;
+        int boneMarrowCountTotal = 0;
+        int total_thighCount = 0;
 
         //aa=1 RIGHT THIGH, aa=2 LEFT THIGH
         for (aa = 1; aa <= 2; aa++) {
@@ -1196,116 +1204,131 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             //outputData(destImage3b);
             //public void outputData(ModelImage destImage3b){
                 
-            	int subcutfatCount = 0;
-            	int fatCount = 0;
-            	int MuscleCount = 0;
-            	int BoneCount = 0;
-            	int BoneMarrowCount = 0;
-            	int total_thighCount = 0;
+            int subcutfatIntensityAvg = 0; 
+            int fatIntensityAvg = 0;
+            int muscleIntensityAvg = 0;
+            int boneIntensityAvg = 0;
+            int boneMarrowIntensityAvg = 0;
             
-            	int AVGsubcutfatCount= 0; 
-            	int AVGfatCount= 0;
-            	int AVGMuscleCount= 0;
-            	int AVGBoneCount=0;
-            	int AVGBoneMarrowCount= 0;
-            	
-                int a=0;
-                int b=0;
-                int c=0;
-                int d=0;
-                int e=0;
+        	int subcutfatIntensitySum = 0; 
+        	int fatIntensitySum = 0;
+        	int muscleIntensitySum = 0;
+        	int boneIntensitySum = 0;
+        	int boneMarrowIntensitySum = 0;
+        	
+            int subcutfatCount = 0;
+            int fatCount = 0;
+            int muscleCount = 0;
+            int boneCount = 0;
+            int boneMarrowCount = 0;
+           
+        
+    	    for (bb = 0; bb < zDim; bb++) {
+    	        try {
+    	        	fatSeg.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+                    if (aa == 1){
+                        srcImageA.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
+                    }
+                    else {
+                        srcImageB.exportData((bb * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
+                    }
+    	            for (cc = 0; cc < imgBuffer1.length; cc++) {
+    	                if (imgBuffer1[cc] == SUB_CUT_FAT) {
+                            subcutfatIntensitySum += imgBuffer2[cc];
+                            subcutfatCount++;
+    	                    subcutfatCountTotal++;
+    	                    total_thighCount++;
+    	                } else if (imgBuffer1[cc] == FAT) {
+                            fatIntensitySum += imgBuffer2[cc];
+                            fatCount++;
+    	                    fatCountTotal++;
+    	                    total_thighCount++;
+    	                } else if (imgBuffer1[cc] == Muscle) {
+                            muscleIntensitySum += imgBuffer2[cc];
+                            muscleCount++;
+    	                    muscleCountTotal++;
+    	                    total_thighCount++;
+    	                } else if (imgBuffer1[cc] == Bone) {
+                            boneIntensitySum += imgBuffer2[cc];
+                            boneCount++;
+    	                    boneCountTotal++;
+    	                    total_thighCount++;
+    	                } else if (imgBuffer1[cc] == BoneMarrow) {
+                            boneMarrowIntensitySum += imgBuffer2[cc];
+                            boneMarrowCount++;
+    	                    boneMarrowCountTotal++;
+    	                    total_thighCount++;
+    	                }
+    	            }
+    	        } catch (IOException ex) {
+    	            System.err.println(
+    	                    "error exporting data from srcImage in AlgorithmPipeline2");
+    	        }
+    	    }
             
-        	    for (bb = 0; bb < zDim; bb++) {
-        	        try {
-        	        	fatSeg.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-        	            for (cc = 0; cc < imgBuffer1.length; cc++) {
-        	                if (imgBuffer1[cc] == SUB_CUT_FAT) {
-        	                	AVGsubcutfatCount+=imgBuffer2[cc];
-        	                	a++;
-        	                    subcutfatCount++;
-        	                    total_thighCount++;
-        	                } else if (imgBuffer1[cc] == FAT) {
-        	                	AVGfatCount+=imgBuffer2[cc];
-        	                	b++;
-        	                    fatCount++;
-        	                    total_thighCount++;
-        	                } else if (imgBuffer1[cc] == Muscle) {
-        	                	AVGMuscleCount+=imgBuffer2[cc];
-        	                	c++;
-        	                    MuscleCount++;
-        	                    total_thighCount++;
-        	                } else if (imgBuffer1[cc] == Bone) {
-        	                	AVGBoneCount+=imgBuffer2[cc];
-        	                	d++;
-        	                    BoneCount++;
-        	                    total_thighCount++;
-        	                } else if (imgBuffer1[cc] == BoneMarrow) {
-        	                	AVGBoneMarrowCount+=imgBuffer2[cc];
-        	                	e++;
-        	                    BoneMarrowCount++;
-        	                    total_thighCount++;
-        	                }
-        	            }
-        	        } catch (IOException ex) {
-        	            System.err.println(
-        	                    "error exporting data from srcImage in AlgorithmPipeline2");
-        	        }
-        	    }
-        	    if(a!=0 && b!=0 && c!=0 && d!=0 && e!=0){
-	        	    AVGsubcutfatCount=AVGsubcutfatCount/a;
-	        	    AVGfatCount=AVGfatCount/b;
-	        	    AVGMuscleCount=AVGMuscleCount/c;
-	        	    AVGBoneCount=AVGBoneCount/d;
-	        	    AVGBoneMarrowCount=AVGBoneMarrowCount/e;
-        	    }
-        	    
-        	    AVGsubcutfatCountTOTAL+= AVGsubcutfatCount/2; 
-        	    AVGfatCountTOTAL+= AVGfatCount/2;
-        	    AVGMuscleCountTOTAL+= AVGMuscleCount/2;
-        	    AVGBoneCountTOTAL+=AVGBoneCount/2;
-        	    AVGBoneMarrowCountTOTAL+= AVGBoneMarrowCount/2;
-        	    
-        	    float realpixelSize = 1;
-        	    float[] res = fatSeg.getFileInfo()[0].getResolutions();
-                float pixelSize = res[0] * res[1] * res[2];
-                if (aa == 1) {
-                    destImageA = fatSeg;
-                    destImageA.calcMinMax();
-                    realpixelSize = pixelSize;
-                    UI.getMessageFrame().append("Segmented Images - Results:  " +
-                                                PlugInAlgorithmPipeline.patientID,
-                                                "Right thigh ");
-                } else {
-                    destImageB = fatSeg;
-                    destImageB.calcMinMax();
-                    UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "Left thigh ");
-                }
-
-
-                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "Volume: (cubic Millimeters) \n" +
+            subcutfatIntensityTotal     += subcutfatIntensitySum; 
+            fatIntensityTotal           += fatIntensitySum;
+            muscleIntensityTotal        += muscleIntensitySum;
+            boneIntensityTotal          += boneIntensitySum;
+            boneMarrowIntensityTotal    += boneMarrowIntensitySum;
+            
+    	    if(subcutfatCount!=0 && fatCount!=0 && muscleCount!=0 && boneCount!=0 && boneMarrowCount!=0){
+                subcutfatIntensityAvg  = subcutfatIntensitySum/subcutfatCount;
+                fatIntensityAvg        = fatIntensitySum/fatCount;
+                muscleIntensityAvg     = muscleIntensitySum/muscleCount;
+                boneIntensityAvg       = boneIntensitySum/boneCount;
+                boneMarrowIntensityAvg = boneMarrowIntensitySum/boneMarrowCount;
+    	    } 
+    	    
+    	    float[] res = srcImageA.getFileInfo()[0].getResolutions();
+            float voxelSize = res[0] * res[1] * res[2];
+            if (aa == 1) {
+                destImageA = fatSeg;
+                destImageA.calcMinMax();
+                UI.getMessageFrame().append("Segmented Images - Results:  " +
+                                            PlugInAlgorithmPipeline.patientID,
+                                            "Right thigh ");
+            } else {
+                destImageB = fatSeg;
+                destImageB.calcMinMax();
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, 
+                        "Left thigh ");
+            }
+            NumberFormat nf = NumberFormat.getInstance();
+            nf.setMaximumFractionDigits(2);
+            nf.setMinimumFractionDigits(0);
+            
+            if(aa==1){
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, 
+                        "Volume: (cubic Millimeters) \n" +
                 		"CLASS \t \tVOLUME\tAVG INTENSITY \n" +
-                		"SubcutaneousFat \t" + subcutfatCount * realpixelSize + "\t"+AVGsubcutfatCount+"\n"+ 
-                		"InterstitialFat \t\t" + fatCount * realpixelSize + "\t"+AVGfatCount+"\n" +
-                		"Muscle \t \t" + MuscleCount * realpixelSize + "\t"+AVGMuscleCount+"\n"+
-                		"Bone \t \t" + BoneCount * realpixelSize + "\t"+AVGBoneCount+"\n"+
-                		"BoneMarrow \t\t" + BoneMarrowCount * realpixelSize + "\t"+AVGBoneMarrowCount+"\n"+
-                		"Total Thigh \t\t" + total_thighCount * realpixelSize + "\n\n\n");
-              
-                if(aa==2){
-                	UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, "SEGMENTATION INTENSITIES\n" +
-        	    		"SubcutaneousFat \t" + SUB_CUT_FAT + "\n"+ 
-        	    		"InterstitialFat \t\t" + FAT + "\n"+
-        	    		"Muscle \t \t" + Muscle + "\n"+
-        	    		"Bone \t \t" + Bone + "\n"+
-        	    		"BoneMarrow \t\t" + BoneMarrow + "\n\n\n"+
+                		"SubcutaneousFat \t" + nf.format(subcutfatCount * voxelSize) + "\t"+subcutfatIntensityAvg+"\n"+ 
+                		"InterstitialFat \t\t" + nf.format(fatCount * voxelSize) + "\t"+fatIntensityAvg+"\n" +
+                		"Muscle \t \t" + nf.format(muscleCount * voxelSize) + "\t"+muscleIntensityAvg+"\n"+
+                		"Bone \t \t" + nf.format(boneCount * voxelSize) + "\t"+boneIntensityAvg+"\n"+
+                		"BoneMarrow \t\t" + nf.format(boneMarrowCount * voxelSize) + "\t"+boneMarrowIntensityAvg + "\n\n\n");
+            }
+            if(aa==2){
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, 
+                        "Volume: (cubic Millimeters) \n" +
+                        "CLASS \t \tVOLUME\tAVG INTENSITY \n" +
+                        "SubcutaneousFat \t" + nf.format(subcutfatCount * voxelSize) + "\t"+subcutfatIntensityAvg+"\n"+ 
+                        "InterstitialFat \t\t" + nf.format(fatCount * voxelSize) + "\t"+fatIntensityAvg+"\n" +
+                        "Muscle \t \t" + nf.format(muscleCount * voxelSize) + "\t"+muscleIntensityAvg+"\n"+
+                        "Bone \t \t" + nf.format(boneCount * voxelSize) + "\t"+boneIntensityAvg+"\n"+
+                        "BoneMarrow \t\t" + nf.format(boneMarrowCount * voxelSize) + "\t"+boneMarrowIntensityAvg+"\n\n"+
+                        "TOTAL Thighs \t" + nf.format(total_thighCount * voxelSize) + "\n\n\n");
+            	
+                UI.getMessageFrame().append("Segmented Images - Results:  " + 
+                        PlugInAlgorithmPipeline.patientID, 
         	    		"TOTAL THIGH DATA\n" +
         	    		"CLASS \t \tAVG INTENSITY \n" +
-        	    		"SubcutaneousFat\t"+AVGsubcutfatCountTOTAL+ "\n"+
-        	    		"InterstitialFat\t\t"+AVGfatCountTOTAL+ "\n"+
-        	    		"Muscle\t\t"+AVGMuscleCountTOTAL+ "\n"+
-        	    		"Bone\t\t"+AVGBoneCountTOTAL+ "\n"+
-        	    		"BoneMarrow\t\t"+AVGBoneMarrowCountTOTAL);
-                	}
+        	    		"SubcutaneousFat\t"+subcutfatIntensityTotal/subcutfatCountTotal+ "\n"+
+        	    		"InterstitialFat\t\t"+fatIntensityTotal/fatCountTotal+ "\n"+
+        	    		"Muscle\t\t"+muscleIntensityTotal/muscleCountTotal+ "\n"+
+        	    		"Bone\t\t"+boneIntensityTotal/boneCountTotal+ "\n"+
+        	    		"BoneMarrow\t\t"+boneMarrowIntensityTotal/boneMarrowCountTotal);
+            	}
 
                 progressBar.updateValue(50*aa, activeImage);
             }

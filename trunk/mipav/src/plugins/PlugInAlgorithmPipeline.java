@@ -137,8 +137,6 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     /** DOCUMENT ME! */
     private ModelImage srcImage = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI = ViewUserInterface.getReference();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -168,6 +166,11 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
      */
     public void disposeLocal() {
         imgBuffer = null;
+        
+        if (obMask != null) {
+            obMask.disposeLocal();
+        }
+        obMask = null;
 
     }
 
@@ -497,7 +500,6 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         x11 = xbound1[1];
 
         for (j = 0; j < zDim; j++) {
-        	System.out.println("slice: "+j);
             try {
                 progressBar.updateValue(Math.round(40 + (30 * j / zDim)), activeImage);
                 obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
