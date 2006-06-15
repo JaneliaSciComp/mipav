@@ -348,10 +348,10 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
             if (doVOI) {
                 oXres = image.getFileInfo(0).getResolutions()[0] * denom;
                 oYres = image.getFileInfo(0).getResolutions()[1] * denom;
-                Sx = ((float) (newExtents[0] - 1) * oXres) /
-                         ((float) (image.getExtents()[0] - 1) * image.getFileInfo(0).getResolutions()[0]);
-                Sy = ((float) (newExtents[1] - 1) * oYres) /
-                         ((float) (image.getExtents()[1] - 1) * image.getFileInfo(0).getResolutions()[1]);
+                Sx = ((float) (newExtents[0]) * oXres) /
+                         ((float) (image.getExtents()[0]) * image.getFileInfo(0).getResolutions()[0]);
+                Sy = ((float) (newExtents[1]) * oYres) /
+                         ((float) (image.getExtents()[1]) * image.getFileInfo(0).getResolutions()[1]);
 
                 if (processIndep || (image.getNDims() == 2)) {
                     xfrm = new TransMatrix(3);
@@ -364,8 +364,8 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
                         Sz = 1.0f;
                     } else {
                         oZres = image.getFileInfo(0).getResolutions()[2] * denom;
-                        Sz = ((float) (newExtents[2] - 1) * oZres) /
-                                 ((float) (image.getExtents()[2] - 1) * image.getFileInfo(0).getResolutions()[2]);
+                        Sz = ((float) (newExtents[2]) * oZres) /
+                                 ((float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
                     }
 
                     xfrm = new TransMatrix(4);
@@ -569,17 +569,17 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
         } // if (voiCheckBox != null)
 
         if (doVOI) {
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0] - 1) /
-                        (float) (newExtents[0] - 1);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1] - 1) /
-                        (float) (newExtents[1] - 1);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]) /
+                        (float) (newExtents[0]);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) /
+                        (float) (newExtents[1]);
 
-            // Sx = ( (float) (newExtents[0] - 1) * oXres) /
-            // ( (float) (image.getExtents()[0] - 1) * image.getFileInfo(0).getResolutions()[0]);
+            // Sx = ( (float) (newExtents[0]) * oXres) /
+            // ( (float) (image.getExtents()[0]) * image.getFileInfo(0).getResolutions()[0]);
             Sx = 1.0f;
 
-            // Sy = ( (float) (newExtents[1] - 1) * oYres) /
-            // ( (float) (image.getExtents()[1] - 1) * image.getFileInfo(0).getResolutions()[1]);
+            // Sy = ( (float) (newExtents[1]) * oYres) /
+            // ( (float) (image.getExtents()[1]) * image.getFileInfo(0).getResolutions()[1]);
             Sy = 1.0f;
 
             if (processIndep || (image.getNDims() == 2)) {
@@ -592,11 +592,11 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
                     oZres = image.getFileInfo(0).getResolutions()[2];
                     Sz = 1.0f;
                 } else {
-                    oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2] - 1) /
-                                (float) (newExtents[2] - 1);
+                    oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
+                                (float) (newExtents[2]);
 
-                    // Sz = ( (float) (newExtents[2] - 1) * oZres) /
-                    // ( (float) (image.getExtents()[2] - 1) * image.getFileInfo(0).getResolutions()[2]);
+                    // Sz = ( (float) (newExtents[2]) * oZres) /
+                    // ( (float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
                     Sz = 1.0f;
                 }
 
