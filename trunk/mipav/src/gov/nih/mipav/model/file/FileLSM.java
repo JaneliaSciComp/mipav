@@ -1020,7 +1020,7 @@ public class FileLSM extends FileBase {
     private int offsetMeanOfRoisOverlay;
 
     /** DOCUMENT ME! */
-    private int offsetNextRecording;
+    //private int offsetNextRecording;
 
     /** DOCUMENT ME! */
     private int offsetOutputLut;
@@ -1232,7 +1232,7 @@ public class FileLSM extends FileBase {
     }
 
     /**
-     * Accessor that returns the address of the TIF header of the second image ir present Returns zero if not present.
+     * Accessor that returns the address of the TIF header of the second image if present Returns zero if not present.
      *
      * @return  secondImage
      */
@@ -1320,7 +1320,6 @@ public class FileLSM extends FileBase {
 
                 // for testing:
                 int numVectors = -1;
-                int numOffsets = 0;
                 int numPerVector = dataOffsets[0].size();
 
                 do {
@@ -3190,7 +3189,7 @@ public class FileLSM extends FileBase {
         } // if (!thumbNail)
         else { // thumbnail image
             thumbnailOffset = offsetTemp[0];
-            // System.err.println("Got first thumbnail offset: " + thumbnailOffset + " has offset: " + haveOffset);
+            Preferences.debug("thumbnail offset: " + thumbnailOffset + "\n");
         }
 
         IFDoffsets[imageSlice] = getInt(endianess);
