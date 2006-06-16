@@ -466,6 +466,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
             this.sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
+        else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+            this.sliceVectorDirectionFilter(buffer, resultBuffer, 0, "image");    
+        }
         else {
             this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
         }
@@ -539,6 +542,10 @@ public class AlgorithmMedian extends AlgorithmBase {
                     sliceVectorMagnitudeFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
+                else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+                    sliceVectorDirectionFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));
+                }
                 else {
                     sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
@@ -548,6 +555,9 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
                 volumeVectorMagnitudeColorFilter(buffer, resultBuffer);
+            }
+            else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+                volumeVectorDirectionColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) {
                 volumeColorFilter(buffer, resultBuffer);
@@ -836,6 +846,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
             sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
+        else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+            sliceVectorDirectionFilter(buffer, resultBuffer, 0, "image");    
+        }
         else {
             sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
         }
@@ -928,6 +941,10 @@ public class AlgorithmMedian extends AlgorithmBase {
                     sliceVectorMagnitudeFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
                 }
+                else if (isColorImage && (filterType == VECTOR_DIRECTION_FILTER)) {
+                    sliceVectorDirectionFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));
+                }
                 else {
                     sliceFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));
@@ -937,6 +954,9 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if ((filterType == VECTOR_MAGNITUDE_FILTER) && isColorImage) {
                 volumeVectorMagnitudeColorFilter(buffer, resultBuffer);
+            }
+            else if ((filterType == VECTOR_DIRECTION_FILTER) && isColorImage) {
+                volumeVectorDirectionColorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
@@ -1758,7 +1778,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param list
      * @return
      */
-    private int vectorMedian(float[] list){
+    private int vectorMagnitudeMedian(float[] list){
         int i, j;
         int index = 0;
         float total;
@@ -1769,6 +1789,36 @@ public class AlgorithmMedian extends AlgorithmBase {
                 total +=  (list[i] - list[j])*(list[i] - list[j]) +
                           (list[i+1] - list[j+1])*(list[i+1] - list[j+1]) +
                           (list[i+2] - list[j+2])*(list[i+2] - list[j+2]);
+            }
+            if (total < smallestTotal) {
+                index = i;
+                smallestTotal = total;
+            }
+        }
+        return index;
+    }
+    
+    /**
+     * Only used with color images in vector filtering.  Returns index of pixel whose
+     * sum of angles difference from the other pixels in the list is smallest.
+     * @param list
+     * @return
+     */
+    private int vectorDirectionMedian(float[] list){
+        int i, j;
+        int index = 0;
+        float total;
+        float smallestTotal = Float.MAX_VALUE;
+        float dotProduct;
+        double normI;
+        double normJ;
+        for (i = 0; i < list.length; i +=3) {
+            total = 0.0f;
+            for (j = 0; j < list.length; j += 3) {
+                dotProduct = (list[i]*list[j] + list[i+1]*list[j+1] + list[i+2]*list[j+2]);
+                normI = Math.sqrt(list[i]*list[i] + list[i+1]*list[i+1] + list[i+2]*list[i+2]);
+                normJ = Math.sqrt(list[j]*list[j] + list[j+1]*list[j+1] + list[j+2]*list[j+2]);
+                total +=  Math.acos(dotProduct/(normI*normJ));
             }
             if (total < smallestTotal) {
                 index = i;
@@ -2227,7 +2277,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     
     /**
      * Allows a single slice to be filtered. Note that a progressBar must be created first.
-     * Only used on color with vector filtering.
+     * Only used on color with vector magnitude filtering.
      * Red, green, and blue are all filtered together; that is, the
      * new red, green, and blue will all come from the same pixel.
      *
@@ -2326,7 +2376,133 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 } else { // in bounds
                                     maskedList = getVectorNeighborList(a, srcBuffer, true);
 
-                                    index = vectorMedian(maskedList);
+                                    index = vectorMagnitudeMedian(maskedList);
+                                    destBuffer[a+1] = maskedList[index];
+                                    destBuffer[a+2] = maskedList[index+1];
+                                    destBuffer[a+3] = maskedList[index+2];
+                                }
+                            } else { // not part of the VOI so just copy this into the destination buffer.
+                                destBuffer[a+1] = srcBuffer[a+1];
+                                destBuffer[a+2] = srcBuffer[a+2];
+                                destBuffer[a+3] = srcBuffer[a+3];
+                            }
+                        }
+
+                    
+            // now set up for the repeat for multiple iterations.
+            // But only bother with copying over if there are more iterations.
+            if (pass < (iterations - 1)) {
+                tempBuffer = destBuffer; // swap dest & src buffers
+                destBuffer = srcBuffer;
+                srcBuffer = tempBuffer;
+            }
+        }
+        // destBuffer should now be copied over for the size of imageSliceLength.  You may return....
+
+    }
+    
+    /**
+     * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     * Only used on color with vector direction filtering.
+     * Red, green, and blue are all filtered together; that is, the
+     * new red, green, and blue will all come from the same pixel.
+     *
+     * @param  srcBuffer            float [] Source buffer.
+     * @param  destBuffer           float[] Destination Buffer.
+     * @param  bufferStartingPoint  Starting point for the buffer.
+     * @param  msgString            A text message that can be displayed as a message text in the progressBar.
+     */
+    private void sliceVectorDirectionFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
+        int i, a, pass; // counting....   i is the offset from the bufferStartingPoint
+
+        // a adds support for 3D filtering by counting as the pixel at the starting point plus the counter offset
+        int buffStart = bufferStartingPoint; // data element at the buffer. a = bufferStartingPoint+i
+        int sliceLength = srcImage.getSliceSize();
+        int imageSliceLength = sliceLength * valuesPerPixel; // since there are 4 values for every color pixel
+        int width = srcImage.getExtents()[0]; // width of slice in number of pixels (
+        int height = srcImage.getExtents()[1]; // height of slice in number of pixels
+        int sliceWidth = width * valuesPerPixel; // width of slice, which, in color images is (4*width)
+        int sliceHeight = height; // height of image, which, actually doesn't change
+        int index = 0; 
+
+        float[] tempBuffer;
+
+        float[] maskedList; // list of buffer-values that were showing inside the mask
+
+        int row, col; // row and column vars for easier reading [(0,0) is in the top-left corner]
+        int mod; // 1% length of slice for percent complete
+
+        // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
+        // image outside the frame may not
+        int upperBound, lowerBound, // bounds on the row
+            leftBound, rightBound; // bounds on the column
+        
+        upperBound = halfK;
+        leftBound = halfK * 4;
+        lowerBound = sliceHeight - halfK - 1;
+        rightBound = sliceWidth - (halfK * 4) - 1;
+
+        // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
+        buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
+                                                                     // !!!
+
+        // copy all alpha values in this slice
+        setCopyColorText("alpha");
+
+        for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
+            destBuffer[a] = srcBuffer[a]; // copy alpha;
+        }
+        
+        mod = (imageSliceLength * numberOfSlices) / 100; // mod is 1 percent of length of slice * the number of slices.
+
+        for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
+            
+            if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
+
+                // do a progress bar update
+                progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
+                                                         (iterations * numberOfSlices)) * 100)), activeImage);
+            }
+            a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
+
+
+                
+
+                        if (pBarVisible == true) {
+                            progressBar.setMessage("Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
+                                                   " of " + iterations + ") ...");
+                        }
+
+                        // if we needed to filter the image, we dropped through the selection to filter the
+                        // color given by int initialIndex
+                        for (i = 0; (i < imageSliceLength) && !threadStopped; a += 4, i += 4) {
+
+                            if (numberOfSlices == 1) { // 2D image     update progressBar
+
+                                if (((i % mod) == 0) && (pBarVisible == true)) {
+                                    progressBar.updateValue(Math.round((float) ((pass * sliceLength) +
+                                                                                (i / 4)) /
+                                                                           (iterations * sliceLength) * 100),
+                                                            activeImage);
+                                }
+                            }
+
+                            if ((entireImage == true) || mask.get(a / 4)) { // may have problems in masking .....
+                                row = i / sliceWidth;
+                                col = i % sliceWidth;
+
+                                if ((row < upperBound) || (row > lowerBound)) {
+                                    destBuffer[a+1] = srcBuffer[a+1]; // row too far up or down--out of bounds
+                                    destBuffer[a+2] = srcBuffer[a+2];
+                                    destBuffer[a+3] = srcBuffer[a+3];
+                                } else if ((col < leftBound) || (col > rightBound)) {
+                                    destBuffer[a+1] = srcBuffer[a+1]; // column too far left or right--out of bounds
+                                    destBuffer[a+2] = srcBuffer[a+2];
+                                    destBuffer[a+3] = srcBuffer[a+3];
+                                } else { // in bounds
+                                    maskedList = getVectorNeighborList(a, srcBuffer, true);
+
+                                    index = vectorDirectionMedian(maskedList);
                                     destBuffer[a+1] = maskedList[index];
                                     destBuffer[a+2] = maskedList[index+1];
                                     destBuffer[a+3] = maskedList[index+2];
@@ -2595,7 +2771,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     }
     
     /**
-     * Filter a Color 3D image with a 3D kernel with vector filtering.
+     * Filter a Color 3D image with a 3D kernel with vector magnitude filtering.
      * Allows median filtering to include the picture elements at greater
      * depths than only the current slice. This method does not filter the alpha band.  Red,
      * green, and blue are all filtered together; that is, the new red, green, and blue will
@@ -2698,7 +2874,139 @@ public class AlgorithmMedian extends AlgorithmBase {
                             } else { // in bounds
                                 maskedList = getVectorNeighborList(i, srcBuffer, false);
 
-                                index = vectorMedian(maskedList);
+                                index = vectorMagnitudeMedian(maskedList);
+                                destBuffer[i+1] = maskedList[index];
+                                destBuffer[i+2] = maskedList[index+1];
+                                destBuffer[i+3] = maskedList[index+2];
+                            }
+                        } else { // not part of the VOI so just copy this into the destination buffer.
+                            destBuffer[i+1] = srcBuffer[i+1];
+                            destBuffer[i+2] = srcBuffer[i+2];
+                            destBuffer[i+3] = srcBuffer[i+3];
+                        }
+                    }
+
+                    // now set up for the repeat for multiple iterations.
+                    // But only bother with copying over if there are more iterations.
+                    if (pass < (iterations - 1)) {
+                        tempBuffer = destBuffer; // swap src & dest buffer
+                        destBuffer = srcBuffer;
+                        srcBuffer = tempBuffer;
+                    }
+                }
+
+                if ((iterations % 2) == 0) { // if even number of iterations, then
+                    tempBuffer = destBuffer; // swap src & dest buffer is necessary
+                    destBuffer = srcBuffer; // to keep other colours not-yet-filtered from
+                    srcBuffer = tempBuffer; // filtering from the wrong buffer, overwriting the real src
+                }
+    }
+    
+    /**
+     * Filter a Color 3D image with a 3D kernel with vector direction filtering.
+     * Allows median filtering to include the picture elements at greater
+     * depths than only the current slice. This method does not filter the alpha band.  Red,
+     * green, and blue are all filtered together; that is, the new red, green, and blue will
+     * all come from the same pixel.
+     *
+     * @param  srcBuffer   float [] Source image.
+     * @param  destBuffer  float [] Destination image.
+     *
+     * @see    volumeFilter
+     */
+    private void volumeVectorDirectionColorFilter(float[] srcBuffer, float[] destBuffer) {
+        int i, pass; // counting the current element
+        int index;
+
+        // it is an offset to the identified pixel, or column, of the slice
+        int row, // ease of reading to find the row, column and slice
+            column, // (all starting at 0) associated with the current element
+            slice; // [(0,0,0) starts at the closest upper-left corner]
+        int width = srcImage.getExtents()[0]; // width of slice in number of pixels
+        int height = srcImage.getExtents()[1]; // height of slice in number of pixels
+        int sliceWidth = width * valuesPerPixel; // width of slice in number of intensity values
+
+        // (as in colors per pixel (1 for mono, 4 for color))
+        int sliceSize = width * height; // in pixels (or elements)
+        int imageSliceLength = width * height * valuesPerPixel; // in values-pixels
+        int imageSize = sliceSize * numberOfSlices; // in pixels (or elements)
+        int imageLength = imageSliceLength * numberOfSlices; // in (values-pixels)
+        float[] tempBuffer;
+
+        float[] maskedList; // list of buffer-values that were showing inside the mask
+
+        // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
+        // image outside the frame may not
+        int leftBound, rightBound, // bounds on the column
+            upperBound, lowerBound, // bounds on the row
+            aheadBound, behindBound; // bounds on the slice
+
+        // (a note on orientation: object front is facing in the same direction as
+        // viewer, thus ahead of viewer is into monitor, behind is out of monitor and
+        // a more positive number of slices is farther forward.)
+        upperBound = halfK;
+        lowerBound = height - halfK - 1;
+        behindBound = halfK;
+        aheadBound = numberOfSlices - halfK - 1;
+
+        // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
+        // these calculations are done seperately for color & mono images in sliceFilter().
+        leftBound = halfK * valuesPerPixel;
+        rightBound = sliceWidth - (valuesPerPixel * halfK) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
+                                                                // halfK - 1)
+
+        int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
+
+        // copy all alpha values in the image
+        setCopyColorText("alpha");
+
+        for (i = 0; i < imageLength; i += 4) {
+            destBuffer[i] = srcBuffer[i]; // copy alpha;
+        }
+
+        // choose i so the proper colors go alongside the initial index
+        // so we get the right output statements in the progress bar
+        // copy only needed RGB values   
+
+                for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
+
+                    if (pBarVisible == true) {
+                            progressBar.setMessage("Filtering pass " + String.valueOf(pass + 1) + " of " +
+                                                   iterations + ") ...");
+                    }
+
+                    // if we needed to filter the image, we dropped through the selection to filter the
+                    // color given by int initialIndex
+                    for (i = 0; (i < imageLength) && !threadStopped; i += 4) {
+
+                        if (((i % mod) == 0) && (pBarVisible == true)) {
+                            progressBar.updateValue(Math.round(((float) ((imageSize * pass) + (i / 4)) /
+                                                                    (iterations * imageSize) * 100)), activeImage);
+                        }
+
+                        if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
+
+                            // Median stuff here
+                            slice = i / imageSliceLength;
+                            row = (i % imageSliceLength) / sliceWidth;
+                            column = i % sliceWidth;
+
+                            if ((row < upperBound) || (row > lowerBound)) {
+                                destBuffer[i+1] = srcBuffer[i+1]; // row too far up or down--out of bounds
+                                destBuffer[i+2] = srcBuffer[i+2];
+                                destBuffer[i+3] = srcBuffer[i+3];
+                            } else if ((column < leftBound) || (column > rightBound)) {
+                                destBuffer[i+1] = srcBuffer[i+1]; // column too far left or right--out of bounds
+                                destBuffer[i+2] = srcBuffer[i+2];
+                                destBuffer[i+3] = srcBuffer[i+3];
+                            } else if ((slice < behindBound) || (slice > aheadBound)) {
+                                destBuffer[i+1] = srcBuffer[i+1]; // slice too far ahead or behind--out of bounds
+                                destBuffer[i+2] = srcBuffer[i+2];
+                                destBuffer[i+3] = srcBuffer[i+3];
+                            } else { // in bounds
+                                maskedList = getVectorNeighborList(i, srcBuffer, false);
+
+                                index = vectorDirectionMedian(maskedList);
                                 destBuffer[i+1] = maskedList[index];
                                 destBuffer[i+2] = maskedList[index+1];
                                 destBuffer[i+3] = maskedList[index+2];
