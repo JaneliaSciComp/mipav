@@ -63,6 +63,12 @@ import java.util.*;
 
 
 public class AlgorithmMean extends AlgorithmBase {
+    
+    public static final int SEPARATE_COMPONENT = 1;
+    
+    public static final int ADAPTIVE_VECTOR = 2;
+    
+    public static final int PARALLEL_VECTOR = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -108,7 +114,7 @@ public class AlgorithmMean extends AlgorithmBase {
     // separately.  If separateChannels is false, decompose image into components parallel
     // and perpindicular to the direction given by (redVector, greenVector, and blueVector)
     // and only filter the parallel component before adding the 2 components back together.
-    private boolean separateChannels = true;
+    private int filterType = SEPARATE_COMPONENT;
     private float redNorm = 0.0f;
     private float greenNorm = 0.0f;
     private float blueNorm  = 0.0f;
@@ -280,14 +286,16 @@ public class AlgorithmMean extends AlgorithmBase {
 
     /**
      * 
-     * If separateChannels is true, RGB images are mean filtered by 'channel.' 
+     * If filterType == SEPARATE_COMPONENT, RGB images are mean filtered by 'channel.' 
      * That is, each color, red, blue and green, is filtered independently of
      * the other two colors. This mean filter permits selectively filtering any combination of the three channels
      * instead of simply filtering all three.
-     * If separateChannels is false, decompose image into components parallel
+     * If filterType == ADAPTIVE_VECTOR, use fuzzy memebership functions based on an angle 
+     * criterion to determine the weights of an adaptive weighted mean filter.
+     * If filterType == PARALLEL_VECTOR, decompose image into components parallel
      * and perpindicular to the direction given by (redVector, greenVector, and blueVector)
      * and only filter the parallel component before adding the 2 components back together.
-     * @param  separateChannels
+     * @param  filterType
      * @param  r  Filter red channel.
      * @param  g  Filter green channel.
      * @param  b  Filter blue channel.
@@ -295,13 +303,13 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  greenVector
      * @param  blueVector
      */
-    public void setRGBChannelFilter(boolean separateChannels, 
+    public void setRGBChannelFilter(int filterType, 
                   boolean r, boolean g, boolean b,
                   int redVector, int greenVector, int blueVector) {
         double offsetR, offsetG, offsetB, denom;
 
         if (isColorImage) { // just in case somebody called for a mono image
-            this.separateChannels = separateChannels;
+            this.filterType = filterType;
             rChannel = r;
             gChannel = g;
             bChannel = b;
@@ -384,8 +392,8 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         this.buildProgressBar(); // let user know what is going on
-        if (isColorImage && !separateChannels) {
-            this.sliceVectorFilter(buffer, resultBuffer, 0, "image"); // filter this slice    
+        if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+            this.sliceParallelVectorFilter(buffer, resultBuffer, 0, "image"); // filter this slice    
         }
         else {
             this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
@@ -455,8 +463,8 @@ public class AlgorithmMean extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && !separateChannels) {
-                    sliceVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+                    sliceParallelVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));    
                 }
                 else {
@@ -466,8 +474,8 @@ public class AlgorithmMean extends AlgorithmBase {
             }
         } else { // volume kernel requested
 
-            if (isColorImage && !separateChannels) {
-                volumeVectorFilter(buffer, resultBuffer);
+            if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+                volumeParallelVectorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
@@ -546,8 +554,8 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         this.buildProgressBar();
-        if (isColorImage && !separateChannels) {
-            sliceVectorFilter(buffer, resultBuffer, 0, "image");    
+        if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+            sliceParallelVectorFilter(buffer, resultBuffer, 0, "image");    
         }
         else {
             sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
@@ -636,8 +644,8 @@ public class AlgorithmMean extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && !separateChannels) {
-                    sliceVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+                    sliceParallelVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));    
                 }
                 else {
@@ -647,8 +655,8 @@ public class AlgorithmMean extends AlgorithmBase {
             }
         } else { // requested volume filter
 
-            if (isColorImage && !separateChannels) {
-                volumeVectorFilter(buffer, resultBuffer);
+            if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+                volumeParallelVectorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
                 volumeColorFilter(buffer, resultBuffer);
@@ -773,6 +781,125 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         mean = (float)(total / count);
+
+        return (mean);
+    }
+    
+    /**
+     * Used for color images only
+     *
+     * @param   i     The central pixel to find neighbors for.
+     * @param   data  Image data
+     * @param   is2D  True indicates that the neighbors are found along a 2D slice (or 2D image) instead of neighbors in
+     *                a 3D volume.
+     *
+     * @return  mean value of the kernel neighborhood
+     */
+    private float [] getAdaptiveMean(int i, float[] data, boolean is2D) {
+        int row, col;
+        int rowj, colj;
+        int width = 0; // width of slice in number of pixels
+        int height = 0; // height of slice in number of pixels
+        int depth = 0;
+        double total = 0.0;
+        float mean[] = new float[3];
+        double weight[];
+        double weightSum;
+        float xi[] = new float[3];
+        float xj[] = new float[3];
+        float dotProduct;
+        double normI;
+        double normJ;
+        double angleSum;
+        int index;
+        width = srcImage.getExtents()[0];
+        height = srcImage.getExtents()[1];
+
+        if (!is2D) {
+            depth = srcImage.getExtents()[2];
+        }
+
+
+        int sliceWidth = width * valuesPerPixel; // width of slice in number of elements
+        int imageSliceLength = srcImage.getSliceSize() * valuesPerPixel;
+        int sliceLoc = i / imageSliceLength;
+        int rowLoc = (i % imageSliceLength) / sliceWidth;
+        int columnLoc = i % sliceWidth;
+        int leftBound;
+        int rightBound;
+        int upperBound;
+        int lowerBound;
+        int behindBound;
+        int aheadBound;
+
+        leftBound = Math.max(-((columnLoc/4)*4), -4 * halfK);
+        rightBound = Math.min(sliceWidth - 1 - columnLoc, 4 * halfK);
+        
+
+        upperBound = Math.max(-rowLoc, -halfK);
+        lowerBound = Math.min(height - 1 - rowLoc, halfK);
+        behindBound = Math.max(-sliceLoc, -halfK);
+        aheadBound = Math.min(depth - 1 - sliceLoc, halfK);
+
+
+        // place all the masked 'on' elements into the data-list
+        int count = 0;
+
+        // colour images are different from the mono images in that though colour images use the same size
+        // kernel as mono images, but fill it with brightness levels that are spread out in the data set.
+        if (is2D) {
+            
+            weight = new double[(lowerBound-upperBound+1)*(rightBound-leftBound+1)/4];
+            weightSum = 0.0;
+            for (row = upperBound, index = 0; row <= lowerBound; row++) { // go through all rows
+
+                for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) { //
+                    xi[0] = data[i + 1 + col + (row * sliceWidth)];
+                    xi[1] = data[i + 2 + col + (row * sliceWidth)];
+                    xi[2] = data[i + 3 + col + (row * sliceWidth)];
+                    angleSum = 0.0;
+                    for (rowj = upperBound; rowj <= lowerBound; rowj++) {
+                        for (colj = leftBound; colj <= rightBound; colj += valuesPerPixel) {
+                            xj[0] = data[i + 1 + colj + (rowj * sliceWidth)];
+                            xj[1] = data[i + 2 + colj + (rowj * sliceWidth)];
+                            xj[2] = data[i + 3 + colj + (rowj * sliceWidth)];
+                            dotProduct = xi[0]*xj[0] + xi[1]*xj[1] + xi[2]*xj[2];
+                            normI = Math.sqrt(xi[0]*xi[0] + xi[1]*xi[1] + xi[2]*xi[2]);
+                            normJ = Math.sqrt(xj[0]*xj[0] + xj[1]*xj[1] + xj[2]*xj[2]);
+                            angleSum += Math.acos(dotProduct/(normI * normJ));
+                        }
+                    }
+                    weight[index] = 2.0/(1.0 + Math.exp(angleSum));
+                    weightSum += weight[index];
+                }
+            }
+            for (index = 0; index < weight.length; index++) {
+                weight[index] = weight[index]/weightSum;
+            }
+
+            for (row = upperBound, index = 0; row <= lowerBound; row++) { // go through all rows
+
+                for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) { //
+                    mean[0] += data[i + 1 + col + (row * sliceWidth)] * weight[index];
+                    mean[1] += data[i + 2 + col + (row * sliceWidth)] * weight[index];
+                    mean[2] += data[i + 3 + col + (row * sliceWidth)] * weight[index];
+                }
+            }
+        } else { // find neighbors in a volume
+
+            int slice;
+
+            for (slice = behindBound; slice <= aheadBound; slice++) {
+
+                for (row = upperBound; row <= lowerBound; row++) {
+
+                    for (col = leftBound; col <= rightBound; col += valuesPerPixel) {
+                        total += data[i + col + (row * sliceWidth) + (slice * sliceWidth * height)];
+                        count++;
+                    }
+                }
+            }
+        }
 
         return (mean);
     }
@@ -969,7 +1096,7 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  bufferStartingPoint  Starting point for the buffer.
      * @param  msgString            A text message that can be displayed as a message text in the progressBar.
      */
-    private void sliceVectorFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
+    private void sliceParallelVectorFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
         int i, a; // counting....   i is the offset from the bufferStartingPoint
 
         // a adds support for 3D filtering by counting as the pixel at the starting point plus the counter offset
@@ -1198,7 +1325,7 @@ public class AlgorithmMean extends AlgorithmBase {
      *
      * @see    volumeFilter
      */
-    private void volumeVectorFilter(float[] srcBuffer, float[] destBuffer) {
+    private void volumeParallelVectorFilter(float[] srcBuffer, float[] destBuffer) {
         int i; // counting the current element
         int initialIndex; // reference to the color band being filtered/copied: aRBG: 0, 1, 2, 3;
                           // it is an offset to the identified pixel, or column, of the slice
