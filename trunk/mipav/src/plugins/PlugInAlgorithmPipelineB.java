@@ -189,7 +189,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		ModelImage BoneIDtemp = (ModelImage) BoneID.clone();
 		Open(BoneIDtemp, 24);
 		Close(BoneIDtemp, 24);
-		IDObjects(BoneIDtemp, zDim*2000/20, zDim*10000/20);  /**isolate bone size*/
+		IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);  /**isolate bone size*/
 		isolatingCenterObject(BoneIDtemp); /**returns binary image of center object*/
 		ModelImage BoneIDtemp1 = (ModelImage)BoneIDtemp.clone(); /**BoneIDtemp retains binary image of BONE*/
 		FillHole(BoneIDtemp1);
@@ -205,7 +205,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 			BoneIDtemp = (ModelImage) BoneID.clone();
 			Open(BoneIDtemp,6);
 			Close(BoneIDtemp,24);
-			IDObjects(BoneIDtemp, zDim*2000/20, zDim*10000/20);
+			IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);
 			isolatingCenterObject(BoneIDtemp); 
 			BoneIDtemp1 = (ModelImage)BoneIDtemp.clone();
 			FillHole(BoneIDtemp1);
@@ -217,7 +217,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 				BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
 				System.out.println("Round2, FillBoneMarrow doesnt work");
 				BoneIDtemp = (ModelImage)BoneID.clone();
-				IDObjects(BoneIDtemp, zDim*2000/20, zDim*10000/20);
+				IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);
 				isolatingCenterObject(BoneIDtemp); 
 				BoneIDtemp1 = (ModelImage)BoneIDtemp.clone();
 				FillHole(BoneIDtemp1);
@@ -230,7 +230,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 					BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
 					BoneIDtemp = (ModelImage)BoneID.clone();
 					Close(BoneIDtemp,24);
-					IDObjects(BoneIDtemp, zDim*2000/20, zDim*10000/20);
+					IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);
 					isolatingCenterObject(BoneIDtemp);
 					BoneIDtemp1 = (ModelImage)BoneIDtemp.clone();
 					FillHole(BoneIDtemp1);
