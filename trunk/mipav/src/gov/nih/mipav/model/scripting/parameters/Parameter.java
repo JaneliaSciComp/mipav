@@ -79,7 +79,7 @@ public abstract class Parameter {
 
     /** String values for all of the parameter value data types (the strings written out to the script). */
     private static final String[] PARAM_STRINGS_TABLE = {
-        "boolean", "int", "long", "short", "ushort", "float", "double", "string", "list_", "var", "image", "voi"
+        "boolean", "int", "long", "short", "ushort", "float", "double", "string", "list_", "var", "image"
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
