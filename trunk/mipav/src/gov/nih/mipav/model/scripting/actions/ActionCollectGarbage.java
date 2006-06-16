@@ -6,9 +6,9 @@ import gov.nih.mipav.model.scripting.parameters.*;
 
 
 /**
- * A script action which causes MIPAV to exit completely.
+ * Forces the JVM to perform a garbage collection of un-referenced memory.
  */
-public class ActionExit implements ScriptableActionInterface {
+public class ActionCollectGarbage implements ScriptableActionInterface {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -16,13 +16,13 @@ public class ActionExit implements ScriptableActionInterface {
      * {@inheritDoc}
      */
     public void insertScriptLine() {
-        ScriptRecorder.getReference().addLine("Exit");
+        ScriptRecorder.getReference().addLine("CollectGarbage");
     }
 
     /**
      * {@inheritDoc}
      */
     public void scriptRun(ParameterTable parameters) {
-        System.exit(0);
+        System.gc();
     }
 }
