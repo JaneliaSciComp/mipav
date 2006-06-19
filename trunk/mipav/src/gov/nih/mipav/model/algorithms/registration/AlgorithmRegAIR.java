@@ -1492,7 +1492,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Blurring source Image");
-                progressBar.updateValue(5, activeImage);
+                progressBar.updateValue(5, runningInSeparateThread);
                 sigmas[0] = sourceGaussX;
                 sigmas[1] = sourceGaussY;
                 sigmas[2] = sourceGaussZ;
@@ -1534,7 +1534,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Blurring target Image");
-                progressBar.updateValue(10, activeImage);
+                progressBar.updateValue(10, runningInSeparateThread);
                 sigmas[0] = targetGaussX;
                 sigmas[1] = targetGaussY;
                 sigmas[2] = targetGaussZ;
@@ -1687,7 +1687,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                 e[2][2] = targetCubicVoxelZ / targetVoxelZ;
                 e[3][3] = 1.0;
                 progressBar.setMessage("Interpolating target image to cubic voxels");
-                progressBar.updateValue(15, activeImage);
+                progressBar.updateValue(15, runningInSeparateThread);
                 pixel5 = reslicer(targetArray, targetXDim, targetYDim, targetZDim, targetCubicXDim, targetCubicYDim,
                                   targetCubicZDim, e);
 
@@ -1783,7 +1783,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                 e[2][2] = sourceCubicVoxelZ / sourceVoxelZ;
                 e[3][3] = 1.0;
                 progressBar.setMessage("Interpolating source image to cubic voxels");
-                progressBar.updateValue(20, activeImage);
+                progressBar.updateValue(20, runningInSeparateThread);
                 pixel6 = reslicer(sourceArray, sourceXDim, sourceYDim, sourceZDim, sourceCubicXDim, sourceCubicYDim,
                                   sourceCubicZDim, e);
 
@@ -1898,7 +1898,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         }
 
         /* Iterate until the final sample factor is reached */
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
 
         while (sampleFactor >= sampleFactor2) {
             iters = 0;
@@ -1910,13 +1910,13 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
                 /* Calculate the standard deviation, mean, and derivatives */
                 if (sampleFactor == 27) {
-                    progressBar.updateValue(40, activeImage);
+                    progressBar.updateValue(40, runningInSeparateThread);
                 } else if (sampleFactor == 9) {
-                    progressBar.updateValue(50, activeImage);
+                    progressBar.updateValue(50, runningInSeparateThread);
                 } else if (sampleFactor == 3) {
-                    progressBar.updateValue(60, activeImage);
+                    progressBar.updateValue(60, runningInSeparateThread);
                 } else if (sampleFactor == 1) {
-                    progressBar.updateValue(70, activeImage);
+                    progressBar.updateValue(70, runningInSeparateThread);
                 }
 
                 progressBar.setMessage("Iteration # " + (iters + 1) + " at sample factor = " + sampleFactor);
@@ -3084,7 +3084,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
             targetVoxelZ = (float) pixel_size_s;
         } // if (cubicInterpolation)
 
-        progressBar.updateValue(80, activeImage);
+        progressBar.updateValue(80, runningInSeparateThread);
         progressBar.setMessage("Reslicing source image to result image");
 
         if ((interpolation == AlgorithmTransform.BILINEAR) || (interpolation == AlgorithmTransform.TRILINEAR)) {

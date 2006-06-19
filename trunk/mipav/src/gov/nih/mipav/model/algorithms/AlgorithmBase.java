@@ -36,9 +36,13 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
     /**
      * Should be set to true if NOT in a single thread - will NOT force a graphics update of the progress bar. Should be
-     * set to false if in a single thread - will force a graphics update of the progress bar.
+     * set to false if in a single thread - will force a graphics update of the progress bar.  This defaults to false,
+     * since we can automatically set it to true when startMethod() is called.  When starting the algorithm with run(),
+     * this boolean should remain false.
+     * @see #startMethod(int)
+     * @see #run()
      */
-    protected boolean activeImage = true;
+    protected boolean runningInSeparateThread = false;
 
     /** This flag will be set to true when the algorithm has completed. */
     protected boolean completed = false;
@@ -266,13 +270,14 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
-     * Should be set to true if NOT in a single thread - will NOT force a graphics update of the progress bar. Should be
-     * set to false if in a single thread - will force a graphics update of the progress bar.
+     * Should be set to true if NOT in a single thread (i.e., the main gui and this algo are in different threads)
+     * - will NOT force a graphics update of the progress bar. Should be set to false if in a single thread - will
+     * force a graphics update of the progress bar.
      *
-     * @return  boolean
+     * @return  boolean  true if this algorithm is in a different thread from the main mipav gui thread.
      */
-    public boolean isActiveImage() {
-        return this.activeImage;
+    public boolean isRunningInSeparateThread() {
+        return this.runningInSeparateThread;
     }
 
     /**
@@ -390,15 +395,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
-     * Sets the active image flag which controls how the progress bar is updated If true the progress bar is not forced
-     * to update.
+     * Sets the running in separate thread flag which controls how the progress bar is updated. If true the progress bar
+     * is not forced to update.
      *
-     * @param  activeFlag  Should be set to true if NOT in a single thread - will NOT force a graphics update of the
-     *                     progress bar. Should be set to false if in a single thread - will force a graphics update of
-     *                     the progress bar.
+     * @param  separateThread  Should be set to true if NOT in a single thread (i.e., the main gui and this algo are in
+     *                         different threads) - will NOT force a graphics update of the progress bar. Should be set
+     *                         to false if in a single thread - will force a graphics update of the progress bar.
      */
-    public void setActiveImage(boolean activeFlag) {
-        this.activeImage = activeFlag;
+    public void setRunningInSeparateThread(boolean separateThread) {
+        this.runningInSeparateThread = separateThread;
     }
 
 
@@ -505,6 +510,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
                 setPriority(MIN_PRIORITY);
             }
 
+            setRunningInSeparateThread(true);
             this.start();
         }
 

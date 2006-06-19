@@ -227,7 +227,8 @@ public class FileCheshireVOI extends FileBase {
 
         progressBar = new ViewJProgressBar("Creating VOIs", "Reading " + fileName, 0, 100, true, null, null);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        progressBar.setVisible(isProgressBarVisible());
         progressBar.updateValueImmed(0);
 
         String name = JDialogBase.makeImageName(image.getImageName(), "_result");

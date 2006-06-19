@@ -295,7 +295,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
         InitializePandY(p, y, func);
         simplex.setP(p);
         simplex.setY(y);
-        simplex.setActiveImage(activeImage);
+        simplex.setRunningInSeparateThread(runningInSeparateThread);
         simplex.run();
         xfrm = getTransform(p[0]); // lowest cost row
         xfrm.invert();

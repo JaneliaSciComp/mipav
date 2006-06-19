@@ -225,7 +225,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
                                                    Integer.toString(iIteration + 1) + "/" + kOptions.iMaxIterations +
                                                    "  Convergence: " + kDecimalFormat.format(dConvergence));
                             progressBar.updateValue((++iIterationControlPoint) * 100 / iNumIterationControlPoints,
-                                                    activeImage);
+                                                    runningInSeparateThread);
 
                             // Minimize single control point.
                             kReg.minimizeControlPoint(iControlX, iControlY, kOptions.iGradientDescentMinimizeMaxSteps,

@@ -581,7 +581,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             } // for ( y = 0; y < yDim2 && !threadStopped; y++ )
 
             if (progressBar != null) {
-                progressBar.updateValue(Math.round((z + 1) * 100.0f / zDim), activeImage);
+                progressBar.updateValue(Math.round((z + 1) * 100.0f / zDim), runningInSeparateThread);
             }
         } // end of for (z = 0; z < zDim; z++)
 

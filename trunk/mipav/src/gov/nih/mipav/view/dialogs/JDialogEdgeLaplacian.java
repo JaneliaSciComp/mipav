@@ -438,7 +438,6 @@ public class JDialogEdgeLaplacian extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -586,15 +585,13 @@ public class JDialogEdgeLaplacian extends JDialogBase implements AlgorithmInterf
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (laplacianSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    laplacianSepAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         laplacianSepAlgo.setProgressBarVisible(false);
                     }
@@ -659,15 +656,13 @@ public class JDialogEdgeLaplacian extends JDialogBase implements AlgorithmInterf
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast
                     if (laplacianSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    laplacianSepAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         laplacianSepAlgo.setProgressBarVisible(false);
                     }
@@ -727,15 +722,13 @@ public class JDialogEdgeLaplacian extends JDialogBase implements AlgorithmInterf
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (laplacianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    laplacianAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         laplacianSepAlgo.setProgressBarVisible(false);
                     }
@@ -800,15 +793,13 @@ public class JDialogEdgeLaplacian extends JDialogBase implements AlgorithmInterf
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast
                     if (laplacianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    laplacianAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         laplacianSepAlgo.setProgressBarVisible(false);
                     }

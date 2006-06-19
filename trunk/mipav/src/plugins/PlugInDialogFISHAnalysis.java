@@ -158,7 +158,7 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
             regionDistAlgo.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (regionDistAlgo.startMethod(Thread.MIN_PRIORITY) == false) {

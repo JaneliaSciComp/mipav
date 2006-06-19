@@ -307,7 +307,6 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         displayLoc = NEW;
         callAlgorithm();
@@ -361,15 +360,13 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (idObjectsAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        idObjectsAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo2D.setProgressBarVisible(false);
                         }
@@ -423,7 +420,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                  * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
                  * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }
                  *
-                 * if ( runInSeparateThread ) { // Start the thread as a low priority because we wish to still have user
+                 * if ( isRunInSeparateThread() ) { // Start the thread as a low priority because we wish to still have user
                  * interface. if ( idObjectsAlgo2D.startMethod( Thread.MIN_PRIORITY ) == false ) {
                  * MipavUtil.displayError( "A thread is already running on this object" ); } } else {
                  * idObjectsAlgo2D.setActiveImage( isActiveImage ); if ( !userInterface.isAppFrameVisible() ) {
@@ -471,15 +468,13 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (idObjectsAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        idObjectsAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo3D.setProgressBarVisible(false);
                         }
@@ -515,7 +510,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                  * (imageFrames.elementAt(i))).setEnabled(false); userInterface.unregisterFrame( (Frame)
                  * (imageFrames.elementAt(i))); }
                  *
-                 * if (runInSeparateThread) { // Start the thread as a low priority because we wish to still have user
+                 * if (isRunInSeparateThread()) { // Start the thread as a low priority because we wish to still have user
                  * interface work fast if (idObjectsAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                  * MipavUtil.displayError( "A thread is already running on this object"); } } else {
                  * idObjectsAlgo3D.setActiveImage(isActiveImage); if (!userInterface.isAppFrameVisible()) {

@@ -245,7 +245,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), runningInSeparateThread);
             }
 
             for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
@@ -442,7 +442,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), runningInSeparateThread);
             }
 
             for (i = imageSliceSize + xDim + 1; (i < (length - imageSliceSize - xDim - 1)) && !threadStopped; i++) {

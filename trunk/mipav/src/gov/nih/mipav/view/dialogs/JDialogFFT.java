@@ -600,7 +600,6 @@ public class JDialogFFT extends JDialogBase implements AlgorithmInterface, Scrip
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

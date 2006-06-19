@@ -189,7 +189,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         // a surface.
         buildProgressBar(srcImage.getImageName(), "Extracting surface ...", 0, 100);
         initProgressBar();
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         if (threadStopped) {
 
@@ -245,7 +245,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 // progressBar.updateValue(15, separateThread);
                 blurAlgo.setProgressBarVisible(false);
                 blurAlgo.run();
-                progressBar.updateValue(15, activeImage);
+                progressBar.updateValue(15, runningInSeparateThread);
 
                 if (blurAlgo.isCompleted() == false) {
 
@@ -268,7 +268,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 return;
             }
         } else {
-            progressBar.updateValue(15, activeImage);
+            progressBar.updateValue(15, runningInSeparateThread);
         }
 
         // Uncomment next line to display blurred maskImage for debugging purposes.
@@ -347,7 +347,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
             buffer = null;
             System.gc();
-            progressBar.updateValue(50, activeImage);
+            progressBar.updateValue(50, runningInSeparateThread);
 
             if (triangleConsistencyMode == ADJ_MODE) {
                 kMesh.getConsistentComponents();
@@ -411,7 +411,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 progressBar.setMessage("Saving surface");
                 ModelClodMesh.save(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomArray);
             } else {
-                progressBar.updateValue(75, activeImage);
+                progressBar.updateValue(75, runningInSeparateThread);
                 progressBar.setMessage("Saving surface");
                 kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomArray);
 

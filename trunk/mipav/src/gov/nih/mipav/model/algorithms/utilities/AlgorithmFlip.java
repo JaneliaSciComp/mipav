@@ -169,7 +169,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                             if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
 
                             resultBuffer[start + index] = buffer[(y * xDim) + (xDim - 1 - x)];
@@ -184,7 +184,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                             if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
 
                             resultBuffer[start + index] = buffer[((yDim - 1 - y) * xDim) + x];
@@ -213,7 +213,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                                 if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
                                     progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) *
-                                                                           100), activeImage);
+                                                                           100), runningInSeparateThread);
                                 }
 
                                 resultBuffer[start + index] = buffer[(cf * y * xDim) + (cf * (xDim - 1 - x)) + j];
@@ -231,7 +231,7 @@ public class AlgorithmFlip extends AlgorithmBase {
 
                                 if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
                                     progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) *
-                                                                           100), activeImage);
+                                                                           100), runningInSeparateThread);
                                 }
 
                                 resultBuffer[start + index] = buffer[(cf * (yDim - 1 - y) * xDim) + (cf * x) + j];

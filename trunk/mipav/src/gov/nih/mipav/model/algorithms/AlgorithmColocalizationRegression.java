@@ -3711,7 +3711,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
      * responds to the volume of interest (<code>VOI</code>) change events.
      *
      * <p>This method calls <code>updateVOI</code> using the <code>UpdateVOIEvent</code> changed <code>VOI</code>, and
-     * retrieves the activeImage out of the current image's frame.</p>
+     * retrieves the runningInSeparateThread out of the current image's frame.</p>
      *
      * @see  UpdateVOIEvent
      * @see  #updateVOI

@@ -2320,7 +2320,7 @@ public class FileAfni extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing AFNI header file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
 
         zBegin = options.getBeginSlice();
         zEnd = options.getEndSlice();
@@ -3785,7 +3785,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, byteBuffer);
                         raFile.write(byteBuffer);
                     }
@@ -3799,7 +3799,7 @@ public class FileAfni extends FileBase {
                 for (t = 0; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3819,7 +3819,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, intBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3841,7 +3841,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3864,7 +3864,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, doubleBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -4263,9 +4263,8 @@ public class FileAfni extends FileBase {
      * Initialize progress bar.
      */
     private void initProgressBar() {
-
         if (progressBar != null) {
-            progressBar.setVisible(true);
+            progressBar.setVisible(isProgressBarVisible());
         }
     }
 

@@ -337,7 +337,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         for (pix = 0; pix < imageLength; pix++) {
 
             if ((incIndex != -1) && ((pix % incIndex) == 0) && (pix > 0)) {
-                progressBar.updateValue(curPercent, activeImage);
+                progressBar.updateValue(curPercent, runningInSeparateThread);
                 curPercent++;
             }
 
@@ -401,7 +401,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         for (pix = 0; pix < imageLength; pix++) {
 
             if ((incIndex != -1) && (((pix + imageLength) % incIndex) == 0)) {
-                progressBar.updateValue(curPercent, activeImage);
+                progressBar.updateValue(curPercent, runningInSeparateThread);
                 curPercent++;
             }
 
@@ -503,7 +503,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         for (pix = 0; pix < size; pix++) {
 
             if ((incIndex != -1) && ((pix % incIndex) == 0) && (pix > 0)) {
-                progressBar.updateValue(curPercent, activeImage);
+                progressBar.updateValue(curPercent, runningInSeparateThread);
                 curPercent++;
             }
 
@@ -562,7 +562,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         for (pix = 0; pix < size; pix++) {
 
             if ((incIndex != -1) && (((pix + size) % incIndex) == 0)) {
-                progressBar.updateValue(curPercent, activeImage);
+                progressBar.updateValue(curPercent, runningInSeparateThread);
                 curPercent++;
             }
 
@@ -621,7 +621,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         for (pix = 0; pix < size; pix++) {
 
             if ((incIndex != -1) && (((pix + (2 * size)) % incIndex) == 0)) {
-                progressBar.updateValue(curPercent, activeImage);
+                progressBar.updateValue(curPercent, runningInSeparateThread);
                 curPercent++;
             }
 

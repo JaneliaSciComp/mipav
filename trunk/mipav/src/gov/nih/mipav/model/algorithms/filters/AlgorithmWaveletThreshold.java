@@ -747,7 +747,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         } // else if (nDims == 3)
 
         progressBar.setMessage("Performing forward wavelet transform");
-        progressBar.updateValue(20, activeImage);
+        progressBar.updateValue(20, runningInSeparateThread);
         transformDir = FORWARD;
         wtn(aExp);
 
@@ -783,7 +783,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         } // if (doWaveletImage)
 
         progressBar.setMessage("Zeroing coefficients below cutoff");
-        progressBar.updateValue(50, activeImage);
+        progressBar.updateValue(50, runningInSeparateThread);
         aMax = -Float.MAX_VALUE;
 
         for (int i = 0; i < aExp.length; i++) {
@@ -828,7 +828,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         } // switch(thresholdType)
 
         progressBar.setMessage("Performing inverse wavelet transform");
-        progressBar.updateValue(60, activeImage);
+        progressBar.updateValue(60, runningInSeparateThread);
         transformDir = INVERSE;
         wtn(aExp);
 
@@ -935,7 +935,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         }
 
         progressBar.setMessage("Importing noise filtered image");
-        progressBar.updateValue(90, activeImage);
+        progressBar.updateValue(90, runningInSeparateThread);
 
         if (destImage != null) {
 

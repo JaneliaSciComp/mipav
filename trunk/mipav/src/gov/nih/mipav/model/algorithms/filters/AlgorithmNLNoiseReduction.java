@@ -848,7 +848,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
 
             if (newProgressValue >= (progressValue + 5)) {
                 progressValue = newProgressValue;
-                progressBar.updateValue(progressValue, activeImage);
+                progressBar.updateValue(progressValue, runningInSeparateThread);
             }
 
             for (j = maskSize; (j < (xSize - maskSize)) && !threadStopped; j++) {
@@ -963,7 +963,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
 
                 if (newProgressValue >= (progressValue + 5)) {
                     progressValue = newProgressValue;
-                    progressBar.updateValue(progressValue, activeImage);
+                    progressBar.updateValue(progressValue, runningInSeparateThread);
                 }
 
                 for (j = maskSize; j < (xSize - maskSize); j++) {

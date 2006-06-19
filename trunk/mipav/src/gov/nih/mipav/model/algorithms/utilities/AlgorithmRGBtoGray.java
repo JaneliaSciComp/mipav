@@ -313,7 +313,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
 
                         if (thresholdAverage) {
@@ -599,7 +599,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (totalLength - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (i) / (totalLength - 1) * 100), runningInSeparateThread);
             }
 
             if (thresholdAverage) {

@@ -249,7 +249,6 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }
@@ -308,15 +307,13 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast
                 if (extractSurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                extractSurAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     extractSurAlgo.setProgressBarVisible(false);
                 }
@@ -392,20 +389,20 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
         gbc.gridheight = 1;
         gbc.insets = insets;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         filePanel.add(fileButton, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         filePanel.add(fileTF, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         filePanel.add(saveLabel, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         filePanel.add(typeComboBox, gbc);
 
         JPanel buttonPanel = new JPanel();

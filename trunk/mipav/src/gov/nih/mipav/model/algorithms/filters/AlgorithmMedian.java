@@ -652,23 +652,23 @@ public class AlgorithmMedian extends AlgorithmBase {
         // larger 2D image
         if (progressBar != null) {
             progressBar.setMessage("Buffering ...");
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
 
             progressBar.setMessage("Filtering...");
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         disposeProgressBar(); // filtering work should be done.
@@ -762,7 +762,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 if (progressBar != null) {
                     progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
@@ -1058,17 +1058,17 @@ public class AlgorithmMedian extends AlgorithmBase {
         // larger 2D image
         if (progressBar != null) {
             progressBar.setMessage("Buffering ...");
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
 
             progressBar.setMessage("Filtering...");
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
@@ -1076,7 +1076,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         disposeProgressBar(); // filtering work should be done.
@@ -1178,7 +1178,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 if (progressBar != null) {
                     progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
@@ -1357,7 +1357,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         for (sliceIndex = 0; sliceIndex < srcBufferDepth; sliceIndex++) {
 
             if (progressBar != null) {
-                progressBar.updateValue(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)), activeImage);
+                progressBar.updateValue(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
             }
 
             copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, sliceIndex * srcBufferSliceLength,
@@ -2113,7 +2113,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                         // do a progress bar update
                         progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                                 (iterations * numberOfSlices)) * 100)), activeImage);
+                                                                 (iterations * numberOfSlices)) * 100)), runningInSeparateThread);
                     }
 
                     if (!rChannel && (initialIndex == 1)) {
@@ -2161,7 +2161,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                                                                 ((initialIndex - 1) * sliceLength) +
                                                                                 (i / 4)) /
                                                                            (3 * iterations * sliceLength) * 100),
-                                                            activeImage);
+                                                            runningInSeparateThread);
                                 }
                             }
 
@@ -2211,7 +2211,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                         // do a progress bar update
                         progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                                 (iterations * numberOfSlices)) * 100)), activeImage);
+                                                                 (iterations * numberOfSlices)) * 100)), runningInSeparateThread);
                     }
                 }
 
@@ -2222,7 +2222,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         if (((i % mod) == 0) && (pBarVisible == true)) {
                             progressBar.updateValue(Math.round(((float) ((pass * imageSliceLength) + i) /
                                                                     (iterations * imageSliceLength) * 100)),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
                     }
 
@@ -2335,7 +2335,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 // do a progress bar update
                 progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                         (iterations * numberOfSlices)) * 100)), activeImage);
+                                                         (iterations * numberOfSlices)) * 100)), runningInSeparateThread);
             }
             a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
 
@@ -2357,7 +2357,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     progressBar.updateValue(Math.round((float) ((pass * sliceLength) +
                                                                                 (i / 4)) /
                                                                            (iterations * sliceLength) * 100),
-                                                            activeImage);
+                                                            runningInSeparateThread);
                                 }
                             }
 
@@ -2461,7 +2461,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 // do a progress bar update
                 progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                         (iterations * numberOfSlices)) * 100)), activeImage);
+                                                         (iterations * numberOfSlices)) * 100)), isRunningInSeparateThread());
             }
             a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
 
@@ -2483,7 +2483,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     progressBar.updateValue(Math.round((float) ((pass * sliceLength) +
                                                                                 (i / 4)) /
                                                                            (iterations * sliceLength) * 100),
-                                                            activeImage);
+                                                            isRunningInSeparateThread());
                                 }
                             }
 
@@ -2711,7 +2711,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
                             progressBar.updateValue(Math.round(((float) ((iterations * (initialIndex - 1) * imageSize) +
                                                                          (imageSize * pass) + (i / 4)) /
-                                                                    (3 * iterations * imageSize) * 100)), activeImage);
+                                                                    (3 * iterations * imageSize) * 100)), runningInSeparateThread);
                         }
 
                         if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -2849,7 +2849,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                         if (((i % mod) == 0) && (pBarVisible == true)) {
                             progressBar.updateValue(Math.round(((float) ((imageSize * pass) + (i / 4)) /
-                                                                    (iterations * imageSize) * 100)), activeImage);
+                                                                    (iterations * imageSize) * 100)), runningInSeparateThread);
                         }
 
                         if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -2981,7 +2981,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                         if (((i % mod) == 0) && (pBarVisible == true)) {
                             progressBar.updateValue(Math.round(((float) ((imageSize * pass) + (i / 4)) /
-                                                                    (iterations * imageSize) * 100)), activeImage);
+                                                                    (iterations * imageSize) * 100)), isRunningInSeparateThread());
                         }
 
                         if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -3102,7 +3102,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 if (((i % mod) == 0) && (pBarVisible == true)) {
                     progressBar.updateValue(Math.round(((float) ((pass * imageLength) + i) /
-                                                            (iterations * imageLength) * 100)), activeImage);
+                                                            (iterations * imageLength) * 100)), runningInSeparateThread);
                 }
 
                 if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -3175,7 +3175,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
 
             if (progressBar != null) {
-                progressBar.updateValue(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)), activeImage);
+                progressBar.updateValue(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
             }
 
             srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;

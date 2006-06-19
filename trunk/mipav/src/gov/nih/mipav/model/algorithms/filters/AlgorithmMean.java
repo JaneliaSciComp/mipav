@@ -983,7 +983,7 @@ public class AlgorithmMean extends AlgorithmBase {
                 if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
 
                     // do a progress bar update
-                    progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), activeImage);
+                    progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), runningInSeparateThread);
                 }
 
                 if ((initialIndex == 1) && (!rChannel)) {
@@ -1038,7 +1038,7 @@ public class AlgorithmMean extends AlgorithmBase {
                             if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
                                 progressBar.updateValue(Math.round((float) (((initialIndex - 1) * sliceLength) +
                                                                             (i / 4)) / (3 * sliceLength) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         }
 
@@ -1062,7 +1062,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                     // do a progress bar update
                     progressBar.updateValue(Math.round((((float) (currentSlice) / (numberOfSlices)) * 100)),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
             }
 
@@ -1071,7 +1071,7 @@ public class AlgorithmMean extends AlgorithmBase {
                 if (numberOfSlices == 1) { // 2D image     update progressBar
 
                     if (((i % mod) == 0) && (pBarVisible == true)) {
-                        progressBar.updateValue(Math.round((float) i / (imageSliceLength) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (imageSliceLength) * 100), runningInSeparateThread);
                     }
                 }
 
@@ -1164,7 +1164,7 @@ public class AlgorithmMean extends AlgorithmBase {
             if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
 
                 // do a progress bar update
-                progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), activeImage);
+                progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), runningInSeparateThread);
             }
 
             
@@ -1193,7 +1193,7 @@ public class AlgorithmMean extends AlgorithmBase {
                     if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
                         progressBar.updateValue(Math.round((float) (((initialIndex - 1) * sliceLength) +
                                                                     (i / 4)) / (3 * sliceLength) * 100),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
                 }
 
@@ -1303,7 +1303,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                     if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
                         progressBar.updateValue(Math.round(((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
-                                                                (3 * imageSize) * 100)), activeImage);
+                                                                (3 * imageSize) * 100)), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -1404,7 +1404,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                 if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
                     progressBar.updateValue(Math.round(((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
-                                                            (3 * imageSize) * 100)), activeImage);
+                                                            (3 * imageSize) * 100)), runningInSeparateThread);
                 }
 
                 if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -1456,7 +1456,7 @@ public class AlgorithmMean extends AlgorithmBase {
         for (i = 0; (i < imageLength) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && (pBarVisible == true)) {
-                progressBar.updateValue(Math.round((((float) (i) / (imageLength - 1)) * 100)), activeImage);
+                progressBar.updateValue(Math.round((((float) (i) / (imageLength - 1)) * 100)), runningInSeparateThread);
             }
 
             if ((entireImage == true) || mask.get(i / valuesPerPixel)) {

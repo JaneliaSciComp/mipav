@@ -628,7 +628,6 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         // only set ref image number if it has not been set already (so user can designate which slice)
@@ -997,8 +996,6 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
         setVisible(false);
 
         if (isScript) {
-            reg35.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 reg35.setProgressBarVisible(false);
             }

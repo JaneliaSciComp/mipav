@@ -262,7 +262,6 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         //        callAlgorithm();
         if (!srcImageKey.equals(destImageKey)) {
@@ -351,21 +350,19 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
             // This is made possible by implementing AlgorithmedPerformed interface
             xcosmEMAlgo.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (xcosmEMAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                xcosmEMAlgo.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     xcosmEMAlgo.setProgressBarVisible(false);
                 }
 
                 xcosmEMAlgo.run();
-            } // end if (runInSeparateThread)
+            } // end if (isRunInSeparateThread())
 
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("JDialogXcosmEM: unable to allocate enough memory");

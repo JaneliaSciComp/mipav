@@ -180,7 +180,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -277,7 +277,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((progressBar != null) && ((i % mod) == 0)) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -322,7 +322,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
                 for (i = (z * sliceLength); (i < endIndex) && !threadStopped; i++) {
 
                     if ((i % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -421,7 +421,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -507,7 +507,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
                     if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
-                                                               100), activeImage);
+                                                               100), runningInSeparateThread);
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
@@ -539,7 +539,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
                     if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
-                                                               100), activeImage);
+                                                               100), runningInSeparateThread);
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {

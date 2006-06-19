@@ -524,7 +524,7 @@ public class FileSTK extends FileBase {
             progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
                                                ViewUserInterface.getReference().getProgressBarPrefix() +
                                                "STK image(s) ...", 0, 100, false, null, null);
-            setProgressBarVisible(!one);
+            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
 
             for (i = 0; i < imageSlice; i++) {
 
@@ -655,7 +655,7 @@ public class FileSTK extends FileBase {
 
             progressBar = new ViewJProgressBar("Saving TIFF image", "Saving Image " + fileName, 0, 100, false, null,
                                                null);
-            progressBar.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
 
             index = fileName.indexOf(".");
             prefix = fileName.substring(0, index); // Used for setting file name
@@ -820,7 +820,7 @@ public class FileSTK extends FileBase {
 
                         progressBar.updateValue(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                (options.getEndSlice() - options.getBeginSlice() + 1) *
-                                                               100), options.isActiveImage());
+                                                               100), options.isRunningInSeparateThread());
                         progressBar.setTitle("Saving image " + k);
 
                         if (options.isWritePackBit()) {
@@ -871,7 +871,7 @@ public class FileSTK extends FileBase {
                     }
                 } else {
                     progressBar.updateValue(Math.round((float) s / (options.getEndSlice()) * 100),
-                                            options.isActiveImage());
+                                            options.isRunningInSeparateThread());
                     progressBar.setTitle("Saving image " + seq);
 
                     if (options.isWritePackBit()) {

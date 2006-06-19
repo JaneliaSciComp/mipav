@@ -274,7 +274,7 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
 
         UI = matchImage.getUserInterface();
         parentFrame = matchImage.getParentFrame();
-        setActiveImage(parser.isActiveImage());
+
         setSeparateThread(false);
         callAlgorithm();
 
@@ -533,14 +533,12 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
             UI.unregisterFrame((Frame) (imageFrames.elementAt(i)));
         }
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             if (spline.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            spline.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 spline.setProgressBarVisible(false);
             }

@@ -930,7 +930,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
 
         FileWriteOptions opts;
 
-        if (activeImage) {
+        if (runningInSeparateThread) {
             opts = new FileWriteOptions(savePrefix + stripExt(name) + saveSuffix, UI.getDefaultDirectory(), saveAs);
         } else {
             opts = new FileWriteOptions(savePrefix + stripExt(name) + saveSuffix,
@@ -942,7 +942,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         int num;
         int fileType;
 
-        opts.setActiveImage(activeImage);
+        opts.setRunningInSeparateThread(runningInSeparateThread);
 
         String tempString = getNextString();
         String ext = tempString;
@@ -989,13 +989,13 @@ public class AlgorithmScriptParser extends AlgorithmBase {
             fTemp = null;
         }
 
-        if (activeImage) {
+        if (runningInSeparateThread) {
             opts = new FileWriteOptions(fname, UI.getDefaultDirectory() + File.separator, saveAs);
         } else {
             opts = new FileWriteOptions(fname, (String) fileDirs.elementAt(currFileIndex) + File.separator, saveAs);
         }
 
-        opts.setActiveImage(activeImage);
+        opts.setRunningInSeparateThread(runningInSeparateThread);
         fileType = fileIO.getFileType(opts.getFileName(), opts.getFileDirectory());
         Preferences.debug("File type is: " + fileType);
         opts.setFileType(fileType);
@@ -1354,6 +1354,9 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                     getFrameFromName(name).save(getWriteOptions(name, true), -1);
                 }
             } catch (Exception e) {
+                System.out.println(e);
+                for (int i = 0; i < e.getStackTrace().length; i++)
+                    System.out.println(e.getStackTrace()[i]);
                 MipavUtil.displayError("Error in script file near \"SaveImageAs\".  Image " + name +
                                        " not found or error in options.\n");
                 isRunning = false;

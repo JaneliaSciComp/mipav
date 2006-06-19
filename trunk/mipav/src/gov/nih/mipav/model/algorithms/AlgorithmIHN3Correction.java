@@ -2012,7 +2012,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             progressBar.setMessage("Starting iteration " + iters);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) iters / (maxIters - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) iters / (maxIters - 1) * 100), runningInSeparateThread);
             }
 
             // Correct volume using field estimate
@@ -2729,7 +2729,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Starting iteration " + iters + ": Tol = " + stddev);
-                progressBar.updateValue(Math.round((float) iters / (maxIters - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) iters / (maxIters - 1) * 100), runningInSeparateThread);
             }
 
             // Correct volume using field estimate

@@ -210,8 +210,6 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                defaceAlgo.setActiveImage(isActiveImage);
-
                 if (!ViewUserInterface.getReference().isAppFrameVisible()) {
                     defaceAlgo.setProgressBarVisible(false);
                 }
@@ -353,7 +351,6 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }

@@ -120,14 +120,13 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (isnAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                isnAlgo.setActiveImage(isActiveImage);
                 isnAlgo.run();
             }
         } catch (OutOfMemoryError x) {

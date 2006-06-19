@@ -409,7 +409,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), runningInSeparateThread);
             }
         }
 
@@ -603,7 +603,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), runningInSeparateThread);
             }
         }
 

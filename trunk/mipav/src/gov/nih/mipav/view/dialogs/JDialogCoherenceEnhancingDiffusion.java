@@ -246,7 +246,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogBase implements A
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -445,21 +444,19 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogBase implements A
             // This is made possible by implementing AlgorithmedPerformed interface
             coherenceEnhancingDiffusionAlgo.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (coherenceEnhancingDiffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                coherenceEnhancingDiffusionAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     coherenceEnhancingDiffusionAlgo.setProgressBarVisible(false);
                 }
 
                 coherenceEnhancingDiffusionAlgo.run();
-            } // end if (runInSeparateThread)
+            } // end if (isRunInSeparateThread())
 
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("JDialogCohEnhDiffusion: unable to allocate enough memory");

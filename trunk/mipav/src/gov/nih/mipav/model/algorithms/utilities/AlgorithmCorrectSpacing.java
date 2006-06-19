@@ -166,7 +166,7 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         for (t = 0; (t < Tdim) && !threadStopped; t++) {
 
             if ((timeBar != null) && timeBar.isVisible()) {
-                timeBar.updateValue(Math.round((float) (t + 1) / (float) Tdim * 100), activeImage);
+                timeBar.updateValue(Math.round((float) (t + 1) / (float) Tdim * 100), runningInSeparateThread);
             }
 
             Z = 0; // Z is the slice number in the resultImage
@@ -180,7 +180,7 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
                         sliceBar.setMessage(message);
                     }
 
-                    sliceBar.updateValue(Math.round((float) (z + 1) / (float) oldZdim * 100), activeImage);
+                    sliceBar.updateValue(Math.round((float) (z + 1) / (float) oldZdim * 100), runningInSeparateThread);
                 }
 
                 try {

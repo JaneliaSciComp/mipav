@@ -745,7 +745,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         int mod = sliceSize / 50; // mod is 2 percent of length
@@ -755,7 +755,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), activeImage);
+                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), runningInSeparateThread);
                 }
             } catch (NullPointerException npe) {
 
@@ -914,7 +914,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -1167,7 +1167,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -1769,7 +1769,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -1876,7 +1876,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -1943,7 +1943,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), activeImage);
+                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), runningInSeparateThread);
                 }
             } catch (NullPointerException npe) {
 
@@ -2052,7 +2052,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -2096,7 +2096,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         processBuffer = tmpBuffer;
 
         try {
-            progressBar.updateValue(33, activeImage);
+            progressBar.updateValue(33, runningInSeparateThread);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -2110,7 +2110,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)), activeImage);
+                    progressBar.updateValue(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)), runningInSeparateThread);
                 }
             } catch (NullPointerException npe) {
 
@@ -2150,7 +2150,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         try {
-            progressBar.updateValue(66, activeImage);
+            progressBar.updateValue(66, runningInSeparateThread);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -2165,7 +2165,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)), activeImage);
+                    progressBar.updateValue(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)), runningInSeparateThread);
                 }
             } catch (NullPointerException npe) {
 
@@ -2185,7 +2185,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         try {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -2274,7 +2274,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         for (pix = 0; pix < sliceSize; pix++) {
@@ -2291,7 +2291,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                     if (((((c * sliceSize) + pix) % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
-                                                               100), activeImage);
+                                                               100), runningInSeparateThread);
                     }
                 } catch (NullPointerException npe) {
 
@@ -2428,7 +2428,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -2491,7 +2491,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), activeImage);
+                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), runningInSeparateThread);
                 }
             } catch (NullPointerException npe) {
 
@@ -2595,7 +2595,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         int mod = (iters * sliceSize) / 20; // mod is 5 percent of length
@@ -2612,7 +2612,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                     if (((((c * sliceSize) + pix) % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
-                                                               100), activeImage);
+                                                               100), runningInSeparateThread);
                     }
                 } catch (NullPointerException npe) {
 
@@ -2948,7 +2948,7 @@ kernelLoop:
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -2984,7 +2984,7 @@ kernelLoop:
 
                     if ((((sliceSize + pix) % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
                 } catch (NullPointerException npe) {
 
@@ -3060,7 +3060,7 @@ kernelLoop:
 
                     if ((((sliceSize + pix) % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
                 } catch (NullPointerException npe) {
 
@@ -3517,7 +3517,7 @@ kernelLoop:
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -3536,7 +3536,7 @@ kernelLoop:
             ultimateErode(true); // forms list of points (one point per object)
 
             if (progressBar != null) {
-                progressBar.updateValue(25, activeImage);
+                progressBar.updateValue(25, runningInSeparateThread);
             }
 
             if (progressBar != null) {
@@ -3613,7 +3613,7 @@ kernelLoop:
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(70, activeImage);
+                progressBar.updateValue(70, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -3701,7 +3701,7 @@ kernelLoop:
         }
 
         try {
-            progressBar.updateValue(90, activeImage);
+            progressBar.updateValue(90, runningInSeparateThread);
             wsImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
 
             // once the data from the watershed has been exported to imgBuffer, the
@@ -3731,7 +3731,7 @@ kernelLoop:
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(90, activeImage);
+                progressBar.updateValue(90, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -3779,7 +3779,7 @@ kernelLoop:
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -3793,7 +3793,7 @@ kernelLoop:
 
             // add set minimum dist
             if (progressBar != null) {
-                progressBar.updateValue(25, activeImage);
+                progressBar.updateValue(25, runningInSeparateThread);
             }
 
             if (progressBar != null) {
@@ -3870,7 +3870,7 @@ kernelLoop:
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(70, activeImage);
+                progressBar.updateValue(70, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -3961,7 +3961,7 @@ kernelLoop:
          * disposeProgressBar(); setCompleted( true ); returnFlag = true; if ( returnFlag == true ) { return; }
          */
         try {
-            progressBar.updateValue(90, activeImage);
+            progressBar.updateValue(90, runningInSeparateThread);
             wsImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             srcImage.importData(0, imgBuffer, true);
 

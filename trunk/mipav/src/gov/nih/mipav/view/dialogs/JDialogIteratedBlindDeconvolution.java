@@ -163,7 +163,6 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         if (!srcImageKey.equals(destImageKey)) { }
@@ -190,15 +189,13 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
             // This is made possible by implementing AlgorithmedPerformed interface
             ibdAlgor.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (ibdAlgor.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                ibdAlgor.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     ibdAlgor.setProgressBarVisible(false);
                 }

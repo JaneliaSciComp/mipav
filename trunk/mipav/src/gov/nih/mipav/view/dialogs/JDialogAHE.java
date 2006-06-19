@@ -372,7 +372,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -551,15 +550,13 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                 aheAlgo.addListener(this);
                 setVisible(false); // Hide dialog
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (aheAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    aheAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         aheAlgo.setProgressBarVisible(false);
                     }
@@ -612,15 +609,13 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (aheAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    aheAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         aheAlgo.setProgressBarVisible(false);
                     }

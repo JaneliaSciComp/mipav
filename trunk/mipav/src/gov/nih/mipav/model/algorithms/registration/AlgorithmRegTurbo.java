@@ -977,7 +977,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         scaleBottomDownLandmarks();
 
         while (!targetImagePyramid.isEmpty()) {
-            progressBar.updateValue(iterationNumber * 100 / (pyramidDepth + 1), activeImage);
+            progressBar.updateValue(iterationNumber * 100 / (pyramidDepth + 1), runningInSeparateThread);
             iterationPower /= ITERATION_PROGRESSION;
 
             if (transformation == BILINEAR_DISTORTION) {
@@ -1036,7 +1036,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             iterationNumber++;
         }
 
-        progressBar.updateValue(pyramidDepth * 100 / (pyramidDepth + 1), activeImage);
+        progressBar.updateValue(pyramidDepth * 100 / (pyramidDepth + 1), runningInSeparateThread);
         iterationPower /= ITERATION_PROGRESSION;
 
         if (transformation == BILINEAR_DISTORTION) {
@@ -1081,7 +1081,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         } // if (interpolation == CUBIC_SPLINE)
 
         iterationPower = (int) Math.pow((double) ITERATION_PROGRESSION, (double) pyramidDepth);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
     }
 

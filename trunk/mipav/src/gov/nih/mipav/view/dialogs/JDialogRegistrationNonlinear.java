@@ -548,7 +548,6 @@ public class JDialogRegistrationNonlinear extends JDialogBase implements Algorit
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -837,7 +836,7 @@ public class JDialogRegistrationNonlinear extends JDialogBase implements Algorit
             // See algorithm performed event. This is made possible by implementing
             nl.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have
                 // user interface work fast
@@ -845,8 +844,6 @@ public class JDialogRegistrationNonlinear extends JDialogBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                nl.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     nl.setProgressBarVisible(false);
                 }
@@ -883,7 +880,7 @@ public class JDialogRegistrationNonlinear extends JDialogBase implements Algorit
             // See algorithm performed event. This is made possible by implementing
             nl.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have
                 // user interface work fast
@@ -891,8 +888,6 @@ public class JDialogRegistrationNonlinear extends JDialogBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                nl.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     nl.setProgressBarVisible(false);
                 }

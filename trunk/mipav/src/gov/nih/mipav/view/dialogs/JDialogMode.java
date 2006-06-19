@@ -373,7 +373,6 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -514,15 +513,13 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
                     modeAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (modeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        modeAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             modeAlgo.setProgressBarVisible(false);
                         }
@@ -569,15 +566,13 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (modeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        modeAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             modeAlgo.setProgressBarVisible(false);
                         }
@@ -625,15 +620,13 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
                     modeAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (modeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        modeAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             modeAlgo.setProgressBarVisible(false);
                         }
@@ -679,15 +672,13 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (modeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        modeAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             modeAlgo.setProgressBarVisible(false);
                         }

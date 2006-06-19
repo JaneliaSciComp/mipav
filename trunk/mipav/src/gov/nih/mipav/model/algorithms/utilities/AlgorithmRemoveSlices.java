@@ -214,7 +214,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 // so long as the slice has not been marked for removal, copy it all over.
@@ -425,7 +425,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 // so long as the slice has not been marked for removal, copy it all over.

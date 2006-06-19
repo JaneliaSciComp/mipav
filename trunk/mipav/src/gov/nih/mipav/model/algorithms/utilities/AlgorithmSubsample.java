@@ -133,7 +133,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             resultImage.importData(0, temp.data, true);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(100, activeImage);
+                progressBar.updateValue(100, runningInSeparateThread);
             }
         } catch (IOException ioe) {
             MipavUtil.displayError("Error caught trying to import subsample result image.");
@@ -655,7 +655,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         int zOffset;
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, activeImage);
+            progressBar.updateValue(percent, runningInSeparateThread);
         }
 
         for (int s = 0; s < nImages; s++) {
@@ -801,7 +801,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         percent += (int) inc;
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, activeImage);
+            progressBar.updateValue(percent, runningInSeparateThread);
         }
 
         remainder += inc - (int) inc;
@@ -811,7 +811,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             remainder = remainder - (int) remainder;
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(percent, activeImage);
+                progressBar.updateValue(percent, runningInSeparateThread);
             }
         }
 
@@ -871,7 +871,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float inc = (90.0f / result.zDim);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, activeImage);
+            progressBar.updateValue(percent, runningInSeparateThread);
         }
 
         for (int z = 0; z < result.zDim; z++) {
@@ -1189,7 +1189,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             percent += (int) inc;
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(percent, activeImage);
+                progressBar.updateValue(percent, runningInSeparateThread);
             }
 
             remainder += inc - (int) inc;
@@ -1199,7 +1199,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 remainder = remainder - (int) remainder;
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(percent, activeImage);
+                    progressBar.updateValue(percent, runningInSeparateThread);
                 }
             }
 
@@ -1263,7 +1263,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float inc = (90.0f / (result.tDim * result.zDim));
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, activeImage);
+            progressBar.updateValue(percent, runningInSeparateThread);
         }
 
         for (int t = 0; t < result.tDim; t++) {
@@ -1585,7 +1585,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 percent += (int) inc;
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(percent, activeImage);
+                    progressBar.updateValue(percent, runningInSeparateThread);
                 }
 
                 remainder += inc - (int) inc;
@@ -1595,7 +1595,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                     remainder = remainder - (int) remainder;
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(percent, activeImage);
+                        progressBar.updateValue(percent, runningInSeparateThread);
                     }
                 } // if (remainder >= 1)
 
@@ -1695,7 +1695,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
         VOIExtAlgo.setProgressBarVisible(false);
 
-        VOIExtAlgo.setActiveImage(activeImage);
+        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
         resultImage.setVOIs(tmpMask.getVOIs());
         tmpMask.disposeLocal();
@@ -1820,7 +1820,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
         VOIExtAlgo.setProgressBarVisible(false);
 
-        VOIExtAlgo.setActiveImage(activeImage);
+        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
 
         VOIVector resultVOIs = tmpMask.getVOIs();

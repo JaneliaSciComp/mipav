@@ -372,8 +372,6 @@ public class JDialogAnimate extends JDialogBase {
                 return;
             }
 
-            algoTrans.setActiveImage(isActiveImage);
-
             if (!ui.isAppFrameVisible()) {
                 algoTrans.setProgressBarVisible(false);
             }
@@ -408,8 +406,6 @@ public class JDialogAnimate extends JDialogBase {
 
                     return;
                 }
-
-                algoTransB.setActiveImage(isActiveImage);
 
                 if (!ui.isAppFrameVisible()) {
                     algoTransB.setProgressBarVisible(false);

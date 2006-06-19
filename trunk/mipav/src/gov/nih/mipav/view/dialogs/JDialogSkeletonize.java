@@ -438,7 +438,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -542,15 +541,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (skeletonizeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        skeletonizeAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             skeletonizeAlgo2D.setProgressBarVisible(false);
                         }
@@ -609,15 +606,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (skeletonizeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        skeletonizeAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             skeletonizeAlgo2D.setProgressBarVisible(false);
                         }
@@ -666,15 +661,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (skeletonizeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        skeletonizeAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             skeletonizeAlgo3D.setProgressBarVisible(false);
                         }
@@ -732,15 +725,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (skeletonizeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        skeletonizeAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             skeletonizeAlgo3D.setProgressBarVisible(false);
                         }
@@ -784,15 +775,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (skeletonizeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        skeletonizeAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             skeletonizeAlgo25D.setProgressBarVisible(false);
                         }
@@ -852,15 +841,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (skeletonizeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        skeletonizeAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             skeletonizeAlgo25D.setProgressBarVisible(false);
                         }

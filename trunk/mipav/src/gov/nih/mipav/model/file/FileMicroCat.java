@@ -395,11 +395,10 @@ public class FileMicroCat extends FileBase {
                                                ViewUserInterface.getReference().getProgressBarPrefix() +
                                                "Micro Cat image(s) ...", 0, 100, false, null, null);
 
-            if (!quiet && !one) {
-                progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-                progressBar.setVisible(true);
-            }
-
+            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
+            setProgressBarVisible(!quiet && !one && ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setVisible(isProgressBarVisible());
+            
             progressBar.updateValue(0, true);
             i = 0;
 

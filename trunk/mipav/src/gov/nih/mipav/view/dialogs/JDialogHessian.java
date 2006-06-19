@@ -194,21 +194,19 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
                 // This is made possible by implementing AlgorithmedPerformed interface
                 imgHessianAlgor.addListener(this);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (imgHessianAlgor.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    imgHessianAlgor.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         imgHessianAlgor.setProgressBarVisible(false);
                     }
 
                     imgHessianAlgor.run();
-                } // end if (runInSeparateThread)
+                } // end if (isRunInSeparateThread())
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog Hessian: unable to allocate enough memory");
 

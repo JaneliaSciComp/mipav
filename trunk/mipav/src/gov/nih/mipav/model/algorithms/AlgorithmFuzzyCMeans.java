@@ -1652,7 +1652,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             yStepper = y * xDim;
 
             if (progressBar != null) {
-                progressBar.updateValue((int) (y * (100.0f / yDim)), activeImage);
+                progressBar.updateValue((int) (y * (100.0f / yDim)), runningInSeparateThread);
             }
 
             for (x = 0; (x < xDim) && !threadStopped; x++) {
@@ -1746,7 +1746,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             zStepOut = z * sliceSize;
 
             if (progressBar != null) {
-                progressBar.updateValue((int) (z * (100.0f / zDim)), activeImage);
+                progressBar.updateValue((int) (z * (100.0f / zDim)), runningInSeparateThread);
             }
 
             for (y = 0; (y < yDim) && !threadStopped; y++) {

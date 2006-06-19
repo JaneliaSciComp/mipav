@@ -352,7 +352,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
 
                     if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if (entireImage || mask.get(i / 4)) {
@@ -419,7 +419,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
                     if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if (entireImage || mask.get(i)) {
@@ -532,7 +532,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
 
                     if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
@@ -599,7 +599,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
                     if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
@@ -685,7 +685,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i += 4) {
 
                 if ((((i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -787,7 +787,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -904,7 +904,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) t / end * 100), activeImage);
+                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
             }
 
             index = t * length;
@@ -999,7 +999,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     offsetZ = (i / sliceSize) - (kExtents[2] / 2);
@@ -1117,7 +1117,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
 
                     if (isProgressBarVisible() && (((start + i) % mod) == 0)) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
@@ -1164,7 +1164,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                     if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
@@ -1252,7 +1252,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i += 4) {
 
                 if ((((i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1356,7 +1356,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1468,7 +1468,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) t / end * 100), activeImage);
+                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
             }
 
             index = t * length;
@@ -1566,7 +1566,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     offsetZ = (i / sliceSize) - (kExtents[2] / 2);

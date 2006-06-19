@@ -866,7 +866,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             // only loading the image works because we have been changing
             // the thing held BY the image.
             algoVOI = new AlgorithmVOIProps(image);
-            algoVOI.setActiveImage(false);
+            algoVOI.setRunningInSeparateThread(false);
 
             if (!((ViewJFrameImage) (parentFrame)).getUserInterface().
                 isAppFrameVisible()) {
@@ -1265,7 +1265,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
      *   This method calls <code>updateVOI</code>
      *   using the <code>UpdateVOIEvent</code>
      *   changed <code>VOI</code>, and retrieves
-     *   the activeImage out of the current image's
+     *   the runningInSeparateThread out of the current image's
      *   frame.
      *
      *   @see UpdateVOIEvent

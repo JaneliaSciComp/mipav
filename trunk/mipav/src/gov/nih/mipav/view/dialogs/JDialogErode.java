@@ -482,7 +482,6 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -605,15 +604,13 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (erodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        erodeAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo2D.setProgressBarVisible(false);
                         }
@@ -666,15 +663,13 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (erodeAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        erodeAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo2D.setProgressBarVisible(false);
                         }
@@ -711,15 +706,13 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        erodeAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo3D.setProgressBarVisible(false);
                         }
@@ -771,15 +764,13 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        erodeAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo3D.setProgressBarVisible(false);
                         }
@@ -825,15 +816,13 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        erodeAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo25D.setProgressBarVisible(false);
                         }
@@ -886,15 +875,13 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (erodeAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        erodeAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo25D.setProgressBarVisible(false);
                         }

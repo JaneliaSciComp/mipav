@@ -361,7 +361,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating gradient magnitude of slice " + (s + 1) + "...");
-                progressBar.updateValue(Math.round(s * inc), activeImage);
+                progressBar.updateValue(Math.round(s * inc), runningInSeparateThread);
             }
 
             start = s * length;
@@ -384,7 +384,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataDerivative,
                                                                                          GyDataRound, color);
-                xConvolver.setActiveImage(activeImage);
+                xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     xConvolver.setMask(mask);
@@ -400,7 +400,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataRound,
                                                                                          GyDataDerivative, color);
-                yConvolver.setActiveImage(activeImage);
+                yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     yConvolver.setMask(mask);
@@ -475,7 +475,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataDerivative,
                                                                                          GyDataRound, color);
-                xConvolver.setActiveImage(activeImage);
+                xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     xConvolver.setMask(mask);
@@ -490,7 +490,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataRound,
                                                                                          GyDataDerivative, color);
-                yConvolver.setActiveImage(activeImage);
+                yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     yConvolver.setMask(mask);
@@ -591,7 +591,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating gradient magnitude of slice " + (s + 1) + "...");
-                progressBar.updateValue(Math.round(s * inc), activeImage);
+                progressBar.updateValue(Math.round(s * inc), runningInSeparateThread);
             }
 
             start = s * length;
@@ -613,7 +613,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataDerivative,
                                                                                          GyDataRound, color);
-                xConvolver.setActiveImage(activeImage);
+                xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     xConvolver.setMask(mask);
@@ -629,7 +629,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataRound,
                                                                                          GyDataDerivative, color);
-                yConvolver.setActiveImage(activeImage);
+                yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     yConvolver.setMask(mask);
@@ -704,7 +704,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataDerivative,
                                                                                          GyDataRound, color);
-                xConvolver.setActiveImage(activeImage);
+                xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     xConvolver.setMask(mask);
@@ -719,7 +719,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              extents[0], extents[1]
                                                                                          }, GxDataRound,
                                                                                          GyDataDerivative, color);
-                yConvolver.setActiveImage(activeImage);
+                yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     yConvolver.setMask(mask);
@@ -815,7 +815,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setActiveImage(activeImage);
+            xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -838,7 +838,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setActiveImage(activeImage);
+            yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 yConvolver.setMask(mask);
@@ -861,7 +861,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setActiveImage(activeImage);
+            zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 zConvolver.setMask(mask);
@@ -883,7 +883,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
                     maxPercent++;
-                    progressBar.updateValue(maxPercent, activeImage);
+                    progressBar.updateValue(maxPercent, runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -943,7 +943,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       GxDataDerivative,
                                                                                                       GyDataRound,
                                                                                                       color);
-                            x2Convolver.setActiveImage(activeImage);
+                            x2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 x2Convolver.setMask(mask);
@@ -961,7 +961,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       }, GxDataRound,
                                                                                                       GyDataDerivative,
                                                                                                       color);
-                            y2Convolver.setActiveImage(activeImage);
+                            y2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 y2Convolver.setMask(mask);
@@ -1007,7 +1007,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setActiveImage(activeImage);
+            xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -1028,7 +1028,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setActiveImage(activeImage);
+            yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 yConvolver.setMask(mask);
@@ -1049,7 +1049,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setActiveImage(activeImage);
+            zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 zConvolver.setMask(mask);
@@ -1069,7 +1069,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
                     maxPercent++;
-                    progressBar.updateValue(maxPercent, activeImage);
+                    progressBar.updateValue(maxPercent, runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1108,7 +1108,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       GxDataDerivative,
                                                                                                       GyDataRound,
                                                                                                       color);
-                            x2Convolver.setActiveImage(activeImage);
+                            x2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 x2Convolver.setMask(mask);
@@ -1126,7 +1126,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       }, GxDataRound,
                                                                                                       GyDataDerivative,
                                                                                                       color);
-                            y2Convolver.setActiveImage(activeImage);
+                            y2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 y2Convolver.setMask(mask);
@@ -1226,7 +1226,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) t / end * 100), activeImage);
+                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
             }
 
             index = t * length;
@@ -1321,7 +1321,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     offsetZ = (i / sliceSize) - (kExtents[2] / 2);
@@ -1426,7 +1426,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating gradient magnitude of slice " + (s + 1) + "...");
-                progressBar.updateValue(Math.round(s * inc), activeImage);
+                progressBar.updateValue(Math.round(s * inc), runningInSeparateThread);
             }
 
             start = s * length;
@@ -1446,7 +1446,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              srcImage.getExtents()[1]
                                                                                          }, GxDataDerivative,
                                                                                          GyDataRound, color);
-                xConvolver.setActiveImage(activeImage);
+                xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     xConvolver.setMask(mask);
@@ -1463,7 +1463,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              srcImage.getExtents()[1]
                                                                                          }, GxDataRound,
                                                                                          GyDataDerivative, color);
-                yConvolver.setActiveImage(activeImage);
+                yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     yConvolver.setMask(mask);
@@ -1516,7 +1516,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              srcImage.getExtents()[1]
                                                                                          }, GxDataDerivative,
                                                                                          GyDataRound, color);
-                xConvolver.setActiveImage(activeImage);
+                xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     xConvolver.setMask(mask);
@@ -1532,7 +1532,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                              srcImage.getExtents()[1]
                                                                                          }, GxDataRound,
                                                                                          GyDataDerivative, color);
-                yConvolver.setActiveImage(activeImage);
+                yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
                 if (!entireImage) {
                     yConvolver.setMask(mask);
@@ -1633,7 +1633,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setActiveImage(activeImage);
+            xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -1656,7 +1656,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setActiveImage(activeImage);
+            yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 yConvolver.setMask(mask);
@@ -1679,7 +1679,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setActiveImage(activeImage);
+            zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 zConvolver.setMask(mask);
@@ -1701,7 +1701,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
                     maxPercent++;
-                    progressBar.updateValue(maxPercent, activeImage);
+                    progressBar.updateValue(maxPercent, runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1765,7 +1765,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       GxDataDerivative,
                                                                                                       GyDataRound,
                                                                                                       color);
-                            x2Convolver.setActiveImage(activeImage);
+                            x2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 x2Convolver.setMask(mask);
@@ -1783,7 +1783,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       }, GxDataRound,
                                                                                                       GyDataDerivative,
                                                                                                       color);
-                            y2Convolver.setActiveImage(activeImage);
+                            y2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 y2Convolver.setMask(mask);
@@ -1832,7 +1832,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setActiveImage(activeImage);
+            xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -1853,7 +1853,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setActiveImage(activeImage);
+            yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 yConvolver.setMask(mask);
@@ -1874,7 +1874,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setActiveImage(activeImage);
+            zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 zConvolver.setMask(mask);
@@ -1894,7 +1894,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
                     maxPercent++;
-                    progressBar.updateValue(maxPercent, activeImage);
+                    progressBar.updateValue(maxPercent, runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1935,7 +1935,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       GxDataDerivative,
                                                                                                       GyDataRound,
                                                                                                       color);
-                            x2Convolver.setActiveImage(activeImage);
+                            x2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 x2Convolver.setMask(mask);
@@ -1953,7 +1953,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       }, GxDataRound,
                                                                                                       GyDataDerivative,
                                                                                                       color);
-                            y2Convolver.setActiveImage(activeImage);
+                            y2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 y2Convolver.setMask(mask);
@@ -2056,7 +2056,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setActiveImage(activeImage);
+            xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -2079,7 +2079,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setActiveImage(activeImage);
+            yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 yConvolver.setMask(mask);
@@ -2102,7 +2102,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setActiveImage(activeImage);
+            zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 zConvolver.setMask(mask);
@@ -2124,7 +2124,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
                     maxPercent++;
-                    progressBar.updateValue(maxPercent, activeImage);
+                    progressBar.updateValue(maxPercent, runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -2188,7 +2188,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       GxDataDerivative,
                                                                                                       GyDataRound,
                                                                                                       color);
-                            x2Convolver.setActiveImage(activeImage);
+                            x2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 x2Convolver.setMask(mask);
@@ -2206,7 +2206,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       }, GxDataRound,
                                                                                                       GyDataDerivative,
                                                                                                       color);
-                            y2Convolver.setActiveImage(activeImage);
+                            y2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 y2Convolver.setMask(mask);
@@ -2255,7 +2255,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setActiveImage(activeImage);
+            xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -2276,7 +2276,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setActiveImage(activeImage);
+            yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 yConvolver.setMask(mask);
@@ -2297,7 +2297,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setActiveImage(activeImage);
+            zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 zConvolver.setMask(mask);
@@ -2317,7 +2317,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
                     maxPercent++;
-                    progressBar.updateValue(maxPercent, activeImage);
+                    progressBar.updateValue(maxPercent, runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -2358,7 +2358,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       GxDataDerivative,
                                                                                                       GyDataRound,
                                                                                                       color);
-                            x2Convolver.setActiveImage(activeImage);
+                            x2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 x2Convolver.setMask(mask);
@@ -2376,7 +2376,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                                       }, GxDataRound,
                                                                                                       GyDataDerivative,
                                                                                                       color);
-                            y2Convolver.setActiveImage(activeImage);
+                            y2Convolver.setRunningInSeparateThread(runningInSeparateThread);
 
                             if (!entireImage) {
                                 y2Convolver.setMask(mask);

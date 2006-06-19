@@ -341,7 +341,6 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
             throw new IllegalArgumentException(e.getMessage());
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }
@@ -450,15 +449,13 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast
                 if (extractSurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                extractSurAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     extractSurAlgo.setProgressBarVisible(false);
                 }

@@ -180,15 +180,13 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (HSBAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                HSBAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     HSBAlgo.setProgressBarVisible(false);
                 }
@@ -314,8 +312,7 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
         } catch (Exception e) {
             throw new IllegalArgumentException();
         }
-
-        setActiveImage(parser.isActiveImage());
+        
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(imageHKey, getResultImageH().getImageName());

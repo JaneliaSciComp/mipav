@@ -146,7 +146,8 @@ public class FileOSM extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading OSM file...", 0, 100, true, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            progressBar.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setVisible(isProgressBarVisible());
 
             file = new File(fileDir + fileName);
 
@@ -407,7 +408,8 @@ public class FileOSM extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing OSM file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        progressBar.setVisible(isProgressBarVisible());
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
@@ -668,7 +670,7 @@ public class FileOSM extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, byteBuffer);
                         raFile.write(byteBuffer);
                     } // for (z = sBegin; z <= sEnd; z++,count++)
@@ -687,7 +689,7 @@ public class FileOSM extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -717,7 +719,7 @@ public class FileOSM extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, intBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -750,7 +752,7 @@ public class FileOSM extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {

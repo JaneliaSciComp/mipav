@@ -558,7 +558,6 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         if (secondImage != null) {
@@ -787,15 +786,13 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (histogram2DimAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                histogram2DimAlgo.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     histogram2DimAlgo.setProgressBarVisible(false);
                 }

@@ -223,14 +223,13 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (PipelineAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    PipelineAlgo.setActiveImage(isActiveImage);
                     PipelineAlgo.run();
 
                 }
@@ -258,14 +257,13 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (PipelineAlgoB.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                PipelineAlgoB.setActiveImage(isActiveImage);
                 PipelineAlgoB.run();
             }
         }

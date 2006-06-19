@@ -232,7 +232,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -246,7 +246,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Pruning Slice " + (slice + 1));
-                progressBar.updateValue(Math.round(((float) slice) / ((float) zDim) * 100), activeImage);
+                progressBar.updateValue(Math.round(((float) slice) / ((float) zDim) * 100), runningInSeparateThread);
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -703,7 +703,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -721,7 +721,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Skeletonizing Slice " + (i + 1));
-                progressBar.updateValue(Math.round(((float) i) / ((float) zDim) * 100), activeImage);
+                progressBar.updateValue(Math.round(((float) i) / ((float) zDim) * 100), runningInSeparateThread);
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -822,7 +822,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         for (pix = 0; pix < imgLength; pix++) {
@@ -843,7 +843,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                         if (((((c * offsetZ) + pix) % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((pix + 1 + (c * offsetZ)) /
                                                                    (iters * (float) sliceLength * zDim) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
                     } catch (NullPointerException npe) {
 
@@ -969,7 +969,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
         }
 
         int mod = (iters * sliceLength * zDim) / 20; // mod is 5 percent of length
@@ -990,7 +990,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                         if (((((c * offsetZ) + pix) % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((pix + 1 + (c * offsetZ)) /
                                                                    (iters * (float) sliceLength * zDim) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
                     } catch (NullPointerException npe) {
 

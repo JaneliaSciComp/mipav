@@ -107,7 +107,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
 
             // let user know something is happening by updating the progressbar
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (t) / (oldTdim - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (t) / (oldTdim - 1) * 100), runningInSeparateThread);
             }
 
             // so long as the slice has not been marked for removal, copy it all over.

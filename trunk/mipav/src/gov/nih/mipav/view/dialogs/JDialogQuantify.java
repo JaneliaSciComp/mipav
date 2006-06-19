@@ -204,7 +204,6 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
 
         setMaskImage(parser.getImage(maskImageKey));
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }
@@ -236,15 +235,13 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (algoQuantify.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                algoQuantify.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     algoQuantify.setProgressBarVisible(false);
                 }

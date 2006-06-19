@@ -707,7 +707,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         for (int i = 0; i < srcImage.length; i++) {
@@ -954,15 +953,13 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (afcmAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                afcmAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     afcmAlgo.setProgressBarVisible(false);
                 }

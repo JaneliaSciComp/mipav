@@ -145,7 +145,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
      */
     public JDialogPointArea(Frame theParentFrame, ModelImage image, int xLoc, int yLoc, boolean showGraph) {
         super(theParentFrame, false);
-        this.runInSeparateThread = false;
+        setSeparateThread(false);
         userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
 
         // setLocation(xLoc, yLoc);
@@ -316,7 +316,6 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }
@@ -415,15 +414,13 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
         pointAlgo.addListener(this);
         setVisible(false); // Hide dialog
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (pointAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            pointAlgo.setActiveImage(isActiveImage);
-
             if (!userInterface.isAppFrameVisible()) {
                 pointAlgo.setProgressBarVisible(false);
             }

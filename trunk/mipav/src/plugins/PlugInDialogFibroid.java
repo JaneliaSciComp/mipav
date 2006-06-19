@@ -128,7 +128,7 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
             fibroidAlgo.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (fibroidAlgo.startMethod(Thread.MIN_PRIORITY) == false) {

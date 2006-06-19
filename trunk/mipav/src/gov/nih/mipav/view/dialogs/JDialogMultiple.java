@@ -434,7 +434,7 @@ public class JDialogMultiple extends JDialogBase implements ActionListener, List
                 AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory);
 
                 // System.err.println("setting active image to false");
-                parse.setActiveImage(false);
+                parse.setRunningInSeparateThread(false);
 
                 // check to see if there are active images
                 int numActive = parse.preParseActiveImages();
@@ -1238,7 +1238,7 @@ public class JDialogMultiple extends JDialogBase implements ActionListener, List
         for (j = 0; j < imageSet.length; j++) {
             AlgorithmScriptParser parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory);
 
-            parse.setActiveImage(false);
+            parse.setRunningInSeparateThread(false);
             fileNames = new Vector();
             dirs = new Vector();
             voiNames = new Vector();
@@ -1321,7 +1321,7 @@ public class JDialogMultiple extends JDialogBase implements ActionListener, List
                 parse = new AlgorithmScriptParser(scriptFileName, scriptDirectory);
             }
 
-            parse.setActiveImage(false);
+            parse.setRunningInSeparateThread(false);
 
             // System.err.println("setting active image to false");
             fileNames = new Vector();

@@ -4039,7 +4039,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // nucleusVoxel = new boolean[numObjects][totLength];
         for (id = 1; id <= numObjects; id++) {
             progressBar.setMessage("Processing object " + id + " of " + numObjects + " in blue segmented image");
-            progressBar.updateValue(85 + (id * 10 / numObjects), activeImage);
+            progressBar.updateValue(85 + (id * 10 / numObjects), runningInSeparateThread);
 
             Arrays.fill(byteBuffer, (byte) 0);
             xCenter[id - 1] = 0.0f;

@@ -189,7 +189,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         // a surface.
         buildProgressBar(srcImage.getImageName(), "Extracting surface ...", 0, 100);
         initProgressBar();
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         if (threadStopped) {
 
@@ -243,10 +243,10 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 progressBar.setMessage("Blurring images");
 
-                // progressBar.updateValue(15, activeImage);
+                // progressBar.updateValue(15, runningInSeparateThread);
                 blurAlgo.setProgressBarVisible(false);
                 blurAlgo.run();
-                progressBar.updateValue(15, activeImage);
+                progressBar.updateValue(15, runningInSeparateThread);
 
                 if (blurAlgo.isCompleted() == false) {
 
@@ -269,7 +269,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 return;
             }
         } else {
-            progressBar.updateValue(15, activeImage);
+            progressBar.updateValue(15, runningInSeparateThread);
         }
 
         // Uncomment next line to display blurred maskImage for debugging purposes.
@@ -373,7 +373,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
             ModelTriangleMesh kMesh = kExtractor.get((int) level, progressBar);
 
             buffer2 = null;
-            progressBar.updateValue(50, activeImage);
+            progressBar.updateValue(50, runningInSeparateThread);
 
             if (triangleConsistencyMode == ADJ_MODE) {
                 kMesh.getConsistentComponents();
@@ -437,7 +437,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 progressBar.setMessage("Saving surface");
                 ModelClodMesh.save(surfaceFileName, akClod, true, direction, origin, box, inverseDicomArray);
             } else {
-                progressBar.updateValue(75, activeImage);
+                progressBar.updateValue(75, runningInSeparateThread);
                 progressBar.setMessage("Saving surface");
                 kMesh.save(surfaceFileName, true, direction, origin, box, inverseDicomArray);
 
@@ -514,13 +514,13 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     }
                 } // (!foundVOI)
 
-                // progressBar.setValue(2, activeImage);
+                // progressBar.setValue(2, runningInSeparateThread);
                 short[] tempImage = new short[destExtents[0] * destExtents[1] * destExtents[2]];
 
-                // progressBar.setValue(3, activeImage);
+                // progressBar.setValue(3, runningInSeparateThread);
                 tempImage = srcImage.generateVOIMask(tempImage, i);
 
-                // progressBar.setValue(4, activeImage);
+                // progressBar.setValue(4, runningInSeparateThread);
                 if (tempImage == null) {
                     MipavUtil.displayError("Error when making mask image from VOI.");
                     VOIs.VOIAt(i).setID(oldID);
@@ -530,7 +530,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 VOIs.VOIAt(i).setID(oldID);
 
-                // progressBar.setValue(5, activeImage);
+                // progressBar.setValue(5, runningInSeparateThread);
                 for (i = 0; i < tempImage.length; i++) {
 
                     if (tempImage[i] > 0) {
@@ -538,13 +538,13 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     }
                 }
 
-                // progressBar.setValue(10, activeImage);
+                // progressBar.setValue(10, runningInSeparateThread);
                 maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image",
                                            srcImage.getUserInterface());
                 maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
                 maskImage.importData(0, tempImage, true);
 
-                // progressBar.setValue(12, activeImage);
+                // progressBar.setValue(12, runningInSeparateThread);
                 tempImage = null;
                 System.gc();
             } else if (mode == MASK_MODE) {

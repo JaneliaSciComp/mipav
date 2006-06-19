@@ -245,15 +245,13 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
                 userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
             }
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (rotateAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                rotateAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     rotateAlgo.setProgressBarVisible(false);
                 }
@@ -414,7 +412,6 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
             throw new IllegalArgumentException(e.getMessage());
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

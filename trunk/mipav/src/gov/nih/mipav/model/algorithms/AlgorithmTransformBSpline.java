@@ -242,7 +242,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                 Point2f kPoint = new Point2f();
 
                 for (int slice = 0; slice < numberSlices; slice++) {
-                    progressBar.updateValue(100 * slice / numberSlices, activeImage);
+                    progressBar.updateValue(100 * slice / numberSlices, runningInSeparateThread);
 
                     ModelSimpleImage kSimpleImageSlice = new ModelSimpleImage(aiSliceExtents, outResolutions,
                                                                               m_kImageSource, slice);

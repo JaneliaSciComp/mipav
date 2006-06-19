@@ -518,7 +518,6 @@ public class JDialogGaussianBlurITK extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -677,16 +676,13 @@ public class JDialogGaussianBlurITK extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -739,16 +735,13 @@ public class JDialogGaussianBlurITK extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -819,16 +812,13 @@ public class JDialogGaussianBlurITK extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -880,16 +870,13 @@ public class JDialogGaussianBlurITK extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

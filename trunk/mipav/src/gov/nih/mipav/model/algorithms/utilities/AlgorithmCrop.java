@@ -223,7 +223,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if (((i % (4 * dimExtents[0])) == 0) && (i != 0)) {
@@ -242,7 +242,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if (((i % dimExtents[0]) == 0) && (i != 0)) {
@@ -360,7 +360,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
                     }
 
                     if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -378,7 +378,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
                     }
 
                     if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -506,7 +506,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
                         }
 
                         if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -524,7 +524,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
                         }
 
                         if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -677,7 +677,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if (((i % (4 * dimExtents[0])) == 0) && (i != 0)) {
@@ -696,7 +696,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if (((i % dimExtents[0]) == 0) && (i != 0)) {
@@ -929,7 +929,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
                     }
 
                     if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -947,7 +947,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
                     }
 
                     if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -1245,7 +1245,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
                         }
 
                         if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -1263,7 +1263,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
                         }
 
                         if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {

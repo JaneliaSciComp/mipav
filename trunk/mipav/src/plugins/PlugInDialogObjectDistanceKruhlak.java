@@ -253,7 +253,7 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
             objectDistAlgo.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.

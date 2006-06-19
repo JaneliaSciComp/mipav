@@ -458,7 +458,6 @@ public class JDialogLocalNormalization extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -920,7 +919,7 @@ public class JDialogLocalNormalization extends JDialogBase
                 algoLocal.addListener(this);
                 setVisible(false); // Hide dialog
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish
                     // to still have user interface work fast.
@@ -928,8 +927,6 @@ public class JDialogLocalNormalization extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    algoLocal.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         algoLocal.setProgressBarVisible(false);
                     }
@@ -962,7 +959,7 @@ public class JDialogLocalNormalization extends JDialogBase
              * imageFrames.size(); i++) { titles[i] = ((ViewJFrameBase)(imageFrames.elementAt(i))).getTitle();
              * ((ViewJFrameBase)(imageFrames.elementAt(i))).setTitle("Locked: " + titles[i] );
              * ((ViewJFrameBase)(imageFrames.elementAt(i))).setEnabled(false);
-             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (runInSeparateThread) { // Start
+             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (isRunInSeparateThread()) { // Start
              * the thread as a low priority because we wish to still have user interface work fast. if
              * (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false){ MipavUtil.displayError("A thread is already
              * running on this object"); } } else { medianAlgo.run(); } } catch (OutOfMemoryError x){
@@ -1006,15 +1003,13 @@ public class JDialogLocalNormalization extends JDialogBase
                 algoLocal.addListener(this);
                 setVisible(false); // Hide dialog
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (algoLocal.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    algoLocal.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         algoLocal.setProgressBarVisible(false);
                     }
@@ -1046,7 +1041,7 @@ public class JDialogLocalNormalization extends JDialogBase
              * ((ViewJFrameBase)(imageFrames.elementAt(i))).getTitle();
              * ((ViewJFrameBase)(imageFrames.elementAt(i))).setTitle("Locked: " + titles[i] );
              * ((ViewJFrameBase)(imageFrames.elementAt(i))).setEnabled(false);
-             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (runInSeparateThread) { // Start
+             * userInterface.unregisterFrame((Frame)(imageFrames.elementAt(i))); } if (isRunInSeparateThread()) { // Start
              * the thread as a low priority because we wish to still have user interface work fast. if
              * (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false){ MipavUtil.displayError("A thread is already
              * running on this object"); } } else { medianAlgo.run(); } } catch (OutOfMemoryError x){

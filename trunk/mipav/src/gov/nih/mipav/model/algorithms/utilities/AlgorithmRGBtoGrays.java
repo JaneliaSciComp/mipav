@@ -167,7 +167,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
 
                         bufferDestR[id] = buffer[i + 1];

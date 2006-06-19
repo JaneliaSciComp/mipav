@@ -364,6 +364,8 @@ public class FileICS extends FileBase {
                                            ViewUserInterface.getReference().getProgressBarPrefix() + "ICS image(s) ...",
                                            0, 100, false, null, null);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        
         readHeader();
         s = fileName.lastIndexOf(".");
 
@@ -731,7 +733,7 @@ public class FileICS extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing ICS header file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
 
         zBegin = options.getBeginSlice();
         zEnd = options.getEndSlice();
@@ -1068,7 +1070,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, byteBuffer);
                         raFile.write(byteBuffer);
                     }
@@ -1083,7 +1085,7 @@ public class FileICS extends FileBase {
                 for (t = 0; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1104,7 +1106,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, intBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1126,7 +1128,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, longBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1152,7 +1154,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1175,7 +1177,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY((t * zDim) + z, doubleBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1203,7 +1205,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportComplexData(2 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer, floatBufferI);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1232,7 +1234,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
                         image.exportDComplexData(2 * ((t * zDim) + z) * sliceSize, sliceSize, doubleBuffer,
                                                  doubleBufferI);
 
@@ -1268,7 +1270,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
 
                         if (haveRed) {
                             image.exportRGBData(1, 4 * ((t * zDim) + z) * sliceSize, sliceSize, byteBuffer);
@@ -1283,7 +1285,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
 
                         if (haveRed && haveGreen) {
                             image.exportRGBData(2, 4 * ((t * zDim) + z) * sliceSize, sliceSize, byteBuffer);
@@ -1301,7 +1303,7 @@ public class FileICS extends FileBase {
 
                         for (z = zBegin; z <= zEnd; z++) {
                             progressBar.updateValue((100 * count++) / (numColors * numberSlices),
-                                                    options.isActiveImage());
+                                                    options.isRunningInSeparateThread());
                             image.exportRGBData(3, 4 * ((t * zDim) + z) * sliceSize, sliceSize, byteBuffer);
                             raFile.write(byteBuffer);
                         }
@@ -1316,7 +1318,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
 
                         if (haveRed) {
                             image.exportRGBData(1, 4 * ((t * zDim) + z) * sliceSize, sliceSize, shortBuffer);
@@ -1336,7 +1338,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
 
                         if (haveRed && haveGreen) {
                             image.exportRGBData(2, 4 * ((t * zDim) + z) * sliceSize, sliceSize, shortBuffer);
@@ -1359,7 +1361,7 @@ public class FileICS extends FileBase {
 
                         for (z = zBegin; z <= zEnd; z++) {
                             progressBar.updateValue((100 * count++) / (numColors * numberSlices),
-                                                    options.isActiveImage());
+                                                    options.isRunningInSeparateThread());
                             image.exportRGBData(3, 4 * ((t * zDim) + z) * sliceSize, sliceSize, shortBuffer);
 
                             for (j = 0; j < sliceSize; j++) {
@@ -1380,7 +1382,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
 
                         if (haveRed) {
                             image.exportRGBData(1, 4 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer);
@@ -1403,7 +1405,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isActiveImage());
+                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
 
                         if (haveRed && haveGreen) {
                             image.exportRGBData(2, 4 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer);
@@ -1429,7 +1431,7 @@ public class FileICS extends FileBase {
 
                         for (z = zBegin; z <= zEnd; z++) {
                             progressBar.updateValue((100 * count++) / (numColors * numberSlices),
-                                                    options.isActiveImage());
+                                                    options.isRunningInSeparateThread());
                             image.exportRGBData(3, 4 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer);
 
                             for (j = 0; j < sliceSize; j++) {

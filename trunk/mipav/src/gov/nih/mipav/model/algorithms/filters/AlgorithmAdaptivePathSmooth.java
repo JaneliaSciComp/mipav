@@ -426,7 +426,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         for (i = 0; i < zDim; i++) {
 
@@ -441,7 +441,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 return;
             }
 
-            progressBar.updateValue(i * 100 / zDim, activeImage);
+            progressBar.updateValue(i * 100 / zDim, runningInSeparateThread);
             progressBar.setMessage("Processing slice " + (i + 1) + "...");
             rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
@@ -503,7 +503,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             srcImage.calcMinMax();
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -549,7 +549,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         for (i = 0; i < zDim; i++) {
 
@@ -564,7 +564,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 return;
             }
 
-            progressBar.updateValue(i * 100 / zDim, activeImage);
+            progressBar.updateValue(i * 100 / zDim, runningInSeparateThread);
             progressBar.setMessage("Processing slice " + (i + 1) + "...");
 
             process(imgBuffer, false);
@@ -609,7 +609,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             srcImage.calcMinMax();
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -668,7 +668,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         progressBar.setMessage("Converting from RGB to YCrCb");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
@@ -689,7 +689,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, activeImage);
+        progressBar.updateValue(95, runningInSeparateThread);
         progressBar.setMessage("Converting fromYCrCb to RGB");
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -726,7 +726,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -778,7 +778,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
 
         process(imgBuffer, true);
@@ -816,7 +816,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -878,7 +878,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         progressBar.setMessage("Converting from RGB to YCrCb");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
@@ -890,7 +890,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(5, activeImage);
+        progressBar.updateValue(5, runningInSeparateThread);
         process3D(Y, Cr, Cb);
 
         if (threadStopped) {
@@ -900,7 +900,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, activeImage);
+        progressBar.updateValue(95, runningInSeparateThread);
         progressBar.setMessage("Converting fromYCrCb to RGB");
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -937,7 +937,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -1000,7 +1000,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         try {
             histX = new int[maxLength];
@@ -1084,7 +1084,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -3170,19 +3170,19 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         dataBW = Y;
 
         // if (doProgress) {
-        // progressBar.updateValue(10, activeImage);
+        // progressBar.updateValue(10, runningInSeparateThread);
         // progressBar.setMessage("Performing median filter");
         // }
         // medianFilter(fY);
         if (doProgress) {
-            progressBar.updateValue(20, activeImage);
+            progressBar.updateValue(20, runningInSeparateThread);
             progressBar.setMessage("Creating edge graph");
         }
 
         createEdgeGraph(fY);
 
         if (doProgress) {
-            progressBar.updateValue(50, activeImage);
+            progressBar.updateValue(50, runningInSeparateThread);
             progressBar.setMessage("Filtering in Y space");
         }
 
@@ -3242,19 +3242,19 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         height = yDim;
 
         // if (doProgress) {
-        // progressBar.updateValue(10, activeImage);
+        // progressBar.updateValue(10, runningInSeparateThread);
         // progressBar.setMessage("Performing median filter");
         // }
         // medianFilter(fY,fR,fB);
         if (doProgress) {
-            progressBar.updateValue(20, activeImage);
+            progressBar.updateValue(20, runningInSeparateThread);
             progressBar.setMessage("Creating edge graph");
         }
 
         createEdgeGraph(fY, fR, fB);
 
         if (doProgress) {
-            progressBar.updateValue(50, activeImage);
+            progressBar.updateValue(50, runningInSeparateThread);
             progressBar.setMessage("Filtering in Y space");
         }
 
@@ -3272,7 +3272,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             radius = radiusCb;
 
             if (doProgress) {
-                progressBar.updateValue(70, activeImage);
+                progressBar.updateValue(70, runningInSeparateThread);
                 progressBar.setMessage("Filtering in Cb space");
             }
 
@@ -3289,7 +3289,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             radius = radiusCr;
 
             if (doProgress) {
-                progressBar.updateValue(90, activeImage);
+                progressBar.updateValue(90, runningInSeparateThread);
                 progressBar.setMessage("Filtering in Cr space");
             }
 
@@ -3341,7 +3341,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             radius = radiusCb / 2.0f;
 
             if (doProgress) {
-                progressBar.updateValue(70, activeImage);
+                progressBar.updateValue(70, runningInSeparateThread);
                 progressBar.setMessage("Filtering in Cb space");
             }
 
@@ -3358,7 +3358,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             radius = radiusCr / 2.0f;
 
             if (doProgress) {
-                progressBar.updateValue(90, activeImage);
+                progressBar.updateValue(90, runningInSeparateThread);
                 progressBar.setMessage("Filtering in Cr space");
             }
 
@@ -3427,7 +3427,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             newValue = pIndex * 100 / totalLength;
 
             if (newValue > oldValue) {
-                progressBar.updateValue(newValue, activeImage);
+                progressBar.updateValue(newValue, runningInSeparateThread);
             }
 
             oldValue = newValue;
@@ -3599,7 +3599,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             newValue = 5 + (pIndex * 35 / totalLength);
 
             if (newValue > oldValue) {
-                progressBar.updateValue(newValue, activeImage);
+                progressBar.updateValue(newValue, runningInSeparateThread);
             }
 
             oldValue = newValue;
@@ -3703,7 +3703,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 40 + (pIndex * 30 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -3806,7 +3806,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 70 + (pIndex * 25 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -4020,7 +4020,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 40 + (pIndex * 30 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -4124,7 +4124,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 70 + (pIndex * 25 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;

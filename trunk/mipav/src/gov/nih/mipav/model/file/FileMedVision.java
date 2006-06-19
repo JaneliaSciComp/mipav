@@ -113,7 +113,8 @@ public class FileMedVision extends FileBase {
             progressBar = new ViewJProgressBar("Loading MedVision image", "Loading Image " + fileName, 0, 100, false,
                                                null, null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            progressBar.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setVisible(isProgressBarVisible());
         }
     }
 

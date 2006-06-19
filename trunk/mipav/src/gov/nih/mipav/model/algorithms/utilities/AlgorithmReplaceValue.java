@@ -147,7 +147,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
                         if ((counter % mod) == 0) {
                             progressBar.updateValue(Math.round((float) counter / ((length * t * z) - 1) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
 
                         for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
@@ -249,7 +249,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
                         if ((counter % mod) == 0) {
                             progressBar.updateValue(Math.round((float) counter / ((length * t * z) - 1) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
 
                         for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {

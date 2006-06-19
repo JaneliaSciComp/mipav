@@ -128,7 +128,7 @@ public class PlugInDialogSCUP extends JDialogBase implements AlgorithmInterface 
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
@@ -136,7 +136,6 @@ public class PlugInDialogSCUP extends JDialogBase implements AlgorithmInterface 
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                scupAlgo.setActiveImage(isActiveImage);
                 scupAlgo.run();
             }
         } catch (OutOfMemoryError x) {

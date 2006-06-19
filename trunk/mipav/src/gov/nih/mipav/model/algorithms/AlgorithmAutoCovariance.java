@@ -262,7 +262,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             newValue = deltaY * 100 / yDim;
 
             if ((progressBar != null) && (newValue > oldValue)) {
-                progressBar.updateValue(newValue, activeImage);
+                progressBar.updateValue(newValue, runningInSeparateThread);
             }
 
             oldValue = newValue;
@@ -297,7 +297,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         for (y = 0; y < yDim; y++) {
@@ -502,7 +502,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = deltaY * 100 / yPresent;
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -537,7 +537,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(100 / colorsPresent, activeImage);
+                progressBar.updateValue(100 / colorsPresent, runningInSeparateThread);
             }
 
             for (y = 0; y < yDim; y++) {
@@ -673,7 +673,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = lastValue + (deltaY * 100 / yPresent);
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -708,7 +708,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(lastValue + (100 / colorsPresent), activeImage);
+                progressBar.updateValue(lastValue + (100 / colorsPresent), runningInSeparateThread);
             }
 
             for (y = 0; y < yDim; y++) {
@@ -844,7 +844,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = lastValue + (deltaY * 100 / yPresent);
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -879,7 +879,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(100, activeImage);
+                progressBar.updateValue(100, runningInSeparateThread);
             }
 
             for (y = 0; y < yDim; y++) {
@@ -1070,7 +1070,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             newValue = deltaZ * 100 / zDim;
 
             if ((progressBar != null) && (newValue > oldValue)) {
-                progressBar.updateValue(newValue, activeImage);
+                progressBar.updateValue(newValue, runningInSeparateThread);
             }
 
             oldValue = newValue;
@@ -1115,7 +1115,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         for (z = 0; z < zDim; z++) {
@@ -1353,7 +1353,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = deltaZ * 100 / zPresent;
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -1398,7 +1398,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(100 / colorsPresent, activeImage);
+                progressBar.updateValue(100 / colorsPresent, runningInSeparateThread);
             }
 
             for (z = 0; z < zDim; z++) {
@@ -1561,7 +1561,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = lastValue + (deltaZ * 100 / zPresent);
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -1606,7 +1606,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(lastValue + (100 / colorsPresent), activeImage);
+                progressBar.updateValue(lastValue + (100 / colorsPresent), runningInSeparateThread);
             }
 
             for (z = 0; z < zDim; z++) {
@@ -1770,7 +1770,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = lastValue + (deltaZ * 100 / zPresent);
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -1815,7 +1815,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(100, activeImage);
+                progressBar.updateValue(100, runningInSeparateThread);
             }
 
             for (z = 0; z < zDim; z++) {
@@ -2040,7 +2040,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             newValue = deltaT * 100 / tDim;
 
             if ((progressBar != null) && (newValue > oldValue)) {
-                progressBar.updateValue(newValue, activeImage);
+                progressBar.updateValue(newValue, runningInSeparateThread);
             }
 
             oldValue = newValue;
@@ -2095,7 +2095,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         }
 
         if (progressBar != null) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         for (t = 0; t < tDim; t++) {
@@ -2222,7 +2222,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = deltaT * 100 / tPresent;
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -2277,7 +2277,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(100 / colorsPresent, activeImage);
+                progressBar.updateValue(100 / colorsPresent, runningInSeparateThread);
             }
 
             for (t = 0; t < tDim; t++) {
@@ -2336,7 +2336,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = lastValue + (deltaT * 100 / (tDim * colorsPresent));
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -2391,7 +2391,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(lastValue + (100 / colorsPresent), activeImage);
+                progressBar.updateValue(lastValue + (100 / colorsPresent), runningInSeparateThread);
             }
 
             for (t = 0; t < tDim; t++) {
@@ -2450,7 +2450,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 newValue = lastValue + (deltaT * 100 / tPresent);
 
                 if ((progressBar != null) && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, activeImage);
+                    progressBar.updateValue(newValue, runningInSeparateThread);
                 }
 
                 oldValue = newValue;
@@ -2505,7 +2505,7 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(100, activeImage);
+                progressBar.updateValue(100, runningInSeparateThread);
             }
 
             for (t = 0; t < tDim; t++) {

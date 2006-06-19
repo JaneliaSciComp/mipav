@@ -480,7 +480,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             return;
         }
 
-        progressBar.updateValue(10, activeImage);
+        progressBar.updateValue(10, runningInSeparateThread);
 
         // Each element of the mean vector is the mean of 1 of the nPlanes
         progressBar.setMessage("Calculating mean vector");
@@ -511,7 +511,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         } // else not color
 
-        progressBar.updateValue(20, activeImage);
+        progressBar.updateValue(20, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -622,7 +622,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         }
 
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -714,7 +714,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             Preferences.debug(eigenvalue[i] + "\n");
         }
 
-        progressBar.updateValue(40, activeImage);
+        progressBar.updateValue(40, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -785,7 +785,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             } // for (j = 0; j < samples; j++)
         } // else not color
 
-        progressBar.updateValue(50, activeImage);
+        progressBar.updateValue(50, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -862,7 +862,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             } // for (i = nPresent - 1; (i >= 0) && (!threadStopped); i--)
 
-            progressBar.updateValue(60, activeImage);
+            progressBar.updateValue(60, runningInSeparateThread);
 
             if (threadStopped) {
                 finalize();
@@ -995,7 +995,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         pTrunc = null;
         mean = null;
-        progressBar.updateValue(80, activeImage);
+        progressBar.updateValue(80, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -1071,7 +1071,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         } // else not color
 
-        progressBar.updateValue(90, activeImage);
+        progressBar.updateValue(90, runningInSeparateThread);
         progressBar.setMessage("Importing averaged destination data");
 
         try {

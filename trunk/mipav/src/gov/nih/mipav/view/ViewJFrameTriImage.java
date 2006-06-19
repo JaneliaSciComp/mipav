@@ -4495,7 +4495,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         AlgorithmTPSpline algoTPSpline = new AlgorithmTPSpline(xSourceA, ySourceA, zSourceA, xTargetB, yTargetB,
                                                                zTargetB, 0.0f, imageB, clonedImage);
-        algoTPSpline.setActiveImage(false);
+        algoTPSpline.setRunningInSeparateThread(false);
         algoTPSpline.setupTPSpline2D(xSourceA, ySourceA, xTargetB, yTargetB, 0.0f);
         algoTPSpline.runAlgorithm();
 
@@ -4754,7 +4754,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /**
      * DOCUMENT ME!
      *
-     * @param  activeImage  DOCUMENT ME!
+     * @param  runningInSeparateThread  DOCUMENT ME!
      */
     protected void setImageActiveInTriComponents(int activeImage) {
 

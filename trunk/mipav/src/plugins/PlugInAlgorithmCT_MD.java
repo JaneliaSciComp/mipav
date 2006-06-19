@@ -147,7 +147,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         for (int i = 0; (i < length) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && (((i) % mod) == 0)) {
-                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -239,7 +239,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             int hdMuscle = 0;
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (i) / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             }
 
             for (int j = 0; (j < imgLength) && !threadStopped; j++) {

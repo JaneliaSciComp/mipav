@@ -440,7 +440,6 @@ public class JDialogGaussianBlur extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -534,8 +533,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gaussianBlurSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gaussianBlurSepAlgo.setProgressBarVisible(false);
                         }
@@ -601,8 +598,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gaussianBlurSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gaussianBlurSepAlgo.setProgressBarVisible(false);
                         }
@@ -682,8 +677,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gaussianBlurSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gaussianBlurSepAlgo.setProgressBarVisible(false);
                         }
@@ -744,8 +737,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gaussianBlurSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gaussianBlurSepAlgo.setProgressBarVisible(false);
                         }
@@ -818,9 +809,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -881,9 +869,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -958,9 +943,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -1020,9 +1002,6 @@ public class JDialogGaussianBlur extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        // gaussianBlurAlgo.setActiveImage(isActiveImage);
-                        gaussianBlurAlgo.setActiveImage(isActiveImage);
                         gaussianBlurAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

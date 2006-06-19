@@ -697,7 +697,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)), activeImage);
+                progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
 
                 for (i = 0; i < newSliceSize; i++) {
                     realData[(z * newSliceSize) + i] = realSubsetData[i];
@@ -775,7 +775,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                progressBar.updateValue(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)), activeImage);
+                progressBar.updateValue(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
             } // for (z = 0; z < newDimLengths[2]; z++)
 
             realSubsetData = null;
@@ -881,7 +881,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)), activeImage);
+                progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
 
                 for (i = 0; i < newSliceSize; i++) {
                     realData[(z * newSliceSize) + i] = realSubsetData[i];
@@ -958,7 +958,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                progressBar.updateValue(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)), activeImage);
+                progressBar.updateValue(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
             } // for (z = 0; z < newDimLengths[2]; z++)
 
             realSubsetData = null;
@@ -1863,11 +1863,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             if (!image25D) {
 
                 if (transformDir == FORWARD) {
-                    progressBar.updateValue(Math.round(10 + ((float) (i + 1) / ndim * 40)), activeImage);
+                    progressBar.updateValue(Math.round(10 + ((float) (i + 1) / ndim * 40)), runningInSeparateThread);
                 }
 
                 if (transformDir == INVERSE) {
-                    progressBar.updateValue(Math.round(50 + ((float) (i + 1) / ndim * 40)), activeImage);
+                    progressBar.updateValue(Math.round(50 + ((float) (i + 1) / ndim * 40)), runningInSeparateThread);
                 }
             } // if (!image25D)
         }
@@ -3208,7 +3208,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 imagData[i] = tempData[i];
             }
 
-            progressBar.updateValue(10, activeImage);
+            progressBar.updateValue(10, runningInSeparateThread);
         } // end of if (zeroPad)
     } // end of makeComplexData()
 

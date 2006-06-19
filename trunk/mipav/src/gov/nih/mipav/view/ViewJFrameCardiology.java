@@ -2050,7 +2050,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
             // Make algorithm
             mathAlgo = new AlgorithmRGBConcat(image2load, image2load, image2load, tempImage, true);
-            mathAlgo.setActiveImage(false);
+            mathAlgo.setRunningInSeparateThread(false);
             mathAlgo.run();
 
             if (!isFromFrame) {
@@ -2097,7 +2097,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(tempImage, image2load, redValue, greenValue,
                                                                     blueValue, true, threshold, true);
 
-                RGBAlgo.setActiveImage(false);
+                RGBAlgo.setRunningInSeparateThread(false);
                 RGBAlgo.run();
 
                 if (!isFromFrame) {
@@ -2140,7 +2140,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             if (!isFromFrame) {
                 trans = new AlgorithmTransform(image2load, xfrm, AlgorithmTransform.BSPLINE3, res[0], res[1], dims[0],
                                                dims[1], false, false, false);
-                trans.setActiveImage(false);
+                trans.setRunningInSeparateThread(false);
                 trans.run();
                 image2load.disposeLocal();
                 image2load = trans.getTransformedImage();
@@ -2156,13 +2156,13 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 if (tempImage != null) {
                     trans = new AlgorithmTransform(tempImage, xfrm, AlgorithmTransform.BSPLINE3, res[0], res[1],
                                                    dims[0], dims[1], false, false, false);
-                    trans.setActiveImage(false);
+                    trans.setRunningInSeparateThread(false);
                     trans.run();
                     tempImage.disposeLocal();
                 } else {
                     trans = new AlgorithmTransform(image2load, xfrm, AlgorithmTransform.BSPLINE3, res[0], res[1],
                                                    dims[0], dims[1], false, false, false);
-                    trans.setActiveImage(false);
+                    trans.setRunningInSeparateThread(false);
                     trans.run();
                 }
 
@@ -2238,7 +2238,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                                                                  resols[2], volExtents[0], volExtents[1], volExtents[2],
                                                                  false, true, false);
 
-        transformImg.setActiveImage(false);
+        transformImg.setRunningInSeparateThread(false);
         transformImg.run();
         resultImgA = transformImg.getTransformedImage();
         resultImgA.calcMinMax();
@@ -2257,7 +2257,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                                                                       resols[1], resols[2], volExtents[0],
                                                                       volExtents[1], volExtents[2], false, true, false);
 
-            transformImgB.setActiveImage(false);
+            transformImgB.setRunningInSeparateThread(false);
             transformImgB.run();
             resultImgB = transformImgB.getTransformedImage();
             resultImgB.calcMinMax();

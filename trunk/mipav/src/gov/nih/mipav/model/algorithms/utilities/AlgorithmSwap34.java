@@ -157,7 +157,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
                     index = ((t * zDim * sliceSize) + (z * sliceSize) + xy);
 
                     if (((index % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (index) / (length - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) (index) / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     resultBuffer[(z * tDim * sliceSize) + (t * sliceSize) + xy] = buffer[index];

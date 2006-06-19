@@ -18,7 +18,7 @@ public class FileWriteOptions {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private boolean activeImage = false;
+    private boolean runningInSeparateThread = false;
 
     /** DOCUMENT ME! */
     private float alphaBlend;
@@ -511,8 +511,8 @@ public class FileWriteOptions {
      *
      * @return  DOCUMENT ME!
      */
-    public boolean isActiveImage() {
-        return this.activeImage;
+    public boolean isRunningInSeparateThread() {
+        return this.runningInSeparateThread;
     }
 
     /**
@@ -642,8 +642,8 @@ public class FileWriteOptions {
      *
      * @param  isActive  DOCUMENT ME!
      */
-    public void setActiveImage(boolean isActive) {
-        this.activeImage = isActive;
+    public void setRunningInSeparateThread(boolean isActive) {
+        this.runningInSeparateThread = isActive;
     }
 
     /**

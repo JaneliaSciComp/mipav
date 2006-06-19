@@ -442,7 +442,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -642,15 +641,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     medianAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        medianAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             medianAlgo.setProgressBarVisible(false);
                         }
@@ -700,15 +697,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        medianAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             medianAlgo.setProgressBarVisible(false);
                         }
@@ -759,15 +754,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     medianAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        medianAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             medianAlgo.setProgressBarVisible(false);
                         }
@@ -817,15 +810,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (medianAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        medianAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             medianAlgo.setProgressBarVisible(false);
                         }

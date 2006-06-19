@@ -323,7 +323,6 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         if (!srcImageKey.equals(destImageKey)) {
@@ -398,15 +397,13 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
             rSliceAlgo.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (rSliceAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                rSliceAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     rSliceAlgo.setProgressBarVisible(false);
                 }

@@ -119,14 +119,14 @@ public class AlgorithmBSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(25, activeImage);
+        progressBar.updateValue(25, runningInSeparateThread);
 
         resultVOI = new VOI((short) srcImage.getVOIs().size(), "Bsmooth-VOI", 1, VOI.CONTOUR, -1.0f);
         contours = activeVOI.getCurves();
         nContours = contours[0].size();
 
         for (elementNum = 0; elementNum < nContours; elementNum++) {
-            progressBar.updateValue((int) (25 + (75 * (((float) elementNum) / nContours))), activeImage);
+            progressBar.updateValue((int) (25 + (75 * (((float) elementNum) / nContours))), runningInSeparateThread);
 
             if (((VOIContour) (contours[0].elementAt(elementNum))).isActive()) {
                 srcGon = ((VOIContour) (contours[0].elementAt(elementNum))).exportPolygon(1, 1, 1, 1);
@@ -134,11 +134,11 @@ public class AlgorithmBSmooth extends AlgorithmBase {
                 if (srcGon.npoints > 5) {
                     xPoints = new float[srcGon.npoints + 5];
                     yPoints = new float[srcGon.npoints + 5];
-                    progressBar.updateValue(25 + (((75 * elementNum) + 5) / nContours), activeImage);
+                    progressBar.updateValue(25 + (((75 * elementNum) + 5) / nContours), runningInSeparateThread);
                     setPoints(xPoints, yPoints, srcGon);
-                    progressBar.updateValue(25 + (((75 * elementNum) + 25) / nContours), activeImage);
+                    progressBar.updateValue(25 + (((75 * elementNum) + 25) / nContours), runningInSeparateThread);
                     runSmooth(xPoints, yPoints, resultGon);
-                    progressBar.updateValue(25 + (((75 * elementNum) + 50) / nContours), activeImage);
+                    progressBar.updateValue(25 + (((75 * elementNum) + 50) / nContours), runningInSeparateThread);
                     resultVOI.importPolygon(resultGon, 0);
                     resultGon = new Polygon();
 
@@ -156,7 +156,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
             } // if ( ((VOIContour)(contours[0].elementAt(elementNum))).isActive() )
         } // for(elementNum = 0; elementNum < nContours; elementNum++)
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         progressBar.dispose();
         setCompleted(true);
     }
@@ -183,12 +183,12 @@ public class AlgorithmBSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         contours = activeVOI.getCurves();
 
         for (slice = 0; slice < srcImage.getExtents()[2]; slice++) {
             nContours = contours[slice].size();
-            progressBar.updateValue((int) (100 * ((float) slice) / (srcImage.getExtents()[2] - 1)), activeImage);
+            progressBar.updateValue((int) (100 * ((float) slice) / (srcImage.getExtents()[2] - 1)), runningInSeparateThread);
 
             for (elementNum = 0; elementNum < nContours; elementNum++) {
 
@@ -218,7 +218,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
             }
         } // for (slice = 0; slice < srcImage.getExtents()[2]; slice++)
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         setCompleted(true);
         progressBar.dispose();
 

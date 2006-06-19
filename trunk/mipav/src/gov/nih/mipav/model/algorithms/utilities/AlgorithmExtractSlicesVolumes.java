@@ -237,7 +237,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     progress++;
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue((int) ((progress / numToExtract) * 100), activeImage);
+                        progressBar.updateValue((int) ((progress / numToExtract) * 100), runningInSeparateThread);
                     }
 
                     try {
@@ -281,7 +281,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     progress++;
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue((int) ((progress / numToExtract) * 100), activeImage);
+                        progressBar.updateValue((int) ((progress / numToExtract) * 100), runningInSeparateThread);
                     }
 
                     resultImage = new ModelImage(srcImage.getType(), newExtents,

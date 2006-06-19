@@ -411,15 +411,13 @@ public class JDialogCrop extends JDialogBase implements AlgorithmInterface, Scri
             // Hide the dialog since the algorithm is about to run.
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (cropAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                cropAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     cropAlgo.setProgressBarVisible(false);
                 }
@@ -571,7 +569,6 @@ public class JDialogCrop extends JDialogBase implements AlgorithmInterface, Scri
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

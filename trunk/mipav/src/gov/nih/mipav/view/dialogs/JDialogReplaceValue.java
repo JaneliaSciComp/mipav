@@ -266,7 +266,6 @@ public class JDialogReplaceValue extends JDialogBase implements AlgorithmInterfa
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -292,15 +291,13 @@ public class JDialogReplaceValue extends JDialogBase implements AlgorithmInterfa
 
         algoReplace.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (algoReplace.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            algoReplace.setActiveImage(isActiveImage);
-
             if (!userInterface.isAppFrameVisible()) {
                 algoReplace.setProgressBarVisible(false);
             }

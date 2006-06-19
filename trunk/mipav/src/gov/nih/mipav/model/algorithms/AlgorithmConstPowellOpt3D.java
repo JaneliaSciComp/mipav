@@ -567,7 +567,7 @@ public class AlgorithmConstPowellOpt3D extends AlgorithmConstPowellOptBase {
                 if (myProgressBar != null) {
                     myProgressBar.updateValue(progressBegin +
                                               ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
-                                              activeImage);
+                                              runningInSeparateThread);
                 }
 
                 // Initialize values for call to lineMinimization.

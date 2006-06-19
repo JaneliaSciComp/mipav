@@ -1563,7 +1563,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
             /* Set progress bar: */
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (100 * (float) iBruteCount / (float) iTotal), activeImage);
+                progressBar.updateValue((int) (100 * (float) iBruteCount / (float) iTotal), runningInSeparateThread);
             }
 
             /* test current permutation and store results: */
@@ -1972,7 +1972,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (int i = 0; (i < coarseNum) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((i + 1) * 10 / coarseNum, activeImage);
+                progressBar.updateValue((i + 1) * 10 / coarseNum, runningInSeparateThread);
             }
 
             initial[0] = rotateBegin + (i * coarseRate);
@@ -1999,7 +1999,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(10 + ((i + 1) * 5 / fineNum), activeImage);
+                progressBar.updateValue(10 + ((i + 1) * 5 / fineNum), runningInSeparateThread);
             }
 
             initial[0] = rotateBegin + (i * fineRate);
@@ -2020,7 +2020,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(15, activeImage);
+            progressBar.updateValue(15, runningInSeparateThread);
         }
 
         Arrays.sort(costs);
@@ -2038,7 +2038,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(15 + ((i + 1) * 5 / fineNum), activeImage);
+                progressBar.updateValue(15 + ((i + 1) * 5 / fineNum), runningInSeparateThread);
             }
 
             if (matrixList[i].cost < threshold) {
@@ -2098,7 +2098,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(20 + ((count + 1) * 5 / minima.size()), activeImage);
+                progressBar.updateValue(20 + ((count + 1) * 5 / minima.size()), runningInSeparateThread);
             }
 
             powell.setInitialPoint(((MatrixListItem) en.nextElement()).initial);
@@ -2114,7 +2114,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(25, activeImage);
+            progressBar.updateValue(25, runningInSeparateThread);
         }
 
         cost.disposeLocal();
@@ -2208,7 +2208,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (int i = 0; (i < total) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(25 + ((i + 1) * 4 / total), activeImage);
+                progressBar.updateValue(25 + ((i + 1) * 4 / total), runningInSeparateThread);
             }
 
             powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
@@ -2251,7 +2251,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)), activeImage);
+                    progressBar.updateValue(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)), runningInSeparateThread);
                 }
 
                 initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2293,7 +2293,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(32 + ((((2 * j * total) + i + 1) * 3) / (total * 8)), activeImage);
+                        progressBar.updateValue(32 + ((((2 * j * total) + i + 1) * 3) / (total * 8)), runningInSeparateThread);
                     }
 
                     initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2328,7 +2328,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Collections.sort(perturbList);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(35, activeImage);
+            progressBar.updateValue(35, runningInSeparateThread);
         }
 
         cost.disposeLocal();
@@ -2389,7 +2389,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         if (isProgressBarVisible()) {
@@ -2465,7 +2465,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         if (isProgressBarVisible()) {
@@ -2557,7 +2557,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(43, activeImage);
+                progressBar.updateValue(43, runningInSeparateThread);
             }
 
             powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
@@ -2586,7 +2586,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 }
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(51, activeImage);
+                    progressBar.updateValue(51, runningInSeparateThread);
                 }
 
                 if (isProgressBarVisible()) {
@@ -2605,7 +2605,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(60, activeImage);
+            progressBar.updateValue(60, runningInSeparateThread);
         }
 
         cost.disposeLocal();

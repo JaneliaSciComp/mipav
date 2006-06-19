@@ -417,7 +417,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -550,15 +549,13 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast
                     if (adaptivePathSmoothAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    adaptivePathSmoothAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         adaptivePathSmoothAlgo.setProgressBarVisible(false);
                     }
@@ -606,15 +603,13 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast
                     if (adaptivePathSmoothAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    adaptivePathSmoothAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         adaptivePathSmoothAlgo.setProgressBarVisible(false);
                     }

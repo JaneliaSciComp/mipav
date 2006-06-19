@@ -1206,8 +1206,9 @@ public class FileInterfile extends FileBase {
                 }
 
                 numberSlices = 1;
-                setProgressBarVisible(false);
             }
+            
+            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
 
             raFile.seek(dataByteOffset);
 
@@ -1583,7 +1584,9 @@ public class FileInterfile extends FileBase {
         progressBar = new ViewJProgressBar(dataFileName, "Writing Interfile file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        progressBar.setVisible(isProgressBarVisible());
 
         if (!simple) {
             patientName = fileInfo.getPatientName();

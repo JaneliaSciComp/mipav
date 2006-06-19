@@ -373,7 +373,6 @@ public class JDialogColorEdge extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -596,7 +595,7 @@ public class JDialogColorEdge extends JDialogBase
             algoColorEdge.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish
                 // to still have user interface work fast.
@@ -604,8 +603,6 @@ public class JDialogColorEdge extends JDialogBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                algoColorEdge.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     algoColorEdge.setProgressBarVisible(false);
                 }

@@ -721,7 +721,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 gradMagAlgo_A.setRed(true);
                 gradMagAlgo_A.setBlue(true);
                 gradMagAlgo_A.setGreen(true);
-                gradMagAlgo_A.setActiveImage(isActiveImage); // progress bar junk.
+                gradMagAlgo_A.setRunningInSeparateThread(isActiveImage); // progress bar junk.
                 gradMagAlgo_A.setProgressBarVisible(true);
                 gradMagAlgo_A.run();
 
@@ -737,7 +737,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                                                                                gradMag_A.getMin(), gradMag_A.getMax(),
                                                                                0, 255, false);
 
-                changeTypeAlgo_A.setActiveImage(isActiveImage);
+                changeTypeAlgo_A.setRunningInSeparateThread(isActiveImage);
                 changeTypeAlgo_A.setProgressBarVisible(false);
                 changeTypeAlgo_A.run();
                 gradMagRescale_A.calcMinMax();
@@ -795,7 +795,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 gradMagAlgo_B.setRed(true);
                 gradMagAlgo_B.setBlue(true);
                 gradMagAlgo_B.setGreen(true);
-                gradMagAlgo_B.setActiveImage(isActiveImage); // progress bar junk.
+                gradMagAlgo_B.setRunningInSeparateThread(isActiveImage); // progress bar junk.
                 gradMagAlgo_B.setProgressBarVisible(true);
                 gradMagAlgo_B.run();
 
@@ -811,7 +811,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                                                                                gradMag_B.getMin(), gradMag_B.getMax(),
                                                                                0, 255, false);
 
-                changeTypeAlgo_B.setActiveImage(isActiveImage);
+                changeTypeAlgo_B.setRunningInSeparateThread(isActiveImage);
                 changeTypeAlgo_B.setProgressBarVisible(false);
                 changeTypeAlgo_B.run();
                 gradMagRescale_B.calcMinMax();

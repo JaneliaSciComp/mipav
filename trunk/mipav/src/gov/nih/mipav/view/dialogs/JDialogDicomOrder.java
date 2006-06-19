@@ -270,15 +270,13 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
                 userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
             }
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (dicomOrderAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                dicomOrderAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     dicomOrderAlgo.setProgressBarVisible(false);
                 }
@@ -477,7 +475,6 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

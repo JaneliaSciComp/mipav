@@ -1762,7 +1762,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
         for (y = 0; y < yDim; y++) {
             yStepOut = y * xDim;
-            progressBar.updateValue((int) (y * (100.0f / yDim)), activeImage);
+            progressBar.updateValue((int) (y * (100.0f / yDim)), runningInSeparateThread);
 
             for (x = 0; (x < xDim) && !threadStopped; x++) {
 
@@ -1852,7 +1852,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
         for (z = 0; (z < zDim) && !threadStopped; z++) {
             zStepOut = z * sliceSize;
-            progressBar.updateValue((int) (z * (100.0f / zDim)), activeImage);
+            progressBar.updateValue((int) (z * (100.0f / zDim)), runningInSeparateThread);
 
             for (y = 0; (y < yDim) && !threadStopped; y++) {
                 yStepOut = (y * xDim) + zStepOut;

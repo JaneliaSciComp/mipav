@@ -238,15 +238,13 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                algoTrans.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     algoTrans.setProgressBarVisible(false);
                 }

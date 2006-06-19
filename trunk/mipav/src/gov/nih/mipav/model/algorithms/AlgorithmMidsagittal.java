@@ -136,7 +136,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
 
         // flip
         AlgorithmFlip flipAlgo = new AlgorithmFlip(flipImage, AlgorithmFlip.Y_AXIS);
-        flipAlgo.setActiveImage(false);
+        flipAlgo.setRunningInSeparateThread(false);
         flipAlgo.run();
 
         // register
@@ -145,7 +145,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, maxOfMin, doSubsample,
                                                           fastMode, bracketBound, baseNumIter, numMinima);
-        regAlgo.setActiveImage(false);
+        regAlgo.setRunningInSeparateThread(false);
         regAlgo.run();
 
         flipImage.disposeLocal();
@@ -159,7 +159,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
         AlgorithmTransform transformAlgo = new AlgorithmTransform(srcImage, trans, AlgorithmTransform.TRILINEAR, res[0],
                                                                   res[1], res[2], ext[0], ext[1], ext[2], false, false,
                                                                   false);
-        transformAlgo.setActiveImage(false);
+        transformAlgo.setRunningInSeparateThread(false);
 
         // transformAlgo.setUpdateOriginFlag(true);
         transformAlgo.run();

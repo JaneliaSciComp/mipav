@@ -249,7 +249,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
                         }
 
                         if (threadStopped) {
@@ -289,7 +289,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
                         }
 
                         if (threadStopped) {
@@ -335,7 +335,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
                         }
 
                         if (threadStopped) {
@@ -364,7 +364,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
                         }
 
                         if (threadStopped) {

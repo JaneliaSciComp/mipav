@@ -2087,7 +2087,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     }
 
                     if ((pCtr % 250000) == 0) {
-                        progressBar.updateValue(pCtr / 10000, activeImage);
+                        progressBar.updateValue(pCtr / 10000, runningInSeparateThread);
                     }
 
                     // System.out.println("stack length = " + stack.length());

@@ -199,7 +199,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         float avgHue = 0f, avgSaturation = 0f, avgBrightness = 0f;
         int fxDim = 4 * xDim;
         progressBar.setMessage("Segmenting image...");
-        progressBar.updateValue(70, activeImage);
+        progressBar.updateValue(70, runningInSeparateThread);
 
         float[] hsb = new float[3];
         boolean includeRGB;
@@ -209,7 +209,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         for (i = 0, id = 0; i < lengthIn; i += 4, id += 4) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (lengthIn) * 40) + 70, activeImage);
+                progressBar.updateValue(Math.round((float) (i) / (lengthIn) * 40) + 70, runningInSeparateThread);
             }
 
             avgHue = 0f;
@@ -297,7 +297,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             buffer = null;

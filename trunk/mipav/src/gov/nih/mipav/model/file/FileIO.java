@@ -1456,13 +1456,7 @@ public class FileIO {
                                                   null);
             }
 
-            if (!quiet) {
-                pInterface.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                pInterface.setVisible(false);
-            }
+            pInterface.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
             if (pInterface != null) {
                 pInterface.updateValue(0, true);
@@ -3815,13 +3809,7 @@ public class FileIO {
                                            UI.getProgressBarPrefix() + "Analyze image(s) ...", 0, 100, false, null,
                                            null);
 
-        if (!quiet) {
-            progressBar.setVisible(true);
-        }
-
-        if (!UI.isAppFrameVisible()) {
-            progressBar.setVisible(false);
-        }
+        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
         progressBar.updateValue(0, true);
 
@@ -4451,13 +4439,7 @@ public class FileIO {
                                                UI.getProgressBarPrefix() + "COR image(s) ...", 0, 100, false, null,
                                                null);
 
-            if (!quiet) {
-                progressBar.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                progressBar.setVisible(false);
-            }
+            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
             progressBar.updateValue(0, true);
         } catch (OutOfMemoryError error) {
@@ -5370,13 +5352,7 @@ public class FileIO {
                                                UI.getProgressBarPrefix() + "LSM image(s) ...", 0, 100, false, null,
                                                null);
 
-            if (!quiet) {
-                progressBar.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                progressBar.setVisible(false);
-            }
+            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
             progressBar.updateValue(0, true);
         } catch (OutOfMemoryError error) {
@@ -5685,13 +5661,7 @@ public class FileIO {
                                                UI.getProgressBarPrefix() + "Magnetom Vision files ...", 0, 100, false,
                                                null, null);
 
-            if (!quiet) {
-                progressBar.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                progressBar.setVisible(false);
-            }
+            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
             progressBar.updateValue(0, true);
             myFileInfo = imageFile.readHeader();
@@ -6254,13 +6224,7 @@ public class FileIO {
         progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
                                            UI.getProgressBarPrefix() + "NIFTI image(s) ...", 0, 100, false, null, null);
 
-        if (!quiet) {
-            progressBar.setVisible(true);
-        }
-
-        if (!UI.isAppFrameVisible()) {
-            progressBar.setVisible(false);
-        }
+        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
         progressBar.updateValue(0, true);
 
@@ -6907,13 +6871,7 @@ public class FileIO {
         progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
                                            UI.getProgressBarPrefix() + "Raw image(s) ...", 0, 100, false, null, null);
 
-        if (!quiet) {
-            progressBar.setVisible(true);
-        }
-
-        if (!UI.isAppFrameVisible()) {
-            progressBar.setVisible(false);
-        }
+        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
         progressBar.updateValue(0, true);
 
@@ -7285,13 +7243,7 @@ public class FileIO {
                                                UI.getProgressBarPrefix() + "TIFF image(s) ...", 0, 100, false, null,
                                                null);
 
-            if (!quiet) {
-                progressBar.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                progressBar.setVisible(false);
-            }
+            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
             progressBar.updateValue(0, true);
         } catch (OutOfMemoryError error) {
@@ -8521,9 +8473,7 @@ public class FileIO {
             fileSuffix = options.getFileName().substring(index);
         }
 
-        if (!quiet) {
-            progressBar.setVisible(true);
-        }
+        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
         try {
             String name;

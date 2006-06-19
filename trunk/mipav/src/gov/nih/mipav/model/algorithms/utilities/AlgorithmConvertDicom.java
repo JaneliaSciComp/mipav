@@ -85,7 +85,7 @@ public class AlgorithmConvertDicom extends AlgorithmBase {
 
         progressBar = new ViewJProgressBar("DICOM -> Compressed AVI", "Searching for DICOM images", 0, 100, false, null,
                                            null);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
         progressBar.setVisible(true);
 
@@ -97,7 +97,7 @@ public class AlgorithmConvertDicom extends AlgorithmBase {
 
         if (size > 0) {
             float percentDone = 0;
-            progressBar.updateValue((int) percentDone, activeImage);
+            progressBar.updateValue((int) percentDone, runningInSeparateThread);
 
             for (int i = 0; i < size; i++) {
                 progressBar.setMessage("Opening DICOM image...");
@@ -105,12 +105,12 @@ public class AlgorithmConvertDicom extends AlgorithmBase {
                 System.gc();
 
                 percentDone += (100.0 / (float) size);
-                progressBar.updateValue((int) percentDone, activeImage);
+                progressBar.updateValue((int) percentDone, runningInSeparateThread);
             }
 
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         } else {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
             Preferences.debug("No DICOM files to convert" + "\n");
         }
 

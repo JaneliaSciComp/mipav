@@ -171,7 +171,7 @@ public class AlgorithmRGBtoHSB extends AlgorithmBase {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
 
                         Color.RGBtoHSB((int) buffer[i + 1], (int) buffer[i + 2], (int) buffer[i + 3], hsb);

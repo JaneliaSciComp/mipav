@@ -166,7 +166,7 @@ public class FileBioRad extends FileBase {
             byteFormat = (short) getSignedShort(endianess); // 14
             num = (short) getSignedShort(endianess); // 16
 
-            setProgressBarVisible(!one);
+            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
 
             for (i = 0; i < 32; i++) {
                 name[i] = 0;

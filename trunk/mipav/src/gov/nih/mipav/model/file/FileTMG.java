@@ -109,7 +109,8 @@ public class FileTMG extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading TMG file...", 0, 100, true, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            progressBar.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setVisible(isProgressBarVisible());
 
             file = new File(fileDir + fileName);
 

@@ -743,7 +743,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             } // if (saveVF)
 
             progressBar.setMessage("Detecting critical points\n");
-            progressBar.updateValue(92, activeImage);
+            progressBar.updateValue(92, runningInSeparateThread);
             Preferences.debug("Detecting critical points\n");
 
             if (!getCriticalPoints()) {
@@ -755,7 +755,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
             // Generating the skeleton
             progressBar.setMessage("Generating level 1 skeleton");
-            progressBar.updateValue(94, activeImage);
+            progressBar.updateValue(94, runningInSeparateThread);
             Preferences.debug("Generating level1 skeleton\n");
 
             // Allocate skeleton structure
@@ -863,7 +863,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
         if (perHDPoints > 0.0f) {
             progressBar.setMessage("Getting high divergence points");
-            progressBar.updateValue(96, activeImage);
+            progressBar.updateValue(96, runningInSeparateThread);
             Preferences.debug("Getting high divergence points\n");
 
             // Get top perHDPoints fraction of highest negative divergence points
@@ -880,7 +880,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
              * hdPoints[i][2] + "\n");}*/
 
             progressBar.setMessage("Computing level 2 skeleton");
-            progressBar.updateValue(92, activeImage);
+            progressBar.updateValue(92, runningInSeparateThread);
             Preferences.debug("Computing level 2 skeleton\n");
 
             if (!getLevel2Skeleton()) {
@@ -891,7 +891,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             }
         } // if (perHDPoints > 0.0f)
 
-        progressBar.updateValue(99, activeImage);
+        progressBar.updateValue(99, runningInSeparateThread);
 
         if (outputPoints) {
             // Write out the skeleton points
@@ -1218,7 +1218,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
         for (z = 0; z < zDim; z++) {
             Preferences.debug("Processing plane " + z + " out of " + (zDim - 1) + "\n");
-            progressBar.updateValue(z * 90 / (zDim - 1), activeImage);
+            progressBar.updateValue(z * 90 / (zDim - 1), runningInSeparateThread);
 
             // Find the boundary voxels that will influence this point
             // Look at the z coordinate

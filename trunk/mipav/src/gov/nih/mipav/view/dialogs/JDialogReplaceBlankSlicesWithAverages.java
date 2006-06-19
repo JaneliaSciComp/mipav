@@ -169,15 +169,13 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implement
                 userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
             }
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (rAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                rAlgo.setActiveImage(isActiveImage);
-
                 //if (!userInterface.isAppFrameVisible()) {
                     rAlgo.setProgressBarVisible(false);
                 //}
@@ -243,7 +241,6 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implement
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }

@@ -2391,7 +2391,7 @@ public class JPanelHistoLUT
 
             AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogramA, imageA, entireFlag);
 
-            histoAlgoA.setActiveImage(false);
+            histoAlgoA.setRunningInSeparateThread(false);
             histoAlgoA.setProgressBarVisible(false);
             histoAlgoA.run();
         }
@@ -2403,7 +2403,7 @@ public class JPanelHistoLUT
 
             AlgorithmHistogram histoAlgoB = new AlgorithmHistogram(histogramB, imageB, entireFlag);
 
-            histoAlgoB.setActiveImage(false);
+            histoAlgoB.setRunningInSeparateThread(false);
             histoAlgoB.setProgressBarVisible(false);
             histoAlgoB.run();
         }

@@ -351,14 +351,14 @@ public class AlgorithmAGVF extends AlgorithmBase {
         this.initProgressBar();
 
         contours = srcVOI.getCurves();
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
 
         // System.out.println("DestImage " + destImage.toString());
 
         srcVOI.getBounds(xB, yB, zB);
 
         for (slice = (int) zB[0]; slice <= (float) zB[1]; slice++) {
-            progressBar.updateValue((int) (30 + (((float) slice / (nSlice - 1)) * 70)), activeImage);
+            progressBar.updateValue((int) (30 + (((float) slice / (nSlice - 1)) * 70)), runningInSeparateThread);
 
             try {
                 srcImage.exportData(slice * length, length, imgBuffer);
@@ -428,7 +428,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
             }
 
             cleanup();
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
             progressBar.dispose();
             setCompleted(true);
 
@@ -484,7 +484,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
                 runSnake(xPoints, yPoints, uVal, vVal, resultGon);
                 slicesDone++;
-                progressBar.updateValue(slicesDone * 100 / nSlice, activeImage);
+                progressBar.updateValue(slicesDone * 100 / nSlice, runningInSeparateThread);
                 nPts = resultGon.npoints;
 
                 if (nPts < 8) {
@@ -519,7 +519,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         yPoints = new float[tempGon.npoints + 2];
         resultGon = new Polygon();
         slicesDone = nSlice - stSlice;
-        progressBar.updateValue(100 * slicesDone / nSlice, activeImage);
+        progressBar.updateValue(100 * slicesDone / nSlice, runningInSeparateThread);
 
         if (slice >= 0) {
 
@@ -561,7 +561,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
                 setPoints(xPoints, yPoints, tempGon);
                 runSnake(xPoints, yPoints, uVal, vVal, resultGon);
                 slicesDone++;
-                progressBar.updateValue(slicesDone * 100 / nSlice, activeImage);
+                progressBar.updateValue(slicesDone * 100 / nSlice, runningInSeparateThread);
                 nPts = resultGon.npoints;
 
                 if (nPts < 8) {
@@ -595,7 +595,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         setCompleted(true);
         progressBar.dispose();
     }
@@ -653,7 +653,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
         // progressBar.setLocation(xScreen/2, yScreen/2);
         // progressBar.setVisible(true);
-        progressBar.updateValue(25, activeImage);
+        progressBar.updateValue(25, runningInSeparateThread);
 
         calcGVF(imgBuffer);
         expGvfBuffer = null;
@@ -686,7 +686,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
 
         contours = srcVOI.getCurves();
         nContours = contours[0].size();
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
 
         for (int j = 0; j < nContours; j++) {
 
@@ -705,10 +705,10 @@ public class AlgorithmAGVF extends AlgorithmBase {
                 resultVOI.importPolygon(gons[j], 0);
             }
 
-            progressBar.updateValue(30 + (((j / nContours) - 1) * 70), activeImage);
+            progressBar.updateValue(30 + (((j / nContours) - 1) * 70), runningInSeparateThread);
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -778,7 +778,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         }
 
         this.initProgressBar();
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         try {
             srcImage.exportData(0, length, imgBuffer);
@@ -903,7 +903,7 @@ public class AlgorithmAGVF extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         progressBar.dispose();
         setCompleted(true);
 

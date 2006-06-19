@@ -252,7 +252,6 @@ public class JDialogDENCLUE extends JDialogBase implements AlgorithmInterface, S
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -318,15 +317,13 @@ public class JDialogDENCLUE extends JDialogBase implements AlgorithmInterface, S
             denAlgo.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (denAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                denAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     denAlgo.setProgressBarVisible(false);
                 }

@@ -245,7 +245,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating the gaussian blur of slice " + (s + 1) + "...");
-                progressBar.updateValue(Math.round(s * inc), activeImage);
+                progressBar.updateValue(Math.round(s * inc), runningInSeparateThread);
             }
 
             try {
@@ -264,7 +264,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                                                                                         srcImage.getExtents()[0],
                                                                                         srcImage.getExtents()[1]
                                                                                     }, GxDataRound, GyDataRound, color);
-            convolver.setActiveImage(activeImage);
+            convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 convolver.setMask(mask);
@@ -346,7 +346,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating the gaussian blur of volume " + (t + 1) + "...");
-                progressBar.updateValue(Math.round(t * inc), activeImage);
+                progressBar.updateValue(Math.round(t * inc), runningInSeparateThread);
             }
 
             try {
@@ -367,7 +367,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                                                                                         srcImage.getExtents()[2]
                                                                                     }, GxDataRound, GyDataRound,
                                                                                     GzDataRound, color);
-            convolver.setActiveImage(activeImage);
+            convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 convolver.setMask(mask);
@@ -458,7 +458,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating the gaussian blur of slice " + (s + 1) + "...");
-                progressBar.updateValue(Math.round(s * inc), activeImage);
+                progressBar.updateValue(Math.round(s * inc), runningInSeparateThread);
             }
 
             try {
@@ -477,7 +477,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                                                                                         srcImage.getExtents()[0],
                                                                                         srcImage.getExtents()[1]
                                                                                     }, GxDataRound, GyDataRound, color);
-            convolver.setActiveImage(activeImage);
+            convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 convolver.setMask(mask);
@@ -559,7 +559,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating the gaussian blur of volume " + (t + 1) + "...");
-                progressBar.updateValue(Math.round(t * inc), activeImage);
+                progressBar.updateValue(Math.round(t * inc), runningInSeparateThread);
             }
 
             try {
@@ -581,7 +581,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                                                                                         srcImage.getExtents()[2]
                                                                                     }, GxDataRound, GyDataRound,
                                                                                     GzDataRound, color);
-            convolver.setActiveImage(activeImage);
+            convolver.setRunningInSeparateThread(runningInSeparateThread);
 
             if (!entireImage) {
                 convolver.setMask(mask);

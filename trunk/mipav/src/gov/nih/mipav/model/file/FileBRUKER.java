@@ -314,7 +314,8 @@ public class FileBRUKER extends FileBase {
             progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
                                                ViewUserInterface.getReference().getProgressBarPrefix() +
                                                "BRUKER image(s) ...", 0, 100, false, null, null);
-            setProgressBarVisible(!one);
+            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+            
             image = new ModelImage(fileInfo.getDataType(), imageExtents, fileName, UI);
 
             for (i = 0; i < imageSlice; i++) {

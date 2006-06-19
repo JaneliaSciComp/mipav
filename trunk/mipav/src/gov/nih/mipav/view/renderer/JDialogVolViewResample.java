@@ -190,7 +190,6 @@ public class JDialogVolViewResample extends JDialogBase {
         extents = imageA.getExtents();
         res = imageA.getFileInfo(0).getResolutions();
         nDim = extents.length;
-        isActiveImage = false;
 
         // Checking to see if the image has all dimensions that are a power of 2.
         for (int i = 0; i < extents.length; i++) {

@@ -2070,8 +2070,8 @@ public class FileLSM extends FileBase {
                                                ViewUserInterface.getReference().getProgressBarPrefix() +
                                                "LSM image(s) ...", 0, 100, false, null, null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(!one);
-
+            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+            
             for (i = 0; i < imageSlice; i++) {
 
                 try {

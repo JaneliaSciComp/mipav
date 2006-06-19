@@ -2364,7 +2364,7 @@ public class ModelImage extends ModelStorageBase {
             options.setEndTime(this.getExtents()[3] - 1);
         }
 
-        options.setActiveImage(isActive);
+        options.setRunningInSeparateThread(isActive);
         options.setFileType(fileType);
 
         if (fileName != null) {
