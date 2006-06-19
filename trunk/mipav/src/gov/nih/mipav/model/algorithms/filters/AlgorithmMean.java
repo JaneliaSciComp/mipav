@@ -44,7 +44,21 @@ import java.util.*;
  * using a 3 x 3 kernel. In this case only the target pixel and its lower, left, and diagonal left low neighbors will be
  * used. The sum of these 4 pixels will be divided by 4.</p>
  * 
- * <p> If the image is color and separateChannels is false, then the image is decomposed into 
+ * <p> If the image is color and the filterType == ADAPTIVE_VECTOR, then an adaptive vector directional
+ * filter is used.  The distance between 2 pixels is taken as the vector angle between the 2 pixels:
+ * acos(dotProduct(xi, xj)/(norm(xi)*norm(xj)).  For each position xi in the window, the sum of the
+ * angles over all j is obtained: ai = sum over all j of angle(i,j).  A weight wi is then taken as
+ * wi = 2.0/(1.0 + exp(ai)).  The weights are normalized by dividing each weight by the sum of all the
+ * weights in the window: wi = wi/(sum over i of wi).  Then the average is obtained by multiplying
+ * each pixel in the window by the normalized weight.  The red, green, and blue from a given pixel 
+ * will always be used together as a unit; the red, green, and blue from the same pixel will always
+ * be multiplied by the same weight.  In summary, a fuzzy membership function based on an angle 
+ * criterion is used to determine the weights of an adaptive weighted mean filter.  One reference is:
+ * "Color Image Processing Using Adaptive Vector Directional Filters" by K. N. Plataniotis,
+ * D. Androutsos, and A. N. Venetsanopoulos, IEEE Transactions on Circuits and Systems - II:
+ * Analog and Digital Sginal Processing, Vol. 45, No. 10, October, 1998, pp. 1414-1419.</p>
+ * 
+ * <p> If the image is color and the filterType == PARALLEL_VECTOR, then the image is decomposed into 
  * components parallel and perpindicular to the direction (redVector, greenVector, blueVector).
  * Only the parallel component is filtered.  After filtering the parallel component,
  * the parallel and perpindicular components are added back together.
@@ -110,8 +124,9 @@ public class AlgorithmMean extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int valuesPerPixel = 1; // number of elements in a pixel.  Monochrome = 1, Color = 4. (a, R, G, B)
-    // For color images if separateChannels is true, take means of red, green, and blue components
-    // separately.  If separateChannels is false, decompose image into components parallel
+    // For color images if filterType == SEPARATE_COMPONENT, take means of red, green, and blue components
+    // separately.  If filterType == ADAPTIVE_VECTOR, use an adaptive vector directional filter.
+    // If filterType == PARALLEL_VECTOR, decompose image into components parallel
     // and perpindicular to the direction given by (redVector, greenVector, and blueVector)
     // and only filter the parallel component before adding the 2 components back together.
     private int filterType = SEPARATE_COMPONENT;
@@ -392,7 +407,11 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         this.buildProgressBar(); // let user know what is going on
-        if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+        
+        if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
+            this.sliceAdaptiveVectorFilter(buffer, resultBuffer, 0, "image"); // filter this slice    
+        }
+        else if (isColorImage && (filterType == PARALLEL_VECTOR)) {
             this.sliceParallelVectorFilter(buffer, resultBuffer, 0, "image"); // filter this slice    
         }
         else {
@@ -463,7 +482,11 @@ public class AlgorithmMean extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+                if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
+                    sliceAdaptiveVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));    
+                }
+                else if (isColorImage && (filterType == PARALLEL_VECTOR)) {
                     sliceParallelVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));    
                 }
@@ -474,7 +497,10 @@ public class AlgorithmMean extends AlgorithmBase {
             }
         } else { // volume kernel requested
 
-            if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+            if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
+                volumeAdaptiveVectorFilter(buffer, resultBuffer);
+            }
+            else if (isColorImage && (filterType == PARALLEL_VECTOR)) {
                 volumeParallelVectorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
@@ -554,7 +580,10 @@ public class AlgorithmMean extends AlgorithmBase {
         }
 
         this.buildProgressBar();
-        if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+        if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
+            sliceAdaptiveVectorFilter(buffer, resultBuffer, 0, "image");    
+        }
+        else if (isColorImage && (filterType == PARALLEL_VECTOR)) {
             sliceParallelVectorFilter(buffer, resultBuffer, 0, "image");    
         }
         else {
@@ -644,7 +673,11 @@ public class AlgorithmMean extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+                if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
+                    sliceAdaptiveVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
+                            "slice " + String.valueOf(currentSlice + 1));    
+                }
+                else if (isColorImage && (filterType == PARALLEL_VECTOR)) {
                     sliceParallelVectorFilter(buffer, resultBuffer, currentSlice * imageSliceLength,
                             "slice " + String.valueOf(currentSlice + 1));    
                 }
@@ -654,8 +687,10 @@ public class AlgorithmMean extends AlgorithmBase {
                 }
             }
         } else { // requested volume filter
-
-            if (isColorImage && (filterType == PARALLEL_VECTOR)) {
+            if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
+                volumeAdaptiveVectorFilter(buffer, resultBuffer);
+            }
+            else if (isColorImage && (filterType == PARALLEL_VECTOR)) {
                 volumeParallelVectorFilter(buffer, resultBuffer);
             }
             else if (isColorImage) { // for color image
@@ -786,7 +821,7 @@ public class AlgorithmMean extends AlgorithmBase {
     }
     
     /**
-     * Used for color images only
+     * Used for color images only when filterType == ADAPTIVE_VECTOR.
      *
      * @param   i     The central pixel to find neighbors for.
      * @param   data  Image data
@@ -797,11 +832,11 @@ public class AlgorithmMean extends AlgorithmBase {
      */
     private float [] getAdaptiveMean(int i, float[] data, boolean is2D) {
         int row, col;
-        int rowj, colj;
+        int rowj, colj, slicej;
+        int spos, rpos, pos, sposj, rposj, posj;
         int width = 0; // width of slice in number of pixels
         int height = 0; // height of slice in number of pixels
         int depth = 0;
-        double total = 0.0;
         float mean[] = new float[3];
         double weight[];
         double weightSum;
@@ -810,6 +845,7 @@ public class AlgorithmMean extends AlgorithmBase {
         float dotProduct;
         double normI;
         double normJ;
+        double angle;
         double angleSum;
         int index;
         width = srcImage.getExtents()[0];
@@ -819,11 +855,10 @@ public class AlgorithmMean extends AlgorithmBase {
             depth = srcImage.getExtents()[2];
         }
 
-
         int sliceWidth = width * valuesPerPixel; // width of slice in number of elements
-        int imageSliceLength = srcImage.getSliceSize() * valuesPerPixel;
-        int sliceLoc = i / imageSliceLength;
-        int rowLoc = (i % imageSliceLength) / sliceWidth;
+        int imageSliceSize = srcImage.getSliceSize() * valuesPerPixel;
+        int sliceLoc = i / imageSliceSize;
+        int rowLoc = (i % imageSliceSize) / sliceWidth;
         int columnLoc = i % sliceWidth;
         int leftBound;
         int rightBound;
@@ -840,67 +875,125 @@ public class AlgorithmMean extends AlgorithmBase {
         lowerBound = Math.min(height - 1 - rowLoc, halfK);
         behindBound = Math.max(-sliceLoc, -halfK);
         aheadBound = Math.min(depth - 1 - sliceLoc, halfK);
-
-
-        // place all the masked 'on' elements into the data-list
-        int count = 0;
-
+        
         // colour images are different from the mono images in that though colour images use the same size
         // kernel as mono images, but fill it with brightness levels that are spread out in the data set.
         if (is2D) {
             
-            weight = new double[(lowerBound-upperBound+1)*(rightBound-leftBound+1)/4];
+            weight = new double[(lowerBound-upperBound+1)*(rightBound-leftBound+4)/4];
             weightSum = 0.0;
             for (row = upperBound, index = 0; row <= lowerBound; row++) { // go through all rows
-
-                for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) { //
-                    xi[0] = data[i + 1 + col + (row * sliceWidth)];
-                    xi[1] = data[i + 2 + col + (row * sliceWidth)];
-                    xi[2] = data[i + 3 + col + (row * sliceWidth)];
+                rpos = i + (row * sliceWidth);
+                for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) {
+                    pos = rpos + col;
+                    xi[0] = data[pos + 1];
+                    xi[1] = data[pos + 2];
+                    xi[2] = data[pos + 3];
+                    normI = Math.sqrt(xi[0]*xi[0] + xi[1]*xi[1] + xi[2]*xi[2]);
                     angleSum = 0.0;
                     for (rowj = upperBound; rowj <= lowerBound; rowj++) {
+                        rposj = i + (rowj * sliceWidth);
                         for (colj = leftBound; colj <= rightBound; colj += valuesPerPixel) {
-                            xj[0] = data[i + 1 + colj + (rowj * sliceWidth)];
-                            xj[1] = data[i + 2 + colj + (rowj * sliceWidth)];
-                            xj[2] = data[i + 3 + colj + (rowj * sliceWidth)];
+                            posj = rposj + colj;
+                            xj[0] = data[posj + 1];
+                            xj[1] = data[posj + 2];
+                            xj[2] = data[posj + 3];
                             dotProduct = xi[0]*xj[0] + xi[1]*xj[1] + xi[2]*xj[2];
-                            normI = Math.sqrt(xi[0]*xi[0] + xi[1]*xi[1] + xi[2]*xi[2]);
                             normJ = Math.sqrt(xj[0]*xj[0] + xj[1]*xj[1] + xj[2]*xj[2]);
-                            angleSum += Math.acos(dotProduct/(normI * normJ));
+                            if ((normI == 0.0) && (normJ == 0.0)) {
+                                ; // += 0
+                            }
+                            else if ((normI == 0.0) || (normJ == 0.0)) {
+                                angleSum += Math.PI/2.0;
+                            }
+                            else {
+                                angleSum += Math.acos(Math.min(1.0,dotProduct/(normI * normJ)));
+                            }
                         }
                     }
                     weight[index] = 2.0/(1.0 + Math.exp(angleSum));
                     weightSum += weight[index];
                 }
             }
+           
             for (index = 0; index < weight.length; index++) {
                 weight[index] = weight[index]/weightSum;
             }
 
             for (row = upperBound, index = 0; row <= lowerBound; row++) { // go through all rows
-
+                rpos = i + (row * sliceWidth);
                 for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) { //
-                    mean[0] += data[i + 1 + col + (row * sliceWidth)] * weight[index];
-                    mean[1] += data[i + 2 + col + (row * sliceWidth)] * weight[index];
-                    mean[2] += data[i + 3 + col + (row * sliceWidth)] * weight[index];
+                    pos = rpos + col;
+                    mean[0] += data[pos + 1] * weight[index];
+                    mean[1] += data[pos + 2] * weight[index];
+                    mean[2] += data[pos + 3] * weight[index];
                 }
             }
         } else { // find neighbors in a volume
 
+            weight = new double[(lowerBound-upperBound+1)*(rightBound-leftBound+4)*
+                                (aheadBound - behindBound + 1)/4];
+            weightSum = 0.0;
             int slice;
+            
+            for (slice = behindBound, index = 0; slice <= aheadBound; slice++) {
+                spos = i + (slice*imageSliceSize);
+                for (row = upperBound; row <= lowerBound; row++) { // go through all rows
+                    rpos = spos + (row * sliceWidth);
+                    for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) { //
+                        pos = rpos + col;
+                        xi[0] = data[pos + 1];
+                        xi[1] = data[pos + 2];
+                        xi[2] = data[pos + 3];
+                        normI = Math.sqrt(xi[0]*xi[0] + xi[1]*xi[1] + xi[2]*xi[2]);
+                        angleSum = 0.0;
+                        for (slicej = behindBound; slicej <= aheadBound; slicej++) {
+                            sposj = i + (slicej*imageSliceSize);
+                            for (rowj = upperBound; rowj <= lowerBound; rowj++) {
+                                rposj = sposj + (rowj * sliceWidth);
+                                for (colj = leftBound; colj <= rightBound; colj += valuesPerPixel) {
+                                    posj = rposj + colj;
+                                    xj[0] = data[posj + 1];
+                                    xj[1] = data[posj + 2];
+                                    xj[2] = data[posj + 3];
+                                    dotProduct = xi[0]*xj[0] + xi[1]*xj[1] + xi[2]*xj[2];
+                                    normJ = Math.sqrt(xj[0]*xj[0] + xj[1]*xj[1] + xj[2]*xj[2]);
+                                    if ((normI == 0.0) && (normJ == 0.0)) {
+                                        ; // += 0
+                                    }
+                                    else if ((normI == 0.0) || (normJ == 0.0)) {
+                                        angleSum += Math.PI/2.0;
+                                    }
+                                    else {
+                                        angleSum += Math.acos(Math.min(1.0,dotProduct/(normI * normJ)));
+                                    }
+                                }
+                            }
+                        }
+                        weight[index] = 2.0/(1.0 + Math.exp(angleSum));
+                        weightSum += weight[index];
+                    }
+                }
+            }
+            
+            for (index = 0; index < weight.length; index++) {
+                weight[index] = weight[index]/weightSum;
+            }
 
-            for (slice = behindBound; slice <= aheadBound; slice++) {
-
-                for (row = upperBound; row <= lowerBound; row++) {
-
-                    for (col = leftBound; col <= rightBound; col += valuesPerPixel) {
-                        total += data[i + col + (row * sliceWidth) + (slice * sliceWidth * height)];
-                        count++;
+            for (slice = behindBound, index = 0; slice <= aheadBound; slice++) {
+                spos = i + (slice*imageSliceSize);
+                for (row = upperBound; row <= lowerBound; row++) { // go through all rows
+                    rpos = spos + (row * sliceWidth);
+                    for (col = leftBound; col <= rightBound; col += valuesPerPixel, index++) { //
+                        pos = rpos + col;
+                        mean[0] += data[pos + 1] * weight[index];
+                        mean[1] += data[pos + 2] * weight[index];
+                        mean[2] += data[pos + 3] * weight[index];
                     }
                 }
             }
         }
-
+        
         return (mean);
     }
 
@@ -1090,6 +1183,7 @@ public class AlgorithmMean extends AlgorithmBase {
     
     /**
      * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     * Used only for color images when filterType == PARALLEL_VECTOR.
      *
      * @param  srcBuffer            Source buffer.
      * @param  destBuffer           Destination Buffer.
@@ -1218,6 +1312,57 @@ public class AlgorithmMean extends AlgorithmBase {
 
     // destBuffer should now be copied over for the size of imageSliceLength.  You may return....
     }
+    
+    /**
+     * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     * Used only for color images when filterType == ADAPTIVE_VECTOR.
+     *
+     * @param  srcBuffer            Source buffer.
+     * @param  destBuffer           Destination Buffer.
+     * @param  bufferStartingPoint  Starting point for the buffer.
+     * @param  msgString            A text message that can be displayed as a message text in the progressBar.
+     */
+    private void sliceAdaptiveVectorFilter(float[] srcBuffer, float[] destBuffer, int bufferStartingPoint, String msgString) {
+        int i, a; // counting....   i is the offset from the bufferStartingPoint
+
+        // a adds support for 3D filtering by counting as the pixel at the starting point plus the counter offset
+        int buffStart = bufferStartingPoint; // data element at the buffer. a = bufferStartingPoint+i
+        int sliceLength = srcImage.getSliceSize();
+        int imageSliceLength = sliceLength * valuesPerPixel; // since there are 4 values for every color pixel
+        float mean[];
+
+        int mod; // 1% length of slice for percent complete
+
+        // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
+        buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
+                                                                     // !!!
+        if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressB
+            // do a progress bar update
+            progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), activeImage);
+        }
+        mod = imageSliceLength / 100; // mod is 1 percent of length of slice * the number of slices.
+        for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
+            if (numberOfSlices == 1) { // 2D image     update progressBar
+
+                if (((i % mod) == 0) && (pBarVisible == true)) {
+                    progressBar.updateValue(i * 100/imageSliceLength,
+                                            activeImage);
+                }
+            }
+            destBuffer[a] = srcBuffer[a]; // copy alpha;
+            if ((entireImage == true) || mask.get(a / 4)) { 
+                mean = getAdaptiveMean(a, srcBuffer, true);
+                destBuffer[a+1] = mean[0];
+                destBuffer[a+2] = mean[1];
+                destBuffer[a+3] = mean[2];
+            }
+            else {
+                destBuffer[a+1] = srcBuffer[a+1];
+                destBuffer[a+2] = srcBuffer[a+2];
+                destBuffer[a+3] = srcBuffer[a+3];
+            }
+        }
+    }
 
     /**
      * Filter a Color 3D image with a 3D kernel. Allows mean filtering to include the picture elements at greater depths
@@ -1319,6 +1464,7 @@ public class AlgorithmMean extends AlgorithmBase {
     /**
      * Filter a Color 3D image with a 3D kernel. Allows mean filtering to include the picture elements at greater depths
      * than only the current slice. This method allows selected band filtering, and does not filter the alpha band.
+     * Used on when filterType == PARALLEL_VECTOR.
      *
      * @param  srcBuffer   Source image.
      * @param  destBuffer  Destination image.
@@ -1419,6 +1565,48 @@ public class AlgorithmMean extends AlgorithmBase {
                 } else { // not part of the VOI so just copy this into the destination buffer.
                     destBuffer[i] = srcBuffer[i];
                 }
+            }
+        }
+    }
+    
+    /**
+     * Filter a Color 3D image with a 3D kernel. Allows mean filtering to include the picture elements at greater depths
+     * than only the current slice. This method allows selected band filtering, and does not filter the alpha band.
+     * Used only when filterType == ADAPTIVE_VECTOR.
+     *
+     * @param  srcBuffer   Source image.
+     * @param  destBuffer  Destination image.
+     *
+     * @see    volumeFilter
+     */
+    private void volumeAdaptiveVectorFilter(float[] srcBuffer, float[] destBuffer) {
+        int i; // counting the current element
+        int width = srcImage.getExtents()[0]; // width of slice in number of pixels
+        int height = srcImage.getExtents()[1]; // height of slice in number of pixels
+        int sliceSize = width * height; // in pixels (or elements)
+        int imageSliceLength = width * height * valuesPerPixel; // in values-pixels
+        int imageSize = sliceSize * numberOfSlices; // in pixels (or elements)
+        int imageLength = imageSliceLength * numberOfSlices; // in (values-pixels)
+        float mean[];
+
+        int mod; // 1% length of slice for percent complete
+                                                                     // !
+        mod = imageSize / 100; // mod is 1 percent of length of slice * the number of slices.
+        for (i = 0; i < imageLength; i += 4) {
+            if (((i % mod) == 0) && (pBarVisible == true)) {
+                progressBar.updateValue(i * 100/imageLength, activeImage);
+            }
+            destBuffer[i] = srcBuffer[i]; // copy alpha;
+            if ((entireImage == true) || mask.get(i / 4)) { 
+                mean = getAdaptiveMean(i, srcBuffer, true);
+                destBuffer[i+1] = mean[0];
+                destBuffer[i+2] = mean[1];
+                destBuffer[i+3] = mean[2];
+            }
+            else {
+                destBuffer[i+1] = srcBuffer[i+1];
+                destBuffer[i+2] = srcBuffer[i+2];
+                destBuffer[i+3] = srcBuffer[i+3];
             }
         }
     }
