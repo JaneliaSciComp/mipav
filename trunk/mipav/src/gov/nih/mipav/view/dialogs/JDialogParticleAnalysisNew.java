@@ -546,7 +546,6 @@ public class JDialogParticleAnalysisNew extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -688,15 +687,13 @@ public class JDialogParticleAnalysisNew extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (particleAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        particleAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             particleAlgo2D.setProgressBarVisible(false);
                         }
@@ -754,15 +751,13 @@ public class JDialogParticleAnalysisNew extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (particleAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        particleAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             particleAlgo2D.setProgressBarVisible(false);
                         }
@@ -805,15 +800,13 @@ public class JDialogParticleAnalysisNew extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (particleAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        particleAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             particleAlgo3D.setProgressBarVisible(false);
                         }
@@ -866,15 +859,13 @@ public class JDialogParticleAnalysisNew extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (particleAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        particleAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             particleAlgo3D.setProgressBarVisible(false);
                         }
@@ -928,15 +919,13 @@ public class JDialogParticleAnalysisNew extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (particleAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        particleAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             particleAlgo25D.setProgressBarVisible(false);
                         }
@@ -990,15 +979,13 @@ public class JDialogParticleAnalysisNew extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (particleAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        particleAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             particleAlgo25D.setProgressBarVisible(false);
                         }

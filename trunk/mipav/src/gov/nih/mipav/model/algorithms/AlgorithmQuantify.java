@@ -116,7 +116,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             objID = maskImage.getShort(i);
@@ -189,7 +189,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
                 return;
             }
 
-            progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+            progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             offset = z * length;
 
             for (i = 0; i < length; i++) {

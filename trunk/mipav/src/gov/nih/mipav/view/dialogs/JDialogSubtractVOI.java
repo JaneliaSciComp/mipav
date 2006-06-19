@@ -328,15 +328,13 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (subVOIAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    subVOIAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         subVOIAlgo.setProgressBarVisible(false);
                     }
@@ -385,15 +383,13 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface.
                     if (subVOIAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    subVOIAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         subVOIAlgo.setProgressBarVisible(false);
                     }

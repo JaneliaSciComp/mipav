@@ -373,7 +373,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         imageInput.getFileInfo()[0].setResolutions(volumeResolutions);
 
         for (int i = 0; (i < nVolumes) && !threadStopped; i++) {
-            progressBar.updateValue((i + 1) * 100 / nVolumes, activeImage);
+            progressBar.updateValue((i + 1) * 100 / nVolumes, runningInSeparateThread);
 
             try {
                 srcImage.exportData(i * transformBuffer.length, transformBuffer.length, transformBuffer);
@@ -500,7 +500,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             transform = new AlgorithmTransform(imageRef, new TransMatrix(4), interp, volumeResolutionsIso[0],
                                                volumeResolutionsIso[1], volumeResolutionsIso[2], volumeExtentsIso[0],
                                                volumeExtentsIso[1], volumeExtentsIso[2], false, true, false);
-            transform.setActiveImage(activeImage);
+            transform.setRunningInSeparateThread(runningInSeparateThread);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -696,7 +696,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         progressBar.dispose();
         completed = true;
     }
@@ -1002,9 +1002,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         for (int i = start; (i < nVolumes) && !threadStopped; i++) {
 
             if (reference == true) {
-                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), activeImage);
+                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), runningInSeparateThread);
             } else {
-                progressBar.updateValue(offset + (count * 25 / nVolumes), activeImage);
+                progressBar.updateValue(offset + (count * 25 / nVolumes), runningInSeparateThread);
             }
 
             count++;
@@ -1088,7 +1088,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             powell = new AlgorithmPowellOpt3D(this, cog, DOF, cost, initial, getTolerance(DOF, factor), maxIter,
                                               bracketBound);
-            powell.setActiveImage(activeImage);
+            powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
             results[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(refImage.xRes),
                                             powell.getFinal(refImage.xRes));
@@ -1099,9 +1099,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         for (int i = refNum - 1; (i >= 0) && !threadStopped; i--) {
 
             if (reference == true) {
-                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), activeImage);
+                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), runningInSeparateThread);
             } else {
-                progressBar.updateValue(offset + (count * 25 / nVolumes), activeImage);
+                progressBar.updateValue(offset + (count * 25 / nVolumes), runningInSeparateThread);
             }
 
             count++;
@@ -1184,7 +1184,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             powell = new AlgorithmPowellOpt3D(this, cog, DOF, cost, initial, getTolerance(DOF, factor), maxIter,
                                               bracketBound);
-            powell.setActiveImage(activeImage);
+            powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
             results[i] = new MatrixListItem(powell.getCost(), powell.getMatrix(refImage.xRes),
                                             powell.getFinal(refImage.xRes));

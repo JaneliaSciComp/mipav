@@ -210,7 +210,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             average = (float) (total / count);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) s / nImages * 100), activeImage);
+                progressBar.updateValue(Math.round((float) s / nImages * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -221,7 +221,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -232,7 +232,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -243,7 +243,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -420,7 +420,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         average = (float) (total / count);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(20, activeImage);
+            progressBar.updateValue(20, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -431,7 +431,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(40, activeImage);
+            progressBar.updateValue(40, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -442,7 +442,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(60, activeImage);
+            progressBar.updateValue(60, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -453,7 +453,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(80, activeImage);
+            progressBar.updateValue(80, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -626,7 +626,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             average = (float) (total / count);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) s / nImages * 100), activeImage);
+                progressBar.updateValue(Math.round((float) s / nImages * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -637,7 +637,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -648,7 +648,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -659,7 +659,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -849,7 +849,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         average = (float) (total / count);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(20, activeImage);
+            progressBar.updateValue(20, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -860,7 +860,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(40, activeImage);
+            progressBar.updateValue(40, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -871,7 +871,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(60, activeImage);
+            progressBar.updateValue(60, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -882,7 +882,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(80, activeImage);
+            progressBar.updateValue(80, runningInSeparateThread);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {

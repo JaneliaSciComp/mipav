@@ -825,7 +825,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             if (newType != srcImageA.getType()) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImageA, newType, minA, maxA, minA, maxA,
                                                                              false);
-                changeTypeAlgo.setActiveImage(activeImage);
+                changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
                 if (!changeTypeAlgo.isCompleted()) { // if the change algo was halted,
@@ -910,7 +910,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -1522,7 +1522,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 

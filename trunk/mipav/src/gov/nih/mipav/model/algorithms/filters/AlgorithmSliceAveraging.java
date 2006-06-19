@@ -163,7 +163,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(10, activeImage);
+        progressBar.updateValue(10, runningInSeparateThread);
 
         progressBar.setMessage("Averaging data");
 
@@ -264,7 +264,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(90, activeImage);
+        progressBar.updateValue(90, runningInSeparateThread);
 
         progressBar.setMessage("Importing averaged data");
 

@@ -208,11 +208,11 @@ public class AlgorithmBSnake extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(25, activeImage);
+        progressBar.updateValue(25, runningInSeparateThread);
 
         contours = srcVOI.getCurves();
         nContours = contours[0].size();
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
 
         for (int j = 0; j < nContours; j++) {
 
@@ -231,10 +231,10 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 resultVOI.importPolygon(gons[j], 0);
             }
 
-            progressBar.updateValue(30 + (((j / nContours) - 1) * 70), activeImage);
+            progressBar.updateValue(30 + (((j / nContours) - 1) * 70), runningInSeparateThread);
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -281,10 +281,10 @@ public class AlgorithmBSnake extends AlgorithmBase {
         }
 
         contours = srcVOI.getCurves();
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
 
         for (slice = 0; slice < nSlices; slice++) {
-            progressBar.updateValue((int) (30 + (((float) slice / (nSlices - 1)) * 70)), activeImage);
+            progressBar.updateValue((int) (30 + (((float) slice / (nSlices - 1)) * 70)), runningInSeparateThread);
 
             try {
                 srcImage.exportData(slice * length, length, imgBuffer);
@@ -327,7 +327,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
         }
 
         if (propagationType == PROP_SINGLE) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
             setCompleted(true);
             progressBar.dispose();
 
@@ -346,7 +346,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
         // @todo + 2 in AlgorithmSnake (why?)
         xPoints = new float[tempGon.npoints + 5];
         yPoints = new float[tempGon.npoints + 5];
-        progressBar.updateValue(25, activeImage);
+        progressBar.updateValue(25, runningInSeparateThread);
 
         int percent = 25;
         int increment = (100 - percent) / (nSlices);
@@ -369,7 +369,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
                 optGon = voiSimplex.goOptimize(imgBuffer, tempGon);
                 percent += increment;
-                progressBar.updateValue(percent, activeImage);
+                progressBar.updateValue(percent, runningInSeparateThread);
                 setPoints(xPoints, yPoints, tempGon);
 
                 energy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
@@ -415,7 +415,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
                 // only propagate to one other slice if PROP_NEXT
                 if (propagationType == PROP_NEXT) {
-                    progressBar.updateValue(100, activeImage);
+                    progressBar.updateValue(100, runningInSeparateThread);
 
                     if (!failureFlag) {
                         setCompleted(true);
@@ -443,7 +443,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
             xPoints = new float[tempGon.npoints + 5];
             yPoints = new float[tempGon.npoints + 5];
             resultGon = new Polygon();
-            progressBar.updateValue(percent, activeImage);
+            progressBar.updateValue(percent, runningInSeparateThread);
 
             while (!threadStopped) {
 
@@ -459,7 +459,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
                 optGon = voiSimplex.goOptimize(imgBuffer, tempGon);
                 percent += increment;
-                progressBar.updateValue(percent, activeImage);
+                progressBar.updateValue(percent, runningInSeparateThread);
                 setPoints(xPoints, yPoints, tempGon);
                 energy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
                 nPts = resultGon.npoints;
@@ -501,7 +501,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
                 // only propagate to one other slice if PROP_PREV
                 if (propagationType == PROP_PREV) {
-                    progressBar.updateValue(100, activeImage);
+                    progressBar.updateValue(100, runningInSeparateThread);
 
                     if (!failureFlag) {
                         setCompleted(true);
@@ -520,7 +520,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (!failureFlag) {
             setCompleted(true);

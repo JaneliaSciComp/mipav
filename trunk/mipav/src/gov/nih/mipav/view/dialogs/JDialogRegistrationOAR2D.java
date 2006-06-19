@@ -588,7 +588,6 @@ public class JDialogRegistrationOAR2D extends JDialogBase implements AlgorithmIn
                     transform = new AlgorithmTransform(matchImage, reg2.getTransform(), interp2, xresA, yresA, xdimA,
                                                        ydimA, false, false, false);
 
-                    transform.setActiveImage(isActiveImage);
                     transform.setUpdateOriginFlag(true);
 
                     if (!UI.isAppFrameVisible()) {
@@ -1015,7 +1014,6 @@ public class JDialogRegistrationOAR2D extends JDialogBase implements AlgorithmIn
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -1487,15 +1485,13 @@ public class JDialogRegistrationOAR2D extends JDialogBase implements AlgorithmIn
         // Start the thread as a low priority because we wish to still have user interface work fast.
         reg2.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (reg2.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            reg2.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 reg2.setProgressBarVisible(false);
             }

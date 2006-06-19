@@ -1100,7 +1100,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         if ((resolsX != resolsY) || (resolsX != resolsZ)) {
             AlgorithmReslice resliceAlgo = new AlgorithmReslice(_imageA, AlgorithmReslice.LINEAR);
 
-            resliceAlgo.setActiveImage(false);
+            resliceAlgo.setRunningInSeparateThread(false);
             resliceAlgo.setProgressBarVisible(false);
             resliceAlgo.run();
             isoImageA = resliceAlgo.getResultImage();
@@ -1117,7 +1117,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
             if (_imageB != null) {
                 resliceAlgo = new AlgorithmReslice(_imageB, AlgorithmReslice.LINEAR);
-                resliceAlgo.setActiveImage(false);
+                resliceAlgo.setRunningInSeparateThread(false);
                 resliceAlgo.setProgressBarVisible(false);
                 resliceAlgo.run();
                 isoImageB = resliceAlgo.getResultImage();
@@ -1525,7 +1525,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 // Maybe some error message and close dialog
             }
 
-            transformFunct.setActiveImage(false);
+            transformFunct.setRunningInSeparateThread(false);
             transformFunct.setProgressBarVisible(true);
             transformFunct.run();
 
@@ -1562,7 +1562,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                                                         true, false);
             } else { }
 
-            transformFunct.setActiveImage(false);
+            transformFunct.setRunningInSeparateThread(false);
             transformFunct.setProgressBarVisible(true);
             transformFunct.run();
 

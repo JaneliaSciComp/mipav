@@ -179,7 +179,7 @@ public class PlugInAlgorithmNCI_LiepinshSeg extends AlgorithmBase {
 
                             if (((id % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
 
                             if ((buffer[i + 3] > buffer[i + 2]) && (buffer[i + 3] > buffer[i + 1])) {

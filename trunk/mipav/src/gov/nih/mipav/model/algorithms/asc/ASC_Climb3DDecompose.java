@@ -294,7 +294,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
                 blurAlgo = new AlgorithmGaussianBlur(maskImage, sigmas, true, false);
 
                 progressBar.setMessage("Blurring images");
-                progressBar.updateValue(15, activeImage);
+                progressBar.updateValue(15, runningInSeparateThread);
                 blurAlgo.setProgressBarVisible(false);
                 blurAlgo.run();
 
@@ -315,7 +315,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(25, activeImage);
+        progressBar.updateValue(25, runningInSeparateThread);
 
         // Uncomment next line to display blurred maskImage for debugging purposes.
         // new ViewJFrameImage(maskImage, null, new Dimension(100,100), maskImage.getUserInterface() );
@@ -402,12 +402,12 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
                         }
                     }
 
-                    progressBar.updateValue(35, activeImage);
+                    progressBar.updateValue(35, runningInSeparateThread);
                     progressBar.setMessage("Extracting surface");
 
                     // extract contour
                     m_kASC.extractContour(fLevel, iDepth, iOrientTriangles);
-                    progressBar.updateValue(55, activeImage);
+                    progressBar.updateValue(55, runningInSeparateThread);
 
                     if (threadStopped) {
                         finalize();
@@ -439,7 +439,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
                     // freeing of memory here is necessary to handle very
                     // large images.
                     System.gc();
-                    progressBar.updateValue(65, activeImage);
+                    progressBar.updateValue(65, runningInSeparateThread);
                     progressBar.setMessage("Cleaning up");
 
                     if (threadStopped) {
@@ -527,7 +527,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
             kMesh.smoothMesh(2, 0.03f, true, 0.01f, false);
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             finalize();
@@ -644,7 +644,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
         // a surface.
         buildProgressBar(srcImage.getImageName(), "Extracting surface ...", 0, 100);
         initProgressBar();
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         constructLog();
 

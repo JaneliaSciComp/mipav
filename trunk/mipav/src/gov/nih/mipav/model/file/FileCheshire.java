@@ -83,7 +83,8 @@ public class FileCheshire extends FileBase {
                                            ViewUserInterface.getReference().getProgressBarPrefix() +
                                            "Cheshire image(s) ...", 0, 100, false, null, null);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(pBarVisible);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        progressBar.setVisible(isProgressBarVisible());
         progressBar.updateValue(0, true);
     }
 

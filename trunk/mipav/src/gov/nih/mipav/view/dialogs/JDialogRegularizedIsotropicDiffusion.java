@@ -236,7 +236,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -385,21 +384,19 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
             // This is made possible by implementing AlgorithmedPerformed interface
             regIsoDiffusionAlgo.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (regIsoDiffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                regIsoDiffusionAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     regIsoDiffusionAlgo.setProgressBarVisible(false);
                 }
 
                 regIsoDiffusionAlgo.run();
-            } // end if (runInSeparateThread)
+            } // end if (isRunInSeparateThread())
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("JDialogRegIsoDiffusion: unable to allocate enough memory");
 

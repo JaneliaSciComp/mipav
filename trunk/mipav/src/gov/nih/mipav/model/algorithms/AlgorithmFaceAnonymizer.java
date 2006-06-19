@@ -210,7 +210,7 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
             undoFace();
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         progressBar.dispose();
 
         setCompleted(true);
@@ -470,7 +470,7 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         m_iFaceFound = 1;
 
         if ((m_iState == DELETE) || (m_iState == OK)) {
-            progressBar.updateValue(50, activeImage);
+            progressBar.updateValue(50, runningInSeparateThread);
         }
     }
 
@@ -483,9 +483,9 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         for (int z = 0; z < m_iZBound; z++) {
 
             if (m_iState == FIND) {
-                progressBar.updateValue(100 * z / m_iZBound, activeImage);
+                progressBar.updateValue(100 * z / m_iZBound, runningInSeparateThread);
             } else {
-                progressBar.updateValue(50 * z / m_iZBound, activeImage);
+                progressBar.updateValue(50 * z / m_iZBound, runningInSeparateThread);
             }
 
             indexZ = z * sliceSize;
@@ -540,9 +540,9 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         for (int z = 0; z < m_iZBound; z++) {
 
             if (m_iState == FIND) {
-                progressBar.updateValue(100 * z / m_iZBound, activeImage);
+                progressBar.updateValue(100 * z / m_iZBound, runningInSeparateThread);
             } else {
-                progressBar.updateValue(50 * z / m_iZBound, activeImage);
+                progressBar.updateValue(50 * z / m_iZBound, runningInSeparateThread);
             }
 
             indexZ = z * sliceSize;
@@ -597,9 +597,9 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         for (int y = 0; y < m_iYBound; y++) {
 
             if (m_iState == FIND) {
-                progressBar.updateValue(100 * y / m_iYBound, activeImage);
+                progressBar.updateValue(100 * y / m_iYBound, runningInSeparateThread);
             } else {
-                progressBar.updateValue(50 * y / m_iYBound, activeImage);
+                progressBar.updateValue(50 * y / m_iYBound, runningInSeparateThread);
             }
 
             indexY = y * m_iXBound;

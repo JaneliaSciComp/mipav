@@ -483,7 +483,6 @@ public class JDialogAnisotropicDiffusion extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -606,15 +605,13 @@ public class JDialogAnisotropicDiffusion extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (diffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        diffusionAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             diffusionAlgo.setProgressBarVisible(false);
                         }
@@ -661,15 +658,13 @@ public class JDialogAnisotropicDiffusion extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (diffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        diffusionAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             diffusionAlgo.setProgressBarVisible(false);
                         }
@@ -712,15 +707,13 @@ public class JDialogAnisotropicDiffusion extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (diffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        diffusionAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             diffusionAlgo.setProgressBarVisible(false);
                         }
@@ -767,15 +760,13 @@ public class JDialogAnisotropicDiffusion extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (diffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        diffusionAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             diffusionAlgo.setProgressBarVisible(false);
                         }

@@ -1189,7 +1189,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());
@@ -2310,14 +2309,12 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         // Start the thread as a low priority because we wish to still have
         // user interface work fast
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            algoTrans.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 algoTrans.setProgressBarVisible(false);
             }
@@ -2496,14 +2493,12 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 if (algoTal.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                algoTal.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     algoTal.setProgressBarVisible(false);
                 }

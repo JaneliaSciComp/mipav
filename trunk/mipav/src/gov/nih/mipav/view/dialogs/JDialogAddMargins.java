@@ -409,7 +409,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -615,15 +614,13 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                     imageMarginsAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                         }
                     } else {
-                        imageMarginsAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             imageMarginsAlgo.setProgressBarVisible(false);
                         }
@@ -681,15 +678,13 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                     imageMarginsAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                         }
                     } else {
-                        imageMarginsAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             imageMarginsAlgo.setProgressBarVisible(false);
                         }
@@ -739,15 +734,13 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                      * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
                      * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        imageMarginsAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             imageMarginsAlgo.setProgressBarVisible(false);
                         }
@@ -788,15 +781,13 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                      * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled(
                      * false ); userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }*/
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (imageMarginsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        imageMarginsAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             imageMarginsAlgo.setProgressBarVisible(false);
                         }

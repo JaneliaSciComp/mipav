@@ -213,15 +213,13 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (convert3Dto4DAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                convert3Dto4DAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     convert3Dto4DAlgo.setProgressBarVisible(false);
                 }
@@ -316,7 +314,6 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

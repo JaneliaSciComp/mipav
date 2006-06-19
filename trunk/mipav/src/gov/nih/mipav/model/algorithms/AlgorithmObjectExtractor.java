@@ -285,7 +285,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
             if (((i % 100) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (iMaxUpdate) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (i) / (iMaxUpdate) * 100), runningInSeparateThread);
             }
 
             updateMesh();
@@ -1875,7 +1875,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             sigmas[1] = 2f;
             sigmas[2] = 0.5f;
             gradMagAlgo = new AlgorithmGradientMagnitude(energyImage, image, sigmas, true, false);
-            gradMagAlgo.setActiveImage(activeImage);
+            gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradMagAlgo.run();
 
             if (gradMagAlgo.isCompleted() == false) {
@@ -1991,7 +1991,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         progressBar = new ViewJProgressBar(image.getImageName(), "Calculating 3D GVF ...", 0, 100, true, this, this);
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         progressBar.setMessage("Calculating 3D GVF");
 
@@ -2319,7 +2319,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
             // Create a mirror at the u boundaries
             // Create a mirror at the 8 corner points of the cube
-            progressBar.updateValue((iteration * 100) / gvfIterations, activeImage);
+            progressBar.updateValue((iteration * 100) / gvfIterations, runningInSeparateThread);
             uVal[0] = uVal[2 + (2 * (xDim + 2)) + (2 * expSliceSize)];
             uVal[xDim + 1] = uVal[(xDim - 1) + (2 * (xDim + 2)) + (2 * expSliceSize)];
             uVal[(yDim + 1) * (xDim + 2)] = uVal[((yDim - 1) * (xDim + 2)) + 2 + (2 * expSliceSize)];

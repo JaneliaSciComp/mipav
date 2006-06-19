@@ -121,7 +121,7 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
 
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round((float) ((t * sliceNumber) + s) / ((tDim * sliceNumber) - 1) *
-                                                           100), activeImage);
+                                                           100), runningInSeparateThread);
                 }
 
                 start = s * length;

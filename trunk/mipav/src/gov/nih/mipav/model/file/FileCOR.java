@@ -540,7 +540,9 @@ public class FileCOR extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing COR file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        progressBar.setVisible(isProgressBarVisible());
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
@@ -923,7 +925,7 @@ public class FileCOR extends FileBase {
 
         // Stored as 8-bit unsigned byte
         for (z = sBegin; z <= sEnd; z++) {
-            progressBar.updateValue((100 * count++) / numberSlices, options.isActiveImage());
+            progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
             fileExt = Integer.toString(fileNumber++);
 
             // Pad file numbers with leading zeros to the prescribed

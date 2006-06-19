@@ -297,7 +297,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         userInterface = trueImage.getUserInterface();
         parentFrame = trueImage.getParentFrame();
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }

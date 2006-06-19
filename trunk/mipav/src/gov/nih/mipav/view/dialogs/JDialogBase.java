@@ -60,9 +60,6 @@ public abstract class JDialogBase extends JDialog
      */
     protected JButton helpButton;
 
-    /** Whether this is an active image script or a multi-image script (always true if not a script, i think). */
-    protected boolean isActiveImage = true;
-
     /**
      * The main panel of the dialog. To be filled by inheriting classes. Defaults to BorderLayout since that's what the
      * contentPane defaults to (makes it easier to change over to using mainDialogPanel without messing up the layout).
@@ -319,6 +316,15 @@ public abstract class JDialogBase extends JDialog
     public boolean isCancelled() {
         return cancelFlag;
     }
+    
+    /**
+     * Returns whether this dialog's algorithm should be run in a new thread.
+     * 
+     * @return  True if this dialog's algorithm should be run in a new thread.
+     */
+    public boolean isRunInSeparateThread() {
+        return runInSeparateThread;
+    }
 
     /**
      * Unchanged.
@@ -345,15 +351,6 @@ public abstract class JDialogBase extends JDialog
         } else {
             return (String.valueOf(number));
         }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  act  DOCUMENT ME!
-     */
-    public void setActiveImage(boolean act) {
-        this.isActiveImage = act;
     }
 
     /**

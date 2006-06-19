@@ -500,7 +500,7 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
             UI.unregisterFrame((Frame) (imageFrames.elementAt(i)));
         }
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
@@ -508,8 +508,6 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            turbo.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 turbo.setProgressBarVisible(false);
             }

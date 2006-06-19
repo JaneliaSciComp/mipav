@@ -1224,7 +1224,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 blur.setBlue(true);
             }
 
-            blur.setActiveImage(activeImage);
+            blur.setRunningInSeparateThread(runningInSeparateThread);
             blur.run();
 
             if (blur.isCompleted() == false) {
@@ -1262,7 +1262,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 blur2.setBlue(true);
             }
 
-            blur2.setActiveImage(activeImage);
+            blur2.setRunningInSeparateThread(runningInSeparateThread);
             blur2.run();
 
             if (blur2.isCompleted() == false) {
@@ -1281,7 +1281,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             transform = new AlgorithmTransform(blurredRef, new TransMatrix(4), interp, resRefIso[0], resRefIso[1],
                                                resRefIso[2], extentsRefIso[0], extentsRefIso[1], extentsRefIso[2],
                                                false, true, false);
-            transform.setActiveImage(activeImage);
+            transform.setRunningInSeparateThread(runningInSeparateThread);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -1335,7 +1335,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             transform = new AlgorithmTransform(refWeight, new TransMatrix(4), interp, resRefIso[0], resRefIso[1],
                                                resRefIso[2], extentsRefIso[0], extentsRefIso[1], extentsRefIso[2],
                                                false, true, false);
-            transform.setActiveImage(activeImage);
+            transform.setRunningInSeparateThread(runningInSeparateThread);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -1385,7 +1385,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             transform2 = new AlgorithmTransform(blurredInput, new TransMatrix(4), interp, resInputIso[0],
                                                 resInputIso[1], resInputIso[2], extentsInputIso[0], extentsInputIso[1],
                                                 extentsInputIso[2], false, true, false);
-            transform2.setActiveImage(activeImage);
+            transform2.setRunningInSeparateThread(runningInSeparateThread);
             transform2.run();
 
             if (transform2.isCompleted() == false) {
@@ -1442,7 +1442,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             transform2 = new AlgorithmTransform(inputWeight, new TransMatrix(4), interp, resInputIso[0], resInputIso[1],
                                                 resInputIso[2], extentsInputIso[0], extentsInputIso[1],
                                                 extentsInputIso[2], false, true, false);
-            transform2.setActiveImage(activeImage);
+            transform2.setRunningInSeparateThread(runningInSeparateThread);
             transform2.run();
 
             if (transform2.isCompleted() == false) {
@@ -2499,7 +2499,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             powell = new AlgorithmConstPowellOpt3D(this, cog, 3, cost, initial, getTolerance(3), maxIter, bracketBound);
         }
 
-        powell.setActiveImage(activeImage);
+        powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
 
         int iG = 0;
@@ -2508,7 +2508,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         boolean[] foundMin = new boolean[numberOfCoarseAngles];
 
         for (int i = 0; (i < coarseNumX) && !threadStopped; i++) {
-            progressBar.updateValue((i + 1) * 10 / coarseNumX, activeImage);
+            progressBar.updateValue((i + 1) * 10 / coarseNumX, runningInSeparateThread);
             initial[0] = rotateBeginX + (i * coarseRateX);
 
             for (int j = 0; (j < coarseNumY) && !threadStopped; j++) {
@@ -2557,7 +2557,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         double factorX, factorY, factorZ;
 
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
-            progressBar.updateValue(10 + ((i + 1) * 5 / fineNumX), activeImage);
+            progressBar.updateValue(10 + ((i + 1) * 5 / fineNumX), runningInSeparateThread);
             initial[0] = rotateBeginX + (i * fineRateX);
             factorX = (i * fineRateX) / coarseRateX;
 
@@ -2612,10 +2612,10 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         progressBar.setMessage("Optimizing top samples");
         Preferences.debug("Level Eight. Optimizing top samples. \n");
-        powell.setActiveImage(activeImage);
+        powell.setRunningInSeparateThread(runningInSeparateThread);
 
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
-            progressBar.updateValue(15 + ((i + 1) * 5 / fineNumX), activeImage);
+            progressBar.updateValue(15 + ((i + 1) * 5 / fineNumX), runningInSeparateThread);
 
             for (int j = 0; (j < fineNumY) && !threadStopped; j++) {
 
@@ -2694,13 +2694,13 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
         powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, initial, getTolerance(degree), maxIter,
                                                bracketBound);
-        powell.setActiveImage(activeImage);
+        powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
 
         MatrixListItem item;
 
         for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            progressBar.updateValue(20 + ((count + 1) / minima.size() * 5), activeImage);
+            progressBar.updateValue(20 + ((count + 1) / minima.size() * 5), runningInSeparateThread);
             tempInitial = ((MatrixListItem) en.nextElement()).initial;
 
             if (testBounds3D(tempInitial, initialMessage)) {
@@ -2835,11 +2835,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         // Recalculating minima at this level, i.e. with images subsampled at level 4.
         for (int i = 0; (i < total) && !threadStopped; i++) { // Loop "total" times.
-            progressBar.updateValue(25 + ((i + 1) * 4 / total), activeImage);
+            progressBar.updateValue(25 + ((i + 1) * 4 / total), runningInSeparateThread);
 
             // add i-th mimium to newMinima Vector
             powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
-            powell.setActiveImage(activeImage);
+            powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
 
             if (threadStopped) {
@@ -2857,7 +2857,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
             // add i-th optimized minimum to newMinima vector
             powell.setInitialPoint(((MatrixListItem) optMinima.elementAt(i)).initial);
-            powell.setActiveImage(activeImage);
+            powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
 
             if (threadStopped) {
@@ -2938,7 +2938,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         for (int j = 0; (j < 7) && !threadStopped; j++) {
 
             for (int i = 0; (i < ((2 * total) - remove)) && !threadStopped; i++) {
-                progressBar.updateValue(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)), activeImage);
+                progressBar.updateValue(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)), runningInSeparateThread);
 
                 // Current "initial" is element for this i.
                 initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2979,7 +2979,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                 // Set powell fields.
                 powell.setInitialPoint(initial);
-                powell.setActiveImage(activeImage);
+                powell.setRunningInSeparateThread(runningInSeparateThread);
                 powell.run();
 
                 // Add results (in form of a MatrixListItem) to perturbList.
@@ -3012,7 +3012,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             for (int j = 0; (j < 5) && !threadStopped; j++) {
 
                 for (int i = 0; (i < ((2 * total) - remove)) && !threadStopped; i++) {
-                    progressBar.updateValue(32 + ((((j * 2 * total) + i + 1) * 3) / (total * 8)), activeImage);
+                    progressBar.updateValue(32 + ((((j * 2 * total) + i + 1) * 3) / (total * 8)), runningInSeparateThread);
                     initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
 
                     if (j == 1) {
@@ -3031,7 +3031,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
                     // make initial variable old initial * scaleDelta in each dimension
                     powell.setInitialPoint(initial);
-                    powell.setActiveImage(activeImage);
+                    powell.setRunningInSeparateThread(runningInSeparateThread);
                     powell.run();
                     item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
                     perturbList.add(item);
@@ -3050,7 +3050,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         best4Now = (MatrixListItem) perturbList.elementAt(0);
         Preferences.debug(best4Now.toString());
 
-        progressBar.updateValue(35, activeImage);
+        progressBar.updateValue(35, runningInSeparateThread);
         cost.disposeLocal();
         powell.disposeLocal();
 
@@ -3111,7 +3111,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                                                                          getTolerance(degree), maxIter, bracketBound);
 
         powell.setProgressBar(progressBar, 60, 40);
-        powell.setActiveImage(activeImage);
+        powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
         powell.run();
 
@@ -3123,7 +3123,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal(input.xRes));
         item2.halfMatrix = powell.getMatrixHalf(input.xRes);
         item2.midsagMatrix = powell.getMatrixMidsagittal(input.xRes);
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         Preferences.debug("Best answer: \n" + item2 + "\n");
         progressBar.dispose();
         cost.disposeLocal();
@@ -3213,7 +3213,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         progressBar.setMessage("Optimizing with " + degree + " DOF");
         powell.setProgressBar(progressBar, 35, 8);
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
-        powell.setActiveImage(activeImage);
+        powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
 
         if (threadStopped) {
@@ -3231,11 +3231,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (DOF > 7) {
             degree = 9;
             progressBar.setMessage("Optimizing with " + degree + " DOF");
-            progressBar.updateValue(43, activeImage);
+            progressBar.updateValue(43, runningInSeparateThread);
             powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                    bracketBound);
             powell.setProgressBar(progressBar, 43, 8);
-            powell.setActiveImage(activeImage);
+            powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.setLimits(limits);
             powell.run();
 
@@ -3250,11 +3250,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (DOF > 9) {
                 degree = 12;
                 progressBar.setMessage("Optimizing with " + degree + " DOF");
-                progressBar.updateValue(51, activeImage);
+                progressBar.updateValue(51, runningInSeparateThread);
                 powell = new AlgorithmConstPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                        bracketBound);
                 powell.setProgressBar(progressBar, 51, 9);
-                powell.setActiveImage(activeImage);
+                powell.setRunningInSeparateThread(runningInSeparateThread);
                 powell.setLimits(limits);
                 powell.run();
 
@@ -3269,7 +3269,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(60, activeImage);
+        progressBar.updateValue(60, runningInSeparateThread);
         cost.disposeLocal();
         powell.disposeLocal();
 

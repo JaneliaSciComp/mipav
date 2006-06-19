@@ -1909,7 +1909,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             resultImgB.setImageName("imageB_rgb");
 
             AlgorithmRGBConcat rgbAlgo = new AlgorithmRGBConcat(resultImgB, resultImgB, resultImgB, true);
-            rgbAlgo.setActiveImage(activeImage);
+            rgbAlgo.setRunningInSeparateThread(runningInSeparateThread);
             rgbAlgo.run();
             resultImgB = rgbAlgo.getImageR();
 
@@ -1934,7 +1934,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
             AlgorithmRGBtoGray rgbAlgo = new AlgorithmRGBtoGray(resultImgB, redValue, greenValue, blueValue, true,
                                                                 threshold, true);
-            rgbAlgo.setActiveImage(activeImage);
+            rgbAlgo.setRunningInSeparateThread(runningInSeparateThread);
             rgbAlgo.run();
             resultImgB = rgbAlgo.getSrcImage();
 
@@ -1996,7 +1996,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 algoMarginsA = new AlgorithmAddMargins(resultImgA, padValue, 0, appendA[0], 0, appendA[1]);
             } // else nDims == 2
 
-            algoMarginsA.setActiveImage(activeImage);
+            algoMarginsA.setRunningInSeparateThread(runningInSeparateThread);
             algoMarginsA.run();
 
             if (algoMarginsA.isCompleted() == false) {
@@ -2047,7 +2047,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                 algoMarginsB = new AlgorithmAddMargins(resultImgB, padValue, 0, appendB[0], 0, appendB[1]);
             } // else nDims == 2
 
-            algoMarginsB.setActiveImage(activeImage);
+            algoMarginsB.setRunningInSeparateThread(runningInSeparateThread);
             algoMarginsB.run();
 
             if (algoMarginsB.isCompleted() == false) {
@@ -2456,7 +2456,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     algoMarginsA = new AlgorithmAddMargins(resultImgA, padValue, addA[0], 0, addA[1], 0);
                 } // else nDims == 2
 
-                algoMarginsA.setActiveImage(activeImage);
+                algoMarginsA.setRunningInSeparateThread(runningInSeparateThread);
 
                 algoMarginsA.run();
 
@@ -2535,7 +2535,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                     algoMarginsB = new AlgorithmAddMargins(resultImgB, padValue, addB[0], 0, addB[1], 0);
                 } // else nDims == 2
 
-                algoMarginsB.setActiveImage(activeImage);
+                algoMarginsB.setRunningInSeparateThread(runningInSeparateThread);
                 algoMarginsB.run();
 
                 if (algoMarginsB.isCompleted() == false) {
@@ -2648,7 +2648,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                                                        true);
             }
 
-            algoTransform.setActiveImage(activeImage);
+            algoTransform.setRunningInSeparateThread(runningInSeparateThread);
             algoTransform.setPadValue((int) padValue);
             algoTransform.run();
 
@@ -2712,7 +2712,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
                                                        true);
             } // else nDims == 2
 
-            algoTransform.setActiveImage(activeImage);
+            algoTransform.setRunningInSeparateThread(runningInSeparateThread);
             algoTransform.setPadValue((int) padValue);
             algoTransform.run();
 

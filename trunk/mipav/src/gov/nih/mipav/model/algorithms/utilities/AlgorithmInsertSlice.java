@@ -176,7 +176,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 if (z == insertSlice) {

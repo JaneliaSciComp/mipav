@@ -163,7 +163,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         }
 
         progressBar.setMessage("Building vertex connectivity.");
-        progressBar.updateValue(10, activeImage);
+        progressBar.updateValue(10, runningInSeparateThread);
 
         // build connectivity
         i = 0;
@@ -182,7 +182,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         int length1 = i;
 
         progressBar.setMessage("Building vertex data.");
-        progressBar.updateValue(60, activeImage);
+        progressBar.updateValue(60, runningInSeparateThread);
 
         float min = (float) srcImage.getMin();
         float max = (float) srcImage.getMax();
@@ -216,7 +216,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         }
 
         progressBar.setMessage("Saving surface.");
-        progressBar.updateValue(90, activeImage);
+        progressBar.updateValue(90, runningInSeparateThread);
 
         try {
             qMesh = new ModelQuadMesh(cVertex, cConnect, length2, length1, null, maxBox);
@@ -298,7 +298,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         }
 
         progressBar.setMessage("Building vertex connectivity.");
-        progressBar.updateValue(10, activeImage);
+        progressBar.updateValue(10, runningInSeparateThread);
 
         // build connectivity
         i = 0;
@@ -333,7 +333,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         }
 
         progressBar.setMessage("Building vertex data.");
-        progressBar.updateValue(60, activeImage);
+        progressBar.updateValue(60, runningInSeparateThread);
 
         float min = (float) srcImage.getMin();
         float max = (float) srcImage.getMax();
@@ -383,7 +383,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         }
 
         progressBar.setMessage("Saving surface.");
-        progressBar.updateValue(90, activeImage);
+        progressBar.updateValue(90, runningInSeparateThread);
 
         try {
             vertex = new Point3f[i];

@@ -280,7 +280,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         int j, i, x, y, xx, yy, BACKGROUNDFound;
         for (j = 0; j < zDim; j++) {
             try {
-                progressBar.updateValue(Math.round(10 + (30 * j / zDim)), activeImage);
+                progressBar.updateValue(Math.round(10 + (30 * j / zDim)), runningInSeparateThread);
                 SegmentedImg.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
                 Mask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
                 // setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
@@ -472,20 +472,20 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
         // --------------- STEP 1: Obtaining Background Mask --------------------
         // A) FUZZY SEGMENTATION
-        progressBar.updateValue(5, activeImage);        progressBar.setMessage("Taking Fuzzy");
+        progressBar.updateValue(5, runningInSeparateThread);        progressBar.setMessage("Taking Fuzzy");
         nClasses=3;
         HardSeg = HardFuzzy(srcImage, nClasses);
         
 // PFH        ShowImage(HardSeg, "HardSeg Image");
         
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
-        progressBar.updateValue(15, activeImage);        progressBar.setMessage("Boundary Correction");
+        progressBar.updateValue(15, runningInSeparateThread);        progressBar.setMessage("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
         
  // PFH       ShowImage(obMask, "obmask Image");
         
         // ----------------------STEP 2: THIGH SEPARATION -----------------------
-        progressBar.updateValue(25, activeImage); 		progressBar.setMessage("Doing Thigh Segmentation");
+        progressBar.updateValue(25, runningInSeparateThread); 		progressBar.setMessage("Doing Thigh Segmentation");
 
         // CROP VOI
         int[] xbound = new int[2];
@@ -504,7 +504,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
         for (j = 0; j < zDim; j++) {
             try {
-                progressBar.updateValue(Math.round(40 + (30 * j / zDim)), activeImage);
+                progressBar.updateValue(Math.round(40 + (30 * j / zDim)), runningInSeparateThread);
                 obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
 
                 for (y = 5; y < (yDim - 5); y++) {
@@ -610,19 +610,19 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
 
         //ShowImage(srcImage,"srcImage");
         crop(destImageA, srcImage, xbound, ybound, zbound);
-        progressBar.updateValue(85, activeImage);
+        progressBar.updateValue(85, runningInSeparateThread);
         //ShowImage(destImageA,"destImageA");
         //        System.out.println("used obMask voi to crop ISN'd imageA");
         crop(destImageB, srcImage, xbound1, ybound, zbound);
-        progressBar.updateValue(90, activeImage);
+        progressBar.updateValue(90, runningInSeparateThread);
         //ShowImage(destImageB,"destImageA");
         //        System.out.println("used obMask voi to crop ISN'd imageB");
         crop(obMaskA, obMask, xbound, ybound, zbound);
-        progressBar.updateValue(95, activeImage);
+        progressBar.updateValue(95, runningInSeparateThread);
         
         //        System.out.println("used obMask voi to crop ISN'd imageA");
         crop(obMaskB, obMask, xbound1, ybound, zbound);
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         // set the first part to being done, and return to the listening dialog
         setCompleted(true);

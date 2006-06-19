@@ -408,19 +408,19 @@ public class AlgorithmMode extends AlgorithmBase {
         // progressBar stuff here is a bit of overkill, unless we have a really
         // larger 2D image
         progressBar.setMessage("Buffering ...");
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         progressBar.setMessage("Filtering...");
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         disposeProgressBar(); // filtering work should be done.
 
@@ -503,7 +503,7 @@ public class AlgorithmMode extends AlgorithmBase {
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
 
                 progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                        activeImage);
+                                        runningInSeparateThread);
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -589,20 +589,20 @@ public class AlgorithmMode extends AlgorithmBase {
         // progressBar stuff here is a bit of overkill, unless we have a really
         // larger 2D image
         progressBar.setMessage("Buffering ...");
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         progressBar.setMessage("Filtering...");
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         disposeProgressBar(); // filtering work should be done.
 
@@ -692,7 +692,7 @@ public class AlgorithmMode extends AlgorithmBase {
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
 
                 progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                        activeImage);
+                                        runningInSeparateThread);
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -873,7 +873,7 @@ public class AlgorithmMode extends AlgorithmBase {
 
         for (sliceIndex = 0; sliceIndex < srcBufferDepth; sliceIndex++) {
 
-            progressBar.updateValue(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)), activeImage);
+            progressBar.updateValue(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
 
             copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, sliceIndex * srcBufferSliceLength,
                                        (sliceIndex * bdrBufferSliceLength) + bdrBufferSliceOffset);
@@ -1315,7 +1315,7 @@ public class AlgorithmMode extends AlgorithmBase {
 
         for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
 
-            progressBar.updateValue(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)), activeImage);
+            progressBar.updateValue(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
 
             srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
 

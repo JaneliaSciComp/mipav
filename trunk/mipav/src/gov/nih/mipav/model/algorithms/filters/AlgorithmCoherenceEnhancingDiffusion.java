@@ -979,7 +979,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             // iterate diffusion for each slice
             for (int iterNum = 1; iterNum <= numIterations; iterNum++) {
                 progressBar.updateValue(Math.round(((float) (computationCount++) / (totalComputation - 1) * 100)),
-                                        activeImage);
+                                        runningInSeparateThread);
 
                 computeDx(dx2, iterationBuffer);
                 computeDy(dy2, iterationBuffer);
@@ -1263,7 +1263,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             // iterate diffusion for each slice
             for (int iterNum = 1; iterNum <= numIterations; iterNum++) {
                 progressBar.updateValue(Math.round(((float) (computationCount++) / (totalComputation - 1) * 100)),
-                                        activeImage);
+                                        runningInSeparateThread);
 
                 if (useRed) {
                     computeDx(dx2, iterationBufferR);
@@ -1724,7 +1724,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             Matrix dMat;
 
             for (int z = 0; z < zDim; z++) {
-                progressBar.updateValue((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim), activeImage);
+                progressBar.updateValue((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim), runningInSeparateThread);
 
                 for (int y = 0; y < yDim; y++) {
 
@@ -2287,7 +2287,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             Matrix dMat;
 
             for (int z = 0; z < zDim; z++) {
-                progressBar.updateValue((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim), activeImage);
+                progressBar.updateValue((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim), runningInSeparateThread);
 
                 for (int y = 0; y < yDim; y++) {
 

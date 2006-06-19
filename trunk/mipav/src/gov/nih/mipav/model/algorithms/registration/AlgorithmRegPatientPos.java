@@ -508,7 +508,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
              * rightWidth, int height, int front, int back)
              */
 
-            algoMargins.setActiveImage(activeImage);
+            algoMargins.setRunningInSeparateThread(runningInSeparateThread);
             algoMargins.run();
 
             if (algoMargins.isCompleted() == false) {
@@ -533,7 +533,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
              * AlgorithmCrop(ModelImage destImg, ModelImage srcImg, int _cushion, int x[], int y[], int z[]) where x, y,
              * and z are int arrays with 2 elements representing lower and upper bounds.
              */
-            algoCrop.setActiveImage(activeImage);
+            algoCrop.setRunningInSeparateThread(runningInSeparateThread);
             algoCrop.run();
 
             if (algoCrop.isCompleted() == false) {
@@ -596,7 +596,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
                                                                   (float) resB[index2ImgA[2]],
                                                                   (int) dimB[index2ImgA[0]], (int) dimB[index2ImgA[1]],
                                                                   (int) dimB[index2ImgA[2]], false, false, true);
-        algoTransform.setActiveImage(activeImage);
+        algoTransform.setRunningInSeparateThread(runningInSeparateThread);
         algoTransform.run();
 
         if (algoTransform.isCompleted() == false) {
@@ -692,7 +692,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
         ModelImage tempImg = new ModelImage(imageB.getType(), newNewDims, imageB.getImageName(),
                                             imageB.getUserInterface());
         AlgorithmCrop algoCrop = new AlgorithmCrop(tempImg, orientedImgB, 0, boundX, boundY, boundZ);
-        algoCrop.setActiveImage(activeImage);
+        algoCrop.setRunningInSeparateThread(runningInSeparateThread);
         algoCrop.run();
 
         if (algoCrop.isCompleted() == false) {

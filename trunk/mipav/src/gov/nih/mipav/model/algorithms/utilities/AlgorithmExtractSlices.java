@@ -218,7 +218,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                     // let user know something is happening by updating the progressbar
                     if (isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) *
-                                                               100), activeImage);
+                                                               100), runningInSeparateThread);
                     }
 
                     // if the slice has been marked for extraction, copy it all over.
@@ -347,7 +347,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
 
                             if (isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (zDest + 1) / (numElements) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
 
                         } catch (IOException error) {

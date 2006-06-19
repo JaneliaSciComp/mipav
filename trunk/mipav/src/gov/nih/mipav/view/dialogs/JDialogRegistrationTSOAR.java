@@ -397,7 +397,6 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -523,7 +522,7 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
                                         finalRegistrationAtLevel2);
         algoReg.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (algoReg.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -533,7 +532,6 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
             dispose();
         } else {
             dispose();
-            algoReg.setActiveImage(isActiveImage);
 
             if (!UI.isAppFrameVisible()) {
                 algoReg.setProgressBarVisible(false);

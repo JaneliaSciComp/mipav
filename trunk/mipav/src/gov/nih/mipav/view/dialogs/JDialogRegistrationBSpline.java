@@ -493,7 +493,6 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }
@@ -571,7 +570,7 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         // See algorithm performed event. This is made possible by implementing
         m_kAlgorithmReg.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
@@ -579,8 +578,6 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            m_kAlgorithmReg.setActiveImage(isActiveImage);
-
             if (!m_kUI.isAppFrameVisible()) {
                 m_kAlgorithmReg.setProgressBarVisible(false);
             }

@@ -493,7 +493,6 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -628,15 +627,13 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (openAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        openAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             openAlgo2D.setProgressBarVisible(false);
                         }
@@ -689,15 +686,13 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (openAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        openAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             openAlgo2D.setProgressBarVisible(false);
                         }
@@ -737,15 +732,13 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (openAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        openAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             openAlgo3D.setProgressBarVisible(false);
                         }
@@ -796,15 +789,13 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (openAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        openAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             openAlgo3D.setProgressBarVisible(false);
                         }
@@ -855,15 +846,13 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (openAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        openAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             openAlgo25D.setProgressBarVisible(false);
                         }
@@ -916,15 +905,13 @@ public class JDialogOpen extends JDialogBase implements AlgorithmInterface, Scri
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (openAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        openAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             openAlgo25D.setProgressBarVisible(false);
                         }

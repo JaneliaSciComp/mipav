@@ -332,7 +332,7 @@ public class AlgorithmReslice extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.updateValue(Math.round((float) (i - 2) / (srcImage.getExtents()[2] - 1) * 100),
-                                        activeImage);
+                                        runningInSeparateThread);
             }
 
             if (i < srcImage.getExtents()[2]) {
@@ -509,7 +509,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             }
 
             zRes = srcImage.getFileInfo(i).getResolutions()[2];

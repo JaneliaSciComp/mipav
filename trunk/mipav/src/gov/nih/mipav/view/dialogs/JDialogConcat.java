@@ -419,7 +419,6 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -588,7 +587,7 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
                     }
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (mathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -596,8 +595,6 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
                     }
 
                 } else {
-                    mathAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         mathAlgo.setProgressBarVisible(false);
                     }

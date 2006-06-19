@@ -1574,7 +1574,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         for (int m = 0; m < endIndex; m++) {
             progressBar.setMessage("Registering image " + (iNumber + 1));
-            progressBar.updateValue((int) (m / (float) (inputImage.getExtents()[3] - 1) * 100), activeImage);
+            progressBar.updateValue((int) (m / (float) (inputImage.getExtents()[3] - 1) * 100), runningInSeparateThread);
 
             Preferences.debug(" ***********************Starting Image " + iNumber + "  **************************\n");
             Preferences.debug(" **************************************************************************\n\n");

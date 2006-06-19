@@ -234,7 +234,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
 
                     buffer[i] = 255;
@@ -260,7 +260,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
                         progressBar.updateValue(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
 
                     buffer[i] = 255;
@@ -500,7 +500,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             for (i = 0, id = 0; (i < totLength) && !threadStopped; i += 4, id++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (totLength - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) (i) / (totLength - 1) * 100), runningInSeparateThread);
                 }
 
                 buffer[i] = 255;
@@ -525,7 +525,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             for (i = 0, id = 0; (i < totLength) && !threadStopped; i += 4, id++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (totLength - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) (i) / (totLength - 1) * 100), runningInSeparateThread);
                 }
 
                 buffer[i] = 255;

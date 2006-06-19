@@ -186,7 +186,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if (isInverse) {
@@ -287,7 +287,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if (isInverse) {
@@ -393,7 +393,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if (isInverse) {
@@ -495,7 +495,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if (isInverse) {

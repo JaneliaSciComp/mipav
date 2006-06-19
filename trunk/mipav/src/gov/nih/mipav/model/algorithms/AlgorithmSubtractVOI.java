@@ -251,7 +251,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
                                                                              false);
 
-                changeTypeAlgo.setActiveImage(activeImage);
+                changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
                 // if the change algo is halted,
@@ -316,7 +316,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -517,7 +517,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -667,7 +667,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -828,7 +828,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -1125,7 +1125,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
                                     progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 50),
-                                                            activeImage);
+                                                            runningInSeparateThread);
                                 }
                             } catch (NullPointerException npe) {
 
@@ -1257,7 +1257,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
                                     progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 50),
-                                                            activeImage);
+                                                            runningInSeparateThread);
                                 }
                             } catch (NullPointerException npe) {
 

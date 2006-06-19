@@ -223,7 +223,8 @@ public class FileRaw extends FileBase {
                                                   ViewUserInterface.getReference().getProgressBarPrefix() + "image ...",
                                                   0, 100, false, null, null);
 
-                pInterface.setVisible(true);
+                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+                pInterface.setVisible(isProgressBarVisible());
             }
 
             if (showProgress) {
@@ -1120,7 +1121,8 @@ public class FileRaw extends FileBase {
             if (showProgress) {
                 pInterface = new ViewJProgressBar("Saving " + fileName, "Saving image ...", 0, 100, false, null, null);
 
-                pInterface.setVisible(true);
+                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+                pInterface.setVisible(isProgressBarVisible());
             }
 
             for (int t = beginTimePeriod; t <= endTimePeriod; t++) {
@@ -1129,7 +1131,7 @@ public class FileRaw extends FileBase {
 
                     if (showProgress) {
                         pInterface.updateValue(MipavMath.round((float) ((t * (endSlice - beginSlice)) + k) / (nImages) *
-                                                                   100), options.isActiveImage());
+                                                                   100), options.isRunningInSeparateThread());
                         // pInterface.setTitle("Saving image " + k);
                     }
 
@@ -1203,7 +1205,8 @@ public class FileRaw extends FileBase {
         if (showProgress) {
             pInterface = new ViewJProgressBar("Saving " + fileName, "Saving image ...", 0, 100, false, null, null);
 
-            pInterface.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            pInterface.setVisible(isProgressBarVisible());
         }
 
         int index = fileName.lastIndexOf(".");
@@ -1254,7 +1257,7 @@ public class FileRaw extends FileBase {
             if (showProgress) {
                 pInterface.setTitle("Saving image " + fileString);
                 pInterface.updateValue(MipavMath.round((prog / (endSlice - beginSlice + 1)) * 100),
-                                       options.isActiveImage());
+                                       options.isRunningInSeparateThread());
             }
 
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
@@ -1324,7 +1327,8 @@ public class FileRaw extends FileBase {
         if (showProgress) {
             pInterface = new ViewJProgressBar("Saving " + fileName, "Saving image ...", 0, 100, false, null, null);
 
-            pInterface.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            pInterface.setVisible(isProgressBarVisible());
         }
 
 
@@ -1377,7 +1381,7 @@ public class FileRaw extends FileBase {
             if (showProgress) {
                 pInterface.setTitle("Saving image " + fileString);
                 pInterface.updateValue(MipavMath.round((prog / (endTimePeriod - beginTimePeriod + 1)) * 100),
-                                       options.isActiveImage());
+                                       options.isRunningInSeparateThread());
             }
 
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {

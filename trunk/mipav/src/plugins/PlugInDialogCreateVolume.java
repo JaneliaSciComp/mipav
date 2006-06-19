@@ -203,16 +203,15 @@ public class PlugInDialogCreateVolume extends JDialogBase implements AlgorithmIn
                                                                numBlank);
             createVolumeAlgo.addListener(this);
             setVisible(false); // Hide dialog
-            runInSeparateThread = false;
+            setSeparateThread(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (createVolumeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("Create Volume reports: A thread is already running on this object [createVolumeAlgo]");
                 }
             } else {
-                createVolumeAlgo.setActiveImage(isActiveImage);
                 createVolumeAlgo.run(); // don't run in separate thread
             }
         } catch (OutOfMemoryError x) {

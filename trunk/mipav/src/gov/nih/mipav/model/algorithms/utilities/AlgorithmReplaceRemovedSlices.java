@@ -274,7 +274,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             else {
                 buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
             }
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
             initProgressBar();
 
             int length = resultImage.getExtents()[2];
@@ -295,7 +295,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcIndex++;
                 }
 
-                progressBar.updateValue((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f), activeImage);
+                progressBar.updateValue((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f), runningInSeparateThread);
             }
 
             // System.err.println("finished copying original slices into result image");
@@ -325,7 +325,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 }
 
                 progressBar.updateValue((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f) + 50,
-                                        activeImage);
+                                        runningInSeparateThread);
             }
 
             imageBuffer = null;
@@ -482,7 +482,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             else {
                 buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
             }
-            progressBar.updateValue(0, activeImage);
+            progressBar.updateValue(0, runningInSeparateThread);
             initProgressBar();
 
             int sliceArea = extents[0] * extents[1];
@@ -534,7 +534,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     }
                 }
 
-                progressBar.updateValue((int) ((((float) x + 1.0f) / (float) length) * 50.0f), activeImage);
+                progressBar.updateValue((int) ((((float) x + 1.0f) / (float) length) * 50.0f), runningInSeparateThread);
             }
 
             foundStart = false;
@@ -560,7 +560,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     foundStart = false;
                 }
 
-                progressBar.updateValue((int) ((((float) x + 1.0f) / (float) length) * 50.0f) + 50, activeImage);
+                progressBar.updateValue((int) ((((float) x + 1.0f) / (float) length) * 50.0f) + 50, runningInSeparateThread);
             }
 
             imageBuffer = null;

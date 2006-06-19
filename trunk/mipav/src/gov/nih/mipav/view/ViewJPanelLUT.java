@@ -2256,7 +2256,7 @@ public class ViewJPanelLUT extends JPanel
             AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogramA, panelParent.getImageA(), entireFlag);
 
             histoAlgoA.setProgressBarVisible(progressFlag);
-            histoAlgoA.setActiveImage(false);
+            histoAlgoA.setRunningInSeparateThread(false);
             histoAlgoA.run();
         }
 
@@ -2267,7 +2267,7 @@ public class ViewJPanelLUT extends JPanel
             AlgorithmHistogram histoAlgoB = new AlgorithmHistogram(histogramB, panelParent.getImageB(), entireFlag);
 
             histoAlgoB.setProgressBarVisible(progressFlag);
-            histoAlgoB.setActiveImage(false);
+            histoAlgoB.setRunningInSeparateThread(false);
             histoAlgoB.run();
         }
     }

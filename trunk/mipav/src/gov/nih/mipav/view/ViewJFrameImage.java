@@ -575,7 +575,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                                                                          AlgorithmImageMath.CLIP, true,
                                                                                          null);
 
-                    algImageCalc.setActiveImage(false);
+                    algImageCalc.setRunningInSeparateThread(false);
                     algImageCalc.run();
 
                     destImage.setFileInfo(imageA.getFileInfo());
@@ -1228,7 +1228,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                                                                          componentImage.getPaintBitmap(),
                                                                                          xDim, yDim, zDim, voiID);
 
-            algoPaintToVOI.setActiveImage(false);
+            algoPaintToVOI.setRunningInSeparateThread(false);
             algoPaintToVOI.run();
 
             // add the conversion to the script, if one is being recorded
@@ -2068,7 +2068,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         AlgorithmMatchForReference algoRef = new AlgorithmMatchForReference(getActiveImage(),
                                                                                             image2load);
 
-                        algoRef.setActiveImage(false);
+                        algoRef.setRunningInSeparateThread(false);
                         algoRef.run();
 
                         ModelImage refImage = null;

@@ -256,7 +256,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         for (z = 0; z < sliceNum; z++) {
             
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z) / (sliceNum) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (z) / (sliceNum) * 100), runningInSeparateThread);
             }
             try {
                 srcImage.exportData(z*colorLen, colorLen, imageData);

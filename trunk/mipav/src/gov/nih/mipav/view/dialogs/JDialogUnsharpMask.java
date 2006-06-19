@@ -481,7 +481,6 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -604,15 +603,13 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (unsharpMaskAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        unsharpMaskAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -659,15 +656,13 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (unsharpMaskAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        unsharpMaskAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -725,15 +720,13 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (unsharpMaskAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        unsharpMaskAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -780,14 +773,12 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                     }
 
                     // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         if (unsharpMaskAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        unsharpMaskAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }

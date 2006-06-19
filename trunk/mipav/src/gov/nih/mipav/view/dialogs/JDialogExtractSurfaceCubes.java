@@ -414,15 +414,13 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast
                 if (extractSurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                extractSurAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     extractSurAlgo.setProgressBarVisible(false);
                 }

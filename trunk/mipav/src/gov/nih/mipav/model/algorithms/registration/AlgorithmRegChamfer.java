@@ -728,7 +728,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
         InitializePandY(p, y, func);
         simplex.setP(p);
         simplex.setY(y);
-        simplex.setActiveImage(activeImage);
+        simplex.setRunningInSeparateThread(runningInSeparateThread);
         simplex.run();
 
         // for (int i = 0;  i<simplexDim+1; i++)

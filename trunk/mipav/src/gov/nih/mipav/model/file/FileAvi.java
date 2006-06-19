@@ -342,7 +342,8 @@ public class FileAvi extends FileBase {
 
                 // progressBar.setLocation( (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2,
                 // 50);
-                progressBar.setVisible(!one);
+                setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+                progressBar.setVisible(isProgressBarVisible());
             }
 
             startPosition = raFile.getFilePointer();
@@ -2757,7 +2758,7 @@ public class FileAvi extends FileBase {
 
                     algoMarg.performCopiesWithBuffers(false);
                     algoMarg.setProgressBarVisible(true);
-                    algoMarg.setActiveImage(false);
+                    algoMarg.setRunningInSeparateThread(false);
                     algoMarg.run();
                     algoMarg.finalize();
                     algoMarg = null;
@@ -2785,6 +2786,7 @@ public class FileAvi extends FileBase {
         progressBar = new ViewJProgressBar(imageA.getImageName(), progressString, 0, 100, false, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
         progressBar.setVisible(isProgressBarVisible());
 
         lutBufferRemapped = new int[1];
@@ -3479,7 +3481,7 @@ public class FileAvi extends FileBase {
             AlgorithmTranscode at = new AlgorithmTranscode(file.toURI().toURL(), fileDir + fileName,
                                                            newCompressionType);
 
-            at.setActiveImage(false);
+            at.setRunningInSeparateThread(false);
             at.setProgressBarVisible(isProgressBarVisible());
             at.setQuality(compressionQuality);
             at.run();

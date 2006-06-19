@@ -463,7 +463,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
             mipPlaneNormal = crossProduct(rowDirection, colDirection);
 
             for (int row = 0; row < mipPlaneDims[1]; row++) {
-                progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), runningInSeparateThread);
                 leftMostPoint[0] = mipTopLeftPrime[0] + (row * dr[0]);
                 leftMostPoint[1] = mipTopLeftPrime[1] + (row * dr[1]);
                 leftMostPoint[2] = mipTopLeftPrime[2] + (row * dr[2]);
@@ -531,7 +531,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
             mipPlaneNormal = crossProduct(rowDirection, colDirection);
 
             for (int row = 0; row < mipPlaneDims[1]; row++) {
-                progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), runningInSeparateThread);
                 leftMostPoint[0] = mipTopLeftPrime[0] + (row * dr[0]);
                 leftMostPoint[1] = mipTopLeftPrime[1] + (row * dr[1]);
                 leftMostPoint[2] = mipTopLeftPrime[2] + (row * dr[2]);
@@ -674,7 +674,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
         MIPNode mipInfo = new MIPNode();
 
         for (int row = 0; row < mipPlaneDims[1]; row++) {
-            progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), activeImage);
+            progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), runningInSeparateThread);
             leftMostPoint[0] = mipTopLeftPrime[0] + (row * dr[0]);
             leftMostPoint[1] = mipTopLeftPrime[1] + (row * dr[1]);
             leftMostPoint[2] = mipTopLeftPrime[2] + (row * dr[2]);

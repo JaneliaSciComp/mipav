@@ -384,7 +384,7 @@ public class JFrameRegistrationMosaic extends JFrame
                                                              ((AlgorithmRegOAR2D) kAlgorithm).getTransform(),
                                                              m_iInterp2, 1.0f, 1.0f, iXDim, iYDim, false, false, false);
 
-                kAlgorithmTransform.setActiveImage(true);
+                kAlgorithmTransform.setRunningInSeparateThread(true);
                 kAlgorithmTransform.setUpdateOriginFlag(true);
                 kAlgorithmTransform.setProgressBarVisible(false);
                 kAlgorithmTransform.run();
@@ -399,7 +399,7 @@ public class JFrameRegistrationMosaic extends JFrame
                                                              AlgorithmTransform.BILINEAR, 1.0f, 1.0f, iXDim, iYDim,
                                                              false, false, false);
 
-                kAlgorithmTransform.setActiveImage(true);
+                kAlgorithmTransform.setRunningInSeparateThread(true);
                 kAlgorithmTransform.setUpdateOriginFlag(true);
                 kAlgorithmTransform.setProgressBarVisible(false);
                 kAlgorithmTransform.run();
@@ -1594,7 +1594,7 @@ public class JFrameRegistrationMosaic extends JFrame
                                                                 m_bDoSubsample, m_iBracketBound, m_iMaxIterations,
                                                                 m_iNumMinima);
         kAlgorithmReg.addListener(this);
-        kAlgorithmReg.setActiveImage(false);
+        kAlgorithmReg.setRunningInSeparateThread(false);
         kAlgorithmReg.setProgressBarVisible(true);
 
         if (m_bBruteForce == true) {

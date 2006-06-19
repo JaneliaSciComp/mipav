@@ -691,7 +691,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (i) / numberOfSlices) * 100), activeImage);
+                            progressBar.updateValue((int) (((float) (i) / numberOfSlices) * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
                         }
                     } catch (NullPointerException npe) {
@@ -739,7 +739,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                                                                 (((float) ((Math.max(0, colorUsed - 1) *
                                                                                 numberOfSlices) + i) /
                                                                       (numColors * numberOfSlices)) * 100),
-                                                            activeImage);
+                                                            runningInSeparateThread);
 
                                     if ((color == 1) && rChannel) {
                                         progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
@@ -980,7 +980,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) ((float) (i) / numberOfSlices * 100), activeImage);
+                            progressBar.updateValue((int) ((float) (i) / numberOfSlices * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
                         }
                     } catch (NullPointerException npe) {
@@ -1024,7 +1024,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
                                 progressBar.updateValue((int)
                                                             (((float) ((Math.max(0, colorUsed - 1) * numberOfSlices) +
                                                                        i) / (numColors * numberOfSlices)) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
 
                                 if ((color == 1) && rChannel) {
                                     progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
@@ -1563,7 +1563,7 @@ public class AlgorithmAHElocal extends AlgorithmBase {
 
                 // if display is showing, update the progress bar
                 if (pBarVisible && (numberOfSlices == 1) && ((i % onePercent) == 0)) { // filtering but a single slice
-                    progressBar.updateValue(Math.round(((float) i / sliceLength) * 100), activeImage);
+                    progressBar.updateValue(Math.round(((float) i / sliceLength) * 100), runningInSeparateThread);
                 }
             } catch (NullPointerException npe) {
 

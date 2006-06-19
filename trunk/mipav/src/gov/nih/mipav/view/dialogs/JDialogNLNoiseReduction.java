@@ -345,7 +345,6 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -464,15 +463,13 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (nlnrAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        nlnrAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -520,15 +517,13 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (nlnrAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        nlnrAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -577,15 +572,13 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (nlnrAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        nlnrAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -632,15 +625,13 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (nlnrAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        nlnrAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -676,7 +667,7 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;

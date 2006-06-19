@@ -435,7 +435,6 @@ public class JDialogGradientMagnitude extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -523,15 +522,13 @@ public class JDialogGradientMagnitude extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gradientMagSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gradientMagSepAlgo.setProgressBarVisible(false);
                         }
@@ -585,7 +582,7 @@ public class JDialogGradientMagnitude extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -661,15 +658,13 @@ public class JDialogGradientMagnitude extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gradientMagSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gradientMagSepAlgo.setProgressBarVisible(false);
                         }
@@ -722,15 +717,13 @@ public class JDialogGradientMagnitude extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gradientMagSepAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gradientMagSepAlgo.setProgressBarVisible(false);
                         }
@@ -798,15 +791,13 @@ public class JDialogGradientMagnitude extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gradientMagAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gradientMagAlgo.setProgressBarVisible(false);
                         }
@@ -860,7 +851,7 @@ public class JDialogGradientMagnitude extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -936,15 +927,13 @@ public class JDialogGradientMagnitude extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gradientMagAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gradientMagAlgo.setProgressBarVisible(false);
                         }
@@ -997,15 +986,13 @@ public class JDialogGradientMagnitude extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (gradientMagAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        gradientMagAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             gradientMagAlgo.setProgressBarVisible(false);
                         }

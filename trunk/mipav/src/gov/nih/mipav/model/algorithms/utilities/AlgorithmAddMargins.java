@@ -703,7 +703,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
                 if (isProgressBarVisible() && ((i % mod) == 0)) {
-                    progressBar.updateValue(Math.round((float) i / (destSliceArea) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (destSliceArea) * 100), runningInSeparateThread);
                 }
 
                 row = i / destWidth;
@@ -768,7 +768,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                             if (isProgressBarVisible() && ((i % mod) == 0)) {
                                 progressBar.updateValue(Math.round((float) ((z * destSliceArea) + i) / (imageLength) *
-                                                                       100), activeImage);
+                                                                       100), runningInSeparateThread);
                             }
 
                             row = i / destWidth;
@@ -968,7 +968,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
                 if (isProgressBarVisible() && ((i % mod) == 0)) {
-                    progressBar.updateValue(Math.round((float) i / (destSliceArea) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) i / (destSliceArea) * 100), runningInSeparateThread);
                 }
 
                 row = i / destWidth;
@@ -1039,7 +1039,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 srcImage.setFileInfo(fileInfoBuffer[0], 0);
             }
 
-            progressBar.updateValue(100, activeImage); // show at 100%
+            progressBar.updateValue(100, runningInSeparateThread); // show at 100%
 
         } else { // source is 3D or 4D
 
@@ -1079,7 +1079,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                                 if (isProgressBarVisible() && ((i % mod) == 0)) {
                                     progressBar.updateValue(Math.round((float) (tNewOffset + (z * destSliceArea) + i) /
-                                                                           (imageLength) * 100), activeImage);
+                                                                           (imageLength) * 100), runningInSeparateThread);
                                 }
 
                                 row = i / destWidth;
@@ -1183,7 +1183,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (Z = 0; (Z < destDepth) && !threadStopped; Z++) {
 
                         if ((isProgressBarVisible()) && (tDim == 1)) {
-                            progressBar.updateValue(Math.round((float) (Z) / destDepth * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) (Z) / destDepth * 100), runningInSeparateThread);
                         }
 
                         // DICOM
@@ -1296,7 +1296,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     }
                 } // for (t = 0; t < tDim; t++)
 
-                progressBar.updateValue(100, activeImage); // show at 100%
+                progressBar.updateValue(100, runningInSeparateThread); // show at 100%
 
                 if (threadStopped) {
                     sourceSlice = null;
@@ -1454,7 +1454,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (i = 0; (i < topMargin) && !threadStopped; i++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / destHeight * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) i / destHeight * 100), runningInSeparateThread);
                         }
 
                         destImage.importData(i * destWidth * colorFactor, headerFooterMargins, false);
@@ -1466,7 +1466,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         if (isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) (i + topMargin) / destHeight * 100),
-                                                    activeImage);
+                                                    runningInSeparateThread);
                         }
 
                         destImage.importData(colorFactor * (topRows + (destWidth * i)), leftMargins, false); // left margin
@@ -1483,7 +1483,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (i = topMargin + srcHeight; (i < destHeight) && !threadStopped; i++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / destHeight * 100), activeImage);
+                            progressBar.updateValue(Math.round((float) i / destHeight * 100), runningInSeparateThread);
                         }
 
                         destImage.importData(colorFactor * i * destWidth, headerFooterMargins, false);
@@ -1538,7 +1538,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         destImage.setFileInfo(fileInfoBuffer, 0);
                     }
 
-                    progressBar.updateValue(100, activeImage); // show at 100%
+                    progressBar.updateValue(100, runningInSeparateThread); // show at 100%
                 } else { // source is 3D or 4D
 
                     int Z;
@@ -1556,7 +1556,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                             if (isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round(((float) ((t * destDepth) + z)) /
-                                                                       (tDim * destDepth) * 100), activeImage);
+                                                                       (tDim * destDepth) * 100), runningInSeparateThread);
                             }
 
                             for (i = 0; (i < destHeight) && !threadStopped; i++) {
@@ -1572,7 +1572,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             // let user know something is happening by updating the progressbar
                             if ((isProgressBarVisible()) && (tDim == 1)) {
                                 progressBar.updateValue(Math.round((float) (z + frontMargin) / destDepth * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
 
                             // TOP MARGIN LATITUDES: over the top margin, copy in the default values
@@ -1609,7 +1609,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             destPlate = z * destSliceArea;
 
                             if ((isProgressBarVisible()) && (tDim == 1)) {
-                                progressBar.updateValue(Math.round((float) z / (destDepth) * 100), activeImage);
+                                progressBar.updateValue(Math.round((float) z / (destDepth) * 100), runningInSeparateThread);
                             }
 
                             for (i = 0; (i < destHeight) && !threadStopped; i++) {
@@ -1659,7 +1659,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         for (Z = 0; (Z < destDepth) && !threadStopped; Z++) {
 
                             if ((isProgressBarVisible()) && (tDim == 1)) {
-                                progressBar.updateValue(Math.round((float) (Z) / destDepth * 100), activeImage);
+                                progressBar.updateValue(Math.round((float) (Z) / destDepth * 100), runningInSeparateThread);
                             }
 
                             // DICOM

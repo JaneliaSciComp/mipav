@@ -138,7 +138,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         int i;
 
         try {
-            gradientMagAlgo.setActiveImage(activeImage);
+            gradientMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradientMagAlgo.run();
             gradMagVol.convertToFloat();
             gradMagBuf = new float[volLength];
@@ -321,7 +321,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         for (int t = 1; t < tdim; t++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(increment * t), activeImage);
+                progressBar.updateValue(Math.round(increment * t), runningInSeparateThread);
             }
 
             func.setSlice(t);
@@ -332,7 +332,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
                 InitializePandY(p, y, func);
                 simplex.setP(p);
                 simplex.setY(y);
-                simplex.setActiveImage(activeImage);
+                simplex.setRunningInSeparateThread(runningInSeparateThread);
                 simplex.run();
                 Preferences.debug("cost = " + y[0] + "\n");
             }

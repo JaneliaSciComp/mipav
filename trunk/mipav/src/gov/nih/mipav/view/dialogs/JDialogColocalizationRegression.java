@@ -772,7 +772,6 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         if (secondImage != null) {
@@ -1234,10 +1233,7 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
             // Hide dialog
             setVisible(false);
 
-            // System.err.println("Active image " + isActiveImage);
-            colocalizationAlgo.setActiveImage(isActiveImage);
-
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (colocalizationAlgo.startMethod(Thread.MIN_PRIORITY) == false) {

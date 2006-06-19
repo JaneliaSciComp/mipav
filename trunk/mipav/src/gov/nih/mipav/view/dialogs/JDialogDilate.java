@@ -482,8 +482,7 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
         } catch (Exception e) {
             throw new IllegalArgumentException();
         }
-
-        setActiveImage(parser.isActiveImage());
+        
         setSeparateThread(false);
         callAlgorithm();
 
@@ -612,15 +611,13 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (dilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        dilateAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             dilateAlgo2D.setProgressBarVisible(false);
                         }
@@ -672,15 +669,13 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (dilateAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        dilateAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             dilateAlgo2D.setProgressBarVisible(false);
                         }
@@ -721,15 +716,13 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (dilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        dilateAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             dilateAlgo2D.setProgressBarVisible(false);
                         }
@@ -780,15 +773,13 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (dilateAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        dilateAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             dilateAlgo2D.setProgressBarVisible(false);
                         }
@@ -841,15 +832,13 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (dilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        dilateAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             dilateAlgo25D.setProgressBarVisible(false);
                         }
@@ -901,15 +890,13 @@ public class JDialogDilate extends JDialogBase implements AlgorithmInterface, Sc
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (dilateAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        dilateAlgo25D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             dilateAlgo25D.setProgressBarVisible(false);
                         }

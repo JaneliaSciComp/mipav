@@ -253,7 +253,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     }
 
                     if ((srcImage.getNDims() > 2) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                        progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
                     }
 
                     offset = z * imgLength;
@@ -263,7 +263,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                         if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                            progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                         }
 
                         if (((mask.get(offset + i) == true) && (polarity == true)) ||
@@ -353,7 +353,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
                 }
 
                 offset = z * imgLength;
@@ -363,7 +363,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                     }
 
                     if (((mask.get(offset + i) == true) && (polarity == true)) ||
@@ -489,7 +489,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             }
 
             offset = z * paintLength;
@@ -499,7 +499,7 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
                 if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                 }
 
                 if (((mask.get(offset + j) == true) && (polarity == true)) ||
@@ -598,7 +598,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             }
 
             offset = z * paintLength;
@@ -608,7 +608,7 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
                 if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                 }
 
                 if ((mask.get(offset + j) == true) && (polarity == true)) {
@@ -747,7 +747,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
                 }
 
                 offset = z * imgLength;
@@ -757,7 +757,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                     }
 
                     if (((mask.get(offset + i) == true) && (polarity == true)) ||
@@ -846,7 +846,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
                 }
 
                 offset = z * imgLength;
@@ -856,7 +856,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, activeImage);
+                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                     }
                     
 //                  Must preserve phase information so make values 1000 times the
@@ -1025,7 +1025,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1093,7 +1093,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1137,7 +1137,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), activeImage);
+                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1181,7 +1181,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), activeImage);
+                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1252,7 +1252,7 @@ public class AlgorithmMask extends AlgorithmBase {
             offset = z * length;
 
             if ((pBarVisible == true) && (progressBar != null)) {
-                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1326,7 +1326,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if ((pBarVisible == true) && (progressBar != null)) {
                 progressBar.updateValue(Math.round((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) * 100),
-                                        activeImage);
+                                        runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1366,7 +1366,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if ((pBarVisible == true) && (progressBar != null)) {
                 progressBar.updateValue(Math.round((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-                                                       100), activeImage);
+                                                       100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1406,7 +1406,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if ((pBarVisible == true) && (progressBar != null)) {
                 progressBar.updateValue(Math.round((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-                                                       100), activeImage);
+                                                       100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1489,7 +1489,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == false)) {
@@ -1555,7 +1555,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1597,7 +1597,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), activeImage);
+                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1639,7 +1639,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), activeImage);
+                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1717,7 +1717,7 @@ public class AlgorithmMask extends AlgorithmBase {
             offset = z * length;
 
             if ((pBarVisible == true) && (progressBar != null)) {
-                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1790,7 +1790,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if ((pBarVisible == true) && (progressBar != null)) {
                 progressBar.updateValue(Math.round((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) * 100),
-                                        activeImage);
+                                        runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1828,7 +1828,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if ((pBarVisible == true) && (progressBar != null)) {
                 progressBar.updateValue(Math.round((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-                                                       100), activeImage);
+                                                       100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1866,7 +1866,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             if ((pBarVisible == true) && (progressBar != null)) {
                 progressBar.updateValue(Math.round((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-                                                       100), activeImage);
+                                                       100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {

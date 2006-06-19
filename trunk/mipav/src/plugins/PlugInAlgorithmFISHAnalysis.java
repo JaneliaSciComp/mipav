@@ -1488,7 +1488,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         for (id = 1; id <= numObjects; id++) {
             progressBar.setMessage("Processing object " + id + " of " + numObjects + " in blue segmented image");
-            progressBar.updateValue(75 + (id * 10 / numObjects), activeImage);
+            progressBar.updateValue(75 + (id * 10 / numObjects), runningInSeparateThread);
 
             for (j = 0; j < totLength; j++) {
                 byteBuffer[j] = 0;

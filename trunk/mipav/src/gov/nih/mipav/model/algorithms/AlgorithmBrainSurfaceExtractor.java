@@ -211,7 +211,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         // filter
         progressBar.setMessage("Filtering image...");
-        progressBar.updateValue(5, activeImage);
+        progressBar.updateValue(5, runningInSeparateThread);
 
         if (filterIterations > 0) {
             resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imgName + "_temp_results",
@@ -223,13 +223,13 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                                                                                                            filterKernel,
                                                                                                            filterContrast,
                                                                                                            do25D);
-            filterAlgo.setActiveImage(isActiveImage());
+            filterAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             filterAlgo.setProgressBarVisible(false);
             filterAlgo.addListener(this);
             filterAlgo.run();
             filterAlgo.finalize();
             curStep++;
-            progressBar.updateValue(progInc * curStep, activeImage);
+            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
             if (showIntermediateImages) {
                 ModelImage tempImage = (ModelImage) resultImage.clone(imgName + "_filter");
@@ -259,7 +259,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             AlgorithmEdgeLaplacianSep edgeLapAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage,
                                                                                   edgeSigmas, regionFlag, do25D);
             edgeLapAlgo.setZeroDetectionType(AlgorithmEdgeLaplacianSep.NEGATIVE_EDGES);
-            edgeLapAlgo.setActiveImage(isActiveImage());
+            edgeLapAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             edgeLapAlgo.setProgressBarVisible(false);
             edgeLapAlgo.addListener(this);
             edgeLapAlgo.run();
@@ -270,12 +270,12 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             edgeAlgo = edgeLapAlgo;
             resultImage = edgeLapAlgo.getZeroXMask();
             curStep++;
-            progressBar.updateValue(progInc * curStep, activeImage);
+            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
         } else {
             AlgorithmEdgeLaplacian edgeLapAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas,
                                                                             regionFlag, do25D);
             edgeLapAlgo.setZeroDetectionType(AlgorithmEdgeLaplacian.NEGATIVE_EDGES);
-            edgeLapAlgo.setActiveImage(isActiveImage());
+            edgeLapAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             edgeLapAlgo.setProgressBarVisible(false);
             edgeLapAlgo.addListener(this);
             edgeLapAlgo.run();
@@ -286,7 +286,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             edgeAlgo = edgeLapAlgo;
             resultImage = edgeLapAlgo.getZeroXMask();
             curStep++;
-            progressBar.updateValue(progInc * curStep, activeImage);
+            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
         }
 
         if (isThreadStopped()) {
@@ -324,7 +324,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         curStep++;
-        progressBar.updateValue(progInc * curStep, activeImage);
+        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         if (isThreadStopped()) {
             finalize();
@@ -353,13 +353,13 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                                                    erosionIterations, 0, 0, regionFlag);
         }
 
-        erodeAlgo.setActiveImage(isActiveImage());
+        erodeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
         erodeAlgo.setProgressBarVisible(false);
         erodeAlgo.addListener(this);
         erodeAlgo.run();
         erodeAlgo.finalize();
         curStep++;
-        progressBar.updateValue(progInc * curStep, activeImage);
+        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         if (isThreadStopped()) {
             finalize();
@@ -381,7 +381,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         resultImage = findLargestRegion(tempMaskImage);
         tempMaskImage.disposeLocal();
         curStep++;
-        progressBar.updateValue(progInc * curStep, activeImage);
+        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         if (isThreadStopped()) {
             finalize();
@@ -404,13 +404,13 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                                                     erosionIterations, 0, 0, 0, regionFlag);
         }
 
-        dilateAlgo.setActiveImage(isActiveImage());
+        dilateAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
         dilateAlgo.setProgressBarVisible(false);
         dilateAlgo.addListener(this);
         dilateAlgo.run();
         dilateAlgo.finalize();
         curStep++;
-        progressBar.updateValue(progInc * curStep, activeImage);
+        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         if (isThreadStopped()) {
             finalize();
@@ -430,13 +430,13 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         AlgorithmMorphology25D closeAlgo = new AlgorithmMorphology25D(resultImage, closeKernel, closeKernelSize,
                                                                       AlgorithmMorphology25D.CLOSE, closeIterations + 1,
                                                                       closeIterations, 0, 0, regionFlag);
-        closeAlgo.setActiveImage(isActiveImage());
+        closeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
         closeAlgo.setProgressBarVisible(false);
         closeAlgo.addListener(this);
         closeAlgo.run();
         closeAlgo.finalize();
         curStep++;
-        progressBar.updateValue(progInc * curStep, activeImage);
+        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         if (isThreadStopped()) {
             finalize();
@@ -471,7 +471,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
             // make a mask from the voi
             AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true);
-            maskAlgo.setActiveImage(isActiveImage());
+            maskAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             maskAlgo.setProgressBarVisible(false);
             maskAlgo.addListener(this);
             maskAlgo.run();
@@ -481,7 +481,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage.getVOIs().removeAllElements();
             resultImage.clearMask();
             curStep++;
-            progressBar.updateValue(progInc * curStep, activeImage);
+            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
             if (isThreadStopped()) {
                 finalize();
@@ -531,7 +531,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         curStep++;
-        progressBar.updateValue(progInc * curStep, activeImage);
+        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         int orient = image.getFileInfo(0).getImageOrientation();
         int[] axisOrient = image.getFileInfo(0).getAxisOrientation();
@@ -882,7 +882,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         slices[slices.length - 1] = true;
 
         AlgorithmRemoveSlices sliceAlgo = new AlgorithmRemoveSlices(paddedImg, img, slices);
-        sliceAlgo.setActiveImage(false);
+        sliceAlgo.setRunningInSeparateThread(false);
         sliceAlgo.setProgressBarVisible(false);
         sliceAlgo.run();
         sliceAlgo.finalize();

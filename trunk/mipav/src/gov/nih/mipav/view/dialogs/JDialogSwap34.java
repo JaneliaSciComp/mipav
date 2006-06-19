@@ -154,14 +154,12 @@ public class JDialogSwap34 extends JDialogBase implements AlgorithmInterface, Sc
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 if (swap34Algo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                swap34Algo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     swap34Algo.setProgressBarVisible(false);
                 }
@@ -253,7 +251,6 @@ public class JDialogSwap34 extends JDialogBase implements AlgorithmInterface, Sc
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());

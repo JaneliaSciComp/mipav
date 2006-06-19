@@ -477,7 +477,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round(((float) (computationCount) / (totalComputation - 1) * 100)),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 algoSepConvolver.run();
@@ -680,7 +680,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round(((float) (computationCount) / (totalComputation - 1) * 100)),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 if (useRed) {
@@ -902,7 +902,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(((float) (iterNum) / (numIterations - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (iterNum) / (numIterations - 1) * 100)), runningInSeparateThread);
             }
 
             algoSepConvolver.run();
@@ -1088,7 +1088,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(((float) (iterNum) / (numIterations - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (iterNum) / (numIterations - 1) * 100)), runningInSeparateThread);
             }
 
             if (useRed) {

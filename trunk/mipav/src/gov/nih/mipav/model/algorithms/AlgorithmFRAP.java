@@ -1301,7 +1301,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             progressBar.setMessage("Finding single exponential model");
         }
 
-        progressBar.updateValue(50, activeImage);
+        progressBar.updateValue(50, runningInSeparateThread);
 
         if (model == NARROW_BAND_2D) {
             // Determine the constraints on alpha beta and gamma.
@@ -1607,7 +1607,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ssemax = -Double.MAX_VALUE;
 
                 for (z = 0; z <= 100; z++) {
-                    progressBar.updateValue(z, activeImage);
+                    progressBar.updateValue(z, runningInSeparateThread);
                     indexZ = xydim * z;
                     gamma = 0.01 * z;
 
@@ -1664,7 +1664,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 progressBar.setMessage("Checking for local minima");
 
                 for (z = 2; z <= 98; z++) {
-                    progressBar.updateValue(z + 2, activeImage);
+                    progressBar.updateValue(z + 2, runningInSeparateThread);
                     indexZ = xydim * z;
 
                     for (y = 2; y <= 198; y++) {
@@ -1921,7 +1921,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             for (k = 0; k < 26; k++) {
                 progressBar.setMessage("Performing " + (k + 1) + " of 26 grid search runs");
-                progressBar.updateValue(50 + k, activeImage);
+                progressBar.updateValue(50 + k, runningInSeparateThread);
                 lmod = new FitFullModel(tStripZero, largestPole, tol, initial_kon[k], initial_koff[k]);
                 lmod.driver();
                 timeFunction = lmod.getTimeFunction();
@@ -2063,7 +2063,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 progressBar.setMessage("Calculating sse array for kon and koff variations");
 
                 for (y = 0; y <= 200; y++) {
-                    progressBar.updateValue(y / 2, activeImage);
+                    progressBar.updateValue(y / 2, runningInSeparateThread);
                     indexY = 201 * y;
                     koff = 0.02 * params[1] * Math.pow(2500.0, 0.005 * y);
 
@@ -2095,7 +2095,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 progressBar.setMessage("Checking for local minima");
 
                 for (y = 2; y <= 198; y++) {
-                    progressBar.updateValue(y / 2, activeImage);
+                    progressBar.updateValue(y / 2, runningInSeparateThread);
                     indexY = 201 * y;
 
                     for (x = 2; x <= 198; x++) {

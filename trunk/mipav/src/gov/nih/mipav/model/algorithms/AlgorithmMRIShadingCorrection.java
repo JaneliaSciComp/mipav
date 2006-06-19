@@ -359,7 +359,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                 originalStdDev = Math.sqrt(originalStdDev);
 
                 for (it = 1; it <= iters; it++) {
-                    progressBar.updateValue(100 * ((iters * z) + it) / (zDim * iters), activeImage);
+                    progressBar.updateValue(100 * ((iters * z) + it) / (zDim * iters), runningInSeparateThread);
 
                     // The Laplacian of the buffer will be placed in buffer2
                     image2.importData(0, buffer, true);

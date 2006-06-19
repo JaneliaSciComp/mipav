@@ -140,7 +140,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue(progressBar.getValue() + 1, activeImage);
+                progressBar.updateValue(progressBar.getValue() + 1, runningInSeparateThread);
             }
 
             if ((attenuationBuffer[i] == 0) && (maskImage.getFloat(i) == 1)) {
@@ -191,7 +191,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         if (isProgressBarVisible()) {
             progressBar.setMessage("Attenuating image...");
-            progressBar.updateValue(progressBar.getValue() + 40, activeImage);
+            progressBar.updateValue(progressBar.getValue() + 40, runningInSeparateThread);
         }
 
         // combine attenuation buffer with srcImage and put into destImage
@@ -214,7 +214,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(progressBar.getValue() + 5, activeImage);
+            progressBar.updateValue(progressBar.getValue() + 5, runningInSeparateThread);
         }
 
         totalPercent = 10;
@@ -223,7 +223,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue(progressBar.getValue() + 1, activeImage);
+                progressBar.updateValue(progressBar.getValue() + 1, runningInSeparateThread);
             }
 
             if (attenuationBuffer[i] == 0) {
@@ -242,7 +242,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(95, activeImage);
+            progressBar.updateValue(95, runningInSeparateThread);
         }
 
         destImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), srcImage.getImageName() + "_attenuated");
@@ -258,7 +258,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         destImage.copyFileTypeInfo(srcImage);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(100, activeImage);
+            progressBar.updateValue(100, runningInSeparateThread);
         }
 
         disposeProgressBar();
@@ -335,7 +335,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             }
 
             if (progressBar != null) {
-                progressBar.updateValue(0, activeImage);
+                progressBar.updateValue(0, runningInSeparateThread);
             }
         } catch (NullPointerException npe) {
 
@@ -358,7 +358,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
                 try {
 
                     if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 30), activeImage);
+                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 30), runningInSeparateThread);
                     }
                 } catch (NullPointerException npe) {
 

@@ -549,7 +549,7 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
                 if (myProgressBar != null) {
                     myProgressBar.updateValue(progressBegin +
                                               ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
-                                              activeImage);
+                                              runningInSeparateThread);
                 }
 
                 // Change by Z Cohen on 6/14/04

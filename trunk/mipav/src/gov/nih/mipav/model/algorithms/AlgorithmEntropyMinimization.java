@@ -1196,7 +1196,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         }
 
         for (iter = 1;; iter++) {
-            progressBar.updateValue(100 * iter / ITMAX, activeImage);
+            progressBar.updateValue(100 * iter / ITMAX, runningInSeparateThread);
             fp = fret;
             ibig = -1;
 

@@ -266,11 +266,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
                 maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice);
 
                 if (imageA.getType() == ModelStorageBase.UBYTE) {
@@ -297,11 +297,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
                 maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice);
 
                 if (imageB.getType() == ModelStorageBase.UBYTE) {
@@ -2249,7 +2249,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         try {
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(imageActive, 1.0f, 1.0f);
 
-            regionGrowAlgo.setActiveImage(false);
+            regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (imageActive.getType() == ModelStorageBase.BOOLEAN) {
                 less = 0;
@@ -2383,7 +2383,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         try {
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
 
-            regionGrowAlgo.setActiveImage(false);
+            regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (image.getType() == ModelStorageBase.BOOLEAN) {
                 less = 0;

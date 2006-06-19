@@ -93,7 +93,7 @@ public class PlugInAlgorithmAbsoluteValue extends AlgorithmBase {
                 srcImage.importData((i * imgBuffer.length), imgBuffer, false);
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((i + 1.0) / z) * 100), activeImage);
+                    progressBar.updateValue(Math.round((float) ((i + 1.0) / z) * 100), runningInSeparateThread);
                 }
             } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmAbsoluteValue");

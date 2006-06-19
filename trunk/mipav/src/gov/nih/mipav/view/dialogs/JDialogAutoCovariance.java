@@ -427,7 +427,6 @@ public class JDialogAutoCovariance extends JDialogBase implements AlgorithmInter
             }
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -486,14 +485,12 @@ public class JDialogAutoCovariance extends JDialogBase implements AlgorithmInter
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 if (algoAutoCovariance.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                algoAutoCovariance.setActiveImage(isActiveImage);
-
                 if (!UI.isAppFrameVisible()) {
                     algoAutoCovariance.setProgressBarVisible(false);
                 }

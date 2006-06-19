@@ -250,7 +250,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):
-        unsharper.setActiveImage(activeImage);
+        unsharper.setRunningInSeparateThread(runningInSeparateThread);
         unsharper.run();
 
         // if the algorithm failed:
@@ -271,7 +271,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):
-        FFTer.setActiveImage(activeImage);
+        FFTer.setRunningInSeparateThread(runningInSeparateThread);
         FFTer.run();
 
         // if the algorithm failed:

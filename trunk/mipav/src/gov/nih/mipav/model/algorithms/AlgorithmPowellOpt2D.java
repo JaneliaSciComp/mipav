@@ -257,7 +257,7 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
                 if (myProgressBar != null) {
                     myProgressBar.updateValue(progressBegin +
                                               ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
-                                              activeImage);
+                                              runningInSeparateThread);
                 }
 
                 for (int j = 0; j < nDims; j++) {

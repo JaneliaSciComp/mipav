@@ -1521,7 +1521,7 @@ public abstract class ViewJFrameBase extends JFrame
                 AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
                                                                          (float) imageA.getMax(), 0, 255, false);
 
-                algoChange.setActiveImage(false);
+                algoChange.setRunningInSeparateThread(false);
                 algoChange.run();
 
                 algoChange.finalize();
@@ -2610,7 +2610,7 @@ public abstract class ViewJFrameBase extends JFrame
                 AlgorithmChangeType algoChange = new AlgorithmChangeType(imageAvi, imageA, (float) imageA.getMin(),
                                                                          (float) imageA.getMax(), 0, 255, false);
 
-                algoChange.setActiveImage(false);
+                algoChange.setRunningInSeparateThread(false);
                 algoChange.run();
 
                 algoChange.finalize();
@@ -3425,7 +3425,7 @@ public abstract class ViewJFrameBase extends JFrame
             AlgorithmTransform transformVol = new AlgorithmTransform(image, xfrm, AlgorithmTransform.BILINEAR, oXres,
                                                                      oYres, oXdim, oYdim, false, true, false);
 
-            transformVol.setActiveImage(false);
+            transformVol.setRunningInSeparateThread(false);
             transformVol.run();
 
             ModelImage resampledImage = transformVol.getTransformedImage();
@@ -3481,7 +3481,7 @@ public abstract class ViewJFrameBase extends JFrame
                 // doOrigins and doOrients are passed to loadImage
                 algoMatch = new AlgorithmMatchImages(imageA, image, doOrigins, doDimensions, resByRef);
                 algoMatch.setOrients(doOrients);
-                algoMatch.setActiveImage(false);
+                algoMatch.setRunningInSeparateThread(false);
                 algoMatch.run();
 
                 if (!algoMatch.isCompleted()) {

@@ -786,7 +786,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
@@ -798,7 +798,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                 if (slice[0] <= 0 ){
                     maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
-                    maskAlgo.setActiveImage(false);
+                    maskAlgo.setRunningInSeparateThread(false);
                     maskAlgo.setProgressBarVisible(showProgressBar);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
 
@@ -833,7 +833,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
@@ -843,7 +843,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (slice[0] == -1 ) timeSlice = -1;
                 }
                 maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
-                maskAlgo.setActiveImage(false);
+                maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
 
@@ -914,7 +914,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
             }
 
-            maskAlgo.setActiveImage(false);
+            maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.calcInPlace25DCShortMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
         } else { // not color
 
@@ -931,7 +931,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
             }
 
-            maskAlgo.setActiveImage(false);
+            maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
         
@@ -3476,7 +3476,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(imageActive, 1.0f, 1.0f);
 
-            regionGrowAlgo.setActiveImage(false);
+            regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (imageActive.getType() == ModelStorageBase.BOOLEAN) {
                 less = 0;
@@ -3613,7 +3613,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
 
-            regionGrowAlgo.setActiveImage(false);
+            regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (image.getType() == ModelStorageBase.BOOLEAN) {
                 less = 0;
@@ -3759,7 +3759,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(imageActive, 1.0f, 1.0f);
 
-            regionGrowAlgo.setActiveImage(false);
+            regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (imageActive.getNDims() == 2) {
                 count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,
@@ -3903,7 +3903,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         try {
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
 
-            regionGrowAlgo.setActiveImage(false);
+            regionGrowAlgo.setRunningInSeparateThread(false);
 
             if (image.getNDims() == 2) {
                 count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,

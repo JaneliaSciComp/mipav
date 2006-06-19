@@ -569,9 +569,11 @@ public class FileTiff extends FileBase {
 
             pBarVisible = !one;
 
-            if (multiFile || !showProgressBar) {
+            if (multiFile || !showProgressBar || !ViewUserInterface.getReference().isAppFrameVisible()) {
                 pBarVisible = false;
             }
+            
+            progressBar.setVisible(pBarVisible);
 
             // long secondTime = System.currentTimeMillis();
             // System.err.println("Time elapsed reading IFDs: " + ((secondTime - firstTime) / 1000));
@@ -732,8 +734,9 @@ public class FileTiff extends FileBase {
                                                    ViewUserInterface.getReference().getProgressBarPrefix() +
                                                    "series(s) ...", 0, 100, false, null, null);
                 progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-                progressBar.setVisible(true);
                 progressBar.updateValue(0, false);
+                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+                progressBar.setVisible(isProgressBarVisible());
             }
 
             // go through each file name in the vector, loading
@@ -791,7 +794,8 @@ public class FileTiff extends FileBase {
                                                    ViewUserInterface.getReference().getProgressBarPrefix() +
                                                    "series(s) ...", 0, 100, false, null, null);
                 progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-                progressBar.setVisible(true);
+                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+                progressBar.setVisible(isProgressBarVisible());
                 progressBar.updateValue(0, false);
             }
 
@@ -952,7 +956,8 @@ public class FileTiff extends FileBase {
             progressBar = new ViewJProgressBar("Saving TIFF image", "Saving Image " + fileName, 0, 100, false, null,
                                                null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            progressBar.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setVisible(isProgressBarVisible());
             index = fileName.indexOf(".");
             prefix = fileName.substring(0, index); // Used for setting file name
             fileSuffix = fileName.substring(index);
@@ -1146,7 +1151,7 @@ public class FileTiff extends FileBase {
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
                         progressBar.updateValue(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                (options.getEndSlice() - options.getBeginSlice() + 1) *
-                                                               100), options.isActiveImage());
+                                                               100), options.isRunningInSeparateThread());
                         progressBar.setTitle("Saving image " + k);
 
                         if (options.isWritePackBit()) {
@@ -1201,7 +1206,7 @@ public class FileTiff extends FileBase {
                     }
                 } else {
                     progressBar.updateValue(Math.round((float) s / (options.getEndSlice()) * 100),
-                                            options.isActiveImage());
+                                            options.isRunningInSeparateThread());
                     progressBar.setTitle("Saving image " + seq);
 
                     if (options.isWritePackBit()) {

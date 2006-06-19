@@ -431,7 +431,6 @@ public class JDialogMRIShadingCorrection extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -546,15 +545,13 @@ public class JDialogMRIShadingCorrection extends JDialogBase
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (mAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    mAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         mAlgo.setProgressBarVisible(false);
                     }
@@ -602,15 +599,13 @@ public class JDialogMRIShadingCorrection extends JDialogBase
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface.
                     if (mAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    mAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         mAlgo.setProgressBarVisible(false);
                     }
@@ -645,7 +640,7 @@ public class JDialogMRIShadingCorrection extends JDialogBase
 
         gbc.gridwidth = 6;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

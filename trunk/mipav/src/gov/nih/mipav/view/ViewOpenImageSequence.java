@@ -1547,7 +1547,7 @@ public class ViewOpenImageSequence extends JFrame
                                                                            1.0f,
                                                                            resultImage.getFileInfo(0).getUnitsOfMeasure()[2],
                                                                            resultImage.getFileInfo(0).getUnitsOfMeasure()[2]);
-            algConvert.setActiveImage(false);
+            algConvert.setRunningInSeparateThread(false);
             algConvert.runAlgorithm();
             resultImage.disposeLocal();
             resultImage = algConvert.getResultImage();

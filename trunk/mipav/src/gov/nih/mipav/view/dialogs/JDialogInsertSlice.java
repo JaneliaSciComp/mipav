@@ -406,7 +406,6 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());
@@ -501,15 +500,13 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
             insertSliceAlgo.addListener(this);
             setVisible(false); // Hide dialog
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (insertSliceAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                insertSliceAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     insertSliceAlgo.setProgressBarVisible(false);
                 }

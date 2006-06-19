@@ -179,8 +179,6 @@ public class JDialogThresholdLUT extends JDialogBase {
                         // Make the algorithm class
                         thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, binaryFlag, true,
                                                                    false);
-                        thresholdAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             thresholdAlgo.setProgressBarVisible(false);
                         }
@@ -201,8 +199,6 @@ public class JDialogThresholdLUT extends JDialogBase {
                         // Make algorithm
                         thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, binaryFlag, true,
                                                                    true);
-                        thresholdAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             thresholdAlgo.setProgressBarVisible(false);
                         }
@@ -228,7 +224,6 @@ public class JDialogThresholdLUT extends JDialogBase {
                     try {
                         resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold", userInterface);
                         thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, true, true, true);
-                        thresholdAlgo.setActiveImage(isActiveImage);
 
                         if (!userInterface.isAppFrameVisible()) {
                             thresholdAlgo.setProgressBarVisible(false);
@@ -240,7 +235,6 @@ public class JDialogThresholdLUT extends JDialogBase {
                                                                                       AlgorithmMorphology2D.DELETE_OBJECTS,
                                                                                       0, 0, 0, 0, true);
                         morphAlgo2D.setMinMax(Math.round(min), Math.round(max));
-                        morphAlgo2D.setActiveImage(isActiveImage);
 
                         if (!userInterface.isAppFrameVisible()) {
                             morphAlgo2D.setProgressBarVisible(false);
@@ -249,8 +243,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                         morphAlgo2D.run();
 
                         AlgorithmQuantify algoQuantify = new AlgorithmQuantify(image, resultImage);
-                        algoQuantify.setActiveImage(isActiveImage);
-
+                        
                         if (!userInterface.isAppFrameVisible()) {
                             algoQuantify.setProgressBarVisible(false);
                         }
@@ -281,7 +274,6 @@ public class JDialogThresholdLUT extends JDialogBase {
 
                         // Make algorithm
                         thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, true, true, true);
-                        thresholdAlgo.setActiveImage(isActiveImage);
 
                         if (!userInterface.isAppFrameVisible()) {
                             thresholdAlgo.setProgressBarVisible(false);
@@ -293,8 +285,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                                                                                       AlgorithmMorphology3D.DELETE_OBJECTS,
                                                                                       0, 0, 0, 0, true);
                         morphAlgo3D.setMinMax(Math.round(min), Math.round(max));
-                        morphAlgo3D.setActiveImage(isActiveImage);
-
+                        
                         if (!userInterface.isAppFrameVisible()) {
                             morphAlgo3D.setProgressBarVisible(false);
                         }
@@ -302,7 +293,6 @@ public class JDialogThresholdLUT extends JDialogBase {
                         morphAlgo3D.run();
 
                         AlgorithmQuantify algoQuantify = new AlgorithmQuantify(image, resultImage);
-                        algoQuantify.setActiveImage(isActiveImage);
 
                         if (!userInterface.isAppFrameVisible()) {
                             algoQuantify.setProgressBarVisible(false);

@@ -469,7 +469,6 @@ public class JDialogRegistrationAIR extends JDialogBase implements AlgorithmInte
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());
@@ -850,7 +849,7 @@ public class JDialogRegistrationAIR extends JDialogBase implements AlgorithmInte
         // See algorithm performed event. This is made possible by implementing
         air.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
@@ -860,8 +859,6 @@ public class JDialogRegistrationAIR extends JDialogBase implements AlgorithmInte
                 return;
             }
         } else {
-            air.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 air.setProgressBarVisible(false);
             }

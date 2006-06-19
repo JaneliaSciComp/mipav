@@ -756,7 +756,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                     if (isProgressBarVisible()) {
                         progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80)),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
 
                     if (transformDir == FORWARD) {
@@ -1023,7 +1023,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                     if (isProgressBarVisible()) {
                         progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80)),
-                                                activeImage);
+                                                runningInSeparateThread);
                     }
 
                     if (transformDir == FORWARD) {
@@ -2095,7 +2095,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
 
             if (!image25D && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(10 + ((float) (i + 1) / ndim * 80)), activeImage);
+                progressBar.updateValue(Math.round(10 + ((float) (i + 1) / ndim * 80)), runningInSeparateThread);
             }
         }
 

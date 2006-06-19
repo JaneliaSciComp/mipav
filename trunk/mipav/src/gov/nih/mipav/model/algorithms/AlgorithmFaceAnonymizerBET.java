@@ -198,7 +198,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         bet.setStiffness(stiffnessBET);
         bet.setExtractPaint(extractBrainToPaint);
         bet.setSaveBrainMesh(false);
-        bet.setActiveImage(isActiveImage());
+        bet.setRunningInSeparateThread(isRunningInSeparateThread());
 
         if (!ViewUserInterface.getReference().isAppFrameVisible()) {
             bet.setProgressBarVisible(false);
@@ -495,6 +495,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      */
     private void incrementProgressBar(int inc) {
         currentProgressBarValue += inc;
-        progressBar.updateValue(currentProgressBarValue, activeImage);
+        progressBar.updateValue(currentProgressBarValue, runningInSeparateThread);
     }
 }

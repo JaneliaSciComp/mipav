@@ -249,7 +249,6 @@ public class JDialogEvaluateSegmentation extends JDialogBase implements Algorith
         userInterface = trueImage.getUserInterface();
         parentFrame = trueImage.getParentFrame();
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }

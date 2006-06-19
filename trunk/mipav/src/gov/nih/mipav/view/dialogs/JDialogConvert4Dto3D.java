@@ -169,14 +169,12 @@ public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterf
             }
 
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 if (convert4Dto3DAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                convert4Dto3DAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     convert4Dto3DAlgo.setProgressBarVisible(false);
                 }
@@ -251,7 +249,6 @@ public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterf
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }

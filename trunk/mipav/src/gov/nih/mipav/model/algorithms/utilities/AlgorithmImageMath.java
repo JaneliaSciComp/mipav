@@ -257,7 +257,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                            (srcImage.getType() != ModelStorageBase.DOUBLE)) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.FLOAT, min, max,
                                                                              min, max, false);
-                changeTypeAlgo.setActiveImage(activeImage);
+                changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
                 // if the change algo was halted,
@@ -278,7 +278,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                            (srcImage.getType() != ModelStorageBase.DOUBLE)) {
                 AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, ModelStorageBase.FLOAT, min, max,
                                                                              min, max, false);
-                changeTypeAlgo.setActiveImage(activeImage);
+                changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 changeTypeAlgo.run();
 
                 // if the change algo is halted,
@@ -353,7 +353,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 if (newType != srcImage.getType()) {
                     AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(srcImage, newType, min, max, min, max,
                                                                                  false);
-                    changeTypeAlgo.setActiveImage(activeImage);
+                    changeTypeAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     changeTypeAlgo.run();
 
                     // if the change algo is halted,
@@ -420,7 +420,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -604,7 +604,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -982,7 +982,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 
@@ -1194,7 +1194,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
                                 progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        activeImage);
+                                                        runningInSeparateThread);
                             }
                         } catch (NullPointerException npe) {
 

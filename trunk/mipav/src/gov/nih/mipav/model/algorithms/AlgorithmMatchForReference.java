@@ -164,7 +164,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
             // Make algorithm
             mathAlgo = new AlgorithmRGBConcat(adjImage, adjImage, adjImage, tempImage, true);
-            mathAlgo.setActiveImage(activeImage);
+            mathAlgo.setRunningInSeparateThread(runningInSeparateThread);
             mathAlgo.run();
 
             newAdjImage = tempImage;
@@ -207,7 +207,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
             // Make algorithm
             AlgorithmRGBtoGray RGBAlgo = new AlgorithmRGBtoGray(tempImage, adjImage, redValue, greenValue, blueValue,
                                                                 true, threshold, true);
-            RGBAlgo.setActiveImage(activeImage);
+            RGBAlgo.setRunningInSeparateThread(runningInSeparateThread);
             RGBAlgo.run();
 
             newAdjImage = tempImage;
@@ -324,7 +324,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    newXDim, newYDim, false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
 
                 if (colorChanged) {
@@ -345,7 +345,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    newXDim, newYDim, false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
                 newRefImage = trans.getTransformedImage();
                 newRefImage.calcMinMax();
@@ -368,7 +368,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    newXDim, dims[1], false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
 
                 if (colorChanged) {
@@ -389,7 +389,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    newXDim, dims[1], false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
                 newRefImage = trans.getTransformedImage();
                 newRefImage.calcMinMax();
@@ -416,7 +416,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    dims[0], newYDim, false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
 
                 if (colorChanged) {
@@ -438,7 +438,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    dims[0], newYDim, false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
                 newRefImage = trans.getTransformedImage();
                 newRefImage.calcMinMax();
@@ -460,7 +460,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                                                    dims[0], dims[1], false, false, false);
                 }
 
-                trans.setActiveImage(activeImage);
+                trans.setRunningInSeparateThread(runningInSeparateThread);
                 trans.run();
 
                 if (colorChanged) {
@@ -477,7 +477,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
                 if (refNewZDim) {
                     trans = new AlgorithmTransform(refImage, xfrmRef, AlgorithmTransform.TRILINEAR, res[0], res[1],
                                                    res[2], dims[0], dims[1], newZDim, false, false, false);
-                    trans.setActiveImage(activeImage);
+                    trans.setRunningInSeparateThread(runningInSeparateThread);
                     trans.run();
 
                     newRefImage = trans.getTransformedImage();

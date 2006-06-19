@@ -356,7 +356,6 @@ public class JDialogHomomorphicFilter extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -472,15 +471,13 @@ public class JDialogHomomorphicFilter extends JDialogBase
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (FrequencyFilterAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    FrequencyFilterAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         FrequencyFilterAlgo.setProgressBarVisible(false);
                     }
@@ -528,15 +525,13 @@ public class JDialogHomomorphicFilter extends JDialogBase
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (FrequencyFilterAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    FrequencyFilterAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         FrequencyFilterAlgo.setProgressBarVisible(false);
                     }

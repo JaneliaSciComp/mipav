@@ -195,15 +195,13 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
                 userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
             }
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface.
                 if (orderAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                orderAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     orderAlgo.setProgressBarVisible(false);
                 }
@@ -240,7 +238,6 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         run();
     }

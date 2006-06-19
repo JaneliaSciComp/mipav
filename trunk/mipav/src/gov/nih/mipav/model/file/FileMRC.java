@@ -154,7 +154,8 @@ public class FileMRC extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading MRC file...", 0, 100, true, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            progressBar.setVisible(true);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setVisible(isProgressBarVisible());
 
             file = new File(fileDir + fileName);
 
@@ -479,7 +480,8 @@ public class FileMRC extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing MRC file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        progressBar.setVisible(isProgressBarVisible());
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
@@ -763,7 +765,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, byteBuffer);
                         raFile.write(byteBuffer);
                     } // for (z = sBegin; z <= sEnd; z++,count++)
@@ -781,7 +783,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -813,7 +815,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportSliceXY(i, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -846,7 +848,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportComplexData(2 * i * sliceSize, sliceSize, floatBuffer, floatBufferI);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -889,7 +891,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isActiveImage());
+                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
                         image.exportRGBData(1, 4 * i * sliceSize, sliceSize, byteBufferR);
                         image.exportRGBData(2, 4 * i * sliceSize, sliceSize, byteBufferG);
                         image.exportRGBData(3, 4 * i * sliceSize, sliceSize, byteBufferB);

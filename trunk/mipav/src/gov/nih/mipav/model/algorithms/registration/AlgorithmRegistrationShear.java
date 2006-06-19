@@ -595,7 +595,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         try {
             progressBar.setMessage("Blurring image A");
-            progressBar.updateValue(5, activeImage);
+            progressBar.updateValue(5, runningInSeparateThread);
             blurredImageA = (ModelImage) imageA.clone();
             sigmas[0] = twoblur;
             sigmas[1] = twoblur;
@@ -703,7 +703,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         try {
             progressBar.setMessage("Blurring image B");
-            progressBar.updateValue(10, activeImage);
+            progressBar.updateValue(10, runningInSeparateThread);
 
             if (resampledImageB != null) {
                 blurredImageB = (ModelImage) resampledImageB.clone();
@@ -728,7 +728,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
             // Getting best coarse shift
             progressBar.setMessage("Getting best coarse shift");
-            progressBar.updateValue(15, activeImage);
+            progressBar.updateValue(15, runningInSeparateThread);
             sx = 0;
             sy = 0;
             sz = 0;
@@ -841,7 +841,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         /* blurring the first pass weight */
 
         progressBar.setMessage("Getting the first pass weight");
-        progressBar.updateValue(20, activeImage);
+        progressBar.updateValue(20, runningInSeparateThread);
 
         try {
             blurredImageW = (ModelImage) imageA.clone();
@@ -874,7 +874,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         // Calculate fitim an array of 7 volSize images and then calculate
         // chol_fitim from fitim
         progressBar.setMessage("Creating first alignment structure");
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
         success = mri_3dalign_setup(blurredImageA, blurredImageW);
 
         if (success == -1) {
@@ -925,7 +925,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         init_dz = sz * zdel;
 
         progressBar.setMessage("Calculating first alignment parameters");
-        progressBar.updateValue(40, activeImage);
+        progressBar.updateValue(40, runningInSeparateThread);
         mri_3dalign_one(blurredImageB);
         blurredImageB.disposeLocal();
         blurredImageB = null;
@@ -965,7 +965,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         final_regmode = VL_final;
         progressBar.setMessage("Creating final alignment structure");
-        progressBar.updateValue(60, activeImage);
+        progressBar.updateValue(60, runningInSeparateThread);
         success = mri_3dalign_setup(imageA, null);
 
         if (success == -1) {
@@ -987,7 +987,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         init_dz = dz_1;
 
         progressBar.setMessage("Calculating final alignment parameters");
-        progressBar.updateValue(80, activeImage);
+        progressBar.updateValue(80, runningInSeparateThread);
 
         if (resampledImageB != null) {
             mri_3dalign_one_final(resampledImageB);
@@ -1006,7 +1006,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
         cleanup();
         disposeProgressBar();
         setCompleted(true);
@@ -4367,7 +4367,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                     // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
                     imageMarginsAlgo.performCopiesWithBuffers(false);
 
-                    imageMarginsAlgo.setActiveImage(activeImage);
+                    imageMarginsAlgo.setRunningInSeparateThread(runningInSeparateThread);
                     imageMarginsAlgo.run();
                 } catch (OutOfMemoryError oome) {
                     cleanup();

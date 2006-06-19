@@ -168,7 +168,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm",
                                              srcImage.getUserInterface());
                 gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
-                gradMagAlgo.setActiveImage(activeImage);
+                gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 gradMagAlgo.run();
 
                 if (gradMagAlgo.isCompleted() == false) {
@@ -333,7 +333,7 @@ Found:
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if (((i % xDim) == 0) || ((i % xDim) == (xDim - 1))) {
@@ -714,7 +714,7 @@ Found:
                                              srcImage.getUserInterface());
 
                 gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
-                gradMagAlgo.setActiveImage(activeImage);
+                gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 gradMagAlgo.run();
 
                 if (gradMagAlgo.isCompleted() == false) {
@@ -869,7 +869,7 @@ Found:
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 50), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 50), runningInSeparateThread);
             }
 
             temp = i % imageLength;
@@ -1207,7 +1207,7 @@ Found:
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 50) + 50, activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 50) + 50, runningInSeparateThread);
             }
 
             if (destImage.getShort(i) == WSHED) {

@@ -1548,7 +1548,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
             mesg = "Loop: " + loop + " of " + itMax + " FFT1()";
             progressBar.setMessage(mesg);
-            progressBar.updateValue((loop * 100) / itMax, activeImage);
+            progressBar.updateValue((loop * 100) / itMax, runningInSeparateThread);
             real_fft3d(diffr, Rx, Ry, twoRz, Rx + 2, Ry + 2, 1);
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu"); diffr is essentially the same here.  Difference is in
             // the bottom row for all the image planes

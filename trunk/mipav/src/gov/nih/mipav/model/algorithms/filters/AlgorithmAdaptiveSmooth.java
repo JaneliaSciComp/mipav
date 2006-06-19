@@ -329,7 +329,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
         progressBar.setMessage("Converting from RGB to YCrCb");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
@@ -350,7 +350,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, activeImage);
+        progressBar.updateValue(95, runningInSeparateThread);
         progressBar.setMessage("Converting fromYCrCb to RGB");
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -387,7 +387,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -438,7 +438,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
         progressBar.setLocation(xScreen / 2, yScreen / 2);
         progressBar.setVisible(true);
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
 
 
         process(imgBuffer);
@@ -476,7 +476,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
 
         if (threadStopped) {
             cleanup();
@@ -1331,13 +1331,13 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        progressBar.updateValue(10, activeImage);
+        progressBar.updateValue(10, runningInSeparateThread);
         progressBar.setMessage("Performing median filter");
         medianFilter(fY);
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
         progressBar.setMessage("Creating edge graph");
         createEdgeGraph(fY);
-        progressBar.updateValue(50, activeImage);
+        progressBar.updateValue(50, runningInSeparateThread);
         progressBar.setMessage("Filtering in Y space");
         filterProcessBW();
 
@@ -1392,13 +1392,13 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        progressBar.updateValue(10, activeImage);
+        progressBar.updateValue(10, runningInSeparateThread);
         progressBar.setMessage("Performing median filter");
         medianFilter(fY, fR, fB);
-        progressBar.updateValue(30, activeImage);
+        progressBar.updateValue(30, runningInSeparateThread);
         progressBar.setMessage("Creating edge graph");
         createEdgeGraph(fY, fR, fB);
-        progressBar.updateValue(50, activeImage);
+        progressBar.updateValue(50, runningInSeparateThread);
         progressBar.setMessage("Filtering in Y space");
         filterProcess();
 
@@ -1412,7 +1412,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         if (!reduce) {
             data = Cb;
             radius = radiusCb;
-            progressBar.updateValue(70, activeImage);
+            progressBar.updateValue(70, runningInSeparateThread);
             progressBar.setMessage("Filtering in Cb space");
             filterProcess();
 
@@ -1425,7 +1425,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
 
             data = Cr;
             radius = radiusCr;
-            progressBar.updateValue(90, activeImage);
+            progressBar.updateValue(90, runningInSeparateThread);
             progressBar.setMessage("Filtering in Cr space");
             filterProcess();
 
@@ -1473,7 +1473,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             createEdgeGraph(newY, newR, newB);
             data = newB;
             radius = radiusCb / 2.0f;
-            progressBar.updateValue(70, activeImage);
+            progressBar.updateValue(70, runningInSeparateThread);
             progressBar.setMessage("Filtering in Cb space");
             filterProcess();
 
@@ -1486,7 +1486,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
 
             data = newR;
             radius = radiusCr / 2.0f;
-            progressBar.updateValue(90, activeImage);
+            progressBar.updateValue(90, runningInSeparateThread);
             progressBar.setMessage("Filtering in Cr space");
             filterProcess();
 

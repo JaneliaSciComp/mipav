@@ -188,7 +188,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
 
         buildProgressBar(srcImage.getFileInfo()[0].getFileName(), "Reordering image to dicom order ...", 0, 100);
         initProgressBar();
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         xyzSize = xDim * yDim * zDim;
 
         try {
@@ -270,7 +270,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         destImage.setFileInfo(newFileInfo);
 
         for (x = 0; (x < xDim) && !threadStopped; x++) {
-            progressBar.updateValue(Math.round(100 * x / (xDim - 1)), activeImage);
+            progressBar.updateValue(Math.round(100 * x / (xDim - 1)), runningInSeparateThread);
 
             switch (orient[0]) {
 

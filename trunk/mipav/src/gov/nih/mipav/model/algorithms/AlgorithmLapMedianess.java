@@ -69,7 +69,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
      * @param  img25D       Flag, if true, indicates that each slice of the 3D volume should be processed independently.
      *                      2D images disregard this flag.
      * @param  ampFactor    An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
-     * @param  activeImage  whether the algorithm is running in a separate thread
+     * @param  runningInSeparateThread  whether the algorithm is running in a separate thread
      */
     public AlgorithmLapMedianess(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor,
                                  boolean activeImage) {
@@ -81,7 +81,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         entireImage = maskFlag;
         image25D = img25D;
         amplificationFactor = ampFactor;
-        this.activeImage = activeImage;
+        this.runningInSeparateThread = activeImage;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -115,7 +115,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
      * @param  img25D       Flag, if true, indicates that each slice of the 3D volume should be processed independently.
      *                      2D images disregard this flag.
      * @param  ampFactor    An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
-     * @param  activeImage  whether the algorithm is running in a separate thread
+     * @param  runningInSeparateThread  whether the algorithm is running in a separate thread
      */
     public AlgorithmLapMedianess(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                  boolean img25D, float ampFactor, boolean activeImage) {
@@ -127,7 +127,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         entireImage = maskFlag;
         image25D = img25D;
         amplificationFactor = ampFactor;
-        this.activeImage = activeImage;
+        this.runningInSeparateThread = activeImage;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -310,7 +310,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             makeKernels2D(sigs);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / 8 * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (s) / 8 * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -366,7 +366,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -466,7 +466,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             makeKernels3D(sigs);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / 8 * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (s) / 8 * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -540,7 +540,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             makeKernels2D(sigs);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / 8 * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (s) / 8 * 100), runningInSeparateThread);
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -639,7 +639,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
             }
 
             if ((entireImage == true) || mask.get(i)) {

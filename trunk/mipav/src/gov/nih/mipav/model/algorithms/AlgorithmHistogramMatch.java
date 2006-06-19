@@ -170,7 +170,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
                 try {
                     progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, activeImage); // not quite midway
+                    progressBar.updateValue(45, runningInSeparateThread); // not quite midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -195,7 +195,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (colour) / valuesPerPixel) * 100), activeImage);
+                            progressBar.updateValue((int) (((float) (colour) / valuesPerPixel) * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing colour " + Integer.toString(colour));
                         }
                     } catch (NullPointerException npe) {
@@ -299,7 +299,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
                 try {
                     progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, activeImage); // a little less than midway
+                    progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -324,7 +324,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (colour) / valuesPerPixel) * 100), activeImage);
+                            progressBar.updateValue((int) (((float) (colour) / valuesPerPixel) * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing colour " + Integer.toString(colour));
                         }
                     } catch (NullPointerException npe) {

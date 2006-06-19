@@ -206,7 +206,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Processing Image");
-                progressBar.updateValue(45, activeImage); // a little less than midway
+                progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -359,7 +359,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Processing Image");
-                progressBar.updateValue(45, activeImage); // a little less than midway
+                progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {

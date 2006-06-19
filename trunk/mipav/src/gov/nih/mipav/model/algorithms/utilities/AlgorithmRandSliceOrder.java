@@ -131,7 +131,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
         for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / (sliceNumber - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) (s) / (sliceNumber - 1) * 100), runningInSeparateThread);
             }
 
             try {

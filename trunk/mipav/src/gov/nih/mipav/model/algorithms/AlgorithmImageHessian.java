@@ -256,7 +256,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         double maxExpRb = 0, maxExpS = 0;
 
         for (row = 0; row < numRows; row++) {
-            progressBar.updateValue(Math.round(((float) (row) / (numRows - 1) * 100)), activeImage);
+            progressBar.updateValue(Math.round(((float) (row) / (numRows - 1) * 100)), runningInSeparateThread);
 
             for (col = 0; col < numCols; col++) {
 
@@ -441,7 +441,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (plane = 0; plane < numPlanes; plane++) {
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
 
                 for (row = 0; row < numRows; row++) {
 
@@ -671,7 +671,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (row = 0; row < numRows; row++) {
-                progressBar.updateValue(Math.round(((float) (row) / (numRows - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (row) / (numRows - 1) * 100)), runningInSeparateThread);
 
                 for (col = 0; col < numCols; col++) {
 
@@ -961,7 +961,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (plane = 0; plane < numPlanes; plane++) {
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
 
                 for (row = 0; row < numRows; row++) {
 
@@ -1240,7 +1240,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             plane = ((numPlanes / 2) - 1);
 
             for (plane--; plane < ((numPlanes / 2) + 2); plane++) { // do 3 center slices
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
 
                 for (row = 0; row < numRows; row++) {
 
@@ -1484,7 +1484,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (plane = 0; plane < numPlanes; plane++) {
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), activeImage);
+                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
 
                 for (row = 0; row < numRows; row++) {
 

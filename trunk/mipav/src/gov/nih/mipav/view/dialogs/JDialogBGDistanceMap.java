@@ -363,7 +363,6 @@ public class JDialogBGDistanceMap extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

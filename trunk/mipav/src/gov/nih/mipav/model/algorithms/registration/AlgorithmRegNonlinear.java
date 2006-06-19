@@ -785,7 +785,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
             dataOut = null;
 
             AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
-            VOIExtAlgo.setActiveImage(activeImage);
+            VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
             VOIExtAlgo.run();
             resultImage.setVOIs(maskImage.getVOIs());
             maskImage.disposeLocal();
@@ -1331,7 +1331,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                 if (progressBar != null) {
                     progressBar.setMessage("Registering slice number " + String.valueOf(sNumber));
-                    progressBar.updateValue(100 * series / seriesNumber, activeImage);
+                    progressBar.updateValue(100 * series / seriesNumber, runningInSeparateThread);
                 }
 
                 if (doAdjacent) {
@@ -1693,7 +1693,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                     if ((!series2D) && (progressBar != null)) {
                         progressBar.setMessage("Blurring source Image");
-                        progressBar.updateValue(5, activeImage);
+                        progressBar.updateValue(5, runningInSeparateThread);
                     } // if ((!series2D) && (progressBar != null))
 
                     sigmas[0] = sourceGaussX;
@@ -1739,7 +1739,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                     if ((!series2D) && (progressBar != null)) {
                         progressBar.setMessage("Blurring target Image");
-                        progressBar.updateValue(10, activeImage);
+                        progressBar.updateValue(10, runningInSeparateThread);
                     }
 
                     sigmas[0] = targetGaussX;
@@ -1821,7 +1821,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                         case NL2D12:
                         case NL3D30:
                             progressBar.setMessage("Calculating second order parameters");
-                            progressBar.updateValue(60, activeImage);
+                            progressBar.updateValue(60, runningInSeparateThread);
                             break;
 
                         case NL2D20:
@@ -2274,7 +2274,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if ((!series2D) && (progressBar != null)) {
                 progressBar.setMessage("Reslicing source image");
-                progressBar.updateValue(80, activeImage);
+                progressBar.updateValue(80, runningInSeparateThread);
             }
 
             if (inPlane) { // 2D
@@ -2364,7 +2364,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                 if ((!series2D) && (progressBar != null)) {
                     progressBar.setMessage("Reslicing mask image");
-                    progressBar.updateValue(85, activeImage);
+                    progressBar.updateValue(85, runningInSeparateThread);
                 }
 
                 sMinValue = Float.MAX_VALUE;
@@ -2417,7 +2417,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                 if ((!series2D) && (progressBar != null)) {
                     progressBar.setMessage("Performing VOI extraction algorithm");
-                    progressBar.updateValue(90, activeImage);
+                    progressBar.updateValue(90, runningInSeparateThread);
                 }
 
                 AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);

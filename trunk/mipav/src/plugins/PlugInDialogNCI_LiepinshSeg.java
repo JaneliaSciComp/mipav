@@ -165,14 +165,13 @@ public class PlugInDialogNCI_LiepinshSeg extends JDialogBase implements Algorith
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (eyeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                eyeAlgo.setActiveImage(isActiveImage);
                 eyeAlgo.run();
             }
         } catch (OutOfMemoryError x) {

@@ -659,7 +659,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 for (z = 0; (z < nrz) && !threadStopped; z++) {
 
                     if ((n % mod) == 0) {
-                        progressBar.updateValue(n / mod, activeImage);
+                        progressBar.updateValue(n / mod, runningInSeparateThread);
                     }
 
                     n++;
@@ -757,7 +757,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
 
                     if (isProgressBarVisible()) {
                         progressBar.setMessage("process VOI (" + obj.getName() + ")");
-                        progressBar.updateValue(0, activeImage);
+                        progressBar.updateValue(0, runningInSeparateThread);
                     }
 
                     // create an image with voi tags
@@ -775,7 +775,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                             for (z = 0; (z < nrz) && !threadStopped; z++) {
 
                                 if ((n % mod) == 0) {
-                                    progressBar.updateValue(n / mod, activeImage);
+                                    progressBar.updateValue(n / mod, runningInSeparateThread);
                                 }
 
                                 n++;

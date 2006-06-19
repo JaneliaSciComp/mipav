@@ -233,7 +233,6 @@ public class JDialogRegistrationShear extends JDialogBase implements AlgorithmIn
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());
@@ -302,7 +301,7 @@ public class JDialogRegistrationShear extends JDialogBase implements AlgorithmIn
         // See algorithm performed event. This is made possible by implementing
         RegShear.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have
             // user interface work fast
@@ -310,8 +309,6 @@ public class JDialogRegistrationShear extends JDialogBase implements AlgorithmIn
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            RegShear.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 RegShear.setProgressBarVisible(false);
             }

@@ -331,7 +331,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
                 userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
             }
 
-            if (runInSeparateThread && (m_bAlgorithmLaunched == false)) {
+            if (isRunInSeparateThread() && (m_bAlgorithmLaunched == false)) {
 
                 // Start the thread as a low priority because we wish
                 // to still have user interface work fast.
@@ -343,8 +343,6 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
                 // is first created: set launched flag to be true:
                 m_bAlgorithmLaunched = true;
             } else {
-                m_kFaceAnonymizerAlgorithm.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     m_kFaceAnonymizerAlgorithm.setProgressBarVisible(false);
                 }
@@ -434,7 +432,6 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
     }

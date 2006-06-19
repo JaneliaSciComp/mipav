@@ -386,7 +386,6 @@ public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -478,15 +477,13 @@ public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterf
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (deleteAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        deleteAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             deleteAlgo2D.setProgressBarVisible(false);
                         }
@@ -540,15 +537,13 @@ public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterf
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface.
                         if (deleteAlgo2D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        deleteAlgo2D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             deleteAlgo2D.setProgressBarVisible(false);
                         }
@@ -594,15 +589,13 @@ public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterf
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (deleteAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        deleteAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             deleteAlgo3D.setProgressBarVisible(false);
                         }
@@ -655,15 +648,13 @@ public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterf
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast
                         if (deleteAlgo3D.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        deleteAlgo3D.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             deleteAlgo3D.setProgressBarVisible(false);
                         }

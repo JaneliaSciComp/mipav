@@ -256,7 +256,7 @@ public class JDialogDirectResample extends JDialogBase {
                                                       false);
             }
 
-            transformImg.setActiveImage(false);
+            transformImg.setRunningInSeparateThread(false);
 
             if (!userInterface.isAppFrameVisible()) {
                 transformImg.setProgressBarVisible(false);
@@ -296,7 +296,7 @@ public class JDialogDirectResample extends JDialogBase {
 
             }
 
-            transformImg.setActiveImage(false);
+            transformImg.setRunningInSeparateThread(false);
 
             if (!userInterface.isAppFrameVisible()) {
                 transformImg.setProgressBarVisible(false);

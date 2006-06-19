@@ -345,7 +345,7 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
 
         userInterface = matchImage.getUserInterface();
         parentFrame = matchImage.getParentFrame();
-        setActiveImage(parser.isActiveImage());
+
         setSeparateThread(false);
         callAlgorithm();
 
@@ -545,14 +545,12 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
         // if (erodeAlgo3D.startMethod(Thread.MIN_PRIORITY) == false){
         // MipavUtil.displayError("A thread is already running on this object", "Error");
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             if (LSMatch.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            LSMatch.setActiveImage(isActiveImage);
-
             if (!userInterface.isAppFrameVisible()) {
                 LSMatch.setProgressBarVisible(false);
             }

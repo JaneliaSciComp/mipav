@@ -763,7 +763,6 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         if (secondImage != null) {
@@ -1108,7 +1107,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (colocalizationAlgo.startMethod(Thread.MIN_PRIORITY) == false) {

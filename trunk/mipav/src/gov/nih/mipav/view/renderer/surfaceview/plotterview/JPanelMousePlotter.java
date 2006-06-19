@@ -1904,7 +1904,7 @@ public class JPanelMousePlotter extends JPanelRendererBase
                     at = new AlgorithmTranscode(file2delete.toURI().toURL(),
                                                 fileDir + fileName.substring(0, fileName.length() - 4) + fileExt,
                                                 compression);
-                    at.setActiveImage(true);
+                    at.setRunningInSeparateThread(true);
                     at.setQuality(mjpegQuality);
                 } catch (Exception ex) {
                     System.err.println("MalformedURLException in MouseRecorder transcoding");

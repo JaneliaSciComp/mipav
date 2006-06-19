@@ -222,7 +222,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                      m_kSourceGreen,
                                      m_kSourceBlue,
                                      kImage );
-        kRGBAlgoMulti.setActiveImage(false);
+        kRGBAlgoMulti.setRunningInSeparateThread(false);
         kRGBAlgoMulti.setProgressBarVisible(false);
         kRGBAlgoMulti.run();
         kRGBAlgoMulti.finalize();
@@ -251,7 +251,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                             null, null);
         AlgorithmRGBtoGray kRGBAlgo =
             new AlgorithmRGBtoGray( kResult, kImage );
-        kRGBAlgo.setActiveImage(false);
+        kRGBAlgo.setRunningInSeparateThread(false);
         kRGBAlgo.setProgressBarVisible(false);
         kRGBAlgo.run();
         kRGBAlgo.finalize();
@@ -279,7 +279,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         // Make algorithm
         AlgorithmRGBConcat kMathAlgo =
             new AlgorithmRGBConcat( kRed, kGreen, kBlue, kResult, false );
-        kMathAlgo.setActiveImage(false);
+        kMathAlgo.setRunningInSeparateThread(false);
         kMathAlgo.setProgressBarVisible(false);
         kMathAlgo.run();
         kMathAlgo.finalize();
@@ -512,7 +512,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                               unequalDim, image25D, imageCrop,
                                               kernelDiameter, filterType, freq1, freq2,
                                               constructionMethod, butterworthOrder);
-        kFFT.setActiveImage(false);
+        kFFT.setRunningInSeparateThread(false);
         kFFT.setProgressBarVisible( false );
         kFFT.run();
         kFFT.finalize();
@@ -538,7 +538,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                           AlgorithmImageMath.CLIP, true,
                                           null);
 
-        algImageCalc.setActiveImage(false);
+        algImageCalc.setRunningInSeparateThread(false);
         algImageCalc.setProgressBarVisible( false );
         algImageCalc.run();
         algImageCalc.finalize();
@@ -770,8 +770,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             JDialogFlip flipz =
                 new JDialogFlip( ViewUserInterface.getReference(),
                                  kReturn, AlgorithmFlip.Z_AXIS);
-            flipz.setActiveImage(false);
-            flipz.setSeparateThread( false );
             flipz.callAlgorithm();
             flipz.dispose();
             flipz = null;
@@ -779,16 +777,12 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         JDialogFlip flipy =
             new JDialogFlip( ViewUserInterface.getReference(),
                              kReturn, AlgorithmFlip.Y_AXIS);
-        flipy.setActiveImage(false);
-        flipy.setSeparateThread( false );
         flipy.callAlgorithm();
         flipy.dispose();
         flipy = null;
         JDialogFlip flipx =
             new JDialogFlip( ViewUserInterface.getReference(),
                              kReturn, AlgorithmFlip.X_AXIS);
-        flipx.setActiveImage(false);
-        flipx.setSeparateThread( false );
         flipx.callAlgorithm();
         flipx.dispose();
         flipx = null;

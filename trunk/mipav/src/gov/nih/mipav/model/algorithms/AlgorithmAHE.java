@@ -318,7 +318,7 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                 try {
                     progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, activeImage); // not quite midway
+                    progressBar.updateValue(45, runningInSeparateThread); // not quite midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -346,7 +346,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                         try {
 
                             if (pBarVisible) {
-                                progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), activeImage);
+                                progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), runningInSeparateThread);
                                 progressBar.setMessage("Processing color " + Integer.toString(color));
                             }
                         } catch (NullPointerException npe) {
@@ -451,7 +451,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (i) / nSlices) * 100), activeImage);
+                            progressBar.updateValue((int) (((float) (i) / nSlices) * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
                         }
                     } catch (NullPointerException npe) {
@@ -489,7 +489,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                                 if (pBarVisible) {
                                     progressBar.updateValue((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) +
                                                                              i) / (numColors * nSlices)) * 100),
-                                                            activeImage);
+                                                            runningInSeparateThread);
 
                                     if ((color == 1) && rChannel) {
                                         progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
@@ -580,7 +580,7 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                 try {
                     progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, activeImage); // a little less than midway
+                    progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -605,7 +605,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), activeImage);
+                            progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing color " + Integer.toString(color));
                         }
                     } catch (NullPointerException npe) {
@@ -712,7 +712,7 @@ public class AlgorithmAHE extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) ((float) (i) / nSlices * 100), activeImage);
+                            progressBar.updateValue((int) ((float) (i) / nSlices * 100), runningInSeparateThread);
                             progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
                         }
                     } catch (NullPointerException npe) {
@@ -749,7 +749,7 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                             if (pBarVisible) {
                                 progressBar.updateValue((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) + i) /
-                                                                    (numColors * nSlices)) * 100), activeImage);
+                                                                    (numColors * nSlices)) * 100), runningInSeparateThread);
 
                                 if ((color == 1) && rChannel) {
                                     progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));

@@ -218,7 +218,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                         for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
 
                             if (((count % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (count) / (length - 1) * 100), activeImage);
+                                progressBar.updateValue(Math.round((float) (count) / (length - 1) * 100), runningInSeparateThread);
                             }
 
                             buffer[i] = srcImage.getFloat(j, k); // places new pixel data in buffer
@@ -246,7 +246,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                         for (k = oldDimExtents[1] - 1; (k >= 0) && !threadStopped; k--) {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
+                                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                             }
 
                             buffer[i] = srcImage.getFloat(j, k); // places new pixel data in buffer
@@ -264,7 +264,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                         for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
+                                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                             }
 
                             buffer[i] = srcImage.getFloat(j, k); // places new pixel data in buffer
@@ -307,7 +307,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                             for (w = cf-1; (w >= 0) && !threadStopped; w--) {
 
                                 if (((count % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (count) / (length - 1) * 100), activeImage);
+                                    progressBar.updateValue(Math.round((float) (count) / (length - 1) * 100), runningInSeparateThread);
                                 }
 
                                 buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * cf) + ((cf * j) + w)); // puts new pixel data in buffer
@@ -337,7 +337,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                             for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
+                                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                                 }
 
                                 buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * cf) + ((cf * j) + w)); // puts new pixel data in buffer
@@ -359,7 +359,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                             for (w = 0; (w < cf) && !threadStopped; w++) {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), activeImage);
+                                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                                 }
 
                                 buffer[i] = srcImage.getFloat((k * oldDimExtents[0] * cf) + ((cf * j) + w)); // puts new pixel data in buffer
@@ -1026,7 +1026,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         if ((((start + index + tOffset) % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) (start + index + tOffset) / (totalLength - 1) *
-                                                                   100), activeImage);
+                                                                   100), runningInSeparateThread);
                         }
 
                         resultBuffer[start + index + tOffset] = buffer[index];
@@ -1397,7 +1397,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         if ((((start + index + tOffset) % mod) == 0) && isProgressBarVisible()) {
                             progressBar.updateValue(Math.round((float) (start + index + tOffset) / (totalLength - 1) *
-                                                                   100), activeImage);
+                                                                   100), runningInSeparateThread);
                         }
 
                         resultBuffer[start + index + tOffset] = buffer[index];

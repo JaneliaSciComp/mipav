@@ -865,7 +865,6 @@ public class JDialogRegistrationOAR25D extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         if (refImageNum == 0) {
@@ -1242,7 +1241,6 @@ public class JDialogRegistrationOAR25D extends JDialogBase
         setVisible(false);
 
         if (isScript) {
-            reg25.setActiveImage(isActiveImage);
             reg25.run();
         } else {
 

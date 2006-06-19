@@ -183,15 +183,13 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
 
         algoDicomConvert.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (algoDicomConvert.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            algoDicomConvert.setActiveImage(isActiveImage);
-
             if (!userInterface.isAppFrameVisible()) {
                 algoDicomConvert.setProgressBarVisible(false);
             }

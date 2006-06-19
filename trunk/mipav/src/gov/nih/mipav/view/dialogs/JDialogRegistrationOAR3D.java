@@ -474,7 +474,6 @@ public class JDialogRegistrationOAR3D extends JDialogBase implements AlgorithmIn
                     transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
                                                        ydimA, zdimA, false, false, false);
 
-                    transform.setActiveImage(isActiveImage);
                     transform.setUpdateOriginFlag(true);
 
                     if (!UI.isAppFrameVisible()) {
@@ -893,7 +892,6 @@ public class JDialogRegistrationOAR3D extends JDialogBase implements AlgorithmIn
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -1399,15 +1397,13 @@ public class JDialogRegistrationOAR3D extends JDialogBase implements AlgorithmIn
         // Hide dialog
         setVisible(false);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            reg3.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 reg3.setProgressBarVisible(false);
             }

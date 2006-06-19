@@ -177,20 +177,18 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
             // This is made possible by implementing AlgorithmedPerformed interface
             vsMIPAlgo.addListener(this);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 if (vsMIPAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                vsMIPAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     vsMIPAlgo.setProgressBarVisible(false);
                 }
 
                 vsMIPAlgo.run();
-            } // end if (runInSeparateThread)
+            } // end if (isRunInSeparateThread())
 
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("JDialogVSMIP: unable to allocate enough memory for MIP image");

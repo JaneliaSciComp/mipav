@@ -1364,7 +1364,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         for (i = 0; i < xWarp.length; i++) {
 
             if ((i % mod) == 0) {
-                progressBar.updateValue((i + 1) * 100 / xWarp.length, activeImage);
+                progressBar.updateValue((i + 1) * 100 / xWarp.length, runningInSeparateThread);
             }
 
             result[0][i] = C[N][0] + (C[N + 1][0] * xWarp[i]) + (C[N + 2][0] * yWarp[i]);
@@ -1468,7 +1468,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int tmpb1, tmpb2, tmpb3, tmpb4;
         float tmpa1, tmpa2, tmpa3, tmpa4;
 
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         progressBar.setMessage("Performing base to match grid transformation...");
 
         xDimA = baseImage.getExtents()[0];
@@ -1514,7 +1514,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         lengthA = xDimA * yDimA;
 
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         progressBar.setMessage("Performing interpolation into result buffer...");
 
         if (matchImage.isColorImage() == false) {
@@ -1555,7 +1555,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 for (i = 0; i < yDimA; i++) {
 
                     if ((i % mod) == 0) {
-                        progressBar.updateValue(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA), activeImage);
+                        progressBar.updateValue(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA), runningInSeparateThread);
                     }
 
                     yPos = i * xDimA;
@@ -1650,7 +1650,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 for (i = 0; i < yDimA; i++) {
 
                     if ((i % mod) == 0) {
-                        progressBar.updateValue(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA), activeImage);
+                        progressBar.updateValue(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA), runningInSeparateThread);
                     }
 
                     yPos = i * xDimA;
@@ -1782,7 +1782,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         float tmpa1, tmpa2, tmpa3, tmpa4, tmpa5, tmpa6, tmpa7, tmpa8;
         int index000, index001, index010, index011, index100, index101, index110, index111;
 
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         progressBar.setMessage("Performing base to match grid transformation...");
 
         xDimA = baseImage.getExtents()[0];
@@ -1819,7 +1819,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         sliceSizeA = xDimA * yDimA;
         lengthA = sliceSizeA * zDimA;
 
-        progressBar.updateValue(0, activeImage);
+        progressBar.updateValue(0, runningInSeparateThread);
         progressBar.setMessage("Performing interpolation into result buffer...");
 
         if (matchImage.isColorImage() == false) {
@@ -1859,7 +1859,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             for (i = 0; i < zDimA; i++) {
 
                 if ((i % mod) == 0) {
-                    progressBar.updateValue((i + 1) * 100 / zDimA, activeImage);
+                    progressBar.updateValue((i + 1) * 100 / zDimA, runningInSeparateThread);
                 }
 
                 zPos = i * sliceSizeA;
@@ -1981,7 +1981,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             for (i = 0; i < zDimA; i++) {
 
                 if ((i % mod) == 0) {
-                    progressBar.updateValue((i + 1) * 100 / zDimA, activeImage);
+                    progressBar.updateValue((i + 1) * 100 / zDimA, runningInSeparateThread);
                 }
 
                 zPos = i * sliceSizeA;

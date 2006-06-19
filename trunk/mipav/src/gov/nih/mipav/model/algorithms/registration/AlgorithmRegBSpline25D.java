@@ -104,7 +104,7 @@ iteration:
                                              "  ");
 
             // Update the progress bar.
-            progressBar.updateValue((iSlice + 1) * 100 / iNumSlices, activeImage);
+            progressBar.updateValue((iSlice + 1) * 100 / iNumSlices, runningInSeparateThread);
 
             // This is either the specified reference slice or the previous
             // slice (previous slice is set to last slice when the

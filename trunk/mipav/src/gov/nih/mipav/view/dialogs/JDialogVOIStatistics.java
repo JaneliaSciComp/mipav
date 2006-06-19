@@ -774,7 +774,6 @@ public class JDialogVOIStatistics extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         overwrite.setSelected(true);
 
@@ -1052,7 +1051,7 @@ public class JDialogVOIStatistics extends JDialogBase
         everything.setSelectedIndex(LOG_TAB);
         cancelButton.setEnabled(false);
         OKButton.setEnabled(false);
-        da.setActiveImage(false);
+        da.setRunningInSeparateThread(false);
 
         if (!ui.isAppFrameVisible()) {
             da.setProgressBarVisible(false);

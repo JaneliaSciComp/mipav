@@ -204,7 +204,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100),
-                                            activeImage);
+                                            runningInSeparateThread);
                 }
 
                 if (((z == 0) && (frontSlices > 0)) || ((z == oldZdim) && (backSlices > 0))) {

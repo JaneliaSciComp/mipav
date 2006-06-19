@@ -501,7 +501,6 @@ public class JDialogFRETEfficiency extends JDialogBase
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
 
         if (!checkImage(FRETImage)) {
@@ -662,15 +661,13 @@ public class JDialogFRETEfficiency extends JDialogBase
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (feffAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                feffAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     feffAlgo.setProgressBarVisible(false);
                 }

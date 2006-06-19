@@ -255,7 +255,6 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());
@@ -298,15 +297,13 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
         // Start the thread as a low priority because we wish to still have user interface work fast.
         RegPatPos.addListener(this);
 
-        if (runInSeparateThread) {
+        if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (RegPatPos.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            RegPatPos.setActiveImage(isActiveImage);
-
             if (!UI.isAppFrameVisible()) {
                 RegPatPos.setProgressBarVisible(false);
             }

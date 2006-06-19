@@ -305,7 +305,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
         parser.putVariable(destImageAKey, getResultImageA().getImageName());
@@ -382,15 +381,13 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (matchAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                matchAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     matchAlgo.setProgressBarVisible(false);
                 }

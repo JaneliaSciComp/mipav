@@ -367,7 +367,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         resultBuffer = new float[resultNumber][sliceSize];
 
         for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
-            progressBar.updateValue((int) ((y - yStart) * (100.0f / (yEnd - yStart))), activeImage);
+            progressBar.updateValue((int) ((y - yStart) * (100.0f / (yEnd - yStart))), runningInSeparateThread);
 
             for (x = xStart; x <= xEnd; x++) {
                 pos = x + (y * xDim);

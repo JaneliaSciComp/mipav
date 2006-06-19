@@ -233,7 +233,7 @@ public class FileDM3 extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading DM3 file...", 0, 100, false, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(!one);
+            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
 
             file = new File(fileDir + fileName);
 

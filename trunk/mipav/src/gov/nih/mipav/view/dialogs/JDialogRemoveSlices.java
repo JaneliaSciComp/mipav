@@ -392,7 +392,7 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
 
                 replaceSlicesAlgo.addListener(this);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (replaceSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -401,7 +401,7 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
                 } else {
 
                     // replaceSlicesAlgo.setSeparateThread(false);
-                    replaceSlicesAlgo.setActiveImage(false);
+                    replaceSlicesAlgo.setRunningInSeparateThread(false);
                     replaceSlicesAlgo.run();
                 }
             }
@@ -665,7 +665,6 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -852,15 +851,13 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
                     removeSlicesAlgo.addListener(this);
                     setVisible(false); // Hide dialog
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (removeSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        removeSlicesAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             removeSlicesAlgo.setProgressBarVisible(false);
                         }
@@ -908,15 +905,13 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (removeSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        removeSlicesAlgo.setActiveImage(isActiveImage);
-
                         if (!userInterface.isAppFrameVisible()) {
                             removeSlicesAlgo.setProgressBarVisible(false);
                         }

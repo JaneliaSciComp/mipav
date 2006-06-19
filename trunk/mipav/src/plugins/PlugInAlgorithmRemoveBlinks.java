@@ -261,7 +261,7 @@ public class PlugInAlgorithmRemoveBlinks extends AlgorithmBase {
             }
 
             AlgorithmRemoveSlices algoRS = new AlgorithmRemoveSlices(srcImage, destImage, removedSlices);
-            algoRS.setActiveImage(activeImage);
+            algoRS.setRunningInSeparateThread(runningInSeparateThread);
             algoRS.run();
 
             if (algoRS.isCompleted()) {

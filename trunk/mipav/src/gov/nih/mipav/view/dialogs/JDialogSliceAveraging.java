@@ -330,7 +330,6 @@ public class JDialogSliceAveraging extends JDialogBase implements AlgorithmInter
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 
@@ -398,15 +397,13 @@ public class JDialogSliceAveraging extends JDialogBase implements AlgorithmInter
                 // Hide dialog
                 setVisible(false);
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (sAverAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    sAverAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         sAverAlgo.setProgressBarVisible(false);
                     }
@@ -455,15 +452,13 @@ public class JDialogSliceAveraging extends JDialogBase implements AlgorithmInter
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
-                if (runInSeparateThread) {
+                if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
                     if (sAverAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    sAverAlgo.setActiveImage(isActiveImage);
-
                     if (!userInterface.isAppFrameVisible()) {
                         sAverAlgo.setProgressBarVisible(false);
                     }

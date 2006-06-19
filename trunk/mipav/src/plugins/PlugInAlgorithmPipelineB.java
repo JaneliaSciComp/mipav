@@ -276,7 +276,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 		    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, Bone);
 			BoneIDtemp.disposeLocal();		BoneIDtemp=null;
 		}		
-	    progressBar.updateValue(50 * (aa - 1) + 43, activeImage);
+	    progressBar.updateValue(50 * (aa - 1) + 43, runningInSeparateThread);
 	    residual.disposeLocal();	    residual=null;
 	    BoneID.disposeLocal();			BoneID=null;
 	    return BoneIDtemp1;   
@@ -1146,12 +1146,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             // STEP 1: VOI to Mask
             voiMask = makeVOI(processedImage);								//ShowImage(voiMask,"voi binary mask");
-            progressBar.updateValue((50 * (aa - 1)) + 4, activeImage);
+            progressBar.updateValue((50 * (aa - 1)) + 4, runningInSeparateThread);
 
 
             // STEP 2: ISN and N3 inside VOI
             ISN(processedImage);											//ShowImage(destImage2,"intensity slice normalized image");
-            progressBar.updateValue((50 * (aa - 1)) + 9, activeImage);
+            progressBar.updateValue((50 * (aa - 1)) + 9, runningInSeparateThread);
             if(useN3) {
             	ModelImage tmp = processedImage;
             	processedImage = N3(processedImage);
@@ -1160,25 +1160,25 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             	tmp = null;
             	//ViewJFrameImage dif = new ViewJFrameImage(destImage2);
             }
-           	progressBar.updateValue((50 * (aa - 1)) + 30, activeImage);
+           	progressBar.updateValue((50 * (aa - 1)) + 30, runningInSeparateThread);
                        
 
             //STEP 3: FUZZY SEGMENT ENTIRE IMAGE
             ModelImage HardSeg1 = HardFuzzy(processedImage, 4);				//ShowImage(HardSeg1,"4class hard fuzzy segmentation");
-            progressBar.updateValue(50 * (aa - 1) + 18, activeImage);
+            progressBar.updateValue(50 * (aa - 1) + 18, runningInSeparateThread);
 
             
             //STEP 4: ISOLATE BONE
             //(and if bone continuous fill with bone marrow)
             ModelImage boneSeg = processBone(HardSeg1);						//ShowImage(destImage3a,"isolated bone");
-            progressBar.updateValue(50 * (aa - 1) + 27, activeImage);
+            progressBar.updateValue(50 * (aa - 1) + 27, runningInSeparateThread);
 
             
             //STEP 5: PROCESS BONE MARROW --(given none found in step 4) 
             //(and if bone nonexistant, create thin artifical bone around bone marrow)
             if(continuousBone==false){
 	            processBoneMarrow(boneSeg, HardSeg1);				//ShowImage(destImage3a,"bone with bone marrow");
-	            progressBar.updateValue(50 * (aa - 1) + 36, activeImage);
+	            progressBar.updateValue(50 * (aa - 1) + 36, runningInSeparateThread);
             }            
             processedImage.disposeLocal();
             processedImage = null;
@@ -1186,7 +1186,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             
             //STEP 6: PROCESS FAT
             ModelImage fatSeg = processHardFat(HardSeg1);        				//ShowImage(destImage3b, "bundle cleanedup fat image");
-            progressBar.updateValue(50 * (aa - 1) + 46, activeImage);
+            progressBar.updateValue(50 * (aa - 1) + 46, runningInSeparateThread);
             HardSeg1.disposeLocal();
             HardSeg1=null;
             voiMask.disposeLocal();
@@ -1196,7 +1196,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
             //STEP 7: MERGING PROCESSED THIGH IMAGES
             mergeImages(fatSeg, boneSeg, fatSeg);			//ShowImage(destImage3b, "after 'merge'");
-            progressBar.updateValue(50 * (aa - 1) + 50, activeImage);
+            progressBar.updateValue(50 * (aa - 1) + 50, runningInSeparateThread);
             boneSeg.disposeLocal();
             boneSeg = null;
             
@@ -1330,7 +1330,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         	    		"BoneMarrow\t\t"+boneMarrowIntensityTotal/boneMarrowCountTotal);
             	}
 
-                progressBar.updateValue(50*aa, activeImage);
+                progressBar.updateValue(50*aa, runningInSeparateThread);
             }
 	        System.out.println("thigh cleanup done --destImage");
 	        setCompleted(true);

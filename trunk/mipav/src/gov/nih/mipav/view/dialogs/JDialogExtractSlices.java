@@ -350,15 +350,13 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (extractSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                extractSlicesAlgo.setActiveImage(isActiveImage);
-
                 if (!userInterface.isAppFrameVisible()) {
                     extractSlicesAlgo.setProgressBarVisible(false);
                 }
@@ -426,7 +424,6 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         run();
         parser.putVariable(destImageKey, getResultImage().getImageName());

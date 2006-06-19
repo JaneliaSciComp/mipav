@@ -2817,7 +2817,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
 
         for (iter = 0; iter < iterations; iter++) {
             progressBar.setMessage("iteration = " + (iter + 1));
-            progressBar.updateValue(100 * iter / iterations, activeImage);
+            progressBar.updateValue(100 * iter / iterations, runningInSeparateThread);
             newToOld();
             getProbX();
             getProbXOld();
@@ -2927,7 +2927,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
             } // for (j = 0; j < gaussians; j++)
         } // for (i = 0; i < count; i++)
 
-        progressBar.updateValue(100, activeImage);
+        progressBar.updateValue(100, runningInSeparateThread);
     }
 
     /**

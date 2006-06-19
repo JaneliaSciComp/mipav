@@ -254,7 +254,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round((float) ((s * iterations) + n) / ((nImages * iterations) - 1) *
-                                                           100), activeImage);
+                                                           100), runningInSeparateThread);
                 }
 
                 // Normalize GM !!
@@ -377,7 +377,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                     if ((i % offset) == 0) {
                         progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                                Math.round(100 * ((float) (n)) / iterations), activeImage);
+                                                Math.round(100 * ((float) (n)) / iterations), runningInSeparateThread);
                     }
                 }
 
@@ -410,7 +410,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
                     if ((i % offset) == 0) {
                         progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
                                                 Math.round(100 * ((float) (n)) / iterations) +
-                                                Math.round((float) (50.0) / (iterations)), activeImage);
+                                                Math.round((float) (50.0) / (iterations)), runningInSeparateThread);
                     }
 
                 }
@@ -513,7 +513,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), activeImage);
+                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), runningInSeparateThread);
             }
 
             for (z = 0; z < srcImage.getExtents()[2]; z++) {
@@ -640,7 +640,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                 if (isProgressBarVisible()) {
                     progressBar.updateValue(Math.round((float) ((s * iterations) + n) / ((nImages * iterations) - 1) *
-                                                           100), activeImage);
+                                                           100), runningInSeparateThread);
                 }
                 // Normalize GM !!
 
@@ -760,7 +760,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
                     if ((i % offset) == 0) {
                         progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                                Math.round(100 * ((float) (n)) / iterations), activeImage);
+                                                Math.round(100 * ((float) (n)) / iterations), runningInSeparateThread);
                     }
                 }
 
@@ -787,7 +787,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
                     if ((i % offset) == 0) {
                         progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
                                                 Math.round(100 * ((float) (n)) / iterations) +
-                                                Math.round((float) (50.0) / (iterations)), activeImage);
+                                                Math.round((float) (50.0) / (iterations)), runningInSeparateThread);
                     }
 
                 }

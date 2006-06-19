@@ -387,9 +387,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             if (isProgressBarVisible()) {
 
                 if (secondStageErosion) {
-                    progressBar.updateValue(Math.round((iStep * 100.0f) / 800 * 25), activeImage);
+                    progressBar.updateValue(Math.round((iStep * 100.0f) / 800 * 25), runningInSeparateThread);
                 } else {
-                    progressBar.updateValue(Math.round((iStep * 100.0f) / 800 * 50), activeImage);
+                    progressBar.updateValue(Math.round((iStep * 100.0f) / 800 * 50), runningInSeparateThread);
                 }
             }
 
@@ -419,9 +419,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             if (((i % 100) == 0) && isProgressBarVisible()) {
 
                 if (secondStageErosion) {
-                    progressBar.updateValue(Math.round((25 + (((float) (i)) / iMaxUpdate * 25))), activeImage);
+                    progressBar.updateValue(Math.round((25 + (((float) (i)) / iMaxUpdate * 25))), runningInSeparateThread);
                 } else {
-                    progressBar.updateValue(Math.round((50 + (((float) (i)) / iMaxUpdate * 50))), activeImage);
+                    progressBar.updateValue(Math.round((50 + (((float) (i)) / iMaxUpdate * 50))), runningInSeparateThread);
                 }
             }
 
@@ -456,7 +456,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(50 + ((iStep * 100.0f) / 800 * 25)), activeImage);
+                    progressBar.updateValue(Math.round(50 + ((iStep * 100.0f) / 800 * 25)), runningInSeparateThread);
                 }
 
                 for (i = 1; i <= iMaxUpdate; i++) {
@@ -483,7 +483,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
                 if (((i % 100) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((75 + (((float) (i)) / iMaxUpdate * 25))), activeImage);
+                    progressBar.updateValue(Math.round((75 + (((float) (i)) / iMaxUpdate * 25))), runningInSeparateThread);
                 }
 
                 updateMesh();

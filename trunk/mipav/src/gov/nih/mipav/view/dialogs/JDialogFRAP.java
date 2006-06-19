@@ -498,7 +498,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (frapAlgo.startMethod(Thread.MIN_PRIORITY) == false) {

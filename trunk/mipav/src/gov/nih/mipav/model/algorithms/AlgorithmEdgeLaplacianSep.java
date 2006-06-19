@@ -598,7 +598,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating the edges of slice " + (s + 1) + "...");
-                progressBar.updateValue(Math.round(s * inc), activeImage);
+                progressBar.updateValue(Math.round(s * inc), runningInSeparateThread);
             }
 
             start = s * length;
@@ -728,7 +728,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if (isProgressBarVisible()) {
             progressBar.setMessage("Convolving X dimension...");
-            progressBar.updateValue(5, activeImage);
+            progressBar.updateValue(5, runningInSeparateThread);
         }
 
         AlgorithmSeparableConvolver xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
@@ -749,7 +749,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if (isProgressBarVisible()) {
             progressBar.setMessage("Convolving Y dimension...");
-            progressBar.updateValue(10, activeImage);
+            progressBar.updateValue(10, runningInSeparateThread);
         }
 
         if (!entireImage) {
@@ -766,7 +766,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         if (isProgressBarVisible()) {
             progressBar.setMessage("Convolving Z dimension...");
-            progressBar.updateValue(15, activeImage);
+            progressBar.updateValue(15, runningInSeparateThread);
         }
 
         if (!entireImage) {
@@ -783,7 +783,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
             if (isProgressBarVisible()) {
                 progressBar.setMessage("Calculating the edges of slice " + (s + 1) + "...");
-                progressBar.updateValue(15 + Math.round(s * inc), activeImage);
+                progressBar.updateValue(15 + Math.round(s * inc), runningInSeparateThread);
             }
 
             start = s * length;

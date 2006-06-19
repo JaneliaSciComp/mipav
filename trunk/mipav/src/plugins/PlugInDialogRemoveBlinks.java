@@ -125,14 +125,13 @@ public class PlugInDialogRemoveBlinks extends JDialogBase implements AlgorithmIn
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (icgAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                icgAlgo.setActiveImage(isActiveImage);
                 icgAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -213,7 +212,6 @@ public class PlugInDialogRemoveBlinks extends JDialogBase implements AlgorithmIn
             throw new IllegalArgumentException();
         }
 
-        setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
         callAlgorithm();
 

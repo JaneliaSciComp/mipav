@@ -231,7 +231,7 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
                                                        kOptions.iMaxIterations + "  Convergence: " +
                                                        kDecimalFormat.format(dConvergence));
                                 progressBar.updateValue((++iIterationControlPoint) * 100 / iNumIterationControlPoints,
-                                                        activeImage);
+                                                        runningInSeparateThread);
 
                                 // Minimize single control point.
                                 kReg.minimizeControlPoint(iControlX, iControlY, iControlZ,
