@@ -1814,11 +1814,19 @@ public class AlgorithmMedian extends AlgorithmBase {
         double normJ;
         for (i = 0; i < list.length; i +=3) {
             total = 0.0f;
+            normI = Math.sqrt(list[i]*list[i] + list[i+1]*list[i+1] + list[i+2]*list[i+2]);
             for (j = 0; j < list.length; j += 3) {
                 dotProduct = (list[i]*list[j] + list[i+1]*list[j+1] + list[i+2]*list[j+2]);
-                normI = Math.sqrt(list[i]*list[i] + list[i+1]*list[i+1] + list[i+2]*list[i+2]);
                 normJ = Math.sqrt(list[j]*list[j] + list[j+1]*list[j+1] + list[j+2]*list[j+2]);
-                total +=  Math.acos(dotProduct/(normI*normJ));
+                if ((normI == 0.0) && (normJ == 0.0)) {
+                    ; // total += 0    
+                }
+                else if ((normI == 0.0) || (normJ == 0.0)) {
+                    total += Math.PI/2.0;
+                }
+                else {
+                     total +=  Math.acos(Math.min(1.0,dotProduct/(normI*normJ)));
+                }
             }
             if (total < smallestTotal) {
                 index = i;
