@@ -1338,7 +1338,7 @@ public class AlgorithmMean extends AlgorithmBase {
                                                                      // !!!
         if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressB
             // do a progress bar update
-            progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), activeImage);
+            progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), runningInSeparateThread);
         }
         mod = imageSliceLength / 100; // mod is 1 percent of length of slice * the number of slices.
         for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
@@ -1346,7 +1346,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                 if (((i % mod) == 0) && (pBarVisible == true)) {
                     progressBar.updateValue(i * 100/imageSliceLength,
-                                            activeImage);
+                            runningInSeparateThread);
                 }
             }
             destBuffer[a] = srcBuffer[a]; // copy alpha;
@@ -1594,7 +1594,7 @@ public class AlgorithmMean extends AlgorithmBase {
         mod = imageSize / 100; // mod is 1 percent of length of slice * the number of slices.
         for (i = 0; i < imageLength; i += 4) {
             if (((i % mod) == 0) && (pBarVisible == true)) {
-                progressBar.updateValue(i * 100/imageLength, activeImage);
+                progressBar.updateValue(i * 100/imageLength, runningInSeparateThread);
             }
             destBuffer[i] = srcBuffer[i]; // copy alpha;
             if ((entireImage == true) || mask.get(i / 4)) { 
