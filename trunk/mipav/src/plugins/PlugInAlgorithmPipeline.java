@@ -254,7 +254,8 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
     
     
     /**
-     * DOCUMENT ME!
+     * Function fills the centroid_array with nClasses values equally spaced between 0
+     * and the image maximum.  This is a seed array for the CMeans algorithm.  
      *
      * @param  centroid_array  DOCUMENT ME!
      * @param  srcImage        DOCUMENT ME!
@@ -263,9 +264,11 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
 	public void getCentroid(float[] centroid_array, ModelImage srcImage, int nClasses){
 		int dd;
 		double max = srcImage.getMax();
-    	for(dd=1;dd<(nClasses+1);dd++){
-    		centroid_array[dd-1]=(float)(dd*max/(nClasses+1));
-    	}
+//		System.out.println("getCentroid()  nClasses: " + nClasses + "  max: " + max);
+    	for(dd = 1; dd < (nClasses+1); dd++){
+    		centroid_array[dd-1] = (float)(dd * max / (nClasses+1));
+ //   		System.out.println("	centroid_array[" + (dd-1) + "]: " + centroid_array[dd-1]);
+     	}
 	}
 	
 	
@@ -281,8 +284,10 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         for (j = 0; j < zDim; j++) {
             try {
                 progressBar.updateValue(Math.round(10 + (30 * j / zDim)), runningInSeparateThread);
+
                 SegmentedImg.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
                 Mask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
+
                 // setting the outer BACKGROUND imgBuffers on mask---------background = 0, thigh in=1
                 for (i = 0; i < imgBuffer.length; i++) {
                     imgBuffer1[i] = 1;
@@ -446,8 +451,8 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
      * DOCUMENT ME!
      */
     public void runAlgorithm() {
-
-        buildProgressBar("Pipeline_Crop", "Initializing...", 0, 100);
+    	
+        buildProgressBar("OAI Thigh Seg. Crop", "Initializing...", 0, 100);
         initProgressBar();
 
         try {
@@ -462,7 +467,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         sliceSize = xDim * yDim;
-        imgBuffer = new int[sliceSize];
+        imgBuffer  = new int[sliceSize];
         imgBuffer1 = new int[sliceSize];
         imgBuffer2 = new int[sliceSize];
 
@@ -471,42 +476,72 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         }
 
         // --------------- STEP 1: Obtaining Background Mask --------------------
-        // A) FUZZY SEGMENTATION
-        progressBar.updateValue(5, runningInSeparateThread);        progressBar.setMessage("Taking Fuzzy");
-        nClasses=3;
+        // A) FUZZY C Means SEGMENTATION with 3 classes
+        progressBar.updateValue(5, runningInSeparateThread);
+        progressBar.setMessage("Taking Fuzzy");
+        nClasses = 3;
         HardSeg = HardFuzzy(srcImage, nClasses);
         
 // PFH        ShowImage(HardSeg, "HardSeg Image");
         
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
-        progressBar.updateValue(15, runningInSeparateThread);        progressBar.setMessage("Boundary Correction");
+        progressBar.updateValue(15, runningInSeparateThread);
+        progressBar.setMessage("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
+
+// PFH        ShowImage(obMask, "obmask before");
+ 
         
- // PFH       ShowImage(obMask, "obmask Image");
+        // To eliminate MR artifacts that appear away from the thighs, apply a connected
+        // components anaylsis here and keep only the voxels in the two largest components
+        // Use the resulting image in the following code, which determines the bounding
+        // box of the voxels in each thigh
         
+        // Something like this may work
+        
+//  PFH        IDObjects(obMask, zDim*2000/20, xDim*yDim*zDim);
+ // PFH        ShowImage(obMask, "obmask after");        
         // ----------------------STEP 2: THIGH SEPARATION -----------------------
-        progressBar.updateValue(25, runningInSeparateThread); 		progressBar.setMessage("Doing Thigh Segmentation");
+        progressBar.updateValue(25, runningInSeparateThread);
+        progressBar.setMessage("Doing Thigh Segmentation");
 
         // CROP VOI
-        int[] xbound = new int[2];
-        int[] ybound = new int[2];
-        int[] zbound = new int[2];
-        xbound[0] = (int) (xDim / 2);        xbound[1] = (int) (1);
-        ybound[0] = (int) (yDim / 2);        ybound[1] = (int) (yDim / 2);
-        zbound[0] = 0;					     zbound[1] = zDim - 1;
         
-        int[] xbound1 = new int[2];
-        xbound1[0] = (int) (xDim - 1);       xbound1[1] = (int) (xDim / 2);
+        // X min and max of the bounding box around the thigh image on the left (right thigh)
+        int[] xbound = new int[2];
+        xbound[0] = (int) (xDim / 2);
+        xbound[1] = (int) (1);
+
+        // Y min and max of the bounding box around the both thigh images
+        int[] ybound = new int[2];
+        ybound[0] = (int) (yDim / 2);
+        ybound[1] = (int) (yDim / 2);
+
+        // Z min and max of the bounding box around the both thigh images
+        int[] zbound = new int[2];
+        zbound[0] = 0;
+        zbound[1] = zDim - 1;
+        
+        // X min and max of the bounding box around the thigh image on the right (left thigh)
+       int[] xbound1 = new int[2];
+        xbound1[0] = (int) (xDim - 1);
+        xbound1[1] = (int) (xDim / 2);
 
         int x0, x11;
         x0 = xbound[0];
         x11 = xbound1[1];
-
+        
         for (j = 0; j < zDim; j++) {
             try {
                 progressBar.updateValue(Math.round(40 + (30 * j / zDim)), runningInSeparateThread);
                 obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
 
+ //               System.err.println("\nslice: " + j);
+ //               System.err.println("Xmin: " + xbound[0] + "  Xmax: " + xbound[1]);
+ //               System.err.println("Ymin: " + ybound[0] + "  Ymax: " + ybound[1]);
+ //               System.err.println("Zmin: " + zbound[0] + "  Zmax: " + zbound[1]);
+
+                
                 for (y = 5; y < (yDim - 5); y++) {
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
@@ -588,7 +623,11 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline2");
             }
         }
+        
+// PFH        ShowImage(obMask, "obmask before");
+        // This just smooths out the boundaries of the mask image
         Close(obMask, 24);  /*section added to eliminate results of shading artifact on obMask*/
+// PFH        ShowImage(obMask, "obmask after");
 
         int[] extentA = new int[3];
         int[] extentB = new int[3];
@@ -609,13 +648,16 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         destImageB = new ModelImage(srcImage.getType(), extentB, ("cropped left leg"));
 
         //ShowImage(srcImage,"srcImage");
+        
         crop(destImageA, srcImage, xbound, ybound, zbound);
         progressBar.updateValue(85, runningInSeparateThread);
         //ShowImage(destImageA,"destImageA");
+        
         //        System.out.println("used obMask voi to crop ISN'd imageA");
         crop(destImageB, srcImage, xbound1, ybound, zbound);
         progressBar.updateValue(90, runningInSeparateThread);
         //ShowImage(destImageB,"destImageA");
+        
         //        System.out.println("used obMask voi to crop ISN'd imageB");
         crop(obMaskA, obMask, xbound, ybound, zbound);
         progressBar.updateValue(95, runningInSeparateThread);
@@ -629,4 +671,22 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
         finalize();
         disposeProgressBar();
     }
+    
+    
+    
+    /**
+     * morphological ID_OBJECTS
+     *
+     * @param  srcImage  --source image
+     * @param  min       --smallest object to let through
+     * @param  max       --largest object to let through
+     */
+    public void IDObjects(ModelImage srcImage, int min, int max) {
+        AlgorithmMorphology3D MorphIDObj = null;
+        MorphIDObj = new AlgorithmMorphology3D(srcImage, 4, 1, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
+        MorphIDObj.setMinMax(min, max);
+        MorphIDObj.setProgressBarVisible(false);
+        MorphIDObj.run();
+    }
+
 }
