@@ -207,8 +207,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
 
 		ModelImage BoneIDtemp1 = (ModelImage)BoneIDtemp.clone(); /**BoneIDtemp retains binary image of BONE*/
 		FillHole(BoneIDtemp1);
-//		 PFH
-		ShowImage(BoneIDtemp1, "hole filled");
+//		 PFH		ShowImage(BoneIDtemp1, "hole filled");
 
 		ImgSubtract(residual,BoneIDtemp1,BoneIDtemp); /**Residual receives what's to be seen as BONE MARROW*/
 		Erode(residual, 24); 	/**just to make sure residual is actually of bone marrow size. 
@@ -1134,7 +1133,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("OAI Thigh Seg. 6/15/06", "Processing images...", 0, 100);
+        buildProgressBar("OAI Thigh Seg. 6/20/06", "Processing images...", 0, 100);
         initProgressBar();
         
         xDim = 1;

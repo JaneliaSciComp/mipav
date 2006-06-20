@@ -127,7 +127,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        System.err.println("Algorithm performed");
+        System.out.println("PlugInAlgorithmPipeline completed");
 
         imageA.clearMask();
 
@@ -207,7 +207,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
         if (doStageOne) {
 
-            System.err.println("Cropping Image");
+            System.out.println("Cropping Image");
 
             try {
 
