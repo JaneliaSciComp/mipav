@@ -344,7 +344,10 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
             return;
         }
 
-        waitForFileDone(progressBar, maxVal);
+        if (!waitForFileDone(progressBar, maxVal)) {
+            MipavUtil.displayError("Failure during wait for file done");
+            return;
+        }
 
         // Cleanup.
         try {
