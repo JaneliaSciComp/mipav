@@ -6,6 +6,8 @@ import gov.nih.mipav.model.scripting.parameters.Parameter;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 
+import gov.nih.mipav.view.dialogs.AlgorithmParameters;
+
 import java.util.Vector;
 
 
@@ -56,7 +58,7 @@ public class Parser {
             imageVars[i] = (String) imageVarList.elementAt(i);
         }
 
-        Preferences.debug("Found " + numImages + " unique images used in script " + scriptFile,
+        Preferences.debug("Found " + numImages + " unique images used in script " + scriptFile + "\n",
                           Preferences.DEBUG_MINOR);
 
         return imageVars;
@@ -91,7 +93,7 @@ public class Parser {
             }
         }
 
-        Preferences.debug("Found " + numVOIs + " unique VOIs used in script " + scriptFile, Preferences.DEBUG_MINOR);
+        Preferences.debug("Found " + numVOIs + " unique VOIs used in script " + scriptFile + "attached to image " + imageVarName + "\n", Preferences.DEBUG_MINOR);
 
         return numVOIs;
     }
@@ -105,6 +107,11 @@ public class Parser {
     public static final void main(String[] args) {
 
         try {
+            String[] imageVarNames = Parser.getImageVarsUsedInScript(args[0]);
+            for (int i = 0; i < imageVarNames.length; i++) {
+                int numVOIs = Parser.getNumberOfVOIsRequiredForImageVar(args[0], imageVarNames[i]);
+                System.out.println(imageVarNames[i] + " ===> " + numVOIs);
+            }
             Parser.runScript(args[0]);
         } catch (ParserException pe) {
             MipavUtil.displayError("Fatal error encountered running script:\n" + pe);
@@ -141,10 +148,7 @@ public class Parser {
      * @return  The image placeholder variable for the image the VOI will be loaded into. 
      */
     private static String getVOIParentImage(ParsedActionLine parsedLine) {
-
-        // TODO: it is not the best policy to hard code here that the OpenVOI key for the attached image is
-        // "parent_image"...
-        return parsedLine.getParameterTable().get("parent_image").getValueString();
+        return parsedLine.getParameterTable().get(AlgorithmParameters.getInputImageLabel(1)).getValueString();
     }
 
     /**
