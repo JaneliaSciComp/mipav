@@ -452,7 +452,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
      */
     public void runAlgorithm() {
     	
-        buildProgressBar("OAI Thigh Seg. Crop", "Initializing...", 0, 100);
+        buildProgressBar("OAI Thigh Seg. 6/20/06", "Initializing...", 0, 100);
         initProgressBar();
 
         try {
@@ -475,35 +475,35 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
             zDim = srcImage.getExtents()[2];
         }
 
-        // --------------- STEP 1: Obtaining Background Mask --------------------
+// PFH        ShowImage(srcImage, "Source Image");
+        
+       // --------------- STEP 1: Obtaining Background Mask --------------------
         // A) FUZZY C Means SEGMENTATION with 3 classes
         progressBar.updateValue(5, runningInSeparateThread);
-        progressBar.setMessage("Taking Fuzzy");
+        progressBar.setMessage("Fuzzy C-Means");
         nClasses = 3;
         HardSeg = HardFuzzy(srcImage, nClasses);
-        
-// PFH        ShowImage(HardSeg, "HardSeg Image");
-        
+         
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
         progressBar.updateValue(15, runningInSeparateThread);
         progressBar.setMessage("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
 
-// PFH        ShowImage(obMask, "obmask before");
- 
-        
         // To eliminate MR artifacts that appear away from the thighs, apply a connected
         // components anaylsis here and keep only the voxels in the two largest components
         // Use the resulting image in the following code, which determines the bounding
         // box of the voxels in each thigh
+ 
+        IDObjects(obMask, zDim*2000, xDim*yDim*zDim);
         
-        // Something like this may work
-        
-//  PFH        IDObjects(obMask, zDim*2000/20, xDim*yDim*zDim);
- // PFH        ShowImage(obMask, "obmask after");        
+        // make all components a label value of one
+        for (i = 0; i < xDim*yDim*zDim; i++) {
+        	if(obMask.getShort(i) >= 1) obMask.setShort(i, (short)1);
+        }
+
         // ----------------------STEP 2: THIGH SEPARATION -----------------------
         progressBar.updateValue(25, runningInSeparateThread);
-        progressBar.setMessage("Doing Thigh Segmentation");
+        progressBar.setMessage("Image Cropping");
 
         // CROP VOI
         
@@ -535,20 +535,17 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
             try {
                 progressBar.updateValue(Math.round(40 + (30 * j / zDim)), runningInSeparateThread);
                 obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
-
- //               System.err.println("\nslice: " + j);
- //               System.err.println("Xmin: " + xbound[0] + "  Xmax: " + xbound[1]);
- //               System.err.println("Ymin: " + ybound[0] + "  Ymax: " + ybound[1]);
- //               System.err.println("Zmin: " + zbound[0] + "  Zmax: " + zbound[1]);
-
-                
+               
                 for (y = 5; y < (yDim - 5); y++) {
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
                         // both legs, top y
-                        if ((imgBuffer[i - (2 * xDim)] == 0) && (imgBuffer[i - xDim] == 0) && (imgBuffer[i] == 1) &&
-                                (imgBuffer[i + xDim] == 1) && (imgBuffer[i + (2 * xDim)] == 1) &&
-                                (imgBuffer[i + (5 * xDim)] == 1)) {
+                        if ((imgBuffer[i - (2 * xDim)] == 0) && // pixel in previous row
+                        	(imgBuffer[i - xDim] == 0) && 		// pixel in previous row
+                        	(imgBuffer[i] == 1) &&
+                        	(imgBuffer[i + xDim] == 1) &&
+                        	(imgBuffer[i + (2 * xDim)] == 1) &&
+                        	(imgBuffer[i + (5 * xDim)] == 1)) {
                             if (y < ybound[0]) {
                                 ybound[0] = y;
                             }
@@ -624,13 +621,18 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
             }
         }
         
-// PFH        ShowImage(obMask, "obmask before");
         // This just smooths out the boundaries of the mask image
         Close(obMask, 24);  /*section added to eliminate results of shading artifact on obMask*/
-// PFH        ShowImage(obMask, "obmask after");
 
         int[] extentA = new int[3];
         int[] extentB = new int[3];
+        
+        // it would be nice to leave a 5 pixel boundary around the thighs
+        // requires new VOI's
+//        xbound[0]  -= 5;
+//        xbound1[1] += 5;
+//        ybound[0]  -= 5;
+//        ybound[1]  += 5;
 
         extentA[0] = xbound[1] - xbound[0] + 1;
         extentA[1] = ybound[1] - ybound[0] + 1;
