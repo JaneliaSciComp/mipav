@@ -27,10 +27,11 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** The input image that contains both thighs */
     private ModelImage imageA = null; // source image
 
-    /** DOCUMENT ME! */
+    /** outer boundary mask image, used to seperate the input image into images containing
+     *  a single thigh */
     private ModelImage obMaskA = null;
 
     /** DOCUMENT ME! */
@@ -66,10 +67,9 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
      */
     public PlugInDialogPipeline(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, false);
-    	System.out.println("name of image: "+imA.getImageName());
+    	System.out.println("name of image: " + imA.getImageName());
         imageA = imA;
         userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-        System.err.println("in constructor of dialog pipe");
         callAlgorithm(true);
     }
 
@@ -103,7 +103,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
             // user has said okay to having input the VOIs
             if (resultImageA.getVOIs() == null || resultImageA.getVOIs().size() == 0 ||
                 resultImageB.getVOIs() == null || resultImageB.getVOIs().size() == 0    ) {
-                JOptionPane.showMessageDialog(null, "OSI plugin requires VOIs!", "Warning",
+                JOptionPane.showMessageDialog(null, "OAI plugin requires VOIs!", "Warning",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
@@ -122,14 +122,13 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
-     * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
+     * it has completed or failed to complete, so that the dialog can be display the result image and/or clean up.
      *
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         System.err.println("Algorithm performed");
 
-        ViewJFrameImage imageFrame = null;
         imageA.clearMask();
 
         if (algorithm instanceof PlugInAlgorithmPipeline) {
@@ -208,7 +207,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
         if (doStageOne) {
 
-            System.err.println("doing stage one");
+            System.err.println("Cropping Image");
 
             try {
 
@@ -277,7 +276,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
         setTitle("PLEASE INPUT VOIs");
 
-        JLabel instruction = new JLabel(" Please enter VOIs, then press OK.");
+        JLabel instruction = new JLabel("Please enter VOIs, then press OK.");
         JPanel mainPanel = new JPanel(new BorderLayout());
         n3Box = new JCheckBox("Apply N3 to cropped image");
         n3Box.setFont(serif12);
