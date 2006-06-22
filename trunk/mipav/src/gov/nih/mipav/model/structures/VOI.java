@@ -3699,6 +3699,7 @@ public class VOI extends ModelSerialCloneable {
         }
         if (polygonIndex >= 0 && polygonIndex < curves[slice].size()) {
             if (curveType == CONTOUR || curveType == POLYLINE) {
+                //System.err.println("x: " + x + "y: " + y);
                 ((VOIContour) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
                 ((VOIContour) (curves[slice].elementAt(polygonIndex))).reloadPoints();
             } else if (curveType == LINE) {
