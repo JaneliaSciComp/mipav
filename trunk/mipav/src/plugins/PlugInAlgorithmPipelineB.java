@@ -305,32 +305,44 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      *
      * @param  SegmentedImage  --4class hard fuzzy segmented image
      */
-     public ModelImage processBone(ModelImage SegmentedImage) {
+     public ModelImage processBoneOrg2(ModelImage SegmentedImage) {
         progressBar.setMessage("Isolating/Labeling Bone");
         continuousBone = false;
          
-//       PFH        ShowImage(SegmentedImage, "PlugInAlgorithmPipelineB::processBone() input image");
-        
+//       PFH        ShowImage(SegmentedImage, "processBone input image");
+
         /**round1 most rigorous bone isolation (open24,close24)*/
         ModelImage BoneID = threshold1(SegmentedImage, BACKGROUND_2);/**isolate bone intensity --threshold*/
 //       PFH        ShowImage(BoneID, "BACKGROUND_2 Thresholded image");
 
-        //ModelImage BoneIDtemp = (ModelImage) BoneID.clone();        
-//       PFH        ShowImage(BoneIDtemp, "Opened and closed image");
+        ModelImage BoneIDtemp = (ModelImage) BoneID.clone();        
+//       PFH        ShowImage(BoneIDtemp, "thresholded image");
 
-        IDObjects(BoneID, zDim*325, zDim*550);  /**isolate bone size*/
-        Close(BoneID, 24, 2);
+        IDObjects(BoneID, zDim*250, zDim*550);  /**isolate bone size*/
+//        Close(BoneID, 24, 2);
+        Dilate(BoneID, 6);
 //       PFH        System.err.println("SIZE min: " + zDim*4000/20 + "  max" + zDim*10000/20);
 
         //isolatingCenterObject(BoneIDtemp); /**returns binary image of center object*/
-//       PFH   ShowImage(BoneIDtemp, "isolated center object");
+//       PFH        ShowImage(BoneID, "Dilate bone");
 
         ModelImage BoneIDtemp1 = (ModelImage)BoneID.clone(); /**BoneIDtemp retains binary image of BONE*/
         FillHole(BoneIDtemp1);
-//       PFH   ShowImage(BoneIDtemp1, "hole filled");
+//      PFH        ShowImage(BoneIDtemp1, "hole filled");
+        Erode(BoneIDtemp1, 6);
+        Erode(BoneID, 6);
+//       PFH        ShowImage(BoneIDtemp1, "erode");
 
-        continuousBone = true;
-        System.out.println("Round1, FillBoneMarrow successful");
+        int cnt = 0;
+        for (int i = 0; i < xDim*yDim*zDim; i++) {
+        	if (BoneIDtemp1.getInt(i) >= 1)
+        		cnt++;
+        }
+        if (cnt < 0.5f * zDim*xDim*yDim) {
+        	continuousBone = false;
+            System.out.println("Round1, FillBoneMarrow successful");
+            
+        }
         convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BONE_MARROW);
         convert(BoneIDtemp1, BoneID, BoneIDtemp1, 1, BONE);
         //ShowImage(BoneIDtemp1, "bone and marrow");
@@ -341,6 +353,137 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         return BoneIDtemp1;   
    
     }
+     
+     
+     
+     public ModelImage extractBone(ModelImage boneMarrow, ModelImage inputThigh) {
+    	 float mrBoneThreshold = 0;
+    	 int cnt = 0;
+  	   progressBar.setMessage("Extracting bone");
+
+  	   ModelImage bone = new ModelImage(boneMarrow.getType(), boneMarrow.getExtents(), "boneImg", null);
+  	   
+  	   int xDim = inputThigh.getExtents()[0];
+  	   int yDim = inputThigh.getExtents()[1];
+  	   short[] boneBuffer = new short[xDim * yDim];
+     	 
+  	   for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
+  		   try {
+  			   boneMarrow.exportData((sliceNum * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
+  			   inputThigh.exportData((sliceNum * imgBuffer2.length), imgBuffer2.length, imgBuffer2);
+             } catch (IOException ex) {
+                 System.err.println("Error exporting data");
+             }
+             
+             // estimate a mrBoneThreshold value for pixels next to the marrow
+             // let the value be the average of the adjacent pixels
+             // assign all pixels next to the marrow as bone
+             // relabel all pixels next to the marrow so the image is not modified as it is processed 
+             mrBoneThreshold = 0;
+             cnt = 0;
+        	 for (int idx = xDim; idx < boneBuffer.length - xDim; idx++) {
+        		 if (imgBuffer1[idx] == 0 &&
+        				 (imgBuffer1[idx+1] == 1 || imgBuffer1[idx-1] == 1 ||
+        				  imgBuffer1[idx+xDim] == 1 || imgBuffer1[idx-xDim] == 1)) {
+        			 
+        			 mrBoneThreshold += imgBuffer2[idx];
+        			 boneBuffer[idx] = 1;
+    				 imgBuffer1[idx] = 2;
+    				 cnt++;
+        			 
+        		 } // end if (....)
+        	 } // end for (int idx = 0; ...)
+
+        	 // find average mr value for pixels next to the marrow
+        	 mrBoneThreshold /= cnt;
+       	 
+        	 // increase the marrow mask to include the pixels added as bone
+        	 for (int i = 0; i < imgBuffer1.length; i++) {
+        		 if (imgBuffer1[i] == 2) {
+        			 imgBuffer1[i] = 1;
+        		 }
+        	 }
+
+             // loop through each slice at most 10 times adding neighboring bone pixels
+        	 // that are less than the mrBoneThreshold value
+             for (int iter = 0; iter < 10; iter++) {
+            	 for (int idx = xDim; idx < boneBuffer.length - xDim; idx++) {
+            		 if (imgBuffer1[idx] == 0 &&
+            				 (imgBuffer1[idx+1] == 1 || imgBuffer1[idx-1] == 1 ||
+            				  imgBuffer1[idx+xDim] == 1 || imgBuffer1[idx-xDim] == 1)) {
+            			 
+            			 if (imgBuffer2[idx] < mrBoneThreshold) {
+            				 boneBuffer[idx] = 1;
+            				 imgBuffer1[idx] = 2;
+            			 } // end if (...)
+            			 
+            		 } // end if (....)
+            	 } // end for (int idx = 0; ...)
+            	 
+            	 for (int i = 0; i < boneBuffer.length; i++) {
+            		 if (imgBuffer1[i] == 2) {
+            			 imgBuffer1[i] = 1;
+            		 }
+            	 }
+            	 
+            	 // decrease the threhsold value as you get further from the marrow
+            	 mrBoneThreshold *= 0.95f;
+             } // end for (int iter = 0; ...)
+             
+             try {
+            	 bone.importData((sliceNum * boneBuffer.length), boneBuffer, false);
+             } catch (IOException ex) {
+            	 System.err.println("error importing data");
+             }
+
+             // clean out boneBuffer for the next slice
+             for (int idx = 0; idx < boneBuffer.length; idx++) {
+            	 boneBuffer[idx] = 0;
+             }
+         } // end for (int sliceNum = 0; ...)
+  
+  	   bone.calcMinMax();
+  	   Close(bone, 6, 1);
+       return bone;
+                
+     } // end extractBone(...)
+     
+     
+     /**
+      * method extracts bone marrow and surrounding bone from a C-Means segmented image
+      * 
+      * @param destImage image to be filled with bone and marrow segmented result 
+      * @param CMeansSeg CMeans segmented image of a single thigh image
+      */
+     public void processBoneAndMarrow(ModelImage destImage, ModelImage CMeansSeg, ModelImage thighInputImage) {
+    	 progressBar.setMessage("Processing Bone and Marrow");
+    	 
+ //  PFH    	 ShowImage(CMeansSeg, "Segmented Image");
+    	 
+    	 progressBar.setMessage("Locating Bone Marrow");
+    	 
+    	 ModelImage boneMarrow = extractedBoneMarrow(CMeansSeg);
+    	 // boneMarrow is a binary image containing only the bone marrow
+
+//  PFH         ShowImage(boneMarrow, "bone/morrow image");
+    	 
+    	 // use the bone marrow and input thigh image to segment out the bone
+    	 ModelImage bone = extractBone(boneMarrow, thighInputImage);
+
+    	 // put the boneMarrow segmented image into the destImage
+    	 // label value for BONE_MARROW is 200
+         convert(destImage, boneMarrow, destImage, 1, BONE_MARROW);       
+    	 boneMarrow.disposeLocal();
+    	 boneMarrow = null;
+
+         convert(destImage, bone, destImage, 1, BONE);       
+    	 bone.disposeLocal();
+    	 bone = null;
+
+//       PFH    	 ShowImage(destImage, "bone/morrow image");
+     } // end processBoneAndMarrow(...)
+     
+     
     
    /**
     * LABELING BONE MARROW (1. artificially, 2.filling gaps between bone)
@@ -353,9 +496,10 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     *
     * @param  srcImage  --image with labeled bone
     */
-    public void processBoneMarrow(ModelImage srcImage, ModelImage SegmentedImg){
+    public void processBoneMarrowOrg2(ModelImage srcImage, ModelImage SegmentedImg){
 	   progressBar.setMessage("Processing Bone Marrow (for discontinuous bone images)");
 
+       ShowImage(SegmentedImg, "processed Bone Image segmented image");
 	   /**First, check case 1 or case 2--is there labeled bone?*/	   
 	   
        progressBar.setMessage("Is there bone at all?");
@@ -550,14 +694,27 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
  *
  * @return  --output image with bone marrow as extracted from fuzzy segmentation
  */
-   	public ModelImage extractedBoneMarrow(ModelImage SegmentedImg){
-	 ModelImage SegmentedImg1 = (ModelImage)SegmentedImg.clone();
- 	ModelImage BMarrow = threshold2(SegmentedImg1, 160f,255f); //160-255 encloses fat1, fat2
- 	SegmentedImg1.disposeLocal();SegmentedImg1=null;
- 	IDObjects(BMarrow, 1000*zDim/20, 10000*zDim/20);
- 	isolatingCenterObject(BMarrow);   	/**returns binary image*/
- 	return BMarrow;
- }
+   	public ModelImage extractedBoneMarrow(ModelImage hardSegImg) {
+ 
+   		ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
+   		// bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg)
+   		// bMarrow is a binary image and remains binary through this method
+
+   		//  PFH   		ShowImage(bMarrow, "BMarrow");
+
+   		// find all objects in the thresholded image that have a cardinality within the specified range
+   		IDObjects(bMarrow, 50*zDim, 500*zDim);
+
+   		//  PFH   		ShowImage(bMarrow, "IDObjects");
+
+   		// find the single object closest to the center of the image
+   		isolatingCenterObject(bMarrow);
+   		// bMarrow is a binary image where 1's label bone marrow and 0's are elsewhere
+
+   		//  PFH   		ShowImage(bMarrow, "isolatingCenterObject");
+   		
+   		return bMarrow;
+   	} // end extractedBoneMarrow(...)
   
     /**
      * Returns binary image at center object
@@ -565,8 +722,8 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * @param   srcImage       --image with center object to be isolated
      *
      */
-    public void isolatingCenterObject(ModelImage srcImage){
-    	if(srcImage.getMax()>1){
+    public void isolatingCenterObject(ModelImage srcImage) {
+    	if(srcImage.getMax() > 1){
 	        int[] numObjects = new int[zDim];
 	        int[] BoneObject = new int[zDim];
 	    	int bb, cc, i, n, x, y;
@@ -1008,7 +1165,6 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
     	float thresh[] = {intensity1, intensity2};    	
     	ModelImage resultImage = null;
     	resultImage = threshold(threshSourceImg, thresh);
-        threshSourceImg.disposeLocal();threshSourceImg=null;
         return resultImage;
     }
     
@@ -1129,9 +1285,11 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         //aa=1 RIGHT THIGH, aa=2 LEFT THIGH
         for (aa = 1; aa <= 2; aa++) {
             if (aa == 1) {
+            	// set processedImage and obMask to the RIGHT thigh image 
                 getVariables(srcImageA, obMaskA);
             } else if (aa == 2) {
-                getVariables(srcImageB, obMaskB);
+               	// set processedImage and obMask to the LEFT thigh image
+            	getVariables(srcImageB, obMaskB);
             }
 
             sliceSize = xDim * yDim;
@@ -1144,15 +1302,25 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
              ********************************************************/            
             
             // STEP 1: VOI to Mask
+
+            // processedImage is the right or left thigh image
             voiMask = makeVOI(processedImage);
- //PFH           ShowImage(voiMask, "voi  mask");
+            // voiMask: binary image where 1's are inside the VOI otherwise values are 0's
+            // used in processHardFat(), should probably be made later!!
+ // PFH            ShowImage(voiMask, "voi  mask");
+            
             progressBar.updateValue((50 * (aa - 1)) + 4, runningInSeparateThread);
 
 
             // STEP 2: ISN and N3 inside VOI
             ISN(processedImage);
-// PFH            ShowImage(destImage2, "intensity slice normalized image");
+            // processedImage is right/left thigh image after ISN
+// PFH            ShowImage(processedImage, "ISN");
+
             progressBar.updateValue((50 * (aa - 1)) + 9, runningInSeparateThread);
+            
+            // should take this out since we decided to segment only N3 processed images!!
+            // remove the check box from the dialog (PlugInDialogPipeline) also
             if(useN3) {
             	ModelImage tmp = processedImage;
             	processedImage = N3(processedImage);
@@ -1165,27 +1333,47 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                        
 
             //STEP 3: FUZZY SEGMENT ENTIRE IMAGE
+           	// Fuzzy C-Means for the right/left thigh image
             ModelImage HardSeg1 = HardFuzzy(processedImage, 4);
+            // HardSeg1 image contains 4 different label values
+            //	63 for background and bone
+            //	126 muscle
+            //	189 fat 1 (Bone Marrow)
+            //	252 fat 2 (Bone Marrow)
 // PFH            ShowImage(HardSeg1,"4 class hard fuzzy segmentation");
+
             progressBar.updateValue(50 * (aa - 1) + 18, runningInSeparateThread);
 
+
+
+            // STEP 4: ISOLATE BONE AND MARROW
             
+            // at the end of this step boneSeg must be filled in
+            
+            // make a empty bone/marrow image
+            ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image", HardSeg1.getUserInterface());
+            processBoneAndMarrow(boneSeg, HardSeg1, processedImage);
+	            
+// PFH            ShowImage(boneSeg, "bone/marrow seg");
+
+/*
             //STEP 4: ISOLATE BONE
             //(and if bone continuous fill with bone marrow)
-            ModelImage boneSeg = processBone(HardSeg1);
+//            ModelImage boneSeg = processBone(HardSeg1);
 // PFH            ShowImage(boneSeg, "isolated bone");
             progressBar.updateValue(50 * (aa - 1) + 27, runningInSeparateThread);
 
-            
+            ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image",
+            		HardSeg1.getUserInterface());
             //STEP 5: PROCESS BONE MARROW --(given none found in step 4) 
             //(and if bone nonexistant, create thin artifical bone around bone marrow)
             if(continuousBone == false){
-	            processBoneMarrow(boneSeg, HardSeg1);				//ShowImage(destImage3a,"bone with bone marrow");
+	            processBoneAndMarrow(boneSeg, HardSeg1);				//ShowImage(destImage3a,"bone with bone marrow");
 	            progressBar.updateValue(50 * (aa - 1) + 36, runningInSeparateThread);
             }            
             processedImage.disposeLocal();
             processedImage = null;
-            
+*/            
             
             //STEP 6: PROCESS FAT
             ModelImage fatSeg = processHardFat(HardSeg1);        				//ShowImage(destImage3b, "bundle cleanedup fat image");
