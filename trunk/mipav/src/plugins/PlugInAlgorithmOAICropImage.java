@@ -84,7 +84,7 @@ Binary mask (‘voiMask’) created from input muscle bundle VOI. Contours of ‘voiMa
                  on 4-class segmented muscle bundle.
  */
 
-public class PlugInAlgorithmPipeline extends AlgorithmBase {
+public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
     /** hardSeg intensities (3 class segmentation). */
@@ -149,7 +149,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
      * @param  obMaskB     DOCUMENT ME!
      * @param  srcImage    the source image
      */
-    public PlugInAlgorithmPipeline(ModelImage destImageA, ModelImage destImageB, ModelImage obMaskA, ModelImage obMaskB,
+    public PlugInAlgorithmOAICropImage(ModelImage destImageA, ModelImage destImageB, ModelImage obMaskA, ModelImage obMaskB,
                                    ModelImage srcImage) {
         super(null, srcImage);
         this.srcImage = srcImage;
