@@ -27,6 +27,15 @@ import java.io.*;
  *           <p>The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored by the National Institutes of Health, that will help us better understand how to prevent and treat knee osteoarthritis, one of the most common causes of disability in adults. It is a four-year study and will recruit men and women aged 45 and above at high risk for developing symptomatic knee osteoarthritis. Osteoarthritis causes more health problems and medical expenses than any other form of arthritis. Symptoms of osteoarthritis can range from stiffness and mild pain to severe joint pain and even disability. The OAI cohort will be 5000 participants with clinically significant knee OA or at high risk for developing incident OA and obtain the appropriate images and bio-specimens needed for investigation and validation of OA biomarkers. The large number of images that results from the OAI is a major obstacle to overcome. Manual image segmentation is laborious and subject to inter and intra-observer variability when performing volumetric analysis. Therefore, BIRSS has started a multistage segmentation and quantification technique to automatically or semi-automatically process the entire cohort.</p>
  */
 
+/**
+ * algorithm for seperating a single MR image containing the right and 
+ * left thighs into two seperate images
+ * 
+ * @version  1.0, June 22, 2006
+ * @author   Agatha Monzon, Paul Hemler, and Matthew J. McAuliffe, Ph.D.
+
+ */
+
 
 /*
  PROJECT ‘AUTOMATIC THIGH SEGMENTATION’ – DOCUMENTATION
