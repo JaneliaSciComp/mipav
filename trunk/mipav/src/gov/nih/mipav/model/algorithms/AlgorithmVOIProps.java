@@ -96,6 +96,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         nf = NumberFormat.getInstance();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
+        nf.setGroupingUsed(false);
+
         this.rangeFlag = rangeFlag;
         this.srcImage = srcImg;
         this.statisticList = list;
