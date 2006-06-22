@@ -18,11 +18,15 @@ import gov.nih.mipav.model.file.*;
 
 
 /**
- * DOCUMENT ME!
+ * PlugIn dialog that controls the OAI segmentation for a single MR 
+ * image set containing both the left and right thigh 
  *
- * @version  0.1 Nov 17, 1998
- * @author   Matthew J. McAuliffe, Ph.D.
+ * @version  1.0, June 22, 2006
+ * @author   Agatha Monzon, Paul Hemler, and Matthew J. McAuliffe, Ph.D.
  */
+
+// Main dialog the OAI segmentation algorithm.  Controls image
+// cropping and starts segmentation on both cropped thigh images.
 public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

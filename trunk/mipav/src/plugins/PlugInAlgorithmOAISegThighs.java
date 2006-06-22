@@ -10,6 +10,13 @@ import gov.nih.mipav.model.algorithms.AlgorithmIHN3Correction;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 
+/**
+ * algorithm for segmenting two seperate MR thigh images 
+ * 
+ * @version  1.0, June 22, 2006
+ * @author   Agatha Monzon, Paul Hemler, and Matthew J. McAuliffe, Ph.D.
+
+ */
 
 /**
  * ------------------ Static fields/initializers --------------------------
