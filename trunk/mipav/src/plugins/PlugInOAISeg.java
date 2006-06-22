@@ -16,7 +16,7 @@ import java.awt.*;
 // This is a Algorithm type of PlugIn, and therefore must implement PlugInAlgorithm
 // Implementing the PlugInAlgorithm requires this class to implement the run method
 // with the correct parameters
-public class PlugInPipeline implements PlugInAlgorithm {
+public class PlugInOAISeg implements PlugInAlgorithm {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -37,7 +37,7 @@ public class PlugInPipeline implements PlugInAlgorithm {
         System.out.println("running OAI thigh segmentation");
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogPipeline(parentFrame, image);
+            new PlugInDialogOAISeg(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugIn Wrap Fix only runs on an image frame.");
         }
@@ -55,7 +55,7 @@ public class PlugInPipeline implements PlugInAlgorithm {
     public void run(ViewUserInterface UI, Frame parentFrame, ModelImage imageA, ModelImage imageB) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogPipeline(parentFrame, imageA);
+            new PlugInDialogOAISeg(parentFrame, imageA);
         } else {
             MipavUtil.displayError("PlugIn Wrap Fix only runs on an image frame.");
         }

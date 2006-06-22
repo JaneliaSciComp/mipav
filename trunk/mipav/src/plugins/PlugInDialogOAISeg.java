@@ -23,7 +23,7 @@ import gov.nih.mipav.model.file.*;
  * @version  0.1 Nov 17, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -38,10 +38,10 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
     private ModelImage obMaskB = null;
 
     /** DOCUMENT ME! */
-    private PlugInAlgorithmPipeline PipelineAlgo;
+    private PlugInAlgorithmOAICropImage cropImageAlgo;
 
     /** DOCUMENT ME! */
-    private PlugInAlgorithmPipelineB PipelineAlgoB;
+    private PlugInAlgorithmOAISegThighs segThighsAlgo;
 
     /** DOCUMENT ME! */
     private ModelImage resultImageA = null;
@@ -65,7 +65,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
      * @param  theParentFrame  Parent frame
      * @param  imA             Source image
      */
-    public PlugInDialogPipeline(Frame theParentFrame, ModelImage imA) {
+    public PlugInDialogOAISeg(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, false);
     	System.out.println("name of image: " + imA.getImageName());
         imageA = imA;
@@ -80,7 +80,7 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
      * @param  UI   The user interface, needed to create the image frame.
      * @param  imA  Source image.
      */
-    public PlugInDialogPipeline(ViewUserInterface UI, ModelImage imA) {
+    public PlugInDialogOAISeg(ViewUserInterface UI, ModelImage imA) {
         super();
 
         userInterface = UI;
@@ -131,16 +131,16 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
 
         imageA.clearMask();
 
-        if (algorithm instanceof PlugInAlgorithmPipeline) {
+        if (algorithm instanceof PlugInAlgorithmOAICropImage) {
 
-            if (PipelineAlgo.isCompleted() == true) {
+            if (cropImageAlgo.isCompleted() == true) {
 
                 // The algorithm has completed and produced a new image to be displayed.
-                resultImageA = PipelineAlgo.getResultImageA();
-                resultImageB = PipelineAlgo.getResultImageB();
+                resultImageA = cropImageAlgo.getResultImageA();
+                resultImageB = cropImageAlgo.getResultImageB();
 
-                obMaskA = PipelineAlgo.getMaskA();
-                obMaskB = PipelineAlgo.getMaskB();
+                obMaskA = cropImageAlgo.getMaskA();
+                obMaskB = cropImageAlgo.getMaskB();
 
                 updateFileInfo(imageA, resultImageA);
                 updateFileInfo(imageA, resultImageB);
@@ -153,15 +153,15 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
                 // go to stage 2
                 init();
             }
-        } else if (algorithm instanceof PlugInAlgorithmPipelineB) {
+        } else if (algorithm instanceof PlugInAlgorithmOAISegThighs) {
 
-            if (PipelineAlgoB.isCompleted() == true) {
+            if (segThighsAlgo.isCompleted() == true) {
 
                 System.err.println("GOT PASSED THE SECOND STAGE");
 
                 // The algorithm has completed and produced a new image to be displayed.
-                resultImageA = PipelineAlgoB.getResultImageA();
-                resultImageB = PipelineAlgoB.getResultImageB();
+                resultImageA = segThighsAlgo.getResultImageA();
+                resultImageB = segThighsAlgo.getResultImageB();
 
                 resultImageA.setImageName("Right Thigh Final Segmentation");
                 resultImageB.setImageName("Left Thigh Final Segmentation");
@@ -179,21 +179,21 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
                 // Where index is the static value for FAT etc, and color is the new color.
                 // Then Do myFrame.updateImages(true);
 
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.MUSCLE, Color.GREEN);
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.FAT, Color.MAGENTA);
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE, Color.RED);
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE_MARROW, Color.PINK);
-                f1.getLUTa().setColor(PlugInAlgorithmPipelineB.SUB_CUT_FAT, Color.YELLOW);
+                f1.getLUTa().setColor(PlugInAlgorithmOAISegThighs.MUSCLE, Color.GREEN);
+                f1.getLUTa().setColor(PlugInAlgorithmOAISegThighs.FAT, Color.MAGENTA);
+                f1.getLUTa().setColor(PlugInAlgorithmOAISegThighs.BONE, Color.RED);
+                f1.getLUTa().setColor(PlugInAlgorithmOAISegThighs.BONE_MARROW, Color.PINK);
+                f1.getLUTa().setColor(PlugInAlgorithmOAISegThighs.SUB_CUT_FAT, Color.YELLOW);
                 f1.updateImages(true);
 
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.MUSCLE, Color.GREEN);
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.FAT, Color.MAGENTA);
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE, Color.RED);
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.BONE_MARROW, Color.PINK);
-                f2.getLUTa().setColor(PlugInAlgorithmPipelineB.SUB_CUT_FAT, Color.YELLOW);
+                f2.getLUTa().setColor(PlugInAlgorithmOAISegThighs.MUSCLE, Color.GREEN);
+                f2.getLUTa().setColor(PlugInAlgorithmOAISegThighs.FAT, Color.MAGENTA);
+                f2.getLUTa().setColor(PlugInAlgorithmOAISegThighs.BONE, Color.RED);
+                f2.getLUTa().setColor(PlugInAlgorithmOAISegThighs.BONE_MARROW, Color.PINK);
+                f2.getLUTa().setColor(PlugInAlgorithmOAISegThighs.SUB_CUT_FAT, Color.YELLOW);
                 f2.updateImages(true);
 
-                PipelineAlgoB.finalize();
+                segThighsAlgo.finalize();
             }
         }
     }
@@ -212,12 +212,12 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
             try {
 
                 // Make algorithm
-                PipelineAlgo = new PlugInAlgorithmPipeline(resultImageA, resultImageB, obMaskA, obMaskB, imageA);
+            	cropImageAlgo = new PlugInAlgorithmOAICropImage(resultImageA, resultImageB, obMaskA, obMaskB, imageA);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
-                PipelineAlgo.addListener(this);
+            	cropImageAlgo.addListener(this);
 
                 // Hide dialog
                 setVisible(false);
@@ -225,11 +225,11 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
                 if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (PipelineAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    if (cropImageAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    PipelineAlgo.run();
+                	cropImageAlgo.run();
 
                 }
             } catch (OutOfMemoryError x) {
@@ -243,15 +243,15 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
         // finished stage one, has VOIs, go to stage 2
         else {
              
-            userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID);
+            userInterface.getMessageFrame().addTab("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID);
 
             // Make algorithm
-            PipelineAlgoB = new PlugInAlgorithmPipelineB(resultImageA, resultImageB, obMaskA, obMaskB, useN3);
+            segThighsAlgo = new PlugInAlgorithmOAISegThighs(resultImageA, resultImageB, obMaskA, obMaskB, useN3);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            PipelineAlgoB.addListener(this);
+            segThighsAlgo.addListener(this);
 
             // Hide dialog
             setVisible(false);
@@ -259,11 +259,11 @@ public class PlugInDialogPipeline extends JDialogBase implements AlgorithmInterf
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (PipelineAlgoB.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (segThighsAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                PipelineAlgoB.run();
+            	segThighsAlgo.run();
             }
         }
     }

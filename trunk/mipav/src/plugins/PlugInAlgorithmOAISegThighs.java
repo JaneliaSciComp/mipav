@@ -24,7 +24,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
  *  intra-observer variability when performing volumetric analysis. Therefore, BIRSS has started a multistage segmentation and 
  *  quantification technique to automatically or semi-automatically process the entire cohort.</p>
  */
-public class PlugInAlgorithmPipelineB extends AlgorithmBase {
+public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
 	/** FINAL SEGMENTATION INTENSITY VALUES*/
 	
@@ -115,7 +115,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * ~ Constructors ----------------------------------------------------------------
      * Creates a new PlugInAlgorithmPipelineB object.
      */
-    public PlugInAlgorithmPipelineB() {
+    public PlugInAlgorithmOAISegThighs() {
         try {
             jbInit();
         } catch (Exception ex) {
@@ -134,7 +134,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      * To run algorithm --destImageA, destImageB are the input cropped left/right thighs.
      * obMaskA,obMaskB corresponding outer boundary masks
      */
-    public PlugInAlgorithmPipelineB(ModelImage srcImageA, ModelImage srcImageB, ModelImage obMaskA,
+    public PlugInAlgorithmOAISegThighs(ModelImage srcImageA, ModelImage srcImageB, ModelImage obMaskA,
                                     ModelImage obMaskB, boolean useN3) {
         this.obMaskA = obMaskA;
         this.obMaskB = obMaskB;
@@ -1477,12 +1477,12 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                 destImageA = fatSeg;
                 destImageA.calcMinMax();
                 UI.getMessageFrame().append("Segmented Images - Results:  " +
-                                            PlugInAlgorithmPipeline.patientID,
+                                            PlugInAlgorithmOAICropImage.patientID,
                                             "Right thigh ");
             } else {
                 destImageB = fatSeg;
                 destImageB.calcMinMax();
-                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, 
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID, 
                         "Left thigh ");
             }
             NumberFormat nf = NumberFormat.getInstance();
@@ -1490,7 +1490,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
             nf.setMinimumFractionDigits(0);
             
             if(aa==1){
-                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, 
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID, 
                         "Volume: (cubic Millimeters) \n" +
                 		"CLASS \t \tVOLUME\tAVG INTENSITY \n" +
                 		"SubcutaneousFat \t" + nf.format(subcutfatCount * voxelSize) + "\t"+subcutfatIntensityAvg+"\n"+ 
@@ -1500,7 +1500,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                 		"BoneMarrow \t\t" + nf.format(boneMarrowCount * voxelSize) + "\t"+boneMarrowIntensityAvg + "\n\n\n");
             }
             if(aa==2){
-                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmPipeline.patientID, 
+                UI.getMessageFrame().append("Segmented Images - Results:  " + PlugInAlgorithmOAICropImage.patientID, 
                         "Volume: (cubic Millimeters) \n" +
                         "CLASS \t \tVOLUME\tAVG INTENSITY \n" +
                         "SubcutaneousFat \t" + nf.format(subcutfatCount * voxelSize) + "\t"+subcutfatIntensityAvg+"\n"+ 
@@ -1511,7 +1511,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
                         "TOTAL Thighs \t" + nf.format(total_thighCount * voxelSize) + "\n\n\n");
             	
                 UI.getMessageFrame().append("Segmented Images - Results:  " + 
-                        PlugInAlgorithmPipeline.patientID, 
+                		PlugInAlgorithmOAICropImage.patientID, 
         	    		"TOTAL THIGH DATA\n" +
         	    		"CLASS \t \tAVG INTENSITY \n" +
         	    		"SubcutaneousFat\t"+subcutfatIntensityTotal/subcutfatCountTotal+ "\n"+
