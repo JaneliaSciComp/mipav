@@ -452,7 +452,7 @@ public class PlugInAlgorithmPipeline extends AlgorithmBase {
      */
     public void runAlgorithm() {
     	
-        buildProgressBar("OAI Thigh Seg. 6/20/06", "Initializing...", 0, 100);
+        buildProgressBar("OAI Thigh Seg. 6/22/06", "Initializing...", 0, 100);
         initProgressBar();
 
         try {
