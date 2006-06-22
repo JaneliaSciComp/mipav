@@ -143,8 +143,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
-    
- 
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -221,7 +221,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (getLUTa() != null) {
             getLUTa().zeroToOneLUTAdjust();
         }
-        
+
         }
 
     /**
@@ -1164,10 +1164,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 userInterface.getScriptDialog().append(line);
             }
         } else if (command.equals("MaskToVOI")) {
-//            new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
 
                AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
-               VOIExtractionAlgo.setActiveImage(false);
+               //VOIExtractionAlgo.setActiveImage(false);
                VOIExtractionAlgo.run();
 
             // add the conversion to the script, if one is being recorded
@@ -2869,8 +2868,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         bigger = Math.max(width, height);
         zoom = (int) Math.min((bigger - 1) / ((imageA.getExtents()[0] * widthResFactor) - 1),
                               (bigger - 1) / ((imageA.getExtents()[1] * heightResFactor) - 1));
-        
-        
+
+
         if (zoom > componentImage.getZoomX()) {
             componentImage.setZoom((int) zoom, (int) zoom); // ***************************
             // setZoom(zoom, zoom);
@@ -2888,7 +2887,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                height = componentImage.getSize(null).height /* + fudgeFactor*/;
             }
         } else if ((width < componentImage.getSize(null).width) && (height >= componentImage.getSize(null).height)) {
-       
+
             // width += fudgeFactor;
             height = componentImage.getSize(null).height /* + fudgeFactor*/ +
                      scrollPane.getHorizontalScrollBar().getHeight();
@@ -2896,20 +2895,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             width = componentImage.getSize(null).width /* + fudgeFactor*/ +
                     scrollPane.getVerticalScrollBar().getWidth();
             // height += fudgeFactor;
- 
+
        /*
         * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller
-        * on windows on action event triggered the calling of this method, however on Linux several hundred 
+        * on windows on action event triggered the calling of this method, however on Linux several hundred
         * events would be triggered by the same action.  The code would enter the below block, which did nothing.
         * Then later in this method a small amount would be added to the width and height each time.  Until eventually
         * the image would reach the original size before the user made it smaller.
-        * 
+        *
         * This code now re-adds the component listener and then just returns without allowing the code to reach
         * the point where it adds to the size.  This has been tested on Windows and Linux and appears to produce
         * the desired behavior on both.
-        * 
+        *
         * Nathan Pollack (Contractor-SSAI)  June 19, 2006
-        */ 
+        */
         } else if ((width < componentImage.getSize(null).width) || (height < componentImage.getSize(null).height)) { // width += fudgeFactor;
          	addComponentListener(this);
         	return;
@@ -2936,10 +2935,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         scrollPane.setSize(width, height);
         setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
                 scrollPane.getSize().height + getInsets().top + getInsets().bottom);
-        
-       
-        
-        
+
+
+
+
         //validate();
         setTitle();
         updateImages(true);
@@ -3577,11 +3576,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  DOCUMENT ME!
      */
     public void mouseReleased(MouseEvent event) {}
-    
+
     public void mouseDragged(MouseEvent e){}
-    
+
     public void mouseMoved(MouseEvent e){}
-    
+
 
     /**
      * Method to send an image to the printer.
@@ -5095,7 +5094,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         setBackground(Color.black);
 
-    
+
         addKeyListener(this);
 
         // MUST register frame to image models
@@ -5127,19 +5126,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         userInterface.registerFrame(this);
         updateImages(true);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        
-        
+
+
         /*
          * The addComponentListener statement was moved from earlier in the code to the end
-         * because of a bug found on Linux.  It appeared that adding the component listener 
-         * earlier caused events to be sent which led to a deadlocked situation.  So on the opening 
+         * because of a bug found on Linux.  It appeared that adding the component listener
+         * earlier caused events to be sent which led to a deadlocked situation.  So on the opening
          * of a new window in Linux MIPAV would sometimes freeze up.  The moving of this statement
          * to this line appeared to resolve that, and so this statement should remain here.
-         * 
+         *
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
         addComponentListener(this);
-        
+
     } // end init()
 
     /**
