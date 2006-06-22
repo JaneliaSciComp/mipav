@@ -1164,7 +1164,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 userInterface.getScriptDialog().append(line);
             }
         } else if (command.equals("MaskToVOI")) {
-            new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
+//            new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
+
+               AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
+               VOIExtractionAlgo.setActiveImage(false);
+               VOIExtractionAlgo.run();
 
             // add the conversion to the script, if one is being recorded
             if (userInterface.isScriptRecording()) {
@@ -1182,6 +1186,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 userInterface.getScriptDialog().append(line);
             }
+            updateImages();
         } else if (command.equals("MaskToPaint")) {
             handleMaskToPaint(true);
 
@@ -1563,7 +1568,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogReplaceBlankSlicesWithAverages rBlankWithAvg =
                 new JDialogReplaceBlankSlicesWithAverages(this, getActiveImage());
             rBlankWithAvg.callAlgorithm();
-            
+
         } else if (command.equals("FlipY")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS);
 
