@@ -404,9 +404,9 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
         		 }
         	 }
 
-             // loop through each slice at most 10 times adding neighboring bone pixels
+             // loop through each slice at most 8 times adding neighboring bone pixels
         	 // that are less than the mrBoneThreshold value
-             for (int iter = 0; iter < 10; iter++) {
+             for (int iter = 0; iter < 8; iter++) {
             	 for (int idx = xDim; idx < boneBuffer.length - xDim; idx++) {
             		 if (imgBuffer1[idx] == 0 &&
             				 (imgBuffer1[idx+1] == 1 || imgBuffer1[idx-1] == 1 ||
@@ -443,7 +443,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
          } // end for (int sliceNum = 0; ...)
   
   	   bone.calcMinMax();
-  	   Close(bone, 6, 1);
+ 	   Close(bone, 6, 2);
        return bone;
                 
      } // end extractBone(...)
@@ -1261,7 +1261,7 @@ public class PlugInAlgorithmPipelineB extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("OAI Thigh Seg. 6/21/06", "Processing images...", 0, 100);
+        buildProgressBar("OAI Thigh Seg. 6/22/06", "Processing images...", 0, 100);
         initProgressBar();
         
         xDim = 1;
