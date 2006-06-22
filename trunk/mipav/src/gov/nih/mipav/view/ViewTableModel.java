@@ -107,7 +107,23 @@ public class ViewTableModel extends DefaultTableModel implements Serializable {
 
         return -1;
     }
-    
+
+    /**
+     * Gets the index of a column name that starts with the given string
+     * @param name String name of column
+     * @return int Index of column, or -1 if none
+     */
+    public int getColumnStartsWithIndex(String name) {
+
+        for (int i = 0; i < columnIdentifiers.size(); i++) {
+
+            if (((String)columnIdentifiers.elementAt(i)).startsWith(name)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
     /**
      * Gets the index of the given column name.
      *

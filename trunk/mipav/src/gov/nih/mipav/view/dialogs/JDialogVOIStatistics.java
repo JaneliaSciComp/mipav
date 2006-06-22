@@ -300,7 +300,7 @@ public class JDialogVOIStatistics extends JDialogBase
 
                 if (checkBoxPanel.getSelectedList(VOIStatisticList.statisticDescription[i])) {
 
-                    if (logModel.getColumnIndex(VOIStatisticList.statisticDescription[i]) == -1) {
+                    if (logModel.getColumnStartsWithIndex(VOIStatisticList.statisticDescription[i]) == -1) {
                         if ((VOIStatisticList.statisticDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits) &&
                                 (xUnits == zUnits) && (xUnits != FileInfoBase.UNKNOWN_MEASURE)) {
                             str = image.getFileInfo(0).getVolumeUnitsOfMeasureStr();

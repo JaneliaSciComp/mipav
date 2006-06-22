@@ -2620,60 +2620,58 @@ public class VOIHandler extends JComponent
         int i, s, nVOI;
 
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-
+        boolean foundActive = false;
         nVOI = VOIs.size();
 
         if (nVOI == 0) {
             return;
         }
 
-        for (i = 0; i < nVOI; i++) {
+        for (i = nVOI - 1; i >= 0; i--) {
 
             if (VOIs.VOIAt(i).isActive() == true) {
+                foundActive = true;
+                if (contoursOnly) {
+                    if (compImage.getActiveImage().getNDims() == 2) {
+                        deleteContour(VOIs.VOIAt(i), 0);
+                    } else if (compImage.getActiveImage().getNDims() >= 3) {
 
-                break;
+                        for (s = 0;
+                                 s < compImage.getActiveImage().getExtents()[2];
+                                 s++) {
+                            deleteContour(VOIs.VOIAt(i), s);
+                        }
+                    }
+
+                    if (VOIs.VOIAt(i).isEmpty() == true) {
+                        compImage.getActiveImage().unregisterVOI(VOIs.VOIAt(i));
+
+                        int id = (compImage.getActiveImage().getVOIs().size() > 0)
+                                 ?
+                                 (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).getID() + 1) : 0;
+                        int lastUID = (compImage.getActiveImage().getVOIs().
+                                       size() > 0)
+                                      ?
+                                      (((VOI) (compImage.getActiveImage().
+                                               getVOIs().lastElement())).
+                                       getUID() + 1) : -1;
+
+                        this.updateVOIColor(id, lastUID);
+                        voiID = -1;
+                    }
+                } else {
+                    VOIs.removeElementAt(i);
+                    voiID = -1;
+                }
             } // Set i
         }
 
-        if (i == nVOI) {
+        if (!foundActive) {
             MipavUtil.displayError("VOI must be selected.");
 
             return; // No VOI to delete
         }
 
-
-        if (contoursOnly) {
-            if (compImage.getActiveImage().getNDims() == 2) {
-                deleteContour(VOIs.VOIAt(i), 0);
-            } else if (compImage.getActiveImage().getNDims() >= 3) {
-
-                for (s = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
-                    deleteContour(VOIs.VOIAt(i), s);
-                }
-            }
-
-            if (VOIs.VOIAt(i).isEmpty() == true) {
-                compImage.getActiveImage().unregisterVOI(VOIs.VOIAt(i));
-
-                int id = (compImage.getActiveImage().getVOIs().size() > 0)
-                         ?
-                         (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).getID() +
-                          1) : 0;
-                int lastUID = (compImage.getActiveImage().getVOIs().size() > 0)
-                              ?
-                              (((VOI) (compImage.getActiveImage().getVOIs().lastElement())).
-                               getUID() + 1) : -1;
-
-                this.updateVOIColor(id, lastUID);
-                voiID = -1;
-                this.fireVOISelectionChange(null);
-            } else {
-                VOIs.VOIAt(i).setAllActive(false);
-            }
-        } else {
-            VOIs.removeElementAt(i);
-             voiID = -1;
-        }
 
         fireVOISelectionChange(null);
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
@@ -4100,8 +4098,6 @@ public class VOIHandler extends JComponent
                     }
                 }
 
-                System.err.println("OLD INDEX: " + oldIndex);
-
                 int numSlices =(int)( z[1] - z[0] ) + 1;
                 int numElements = 0;
                 int sliceCounter = 0;
@@ -4115,7 +4111,6 @@ public class VOIHandler extends JComponent
                 compImage.getActiveImage().getVOIs().addElement(outVOI);
 
             } else {
-            System.err.println("in else");
                 if ((z[1] - z[0]) != 0 ||
                     outVOI.getCurveType() == VOI.POLYLINE_SLICE) { // checks to see if it is a 3D VOI
 
