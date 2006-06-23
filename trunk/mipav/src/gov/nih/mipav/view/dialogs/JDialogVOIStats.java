@@ -877,6 +877,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 MipavUtil.displayError("Please make sure VOI is selected.");
                 return;
             }
+            voi.setActive(true);
             ViewUserInterface UI = ((ViewJFrameImage) (parentFrame)).
                                    getUserInterface();
             UI.setDataText("\n -----------------------------------------------------------------------------\n");
