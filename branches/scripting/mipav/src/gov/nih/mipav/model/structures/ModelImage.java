@@ -996,6 +996,19 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
+     * Returns the directory where the image file is located.
+     *
+     * @return  The directory where the image file resides.
+     */
+    public String getImageDirectory() {
+        if (fileInfo != null) {
+            return fileInfo[0].getFileDirectory();
+        } else {
+            return null;
+        }
+    }
+    
+    /**
      * Returns the file name of the image.
      *
      * @return  the String that represents the filename (as stored in the fileinfo)
@@ -1008,7 +1021,6 @@ public class ModelImage extends ModelStorageBase {
             return null;
         }
     }
-
 
     /**
      * Accessor that returns.

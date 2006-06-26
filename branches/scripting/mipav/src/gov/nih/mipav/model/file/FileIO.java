@@ -7820,14 +7820,6 @@ public class FileIO {
                                             options.getBeginTime() + " " + options.getEndTime());
             }
         }
-
-        if (options.getFileType() == FileBase.MINC) {
-            UI.getScriptDialog().append(options.getOrientation() + " " + options.getXStart() + " " +
-                                        options.getXSpace() + " " + options.getYStart() + " " + options.getYSpace() +
-                                        " " + options.getZStart() + " " + options.getZSpace() + " " +
-                                        options.isLeftToRight() + " " + options.isPosToAnt() + " " +
-                                        options.isInfToSup() + " ");
-        }
     }
 
     /**

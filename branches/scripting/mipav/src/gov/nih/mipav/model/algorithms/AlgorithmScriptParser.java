@@ -26,7 +26,7 @@ import javax.swing.*;
  * @author   Neva Cherniavsky (primary)
  * @author   Harman Singh
  * @see      JDialogMultiple
- * @see      JDialogScript
+ * @see      JDialogScriptRecorder
  */
 public class AlgorithmScriptParser extends AlgorithmBase {
 
@@ -1078,31 +1078,11 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         else if ((num == 12) && (image.getNDims() == 3) && (fileType == FileBase.MINC)) {
             opts.setBeginSlice(getNextInteger());
             opts.setEndSlice(getNextInteger());
-            opts.setOrientation(getNextInteger());
-            opts.setXStart(getNextFloat());
-            opts.setXSpace(getNextFloat());
-            opts.setYStart(getNextFloat());
-            opts.setYSpace(getNextFloat());
-            opts.setZStart(getNextFloat());
-            opts.setZSpace(getNextFloat());
-            opts.setLeftToRight(getNextBoolean());
-            opts.setPosToAnt(getNextBoolean());
-            opts.setInfToSup(getNextBoolean());
         } // if 13 and 4D image saved as MINC, these are MINC variables
         else if ((num == 13) && (image.getNDims() == 4) && (fileType == FileBase.MINC)) {
             opts.setBeginSlice(getNextInteger());
             opts.setEndSlice(getNextInteger());
             opts.setTimeSlice(getNextInteger());
-            opts.setOrientation(getNextInteger());
-            opts.setXStart(getNextFloat());
-            opts.setXSpace(getNextFloat());
-            opts.setYStart(getNextFloat());
-            opts.setYSpace(getNextFloat());
-            opts.setZStart(getNextFloat());
-            opts.setZSpace(getNextFloat());
-            opts.setLeftToRight(getNextBoolean());
-            opts.setPosToAnt(getNextBoolean());
-            opts.setInfToSup(getNextBoolean());
         } else if (num == 1) {
 
             if (image.getNDims() == 3) {
@@ -1355,8 +1335,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 }
             } catch (Exception e) {
                 System.out.println(e);
-                for (int i = 0; i < e.getStackTrace().length; i++)
-                    System.out.println(e.getStackTrace()[i]);
+                e.printStackTrace();
                 MipavUtil.displayError("Error in script file near \"SaveImageAs\".  Image " + name +
                                        " not found or error in options.\n");
                 isRunning = false;

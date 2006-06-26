@@ -67,7 +67,13 @@ public class ParameterTable {
      * @return  The requested parameter.
      */
     public Parameter get(String paramLabel) {
-        return (Parameter) paramTable.get(paramLabel);
+        try {
+            return (Parameter) paramTable.get(paramLabel);
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -78,7 +84,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public boolean getBoolean(String paramLabel) {
-        return ((ParameterBoolean) get(paramLabel)).getValue();
+        try {
+            return ((ParameterBoolean) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -89,7 +101,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public double getDouble(String paramLabel) {
-        return ((ParameterDouble) get(paramLabel)).getValue();
+        try {
+            return ((ParameterDouble) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -100,7 +118,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public float getFloat(String paramLabel) {
-        return ((ParameterFloat) get(paramLabel)).getValue();
+        try {
+            return ((ParameterFloat) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -111,7 +135,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public ModelImage getImage(String paramLabel) {
-        return ((ParameterImage) get(paramLabel)).getImage();
+        try {
+            return ((ParameterImage) get(paramLabel)).getImage();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -122,7 +152,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public int getInt(String paramLabel) {
-        return ((ParameterInt) get(paramLabel)).getValue();
+        try {
+            return ((ParameterInt) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -133,7 +169,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public ParameterList getList(String paramLabel) {
-        return (ParameterList) get(paramLabel);
+        try {
+            return (ParameterList) get(paramLabel);
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -144,7 +186,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public long getLong(String paramLabel) {
-        return ((ParameterLong) get(paramLabel)).getValue();
+        try {
+            return ((ParameterLong) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -174,7 +222,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public short getShort(String paramLabel) {
-        return ((ParameterShort) get(paramLabel)).getValue();
+        try {
+            return ((ParameterShort) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -185,7 +239,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public String getString(String paramLabel) {
-        return ((ParameterString) get(paramLabel)).getValue();
+        try {
+            return ((ParameterString) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -196,7 +256,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public short getUShort(String paramLabel) {
-        return ((ParameterUShort) get(paramLabel)).getValue();
+        try {
+            return ((ParameterUShort) get(paramLabel)).getValue();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**
@@ -207,7 +273,13 @@ public class ParameterTable {
      * @return  The requested parameter's value.
      */
     public ParameterVariable getVariable(String paramLabel) {
-        return (ParameterVariable) get(paramLabel);
+        try {
+            return (ParameterVariable) get(paramLabel);
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
     }
 
     /**

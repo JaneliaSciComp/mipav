@@ -128,7 +128,7 @@ public class VariableTable extends Hashtable {
     /**
      * Stores a variable name and its value in the variable table.
      *
-     * @param  varName  The name of the variable.
+     * @param  varName  The name of the variable (e.g., '$save_as_file_name').
      * @param  value    The variable value.
      */
     public void storeVariable(String varName, String value) {
