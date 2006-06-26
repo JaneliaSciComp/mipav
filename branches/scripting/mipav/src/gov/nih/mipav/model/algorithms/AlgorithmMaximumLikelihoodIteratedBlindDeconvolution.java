@@ -206,7 +206,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         {
             iType = ModelStorageBase.USHORT;
         }
-        
+
         /* Create three separate ModelImages of the same type: */
         m_kSourceRed   = new ModelImage(iType,
                                         kImage.getExtents(),
@@ -222,6 +222,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                      m_kSourceGreen,
                                      m_kSourceBlue,
                                      kImage );
+        /* Must not run in separate thread, since we need the results before
+         * proceeding to the next step: */
         kRGBAlgoMulti.setRunningInSeparateThread(false);
         kRGBAlgoMulti.setProgressBarVisible(false);
         kRGBAlgoMulti.run();
@@ -251,6 +253,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                             null, null);
         AlgorithmRGBtoGray kRGBAlgo =
             new AlgorithmRGBtoGray( kResult, kImage );
+        /* Must not run in separate thread, since we need the results before
+         * proceeding to the next step: */
         kRGBAlgo.setRunningInSeparateThread(false);
         kRGBAlgo.setProgressBarVisible(false);
         kRGBAlgo.run();
@@ -260,7 +264,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         return kResult;
     }
 
-    /** 
+    /**
      * Called after the deconvolution algorithm is run. The deconvolution
      * processes the grayscale image. Once the estimated and psf images are
      * calculated, they are used to reconstruct the red, green, and blue
@@ -279,6 +283,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         // Make algorithm
         AlgorithmRGBConcat kMathAlgo =
             new AlgorithmRGBConcat( kRed, kGreen, kBlue, kResult, false );
+        /* Must not run in separate thread, since we need the results before
+         * proceeding to the next step: */
         kMathAlgo.setRunningInSeparateThread(false);
         kMathAlgo.setProgressBarVisible(false);
         kMathAlgo.run();
@@ -298,7 +304,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     private ModelImage initPSF( int iNumberDimensions, int[] aiExtents )
     {
         /* Create a new ModelImage to contain the Gaussian: */
-        ModelImage kImage = 
+        ModelImage kImage =
             new ModelImage( ModelStorageBase.FLOAT, aiExtents, "psf" + 0);
 
         /* Set up the data for the GenerateGaussian class: */
@@ -337,7 +343,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         fGaussData = null;
         fSigmas = null;
         iDerivOrder = null;
-        
+
         /* Apply constraints to the image and return: */
         ModelImage kReturn = constraints( kImage );
         kImage.disposeLocal();
@@ -369,7 +375,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         {
             /* Convolve the current estimate with the current PSF: */
             tempImageConvolve = convolve( kEstimate, kPSF, 1f );
-            
+
             /* Uncomment to check results of convolution:
             new ViewJFrameImage((ModelImage)(tempImageConvolve.clone()),
                                 null, new Dimension(610, 200));
@@ -392,7 +398,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             kEstimate.disposeLocal();
             kEstimate = tempImageCalc;
             kEstimate.setImageName( "estimated" + i );
-            
+
 
             /* Create new psf based on original image and psf: */
             /* convolve the divided image with the estimated mirror: */
@@ -411,7 +417,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             kPSF = constraints( tempImageCalc );
             kPSF.setImageName( "psf" + i );
             tempImageCalc.disposeLocal();
-            
+
             /* Display progression: */
             if ( ((i%m_iNumberProgress) == 0) && (i != m_iNumberIterations) )
             {
@@ -437,7 +443,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         return kEstimate;
-    } 
+    }
 
     /**
      * Convolves two image by computing the fast fourier transforms of each
@@ -460,7 +466,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* multiply the resulting spectrums: */
         ModelImage kConvolve = calc( kImageSpectrum1, kImageSpectrum2,
                                      AlgorithmImageCalculator.MULTIPLY );
-        
+
         /* Clean up temporary data: */
         kImageSpectrum1.disposeLocal();
         kImageSpectrum2.disposeLocal();
@@ -469,7 +475,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         kConvolve.setConvolve( true );
         /* Calculate the inverse FFT: */
         ModelImage kResult = fft( kConvolve, -1 );
-        
+
         /* Clean up temporary data: */
         kConvolve.disposeLocal();
 
@@ -506,12 +512,14 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         int constructionMethod = 1;
         int butterworthOrder = 0;
 
-        // take the FFT of the first input image: 
+        // take the FFT of the first input image:
         AlgorithmFFT kFFT = new AlgorithmFFT( kImageSpectrum, kImage,
                                               iDir, logMagDisplay,
                                               unequalDim, image25D, imageCrop,
                                               kernelDiameter, filterType, freq1, freq2,
                                               constructionMethod, butterworthOrder);
+        /* Must not run in separate thread, since we need the results before
+         * proceeding to the next step: */
         kFFT.setRunningInSeparateThread(false);
         kFFT.setProgressBarVisible( false );
         kFFT.run();
@@ -523,7 +531,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
 
     /**
      * Performs a AlgorithmImageCalculator calculation on the two input
-     * images. Used here to either multiply or divide two images. 
+     * images. Used here to either multiply or divide two images.
      * @param kImage1, the first input image
      * @param kImage2, the second input image
      * @param iType, the type of calculation (multiply or divide)
@@ -537,7 +545,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                           iType,
                                           AlgorithmImageMath.CLIP, true,
                                           null);
-
+        
+        /* Must not run in separate thread, since we need the results before
+         * proceeding to the next step: */
         algImageCalc.setRunningInSeparateThread(false);
         algImageCalc.setProgressBarVisible( false );
         algImageCalc.run();
@@ -603,7 +613,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             {
                 m_afResolutions[i] *= 1.609344e12f; //1609344000000f;
             }
-            
+
         }
 
         /* 2). Hourglass constraint: */
@@ -645,7 +655,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             float fYHalf = (m_afResolutions[1]*(m_iDimY + 1))/2f;
             float fZHalf = (m_afResolutions[2]*(m_iDimZ + 1))/2f;
             float fX, fY, fZ;
-            
+
             float fRadiusZ = 0.0f;
             for ( int z = 0; z < m_iDimZ; z++ )
             {
@@ -656,14 +666,14 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                         fX = m_afResolutions[0] * x;
                         fY = m_afResolutions[1] * y;
                         fZ = m_afResolutions[2] * z;
-                        
+
                         fRadiusZ = (float)(Math.abs( fZ - fZHalf ) * m_fTanTheta);
-                        
-                        if ( ( ((fX - fXHalf) * (fX - fXHalf)) + 
-                               ((fY - fYHalf) * (fY - fYHalf))   ) > 
+
+                        if ( ( ((fX - fXHalf) * (fX - fXHalf)) +
+                               ((fY - fYHalf) * (fY - fYHalf))   ) >
                              ( ( m_fRadius + fRadiusZ ) * ( m_fRadius + fRadiusZ ) ) )
                         {
-                            kWorking.set( (z * m_iDimY * m_iDimX) + 
+                            kWorking.set( (z * m_iDimY * m_iDimX) +
                                           (y * m_iDimX) +
                                           x,
                                           0f );
@@ -683,26 +693,26 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                         fX = m_afResolutions[0] * x;
                         fY = m_afResolutions[1] * y;
                         fZ = m_afResolutions[2] * z;
-                        
+
                         fRadiusZ = (float)(Math.abs( fZ - fZHalf ) * m_fTanTheta);
-                        if ( ( ( ((fX - fXHalf) * (fX - fXHalf)) + 
-                                 ((fY - fYHalf) * (fY - fYHalf))   ) > 
+                        if ( ( ( ((fX - fXHalf) * (fX - fXHalf)) +
+                                 ((fY - fYHalf) * (fY - fYHalf))   ) >
                                (m_fRadialBandLimit * m_fRadialBandLimit) )
                              ||
                              ( (float)(Math.abs( fZ - fZHalf )) > m_fAxialBandLimit )
                              ||
-                             ( ( ((fX - fXHalf) * (fX - fXHalf)) + 
-                                 ((fY - fYHalf) * (fY - fYHalf))   ) < 
+                             ( ( ((fX - fXHalf) * (fX - fXHalf)) +
+                                 ((fY - fYHalf) * (fY - fYHalf))   ) <
                                (fRadiusZ * fRadiusZ) )
                              )
                         {
                             /* Set real value to 0: */
-                            kImageFFT.set( (z * m_iDimY * m_iDimX ) + 
+                            kImageFFT.set( (z * m_iDimY * m_iDimX ) +
                                            (y * m_iDimX) +
                                            (x) + 0,
                                            0f );
                             /* Set imaginary value to 0: */
-                            kImageFFT.set( (z * m_iDimY * m_iDimX ) + 
+                            kImageFFT.set( (z * m_iDimY * m_iDimX ) +
                                            (y * m_iDimX) +
                                            (x) + 1,
                                            0f );
@@ -770,6 +780,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             JDialogFlip flipz =
                 new JDialogFlip( ViewUserInterface.getReference(),
                                  kReturn, AlgorithmFlip.Z_AXIS);
+            /* Must not run in separate thread, since we need the results
+             * before proceeding to the next step: */
+            flipz.setSeparateThread(false);
             flipz.callAlgorithm();
             flipz.dispose();
             flipz = null;
@@ -777,12 +790,18 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         JDialogFlip flipy =
             new JDialogFlip( ViewUserInterface.getReference(),
                              kReturn, AlgorithmFlip.Y_AXIS);
+        /* Must not run in separate thread, since we need the results
+         * before proceeding to the next step: */
+        flipy.setSeparateThread(false);
         flipy.callAlgorithm();
         flipy.dispose();
         flipy = null;
         JDialogFlip flipx =
             new JDialogFlip( ViewUserInterface.getReference(),
                              kReturn, AlgorithmFlip.X_AXIS);
+        /* Must not run in separate thread, since we need the results
+         * before proceeding to the next step: */
+        flipx.setSeparateThread(false);
         flipx.callAlgorithm();
         flipx.dispose();
         flipx = null;
@@ -806,10 +825,10 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         if ( m_iNumberIterations != 0 )
         {
             runDeconvolution( m_kSourceImage, m_kEstimatedImage, m_kPSFImage, true );
-            
+
             if (threadStopped) {
                 finalize();
-                
+
                 return;
             }
             if ( m_kOriginalSourceImage.isColorImage() )
@@ -818,7 +837,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                 /* doesn't matter, just has to be higher than m_iNumberIterations */
                 m_iNumberProgress = 2;
                 m_bUpdatePBar = false;
-            
+
                 /* get new estimates for each color channel by runing the
                  * deconvolution with the estimates from the grayscale image --
                  * deconvolution does not iterated again: */
@@ -858,7 +877,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         return (ModelImage)m_kEstimatedImage.clone();
     }
 
-    /** 
+    /**
      * Dispose of temporary images after the deconvolution process is
      * completed:
      */
@@ -866,7 +885,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     {
         m_kSourceImage.disposeLocal();
         m_kSourceImage = null;
-        
+
         m_kOriginalSourceImage = null;
 
         m_kPSFImage.disposeLocal();
