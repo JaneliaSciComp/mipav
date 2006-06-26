@@ -72,9 +72,9 @@ public class JDialogGridOptions extends JDialogBase {
         this.comp = comp;
 
         unitsStr = FileInfoBase.getUnitsOfMeasureAbbrevStr(comp.getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0));
-        this.width = comp.getGridSpacingX();
-        this.height = comp.getGridSpacingY();
-        this.color = comp.getGridColor();
+        this.width = comp.getVOIHandler().getGridSpacingX();
+        this.height = comp.getVOIHandler().getGridSpacingY();
+        this.color = comp.getVOIHandler().getGridColor();
         init();
     }
 
@@ -96,15 +96,15 @@ public class JDialogGridOptions extends JDialogBase {
        else if (command.equals("Apply")) {
 
             if (setVariables()) {
-                comp.setGridSpacingX(width);
-                comp.setGridSpacingY(height);
-                comp.setGridColor(color);
+                comp.getVOIHandler().setGridSpacingX(width);
+                comp.getVOIHandler().setGridSpacingY(height);
+                comp.getVOIHandler().setGridColor(color);
 
-                comp.setGridLabelingOn(labelBox.isSelected());
-                comp.setGridLabelOrientation(labelXNumButton.isSelected());
+                comp.getVOIHandler().setGridLabelingOn(labelBox.isSelected());
+                comp.getVOIHandler().setGridLabelOrientation(labelXNumButton.isSelected());
 
 
-                if (comp.getGridOverlay()) {
+                if (comp.getVOIHandler().getGridOverlay()) {
                     comp.paintComponent(comp.getGraphics());
                 }
             }
@@ -128,7 +128,6 @@ public class JDialogGridOptions extends JDialogBase {
         gbc.weightx = 1;
         gbc.gridwidth = 1;
 
-        int yPos = 0;
         gbc.anchor = gbc.WEST;
         gbc.fill = gbc.HORIZONTAL;
 

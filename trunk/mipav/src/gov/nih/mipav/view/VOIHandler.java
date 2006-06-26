@@ -26,7 +26,8 @@ import javax.swing.event.EventListenerList;
 import gov.nih.mipav.model.structures.UpdateVOIEvent;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.dialogs.JDialogPointArea;
-import gov.nih.mipav.model.file.FileInfoDicom;  //imports all static variables...makes life easy
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.view.dialogs.JDialogOverlay;  //imports all static variables...makes life easy
 
 
 /**
@@ -136,6 +137,29 @@ public class VOIHandler extends JComponent
     public static final int FRONT    = 2;
     public static final int BACK     = 3;
 
+    /** color of grid. */
+    protected Color gridColor = Color.lightGray;
+
+    /** Flag to indicate if NEI grid overlay should be displayed. */
+    protected boolean gridOverlayOn = false;
+
+    /** spacing of the grid (horizontal) in terms of resolution. */
+    protected float gridSpacingX = 20f;
+
+    /** spacing of the grid (vertical) in terms of resolution. */
+    protected float gridSpacingY = 20f;
+
+    /** if number/lettering should be displayed for grid boxes */
+    protected boolean gridLabelingOn = false;
+
+    /** boolean to determine the orientation:
+     * true is x-axis numbered
+     * false is x-axis lettered
+     */
+    protected boolean gridLabelOrientation = true;
+
+    /** Flag to indicate if DICOM overlay should be displayed. */
+    protected boolean overlayOn = false;
 
 
     /**
@@ -300,7 +324,7 @@ public class VOIHandler extends JComponent
             for (i = 0; i < nVOI; i++) {
                 int curveType = VOIs.VOIAt(i).getCurveType();
 
-                if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
+                if (VOIs.VOIAt(i).isActive()) {
                     if ( (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
                           || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE
                           || VOIs.VOIAt(i).getCurveType() == VOI.LINE
@@ -1065,6 +1089,7 @@ public class VOIHandler extends JComponent
                         VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(), compImage.getResolutionX(), compImage.getResolutionY())) {
                         if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR
                             || VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) {
+                           // System.err.println("IN HERE checkin for NEAR POINT with shift down");
                             for (j = 0; j < nCurves; j++) {
                                 if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), j, compImage.getZoomX(), compImage.getResolutionX(), compImage.getResolutionY())) {
                                     break;
@@ -1073,6 +1098,7 @@ public class VOIHandler extends JComponent
                             if (j == nCurves) {
                                 return;
                             }
+                           // System.err.println("setting mode to DELETE_POINT");
                             // BEN LINK CHANGE can delete point from bounding box'd contour
                             // if ( VOIs.VOIAt( i ).getBoundingBoxFlag() == false ) {
                             compImage.setMode(ViewJComponentEditImage.DELETE_POINT);
@@ -1836,7 +1862,7 @@ public class VOIHandler extends JComponent
         else if (mode == ViewJComponentEditImage.NEW_POINT) { // impossible for LINE
 
             if (mouseEvent.isShiftDown()) {
-                System.err.println("SHIFT IS DOWN!");
+              //  System.err.println("SHIFT IS DOWN!");
                 nVOI = VOIs.size();
                 for (i = 0; i < nVOI; i++) {
                     if (VOIs.VOIAt(i).isActive()) {
@@ -2057,6 +2083,7 @@ public class VOIHandler extends JComponent
             }
         }
         else if (mode == ViewJComponentEditImage.DELETE_POINT) { // impossible for LINE
+            System.err.println("mode is DELETE_POINT in mouse released");
             nVOI = VOIs.size();
             for (i = 0; i < nVOI; i++) {
                 if (VOIs.VOIAt(i).isActive()) {
@@ -4998,7 +5025,7 @@ public class VOIHandler extends JComponent
      *
      * @param  graphics  Graphics the graphics context to draw in
      */
-    public void drawVOIs(Graphics graphics, boolean overlayOn, boolean gridOverlayOn) {
+    public void drawVOIs(Graphics graphics) {
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
         if (compImage.getOrientation() == ViewJComponentEditImage.NA) {
@@ -5100,14 +5127,13 @@ public class VOIHandler extends JComponent
     }
 
     /**
-     * Draws a grid on top of the image according to the gridSpacingX and gridSpacingY.
-     *
-     * @param  g  Graphics the graphics used to draw
+     * Draws a grid on top of the image according to the
+     * gridSpacingX and gridSpacingY
+     * @param g Graphics the graphics used to draw
      */
     protected void showGridOverlay(Graphics g) {
 
-        g.setColor(compImage.getGridColor());
-
+        g.setColor(gridColor);
         Insets insets = compImage.getFrame().getInsets();
         int rightOffset = getBounds().width - insets.left;
         int bottomOffset = getBounds().height - insets.bottom;
@@ -5119,8 +5145,8 @@ public class VOIHandler extends JComponent
         float resX = compImage.getActiveImage().getFileInfo()[0].getResolutions()[0];
         float resY = compImage.getActiveImage().getFileInfo()[0].getResolutions()[1];
 
-        float numVertical = (xDim * resX) / compImage.getGridSpacingX();
-        float numHorizontal = (yDim * resY) / compImage.getGridSpacingY();
+        float numVertical = (xDim * resX) / gridSpacingX;
+        float numHorizontal = (yDim * resY) / gridSpacingY;
 
         float verticalSpacing = (xDim / numVertical) * compImage.getZoomX();
         float horizontalSpacing = (yDim / numHorizontal) * compImage.getZoomY();
@@ -5130,12 +5156,45 @@ public class VOIHandler extends JComponent
         }
 
         offset = 0;
-
         for (int i = 0; i < numHorizontal; i++, offset += horizontalSpacing) {
             g.drawLine(0, MipavMath.round(offset), rightOffset, MipavMath.round(offset));
         }
 
+        if (gridLabelingOn) {
+            int i, j;
+            float xOffset = 0;
+            float yOffset = 0;
+            String gridLabel = "";
+
+            float xPadding = 2 + (2 * compImage.getZoomX());
+            float yPadding = 15 + (2 * compImage.getZoomY());
+
+            char alphaLabel;
+
+            for (i = 0; i < numHorizontal; i++, xOffset += horizontalSpacing) {
+
+                for (j = 0, yOffset = 0; j < numVertical; j++,
+                                      yOffset += verticalSpacing) {
+
+                    if (gridLabelOrientation) {
+                        //x-axis is 1, 2, 3, 4... y-axis is a, b, c, d
+                        alphaLabel = (char) (97 + j);
+
+                        gridLabel = Integer.toString((i + 1)) + alphaLabel;
+
+                    } else {
+                        alphaLabel = (char) (97 + i);
+                        gridLabel = alphaLabel + Integer.toString((j + 1));
+                    }
+                    g.drawString(gridLabel, MipavMath.round(yOffset + xPadding),
+                                 MipavMath.round(xOffset + yPadding));
+                }
+
+            }
+        }
+
     }
+
 
     /**
      * Displays Image overlays (DICOM or image attributes).
@@ -5162,13 +5221,19 @@ public class VOIHandler extends JComponent
             for (int i = 0; i < 16; i++) {
 
                 if ((dicomKeys[i] != null) && !dicomKeys[i].equals("-")) {
-                    overlays[i] = compImage.buildOverlayStrings(fileInfo, overlayNames[i], dicomKeys[i]);
+                    overlays[i] = buildOverlayStrings(fileInfo, overlayNames[i], dicomKeys[i]);
+
+                    if (overlays[i] != null) {
+                //        System.err.println(i + ": OVERLAY NAME DICOM: " + overlayNames[i] +
+                //                           ", key: " + dicomKeys[i] +
+                //                           ", overlay: " + overlays[i]);
+                    }
                 }
             }
 
             Insets insets = compImage.getFrame().getInsets();
-            int rightOffset = getBounds().width - insets.left;
-            int bottomOffset = getBounds().height - insets.bottom - 15;
+            int rightOffset = compImage.getBounds().width - insets.left;
+            int bottomOffset = compImage.getBounds().height - insets.bottom - 15;
 
             int len;
 
@@ -5186,13 +5251,13 @@ public class VOIHandler extends JComponent
                     } else if (i > 11) {
                         compImage.drawStringBW(overlays[i], g, rightOffset - len, bottomOffset - 45 + (i % 4 * 15));
                     }
+                  //  System.err.println(i + ": should have drawn a string somewhere: " + overlays[i]);
                 }
             }
 
             compImage.drawGradicules(g, fileInfo.getResolutions()[0], fileInfo.getResolutions()[1]);
 
-            // At the momment we are using the reconDimension - why not use
-            // ~reconDim = compImage.getActiveImage().getExtents()[0]*compImage.getActiveImage().getResolutions()[0]; ??
+            /*
             float reconDiameter;
 
             try {
@@ -5223,6 +5288,7 @@ public class VOIHandler extends JComponent
             len = g.getFontMetrics(g.getFont()).stringWidth(values[3]);
             compImage.drawStringBW(values[3], g, (getWidth() / 2) - (len / 2), bottomOffset);
             compImage.drawStringBW(values[4], g, 5, 75);
+            */
         } else {
             FileInfoBase fileInfo;
 
@@ -5239,13 +5305,13 @@ public class VOIHandler extends JComponent
             for (int i = 0; i < 16; i++) {
 
                 if ((attribs[i] != null) && !attribs[i].equals("-")) {
-                    overlays[i] = compImage.buildOverlayStrings(fileInfo, overlayNames[i], attribs[i]);
+                    overlays[i] = buildOverlayStrings(fileInfo, overlayNames[i], attribs[i]);
                 }
             }
 
             Insets insets = compImage.getFrame().getInsets();
-            int rightOffset = getBounds().width - insets.left;
-            int bottomOffset = getBounds().height - insets.bottom - 15;
+            int rightOffset = compImage.getBounds().width - insets.left;
+            int bottomOffset = compImage.getBounds().height - insets.bottom - 15;
 
             int len;
 
@@ -5266,6 +5332,262 @@ public class VOIHandler extends JComponent
                 }
             }
         }
+    }
+
+    /**
+     * Builds the overlay Strings from the tag's value. Concatenates the output strings from the tags and ensures that
+     * any properly read-in string has usable (if empty) values.
+     *
+     * @param    inf       The FileInfo with DICOM tags to display.
+     * @param    name      DOCUMENT ME!
+     * @param    dicomKey  Key of tag to display.
+     *
+     * @return  null when value is not a String or when the tag does not exist.
+     */
+    private String buildOverlayStrings(FileInfoBase inf, String name, String attribString) {
+
+        if (inf instanceof FileInfoDicom) {
+            try {
+
+                if ((attribString == null) || (attribString == "")) {
+                    return null;
+                }
+
+                Object val = ((FileInfoDicom) inf).getTag(attribString).getValue(true);
+
+                if (val == null) {
+                    return null;
+                } else if ((name != null) && !(name.trim().equals(""))) {
+                    return (name + " - " + val);
+                } else {
+                    return val.toString();
+                }
+            } catch (IllegalArgumentException ex) {
+                Preferences.debug("Illegal arg on: " + attribString);
+
+                return null;
+            } catch (ClassCastException notStr) {
+                Preferences.debug("Creating strings for DICOM overlay for " + attribString +
+                                  " but encountered a ClassCastException.\n", 4);
+
+                return null;
+            } catch (NullPointerException noTag) {
+                Preferences.debug("Creating strings for DICOM overlay for " + attribString +
+                                  " but encountered a NullPointerException.\n", 4);
+
+                return null;
+            }
+        } else { //FileInfo is NOT DICOM
+            if (attribString == null) {
+            return null;
+        }
+
+        String resultStr = new String();
+
+        if ((name != null) && (name != "")) {
+            resultStr = name + " - ";
+        }
+
+        String[] atts = JDialogOverlay.attribStr;
+
+        if (attribString.equals(atts[0])) {
+            return resultStr + Integer.toString(inf.getExtents()[0]);
+        } else if (attribString.equals(atts[1])) {
+            return resultStr + Integer.toString(inf.getExtents()[1]);
+        } else if (attribString.equals(atts[2])) {
+
+            if (inf.getExtents().length > 2) {
+                return resultStr + Integer.toString(inf.getExtents()[2]);
+            }
+        } else if (attribString.equals(atts[3])) {
+
+            if (inf.getExtents().length > 3) {
+                return resultStr + Integer.toString(inf.getExtents()[3]);
+            }
+        } else if (attribString.equals(atts[4])) {
+            return resultStr + compImage.getActiveImage().getTypeString();
+        } else if (attribString.equals(atts[5])) {
+            return resultStr + Double.toString(compImage.getActiveImage().getMin());
+        } else if (attribString.equals(atts[6])) {
+            return resultStr + Double.toString(compImage.getActiveImage().getMax());
+        } else if (attribString.equals(atts[7])) {
+            return resultStr + inf.getImageOrientationStr(inf.getImageOrientation());
+        } else if (attribString.equals(atts[8])) {
+            return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(0));
+        } else if (attribString.equals(atts[9])) {
+            return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(1));
+        } else if (attribString.equals(atts[10])) {
+
+            if (inf.getExtents().length > 2) {
+                return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(2));
+            }
+        } else if (attribString.equals(atts[11])) {
+            return new String(resultStr + inf.getResolutions()[0] + " " +
+                              inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[0]));
+        } else if (attribString.equals(atts[12])) {
+            return new String(resultStr + inf.getResolutions()[1] + " " +
+                              inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[1]));
+        } else if (attribString.equals(atts[13])) {
+
+            if (inf.getExtents().length > 2) {
+                return new String(resultStr + inf.getResolutions()[2] + " " +
+                                  inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[2]));
+            }
+        } else if (attribString.equals(atts[14])) {
+
+            if (inf.getExtents().length > 3) {
+                return new String(resultStr + inf.getResolutions()[3] + " " +
+                                  inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[3]));
+            }
+        } else if (attribString.equals(atts[15])) {
+            return resultStr + Float.toString(inf.getSliceSpacing());
+        } else if (attribString.equals(atts[16])) {
+            return resultStr + Float.toString(inf.getOrigin()[0]);
+        } else if (attribString.equals(atts[17])) {
+            return resultStr + Float.toString(inf.getOrigin()[1]);
+        } else if (attribString.equals(atts[18])) {
+
+            if (inf.getExtents().length > 2) {
+                return resultStr + Float.toString(inf.getOrigin()[2]);
+            }
+        } else if (attribString.equals(atts[19])) {
+
+            if (inf.getExtents().length > 3) {
+                return resultStr + Float.toString(inf.getOrigin()[3]);
+            }
+        } else if (attribString.equals(atts[20])) {
+
+            if (inf.getEndianess()) {
+                return resultStr + "big endian";
+            } else {
+                return resultStr + "little endian";
+            }
+        } else if (attribString.equals(atts[21])) {
+            return resultStr + inf.getTransformIDStr(inf.getTransformID());
+        }
+
+        return null;
+
+        }
+    }
+
+    /**
+    * get the color of the grid.
+    *
+    * @return  Color grid color
+    */
+
+   public Color getGridColor() {
+       return this.gridColor;
+   }
+
+   /**
+    * returns whether grid overlay is being displayed.
+    *
+    * @return  boolean is grid overlay on?
+    */
+   public boolean getGridOverlay() {
+       return gridOverlayOn;
+   }
+
+   /**
+    * returns the grid spacing in terms of resolution.
+    *
+    * @return  float grid spacing
+    */
+   public float getGridSpacingX() {
+       return gridSpacingX;
+   }
+
+   /**
+    * returns the grid spacing in terms of resolution.
+    *
+    * @return  float grid spacing
+    */
+   public float getGridSpacingY() {
+       return gridSpacingY;
+   }
+
+   /**
+     * set the color of the grid.
+     *
+     * @param  color  Color
+     */
+    public void setGridColor(Color color) {
+        this.gridColor = color;
+    }
+
+    /**
+     * Tells the grid overlay (if on) to show abc/123 labeling
+     * @param doLabel boolean
+     */
+    public void setGridLabelingOn(boolean doLabel) {
+        this.gridLabelingOn = doLabel;
+    }
+
+    /**
+     * Whether or not labels should be drawn on the grid overlay
+     * @return boolean
+     */
+    public boolean getGridLabeling() {
+        return gridLabelingOn;
+    }
+
+    /**
+     * Sets the axis orientation of abc and 123 labeling of the grid overlay
+     * @param or boolean true = x-axis numbered, false = x-axis lettered
+     */
+    public void setGridLabelOrientation(boolean or) {
+        this.gridLabelOrientation = or;
+    }
+
+    public boolean getGridLabelOrientation() {
+        return gridLabelOrientation;
+    }
+
+
+    /**
+     * Sets whether or not to show the NEI grid overlay.
+     *
+     * @param  flag  boolean show grid overlay (or not!)
+     */
+    public void setGridOverlay(boolean flag) {
+        gridOverlayOn = flag;
+    }
+
+    /**
+     * sets the grid spacing (horizontal) in terms of resolution.
+     *
+     * @param  spacing  float new grid spacing
+     */
+    public void setGridSpacingX(float spacing) {
+        this.gridSpacingX = spacing;
+    }
+
+    /**
+     * sets the grid spacing (horizontal) in terms of resolution.
+     *
+     * @param  spacing  float new grid spacing
+     */
+    public void setGridSpacingY(float spacing) {
+        this.gridSpacingY = spacing;
+    }
+
+    /**
+     * Sets whether or not to show the overlay.
+     *
+     * @param  flag  boolean that tells whether or not to show the overlay
+     */
+    public void setOverlay(boolean flag) {
+        overlayOn = flag;
+    }
+
+    /**
+     * Returns if image/dicom overlay should be shown
+     * @return boolean is the overlay shown
+     */
+    public boolean getOverlayOn() {
+        return this.overlayOn;
     }
 
 }
