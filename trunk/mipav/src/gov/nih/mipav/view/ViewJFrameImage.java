@@ -2392,9 +2392,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ShowGrid")) {
 
             if (((JCheckBoxMenuItem) event.getSource()).isSelected()) {
-                componentImage.setGridOverlay(true);
+                componentImage.getVOIHandler().setGridOverlay(true);
             } else {
-                componentImage.setGridOverlay(false);
+                componentImage.getVOIHandler().setGridOverlay(false);
             }
 
             componentImage.paintComponent(componentImage.getGraphics());
@@ -2404,7 +2404,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogGridOptions gridOptions = new JDialogGridOptions(this, componentImage);
         } else if (command.equals("ShowOverlay")) {
 
-            componentImage.setOverlay(((JCheckBoxMenuItem) event.getSource()).isSelected());
+            componentImage.getVOIHandler().setOverlay(((JCheckBoxMenuItem) event.getSource()).isSelected());
 
             // save into preferences
             if (componentImage.getActiveImage().isDicomImage()) {
