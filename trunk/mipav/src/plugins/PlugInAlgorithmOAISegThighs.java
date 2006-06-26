@@ -710,15 +710,16 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
    		//  PFH   		ShowImage(bMarrow, "BMarrow");
 
    		// find all objects in the thresholded image that have a cardinality within the specified range
-   		IDObjects(bMarrow, 50*zDim, 500*zDim);
+   		IDObjects(bMarrow, 100*zDim, 500*zDim);
 
-   		//  PFH   		ShowImage(bMarrow, "IDObjects");
+   		//  PFH    ShowImage(bMarrow, "IDObjects");
 
    		// find the single object closest to the center of the image
+        
    		isolatingCenterObject(bMarrow);
    		// bMarrow is a binary image where 1's label bone marrow and 0's are elsewhere
 
-   		//  PFH   		ShowImage(bMarrow, "isolatingCenterObject");
+   		//  PFH   ShowImage(bMarrow, "isolatingCenterObject");
    		
    		return bMarrow;
    	} // end extractedBoneMarrow(...)
@@ -769,8 +770,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 	                    }
 	                    centroidX[cc-1] = centroidX[cc-1] / n;			
 	                    centroidY[cc-1] = centroidY[cc-1] / n;			
-	                    distFromCent[cc-1] = Math.abs((centroidX[cc-1] - (xDim / 2))*(centroidX[cc-1] - (xDim / 2))
-	                    		+ (centroidY[cc-1] - (yDim / 2))*(centroidY[cc-1] - (yDim / 2)));
+	                    distFromCent[cc-1] = Math.abs((centroidX[cc-1] - (xDim / 2f))*(centroidX[cc-1] - (xDim / 2f))
+	                    		+ (centroidY[cc-1] - (yDim / 3.0f))*(centroidY[cc-1] - (yDim / 3.0f)));
 	                }
 	                /**use centroids to find center Bone object. (object with minimum distFromCent)*/
 	                min = 10000; /**beginning distance from center. element with distance smaller than this becomes bone object.*/
@@ -798,6 +799,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 	            }
 	        }
     	}
+        srcImage.calcMinMax();
     }
     
 
