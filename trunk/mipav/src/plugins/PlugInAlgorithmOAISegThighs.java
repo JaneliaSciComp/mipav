@@ -177,192 +177,13 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
     }
         
-   /**
-    * LABELING BONE
-    * Loop check ending once morphpological open/close operations leave a resultant 'bone'
-    * that is continuous. Continuity test done by differencing bone marrow before and after 'FillHole' operation.
-    *
-    * @param  SegmentedImage  --4class hard fuzzy segmented image
-    */
-    public ModelImage processBoneOrg(ModelImage SegmentedImage) {
-	   /** residual image to check difference between image before and after 'FillHole'*/
-	   ModelImage residual = new ModelImage(SegmentedImage.getType(), SegmentedImage.getExtents(), "Residual",
-	    		SegmentedImage.getUserInterface());
-		progressBar.setMessage("Isolating/Labeling Bone");
-		continuousBone = false;
-		
-		/**round1 most rigorous bone isolation (open24,close24)*/
-		ModelImage BoneID = threshold1(SegmentedImage, BACKGROUND_2);/**isolate bone intensity --threshold*/
-
-		ModelImage BoneIDtemp = (ModelImage) BoneID.clone();
-		Open(BoneIDtemp, 24);
-		Close(BoneIDtemp, 24, 1);
-    
-		IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);  /**isolate bone size*/
-
-
-		isolatingCenterObject(BoneIDtemp); /**returns binary image of center object*/
-
-		ModelImage BoneIDtemp1 = (ModelImage)BoneIDtemp.clone(); /**BoneIDtemp retains binary image of BONE*/
-		FillHole(BoneIDtemp1);
-
-		ImgSubtract(residual,BoneIDtemp1,BoneIDtemp); /**Residual receives what's to be seen as BONE MARROW*/
-		Erode(residual, 24); 	/**just to make sure residual is actually of bone marrow size. 
-								(too small a residual will be eaten away with erosion)*/
-		if(residual.getMax() == 0){
-			/**If no hole was filled.. 
-			round2 second a little less rigorous bone isolation (open6, close24)*/
-			BoneIDtemp.disposeLocal();		BoneIDtemp = null;
-			BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
-			System.out.println("Round1, FillBoneMarrow doesnt work");
-			BoneIDtemp = (ModelImage) BoneID.clone();
-			Open(BoneIDtemp,6);
-			Close(BoneIDtemp,24, 1);
-			
-			// PFH	6/19/06
-			IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);
-			
-			isolatingCenterObject(BoneIDtemp); 
-			BoneIDtemp1 = (ModelImage)BoneIDtemp.clone();
-			FillHole(BoneIDtemp1);
-			ImgSubtract(residual,BoneIDtemp1,BoneIDtemp);
-			Erode(residual, 24);			
-			if(residual.getMax() == 0){
-				/**round 3, no morphological operations --less rigorous BONE isolation*/
-				BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-				BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
-				System.out.println("Round2, FillBoneMarrow doesnt work");
-				BoneIDtemp = (ModelImage)BoneID.clone();
-				
-				// PFH	6/19/06
-				IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);
-				
-				isolatingCenterObject(BoneIDtemp); 
-				BoneIDtemp1 = (ModelImage)BoneIDtemp.clone();
-				FillHole(BoneIDtemp1);
-				ImgSubtract(residual,BoneIDtemp1,BoneIDtemp);
-				Erode(residual, 24);
-				if(residual.getMax() == 0){
-					/**round4, if bone too faint, a simple morphological close to make it continuous --least rigorous bone isolation*/
-					System.out.println("Round3, FillBoneMarrow didnt work -using bone with artificially filled marrow");
-					BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-					BoneIDtemp1.disposeLocal();		BoneIDtemp1 = null;
-					BoneIDtemp = (ModelImage)BoneID.clone();
-					Close(BoneIDtemp,24, 1);
-					
-					// PFH	6/19/06
-					IDObjects(BoneIDtemp, zDim*4000/20, zDim*10000/20);
-					
-					isolatingCenterObject(BoneIDtemp);
-					BoneIDtemp1 = (ModelImage)BoneIDtemp.clone();
-					FillHole(BoneIDtemp1);
-					ImgSubtract(residual,BoneIDtemp1,BoneIDtemp);
-					Erode(residual, 24);
-					if(residual.getMax() == 0){
-						/**cannot find continuous bone to fill with marrow. convert bone image to bone intensity.*/
-						System.out.println("Round4, FillBoneMarrow unsuccessful. Bone not continuous and therefore no marrow labeled in ProcessBone. " +
-								"Bone however IS labeled.");
-						convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp, 1, BONE);
-						BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-					}
-					else{
-						/**however if bone continuous (filled), convert filling to bonemarrow.
-						 *  then on top of bone marrow convert unfilled image to bone.*/
-						continuousBone = true;
-						System.out.println("Round4, FillBoneMarrow successful");
-						convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BONE_MARROW);
-					    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, BONE);
-						BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-					}
-				}
-				else{
-					continuousBone = true;
-					System.out.println("Round3, FillBoneMarrow successful");
-					convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BONE_MARROW);
-				    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, BONE);
-					BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-				}				
-			}
-			else{
-				continuousBone = true;
-				System.out.println("Round2, FillBoneMarrow successful");
-				convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BONE_MARROW);
-			    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, BONE);
-				BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-			}
-		}
-		else{
-			continuousBone = true;
-			System.out.println("Round1, FillBoneMarrow successful");
-			convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BONE_MARROW);
-		    convert(BoneIDtemp1, BoneIDtemp, BoneIDtemp1, 1, BONE);
-			BoneIDtemp.disposeLocal();		BoneIDtemp=null;
-		}		
-	    progressBar.updateValue(50 * (aa - 1) + 43, runningInSeparateThread);
-	    residual.disposeLocal();	    residual=null;
-	    BoneID.disposeLocal();			BoneID=null;
-	    return BoneIDtemp1;   
-	    
-   }
    
     /**
-     * LABELING BONE
-     * Loop check ending once morphpological open/close operations leave a resultant 'bone'
-     * that is continuous. Continuity test done by differencing bone marrow before and after 'FillHole' operation.
-     *
-     * @param  SegmentedImage  --4class hard fuzzy segmented image
+     * 
+     * @param boneMarrow
+     * @param inputThigh
+     * @return
      */
-     public ModelImage processBoneOrg2(ModelImage SegmentedImage) {
-        progressBar.setMessage("Isolating/Labeling Bone");
-        continuousBone = false;
-         
-//       PFH        ShowImage(SegmentedImage, "processBone input image");
-
-        /**round1 most rigorous bone isolation (open24,close24)*/
-        ModelImage BoneID = threshold1(SegmentedImage, BACKGROUND_2);/**isolate bone intensity --threshold*/
-//       PFH        ShowImage(BoneID, "BACKGROUND_2 Thresholded image");
-
-        ModelImage BoneIDtemp = (ModelImage) BoneID.clone();        
-//       PFH        ShowImage(BoneIDtemp, "thresholded image");
-
-        IDObjects(BoneID, zDim*250, zDim*550);  /**isolate bone size*/
-//        Close(BoneID, 24, 2);
-        Dilate(BoneID, 6);
-//       PFH        System.err.println("SIZE min: " + zDim*4000/20 + "  max" + zDim*10000/20);
-
-        //isolatingCenterObject(BoneIDtemp); /**returns binary image of center object*/
-//       PFH        ShowImage(BoneID, "Dilate bone");
-
-        ModelImage BoneIDtemp1 = (ModelImage)BoneID.clone(); /**BoneIDtemp retains binary image of BONE*/
-        FillHole(BoneIDtemp1);
-//      PFH        ShowImage(BoneIDtemp1, "hole filled");
-        Erode(BoneIDtemp1, 6);
-        Erode(BoneID, 6);
-//       PFH        ShowImage(BoneIDtemp1, "erode");
-
-        int cnt = 0;
-        for (int i = 0; i < xDim*yDim*zDim; i++) {
-        	if (BoneIDtemp1.getInt(i) >= 1)
-        		cnt++;
-        }
-        if (cnt < 0.5f * zDim*xDim*yDim) {
-        	continuousBone = false;
-            System.out.println("Round1, FillBoneMarrow successful");
-            
-        }
-        convert(BoneIDtemp1, BoneIDtemp1, BoneIDtemp1, 1, BONE_MARROW);
-        convert(BoneIDtemp1, BoneID, BoneIDtemp1, 1, BONE);
-        //ShowImage(BoneIDtemp1, "bone and marrow");
-
-        progressBar.updateValue(50 * (aa - 1) + 43, runningInSeparateThread);
-        BoneID.disposeLocal();          
-        BoneID=null;
-        return BoneIDtemp1;   
-   
-    }
-     
-     
-     
      public ModelImage extractBone(ModelImage boneMarrow, ModelImage inputThigh) {
     	 float mrBoneThreshold = 0;
     	 int cnt = 0;
@@ -403,6 +224,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
         	 // find average mr value for pixels next to the marrow
         	 mrBoneThreshold /= cnt;
+             mrBoneThreshold *= 0.95f;
        	 
         	 // increase the marrow mask to include the pixels added as bone
         	 for (int i = 0; i < imgBuffer1.length; i++) {
@@ -490,181 +312,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 //       PFH    	 ShowImage(destImage, "bone/morrow image");
      } // end processBoneAndMarrow(...)
      
-     
-    
-   /**
-    * LABELING BONE MARROW (1. artificially, 2.filling gaps between bone)
-    * case1: NO BONE. no bone marrow. (we create artificial bone)
-    * case2: DISCONTINUOUS BONE. no bone marrow. (we fill in the gaps between discontinuous bone and marrow.
-    * case3: CONTINUOUS BONE. bone marrow to fill. and NOISY BONE MARROW. also NOISY BONE. (processed in the end, not this method)
-    * case4: CONTINUOUS BONE. CONTINUOUS BONE MARROW. (not processed at all)
-    * 
-    * *ALGORITHM USED ONLY IF BONE NOT CONTINUOUS* 
-    *
-    * @param  srcImage  --image with labeled bone
-    */
-    public void processBoneMarrowOrg2(ModelImage srcImage, ModelImage SegmentedImg){
-	   progressBar.setMessage("Processing Bone Marrow (for discontinuous bone images)");
-
-       ShowImage(SegmentedImg, "processed Bone Image segmented image");
-	   /**First, check case 1 or case 2--is there labeled bone?*/	   
-	   
-       progressBar.setMessage("Is there bone at all?");
-	   int bb, cc, dd, i;
-	   boolean thereisBone = false;
-       for (bb = 0; bb < zDim; bb++) {
-           try {
-               srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-               while(thereisBone == false){
-	               for (cc = 0; cc < imgBuffer1.length; cc++) {	            	   
-		               	if(imgBuffer1[cc] == BONE){
-		               		thereisBone = true;
-                            bb = zDim;
-		               	}
-	               }
-               }
-           } catch (IOException ex) {
-               System.err.println("error exporting data from destImageA in AlgorithmPipeline2-STEP7");
-           }
-       }
-              
-       
-       
-       progressBar.setMessage("Locating Bone Marrow");
-       /**Second, using srcImage (HardSeg1 4class hard fuzzy segmentation),  
-	   isolate pixels of intensities 160-255 to locate 'bone marrow', and label.*/
-	   ModelImage BMarrow = extractedBoneMarrow(SegmentedImg); /**BMarrow should be binary image (extracted from fuzzyImg)*/
-       convert(srcImage, BMarrow, srcImage, 1, BONE_MARROW);       
-       BMarrow.disposeLocal();
-       BMarrow=null;
-
-       ShowImage(srcImage, "morrow processed.");
-       /***LOOP FOR WHEN THERE IS BONE.*
-	   Fill gaps between discontinuous bone and 'bone marrow'*/
-	   if(thereisBone ==true){
-		   progressBar.setMessage("Growing out Bone Marrow to Bone exterior");
-		        for (bb = 0; bb < zDim; bb++) {
-		            try {
-		                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-		                for (cc = 0; cc < imgBuffer1.length-10*xDim; cc++) {
-		                	/**gap between 'bone to marrow', fill with bonemarrow --L to R*/
-		                	if(imgBuffer1[cc]==BONE && imgBuffer1[cc+1]!=BONE){
-		                		for(dd=10;dd>0;dd--){
-			                    	if(imgBuffer1[cc+dd]==BONE_MARROW && imgBuffer1[cc+dd-1]!=BONE_MARROW){
-			                    		for(i=1;i<dd;i++){
-			                    			imgBuffer1[cc+i]=BONE_MARROW;
-			                    		}
-			                    	}
-		                		}
-		                	}
-		                	/** -- bone 1 row below marrow*/
-		                	if(imgBuffer1[cc]==BONE && imgBuffer1[cc+xDim]!=BONE){
-		                		for(dd=10;dd>0;dd--){
-			                    	if(imgBuffer1[cc+dd*xDim]==BONE_MARROW && imgBuffer1[cc+(dd-1)*xDim]!=BONE_MARROW){
-			                    		for(i=1;i<dd;i++){
-			                    			imgBuffer1[cc+i*xDim]=BONE_MARROW;
-			                    		}
-			                    	}
-		                		}
-		                	}
-		                }
-		                srcImage.importData((bb * imgBuffer1.length), imgBuffer1, false);
-		            } catch (IOException ex) {
-		                System.err.println(
-		                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
-		            }
-		        }
-		        //ShowImage(srcImage, "after first bone loop");
-		        
-		        for (bb = 0; bb < zDim; bb++) {
-		            try {
-		                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-		                for (cc = 10*xDim; cc < imgBuffer1.length; cc++) {
-		                	/** gap between 'marrow to bone', fill with bonemarrow --L to R*/
-		                	if(imgBuffer1[cc]==BONE && imgBuffer1[cc-1]!=BONE){
-		                		for(dd=10;dd>0;dd--){
-			                    	if(imgBuffer1[cc-dd]==BONE_MARROW && imgBuffer1[cc-dd+1]!=BONE_MARROW){
-			                    		for(i=1;i<dd;i++){
-			                    			imgBuffer1[cc-i]=BONE_MARROW;
-			                    		}
-			                    	}
-		                		}
-		                	}
-		                	/**-- bone 1 row above marrow*/
-		                	if(imgBuffer1[cc]==BONE && imgBuffer1[cc-xDim]!=BONE){
-		                		for(dd=10;dd>0;dd--){
-			                    	if(imgBuffer1[cc-dd*xDim]==BONE_MARROW && imgBuffer1[cc-(dd-1)*xDim]!=BONE_MARROW){
-			                    		for(i=1;i<dd;i++){
-			                    			imgBuffer1[cc-i*xDim]=BONE_MARROW;
-			                    		}
-			                    	}
-		                		}
-		                	}
-		                }
-		                srcImage.importData((bb * imgBuffer1.length), imgBuffer1, false);
-		            } catch (IOException ex) {
-		                System.err.println(
-		                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
-		            }
-		        }
-		        //ShowImage(srcImage, "after second bone loop");
-	   	}
-	   
-	   /**if there is no bone, create artificial bone around bone marrow extracted from 4class fuzzy*/
-       
-       /*** Needs UPGRADING - better fill!!!!! */
-	   	if(thereisBone==false){
-	   		progressBar.setMessage("There is no bone. Creating artificial bone around marrow.");
-        	System.out.println("There is no bone");
-        	dd=0;
-	        for (bb = 0; bb < zDim; bb++) {
-	            try {
-	                srcImage.exportData((bb * imgBuffer1.length), imgBuffer1.length, imgBuffer1);
-	                	for (cc = (int)(0.1*yDim*xDim); cc < (int)(0.9*yDim*xDim); cc++) {
-	                		if(imgBuffer1[cc]==BONE_MARROW){
-                				if(imgBuffer1[cc-1]!=BONE_MARROW && imgBuffer1[cc-2]!=BONE_MARROW &&imgBuffer1[cc-3]!=BONE_MARROW &&
-                						imgBuffer1[cc-4]!=BONE_MARROW &&imgBuffer1[cc-5]!=BONE_MARROW){
-                					imgBuffer1[cc-1]=BONE;
-                					imgBuffer1[cc-2]=BONE;
-                					imgBuffer1[cc-3]=BONE;
-            						imgBuffer1[cc-4]=BONE;
-            						imgBuffer1[cc-5]=BONE;
-                				}
-                				if(imgBuffer1[cc+1]!=BONE_MARROW && imgBuffer1[cc+2]!=BONE_MARROW &&imgBuffer1[cc+3]!=BONE_MARROW &&
-                						imgBuffer1[cc+4]!=BONE_MARROW &&imgBuffer1[cc+5]!=BONE_MARROW){
-                					imgBuffer1[cc+1]=BONE;
-                					imgBuffer1[cc+2]=BONE;
-                					imgBuffer1[cc+3]=BONE;
-            						imgBuffer1[cc+4]=BONE;
-            						imgBuffer1[cc+5]=BONE;
-                				}
-                				if(imgBuffer1[cc-1*xDim]!=BONE_MARROW && imgBuffer1[cc-2*xDim]!=BONE_MARROW &&imgBuffer1[cc-3*xDim]!=BONE_MARROW &&
-                						imgBuffer1[cc-4*xDim]!=BONE_MARROW &&imgBuffer1[cc-5*xDim]!=BONE_MARROW){
-                					imgBuffer1[cc-1*xDim]=BONE;
-                					imgBuffer1[cc-2*xDim]=BONE;
-                					imgBuffer1[cc-3*xDim]=BONE;
-            						imgBuffer1[cc-4*xDim]=BONE;
-            						imgBuffer1[cc-5*xDim]=BONE;
-                				}
-                				if(imgBuffer1[cc+1*xDim]!=BONE_MARROW && imgBuffer1[cc+2*xDim]!=BONE_MARROW &&imgBuffer1[cc+3*xDim]!=BONE_MARROW &&
-                						imgBuffer1[cc+4*xDim]!=BONE_MARROW &&imgBuffer1[cc+5*xDim]!=BONE_MARROW){
-                					imgBuffer1[cc+1*xDim]=BONE;
-                					imgBuffer1[cc+2*xDim]=BONE;
-                					imgBuffer1[cc+3*xDim]=BONE;
-            						imgBuffer1[cc+4*xDim]=BONE;
-            						imgBuffer1[cc+5*xDim]=BONE;
-                				}
-	                		}
-	                	}
-	                srcImage.importData((bb * imgBuffer1.length), imgBuffer1, false);
-	            } catch (IOException ex) {
-	                System.err.println(
-	                        "error exporting data from destImageA in AlgorithmPipeline2-STEP7");
-	            }
-	        }
-	        //ShowImage(srcImage,"image after no BONE loop (loop3)");
-	   	}
-   }
    
   /**
    	* LABELING INTERSTITIAL FAT, SUBCUTANEOUS FAT, BACKGROUND AND MUSCLE
@@ -706,19 +353,15 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
    		ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
    		// bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg)
    		// bMarrow is a binary image and remains binary through this method
-
    		//  PFH   		ShowImage(bMarrow, "BMarrow");
 
    		// find all objects in the thresholded image that have a cardinality within the specified range
    		IDObjects(bMarrow, 100*zDim, 500*zDim);
-
    		//  PFH    ShowImage(bMarrow, "IDObjects");
-
-   		// find the single object closest to the center of the image
-        
+   		
+        // find the single object closest to the center of the image
    		isolatingCenterObject(bMarrow);
    		// bMarrow is a binary image where 1's label bone marrow and 0's are elsewhere
-
    		//  PFH   ShowImage(bMarrow, "isolatingCenterObject");
    		
    		return bMarrow;
