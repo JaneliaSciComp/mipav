@@ -5153,7 +5153,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
                                                      pixBuffer, zoom, extents, logMagDisplay,
                                                      ViewJComponentEditImage.NA, false,
-                                                     imageA.getFileInfo()[0].getAxisOrientation());
+                                                     imageA.getAxisOrientation());
 
         componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 

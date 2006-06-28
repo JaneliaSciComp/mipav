@@ -586,8 +586,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if ((orientation == NA) || (orientation == AXIAL)) {
-            res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions()[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions()[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -597,8 +597,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
             maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
         } else if (orientation == CORONAL) {
-            res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions()[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions()[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -608,8 +608,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
             maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
         } else { // orientation == ZY
-            res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions()[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions()[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -2053,8 +2053,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     } // else if (winLevelSet && ((xS != oldXS) || (yS != oldYS)))
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
             } // if (mode == DEFAULT))
-            if (imageActive.getFileInfo(0).getOrigin()[0] != 0 || imageActive.getFileInfo(0).getOrigin()[1] != 0
-                || imageActive.getFileInfo(0).getOrigin()[2] != 0) {
+            if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
+                || imageActive.getOrigin()[2] != 0) {
 
                 fileInfo = imageActive.getFileInfo()[slice];
                 String[] values = setScannerPosition(fileInfo, xS, yS, slice);
@@ -5931,7 +5931,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             FileInfoBase[] fileInfo = imageActive.getFileInfo();
 
             if (imageActive.getNDims() == 2) {
-                area = count * fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1];
+                area = count * imageActive.getResolutions()[0] * imageActive.getResolutions()[1];
                 str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
 
                 if (leadString != null) {
@@ -5943,8 +5943,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
             } else {
-                volume = count * fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1] *
-                             fileInfo[0].getResolutions()[2];
+                volume = count * imageActive.getResolutions()[0] * imageActive.getResolutions()[1] * imageActive.getResolutions()[2];
 
                 str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
 
