@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.ViewUserInterface;
 
+import java.util.Enumeration;
 import java.util.Hashtable;
 
 
@@ -52,6 +53,26 @@ public class VariableTable extends Hashtable {
         }
 
         return singletonReference;
+    }
+    
+    /**
+     * Finds a value in the variable table and changes it to a new value with the same variable placeholder (does nothing if the value is not in the table).
+     * NOTE: May be dangerous to use on non-image variables...
+     * @param  oldValue  The old value to replace.
+     * @param  newValue  The new value to give to the variable which had the old value.
+     */
+    public void changeVariableValue(String oldValue, String newValue) {
+        Enumeration keys = keys();
+        
+        while (keys.hasMoreElements()) {
+            String curKey = (String) keys.nextElement();
+            String curVal = interpolate(curKey);
+            
+            if (curVal.equals(oldValue)) {
+                remove(curKey);
+                put(curKey, newValue);
+            }
+        }
     }
 
     /**

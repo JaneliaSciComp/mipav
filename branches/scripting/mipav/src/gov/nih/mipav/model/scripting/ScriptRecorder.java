@@ -57,6 +57,16 @@ public class ScriptRecorder {
 
         return singletonReference;
     }
+    
+    /**
+     * Add a line to the current script by requesting a script action to generate its script line.
+     * @param  scriptAction  The script action to add to the current script we are recording.
+     */
+    public synchronized void addLine(ScriptableActionInterface scriptAction) {
+        if (isRecording()) {
+            scriptAction.insertScriptLine();
+        }
+    }
 
     /**
      * Appends a line of text to the current script (if one is being recorded).
@@ -121,6 +131,16 @@ public class ScriptRecorder {
         isRecording = recording;
         
         notifyListenersOfScriptStatus();
+    }
+    
+    /**
+     * Changes the script being recorded by this class.  Used by the script recorder dialog to read in a script from disk or allow the user to manually edit the script.
+     * @param  newScript  The new script text.
+     */
+    public synchronized void setScript(String newScript) {
+        script = newScript;
+        
+        notifyListenersOfScriptChange();
     }
     
     /**

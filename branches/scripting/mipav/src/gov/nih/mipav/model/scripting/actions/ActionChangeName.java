@@ -40,10 +40,12 @@ public class ActionChangeName implements ScriptableActionInterface {
     
     /**
      * Constructor used to record the ChangeName script action line.
-     * @param image  The image whose name was changed.
+     * @param  image         The image whose name was changed.
+     * @param  newImageName  The new name given to the image.
      */
-    public ActionChangeName(ModelImage image) {
+    public ActionChangeName(ModelImage image, String newImageName) {
         recordingInputImage = image;
+        recordingImageName = newImageName;
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
