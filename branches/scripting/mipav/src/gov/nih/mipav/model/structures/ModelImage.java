@@ -91,6 +91,10 @@ public class ModelImage extends ModelStorageBase {
 
     /** List of VOIs that are displayed with this image. */
     private VOIVector voiVector = null;
+    
+    
+    /** Full path to the imageFile on disk. */
+    private String filePath = "";
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -996,19 +1000,6 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Returns the directory where the image file is located.
-     *
-     * @return  The directory where the image file resides.
-     */
-    public String getImageDirectory() {
-        if (fileInfo != null) {
-            return fileInfo[0].getFileDirectory();
-        } else {
-            return null;
-        }
-    }
-    
-    /**
      * Returns the file name of the image.
      *
      * @return  the String that represents the filename (as stored in the fileinfo)
@@ -1021,6 +1012,7 @@ public class ModelImage extends ModelStorageBase {
             return null;
         }
     }
+
 
     /**
      * Accessor that returns.
@@ -3433,8 +3425,17 @@ public class ModelImage extends ModelStorageBase {
             fileInfo.setDataType(dataType);
             resultImage.setFileInfo(fileInfo, i);
         }
-
-        return;
     }
+
+    public String getFilePath() {
+        return filePath;
+    }
+
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
+    }
+
+
+
 
 }
