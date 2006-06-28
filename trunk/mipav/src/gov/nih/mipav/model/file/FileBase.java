@@ -167,51 +167,6 @@ public abstract class FileBase{
     /** Byte order. Leftmost byte is most significant. */
     public static boolean BIG_ENDIAN = true;
 
-    /** boolean data type */
-    public static final int BOOLEAN = 0;
-
-    /** byte data type */
-    public static final int BYTE = 1;
-
-    /** unsigned byte data type */
-    public static final int UBYTE = 2;
-
-    /** short data type */
-    public static final int SHORT = 3;
-
-    /** unsigned short data type */
-    public static final int USHORT = 4;
-
-    /** integer data type */
-    public static final int INTEGER = 5;
-
-    /** unsigned integer data type */
-    public static final int UINTEGER = 6;
-
-    /** float data type */
-    public static final int FLOAT = 7;
-
-    /** long data type */
-    public static final int LONG = 8;
-
-    /** double data type */
-    public static final int DOUBLE = 9;
-
-    /** complex data type */
-    public static final int COMPLEX = 10;
-
-    /** double complex data type */
-    public static final int DCOMPLEX = 11;
-
-    /** alpha, red, green and blue data type, each one is byte */
-    public static final int ARGB = 12;
-
-    /** alpha, red, green and blue data type, each one is short */
-    public static final int ARGB_SHORT = 13;
-
-    /** alpha, red, green and blue data type, each one is float */
-    public static final int ARGB_FLOAT = 14;
-
     /** Read only access. */
     public static final int READ = 0;
 
