@@ -7,7 +7,10 @@ import java.awt.event.*;
 import java.io.*;
 
 import javax.swing.*;
+import javax.swing.event.ChangeListener;
+import javax.swing.event.ChangeEvent;
 
+import gov.nih.mipav.model.file.*;
 
 /**
  * Progress bar used everywhere for displaying to the user how long the current process is going to take. The progress
@@ -27,7 +30,7 @@ import javax.swing.*;
  * @version  0.1 Oct 19, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class ViewJProgressBar extends JFrame implements ActionListener, ProgressBarInterface {
+public class ViewJProgressBar extends JFrame implements ActionListener, ProgressBarInterface, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -309,5 +312,16 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
         percentage.setText(String.valueOf(value) + "%");
         super.setTitle(title + "   " + String.valueOf(value) + "%");
         update(this.getGraphics());
+    }
+    
+    /**
+     * Implementation of the ChangeListener interface.
+     */
+    public void stateChanged(ChangeEvent e){
+        Object source = e.getSource();
+        if(source instanceof FileBase){
+            FileBase fileBase = (FileBase)source;
+            updateValue(fileBase.getProgressValue());
+        }
     }
 }
