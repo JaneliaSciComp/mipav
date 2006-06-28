@@ -2579,6 +2579,58 @@ public class Preferences {
         }
         setProperty(PREF_SRB_TEMP_DIR, tempDir);
     }
+    
+    /**
+     * Returns the index of the latest used file filter.
+     * @return the index of the latest used file filter.
+     */
+    public static int getFileFilter(){
+        if(mipavProps == null){
+            read();
+        }
+        
+        return Integer.parseInt(getProperty("FilenameFilter"));
+    }
+    
+    /**
+     * Sets the current used file filter as the latest used file filter.
+     * @param fileFilterIndex  the index of the current used file filter.
+     */
+    public static void setFileFilter(int fileFilterIndex){
+        setProperty("FilenameFilter", new Integer(fileFilterIndex));
+    }
+    
+    /**
+     * Returns the image directory used last time.
+     * @return  the image directory used last time.
+     */
+    public static String getImageDirectory() {
+
+        String str = Preferences.getProperty("ImageDirectory");
+
+        if (str != null) {
+            return str;
+        } else {
+            return (System.getProperties().getProperty("user.dir"));
+        }
+    }
+    
+    /**
+     * Sets the image directory as the latest used image directory. 
+     * @param imageDirectory the current used image directory.
+     */
+    public static void setImageDirectory(File imageDirectory){
+        if(imageDirectory == null){
+            return;
+        }
+        
+        if(imageDirectory.isDirectory()){
+            setProperty("ImageDirectory", imageDirectory.getAbsolutePath());
+        }else{
+            setProperty("ImageDirectory", imageDirectory.getParent());
+        }
+    }
+
     /**
      * DOCUMENT ME!
      *
@@ -2607,4 +2659,5 @@ public class Preferences {
 
         return str;
     }
+    
 }
