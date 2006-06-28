@@ -1891,7 +1891,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
         componentImage = new ViewJComponentCardiology(this, imageA, LUTa, imageBufferA, pixBuffer, zoom, extents,
                                                       logMagDisplay, ViewJComponentEditImage.NA, false,
-                                                      imageA.getFileInfo()[0].getAxisOrientation());
+                                                      imageA.getAxisOrientation());
 
         componentImage.setBuffers(imageBufferA, null, pixBuffer, null);
 
@@ -2024,8 +2024,8 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
         float[] res = new float[2];
 
-        res[0] = getActiveImage().getFileInfo()[0].getResolutions()[0];
-        res[1] = getActiveImage().getFileInfo()[0].getResolutions()[1];
+        res[0] = getActiveImage().getResolutions()[0];
+        res[1] = getActiveImage().getResolutions()[1];
 
         // check to see if image2load needs to be changed to to the componentImage's type (color or gray)
 

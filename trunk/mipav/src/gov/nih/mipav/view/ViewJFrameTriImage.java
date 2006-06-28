@@ -4557,7 +4557,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         } else {
             hasOrientation = true;
 
-            orient = imageA.getFileInfo()[0].getAxisOrientation();
+            orient = imageA.getAxisOrientation();
 
             if (orient[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
 
@@ -4866,7 +4866,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             if (tInfo != null) {
                 pt = tInfo.getTlrcAC();
             } else {
-                tInfo.setAcpcRes(imageA.getFileInfo()[0].getResolutions()[0]);
+                tInfo.setAcpcRes(imageA.getResolutions()[0]);
                 pt = tInfo.getTlrcAC();
             }
 
@@ -4874,13 +4874,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             yTal = y - pt.y;
             zTal = z - pt.z;
         } catch (Exception ex) {
-            xTal = (x * imageA.getFileInfo()[0].getResolutions()[0]) - ATLAS_BBOX_LAT;
-            yTal = (y * imageA.getFileInfo()[0].getResolutions()[1]) - ATLAS_BBOX_ANT;
+            xTal = (x * imageA.getResolutions()[0]) - ATLAS_BBOX_LAT;
+            yTal = (y * imageA.getResolutions()[1]) - ATLAS_BBOX_ANT;
 
             if (useInfNew) {
-                zTal = (z * imageA.getFileInfo()[0].getResolutions()[2]) - ATLAS_BBOX_INF_NEW;
+                zTal = (z * imageA.getResolutions()[2]) - ATLAS_BBOX_INF_NEW;
             } else {
-                zTal = (z * imageA.getFileInfo()[0].getResolutions()[2]) - ATLAS_BBOX_INF;
+                zTal = (z * imageA.getResolutions()[2]) - ATLAS_BBOX_INF;
             }
         }
 

@@ -1073,7 +1073,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
         // init component image
         componentImage = new ViewJComponentEditImage(this, mipImage, LUTa, mipBuffer, null, null, null, pixBuffer, zoom,
                                                      extents, logMagDisplay, ViewJComponentEditImage.NA, false,
-                                                     mipImage.getFileInfo()[0].getAxisOrientation());
+                                                     mipImage.getAxisOrientation());
 
         componentImage.setBuffers(mipBuffer, null, pixBuffer, null);
         componentImage.resetLUTs();
