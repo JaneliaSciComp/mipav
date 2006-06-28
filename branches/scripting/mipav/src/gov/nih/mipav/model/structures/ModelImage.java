@@ -4,6 +4,8 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -997,6 +999,19 @@ public class ModelImage extends ModelStorageBase {
         }
 
         return center;
+    }
+    
+    /**
+     * Returns the directory where the image file is located.
+     *
+     * @return  The directory where the image file resides.
+     */
+    public String getImageDirectory() {
+        if (fileInfo != null) {
+            return fileInfo[0].getFileDirectory();
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -3076,22 +3091,14 @@ public class ModelImage extends ModelStorageBase {
         String oldName = getImageName();
         setImageName(newImageName);
 
-        if (UI.isScriptRecording()) {
-
-            if (UI.getScriptDialog().getImgTableVar(oldName) == null) {
-
-                if (UI.getScriptDialog().getActiveImgTableVar(oldName) == null) {
-                    UI.getScriptDialog().putActiveVar(getImageName());
-                } else {
-                    UI.getScriptDialog().changeActiveVar(oldName, newImageName);
-                }
-            } else {
-                UI.getScriptDialog().changeVar(oldName, newImageName);
-            }
-
-            String line = "ChangeName " + UI.getScriptDialog().getVar(getImageName()) + " " + newImageName + "\n";
-            UI.getScriptDialog().append(line);
+        VariableTable varTable = VariableTable.getReference();
+        if (varTable.containsValue(oldName)) {
+            varTable.changeVariableValue(oldName, newImageName);
+        } else {
+            varTable.storeImageName(newImageName);
         }
+        
+        ScriptRecorder.getReference().addLine(new ActionChangeName(this, newImageName));
 
         try {
             UI.getFrameContainingImage(this).setTitle();
