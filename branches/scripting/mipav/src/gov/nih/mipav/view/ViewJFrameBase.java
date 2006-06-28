@@ -96,6 +96,9 @@ public abstract class ViewJFrameBase extends JFrame
 
     /** Red channel value of the paint color. */
     private int red;
+    
+    
+    private String voiSavedFileName = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2864,6 +2867,11 @@ public abstract class ViewJFrameBase extends JFrame
         }
     }
 
+  public String saveVOIAs(){
+      saveVOIAs(true);
+      return this.voiSavedFileName;
+  }
+    
     /**
      * This method allows the user to choose how to save the VOI.
      *
@@ -2920,6 +2928,10 @@ public abstract class ViewJFrameBase extends JFrame
                 fileName = chooser.getSelectedFile().getName();
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
+                
+                this.voiSavedFileName = directory + fileName;
+                
+                
             } else {
                 return;
             }
@@ -2997,6 +3009,8 @@ public abstract class ViewJFrameBase extends JFrame
                 }
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
+                
+                
 
                 if (!doPoint) {
 
@@ -3012,7 +3026,7 @@ public abstract class ViewJFrameBase extends JFrame
             }
         } else {
             MipavUtil.displayError(" Cannot save images when viewing both images.");
-        }
+        }        
     }
 
     /**
