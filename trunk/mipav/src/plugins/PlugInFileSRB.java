@@ -628,7 +628,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         Vector localFileList = new Vector();
 
         try {
-            GeneralFile localTempDir = FileFactory.newFile(new URI(srbTempDir));
+            GeneralFile localTempDir = edu.sdsc.grid.io.FileFactory.newFile(new URI(srbTempDir));
 
             if (!localTempDir.exists()) {
                 localTempDir.mkdirs();
@@ -781,7 +781,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             LocalFile localTempDir = null;
 
             try {
-                localTempDir = (LocalFile) FileFactory.newFile(new URI(LOCAL_TEMP_DIR));
+                localTempDir = (LocalFile) edu.sdsc.grid.io.FileFactory.newFile(new URI(LOCAL_TEMP_DIR));
 
                 if (!localTempDir.exists()) {
                     localTempDir.mkdirs();
@@ -855,7 +855,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         Vector localFileList = new Vector();
 
         try {
-            GeneralFile localTempDir = FileFactory.newFile(new URI(srbTempDir));
+            GeneralFile localTempDir = edu.sdsc.grid.io.FileFactory.newFile(new URI(srbTempDir));
 
             if (!localTempDir.exists()) {
                 localTempDir.mkdirs();
@@ -952,7 +952,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
             GeneralFile localTempFile = null;
 
             try {
-                GeneralFile localTempDir = FileFactory.newFile(new URI(srbTempDir));
+                GeneralFile localTempDir = edu.sdsc.grid.io.FileFactory.newFile(new URI(srbTempDir));
 
                 if (!localTempDir.exists()) {
                     localTempDir.mkdirs();
@@ -1006,7 +1006,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         } else if (isFileURI(uri)) {
 
             try {
-                LocalFile localFile = (LocalFile) FileFactory.newFile(uri);
+                LocalFile localFile = (LocalFile) edu.sdsc.grid.io.FileFactory.newFile(uri);
                 ViewUserInterface.getReference().openImageFrame(localFile.getPath());
             } catch (IOException e) {
                 e.printStackTrace(System.err);
@@ -1057,7 +1057,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
                 GeneralFile sourceFile = null;
 
                 if (isFileURI(sourceURI)) {
-                    sourceFile = FileFactory.newFile((URI) fileList.elementAt(i));
+                    sourceFile = edu.sdsc.grid.io.FileFactory.newFile((URI) fileList.elementAt(i));
                 } else {
                     sourceFile = new SRBFile(srbFileSystem, ((URI) fileList.elementAt(i)).getPath());
                 }
@@ -1074,7 +1074,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
                 GeneralFile destinationDirectory = null;
 
                 if (isFileURI(destinationURI)) {
-                    destinationDirectory = FileFactory.newFile(destinationURI);
+                    destinationDirectory = edu.sdsc.grid.io.FileFactory.newFile(destinationURI);
                 } else {
                     destinationDirectory = new SRBFile(srbFileSystem, destinationURI.getPath());
                 }
@@ -1177,7 +1177,7 @@ public class PlugInFileSRB implements PlugInFile, ScriptableInterface {
         LocalFile localTempDir = null;
 
         try {
-            localTempDir = (LocalFile) FileFactory.newFile(new URI(LOCAL_TEMP_DIR));
+            localTempDir = (LocalFile) edu.sdsc.grid.io.FileFactory.newFile(new URI(LOCAL_TEMP_DIR));
 
             if (!localTempDir.exists()) {
                 localTempDir.mkdirs();
