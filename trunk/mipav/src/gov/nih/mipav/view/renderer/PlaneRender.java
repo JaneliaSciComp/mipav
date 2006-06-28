@@ -408,7 +408,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         /* Determine the image orientation for the Model Image */
         m_iImageOrientation = m_kImageA.getImageOrientation();
         m_aiOrientation = new int[3];
-        m_aiOrientation = m_kImageA.getFileInfo()[0].getAxisOrientation();
+        m_aiOrientation = m_kImageA.getAxisOrientation();
 
         if (m_aiOrientation[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
 
@@ -2422,9 +2422,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         float[] afResolutions = new float[3];
 
-        afResolutions[0] = Math.abs(m_kImageA.getFileInfo()[0].getResolutions()[m_iXIndex]);
-        afResolutions[1] = Math.abs(m_kImageA.getFileInfo()[0].getResolutions()[m_iYIndex]);
-        afResolutions[2] = Math.abs(m_kImageA.getFileInfo()[0].getResolutions()[m_iZIndex]);
+        afResolutions[0] = Math.abs(m_kImageA.getResolutions()[m_iXIndex]);
+        afResolutions[1] = Math.abs(m_kImageA.getResolutions()[m_iYIndex]);
+        afResolutions[2] = Math.abs(m_kImageA.getResolutions()[m_iZIndex]);
 
         /* if the slice spacing value is greater than the z-res, use the slice spacing instead */
         if (afResolutions[2] < m_kImageA.getFileInfo(0).getSliceSpacing()) {
