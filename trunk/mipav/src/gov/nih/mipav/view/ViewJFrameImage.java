@@ -1695,6 +1695,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogIHN3Correction N3 =
             new JDialogIHN3Correction(this, getActiveImage());
+        } else if (command.equals("SMRISNR")) {
+            new JDialogSingleMRIImageSNR(this,getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
