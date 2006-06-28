@@ -1812,18 +1812,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (sourceFiles == null) {
             return;
         }
-        sourceFiles = SRBFileTransferer.createCompleteFileList(sourceFiles);
+        sourceFiles = SRBUtility.createCompleteFileList(sourceFiles);
         transferer.setSourceFiles(sourceFiles);
 
         // Creates an random subdirectory under the temporary directory.
         transferer.createTempDir();
-        GeneralFile tempDir = SRBFileTransferer.createLocalFile(transferer.getTempDir().getAbsolutePath());
+        GeneralFile tempDir = SRBUtility.createLocalFile(transferer.getTempDir().getAbsolutePath());
         if (tempDir == null) {
             MipavUtil.displayError("The local temporary directory has to be specified");
             return;
         }
 
-        GeneralFile[] targetFiles = transferer.createTargetFiles(tempDir, sourceFiles[0].getParentFile(), sourceFiles);
+        GeneralFile[] targetFiles = SRBUtility.createTargetFiles(tempDir, sourceFiles[0].getParentFile(), sourceFiles);
         if (targetFiles == null) {
             return;
         }
@@ -1840,7 +1840,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         boolean multiFile = (targetFiles.length > 1) ? true : false;
 
-        GeneralFile[] primaryFiles = SRBFileTransferer.getPrimaryFiles(targetFiles);
+        GeneralFile[] primaryFiles = SRBUtility.getPrimaryFiles(targetFiles);
         if (primaryFiles != null) {
             for (int i = 0; i < primaryFiles.length; i++) {
                 ViewUserInterface.getReference().openImageFrame(primaryFiles[i].getPath(), multiFile);
