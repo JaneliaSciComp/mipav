@@ -1662,9 +1662,9 @@ public class ViewJComponentTriSliceImage {
          * transforming the four corners of the plane to the new rotated coordinates. The four transformed/rotated
          * coordinates are used for steping through and interpolating the ModelImage data along the diagonal directions:
          */
-        float xBox = (xDim - 1) * Math.abs(imageA.getFileInfo()[0].getResolutions()[0]);
-        float yBox = (yDim - 1) * Math.abs(imageA.getFileInfo()[0].getResolutions()[1]);
-        float zBox = (zDim - 1) * Math.abs(imageA.getFileInfo()[0].getResolutions()[2]);
+        float xBox = (xDim - 1) * Math.abs(imageA.getResolutions()[0]);
+        float yBox = (yDim - 1) * Math.abs(imageA.getResolutions()[1]);
+        float zBox = (zDim - 1) * Math.abs(imageA.getResolutions()[2]);
         float maxBox = xBox;
 
         if (yBox > maxBox) {

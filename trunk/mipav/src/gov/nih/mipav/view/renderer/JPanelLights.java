@@ -261,9 +261,9 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         int xDim = image.getExtents()[0];
         int yDim = image.getExtents()[1];
         int zDim = image.getExtents()[2];
-        float xScale = Math.abs(image.getFileInfo()[0].getResolutions()[0]);
-        float yScale = Math.abs(image.getFileInfo()[0].getResolutions()[1]);
-        float zScale = Math.abs(image.getFileInfo()[0].getResolutions()[2]);
+        float xScale = Math.abs(image.getResolutions()[0]);
+        float yScale = Math.abs(image.getResolutions()[1]);
+        float zScale = Math.abs(image.getResolutions()[2]);
 
         if ((xScale == 0.0f) || (yScale == 0.0f) || (zScale == 0.0f)) {
             xScale = 1.0f;
