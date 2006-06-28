@@ -446,6 +446,12 @@ public class ViewMenuBar {
                                                                                            "MRICorrection", 0, null,
                                                                                            false)
                                                              }),
+                                        menuBuilder.makeMenu("SNR", false,
+                                                                     new JMenuItem[] {
+                                                                         menuBuilder.buildMenuItem("Single MRI image", "SMRISNR", 0, null,
+                                                                                                    false),
+                                                                     }),        
+                                        
                                         menuBuilder.makeMenu("Transformation tools", false,
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("Reslice - isotropic voxels",
@@ -1262,6 +1268,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
+            menuBuilder.setMenuItemEnabled("Single MRI image", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
