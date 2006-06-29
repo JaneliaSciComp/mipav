@@ -117,7 +117,10 @@ public class JXCEDEExplorer extends JFrame implements TreeSelectionListener, Com
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         GraphicsDevice[] gs = ge.getScreenDevices();
         Insets insets = Toolkit.getDefaultToolkit().getScreenInsets(gs[0].getDefaultConfiguration());
-        this.setPreferredSize(new Dimension(300, (int)screenSize.getHeight()-height-insets.bottom));
+        
+        // JFrame.setPreferredSize() is not available before jvm 1.5
+        //this.setPreferredSize(new Dimension(300, (int)screenSize.getHeight()-height-insets.bottom));
+        this.setSize(new Dimension(300, (int)screenSize.getHeight()-height-insets.bottom));
         this.setLocation(x, y + height);
 
 //        this.setLocation(new Point(0, ));

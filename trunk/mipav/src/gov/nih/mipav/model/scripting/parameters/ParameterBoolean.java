@@ -100,7 +100,10 @@ public class ParameterBoolean extends Parameter {
      * @throws  ParserException  If there is a problem changing the parameter value.
      */
     public void setValue(String paramValueString) throws ParserException {
-        setValue(Boolean.parseBoolean(paramValueString));
+        // Boolean.parseBoolean() is only introduced in jvm 1.5
+        //setValue(Boolean.parseBoolean(paramValueString));
+        
+        setValue(Boolean.valueOf(paramValueString).booleanValue());
     }
 
     /**
