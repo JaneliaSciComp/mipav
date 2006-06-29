@@ -333,8 +333,8 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         fileInfo[0].setModality(srcImage.getFileInfo()[0].getModality());
         fileInfo[0].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
         fileInfo[0].setEndianess(srcImage.getFileInfo()[0].getEndianess());
-        fileInfo[0].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
-        fileInfo[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+        fileInfo[0].setUnitsOfMeasure(srcImage.getUnitsOfMeasure());
+        fileInfo[0].setResolutions(srcImage.getResolutions(0));
         fileInfo[0].setExtents(zXMask.getExtents());
         fileInfo[0].setMax(zXMask.getMax());
         fileInfo[0].setMin(zXMask.getMin());

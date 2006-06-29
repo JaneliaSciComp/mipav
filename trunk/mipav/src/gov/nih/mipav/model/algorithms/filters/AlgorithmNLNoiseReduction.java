@@ -346,15 +346,15 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
         srcMin = srcImage.getMin();
         srcMax = srcImage.getMax();
 
-        xStdDev = maskStdDev / srcImage.getFileInfo()[0].getResolutions()[0];
-        yStdDev = maskStdDev / srcImage.getFileInfo()[0].getResolutions()[1];
+        xStdDev = maskStdDev / srcImage.getResolutions(0)[0];
+        yStdDev = maskStdDev / srcImage.getResolutions(0)[1];
 
         if ((xStdDev < 0.5f) || (yStdDev < 0.5f)) {
             threeByThree = true;
         }
 
         if (srcImage.getNDims() == 3) {
-            zStdDev = maskStdDev / srcImage.getFileInfo()[0].getResolutions()[2];
+            zStdDev = maskStdDev / srcImage.getResolutions(0)[2];
 
             if (zStdDev < 0.5f) {
                 threeByThree = true;
