@@ -275,6 +275,13 @@ public class XCEDEElement extends Element implements TreeNode{
     
     public static final String XCEDE_ATTR_ORIGINALUNITS = "originalunits";
     
+    public static final String XCEDE_ELEMENT_RT = "RT";
+    
+    public static final String XCEDE_ELEMENT_COMMONNAME = "commonName";
+    
+    public static final String XCEDE_ELEMENT_LATINNAME = "latinName";
+    
+    public static final String XCEDE_ELEMENT_STRAIN = "strain";
     
     /***********************************************
      ***** XCEDE Schema Hierarchical Structure *****

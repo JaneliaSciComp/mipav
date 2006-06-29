@@ -1,15 +1,18 @@
 package gov.nih.mipav.model.file;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 import java.text.ParseException;
 import java.util.Date;
 import java.util.Vector;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import javax.xml.parsers.*;
+
+import org.w3c.dom.*;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -23,6 +26,25 @@ import gov.nih.mipav.model.file.xcede.*;
 
 public class FileXCEDEXML extends FileXML {
 
+    private Document document;
+    
+    public Document read(String fileName){
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        try{
+            DocumentBuilder builder = factory.newDocumentBuilder();
+            document = builder.parse(new File(fileName));
+            return document;
+        }catch(SAXParseException e){
+            
+        }catch(SAXException e){
+        }catch(ParserConfigurationException e){
+            
+        }catch(IOException e){
+            
+        }
+        return null;
+    }
+    
     public FileXCEDEXML(ViewUserInterface _UI, String fName, String fDir,
             boolean show) {
         super(_UI, fName, fDir, show);
@@ -277,9 +299,12 @@ public class FileXCEDEXML extends FileXML {
                 currentElement = new XCEDEElement(XCEDEElement.XCEDE_ELEMENT_LIBRARIES, parentElement);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_VALUE)){
                 String level = currentElement.getLevel();
-                if(level.equals(XCEDEElement.XCEDE_ELEMENT_EVENT) || level.equals(XCEDEElement.XCEDE_ELEMENT_EVENTPARAMS)){
+                if (level.equals(XCEDEElement.XCEDE_ELEMENT_EVENT)
+                        || level.equals(XCEDEElement.XCEDE_ELEMENT_EVENTPARAMS)
+                        || level.equals(XCEDEElement.XCEDE_ELEMENT_EXTENDEDDESCRIPTOR)) {
                     parentElement = currentElement;
-                    currentElement = new XCEDEElement(XCEDEElement.XCEDE_ELEMENT_VALUE, parentElement);
+                    currentElement = new XCEDEElement(
+                            XCEDEElement.XCEDE_ELEMENT_VALUE, parentElement);
                 }
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_PCORRECTED)){
                 parentElement = currentElement;
@@ -417,35 +442,19 @@ public class FileXCEDEXML extends FileXML {
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_SUBJECT)){
-                if(parentElement.isProjectElement()){
-                    parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_SUBJECT, currentElement);
-                }else{
-                    parentElement.put(XCEDEElement.XCEDE_ELEMENT_SUBJECT, currentElement);
-                }
+                parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_SUBJECT, currentElement);
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_VISIT)){
-                if(parentElement.isSubjectElement()){
-                    parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_VISIT, currentElement);
-                }else{
-                    parentElement.put(XCEDEElement.XCEDE_ELEMENT_VISIT, currentElement);
-                }
+                parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_VISIT, currentElement);
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_STUDY)){
-                if(parentElement.isVisitElement()){
-                    parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_STUDY, currentElement);
-                }else{
-                    parentElement.put(XCEDEElement.XCEDE_ELEMENT_STUDY, currentElement);
-                }
+                parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_STUDY, currentElement);
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_SERIES)){
-                if(parentElement.isStudyElement()){
-                    parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_SERIES, currentElement);
-                }else{
-                    parentElement.put(XCEDEElement.XCEDE_ELEMENT_SERIES, currentElement);
-                }
+                parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_SERIES, currentElement);
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_ID)){
@@ -455,7 +464,7 @@ public class FileXCEDEXML extends FileXML {
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_FUNDING)){
                 currentElement.put(XCEDEElement.XCEDE_ELEMENT_FUNDING, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_BIRTHDATE)){
-                DateFormat formatter = DateFormat.getDateInstance();
+                DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
                 try{
                     currentElement.put(XCEDEElement.XCEDE_ELEMENT_BIRTHDATE, formatter.parse(elementBuffer));
                 }catch(ParseException e){
@@ -463,7 +472,8 @@ public class FileXCEDEXML extends FileXML {
                     MipavUtil.displayError("Birth date parsing exception: " + elementBuffer);
                 }
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_DEATHDATE)){
-                DateFormat formatter = DateFormat.getDateInstance();
+                DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+
                 try{
                     currentElement.put(XCEDEElement.XCEDE_ELEMENT_DEATHDATE, formatter.parse(elementBuffer));
                 }catch(ParseException e){
@@ -526,7 +536,7 @@ public class FileXCEDEXML extends FileXML {
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_ASSESSMENT)){
-                parentElement.put(XCEDEElement.XCEDE_ELEMENT_ASSESSMENT, currentElement);
+                parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_ASSESSMENT, currentElement);
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_ANNOTATION)){
@@ -629,25 +639,37 @@ public class FileXCEDEXML extends FileXML {
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_VERSION)){
                 currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_TIMESTAMP)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssz");
+                try{
+                    currentElement.put(XCEDEElement.XCEDE_ELEMENT_TIMESTAMP, formatter.parse(elementBuffer));
+                }catch(ParseException e){
+                    formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+                    try{
+                        currentElement.put(XCEDEElement.XCEDE_ELEMENT_TIMESTAMP, formatter.parse(elementBuffer));
+                    }catch(ParseException e2){
+                        e2.printStackTrace(System.err);
+                        MipavUtil.displayError("Death date parsing exception: " + elementBuffer);
+                    }
+                }
+
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_CVS)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_CVS, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_USER)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_USER, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_MACHINE)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_MACHINE, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_PLATFORM)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_PLATFORM, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_PLATFORMVERSION)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_PLATFORMVERSION, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_COMPILERNAME)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_COMPILERNAME, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_COMPILERVERSION)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_COMPILERVERSION, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_LIBNAME)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_LIBNAME, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_LIBVERSION)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_VERSION, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_LIBVERSION, elementBuffer);
                 parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_LIBRARIES, currentElement);
                 currentElement = parentElement;
                 parentElement = (XCEDEElement)currentElement.getParentElement();
@@ -657,11 +679,16 @@ public class FileXCEDEXML extends FileXML {
                 currentElement.put(XCEDEElement.XCEDE_ELEMENT_PROCESS, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_VALUE)){
                 String level = currentElement.getLevel();
-                if(level.equals(XCEDEElement.XCEDE_ELEMENT_LABEL) || level.equals(XCEDEElement.XCEDE_ELEMENT_THRESH)){
+                if(level.equals(XCEDEElement.XCEDE_ELEMENT_LABEL) ){
+                    if(elementBuffer != null && elementBuffer.length() > 0){
+                        currentElement.put(XCEDEElement.XCEDE_ELEMENT_VALUE, elementBuffer);
+                    }
+                }else if(level.equals(XCEDEElement.XCEDE_ELEMENT_THRESH)){
                     if(elementBuffer != null && elementBuffer.length() > 0){
                         currentElement.put(XCEDEElement.XCEDE_ELEMENT_VALUE, Float.valueOf(elementBuffer));
                     }
                 }else{
+               
                     parentElement.put(XCEDEElement.XCEDE_ELEMENT_VALUE, currentElement);
                     currentElement = parentElement;
                     parentElement = (XCEDEElement)currentElement.getParentElement();
@@ -808,6 +835,10 @@ public class FileXCEDEXML extends FileXML {
                 if(elementBuffer != null && elementBuffer.length() > 0){
                     currentElement.put(XCEDEElement.XCEDE_ELEMENT_ONSET, Float.valueOf(elementBuffer));
                 }
+            }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_RT)){
+                if(elementBuffer != null && elementBuffer.length() > 0){
+                    currentElement.put(XCEDEElement.XCEDE_ELEMENT_RT, Float.valueOf(elementBuffer));
+                }
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_DURATION)){
                 if(elementBuffer != null && elementBuffer.length() > 0){
                     currentElement.put(XCEDEElement.XCEDE_ELEMENT_DURATION, Float.valueOf(elementBuffer));
@@ -824,6 +855,8 @@ public class FileXCEDEXML extends FileXML {
                 currentElement.put(XCEDEElement.XCEDE_ELEMENT_SUMMARYNAME, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_SUMMARYVALUE)){
                 currentElement.addChild(XCEDEElement.XCEDE_ELEMENT_SUMMARYVALUE, elementBuffer);
+                currentElement = parentElement;
+                parentElement = (XCEDEElement)currentElement.getParentElement();
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_NORMALIZEDVALUE)){
                 parentElement.addChild(XCEDEElement.XCEDE_ELEMENT_NORMALIZEDVALUE, currentElement);
                 currentElement = parentElement;
@@ -833,9 +866,15 @@ public class FileXCEDEXML extends FileXML {
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_FULLPATH)){
                 currentElement.put(XCEDEElement.XCEDE_ELEMENT_FULLPATH, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_ACTUAL_VALUE)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_FULLPATH, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_ACTUAL_VALUE, elementBuffer);
             }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_DATACLASSIFICATION)){
-                currentElement.put(XCEDEElement.XCEDE_ELEMENT_FULLPATH, elementBuffer);
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_DATACLASSIFICATION, elementBuffer);
+            }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_COMMONNAME)){
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_COMMONNAME, elementBuffer);
+            }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_LATINNAME)){
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_LATINNAME, elementBuffer);
+            }else if(currentKey.equals(XCEDEElement.XCEDE_ELEMENT_STRAIN)){
+                currentElement.put(XCEDEElement.XCEDE_ELEMENT_STRAIN, elementBuffer);
             }
             elementBuffer = "";
         }
