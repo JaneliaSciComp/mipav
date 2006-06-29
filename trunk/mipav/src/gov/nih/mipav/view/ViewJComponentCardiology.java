@@ -229,7 +229,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 numActive++;
 
                 cardioVOI.calcAverageLength(i, imageActive.getExtents()[0], imageActive.getExtents()[1],
-                                            imageActive.getResolutions(), imageActive.getUserInterface());
+                                            imageActive.getResolutions(0), imageActive.getUserInterface());
 
             }
         }
@@ -1015,7 +1015,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         isContained = ((VOILine) (curves[slice].elementAt(j))).contains(xS, yS, true);
                     } else if (curveType == VOI.ANNOTATION) {
                         isContained = ((VOIText) (curves[slice].elementAt(j))).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                                        imageActive.getResolutions(),
+                                                                                        imageActive.getResolutions(0),
                                                                                         g);
                     }
                 }
@@ -1353,7 +1353,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                          .findPositionAndIntensityRGB(rgbPositions[c],
                                                                                           rgbIntensities[c], c,
                                                                                           getActiveImageBuffer(),
-                                                                                          imageActive.getResolutions(),
+                                                                                          imageActive.getResolutions(slice),
                                                                                           getActiveImage().getExtents()[0],
                                                                                           getActiveImage().getExtents()[1]);
 
@@ -1393,7 +1393,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                         int pt = VOIs.VOIAt(i).findPositionAndIntensity(slice, j, position, intensity,
                                                                                         imageBufferActive,
-                                                                                        imageActive.getResolutions(),
+                                                                                        imageActive.getResolutions(slice),
                                                                                         imageActive.getExtents()[0],
                                                                                         imageActive.getExtents()[1]);
                                         float[] pos = new float[pt];
@@ -2054,7 +2054,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     } else if ((selectedCurve instanceof VOIText) &&
                                    ((VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                          imageActive.getResolutions(),
+                                                                          imageActive.getResolutions(0),
                                                                           g)) {
 
                         allActive = false;
@@ -2759,7 +2759,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             FileInfoBase[] fileInfo = imageActive.getFileInfo();
 
             if (imageActive.getNDims() == 2) {
-                area = count * imageActive.getResolutions()[0] * imageActive.getResolutions()[1];
+                area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
                 measure = imageActive.getUnitsOfMeasure(0);
 
                 if (measure == FileInfoBase.INCHES) {
@@ -2793,7 +2793,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 }
 
             } else {
-                volume = count * imageActive.getResolutions()[0] * imageActive.getResolutions()[1] * imageActive.getResolutions()[2];
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] * imageActive.getResolutions(0)[2];
 
                 measure = imageActive.getUnitsOfMeasure(0);
 

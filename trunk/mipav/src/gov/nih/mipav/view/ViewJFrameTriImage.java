@@ -4866,7 +4866,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             if (tInfo != null) {
                 pt = tInfo.getTlrcAC();
             } else {
-                tInfo.setAcpcRes(imageA.getResolutions()[0]);
+                tInfo.setAcpcRes(imageA.getResolutions(0)[0]);
                 pt = tInfo.getTlrcAC();
             }
 
@@ -4874,13 +4874,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             yTal = y - pt.y;
             zTal = z - pt.z;
         } catch (Exception ex) {
-            xTal = (x * imageA.getResolutions()[0]) - ATLAS_BBOX_LAT;
-            yTal = (y * imageA.getResolutions()[1]) - ATLAS_BBOX_ANT;
+            xTal = (x * imageA.getResolutions(0)[0]) - ATLAS_BBOX_LAT;
+            yTal = (y * imageA.getResolutions(0)[1]) - ATLAS_BBOX_ANT;
 
             if (useInfNew) {
-                zTal = (z * imageA.getResolutions()[2]) - ATLAS_BBOX_INF_NEW;
+                zTal = (z * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF_NEW;
             } else {
-                zTal = (z * imageA.getResolutions()[2]) - ATLAS_BBOX_INF;
+                zTal = (z * imageA.getResolutions(0)[2]) - ATLAS_BBOX_INF;
             }
         }
 

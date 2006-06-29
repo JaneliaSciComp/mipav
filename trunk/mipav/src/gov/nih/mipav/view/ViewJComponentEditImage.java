@@ -586,8 +586,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if ((orientation == NA) || (orientation == AXIAL)) {
-            res[0] = Math.abs(imageActive.getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -597,8 +597,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
             maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
         } else if (orientation == CORONAL) {
-            res[0] = Math.abs(imageActive.getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -608,8 +608,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
             maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
         } else { // orientation == ZY
-            res[0] = Math.abs(imageActive.getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -5931,7 +5931,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             FileInfoBase[] fileInfo = imageActive.getFileInfo();
 
             if (imageActive.getNDims() == 2) {
-                area = count * imageActive.getResolutions()[0] * imageActive.getResolutions()[1];
+                area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
                 str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
 
                 if (leadString != null) {
@@ -5943,7 +5943,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
             } else {
-                volume = count * imageActive.getResolutions()[0] * imageActive.getResolutions()[1] * imageActive.getResolutions()[2];
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] * imageActive.getResolutions(0)[2];
 
                 str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
 

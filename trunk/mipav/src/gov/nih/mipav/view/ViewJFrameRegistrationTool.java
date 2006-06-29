@@ -2370,8 +2370,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 componentImageB.setRGBTB(RGBb);
             }
 
-            xRes = image.getResolutions()[0];
-            yRes = image.getResolutions()[1];
+            xRes = image.getResolutions(0)[0];
+            yRes = image.getResolutions(0)[1];
 
             if ((xRes <= 0.0f) || (yRes <= 0.0f)) {
                 xRes = 1.0f;

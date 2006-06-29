@@ -428,8 +428,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
                                         if ((newImage.getExtents()[i] != secondImage
                                                 .getExtents()[i])
-                                                || (newImage.getResolutions()[i] != secondImage
-                                                        .getResolutions()[i])
+                                                || (newImage.getResolutions(0)[i] != secondImage
+                                                        .getResolutions(0)[i])
                                                 || (newImage.getExtents().length > 3)) {
                                             matches = false;
 

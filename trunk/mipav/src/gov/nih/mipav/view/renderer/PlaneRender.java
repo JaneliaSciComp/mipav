@@ -2422,9 +2422,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         float[] afResolutions = new float[3];
 
-        afResolutions[0] = Math.abs(m_kImageA.getResolutions()[m_iXIndex]);
-        afResolutions[1] = Math.abs(m_kImageA.getResolutions()[m_iYIndex]);
-        afResolutions[2] = Math.abs(m_kImageA.getResolutions()[m_iZIndex]);
+        afResolutions[0] = Math.abs(m_kImageA.getResolutions(0)[m_iXIndex]);
+        afResolutions[1] = Math.abs(m_kImageA.getResolutions(0)[m_iYIndex]);
+        afResolutions[2] = Math.abs(m_kImageA.getResolutions(0)[m_iZIndex]);
 
         /* if the slice spacing value is greater than the z-res, use the slice spacing instead */
         if (afResolutions[2] < m_kImageA.getFileInfo(0).getSliceSpacing()) {
