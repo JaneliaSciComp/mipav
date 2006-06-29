@@ -1455,7 +1455,7 @@ public class VOIHandler extends JComponent
                                                          .findPositionAndIntensityRGB(rgbPositions[c],
                                                                                           rgbIntensities[c], c,
                                                                                           compImage.getActiveImageBuffer(),
-                                                                                          compImage.getActiveImage().getResolutions(),
+                                                                                          compImage.getActiveImage().getResolutions(compImage.getSlice()),
                                                                                           compImage.getActiveImage().getExtents()[0],
                                                                                           compImage.getActiveImage().getExtents()[1]);
 
@@ -2169,7 +2169,7 @@ public class VOIHandler extends JComponent
                     }
                     else if (selectedCurve instanceof VOIText
                              && ( (VOIText) selectedCurve).contains(xS, yS, compImage.getZoomX(), compImage.getZoomY(),
-                        compImage.getActiveImage().getResolutions(), g)) {
+                        compImage.getActiveImage().getResolutions(0), g)) {
 
                         allActive = false;
                         VOIs.VOIAt(i).setActive(true);
@@ -2969,7 +2969,7 @@ public class VOIHandler extends JComponent
                                         pt = ((VOIContour) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
                                                  .findPositionAndIntensityRGB(rgbPositions[c], rgbIntensities[c], c,
                                                                                   compImage.getActiveImageBuffer(),
-                                                                                  compImage.getActiveImage().getResolutions(),
+                                                                                  compImage.getActiveImage().getResolutions(compImage.getSlice()),
                                                                                   compImage.getActiveImage().getExtents()[0],
                                                                                   compImage.getActiveImage().getExtents()[1]);
 
@@ -5142,8 +5142,8 @@ public class VOIHandler extends JComponent
         int xDim = compImage.getActiveImage().getExtents()[0];
         int yDim = compImage.getActiveImage().getExtents()[0];
 
-        float resX = compImage.getActiveImage().getResolutions()[0];
-        float resY = compImage.getActiveImage().getResolutions()[1];
+        float resX = compImage.getActiveImage().getResolutions(0)[0];
+        float resY = compImage.getActiveImage().getResolutions(0)[1];
 
         float numVertical = (xDim * resX) / gridSpacingX;
         float numHorizontal = (yDim * resY) / gridSpacingY;

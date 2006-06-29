@@ -2024,8 +2024,8 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
 
         float[] res = new float[2];
 
-        res[0] = getActiveImage().getResolutions()[0];
-        res[1] = getActiveImage().getResolutions()[1];
+        res[0] = getActiveImage().getResolutions(0)[0];
+        res[1] = getActiveImage().getResolutions(0)[1];
 
         // check to see if image2load needs to be changed to to the componentImage's type (color or gray)
 

@@ -1093,9 +1093,9 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  _imageB  the reference to image B.
      */
     public void calcShearWarpImage(ModelImage _imageA, ModelImage _imageB) {
-        float resolsX = Math.abs(_imageA.getResolutions()[0]);
-        float resolsY = Math.abs(_imageA.getResolutions()[1]);
-        float resolsZ = Math.abs(_imageA.getResolutions()[2]);
+        float resolsX = Math.abs(_imageA.getResolutions(0)[0]);
+        float resolsY = Math.abs(_imageA.getResolutions(0)[1]);
+        float resolsZ = Math.abs(_imageA.getResolutions(0)[2]);
 
         if ((resolsX != resolsY) || (resolsX != resolsZ)) {
             AlgorithmReslice resliceAlgo = new AlgorithmReslice(_imageA, AlgorithmReslice.LINEAR);
