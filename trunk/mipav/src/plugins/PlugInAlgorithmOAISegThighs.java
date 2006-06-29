@@ -913,7 +913,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("OAI Thigh Seg. 6/26/06", "Processing images...", 0, 100);
+        buildProgressBar("OAI Thigh Seg. 6/29/06", "Processing images...", 0, 100);
         initProgressBar();
         
         xDim = 1;
