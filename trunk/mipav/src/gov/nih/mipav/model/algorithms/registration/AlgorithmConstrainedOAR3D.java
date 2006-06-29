@@ -1213,7 +1213,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             FileInfoBase[] fileInfo = blurredRef.getFileInfo();
 
             for (i = 0; i < refImage.getExtents()[2]; i++) {
-                fileInfo[i].setResolutions(refImage.getFileInfo()[i].getResolutions());
+                fileInfo[i].setResolutions(refImage.getResolutions(i));
             }
 
             AlgorithmGaussianBlur blur = new AlgorithmGaussianBlur(blurredRef, refImage, sigmasRef, true, false);
