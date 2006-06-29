@@ -39,6 +39,41 @@ import java.text.*;
   Constantinides, Ergin Atalar, Elliot R. McVeigh, Magnetic Resonance in Medicine,
   November, 1997, 38(5), pp. 852-857.
   Erratum in Magnetic Resonance in Medicine, July, 2004, 52(1), p. 219.
+  3.) I. S. Gradshteyn and I. M. Rhyzik, Tables of integrals, series, and products, 
+  Sixth edition.
+  
+  Derivation of Bessel function formula when number of receivers == 1
+  E[M**v] = (2*sigma**2)**(v/2) * gamma(1 + v/2) * 1F1(-v/2, 1, -A**2/(2*sigma**2))
+  E[M] = sigma * sqrt(2) * gamma(3/2) * 1F1(-1/2, 1, -A**2/(2*sigma**2))
+  gamma(1/2) = sqrt(PI)
+  gamma(n+1) = n*gamma(n)
+  gamma(3/2) = sqrt(pi)/2
+  E[M] = sigma * sqrt(PI/2) * 1F1(-1/2, 1, -A**2/(2*sigma**2))
+  1F1(alpha, gamma, z) = exp(z) * 1F1(gamma - alpha, gamma, -z)
+  Let pow = A**2/(2*sigma**2)
+  1F1(-1/2, 1, -pow) = exp(-pow) * 1F1(3/2, 1, pow) =
+  exp(-pow) * [1/2 * 1F1(3/2, 1, pow) + 1/2 * 1F1(3/2, 1, pow)]
+  
+  alpha*1F1(alpha+1, gamma, z) = (z + 2*alpha - gamma)*1F1(alpha, gamma, z) 
+                               + (gamma - alpha) * 1F1(alpha - 1, gamma, z)
+ 1F1(-1/2, 1, -pow) = exp(-pow) * [0.5 * 1F1(3/2, 1, pow) + pow * 1F1(1/2, 1, pow)
+                                    + 0.5 * 1F1(-1/2, 1, pow)] =
+    exp(-pow) * [(1 + pow) * 1F1(1/2, 1, pow) 
+                 + 0.5*(1F1(3/2, 1, pow) - 1F1(1/2, 1, pow))
+                 - 0.5*(1F1(1/2, 1, pow) - 1F1(-1/2, 1, pow))]
+                 
+  (z/gamma)*1F1(alpha+1, gamma+1, z) = 1F1(alpha+1, gamma, z) - 1F1(alpha, gamma, z)
+  
+  1F1(-1/2, 1, -pow) = exp(-pow) * [(1 + pow)* 1F1(1/2, 1, pow) + (pow/2) * 1F1(3/2, 2, pow)
+                                                               - (pow/2) * 1F1(1/2, 2, pow)] =
+     exp(-pow) * [(1 + pow) * 1F1(1/2, 1, pow) + ((pow/2)**2)*1F1(3/2, 3, pow)] =
+     exp(-pow/2) * [(1 + pow) * exp(-pow/2) * 1F1(1/2, 1, pow) + ((pow/2)**2)* exp(-pow/2) * 1F1(3/2, 3, pow)]
+     
+  Iv(x) = ((2**-v)/gamma(v+1)) * (x**v)  * exp(-x) * 1F1(1/2 + v, 1 + 2*v, 2*x)
+  I0(x) = exp(-x) * 1F1(1/2, 1, 2*x)
+  I1(x) = (x * exp(-x)/2) * 1F1(3/2, 3, 2*x)
+  
+  1F1(-1/2, 1, -pow) = exp(-pow/2) * [(1 + pow) * I0(pow/2) + pow * I1(pow/2)]
  */
 public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
