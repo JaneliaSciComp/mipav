@@ -86,10 +86,10 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         ViewUserInterface UI = srcImage.getUserInterface();
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
-        float xRes = srcImage.getFileInfo()[0].getResolutions()[0];
-        float yRes = srcImage.getFileInfo()[0].getResolutions()[1];
-        int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
-        int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
+        float xRes = srcImage.getResolutions(0)[0];
+        float yRes = srcImage.getResolutions(0)[1];
+        int xUnits = srcImage.getUnitsOfMeasure()[0];
+        int yUnits = srcImage.getUnitsOfMeasure()[1];
         String unitsString = null;
         int i;
         int k;
@@ -336,9 +336,9 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
-        float xRes = srcImage.getFileInfo()[0].getResolutions()[0];
-        float yRes = srcImage.getFileInfo()[0].getResolutions()[1];
-        float zRes = srcImage.getFileInfo()[0].getResolutions()[2];
+        float xRes = srcImage.getResolutions(0)[0];
+        float yRes = srcImage.getResolutions(0)[1];
+        float zRes = srcImage.getResolutions(0)[2];
         float[] pAxis = new float[1];
         float[] eccentricity = new float[1];
         float[] majorAxis = new float[1];
