@@ -176,7 +176,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             return;
         }
 
-        float area = srcImage.getFileInfo()[0].getResolutions()[0] * srcImage.getFileInfo()[0].getResolutions()[1];
+        float area = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1];
 
         destImage.getUserInterface().getMessageFrame().append("Number of Fat pixels = " + fat, ViewJFrameMessage.DATA);
         destImage.getUserInterface().getMessageFrame().append("  Area = " + (fat * area) + " mm^2\n",
@@ -205,8 +205,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         int totLength, imgLength;
         float[] buffer;
 
-        float vol = srcImage.getFileInfo()[0].getResolutions()[0] * srcImage.getFileInfo()[0].getResolutions()[1] *
-                        srcImage.getFileInfo()[0].getResolutions()[2];
+        float vol = srcImage.getResolutions(0)[0] * srcImage.getResolutions(0)[1] * srcImage.getResolutions(0)[2];
 
         try {
 

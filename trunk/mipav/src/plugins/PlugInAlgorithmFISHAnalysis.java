@@ -120,8 +120,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         int x, y;
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
-        float xRes = srcImage.getFileInfo()[0].getResolutions()[0];
-        float yRes = srcImage.getFileInfo()[0].getResolutions()[1];
+        float xRes = srcImage.getResolutions(0)[0];
+        float yRes = srcImage.getResolutions(0)[1];
         boolean found;
         AlgorithmMorphology2D idObjectsAlgo2D;
         int numObjects;
@@ -1150,9 +1150,9 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         int xDim = srcImage.getExtents()[0];
         int yDim = srcImage.getExtents()[1];
         int zDim = srcImage.getExtents()[2];
-        float xRes = srcImage.getFileInfo()[0].getResolutions()[0];
-        float yRes = srcImage.getFileInfo()[0].getResolutions()[1];
-        float zRes = srcImage.getFileInfo()[0].getResolutions()[2];
+        float xRes = srcImage.getResolutions(0)[0];
+        float yRes = srcImage.getResolutions(0)[1];
+        float zRes = srcImage.getResolutions(0)[2];
         boolean found;
         AlgorithmMorphology3D idObjectsAlgo3D;
         int numObjects;

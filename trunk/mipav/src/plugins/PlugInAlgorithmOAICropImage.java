@@ -245,8 +245,8 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         FileInfoBase fileInfo1;
         HardSeg[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), "Hard-Fuzzy_seg", srcImage.getUserInterface());
 		fileInfo1 = HardSeg[0].getFileInfo()[0];
-		fileInfo1.setResolutions(srcImage.getFileInfo()[0].getResolutions());
-		fileInfo1.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+		fileInfo1.setResolutions(srcImage.getResolutions(0));
+		fileInfo1.setUnitsOfMeasure(srcImage.getUnitsOfMeasure());
 		HardSeg[0].setFileInfo(fileInfo1, 0);
 
         firstFuzz = new AlgorithmFuzzyCMeans(HardSeg, srcImage, nClasses,4, 1, 2, 2.0f, 20000, 200000, false,

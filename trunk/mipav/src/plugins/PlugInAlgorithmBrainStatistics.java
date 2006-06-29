@@ -173,7 +173,7 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
 
         brainImage.releaseLock();
 
-        int[] units = brainImage.getFileInfo()[0].getUnitsOfMeasure();
+        int[] units = brainImage.getUnitsOfMeasure();
         String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
 
         if (units[0] != FileInfoBase.MILLIMETERS) {
