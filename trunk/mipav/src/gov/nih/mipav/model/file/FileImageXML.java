@@ -461,8 +461,6 @@ public class FileImageXML extends FileXML {
             // imageFileName was parsed from the "image".xml file.
             rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo, showProgress,
                                   FileBase.READ);
-            rawFile.setPBar(pInterface);
-
             int offset = 0;
 
             if (one) {
@@ -1611,7 +1609,7 @@ public class FileImageXML extends FileXML {
 
             FileRaw rawFile;
 
-            rawFile = new FileRaw(img.getFileInfo(0), showProgress);
+            rawFile = new FileRaw(img.getFileInfo(0));
 
             if (img.getNDims() == 3) {
                 rawFile.writeImage3DTo2D(img, options, rawExtension);
