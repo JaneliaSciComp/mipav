@@ -2053,7 +2053,7 @@ public class FileNIFTI extends FileBase {
 
         if (options.isMultiFile()) {
             FileRaw rawFile;
-            rawFile = new FileRaw(image.getFileInfo(0), true);
+            rawFile = new FileRaw(image.getFileInfo(0));
             flipTopBottom(image);
 
             if (oneFile) {
