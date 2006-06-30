@@ -2191,8 +2191,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                                                             ViewJComponentBase.NA, newAlphaBlend);
 
             componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB, paintBuffer);
-            xRes = image.getFileInfo()[0].getResolutions()[0];
-            yRes = image.getFileInfo()[0].getResolutions()[1];
+            xRes = image.getResolutions(0)[0];
+            yRes = image.getResolutions(0)[1];
 
             if ((xRes <= 0.0f) || (yRes <= 0.0f)) {
                 xRes = 1.0f;

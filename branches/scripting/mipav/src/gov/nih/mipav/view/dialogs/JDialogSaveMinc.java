@@ -603,11 +603,11 @@ public class JDialogSaveMinc extends JDialogBase {
             lr = -fileInfo.getOrigin(0);
             xRes = fileInfo.getResolutions()[0];
             
-            pa = -fileInfo.getOrigin(1);
-            yRes = fileInfo.getResolutions()[1];
+            pa = -fileInfo.getOrigin(2);
+            yRes = fileInfo.getResolutions()[2];
             
-            is = fileInfo.getOrigin(2);
-            zRes = fileInfo.getResolutions()[2];
+            is = fileInfo.getOrigin(1);
+            zRes = fileInfo.getResolutions()[1];
         }
         else {
 

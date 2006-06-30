@@ -9980,4 +9980,74 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return m_bConvolve;
     }
 
+    /**
+     * Returns the resolutions for the image without regarding resolution
+     * difference between slices.
+     * 
+     * @return the resolutions for the image
+     */
+    public float[] getResolutions(int index ){
+        if(fileInfo == null){
+            return null;
+        }
+        return fileInfo[index].getResolutions();
+    }
+    
+    /**
+     * Sets the resolutions to the specific
+     * @param index
+     * @param resolutions
+     */
+    public void setResolutions(int index, float[] resolutions){
+        if(fileInfo == null){
+            return;
+        }
+        fileInfo[index].setResolutions(resolutions);
+    }
+    
+    /**
+     * Returns the axis orientation of image
+     * @return the axis orientation of image
+     */
+    public int[] getAxisOrientation(){
+        if(fileInfo == null){
+            return null;
+        }
+        return fileInfo[0].getAxisOrientation();
+    }
+    
+    /**
+     * Returns the origin of the image
+     * @return the origin of the image
+     */
+    public float[] getOrigin(){
+        if(fileInfo == null){
+            return null;
+        }
+        return fileInfo[0].getOrigin();
+    }
+    
+    /**
+     * Returns the unit used to measure the specific dimension of image.
+     * @param index  the index of specific dimension 
+     * @return       the unit used to measure the specific dimension
+     */
+    public int getUnitsOfMeasure(int index){
+        if(fileInfo == null){
+            return -1;
+        }
+        return fileInfo[0].getUnitsOfMeasure(index);
+        
+    }
+    
+    /**
+     * Returns the units used to measure all dimensions of the image.
+     * @return the units used to measure all dimensions of the image.
+     */
+    public int[] getUnitsOfMeasure(){
+        if(fileInfo == null){
+            return null;
+        }
+        return fileInfo[0].getUnitsOfMeasure();
+    }
 }

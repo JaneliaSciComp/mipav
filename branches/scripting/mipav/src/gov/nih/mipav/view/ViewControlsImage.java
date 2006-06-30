@@ -1,6 +1,9 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.file.FileBase;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -250,7 +253,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         }
 
         if (showScripting) {
-            scriptToolBar = toolBarObj.buildScriptToolBar(frame.getUserInterface().isScriptRecording());
+            scriptToolBar = toolBarObj.buildScriptToolBar(ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING);
             panelOptionToolbars.add(scriptToolBar, "West");
         }
 
@@ -474,19 +477,17 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
     }
 
     /**
-     * Invokes the toolbar builder to update the scripts combo box based on the new script directory.
-     *
-     * @param  ui  the user interface to run the script with
+     * Invokes the toolbar builder to run the currently selected script.
      */
-    public void runScript(ViewUserInterface ui) {
+    public void runCurrentScript() {
 
         if (scriptToolBar == null) {
             return;
         }
 
-        toolBarObj.runScript(ui);
+        toolBarObj.runCurrentScript();
 
-    } // end runScript()
+    }
 
     /**
      * Sets the active image to either A or B and updates the paint spinner values.

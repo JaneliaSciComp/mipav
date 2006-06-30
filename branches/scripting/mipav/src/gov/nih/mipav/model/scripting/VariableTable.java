@@ -1,16 +1,11 @@
 package gov.nih.mipav.model.scripting;
 
 
-import gov.nih.mipav.model.structures.ModelImage;
-
-import gov.nih.mipav.view.ViewUserInterface;
-
-import java.util.Enumeration;
 import java.util.Hashtable;
 
 
 /**
- * A table used to store variables and their values.  The main use at the moment is to store image names as values and assign them image placeholder variable names (e.g., '$image1'), which can then be used in scripts.
+ * A table used to store variables and their values.
  */
 public class VariableTable extends Hashtable {
 
@@ -21,14 +16,6 @@ public class VariableTable extends Hashtable {
 
     /** The reference to the only VariableTable which should ever be instantiated. */
     protected static VariableTable singletonReference = null;
-
-    /** The base image placeholder variable string prefix.  Should be prepended to a number for each image used in a script. */
-    protected static final String imageVariablePrefix = "$image";
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** The number to use for the next image placeholder variable to be added to the table.  Starts at 1. */
-    protected int currentImageNumber = 1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -53,37 +40,6 @@ public class VariableTable extends Hashtable {
         }
 
         return singletonReference;
-    }
-    
-    /**
-     * Finds a value in the variable table and changes it to a new value with the same variable placeholder (does nothing if the value is not in the table).
-     * NOTE: May be dangerous to use on non-image variables...
-     * @param  oldValue  The old value to replace.
-     * @param  newValue  The new value to give to the variable which had the old value.
-     */
-    public void changeVariableValue(String oldValue, String newValue) {
-        Enumeration keys = keys();
-        
-        while (keys.hasMoreElements()) {
-            String curKey = (String) keys.nextElement();
-            String curVal = interpolate(curKey);
-            
-            if (curVal.equals(oldValue)) {
-                remove(curKey);
-                put(curKey, newValue);
-            }
-        }
-    }
-
-    /**
-     * Returns the image associated with a image placeholder variable.
-     *
-     * @param   varName  An image placeholder variable (e.g., '$image1').
-     *
-     * @return  The associated image.
-     */
-    public ModelImage getImage(String varName) {
-        return ViewUserInterface.getReference().getRegisteredImageByName(interpolate(varName));
     }
 
     /**
@@ -115,35 +71,6 @@ public class VariableTable extends Hashtable {
      */
     public void removeVariable(String varName) {
         super.remove(varName);
-    }
-
-    /**
-     * Stores a new image name in the variable table, giving it the next available image placeholder variable name.
-     *
-     * @param   imageName  The name of the image to add to the table.
-     *
-     * @return  The image placeholder variable assigned to the newly added image (e.g., '$image2').
-     * 
-     * @see     gov.nih.mipav.model.structures.ModelImage#getImageName()
-     */
-    public String storeImageName(String imageName) {
-        String imageVar = null;
-
-        if (!super.containsValue(imageName)) {
-            imageVar = imageVariablePrefix + currentImageNumber;
-            super.put(imageVar, imageName);
-            currentImageNumber++;
-        } else {
-
-            for (int i = 1; i <= currentImageNumber; i++) {
-
-                if (imageName.equals(interpolate(imageVariablePrefix + i))) {
-                    imageVar = imageVariablePrefix + i;
-                }
-            }
-        }
-
-        return imageVar;
     }
 
     /**

@@ -105,7 +105,7 @@ public class ActionVOIToMask implements ScriptableActionInterface {
                 return;
             }
             
-            VariableTable.getReference().storeImageName(maskImage.getImageName());
+            ScriptRunner.getReference().getImageTable().storeImageName(maskImage.getImageName());
             new ViewJFrameImage(maskImage, null, null, false);
         } catch (OutOfMemoryError oome) {
             MipavUtil.displayError("Out of memory: unable to create new mask image from VOI.");

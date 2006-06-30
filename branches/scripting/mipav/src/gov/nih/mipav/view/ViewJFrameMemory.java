@@ -1,6 +1,9 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -325,9 +328,7 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
                 repaint();
             }
 
-            if (UI.isScriptRecording()) {
-                UI.getScriptDialog().append("CollectGarbage\n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
         }
     }
     // ************************************************************************

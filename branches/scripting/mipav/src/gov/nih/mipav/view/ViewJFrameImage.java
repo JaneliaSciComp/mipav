@@ -5,6 +5,8 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.NDARPipeline;
@@ -422,34 +424,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("AnonymizeDirectory")) {
             userInterface.buildAnonDirectoryDialog();
         } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
-
-            if (userInterface.getScriptDialog() != null) {
-                MipavUtil.displayError("Already recording.  You must save or exit the first script to begin a new one.");
-            } else {
-                JDialogScript scriptDialog = new JDialogScript("Record New Script", userInterface);
-
-                scriptDialog.addWindowListener((WindowListener) userInterface);
-                userInterface.setRecordingScript(true);
-                scriptDialog.setVisible(true);
-
-                if (userInterface.getActiveImageFrame() != null) {
-                    scriptDialog.setActiveImageFlag(true);
-                } else {
-                    scriptDialog.setActiveImageFlag(false);
-                }
-                // userInterface.activeImageRegistryMonitoring();
-            }
+            // pass script events to the VUI, since there's no need to have the same implementation twice
+            ViewUserInterface.getReference().actionPerformed(event);
         } else if (command.equals("RunScript")) {
-
-            if (userInterface.isScriptRecording()) {
-                MipavUtil.displayError("Cannot run a script within a script.");
-
-                return;
-            } else {
-                JDialogMultiple multiple = new JDialogMultiple("Run script on multiple images", getUserInterface());
-
-                multiple.setVisible(true);
-            }
+            // pass script events to the VUI, since there's no need to have the same implementation twice
+            ViewUserInterface.getReference().actionPerformed(event);
         } else if (command.equals("ToolbarScriptDir")) {
 
             // this action is to set the home directory and
@@ -472,15 +451,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.updateScripts(userInterface.getDefaultScriptDirectory());
         } else if (command.equals("ToolbarScriptRun")) {
 
-            // this is different from RunScript ... this is from the
-            // scripting toolbar
-            if (userInterface.isScriptRecording()) {
-                MipavUtil.displayError("Cannot run a script within a script.");
-
+            // this is different from RunScript ... this is from the scripting toolbar
+            if (ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.STOPPED) {
+                MipavUtil.displayError("Cannot run a script while recording a script.");
                 return;
             } else {
-                Preferences.debug("Run the current selected script on the active image.\n");
-                controls.runScript(getUserInterface());
+                Preferences.debug("Run the currently selected script from the toolbar.\n");
+                controls.runCurrentScript();
             }
         } else if (command.equals("ComponentLoadB")) {
 
@@ -1081,11 +1058,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("VOI_to_BinaryMask " +
-                                                       userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                       " \n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
             ModelImage shortImage = null;
 
@@ -1113,11 +1086,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("VOI_to_ShortMask " +
-                                                       userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                       " \n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
             ModelImage uByteImage = null;
 
@@ -1145,66 +1114,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording() && (uByteImage != null)) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "VOI_to_UnsignedByteMask " +
-                              userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
-                userInterface.getScriptDialog().putVar(uByteImage.getImageName());
-                line += userInterface.getScriptDialog().getVar(uByteImage.getImageName()) + "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), ActionVOIToMask.MASK_UBYTE));
         } else if (command.equals("MaskToVOI")) {
+            AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
+            //VOIExtractionAlgo.setActiveImage(false);
+            VOIExtractionAlgo.run();
 
-               AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
-               //VOIExtractionAlgo.setActiveImage(false);
-               VOIExtractionAlgo.run();
-
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "MaskToVOI " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
+            
             updateImages();
         } else if (command.equals("MaskToPaint")) {
             handleMaskToPaint(true);
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "MaskToPaint " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
         } else if (command.equals("PaintToVOI")) {
 
             // new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
@@ -1236,95 +1158,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             algoPaintToVOI.setRunningInSeparateThread(false);
             algoPaintToVOI.run();
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "PaintToVOI " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionPaintToVOI(getActiveImage()));
 
             updateImages();
         } else if (command.equals("PaintToShortMask")) {
             String maskImageName = componentImage.commitPaintToMask();
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording() && (maskImageName != null)) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "PaintToShortMask " +
-                              userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
-                userInterface.getScriptDialog().putVar(maskImageName);
-                line += userInterface.getScriptDialog().getVar(maskImageName) + "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), ActionPaintToMask.MASK_SHORT));
         } else if (command.equals("Open VOI")) {
             boolean success = openVOI(false);
 
-            if (success && userInterface.isScriptRecording()) {
-                String imageName = getActiveImage().getImageName();
-
-                if (userInterface.getScriptDialog().getImgTableVar(imageName) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageName) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageName);
-                    }
-                }
-
-                String imageVarName = (String) userInterface.getScriptDialog().getVar(imageName);
-
-                userInterface.getScriptDialog().append("OpenVOI " + imageVarName);
-
-                ViewVOIVector VOIs = (ViewVOIVector) getActiveImage().getVOIs();
-
-                int nVOI = VOIs.size();
-                int index = 0, i = 0;
-                boolean foundActive = false;
-
-                while (!foundActive && (i != nVOI)) {
-
-                    if (VOIs.VOIAt(i).isActive() == true) {
-                        index = i;
-                        foundActive = true;
-                    } else {
-                        i++;
-                    }
-                }
-
-                VOI currVOI = VOIs.VOIAt(index);
-                String voiName = currVOI.getName();
-
-                userInterface.getScriptDialog().putVoiVar(voiName);
-
-                String voiVarName = (String) userInterface.getScriptDialog().getVoiVar(voiName);
-
-                userInterface.getScriptDialog().append(" " + voiVarName + "\n");
+            if (success) {
+                ScriptRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
             }
         } else if (command.equals("Open all VOIs")) {
             loadAllVOIs(false);
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("OpenAllVOIs " +
-                                                       userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                       "\n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionOpenAllVOIs(getActiveImage()));
         } else if (command.equals("Open all VOIs from...")) {
 
             // get the voi directory
@@ -1364,20 +1214,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Save all VOIs")) {
             saveAllVOIs();
 
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "SaveAllVOIs " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage()));
         } else if (command.equals("Save all VOIs to...")) {
 
             // get the voi directory
@@ -1406,22 +1243,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 voiDir = new String(directory + fileName + File.separator);
                 saveAllVOIsTo(voiDir);
 
-                if (userInterface.isScriptRecording()) {
-
-                    // check to see if the match image is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) ==
-                                null) {
-                            userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                        }
-                    }
-
-                    String line = "SaveAllVOIsTo " +
-                                  userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
-                    line += voiDir + "\n";
-                    userInterface.getScriptDialog().append(line);
-                }
+                ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
             }
         } else if (command.equals("Snake")) {
             new JDialogSnake(this, getActiveImage());
@@ -1513,24 +1335,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                     getActiveImage().getLogMagDisplay());
                 System.gc();
 
-                if (userInterface.isScriptRecording()) {
-
-                    // check to see if the image is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) ==
-                                null) {
-                            userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                        }
-                    }
-
-                    userInterface.getScriptDialog().append("Clone " +
-                                                           userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().putVar(clonedImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(clonedImage.getImageName()) +
-                                                           "\n");
-                }
+                ScriptRecorder.getReference().addLine(new ActionClone(getActiveImage()));
             } catch (OutOfMemoryError error) {
 
                 if (clonedImage != null) {
@@ -1695,6 +1500,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // JDialogIHN3Correction N3 =
             new JDialogIHN3Correction(this, getActiveImage());
+        } else if (command.equals("SMRISNR")) {
+            new JDialogSingleMRIImageSNR(this,getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
@@ -2392,9 +2199,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ShowGrid")) {
 
             if (((JCheckBoxMenuItem) event.getSource()).isSelected()) {
-                componentImage.setGridOverlay(true);
+                componentImage.getVOIHandler().setGridOverlay(true);
             } else {
-                componentImage.setGridOverlay(false);
+                componentImage.getVOIHandler().setGridOverlay(false);
             }
 
             componentImage.paintComponent(componentImage.getGraphics());
@@ -2404,7 +2211,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogGridOptions gridOptions = new JDialogGridOptions(this, componentImage);
         } else if (command.equals("ShowOverlay")) {
 
-            componentImage.setOverlay(((JCheckBoxMenuItem) event.getSource()).isSelected());
+            componentImage.getVOIHandler().setOverlay(((JCheckBoxMenuItem) event.getSource()).isSelected());
 
             // save into preferences
             if (componentImage.getActiveImage().isDicomImage()) {
@@ -2619,8 +2426,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.memoryFrame();
         } else if (command.equals("ImageRegistryMonitor")) {
             userInterface.imageRegistryMonitoring();
-        } else if (command.equals("ActiveImageRegistryMonitor")) {
-            userInterface.activeImageRegistryMonitoring();
         } else if (command.equals("Options")) {
             userInterface.options();
         } else if (command.equals("Shortcuts")) {
@@ -2803,15 +2608,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         }
 
-        if (userInterface.getActiveFrame() != null) {
-            userInterface.getActiveFrame().removeName(imageA.getImageName());
-        }
-
-        if (userInterface.isScriptRecording()) {
-            userInterface.getScriptDialog().append("CloseFrame " +
-                                                   userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                   "\n");
-        }
+        ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
 
         if ((imageA != null) && (imageA.getHistoLUTFrame() != null)) {
             imageA.getHistoLUTFrame().dispose();
@@ -5153,7 +4950,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
                                                      pixBuffer, zoom, extents, logMagDisplay,
                                                      ViewJComponentEditImage.NA, false,
-                                                     imageA.getFileInfo()[0].getAxisOrientation());
+                                                     imageA.getAxisOrientation());
 
         componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 

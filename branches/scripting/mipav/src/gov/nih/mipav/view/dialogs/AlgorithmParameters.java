@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.VariableTable;
+import gov.nih.mipav.model.scripting.ScriptRunner;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -306,7 +306,7 @@ public abstract class AlgorithmParameters {
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
     protected String storeImage(ModelImage image) {
-        return VariableTable.getReference().storeImageName(image.getImageName());
+        return ScriptRunner.getReference().storeImage(image.getImageName());
     }
 
     /**

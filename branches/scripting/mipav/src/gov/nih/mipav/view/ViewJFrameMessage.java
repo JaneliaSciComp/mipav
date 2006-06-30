@@ -1,6 +1,9 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -126,11 +129,7 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
                 MipavUtil.displayError("Error writing file");
             }
 
-            // if the user is recording a script, write a "SaveData"
-            // or "SaveData" (not debug)
-            if (UI.isScriptRecording()) {
-                UI.getScriptDialog().append("SaveTab " + tabbedPane.getTitleAt(tabbedPane.getSelectedIndex()) + "\n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionSaveTab(tabbedPane.getTitleAt(tabbedPane.getSelectedIndex())));
         } else if (event.getActionCommand().equals("Clear")) {
 
             try {
@@ -196,8 +195,6 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
         tabbedPane.addTab(tabTitle, null, st);
         tabbedPane.setSelectedComponent(st);
-
-        if (UI.isScriptRecording()) { }
     }
 
     /**

@@ -2350,7 +2350,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             // Create the componentImageA which will be the reference image in the dual window
             componentImageA = new ViewJComponentSingleRegistration(this, imageA, LUTa, imageBufferA, pixBufferCompA, 1,
                                                                    newExtents, logMagDisplay, ViewJComponentBase.NA,
-                                                                   false, imageA.getFileInfo()[0].getAxisOrientation(),
+                                                                   false, imageA.getAxisOrientation(),
                                                                    true);
 
             componentImageA.setBuffers(imageBufferA, null, pixBufferCompA, null);
@@ -2358,7 +2358,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             // Create the componentImageB which will be the adjusted image in the dual window
             componentImageB = new ViewJComponentSingleRegistration(this, imageB, LUTb, imageBufferB, pixBufferCompA, 1,
                                                                    newExtents, logMagDisplay, ViewJComponentBase.NA,
-                                                                   false, imageA.getFileInfo()[0].getAxisOrientation(),
+                                                                   false, imageA.getAxisOrientation(),
                                                                    false);
 
             componentImageB.setBuffers(imageBufferA, null, pixBufferCompB, null);
@@ -2370,8 +2370,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 componentImageB.setRGBTB(RGBb);
             }
 
-            xRes = image.getFileInfo()[0].getResolutions()[0];
-            yRes = image.getFileInfo()[0].getResolutions()[1];
+            xRes = image.getResolutions(0)[0];
+            yRes = image.getResolutions(0)[1];
 
             if ((xRes <= 0.0f) || (yRes <= 0.0f)) {
                 xRes = 1.0f;

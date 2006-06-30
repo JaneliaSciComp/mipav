@@ -97,7 +97,7 @@ public class ActionPaintToMask implements ScriptableActionInterface {
                 return;
             }
             
-            VariableTable.getReference().storeImageName(maskImageName);
+            ScriptRunner.getReference().getImageTable().storeImageName(maskImageName);
         } catch (OutOfMemoryError oome) {
             MipavUtil.displayError("Out of memory: unable to create new mask image from paint.");
             return;

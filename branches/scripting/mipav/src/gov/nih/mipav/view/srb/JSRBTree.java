@@ -21,6 +21,7 @@ import javax.swing.*;
 import javax.swing.*;
 import javax.swing.tree.*;
 
+import gov.nih.mipav.model.srb.SRBUtility;
 
 /**
  * A utility class which creates a JTree using the Jargon GUI package. This "Browsable DataGrid Tree" uses the
@@ -276,7 +277,7 @@ public class JSRBTree extends JTree implements ActionListener {
                     for (int i = 0; i < selectedPaths.length; i++) {
                         GeneralFile selectedFile = (GeneralFile) selectedPaths[i]
                                 .getLastPathComponent();
-                        delete(selectedFile);
+                        SRBUtility.recursivelyDeleteDir(selectedFile);
                         // that file is gone so refresh to the parent
                     }
                     refresh(selectedPaths[0].getParentPath());
@@ -284,27 +285,6 @@ public class JSRBTree extends JTree implements ActionListener {
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
-        }
-    }
-    
-    /**
-     * Deletes the file or directory denoted by this abstract pathname recurively.
-     * 
-     * @param file  the file or directory denoted by this abstract pathname.
-     */
-    public void delete(GeneralFile file){
-        if(file == null){
-            return;
-        }
-        if(!file.delete()){
-            GeneralFile[] children = file.listFiles();
-            if (children == null) {
-                return;
-            }
-            for (int i = 0; i < children.length; i++) {
-                delete(children[i]);
-            }
-            file.delete();
         }
     }
     /**

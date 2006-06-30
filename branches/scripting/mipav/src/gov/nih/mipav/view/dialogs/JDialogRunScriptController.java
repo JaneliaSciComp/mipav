@@ -4,16 +4,10 @@ import java.io.File;
 import java.io.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.xml.parsers.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.VOI;
-import gov.nih.mipav.view.ViewImageFileFilter;
-import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.JDialogRunScriptModel.ScriptVOI;
-import gov.nih.mipav.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.scripting.*;
 
 /**
@@ -134,8 +128,12 @@ public class JDialogRunScriptController implements ActionListener {
          * Run script 
          * ********************************************************
          */
-       if (e.getActionCommand().equalsIgnoreCase("Run script")) {
-            if (!(view.parseTreeForPlaceHolders())) ParserHardcoded.runScript(model.getScriptFile());
+        if (e.getActionCommand().equalsIgnoreCase("Run script")) {
+            try {
+                if (!(view.parseTreeForPlaceHolders())) Parser.runScript(model.getScriptFile());
+            } catch (ParserException pe) {
+                MipavUtil.displayError("Error encountered running script:\n" + pe);
+            }
         }//run script
 
 

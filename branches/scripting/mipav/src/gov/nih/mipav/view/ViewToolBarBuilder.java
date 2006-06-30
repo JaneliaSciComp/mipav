@@ -1,7 +1,10 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -973,24 +976,31 @@ public class ViewToolBarBuilder implements ItemListener {
     }
 
     /**
-     * Method to run the current script.
-     *
-     * @param  userInterface  The system's user interface
+     * Method to run the script currently selected in the scripting toolbar.
      */
-    public void runScript(ViewUserInterface userInterface) {
-        ViewControlsScript scriptControls = new ViewControlsScript(userInterface);
-
-        scriptControls.setScriptDirectory(userInterface.getDefaultScriptDirectory() + File.separatorChar);
-
-        String tmpStr = (String) currentScriptComboBox.getSelectedItem();
-        int index = tmpStr.lastIndexOf(File.separatorChar);
-
-        tmpStr = tmpStr.substring(index + 1);
-
-        scriptControls.setScriptFileName(tmpStr);
-        scriptControls.runScript();
-
-    } // end runScript()
+    public void runCurrentScript() {
+        try {
+            String scriptFile = getSelectedScriptFileName();
+            String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
+            
+            if (imageVars.length == 1 && Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0) {
+                // TODO: add the current active image as $image1
+                Parser.runScript(scriptFile);
+            } else {
+                new JDialogRunScriptController(scriptFile);
+            }
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered running script:\n " + pe);
+        }
+    }
+    
+    /**
+     * Returns the full path and file name of the currently selected script file in the scripting toolbar.
+     * @return The full path and file name of the currently selected script.
+     */
+    public String getSelectedScriptFileName() {
+        return (String) currentScriptComboBox.getSelectedItem();
+    }
 
     /**
      * Accessor that enables or disables the checkerboard button.

@@ -318,6 +318,10 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
         if ((options.getFileType() == FileBase.TIFF) && options.isPackBitEnabled()) {
             parameters.put(ParameterFactory.newBoolean(TIFF_SET_WRITE_PACK_BIT, options.isWritePackBit()));
         }
+        
+        if ((options.getFileType() == FileBase.AVI)) {
+            parameters.put(ParameterFactory.newInt(AVI_COMPRESSION, options.getAVICompression()));
+        }
 
         if (nDims == 3) {
             parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));

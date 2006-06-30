@@ -155,14 +155,27 @@ public class WidgetFactory {
      * Create a new scroll pane, containing a component.
      *
      * @param   component        the component to put inside the scroll pane
+     *
+     * @return  the new scroll pane
+     */
+    public static final JScrollPane buildScrollPane(JComponent component) {
+        JScrollPane scrollPane = new JScrollPane(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+
+        return scrollPane;
+    }
+    
+    /**
+     * Create a new scroll pane, containing a component.
+     *
+     * @param   component        the component to put inside the scroll pane
      * @param   preferredWidth   the width of the scroll pane
      * @param   preferredHeight  the height of the scroll pane
      *
      * @return  the new scroll pane
      */
     public static final JScrollPane buildScrollPane(JComponent component, int preferredWidth, int preferredHeight) {
-        JScrollPane scrollPane = new JScrollPane(component, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        JScrollPane scrollPane = buildScrollPane(component);
         scrollPane.setPreferredSize(new Dimension(preferredWidth, preferredHeight));
 
         return scrollPane;

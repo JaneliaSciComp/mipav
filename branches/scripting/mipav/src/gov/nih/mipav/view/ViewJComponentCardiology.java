@@ -229,8 +229,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 numActive++;
 
                 cardioVOI.calcAverageLength(i, imageActive.getExtents()[0], imageActive.getExtents()[1],
-                                            imageActive.getFileInfo()[0].getResolutions(),
-                                            imageActive.getUserInterface());
+                                            imageActive.getResolutions(0), imageActive.getUserInterface());
 
             }
         }
@@ -780,8 +779,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
             } // if ((!imageActive.isColorImage()) && (mode == DEFAULT))
 
-            if ((imageActive.getFileInfo(0).getOrigin()[0] != 0) || (imageActive.getFileInfo(0).getOrigin()[1] != 0) ||
-                    (imageActive.getFileInfo(0).getOrigin()[2] != 0)) {
+            if ((imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0) ||
+                    (imageActive.getOrigin()[2] != 0)) {
 
                 fileInfo = imageActive.getFileInfo()[slice];
 
@@ -1016,7 +1015,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         isContained = ((VOILine) (curves[slice].elementAt(j))).contains(xS, yS, true);
                     } else if (curveType == VOI.ANNOTATION) {
                         isContained = ((VOIText) (curves[slice].elementAt(j))).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                                        imageActive.getFileInfo(0).getResolutions(),
+                                                                                        imageActive.getResolutions(0),
                                                                                         g);
                     }
                 }
@@ -1354,7 +1353,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                          .findPositionAndIntensityRGB(rgbPositions[c],
                                                                                           rgbIntensities[c], c,
                                                                                           getActiveImageBuffer(),
-                                                                                          imageActive.getFileInfo()[slice].getResolutions(),
+                                                                                          imageActive.getResolutions(slice),
                                                                                           getActiveImage().getExtents()[0],
                                                                                           getActiveImage().getExtents()[1]);
 
@@ -1373,14 +1372,14 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                             ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbInten,
                                                                                                "Intensity Graph",
                                                                                                VOIs.VOIAt(i),
-                                                                                               FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                                                                               FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
 
                                             contourGraph.setDefaultDirectory(getActiveImage().getUserInterface().getDefaultDirectory());
                                             contourGraph.setVisible(true);
                                             VOIs.VOIAt(i).setContourGraph(contourGraph);
                                             contourGraph.setVOI(VOIs.VOIAt(i));
                                         } else {
-                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
                                             VOIs.VOIAt(i).getContourGraph().saveNewFunction(rgbPos, rgbInten, j);
                                         }
 
@@ -1394,7 +1393,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                         int pt = VOIs.VOIAt(i).findPositionAndIntensity(slice, j, position, intensity,
                                                                                         imageBufferActive,
-                                                                                        imageActive.getFileInfo()[slice].getResolutions(),
+                                                                                        imageActive.getResolutions(slice),
                                                                                         imageActive.getExtents()[0],
                                                                                         imageActive.getExtents()[1]);
                                         float[] pos = new float[pt];
@@ -1407,13 +1406,13 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                         if (VOIs.VOIAt(i).getContourGraph() == null) {
                                             lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(i),
-                                                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
                                             lineGraph.setDefaultDirectory(imageActive.getUserInterface().getDefaultDirectory());
                                             lineGraph.setVisible(true);
                                             VOIs.VOIAt(i).setContourGraph(lineGraph);
                                             lineGraph.setVOI(VOIs.VOIAt(i));
                                         } else {
-                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
                                             VOIs.VOIAt(i).getContourGraph().replaceFunction(pos, inten, VOIs.VOIAt(i),
                                                                                             j);
                                         }
@@ -1476,8 +1475,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         try {
 
             // System.out.println("imageActive.getFileInfo(0) = " + imageActive.getFileInfo(0));
-            if ((imageActive.getFileInfo(0).getOrigin()[0] != 0) || (imageActive.getFileInfo(0).getOrigin()[1] != 0) ||
-                    (imageActive.getFileInfo(0).getOrigin()[2] != 0)) {
+            if ((imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0) ||
+                    (imageActive.getOrigin()[2] != 0)) {
                 fileInfo = imageActive.getFileInfo()[slice];
 
                 String[] values = setMouseOverlayData(fileInfo, mouseEvent, slice);
@@ -1848,7 +1847,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                         }
 
                                         VOIs.VOIAt(i).getContourGraph().update(rgbPositions, rgbIntensities, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
 
                                     } catch (OutOfMemoryError error) {
                                         System.gc();
@@ -1904,7 +1903,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                         }
 
                                         VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
 
                                     } catch (OutOfMemoryError error) {
                                         System.gc();
@@ -1953,7 +1952,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                     }
 
                                     VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(0)));
+                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getUnitsOfMeasure(0)));
                                 } catch (OutOfMemoryError error) {
                                     System.gc();
                                     MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
@@ -2055,7 +2054,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     } else if ((selectedCurve instanceof VOIText) &&
                                    ((VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                          imageActive.getFileInfo()[0].getResolutions(),
+                                                                          imageActive.getResolutions(0),
                                                                           g)) {
 
                         allActive = false;
@@ -2760,8 +2759,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             FileInfoBase[] fileInfo = imageActive.getFileInfo();
 
             if (imageActive.getNDims() == 2) {
-                area = count * fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1];
-                measure = imageActive.getFileInfo(0).getUnitsOfMeasure(0);
+                area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
+                measure = imageActive.getUnitsOfMeasure(0);
 
                 if (measure == FileInfoBase.INCHES) {
                     str = " inches^2";
@@ -2794,10 +2793,9 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 }
 
             } else {
-                volume = count * fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1] *
-                             fileInfo[0].getResolutions()[2];
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] * imageActive.getResolutions(0)[2];
 
-                measure = imageActive.getFileInfo(0).getUnitsOfMeasure(0);
+                measure = imageActive.getUnitsOfMeasure(0);
 
                 if (measure == FileInfoBase.INCHES) {
                     str = " inches^3";
@@ -2911,9 +2909,9 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         coord[2] = zSlice;
 
         // Get the DICOM reference point ( origin ) in the image orientation (axial, sag, coronal )
-        origin[0] = imageActive.getFileInfo()[0].getOrigin()[0];
-        origin[1] = imageActive.getFileInfo()[0].getOrigin()[1];
-        origin[2] = imageActive.getFileInfo()[0].getOrigin()[2];
+        origin[0] = imageActive.getOrigin()[0];
+        origin[1] = imageActive.getOrigin()[1];
+        origin[2] = imageActive.getOrigin()[2];
         // System.out.println("Origin     "  + origin[0] + ", " + origin[1] + ", " + origin[2] );
 
         // Get voxel resolutions

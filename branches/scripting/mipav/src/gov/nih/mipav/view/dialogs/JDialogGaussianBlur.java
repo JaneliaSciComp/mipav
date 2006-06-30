@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -30,7 +32,7 @@ import javax.swing.*;
  * @see      AlgorithmGaussianBlur
  */
 public class JDialogGaussianBlur extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -48,11 +50,11 @@ public class JDialogGaussianBlur extends JDialogBase
     /** DOCUMENT ME! */
     private AlgorithmGaussianBlurSep gaussianBlurSepAlgo;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** Source image. */
+    private ModelImage image;
 
-    /** DOCUMENT ME! */
-    private boolean image25D = false; // flag indicating if slices should be blurred independently
+    /** Flag indicating if slices should be blurred independently. */
+    private boolean image25D = false;
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
@@ -60,8 +62,8 @@ public class JDialogGaussianBlur extends JDialogBase
     /** DOCUMENT ME! */
     private JPanelAlgorithmOutputOptions outputOptionsPanel;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** Result image. */
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private boolean separable = true;
@@ -187,7 +189,9 @@ public class JDialogGaussianBlur extends JDialogBase
 
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         } // if (algorithm instanceof AlgorithmGaussianBlur)
 
         if (algorithm instanceof AlgorithmGaussianBlurSep) {
@@ -239,7 +243,9 @@ public class JDialogGaussianBlur extends JDialogBase
 
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         } // if (algorithm instanceof AlgorithmGaussianBlurSep)
 
         if (gaussianBlurAlgo != null) {
@@ -294,36 +300,14 @@ public class JDialogGaussianBlur extends JDialogBase
 
     /**
      * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "GaussianBlur " + userInterface.getScriptDialog().getVar(image.getImageName()) + " ";
-
-                if (outputOptionsPanel.isOutputNewImageSet()) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " " +
-                            getParameterString(" ") + "\n";
-                } else {
-                    line += userInterface.getScriptDialog().getVar(image.getImageName()) + " " +
-                            getParameterString(" ") + "\n";
-                }
-
-                userInterface.getScriptDialog().append(line);
-            }
+    public void insertScriptLine() {
+        try {
+            AlgorithmParameters algoParams = new DialogParameters();
+            algoParams.storeParamsFromGUI();
+            ScriptRecorder.getReference().addLine("GaussianBlur", algoParams.getParams());
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered recording GaussianBlur script line:\n" + pe);
         }
     }
 
@@ -389,63 +373,20 @@ public class JDialogGaussianBlur extends JDialogBase
     /**
      * Run this algorithm from a script.
      *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * @param  parameters  table of parameters for the script to use
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
+    public void scriptRun(ParameterTable parameters) {
         setScriptRunning(true);
 
-        String srcImageKey = null;
-        String destImageKey = null;
+        AlgorithmParameters algoParams = new DialogParameters(parameters);
+        algoParams.setGUIFromParams();
 
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        // TODO: is there a way to avoid instantiating these panels' GUI elements?
-        sigmaPanel = new JPanelSigmas(image);
-        colorChannelPanel = new JPanelColorChannels(image);
-        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
-
-        outputOptionsPanel.setOutputNewImage(!srcImageKey.equals(destImageKey));
-
-        try {
-            outputOptionsPanel.setProcessWholeImage(parser.getNextBoolean());
-            setSeparable(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            sigmaPanel.setSigmaX(parser.getNextFloat());
-            sigmaPanel.setSigmaY(parser.getNextFloat());
-            sigmaPanel.setSigmaZ(parser.getNextFloat());
-            sigmaPanel.enableResolutionCorrection(parser.getNextBoolean());
-            colorChannelPanel.setRedProcessingRequested(parser.getNextBoolean());
-            colorChannelPanel.setGreenProcessingRequested(parser.getNextBoolean());
-            colorChannelPanel.setBlueProcessingRequested(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
+        // setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
+
         callAlgorithm();
 
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+        algoParams.doPostAlgorithmActions();
     }
 
     /**
@@ -526,7 +467,7 @@ public class JDialogGaussianBlur extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -591,7 +532,7 @@ public class JDialogGaussianBlur extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -670,7 +611,7 @@ public class JDialogGaussianBlur extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -730,7 +671,7 @@ public class JDialogGaussianBlur extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurSepAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -802,7 +743,7 @@ public class JDialogGaussianBlur extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -862,7 +803,7 @@ public class JDialogGaussianBlur extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -936,7 +877,7 @@ public class JDialogGaussianBlur extends JDialogBase
                     // Hide dialog
                     setVisible(false);
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -995,7 +936,7 @@ public class JDialogGaussianBlur extends JDialogBase
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (runInSeparateThread) {
+                    if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
                         if (gaussianBlurAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -1061,7 +1002,6 @@ public class JDialogGaussianBlur extends JDialogBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-
         if (image25DCheckbox.isSelected()) {
             image25D = true;
         } else {
@@ -1077,4 +1017,66 @@ public class JDialogGaussianBlur extends JDialogBase
         return true;
     }
 
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * This class records parameters used in the algorithm's dialog.  It also sets up the dialog's GUI based on parameters parsed out while running it as part of a script.
+     */
+    private class DialogParameters extends AlgorithmParameters {
+
+        /**
+         * Creates a new DialogParameters object.  Called when recording the parameters for this algorithm.
+         */
+        public DialogParameters() {
+            super();
+        }
+
+        /**
+         * Creates a new DialogParameters object.  Called when setting up the dialog GUI when running a script.
+         *
+         * @param  parsedParams  The parsed table of parameters from the script being run.
+         */
+        public DialogParameters(ParameterTable parsedParams) {
+            super(parsedParams);
+        }
+
+        /**
+         * Perform any actions required after the running of the algorithm is complete.
+         */
+        public void doPostAlgorithmActions() {
+            if (outputOptionsPanel.isOutputNewImageSet()) {
+                storeImage(getResultImage());
+            }
+        }
+
+        /**
+         * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+         */
+        public void setGUIFromParams() {
+            image = retrieveInputImage();
+            userInterface = image.getUserInterface();
+            parentFrame = image.getParentFrame();
+
+            outputOptionsPanel.setOutputNewImage(params.getBoolean(DO_OUTPUT_NEW_IMAGE));
+            setSeparable(params.getBoolean(DO_PROCESS_SEPARABLE));
+            setImage25D(params.getBoolean(DO_PROCESS_3D_AS_25D));
+            super.setSigmasGUI(sigmaPanel);
+            super.setColorOptionsGUI(colorChannelPanel);
+        }
+
+        /**
+         * Store the parameters from the dialog to record the execution of this algorithm.
+         * 
+         * @throws  ParserException  If there is a problem creating one of the new parameters.
+         */
+        public void storeParamsFromGUI() throws ParserException {
+            storeInputImage(image);
+            storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
+
+            super.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
+            params.put(ParameterFactory.newBoolean(DO_PROCESS_SEPARABLE, separable));
+            super.storeSigmas(sigmaPanel);
+            super.storeColorOptions(colorChannelPanel);
+        }
+    }
 }

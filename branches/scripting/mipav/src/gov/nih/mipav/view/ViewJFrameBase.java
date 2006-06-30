@@ -795,8 +795,8 @@ public abstract class ViewJFrameBase extends JFrame
                 return false;
             }
 
-            axisA = imageA.getFileInfo()[0].getAxisOrientation();
-            axisB = imageB.getFileInfo()[0].getAxisOrientation();
+            axisA = imageA.getAxisOrientation();
+            axisB = imageB.getAxisOrientation();
 
             // If axis orientation information is available for each of the 3 axes of
             // image A and image B and the orientations are not identical, then reorder image B

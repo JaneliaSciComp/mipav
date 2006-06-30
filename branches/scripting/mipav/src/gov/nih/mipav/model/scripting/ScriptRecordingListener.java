@@ -12,7 +12,7 @@ public interface ScriptRecordingListener {
     
     /**
      * Alerts the listener to a change in whether the ScriptRecorder is currently recording a script.
-     * @param  isRecording  Whether a script is currently being recorded.
+     * @param  recorderStatus  The new status of the scriptRecorder (PAUSED, RECORDING, or STOPPED).
      */
-    void changeRecordingStatus(boolean isRecording);
+    void changeRecordingStatus(int recorderStatus);
 }

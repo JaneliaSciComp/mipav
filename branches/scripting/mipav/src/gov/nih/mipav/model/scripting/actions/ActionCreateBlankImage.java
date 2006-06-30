@@ -1,63 +1,64 @@
 package gov.nih.mipav.model.scripting.actions;
 
 
-import gov.nih.mipav.model.file.FileBase;
-import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewUserInterface;
 
 
 /**
- * TODO: comment
+ * A script action which creates a new blank image with a set of characteristics.
  */
 public class ActionCreateBlankImage implements ScriptableActionInterface {
-
+    /**
+     * The blank image whose creation should be recorded in the script.  The actual creation must be done elsewhere.
+     */
+    private ModelImage recordingBlankImage;
+    
+    /**
+     * Constructor for the dynamic instantiation and execution of the CreateBlankImage script action.
+     */
+    public ActionCreateBlankImage() {}
+    
+    /**
+     * Constructor used to record the CreateBlankImage script action line.
+     * @param input  The blank image which was created.
+     */
+    public ActionCreateBlankImage(ModelImage input) {
+        recordingBlankImage = input;
+    }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * {@inheritDoc}
      */
     public void insertScriptLine() {
+        ParameterTable parameters = new ParameterTable();
+        try {
+            ActionOpenImage.addRawOptionsToParameters(parameters, recordingBlankImage.getFileInfo(0));
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered creating parameters while recording CreateBlankImage script action:\n" + pe);
+            return;
+        }
         
+        ScriptRecorder.getReference().addLine("CreateBlankImage", parameters);
     }
 
     /**
      * {@inheritDoc}
      */
     public void scriptRun(ParameterTable parameters) {
-        /*tokens.nextToken(); // get rid of the word "attributes:" so tokenizer is in the right place.
-        UI.createBlankImage(getRawFileInfo(false));
-        
-        /// getRawFileInfo()
-        getNextString(); // "Attributes"
-
-        if (multiFile) {
-            fileInfo = new FileInfoImageXML((String) fileNames.elementAt(currFileIndex),
-                                            (String) fileDirs.elementAt(currFileIndex), FileBase.RAW_MULTIFILE);
-        } else {
-            fileInfo = new FileInfoImageXML((String) fileNames.elementAt(currFileIndex),
-                                            (String) fileDirs.elementAt(currFileIndex), FileBase.RAW);
-        }
-
-        fileInfo.setDataType(getNextInteger());
-        fileInfo.setEndianess(getNextBoolean());
-        fileInfo.setOffset(getNextInteger());
-
-        int length = getNextInteger();
-        int[] extents = new int[length];
-        float[] res = new float[length];
-        int[] measure = new int[length];
-
-        for (int i = 0; i < length; i++) {
-            extents[i] = getNextInteger();
-            res[i] = getNextFloat();
-            measure[i] = getNextInteger();
-        }
-
-        fileInfo.setExtents(extents);
-        fileInfo.setUnitsOfMeasure(measure);
-        fileInfo.setResolutions(res);
-
-        return fileInfo;*/
+        ViewUserInterface.getReference().createBlankImage(ActionOpenImage.getRawFileInfo(parameters, false));
+    }
+    
+    /**
+     * Changes the blank image whose creation should be recorded in the script.
+     * @param blankImage  The image which was created.
+     */
+    public void setBlankImage(ModelImage blankImage) {
+        recordingBlankImage = blankImage;
     }
 }

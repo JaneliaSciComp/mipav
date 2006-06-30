@@ -75,8 +75,8 @@ public class ActionChangeName implements ScriptableActionInterface {
         String newImageName = parameters.getString(IMAGE_NAME_LABEL);
         
         inputImage.updateFileName(newImageName);
-        VariableTable.getReference().removeVariable(inputImagePlaceholder);
-        VariableTable.getReference().storeVariable(inputImagePlaceholder, newImageName);
+        ScriptRunner.getReference().getImageTable().removeImageVariable(inputImagePlaceholder);
+        ScriptRunner.getReference().getImageTable().storeImageVariable(inputImagePlaceholder, newImageName);
     }
     
     /**

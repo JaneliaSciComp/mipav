@@ -3,6 +3,8 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.xcede.*;
 
@@ -3189,22 +3191,13 @@ public class FileIO {
                 return;
         }
 
-        if (UI.isScriptRecording()) {
-
-            if (options.isSaveAs()) {
-                UI.getScriptDialog().append("SaveImageAs " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
-                                            getSuffix(fileType) + " ");
-
-                if (!options.isDefault()) {
-                    recordOptions(options, image.getExtents());
-                }
-
-                UI.getScriptDialog().append("\n");
-            } else {
-                UI.getScriptDialog().append("SaveImage " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
-                                            getSuffix(fileType) + "\n");
-            }
+        ScriptableActionInterface action;
+        if (options.isSaveAs()) {
+            action = new ActionSaveImageAs(image, options);
+        } else {
+            action = new ActionSaveImage(image, options);
         }
+        ScriptRecorder.getReference().addLine(action);
     }
 
 
@@ -6785,22 +6778,9 @@ public class FileIO {
             return null;
         }
 
-        if (UI.isScriptRecording()) {
-            UI.getScriptDialog().putVar(image.getImageName());
-            UI.getScriptDialog().append("OpenImage " + UI.getScriptDialog().getVar(image.getImageName()));
-            UI.getScriptDialog().append("\tAttributes " + fileInfo.getDataType() + " " + fileInfo.getEndianess() + " " +
-                                        fileInfo.getOffset() + " " + fileInfo.getExtents().length + " ");
-
-            for (i = 0; i < fileInfo.getExtents().length; i++) {
-                UI.getScriptDialog().append(fileInfo.getExtents()[i] + " " + fileInfo.getResolutions()[i] + " " +
-                                            fileInfo.getUnitsOfMeasure()[i] + " ");
-            }
-
-            UI.getScriptDialog().append("\n");
-        }
+        ScriptRecorder.getReference().addLine(new ActionOpenImage(image, false));
 
         return image;
-
     }
 
     /**
@@ -6840,10 +6820,6 @@ public class FileIO {
             fileInfo.setEndianess(rawIODialog.getEndianess());
             fileInfo.setOffset(rawIODialog.getOffset());
         }
-
-
-
-
 
         i = 0;
 
@@ -6974,19 +6950,7 @@ public class FileIO {
 
         progressBar.dispose();
 
-        if (UI.isScriptRecording()) {
-            UI.getScriptDialog().putVar(image.getImageName());
-            UI.getScriptDialog().append("OpenMultiFile " + UI.getScriptDialog().getVar(image.getImageName()));
-            UI.getScriptDialog().append("\tAttributes " + fileInfo.getDataType() + " " + fileInfo.getEndianess() + " " +
-                                        fileInfo.getOffset() + " " + fileInfo.getExtents().length + " ");
-
-            for (i = 0; i < fileInfo.getExtents().length; i++) {
-                UI.getScriptDialog().append(fileInfo.getExtents()[i] + " " + fileInfo.getResolutions()[i] + " " +
-                                            fileInfo.getUnitsOfMeasure()[i] + " ");
-            }
-
-            UI.getScriptDialog().append("\n");
-        }
+        ScriptRecorder.getReference().addLine(new ActionOpenImage(image, true));
 
         return image;
 
@@ -7785,41 +7749,6 @@ public class FileIO {
 
         return image;
 
-    }
-
-    /**
-     * Records the necessary options for a file save.
-     *
-     * @param  options  Structure holding the options used to write the image.
-     * @param  extents  Extents of the image, necessary to determine what to record.
-     */
-    private void recordOptions(FileWriteOptions options, int[] extents) {
-        int nDims = extents.length;
-
-        if ((options.getFileType() == FileBase.TIFF) && options.isPackBitEnabled()) {
-            UI.getScriptDialog().append("" + options.isWritePackBit() + " ");
-        }
-
-        if (nDims == 3) {
-            UI.getScriptDialog().append(options.getBeginSlice() + " " + options.getEndSlice() + " ");
-
-            if ((options.getFileType() == FileBase.TIFF) && options.isMultiFile()) {
-                UI.getScriptDialog().append(options.getStartNumber() + " " + options.getDigitNumber() + " ");
-            }
-        } else if (nDims == 4) {
-
-            if ((options.getFileType() == FileBase.TIFF) || (options.getFileType() == FileBase.MINC)) {
-                UI.getScriptDialog().append(options.getBeginSlice() + " " + options.getEndSlice() + " " +
-                                            options.getTimeSlice() + " ");
-
-                if (options.isMultiFile()) {
-                    UI.getScriptDialog().append(options.getStartNumber() + " " + options.getDigitNumber() + " ");
-                }
-            } else {
-                UI.getScriptDialog().append(options.getBeginSlice() + " " + options.getEndSlice() + " " +
-                                            options.getBeginTime() + " " + options.getEndTime());
-            }
-        }
     }
 
     /**

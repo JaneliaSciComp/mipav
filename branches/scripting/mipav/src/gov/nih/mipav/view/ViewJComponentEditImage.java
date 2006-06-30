@@ -133,26 +133,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** used when graphing a VOI. */
     //protected float[] graphImgBuff;
 
-    /** color of grid. */
-    protected Color gridColor = Color.lightGray;
 
-    /** Flag to indicate if NEI grid overlay should be displayed. */
-    protected boolean gridOverlayOn = false;
-
-    /** spacing of the grid (horizontal) in terms of resolution. */
-    protected float gridSpacingX = 20f;
-
-    /** spacing of the grid (vertical) in terms of resolution. */
-    protected float gridSpacingY = 20f;
-
-    /** if number/lettering should be displayed for grid boxes */
-    protected boolean gridLabelingOn = false;
-
-    /** boolean to determine the orientation:
-     * true is x-axis numbered
-     * false is x-axis lettered
-     */
-    protected boolean gridLabelOrientation = true;
 
 
     /** true if image is known to be in patient orientation and is displayed in ViewJFrameTriImage. */
@@ -284,8 +265,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     protected int lastMouseY = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
 
-    /** Flag to indicate if DICOM overlay should be displayed. */
-    protected boolean overlayOn = false;
+
 
     /** DOCUMENT ME! */
     protected BitSet paintBitmap;
@@ -512,11 +492,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         lutBufferRemapped = new int[1];
 
-        if (imageA.isDicomImage()) {
-            setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
-        } else {
-            setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
-        }
+
 
         showSliceNumber = (imageA.getNDims() > 2) && !(this instanceof ViewJComponentTriImage);
 
@@ -585,6 +561,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         voiHandler = new VOIHandler(this);
 
+        if (imageA.isDicomImage()) {
+           voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
+       } else {
+           voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
+       }
+
+
         if ( ! (this instanceof ViewJComponentTriImage)) {
             addMouseListener(voiHandler);
             addMouseMotionListener(voiHandler);
@@ -603,8 +586,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if ((orientation == NA) || (orientation == AXIAL)) {
-            res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -614,8 +597,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
             maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
         } else if (orientation == CORONAL) {
-            res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -625,8 +608,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
             maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
         } else { // orientation == ZY
-            res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
+            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
+            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
 
             if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
                 res[0] = 1.0f;
@@ -934,7 +917,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maskAlgo.setRunningInSeparateThread(false);
             maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
-        
+
         if (imageACopy != null) {
             if (imageACopy.getType() != ModelStorageBase.SHORT) {
                 try {
@@ -948,11 +931,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageACopy.getNDims() >= 3) {
                         length = length * imageACopy.getExtents()[2];
                     }
-    
+
                     if (imageACopy.getNDims() == 4) {
                         length = length * imageACopy.getExtents()[3];
                     }
-    
+
                     buffer = new double[length];
                     if ((imageACopy.getType() == ModelStorageBase.COMPLEX) ||
                             (imageACopy.getType() == ModelStorageBase.DCOMPLEX)) {
@@ -967,7 +950,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                    }
                     else if (imageA.isColorImage()) {
                         imageACopy.exportData(0, length, buffer); // locks and releases lock
-                        imageACopy.reallocate(ModelStorageBase.SHORT);  
+                        imageACopy.reallocate(ModelStorageBase.SHORT);
                         lengthShort = length/4;
                         bufferShort = new short[lengthShort];
                         red = (byte) Math.round(fillColor.getRed());
@@ -1018,11 +1001,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     if (imageBCopy.getNDims() >= 3) {
                         length = length * imageBCopy.getExtents()[2];
                     }
-    
+
                     if (imageBCopy.getNDims() == 4) {
                         length = length * imageBCopy.getExtents()[3];
                     }
-    
+
                     buffer = new double[length];
                     if ((imageBCopy.getType() == ModelStorageBase.COMPLEX) ||
                             (imageBCopy.getType() == ModelStorageBase.DCOMPLEX)) {
@@ -1033,7 +1016,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     }
                     else if (imageB.isColorImage()) {
                         imageBCopy.exportData(0, length, buffer); // locks and releases lock
-                        imageBCopy.reallocate(ModelStorageBase.SHORT);  
+                        imageBCopy.reallocate(ModelStorageBase.SHORT);
                         lengthShort = length/4;
                         bufferShort = new short[lengthShort];
                         red = (byte) Math.round(fillColor.getRed());
@@ -1285,42 +1268,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         return frame;
     }
 
-    /**
-     * get the color of the grid.
-     *
-     * @return  Color grid color
-     */
 
-    public Color getGridColor() {
-        return this.gridColor;
-    }
-
-    /**
-     * returns whether grid overlay is being displayed.
-     *
-     * @return  boolean is grid overlay on?
-     */
-    public boolean getGridOverlay() {
-        return gridOverlayOn;
-    }
-
-    /**
-     * returns the grid spacing in terms of resolution.
-     *
-     * @return  float grid spacing
-     */
-    public float getGridSpacingX() {
-        return gridSpacingX;
-    }
-
-    /**
-     * returns the grid spacing in terms of resolution.
-     *
-     * @return  float grid spacing
-     */
-    public float getGridSpacingY() {
-        return gridSpacingY;
-    }
 
     /**
      * Returns the imageA.
@@ -2105,8 +2053,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     } // else if (winLevelSet && ((xS != oldXS) || (yS != oldYS)))
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
             } // if (mode == DEFAULT))
-            if (imageActive.getFileInfo(0).getOrigin()[0] != 0 || imageActive.getFileInfo(0).getOrigin()[1] != 0
-                || imageActive.getFileInfo(0).getOrigin()[2] != 0) {
+            if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
+                || imageActive.getOrigin()[2] != 0) {
 
                 fileInfo = imageActive.getFileInfo()[slice];
                 String[] values = setScannerPosition(fileInfo, xS, yS, slice);
@@ -2250,7 +2198,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             || mode == POLYLINE || mode == LEVELSET || mode == PAINT_VOI || mode == DROPPER_PAINT
             || mode == ERASER_PAINT || mode == QUICK_LUT || mode == PROTRACTOR || mode == LIVEWIRE
             || mode == ANNOTATION || mode == POLYLINE_SLICE_VOI || mode == MOVE || mode == MOVE_POINT || mode == NEW_POINT
-            || mode == RETRACE) {
+            || mode == RETRACE || mode == DELETE_POINT) {
             g.dispose();
             return;
         }
@@ -3101,7 +3049,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
             }
 
-            voiHandler.drawVOIs(offscreenGraphics2d, overlayOn, gridOverlayOn); // draw all VOI regions
+            voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
 
             drawImageText(offscreenGraphics2d); // draw image text, i.e. slice number
 
@@ -3192,7 +3140,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             //g.drawPolygon(zoomPolygon(rbLevelSet.getLevelSetPolygon(), getZoomX(), getZoomY()));
         }
 
-        if (overlayOn) {
+        if (voiHandler.getOverlayOn()) {
             voiHandler.showOverlay(g);
         }
     }
@@ -5013,70 +4961,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
 
 
-    /**
-     * set the color of the grid.
-     *
-     * @param  color  Color
-     */
-    public void setGridColor(Color color) {
-        this.gridColor = color;
-    }
 
-    /**
-     * Tells the grid overlay (if on) to show abc/123 labeling
-     * @param doLabel boolean
-     */
-    public void setGridLabelingOn(boolean doLabel) {
-        this.gridLabelingOn = doLabel;
-    }
-
-    /**
-     * Whether or not labels should be drawn on the grid overlay
-     * @return boolean
-     */
-    public boolean getGridLabeling() {
-        return gridLabelingOn;
-    }
-
-    /**
-     * Sets the axis orientation of abc and 123 labeling of the grid overlay
-     * @param or boolean true = x-axis numbered, false = x-axis lettered
-     */
-    public void setGridLabelOrientation(boolean or) {
-        this.gridLabelOrientation = or;
-    }
-
-    public boolean getGridLabelOrientation() {
-        return gridLabelOrientation;
-    }
-
-
-    /**
-     * Sets whether or not to show the NEI grid overlay.
-     *
-     * @param  flag  boolean show grid overlay (or not!)
-     */
-    public void setGridOverlay(boolean flag) {
-        gridOverlayOn = flag;
-    }
-
-    /**
-     * sets the grid spacing (horizontal) in terms of resolution.
-     *
-     * @param  spacing  float new grid spacing
-     */
-    public void setGridSpacingX(float spacing) {
-        this.gridSpacingX = spacing;
-    }
-
-    /**
-     * sets the grid spacing (horizontal) in terms of resolution.
-     *
-     * @param  spacing  float new grid spacing
-     */
-    public void setGridSpacingY(float spacing) {
-        this.gridSpacingY = spacing;
-    }
 
     /**
      * Sets the RegionGrowDialog for this class (usually used to set it to null).
@@ -5363,14 +5248,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         orientation = _orientation;
     }
 
-    /**
-     * Sets whether or not to show the overlay.
-     *
-     * @param  flag  boolean that tells whether or not to show the overlay
-     */
-    public void setOverlay(boolean flag) {
-        overlayOn = flag;
-    }
+
 
     /**
      * If true do not getMask on a setActiveImage command so as to keep the mask from the old active image.
@@ -6053,7 +5931,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             FileInfoBase[] fileInfo = imageActive.getFileInfo();
 
             if (imageActive.getNDims() == 2) {
-                area = count * fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1];
+                area = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1];
                 str = imageActive.getFileInfo(0).getAreaUnitsOfMeasureStr();
 
                 if (leadString != null) {
@@ -6065,8 +5943,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
             } else {
-                volume = count * fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1] *
-                             fileInfo[0].getResolutions()[2];
+                volume = count * imageActive.getResolutions(0)[0] * imageActive.getResolutions(0)[1] * imageActive.getResolutions(0)[2];
 
                 str = imageActive.getFileInfo(0).getVolumeUnitsOfMeasureStr();
 
@@ -6708,141 +6585,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         // imageActive.notifyImageDisplayListeners();
     }
 
-
-
-    /**
-<<<<<<< .mine
-=======
-     * Displays Image overlays (DICOM or image attributes).
-     *
-     * @param  g  Graphics object used to paint and display the strings.
-     */
-    protected void showOverlay(Graphics g) {
-
-        String[] overlays = new String[16];
-        String[] overlayNames = new String[16];
-
-        if (imageActive.getFileInfo(0) instanceof FileInfoDicom) {
-            FileInfoDicom fileInfo;
-
-            if (slice >= 0) {
-                fileInfo = (FileInfoDicom) (imageActive.getFileInfo())[slice];
-            } else {
-                fileInfo = (FileInfoDicom) (imageActive.getFileInfo())[0];
-            }
-
-            String[] dicomKeys = Preferences.getOverlays(true);
-            overlayNames = Preferences.getOverlayNames(true);
-
-            for (int i = 0; i < 16; i++) {
-
-                if ((dicomKeys[i] != null) && !dicomKeys[i].equals("-")) {
-                    overlays[i] = buildOverlayStrings(fileInfo, overlayNames[i], dicomKeys[i]);
-                }
-            }
-
-            Insets insets = frame.getInsets();
-            int rightOffset = getBounds().width - insets.left;
-            int bottomOffset = getBounds().height - insets.bottom - 15;
-
-            int len;
-
-            for (int i = 0; i < 16; i++) {
-
-                if (overlays[i] != null) {
-                    len = g.getFontMetrics(g.getFont()).stringWidth(overlays[i]);
-
-                    if (i < 4) {
-                        drawStringBW(overlays[i], g, 5, (15 * (i + 1)));
-                    } else if ((i > 3) && (i < 8)) {
-                        drawStringBW(overlays[i], g, rightOffset - len, (15 * ((i % 4) + 1)));
-                    } else if ((i > 7) && (i < 12)) {
-                        drawStringBW(overlays[i], g, 5, bottomOffset - 45 + (i % 4 * 15));
-                    } else if (i > 11) {
-                        drawStringBW(overlays[i], g, rightOffset - len, bottomOffset - 45 + (i % 4 * 15));
-                    }
-                }
-            }
-
-            drawGradicules(g, fileInfo.getResolutions()[0], fileInfo.getResolutions()[1]);
-
-            // At the momment we are using the reconDimension - why not use
-            // ~reconDim = imageActive.getExtents()[0]*imageActive.getResolutions()[0]; ??
-            float reconDiameter;
-
-            try {
-                reconDiameter = Float.valueOf((String) (fileInfo.getTag("0018,1100").getValue(true))).floatValue();
-            } catch (Exception ex) {
-                reconDiameter = imageActive.getExtents()[0] * fileInfo.getResolutions()[0];
-            }
-
-            String[] values = setOverlayValues(imageActive.getImageOrientation(), MipavMath.round(fileInfo.xLocation),
-                                               MipavMath.round(fileInfo.yLocation), MipavMath.round(fileInfo.zLocation),
-                                               MipavMath.round(reconDiameter));
-
-            int index = values[0].length() / 2;
-
-            for (int i = 0; i < values[0].length(); i++) {
-                drawStringBW(String.valueOf(values[0].charAt(i)), g, 5, (getHeight() / 2) - ((index - i) * 15));
-            }
-
-            index = values[1].length() / 2;
-
-            for (int i = 0; i < values[1].length(); i++) {
-                drawStringBW(String.valueOf(values[1].charAt(i)), g, rightOffset - 10,
-                             (getHeight() / 2) - ((index - i) * 15));
-            }
-
-            len = g.getFontMetrics(g.getFont()).stringWidth(values[2]);
-            drawStringBW(values[2], g, (getWidth() / 2) - (len / 2), 15);
-            len = g.getFontMetrics(g.getFont()).stringWidth(values[3]);
-            drawStringBW(values[3], g, (getWidth() / 2) - (len / 2), bottomOffset);
-            drawStringBW(values[4], g, 5, 75);
-        } else {
-            FileInfoBase fileInfo;
-
-            if (slice >= 0) {
-                fileInfo = imageActive.getFileInfo()[slice];
-            } else {
-                fileInfo = imageActive.getFileInfo()[0];
-            }
-
-            String[] attribs = Preferences.getOverlays(false);
-
-            overlayNames = Preferences.getOverlayNames(false);
-
-            for (int i = 0; i < 16; i++) {
-
-                if ((attribs[i] != null) && !attribs[i].equals("-")) {
-                    overlays[i] = buildOverlayStrings(fileInfo, overlayNames[i], attribs[i]);
-                }
-            }
-
-            Insets insets = frame.getInsets();
-            int rightOffset = getBounds().width - insets.left;
-            int bottomOffset = getBounds().height - insets.bottom - 15;
-
-            int len;
-
-            for (int i = 0; i < 16; i++) {
-
-                if (overlays[i] != null) {
-                    len = g.getFontMetrics(g.getFont()).stringWidth(overlays[i]);
-
-                    if (i < 4) {
-                        drawStringBW(overlays[i], g, 5, (15 * (i + 1)));
-                    } else if ((i > 3) && (i < 8)) {
-                        drawStringBW(overlays[i], g, rightOffset - len, (15 * ((i % 4) + 1)));
-                    } else if ((i > 7) && (i < 12)) {
-                        drawStringBW(overlays[i], g, 5, bottomOffset - 45 + (i % 4 * 15));
-                    } else if (i > 11) {
-                        drawStringBW(overlays[i], g, rightOffset - len, bottomOffset - 45 + (i % 4 * 15));
-                    }
-                }
-            }
-        }
-    }
-
     /**
      * Update the voi color.
      *
@@ -6930,152 +6672,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-    /**
-     * Builds the overlay Strings from the tag's value. Concatenates the output strings from the tags and ensures that
-     * any properly read-in string has usable (if empty) values.
-     *
-     * @param    inf       The FileInfo with DICOM tags to display.
-     * @param    name      DOCUMENT ME!
-     * @param    dicomKey  Key of tag to display.
-     *
-     * @return  null when value is not a String or when the tag does not exist.
-     */
-    private String buildOverlayStrings(FileInfoDicom inf, String name, String dicomKey) {
 
-        try {
-
-            if ((dicomKey == null) || (dicomKey == "")) {
-                return null;
-            }
-
-            Object val = inf.getTag(dicomKey).getValue(true);
-
-            if (val == null) {
-                return null;
-            } else if ((name != null) && !(name.trim().equals(""))) {
-                return (name + " - " + val);
-            } else {
-                return val.toString();
-            }
-        } catch (IllegalArgumentException ex) {
-            Preferences.debug("Illegal arg on: " + dicomKey);
-
-            return null;
-        } catch (ClassCastException notStr) {
-            Preferences.debug("Creating strings for DICOM overlay for " + dicomKey +
-                              " but encountered a ClassCastException.\n", 4);
-
-            return null;
-        } catch (NullPointerException noTag) {
-            Preferences.debug("Creating strings for DICOM overlay for " + dicomKey +
-                              " but encountered a NullPointerException.\n", 4);
-
-            return null;
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param   inf           FileInfoBase
-     * @param   name          String
-     * @param   attribString  String
-     *
-     * @return  String
-     */
-    public String buildOverlayStrings(FileInfoBase inf, String name, String attribString) {
-
-        if (attribString == null) {
-            return null;
-        }
-
-        String resultStr = new String();
-
-        if ((name != null) && (name != "")) {
-            resultStr = name + " - ";
-        }
-
-        String[] atts = JDialogOverlay.attribStr;
-
-        if (attribString.equals(atts[0])) {
-            return resultStr + Integer.toString(inf.getExtents()[0]);
-        } else if (attribString.equals(atts[1])) {
-            return resultStr + Integer.toString(inf.getExtents()[1]);
-        } else if (attribString.equals(atts[2])) {
-
-            if (inf.getExtents().length > 2) {
-                return resultStr + Integer.toString(inf.getExtents()[2]);
-            }
-        } else if (attribString.equals(atts[3])) {
-
-            if (inf.getExtents().length > 3) {
-                return resultStr + Integer.toString(inf.getExtents()[3]);
-            }
-        } else if (attribString.equals(atts[4])) {
-            return resultStr + imageActive.getTypeString();
-        } else if (attribString.equals(atts[5])) {
-            return resultStr + Double.toString(imageActive.getMin());
-        } else if (attribString.equals(atts[6])) {
-            return resultStr + Double.toString(imageActive.getMax());
-        } else if (attribString.equals(atts[7])) {
-            return resultStr + inf.getImageOrientationStr(inf.getImageOrientation());
-        } else if (attribString.equals(atts[8])) {
-            return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(0));
-        } else if (attribString.equals(atts[9])) {
-            return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(1));
-        } else if (attribString.equals(atts[10])) {
-
-            if (inf.getExtents().length > 2) {
-                return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(2));
-            }
-        } else if (attribString.equals(atts[11])) {
-            return new String(resultStr + inf.getResolutions()[0] + " " +
-                              inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[0]));
-        } else if (attribString.equals(atts[12])) {
-            return new String(resultStr + inf.getResolutions()[1] + " " +
-                              inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[1]));
-        } else if (attribString.equals(atts[13])) {
-
-            if (inf.getExtents().length > 2) {
-                return new String(resultStr + inf.getResolutions()[2] + " " +
-                                  inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[2]));
-            }
-        } else if (attribString.equals(atts[14])) {
-
-            if (inf.getExtents().length > 3) {
-                return new String(resultStr + inf.getResolutions()[3] + " " +
-                                  inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[3]));
-            }
-        } else if (attribString.equals(atts[15])) {
-            return resultStr + Float.toString(inf.getSliceSpacing());
-        } else if (attribString.equals(atts[16])) {
-            return resultStr + Float.toString(inf.getOrigin()[0]);
-        } else if (attribString.equals(atts[17])) {
-            return resultStr + Float.toString(inf.getOrigin()[1]);
-        } else if (attribString.equals(atts[18])) {
-
-            if (inf.getExtents().length > 2) {
-                return resultStr + Float.toString(inf.getOrigin()[2]);
-            }
-        } else if (attribString.equals(atts[19])) {
-
-            if (inf.getExtents().length > 3) {
-                return resultStr + Float.toString(inf.getOrigin()[3]);
-            }
-        } else if (attribString.equals(atts[20])) {
-
-            if (inf.getEndianess()) {
-                return resultStr + "big endian";
-            } else {
-                return resultStr + "little endian";
-            }
-        } else if (attribString.equals(atts[21])) {
-            return resultStr + inf.getTransformIDStr(inf.getTransformID());
-        }
-
-        return null;
-
-    }
 
     /**
      * DOCUMENT ME!

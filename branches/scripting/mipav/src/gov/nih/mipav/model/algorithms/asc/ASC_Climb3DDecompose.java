@@ -210,9 +210,9 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
             maxDim = m_iZBound;
         }
 
-        fXRes = image.getFileInfo()[0].getResolutions()[0];
-        fYRes = image.getFileInfo()[0].getResolutions()[1];
-        fZRes = image.getFileInfo()[0].getResolutions()[2];
+        fXRes = image.getResolutions(0)[0];
+        fYRes = image.getResolutions(0)[1];
+        fZRes = image.getResolutions(0)[2];
 
         box = new float[3];
         box[0] = (m_iXBound - 1) * fXRes;
@@ -328,9 +328,9 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
             return;
         }
 
-        fXRes = maskImage.getFileInfo()[0].getResolutions()[0];
-        fYRes = maskImage.getFileInfo()[0].getResolutions()[1];
-        fZRes = maskImage.getFileInfo()[0].getResolutions()[2];
+        fXRes = maskImage.getResolutions(0)[0];
+        fYRes = maskImage.getResolutions(0)[1];
+        fZRes = maskImage.getResolutions(0)[2];
 
         // Make storage string
         if (surfaceFileName.endsWith(".sur") == false) {
@@ -717,7 +717,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
 
                     maskImage = new ModelImage(ModelImage.FLOAT, destExtents, "Surface image",
                                                srcImage.getUserInterface());
-                    maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+                    maskImage.setResolutions(0, srcImage.getResolutions(0));
                     maskImage.importData(0, tempImage, true);
 
                     System.gc();
@@ -725,7 +725,7 @@ public class ASC_Climb3DDecompose extends AlgorithmBase {
                     maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image",
                                                srcImage.getUserInterface());
 
-                    maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+                    maskImage.setResolutions(0, srcImage.getResolutions(0));
 
                     int length = destExtents[0] * destExtents[1] * destExtents[2];
                     // BitSet mask = image.getMask(); // painted regions

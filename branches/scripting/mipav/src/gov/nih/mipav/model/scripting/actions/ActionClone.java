@@ -60,7 +60,7 @@ public class ActionClone implements ScriptableActionInterface {
     public void scriptRun(ParameterTable parameters) {
         ModelImage inputImage = parameters.getImage(INPUT_IMAGE_LABEL);
         ModelImage clonedImage = (ModelImage) inputImage.clone();
-        VariableTable.getReference().storeImageName(clonedImage.getImageName());
+        ScriptRunner.getReference().getImageTable().storeImageName(clonedImage.getImageName());
         new ViewJFrameImage(clonedImage);
     }
     

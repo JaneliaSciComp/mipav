@@ -160,8 +160,7 @@ public class Parser {
      */
     private static boolean isOpenImageAction(String action) {
 
-        if (action.equalsIgnoreCase("OpenImage") || action.equalsIgnoreCase("OpenMultiFile") ||
-                action.equalsIgnoreCase("LoadImage")) {
+        if (action.equalsIgnoreCase("OpenImage")) {
             return true;
         }
 

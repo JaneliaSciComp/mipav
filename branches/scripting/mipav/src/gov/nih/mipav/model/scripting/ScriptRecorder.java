@@ -20,17 +20,29 @@ public class ScriptRecorder {
 
     /** The reference to the only occurrance of this class. */
     protected static ScriptRecorder singletonReference = null;
+    
+    /** Status indicating that the script recorder is currently paused. */
+    public static final int PAUSED = 2;
+    
+    /** Status indicating that the script recorder is currently recording. */
+    public static final int RECORDING = 1;
+    
+    /** Status indicating that the script recorder is currently stopped (either never started, or recording is over). */
+    public static final int STOPPED = 0;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The contents of the current script being recorded. */
     protected String script;
     
-    /** Whether we are currently recording a script. */
-    protected boolean isRecording;
+    /** The current status of the recorder, either PAUSED, RECORDING, or STOPPED. */
+    protected int recorderStatus;
     
     /** A list of listeners who want to know about lines added to the script. */
     protected Vector recordingListeners = new Vector();
+    
+    /** The table containing image-placeholder-to-image-name mappings for the script we are currently recording. */
+    protected ImageVariableTable imageTable;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -39,7 +51,8 @@ public class ScriptRecorder {
      */
     protected ScriptRecorder() {
         script = new String();
-        isRecording = false;
+        imageTable = new ImageVariableTable();
+        recorderStatus = STOPPED;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -63,7 +76,7 @@ public class ScriptRecorder {
      * @param  scriptAction  The script action to add to the current script we are recording.
      */
     public synchronized void addLine(ScriptableActionInterface scriptAction) {
-        if (isRecording()) {
+        if (getRecorderStatus() == RECORDING) {
             scriptAction.insertScriptLine();
         }
     }
@@ -74,8 +87,7 @@ public class ScriptRecorder {
      * @param  line  A line of text to be added to the script (should not include an end-line character).
      */
     public synchronized void addLine(String line) {
-
-        if (isRecording()) {
+        if (getRecorderStatus() == RECORDING) {
             script += line.trim() + LINE_SEPARATOR;
             notifyListenersOfScriptChange();
         }
@@ -88,8 +100,7 @@ public class ScriptRecorder {
      * @param  parameterList  The list of parameters to include in the new script line.
      */
     public synchronized void addLine(String action, ParameterTable parameterList) {
-
-        if (isRecording()) {
+        if (getRecorderStatus() == RECORDING) {
             script += action + "(" + parameterList + ")" + LINE_SEPARATOR;
             
             notifyListenersOfScriptChange();
@@ -99,8 +110,9 @@ public class ScriptRecorder {
     /**
      * Erases the current script.
      */
-    public synchronized void clearScript() {
+    public synchronized void resetScript() {
         script = new String();
+        imageTable = new ImageVariableTable();
         
         notifyListenersOfScriptChange();
     }
@@ -113,22 +125,23 @@ public class ScriptRecorder {
     public synchronized String getScript() {
         return script;
     }
-
-    /**
-     * Checks to see if a script is being recorded right now.
-     *
-     * @return  <code>True</code> if a script is being recorded right now, <code>false</code> otherwise.
-     */
-    public synchronized boolean isRecording() {
-        return isRecording;
-    }
     
     /**
-     * Changes whether the script recorder is currently recording.  Also notifies any ScriptRecorderListeners of the change.
-     * @param  recording  Whether we are currently recording a script.
+     * Returns the current status of the script recorder.
+     * 
+     * @return  Either PAUSED, RECORDING, or STOPPED.
      */
-    protected synchronized void setRecording(boolean recording) {
-        isRecording = recording;
+    public synchronized int getRecorderStatus() {
+        return recorderStatus;
+    }
+
+    /**
+     * Changes the current status of the script recorder and notifies any recorder listeners of the change.
+     * 
+     * @param  status  The new status for the script recorder.
+     */
+    protected synchronized void setRecorderStatus(int status) {
+        recorderStatus = status;
         
         notifyListenersOfScriptStatus();
     }
@@ -144,13 +157,18 @@ public class ScriptRecorder {
     }
     
     /**
-     * Starts the recording of a new script (if one isn't already being recorded).  Any script text which was previously recorded and stored in the recorder is erased.
+     * Starts the recording of a new script (if one isn't already being recorded).  Any script text which was 
+     * previously recorded and stored in the recorder is erased (unless we are resuming from a recorder pause).
+     * 
      * @return  <code>True</code> if recording was started successfully, <code>false</code> otherwise.
      */
     public synchronized boolean startRecording() {
-        if (!isRecording()) {
-            clearScript();
-            setRecording(true);
+        if (getRecorderStatus() == STOPPED) {
+            resetScript();
+            setRecorderStatus(RECORDING);
+            return true;
+        } else if (getRecorderStatus() == PAUSED) {
+            setRecorderStatus(RECORDING);
             return true;
         } else {
             MipavUtil.displayError("Script recording startup failed.  Cannot record two scripts at the same time.");
@@ -159,11 +177,23 @@ public class ScriptRecorder {
     }
     
     /**
-     * Pauses or stops script recording.  Call <code>getScript()</code> to get the recorded script.
+     * Pauses the recording of the script we are currently recording.
+     */
+    public synchronized void pauseRecording() {
+        if (getRecorderStatus() == RECORDING) {
+            setRecorderStatus(PAUSED);
+        } else {
+            MipavUtil.displayError("Cannot pause script recording.  Recording is either already paused or is stopped.");
+            return;
+        }
+    }
+    
+    /**
+     * Stops script recording.  Call <code>getScript()</code> to get the recorded script.
      */
     public synchronized void stopRecording() {
-        if (isRecording()) {
-            setRecording(false);
+        if (getRecorderStatus() != STOPPED) {
+            setRecorderStatus(STOPPED);
         } else {
             MipavUtil.displayError("Cannot stop script recording.  No recording is currently taking place.");
             return;
@@ -200,7 +230,7 @@ public class ScriptRecorder {
      */
     protected synchronized void notifyListenersOfScriptStatus() {
         for (int i = 0; i < recordingListeners.size(); i++) {
-            ((ScriptRecordingListener)recordingListeners.elementAt(i)).changeRecordingStatus(isRecording());
+            ((ScriptRecordingListener)recordingListeners.elementAt(i)).changeRecordingStatus(getRecorderStatus());
         }
     }
 }

@@ -3091,9 +3091,9 @@ public class ModelImage extends ModelStorageBase {
         String oldName = getImageName();
         setImageName(newImageName);
 
-        VariableTable varTable = VariableTable.getReference();
+        ImageVariableTable varTable = ScriptRunner.getReference().getImageTable();
         if (varTable.containsValue(oldName)) {
-            varTable.changeVariableValue(oldName, newImageName);
+            varTable.changeImageName(oldName, newImageName);
         } else {
             varTable.storeImageName(newImageName);
         }

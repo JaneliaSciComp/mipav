@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  * @author  mccreedy
  */
 public class JDialogFaceAnonymizerBET extends JDialogBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ScriptableInterface {
+        implements AlgorithmInterface, DialogDefaultsInterface, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -180,7 +182,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         }
 
         if ((algorithm instanceof AlgorithmFaceAnonymizerBET) && algorithm.isCompleted()) {
-            insertScriptLine(algorithm);
+            insertScriptLine();
             srcImage.calcMinMax();
             srcImage.notifyImageDisplayListeners(null, true);
             defaceAlgo.finalize();
@@ -203,7 +205,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (defaceAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -250,28 +252,14 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
 
     /**
      * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-            ViewUserInterface ui = ViewUserInterface.getReference();
-
-            if (ui.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (ui.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (ui.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        ui.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                ui.getScriptDialog().append("FaceAnonymizerBET " +
-                                            ui.getScriptDialog().getVar(srcImage.getImageName()) + " ");
-                ui.getScriptDialog().append(getParameterString(" ") + "\n");
-            }
+    public void insertScriptLine() {
+        try {
+            AlgorithmParameters algoParams = new DialogParameters();
+            algoParams.storeParamsFromGUI();
+            ScriptRecorder.getReference().addLine("FaceAnonymizerBET", algoParams.getParams());
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered recording FaceAnonymizerBET script line:\n" + pe);
         }
     }
 
@@ -312,47 +300,20 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
     /**
      * Run this algorithm from a script.
      *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * @param  parameters  table of parameters for the script to use
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
+    public void scriptRun(ParameterTable parameters) {
         setScriptRunning(true);
 
-        String srcImageKey = null;
+        AlgorithmParameters algoParams = new DialogParameters(parameters);
+        algoParams.setGUIFromParams();
 
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-        srcImage = im;
-        parentFrame = srcImage.getParentFrame();
-
-        try {
-
-            // only use the script's face orientation if we can't guess it
-            faceOrientation = getFaceOrientation(srcImage);
-
-            int scriptFaceOrientation = parser.getNextInteger();
-
-            if (faceOrientation == FACING_UNKNOWN) {
-                faceOrientation = scriptFaceOrientation;
-            }
-
-            extraMMsToDelete = parser.getNextInteger();
-            verticalDeletionLimit = parser.getNextFloat();
-            estimateWithSphereBET = parser.getNextBoolean();
-            imageInfluenceBET = parser.getNextFloat();
-            stiffnessBET = parser.getNextFloat();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
+        // setActiveImage(parser.isActiveImage());
         setSeparateThread(false);
+
         callAlgorithm();
+
+        algoParams.doPostAlgorithmActions();
     }
 
     /**
@@ -595,5 +556,76 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         }
 
         return true;
+    }
+    
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * This class records parameters used in the algorithm's dialog.  It also sets up the dialog's GUI based on parameters parsed out while running it as part of a script.
+     */
+    private class DialogParameters extends AlgorithmParameters {
+        private static final String FACE_ORIENTATION = "face_orientation";
+        private static final String EXTRA_MMS_TO_DELETE = "mms_to_delete_from_face";
+        private static final String VERT_DELETION_LIMIT = "vertical_deletion_limit_ratio";
+        private static final String BET_DO_SPHERE_ESTIMATION = "bet_do_estimate_with_sphere";
+        private static final String BET_IMG_INFLUENCE = "bet_image_influence";
+        private static final String BET_STIFFNESS = "bet_stiffness";        
+        
+        /**
+         * Creates a new DialogParameters object.  Called when recording the parameters for this algorithm.
+         */
+        public DialogParameters() {
+            super();
+        }
+
+        /**
+         * Creates a new DialogParameters object.  Called when setting up the dialog GUI when running a script.
+         *
+         * @param  parsedParams  The parsed table of parameters from the script being run.
+         */
+        public DialogParameters(ParameterTable parsedParams) {
+            super(parsedParams);
+        }
+
+        /**
+         * Perform any actions required after the running of the algorithm is complete.
+         */
+        public void doPostAlgorithmActions() {}
+
+        /**
+         * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+         */
+        public void setGUIFromParams() {
+            srcImage = retrieveInputImage();
+            parentFrame = srcImage.getParentFrame();
+            
+            faceOrientation = getFaceOrientation(srcImage);
+            int scriptFaceOrientation = params.getInt(FACE_ORIENTATION);
+            if (faceOrientation == FACING_UNKNOWN) {
+                faceOrientation = scriptFaceOrientation;
+            }
+            
+            extraMMsToDelete = params.getInt(EXTRA_MMS_TO_DELETE);
+            verticalDeletionLimit = params.getFloat(VERT_DELETION_LIMIT);
+            estimateWithSphereBET = params.getBoolean(BET_DO_SPHERE_ESTIMATION);
+            imageInfluenceBET = params.getFloat(BET_IMG_INFLUENCE);
+            stiffnessBET = params.getFloat(BET_STIFFNESS);
+        }
+
+        /**
+         * Store the parameters from the dialog to record the execution of this algorithm.
+         * 
+         * @throws  ParserException  If there is a problem creating one of the new parameters.
+         */
+        public void storeParamsFromGUI() throws ParserException {
+            storeInputImage(srcImage);
+
+            params.put(ParameterFactory.newInt(FACE_ORIENTATION, faceOrientation));
+            params.put(ParameterFactory.newInt(EXTRA_MMS_TO_DELETE, extraMMsToDelete));
+            params.put(ParameterFactory.newFloat(VERT_DELETION_LIMIT, verticalDeletionLimit));
+            params.put(ParameterFactory.newBoolean(BET_DO_SPHERE_ESTIMATION, estimateWithSphereBET));
+            params.put(ParameterFactory.newFloat(BET_IMG_INFLUENCE, imageInfluenceBET));
+            params.put(ParameterFactory.newFloat(BET_STIFFNESS, stiffnessBET));
+        }
     }
 }

@@ -48,13 +48,7 @@ public class FileRaw extends FileBase {
     private int nTimePeriods;
 
     /** DOCUMENT ME! */
-    private ProgressBarInterface pInterface;
-
-    /** DOCUMENT ME! */
     private int planarConfig;
-
-    /** DOCUMENT ME! */
-    private boolean showProgress;
 
     /** DOCUMENT ME! */
     private long startPosition = 0;
@@ -65,12 +59,10 @@ public class FileRaw extends FileBase {
      * Constructor for Raw Files that will be used to write from 4D to 3D or from 3D to 2D.
      *
      * @param  fInfo            fileinfo
-     * @param  showProgressBar  boolean indicating if progress bar should be displayed
      */
 
-    public FileRaw(FileInfoBase fInfo, boolean showProgressBar) {
+    public FileRaw(FileInfoBase fInfo) {
         fileInfo = fInfo;
-        showProgress = showProgressBar;
 
         // check to see if compression handling is to be used
         compressionType = fInfo.getCompressionType();
@@ -110,7 +102,6 @@ public class FileRaw extends FileBase {
         }
 
         this.fileName = fileName;
-        showProgress = showProgressBar;
 
         if (compressionType == FileInfoBase.COMPRESSION_NONE) {
             fileRW = new FileRawChunk(raFile, fileInfo);
@@ -217,19 +208,7 @@ public class FileRaw extends FileBase {
         byte[] buffer = null;
 
         try {
-
-            if (showProgress && (pInterface == null)) {
-                pInterface = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                                  ViewUserInterface.getReference().getProgressBarPrefix() + "image ...",
-                                                  0, 100, false, null, null);
-
-                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-                pInterface.setVisible(isProgressBarVisible());
-            }
-
-            if (showProgress) {
-                pInterface.updateValue(0, false);
-            }
+            fireProgressStateChanged(0, ViewUserInterface.getReference().getProgressBarPrefix() + fileName, ViewUserInterface.getReference().getProgressBarPrefix() + "image ...");
 
             extents = new int[image.getNDims()];
 
@@ -272,9 +251,7 @@ public class FileRaw extends FileBase {
 
         for (k = 0; k < nBuffers; k++) {
 
-            if (showProgress) {
-                pInterface.updateValue(MipavMath.round((float) k / (nBuffers - 1) * 100), false);
-            }
+            fireProgressStateChanged(MipavMath.round((float) k / (nBuffers - 1) * 100));
 
             switch (image.getType()) {
 
@@ -285,11 +262,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getBitSetBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -301,11 +273,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getByteBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -317,11 +284,6 @@ public class FileRaw extends FileBase {
 
                         image.importUData(k * bufferSize, fileRW.getShortBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -333,11 +295,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getShortBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -349,11 +306,6 @@ public class FileRaw extends FileBase {
 
                         image.importUData(k * bufferSize, fileRW.getShortBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -365,11 +317,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getIntBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -381,11 +328,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getIntBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -397,12 +339,7 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getLongBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
-                        throw error;
+                       throw error;
                     }
 
                     break;
@@ -413,12 +350,7 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getFloatBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
-                        throw error;
+                       throw error;
                     }
 
                     break;
@@ -429,11 +361,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * bufferSize, fileRW.getDoubleBuffer(), false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -468,11 +395,6 @@ public class FileRaw extends FileBase {
 
                         image.importData(k * buffer.length, buffer, false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -509,11 +431,6 @@ public class FileRaw extends FileBase {
 
                         image.importUData(k * shortBuffer.length, shortBuffer, false);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
@@ -534,21 +451,12 @@ public class FileRaw extends FileBase {
 
                         image.importComplexData(2 * k * bufferSize, realBuffer, imagBuffer, false, true);
                     } catch (IOException error) {
-
-                        if (showProgress) {
-                            pInterface.dispose();
-                        }
-
                         throw error;
                     }
 
                     break;
 
                 default:
-                    if (showProgress) {
-                        pInterface.dispose();
-                    }
-
                     throw new IOException();
             }
         }
@@ -556,10 +464,6 @@ public class FileRaw extends FileBase {
         // image.calcMinMax();
         if (compressionType != 1) {
             raFile.close();
-        }
-
-        if (showProgress) {
-            pInterface.dispose();
         }
     }
 
@@ -1030,18 +934,6 @@ public class FileRaw extends FileBase {
     }
 
     /**
-     * Sets the progress bar panel to be updated (rather than create a new progress bar frame to update status of file
-     * opening in a panel instead of frame.
-     *
-     * @param  pBar  ProgressBarInterface
-     */
-    public void setPBar(ProgressBarInterface pBar) {
-
-        // System.err.println("SET P BAR");
-        this.pInterface = pBar;
-    }
-
-    /**
      * Sets the planar configuration for RGB images.
      *
      * @param  _planarConfig  0 indicates pixels are RGB, RGB chunky<br>
@@ -1118,22 +1010,12 @@ public class FileRaw extends FileBase {
                 raFile.seek(startPosition);
             }
 
-            if (showProgress) {
-                pInterface = new ViewJProgressBar("Saving " + fileName, "Saving image ...", 0, 100, false, null, null);
-
-                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-                pInterface.setVisible(isProgressBarVisible());
-            }
+            fireProgressStateChanged(0, "Saving " + fileName, "Saving image ...");
 
             for (int t = beginTimePeriod; t <= endTimePeriod; t++) {
 
                 for (k = beginSlice; k <= endSlice; k++) {
-
-                    if (showProgress) {
-                        pInterface.updateValue(MipavMath.round((float) ((t * (endSlice - beginSlice)) + k) / (nImages) *
-                                                                   100), options.isRunningInSeparateThread());
-                        // pInterface.setTitle("Saving image " + k);
-                    }
+                    fireProgressStateChanged(MipavMath.round((float) ((t * (endSlice - beginSlice)) + k) / (nImages) * 100));
 
                     try {
                         fileRW.writeImage(image, (t * offset) + (k * bufferSize),
@@ -1153,19 +1035,11 @@ public class FileRaw extends FileBase {
                 raFile.close();
             }
 
-            if (showProgress) {
-                pInterface.dispose();
-            }
-
             return;
         } catch (OutOfMemoryError error) {
 
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 raFile.close();
-            }
-
-            if (showProgress) {
-                pInterface.dispose();
             }
 
             throw error;
@@ -1202,12 +1076,7 @@ public class FileRaw extends FileBase {
         String fileName = options.getFileName();
         String fileDir = options.getFileDirectory();
 
-        if (showProgress) {
-            pInterface = new ViewJProgressBar("Saving " + fileName, "Saving image ...", 0, 100, false, null, null);
-
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            pInterface.setVisible(isProgressBarVisible());
-        }
+        fireProgressStateChanged(0, "Saving " + fileName, "Saving image ...");
 
         int index = fileName.lastIndexOf(".");
 
@@ -1254,11 +1123,7 @@ public class FileRaw extends FileBase {
                 }
             }
 
-            if (showProgress) {
-                pInterface.setTitle("Saving image " + fileString);
-                pInterface.updateValue(MipavMath.round((prog / (endSlice - beginSlice + 1)) * 100),
-                                       options.isRunningInSeparateThread());
-            }
+            fireProgressStateChanged(MipavMath.round((prog / (endSlice - beginSlice + 1)) * 100), "Saving image " + fileString, "Saving image ...");
 
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 file = new File(fileDir + fileString);
@@ -1282,10 +1147,6 @@ public class FileRaw extends FileBase {
                 throw error;
             }
         } // end for loop
-
-        if (showProgress) {
-            pInterface.dispose();
-        }
     }
 
     /**
@@ -1324,13 +1185,7 @@ public class FileRaw extends FileBase {
         String fileName = options.getFileName();
         String fileDir = options.getFileDirectory();
 
-        if (showProgress) {
-            pInterface = new ViewJProgressBar("Saving " + fileName, "Saving image ...", 0, 100, false, null, null);
-
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            pInterface.setVisible(isProgressBarVisible());
-        }
-
+        fireProgressStateChanged(0, "Saving " + fileName, "Saving image ...");
 
         int index = fileName.lastIndexOf(".");
 
@@ -1378,11 +1233,7 @@ public class FileRaw extends FileBase {
                 }
             }
 
-            if (showProgress) {
-                pInterface.setTitle("Saving image " + fileString);
-                pInterface.updateValue(MipavMath.round((prog / (endTimePeriod - beginTimePeriod + 1)) * 100),
-                                       options.isRunningInSeparateThread());
-            }
+            fireProgressStateChanged(MipavMath.round((prog / (endTimePeriod - beginTimePeriod + 1)) * 100), "Saving image " + fileString, "Saving image ...");
 
             if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                 file = new File(fileDir + fileString);
@@ -1410,9 +1261,6 @@ public class FileRaw extends FileBase {
                 throw error;
             }
         }
-
-        pInterface.dispose();
-
 
     }
 }

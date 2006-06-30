@@ -1,6 +1,8 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionCollectGarbage;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -251,9 +253,7 @@ public class ViewJFrameRegisteredImages extends JFrame
                 surf.stop(); // should update the display & memory values
             }
 
-            if (UI.isScriptRecording()) {
-                UI.getScriptDialog().append("CollectGarbage\n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
         } else if (source == callDeletebutton) { // call the garbage collector
 
             // selectedName = get selected item from the list
