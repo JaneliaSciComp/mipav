@@ -19,7 +19,9 @@ import java.io.*;
  */
 
 public class FileAnalyze extends FileBase {
-
+    /** The extensions of ANALYZE file */
+    public static final String[] EXTENSIONS = {".hdr", ".img"};
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Storage buffer for the header. */
@@ -70,8 +72,45 @@ public class FileAnalyze extends FileBase {
         showProgress = show;
     }
 
+    public FileAnalyze(String[] fileNames){
+        super(fileNames);
+    }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Returns the header file
+     */
+    public String getHeaderFile(){
+        if(fileNames == null || fileNames.length != 2){
+            return null;
+        }
+        
+        for(int i = 0; i < fileNames.length; i++){
+            if(FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[0])){
+                return fileNames[i];
+            }
+        }
+        return null;
+    }
+    
+    /**
+     * Returns the image file list
+     * @return the image file list.
+     */
+    public String[] getImageFiles(){
+        if(fileNames == null || fileNames.length != 2){
+            return null;
+        }
+        String[] result = new String[1];
+        for(int i = 0; i < fileNames.length; i++){
+            if(FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[1])){
+                result[0] = fileNames[i];
+                return result;
+            }
+        }
+        return null;
+    }
+    
     /**
      * Absolute value of image.
      *
@@ -853,7 +892,7 @@ public class FileAnalyze extends FileBase {
 
         if (options.isMultiFile()) {
             FileRaw rawFile;
-            rawFile = new FileRaw(image.getFileInfo(0), true);
+            rawFile = new FileRaw(image.getFileInfo(0));
             flipTopBottom(image);
 
             if (image.getNDims() == 3) {
