@@ -6,6 +6,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
+import java.io.File;
+
 
 /**
  * This structure contains the basic information that describes how the image is stored on disk.
@@ -376,10 +378,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
 
-    /** File directory where the image is located. */
-    protected String fileDir;
-
     /** File name the the image was read from (image extension included - foo.img, foo.dcm ). */
+    /** The file name which includes the path information */
     protected String fileName;
 
     /** File suffix (ex. "jpg") */
@@ -488,9 +488,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  format     file storage format -- see FileBase.java
      */
     public FileInfoBase(String name, String directory, int format) {
-
-        fileName = name;
-        fileDir = directory;
+        fileName = directory + name;
         fileFormat = format;
         fileSuffix = FileIO.getSuffixFrom(name);
     }
@@ -1035,7 +1033,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         cloned.modality = modality;
         cloned.imageOrientation = imageOrientation;
         cloned.fileName = fileName;
-        cloned.fileDir = fileDir;
         cloned.fileSuffix = fileSuffix;
         cloned.fileFormat = fileFormat;
         cloned.dataType = dataType;
@@ -1350,7 +1347,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         dimResolutions = null;
 
         fileName = null;
-        fileDir = null;
         fileSuffix = null;
 
         try {
@@ -1488,9 +1484,19 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return  String that indicates location of the file
      */
     public final String getFileDirectory() {
-        return fileDir;
+        if(fileName == null || fileName.length() == 0){
+            return null;
+        }
+        int index = fileName.lastIndexOf(File.separator);
+        if(index >= 0){
+            return fileName.substring(0, index + 1);
+        }
+        return null;
     }
 
+    public final void setFileDirectory(String directory){
+        setFileName(directory + FileUtility.getFileName(fileName));
+    }
     /**
      * Returns file format.
      *
@@ -1506,7 +1512,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return  String indicating file name
      */
     public final String getFileName() {
-        return fileName;
+        return FileUtility.getFileName(fileName);
     }
 
     /**
@@ -1984,15 +1990,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
-     * Sets the file directory.
-     *
-     * @param  fDir  file directory
-     */
-    public final void setFileDirectory(String fDir) {
-        fileDir = fDir;
-    }
-
-    /**
      * Sets the file format.
      *
      * @param  format  File format
@@ -2292,7 +2289,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         s += "File info:\n";
         s += "Modality: ";
         s += FileInfoBase.getModalityStr(modality) + "\n";
-        s += "File directory: " + fileDir + "\nFile name: " + fileName + "\n";
+        s += "\nFile name: " + fileName + "\n";
         s += "File suffix: " + fileSuffix + "\n";
         s += "File format: ";
         s += FileBase.getFileFormatStr(fileFormat) + "\n";
