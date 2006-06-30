@@ -133,7 +133,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         this.register = register;
         this.cost = cost;
         this.createRegImage = createRegImage;
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

@@ -308,7 +308,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         oldMember = new float[nClass];
         sCentroids = new float[nClass];
         unusedCentroids = new boolean[nClass];
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
         classNumber = new int[nClass];
 
         if ((exponent - Math.floor(exponent)) < 0.01) {
@@ -363,7 +363,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         oldMember = new float[nClass];
         sCentroids = new float[nClass];
         unusedCentroids = new boolean[nClass];
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
         classNumber = new int[nClass];
 
         if ((exponent - Math.floor(exponent)) < 0.01) {

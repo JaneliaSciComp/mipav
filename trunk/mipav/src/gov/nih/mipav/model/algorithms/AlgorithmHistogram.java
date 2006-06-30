@@ -492,7 +492,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         buildProgressBar("Histogram", "Calculating histogram data...", 0, 100);
         initProgressBar();
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         switch (image.getType()) {
 

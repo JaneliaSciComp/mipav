@@ -87,9 +87,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
     String transformTypeName;
 
     /** DOCUMENT ME! */
-    ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private AlgorithmBSpline Bspline;
 
     /** DOCUMENT ME! */
@@ -137,7 +134,6 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         this.interpolation = interpolation;
         this.doClip = doClip;
         this.doVOI = doVOI;
-        UI = srcImage.getUserInterface();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

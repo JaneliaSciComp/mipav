@@ -446,8 +446,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         FileInfoBase[] fInfoBase;
         int[] extents;
         String srcName;
-        ViewUserInterface UI;
-
 
         try {
             constructLog();
@@ -460,9 +458,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             sliceLength = xDim * yDim;
             extents = srcImage.getExtents();
             srcName = srcImage.getImageName();
-            UI = srcImage.getUserInterface();
-
-
+            
             c1Buffer = new float[sliceLength];
             c2Buffer = new float[sliceLength];
 
@@ -723,7 +719,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.disposeLocal();
                 srcImage = null;
 
-                srcImage = new ModelImage(ModelStorageBase.ARGB, extents, srcName, UI);
+                srcImage = new ModelImage(ModelStorageBase.ARGB, extents, srcName);
                 srcImage.setFileInfo(fInfoBase[0], 0);
                 srcImage.importData(0, segBuffer, true);
             }
@@ -805,7 +801,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         FileInfoBase[] fInfoBase;
         int[] extents;
         String srcName;
-        ViewUserInterface UI;
 
 
         try {
@@ -819,7 +814,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             sliceLength = xDim * yDim;
             extents = srcImage.getExtents();
             srcName = srcImage.getImageName();
-            UI = srcImage.getUserInterface();
 
             redBuffer = new float[sliceLength];
             greenBuffer = new float[sliceLength];
@@ -1083,7 +1077,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.disposeLocal();
                 srcImage = null;
 
-                srcImage = new ModelImage(ModelStorageBase.ARGB, extents, srcName, UI);
+                srcImage = new ModelImage(ModelStorageBase.ARGB, extents, srcName);
                 srcImage.setFileInfo(fInfoBase[0], 0);
                 srcImage.importData(0, segBuffer, true);
             }
@@ -1161,7 +1155,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         FileInfoBase[] fInfoBase;
         int[] extents;
         String srcName;
-        ViewUserInterface UI;
 
         try {
             constructLog();
@@ -1174,7 +1167,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             sliceLength = xDim * yDim;
             extents = srcImage.getExtents();
             srcName = srcImage.getImageName();
-            UI = srcImage.getUserInterface();
 
             buffer = new float[sliceLength];
             srcImage.exportData(0, sliceLength, buffer);
@@ -1406,7 +1398,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.disposeLocal();
                 srcImage = null;
 
-                srcImage = new ModelImage(ModelStorageBase.ARGB, extents, srcName, UI);
+                srcImage = new ModelImage(ModelStorageBase.ARGB, extents, srcName);
                 srcImage.setFileInfo(fInfoBase[0], 0);
                 srcImage.importData(0, segBuffer, true);
             }

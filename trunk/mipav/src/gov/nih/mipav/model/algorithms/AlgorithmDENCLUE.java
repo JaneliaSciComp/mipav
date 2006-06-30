@@ -19,9 +19,6 @@ import java.io.*;
 public class AlgorithmDENCLUE extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** The ViewUserInterface is held for debugging purposes only. May be deprecated in the future. */
-    ViewUserInterface userInterface; // for debug only
     
     // If true, use a Gaussian influence function
     // If false, use a square wave influence function
@@ -104,15 +101,6 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         }
     }
 
-    
-    /**
-     * The ViewUserInterface is set for debugging purposes only. This method may be deprecated in the future.
-     *
-     * @param  vui  DOCUMENT ME!
-     */
-    public void setUserInterface(ViewUserInterface vui) {
-        userInterface = vui;
-    }
 
     /**
      * Filters the source image. Replaces the original image with the filtered image.

@@ -398,7 +398,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         String name = JDialogBase.makeImageName(srcImage.getImageName(), "_transform");
         int type = srcImage.getType();
-        ViewUserInterface UI = srcImage.getUserInterface();
 
         if (DIM == 3) {
 
@@ -429,7 +428,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
         } // end of DIM == 4
 
-        destImage = new ModelImage(type, extents, name, UI);
+        destImage = new ModelImage(type, extents, name);
         updateFileInfo(srcImage, destImage, destResolutions);
     }
 

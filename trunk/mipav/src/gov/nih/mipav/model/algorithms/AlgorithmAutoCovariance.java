@@ -222,7 +222,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         boolean found;
         int xLast = 0;
         int yLast = yDim - 1;
-        ViewUserInterface UI = srcImage.getUserInterface();
         int thisPos, nextPos, resultPos;
         int this1, next1, result1;
         int ymdelta;
@@ -402,9 +401,9 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             // System.out.println("c4 = "+ c4);
             // System.out.println("fwhm = " + fwhm);
-            UI.setDataText("Auto covariance full width at half maximum = " + fwhm + "\n");
+            ViewUserInterface.getReference().setDataText("Auto covariance full width at half maximum = " + fwhm + "\n");
         } else {
-            UI.setDataText("Cannot find auto covariance full width at half maximum\n");
+            ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width at half maximum\n");
         }
 
         if (progressBar != null) {
@@ -444,7 +443,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         boolean found;
         int xLast = 0;
         int yLast = yDim - 1;
-        ViewUserInterface UI = srcImage.getUserInterface();
         int thisPos, nextPos, resultPos;
         int this1, next1, result1;
         int ymdelta;
@@ -643,10 +641,10 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmR = " + fwhmR);
                 Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n");
-                UI.setDataText("Auto covariance full width red at half maximum = " + fwhmR + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " + fwhmR + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width red at half maximum\n");
-                UI.setDataText("Cannot find auto covariance full width red at half maximum");
+                ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width red at half maximum");
             }
 
         } // if (destImageR != null)
@@ -814,10 +812,10 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmG = " + fwhmG);
                 Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n");
-                UI.setDataText("Auto covariance full width green at half maximum = " + fwhmG + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " + fwhmG + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width green at half maximum\n");
-                UI.setDataText("Cannot find auto covariance full width green at half maximum\n");
+                ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width green at half maximum\n");
             }
 
         } // if (destImageG != null)
@@ -983,10 +981,10 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmB = " + fwhmB);
                 Preferences.debug("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
-                UI.setDataText("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width blue at half maximum\n");
-                UI.setDataText("Cannot find auto covariance full width blue at half maximum\n");
+                ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width blue at half maximum\n");
             }
         } // if (destImageB != null)
 
@@ -1030,7 +1028,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int xLast = 0;
         int yLast = yDim - 1;
         int zLast = 0;
-        ViewUserInterface UI = srcImage.getUserInterface();
         int thisPos, nextPos, resultPos;
         int this1, next1, result1, this2, next2, result2;
         int ymdelta, zmdelta;
@@ -1250,9 +1247,9 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
             // System.out.println("c4 = "+ c4);
             // System.out.println("fwhm = " + fwhm);
-            UI.setDataText("Auto covariance full width at half maximum = " + fwhm + "\n");
+            ViewUserInterface.getReference().setDataText("Auto covariance full width at half maximum = " + fwhm + "\n");
         } else {
-            UI.setDataText("Cannot find auto covariance full width at half maximum\n");
+            ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width at half maximum\n");
         }
 
         if (progressBar != null) {
@@ -1296,7 +1293,6 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
         int xLast = 0;
         int yLast = yDim - 1;
         int zLast = 0;
-        ViewUserInterface UI = srcImage.getUserInterface();
         int thisPos, nextPos, resultPos;
         int this1, next1, result1, this2, next2, result2;
         int ymdelta, zmdelta;
@@ -1534,10 +1530,10 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmR = " + fwhmR);
                 Preferences.debug("Auto covariance full width red at half maximum = " + fwhmR + "\n");
-                UI.setDataText("Auto covariance full width red at half maximum = " + fwhmR + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width red at half maximum = " + fwhmR + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width red at half maximum\n");
-                UI.setDataText("Cannot find auto covariance full width red at half maximum\n");
+                ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width red at half maximum\n");
             }
         } // if (destImageR != null)
 
@@ -1742,10 +1738,10 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmG = " + fwhmG);
                 Preferences.debug("Auto covariance full width green at half maximum = " + fwhmG + "\n");
-                UI.setDataText("Auto covariance full width green at half maximum = " + fwhmG + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width green at half maximum = " + fwhmG + "\n");
             } else {
                 Preferences.debug("Cannot find auto covarinace full width green at half maximum\n");
-                UI.setDataText("Cannot find auto covariance full width green at half maximum\n");
+                ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width green at half maximum\n");
             }
 
         } // if (destImageG != null)
@@ -1949,10 +1945,10 @@ public class AlgorithmAutoCovariance extends AlgorithmBase {
 
                 // System.out.println("c4 = "+ c4);
                 // System.out.println("fwhmB = " + fwhmB);
-                UI.setDataText("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
+                ViewUserInterface.getReference().setDataText("Auto covariance full width blue at half maximum = " + fwhmB + "\n");
             } else {
                 Preferences.debug("Cannot find auto covariance full width blue at half maximum\n");
-                UI.setDataText("Cannot find auto covariance full width blue at half maximum\n");
+                ViewUserInterface.getReference().setDataText("Cannot find auto covariance full width blue at half maximum\n");
             }
 
         } // if (destImageB != null)

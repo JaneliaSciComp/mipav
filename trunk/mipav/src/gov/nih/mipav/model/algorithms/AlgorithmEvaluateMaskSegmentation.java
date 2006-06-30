@@ -73,8 +73,6 @@ public class AlgorithmEvaluateMaskSegmentation extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int trueLevels;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -121,7 +119,6 @@ public class AlgorithmEvaluateMaskSegmentation extends AlgorithmBase {
             return;
         }
 
-        userInterface = srcImage.getUserInterface();
         length = srcImage.getExtents()[0];
 
         for (i = 1; i < srcImage.getNDims(); i++) {
@@ -229,8 +226,8 @@ public class AlgorithmEvaluateMaskSegmentation extends AlgorithmBase {
             return;
         }
 
-        userInterface.setGlobalDataText(srcImage.getImageName() + " = true\n");
-        userInterface.setGlobalDataText(testImage.getImageName() + " = test\n");
+        ViewUserInterface.getReference().setGlobalDataText(srcImage.getImageName() + " = true\n");
+        ViewUserInterface.getReference().setGlobalDataText(testImage.getImageName() + " = test\n");
 
         for (i = 0; i < trueLevels; i++) {
             tLevel = trueLevelArray[i];
@@ -258,13 +255,13 @@ public class AlgorithmEvaluateMaskSegmentation extends AlgorithmBase {
                 } // else trueArray[k] != tLevel
             } // for (k = 0; k < length; k++)
 
-            userInterface.setGlobalDataText("Statistics for level = " + String.valueOf(tLevel) + "\n");
+            ViewUserInterface.getReference().setGlobalDataText("Statistics for level = " + String.valueOf(tLevel) + "\n");
             fnvf = (float) falseNegative / (float) absoluteTrue;
-            userInterface.setGlobalDataText("     False negative volume fraction = " + String.valueOf(fnvf) + "\n");
+            ViewUserInterface.getReference().setGlobalDataText("     False negative volume fraction = " + String.valueOf(fnvf) + "\n");
             fpvf = (float) falsePositive / (float) absoluteTrue;
-            userInterface.setGlobalDataText("     False positive volume fraction = " + String.valueOf(fpvf) + "\n");
+            ViewUserInterface.getReference().setGlobalDataText("     False positive volume fraction = " + String.valueOf(fpvf) + "\n");
             tpvf = (float) trueFound / (float) absoluteTrue;
-            userInterface.setGlobalDataText("     True Positive volume fraction = " + String.valueOf(tpvf) + "\n\n");
+            ViewUserInterface.getReference().setGlobalDataText("     True Positive volume fraction = " + String.valueOf(tpvf) + "\n\n");
 
         } // for (i = 0; i < trueLevels; i++)
 

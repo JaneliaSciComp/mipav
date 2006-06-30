@@ -21,9 +21,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private int algorID = 0; // 2 means run on the image, 3 means run batch
 
     /** DOCUMENT ME! */
@@ -89,30 +86,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         algorID = id;
         hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
-
-        if (sigmas.length == 2) {
-            eigenSystemAlgo = new AlgorithmEigensolver(2);
-        } else if (sigmas.length == 3) {
-            eigenSystemAlgo = new AlgorithmEigensolver(3);
-        }
-
-    } // end AlgorithmImageHessian(...)
-
-    /**
-     * Creates a new AlgorithmImageHessian object.
-     *
-     * @param  UI       DOCUMENT ME!
-     * @param  destImg  DOCUMENT ME!
-     * @param  srcImg   DOCUMENT ME!
-     * @param  id       DOCUMENT ME!
-     * @param  sigmas   DOCUMENT ME!
-     */
-    public AlgorithmImageHessian(ViewUserInterface UI, ModelImage destImg, ModelImage srcImg, int id, float[] sigmas) {
-        super(destImg, srcImg);
-
-        algorID = id;
-        hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
-        userInterface = UI;
 
         if (sigmas.length == 2) {
             eigenSystemAlgo = new AlgorithmEigensolver(2);

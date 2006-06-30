@@ -116,12 +116,12 @@ public class GenerateGaussian {
      *
      * @return  image model object containing the gaussian data
      */
-    public ModelImage makeImage(ViewUserInterface UI) {
+    public ModelImage makeImage() {
 
         ModelImage image;
 
         try {
-            image = new ModelImage(ModelImage.FLOAT, dimLengths, "Gaussian", UI);
+            image = new ModelImage(ModelImage.FLOAT, dimLengths, "Gaussian");
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Generate gaussian: unable to allocate enough memory");
 
