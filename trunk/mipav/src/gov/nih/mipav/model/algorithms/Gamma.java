@@ -19,6 +19,11 @@ public class Gamma {
     /** output result */
     private double result[];
     
+    /**
+     * 
+     * @param x Input argument
+     * @param result outputted gamma(x)
+     */
     public Gamma(double x, double result[]) {
         this.x = x;
         this.result = result;
