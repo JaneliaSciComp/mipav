@@ -30,7 +30,7 @@ import gov.nih.mipav.model.file.*;
  * @version  0.1 Oct 19, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class ViewJProgressBar extends JFrame implements ActionListener, ProgressBarInterface, ChangeListener {
+public class ViewJProgressBar extends JFrame implements ActionListener, ProgressBarInterface, ProgressChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -315,13 +315,18 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
     }
     
     /**
-     * Implementation of the ChangeListener interface.
+     * Implementation of the ProgressChangeListener interface.
      */
-    public void stateChanged(ChangeEvent e){
+    public void progressStateChanged(ProgressChangeEvent e){
         Object source = e.getSource();
-        if(source instanceof FileBase){
-            FileBase fileBase = (FileBase)source;
-            updateValue(fileBase.getProgressValue());
+        String t = e.getTitle();
+        if(t != null && title.length() > 0){
+            setTitle(t);
         }
+        String m = e.getMessage();
+        if(m != null & m.length() > 0){
+            setMessage(m);
+        }
+        updateValue(e.getValue());
     }
 }
