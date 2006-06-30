@@ -102,9 +102,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** A list of voi files, set by the command line, to be used in a script. */
     Vector voiFileNames = new Vector();
 
-    /** Active images monitor. */
-    private ViewJFrameActiveImages activeImageMonitorFrame;
-
     /** Vector to hold the clipped Polygons arrays (is this actually used??). */
     private Vector clippedPolygons = new Vector();
 
@@ -203,7 +200,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         mainFrame = new JFrame();
         imageFrameVector = new Vector();
         imageHashtable = new CustomHashtable();
-        activeImageMonitorFrame = new ViewJFrameActiveImages(this);
         initialize();
     }
 
@@ -625,8 +621,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             memoryAllocation();
         } else if (command.equals("ImageRegistryMonitor")) {
             imageRegistryMonitoring();
-        } else if (command.equals("ActiveImageRegistryMonitor")) {
-            activeImageRegistryMonitoring();
         } else if (command.equals("Options")) {
             options();
         } else if (command.equals("Shortcuts")) {
@@ -655,19 +649,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             int number = Integer.valueOf(command.substring(10)).intValue();
             openLastImage(number);
 
-        }
-    }
-
-    /**
-     * Display image registry frame.
-     */
-    public void activeImageRegistryMonitoring() {
-
-        /*
-         * if (activeImageMonitorFrame != null) { activeImageMonitorFrame.dispose(); }
-         */
-        if (activeImageMonitorFrame != null) {
-            activeImageMonitorFrame.setVisible(true);
         }
     }
 
@@ -1042,15 +1023,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (NullPointerException ex) { // do nothing
             }
         }
-    }
-
-    /**
-     * Return the active image monitor.
-     *
-     * @return  activeImageMonitorFrame active image monitor
-     */
-    public ViewJFrameActiveImages getActiveFrame() {
-        return activeImageMonitorFrame;
     }
 
     /**
@@ -1766,8 +1738,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         ViewOpenFileUI fileUI = new ViewOpenFileUI(ViewUserInterface.getReference(), false);
 
         String name = fileUI.open(temp, multiFile, null);
-
-        getActiveFrame().addName(name);
 
         // if the SaveAllOnSave preference flag is set, then
         // load all the files associated with this image (VOIs, LUTs, etc.)

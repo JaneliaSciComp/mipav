@@ -214,10 +214,6 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             }
         }
 
-        if (userInterface.getActiveFrame() != null) {
-            userInterface.getActiveFrame().removeName(imageA.getImageName());
-        }
-
         if (userInterface.isScriptRecording()) {
             userInterface.getScriptDialog().append("CloseFrame " +
                                                    userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +

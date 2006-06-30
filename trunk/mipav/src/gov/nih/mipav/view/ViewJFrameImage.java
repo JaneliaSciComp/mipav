@@ -2621,8 +2621,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.memoryFrame();
         } else if (command.equals("ImageRegistryMonitor")) {
             userInterface.imageRegistryMonitoring();
-        } else if (command.equals("ActiveImageRegistryMonitor")) {
-            userInterface.activeImageRegistryMonitoring();
         } else if (command.equals("Options")) {
             userInterface.options();
         } else if (command.equals("Shortcuts")) {
@@ -2803,10 +2801,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (reply == JOptionPane.NO_OPTION) {
                 return;
             }
-        }
-
-        if (userInterface.getActiveFrame() != null) {
-            userInterface.getActiveFrame().removeName(imageA.getImageName());
         }
 
         if (userInterface.isScriptRecording()) {
