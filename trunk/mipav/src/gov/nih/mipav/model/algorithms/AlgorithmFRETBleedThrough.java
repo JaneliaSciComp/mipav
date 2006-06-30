@@ -117,7 +117,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         this.useGreen = useGreen;
         this.useBlue = useBlue;
         this.acceptorRun = acceptorRun;
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

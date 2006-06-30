@@ -1564,12 +1564,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         try {
             progressBar.updateValue(100, runningInSeparateThread);
 
-            ViewUserInterface UI = srcImage.getUserInterface();
-
-            UI.setDataText("\nDeleted objects outside range (" + min + "," + max + "). \n");
+            ViewUserInterface.getReference().setDataText("\nDeleted objects outside range (" + min + "," + max + "). \n");
 
             for (i = 0; i < objects.size(); i++) {
-                UI.setDataText("  Object " + (i + 1) + " = " + ((intObject) (objects.elementAt(i))).size + "\n");
+                ViewUserInterface.getReference().setDataText("  Object " + (i + 1) + " = " + ((intObject) (objects.elementAt(i))).size + "\n");
             }
         } catch (NullPointerException npe) {
 

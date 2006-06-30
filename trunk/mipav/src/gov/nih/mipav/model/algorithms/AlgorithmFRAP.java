@@ -251,7 +251,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         this.paramVary = paramVary;
         this.radius = radius;
         this.diffusion = diffusion;
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

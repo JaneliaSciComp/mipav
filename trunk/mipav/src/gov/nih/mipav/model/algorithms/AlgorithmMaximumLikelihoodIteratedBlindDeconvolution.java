@@ -231,8 +231,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         kRGBAlgoMulti = null;
 
         JDialogRGBtoGrays kDialogTemp =
-            new JDialogRGBtoGrays( ViewUserInterface.getReference(),
-                                   kImage );
+            new JDialogRGBtoGrays( ViewUserInterface.getReference(), kImage );
         kDialogTemp.updateFileInfo(kImage, m_kSourceRed);
         kDialogTemp.updateFileInfo(kImage, m_kSourceGreen);
         kDialogTemp.updateFileInfo(kImage, m_kSourceBlue);

@@ -178,7 +178,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
     public void extractBrain() {
 
         // unchanging parameters and placeholders passed into algorithms
-        ViewUserInterface userInterface = image.getUserInterface();
         float filterContrast = 0.05f;
         int middleSlice = image.getExtents()[2] / 2;
         xRes = image.getFileInfo(middleSlice).getResolutions()[0];
@@ -214,8 +213,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         progressBar.updateValue(5, runningInSeparateThread);
 
         if (filterIterations > 0) {
-            resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imgName + "_temp_results",
-                                         userInterface);
+            resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imgName + "_temp_results");
 
             AlgorithmRegularizedIsotropicDiffusion filterAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage,
                                                                                                            image,
