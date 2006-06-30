@@ -14,10 +14,10 @@ public class Gamma {
     /** input argument 
      *  Note that the gamma function is not defined for x equal to zero or a
      *  negative integer */
-    double x;
+    private double x;
     
     /** output result */
-    double result[];
+    private double result[];
     
     public Gamma(double x, double result[]) {
         this.x = x;
