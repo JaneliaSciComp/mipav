@@ -183,11 +183,6 @@ public abstract class FileBase{
 
     /** Pointer to file to read or write from. */
     protected RandomAccessFile raFile;
-
-    /**
-     * Used to store the value of the progress;
-     */
-    protected int progressValue;
     
     /**
      * A list of the ChangeListeners which are interested in the ChangeEvent. 
@@ -208,9 +203,13 @@ public abstract class FileBase{
      * Empty constructor.
      */
     public FileBase() {
-        listenerList = new EventListenerList();
+        this(null);
     }
 
+    public FileBase(String[] fileNames){
+        this.fileNames = fileNames;
+        listenerList = new EventListenerList();        
+    }
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -234,6 +233,9 @@ public abstract class FileBase{
 
     } // end getFileFormatStr()
 
+//    public abstract String getHeaderFile();
+    
+//    public abstract String[] getImageFiles();
     /**
      * Prepares this class for cleanup.
      */
@@ -797,32 +799,15 @@ public abstract class FileBase{
 
         raFile.write(buffer);
     }
-
-    /**
-     * Returns the value which represents the progress has been made.
-     * @return the value which represents the progress has been made.
-     */
-    public int getProgressValue(){
-        return progressValue;
-    }
-    
-    /**
-     * Sets the value which represents the progress has been made.
-     * 
-     * @param value
-     */
-    public void setProgressValue(int value){
-        this.progressValue = value;
-    }
     
     // public abstract String[] getExtensions();
     /**
-     * Adds the ChangeListener to this FileBase object.
+     * Adds the ProgressChangeListener to this FileBase object.
      * 
      * @param l
      */
-    public void addChangeListener(ChangeListener l){
-        listenerList.add(ChangeListener.class, l);
+    public void addProgressChangeListener(ProgressChangeListener l){
+        listenerList.add(ProgressChangeListener.class, l);
     }
     
     /**
@@ -830,22 +815,36 @@ public abstract class FileBase{
      * 
      * @param l
      */
-    public void removeChangeListener(ChangeListener l){
-        listenerList.remove(ChangeListener.class, l);
+    public void removeProgressChangeListener(ProgressChangeListener l){
+        listenerList.remove(ProgressChangeListener.class, l);
     }
     
     /**
      * Notifies all listeners that have registered interest for notification
      * on this event type.
+     * 
+     * @param value   the value of the progress bar.
+     * @param title   the title of the progress dialog.
+     * @param message the message for that specific progress value.
      */
-    public void fireStateChanged(){
+    public void fireProgressStateChanged(int value, String title, String message){
         Object[] listeners = listenerList.getListenerList();
         for(int i = listeners.length-2; i >= 0; i -= 2){
-            if(listeners[i] == ChangeListener.class){
-                ChangeEvent event = new ChangeEvent(this);
-                ((ChangeListener)listeners[i+1]).stateChanged(event);
+            if(listeners[i] == ProgressChangeListener.class){
+                ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
+                ((ProgressChangeListener)listeners[i+1]).progressStateChanged(event);
             }
         }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for notification
+     * on this event type.
+     * 
+     * @param value  the value of the progress bar.
+     */
+    public void fireProgressStateChanged(int value){
+        fireProgressStateChanged(value, null, null);
     }
 
     /**
