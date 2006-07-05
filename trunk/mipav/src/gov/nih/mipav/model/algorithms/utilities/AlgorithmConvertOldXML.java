@@ -43,7 +43,6 @@ public class AlgorithmConvertOldXML extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int numConverted = 0; // number of old xml files that were converted
 
-    /** private ViewUserInterface userInterface = null; private ViewJProgressBar progressBar = null;. */
     private String outString = new String();
 
     /** DOCUMENT ME! */

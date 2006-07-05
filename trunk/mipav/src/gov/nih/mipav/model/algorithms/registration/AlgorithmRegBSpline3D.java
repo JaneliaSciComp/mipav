@@ -279,9 +279,8 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
             BSplineBasisf kBasisX = kReg.getLattice().getBasisX();
             BSplineBasisf kBasisY = kReg.getLattice().getBasisY();
             BSplineBasisf kBasisZ = kReg.getLattice().getBasisZ();
-            ViewUserInterface UI = m_kImageSource.getUserInterface();
             String fileName = m_kImageSource.getImageName() + ".nlt";
-            File file = new File(UI.getDefaultDirectory() + fileName);
+            File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "rw");
 
             // Necessary so that if this is an overwritten file there isn't any

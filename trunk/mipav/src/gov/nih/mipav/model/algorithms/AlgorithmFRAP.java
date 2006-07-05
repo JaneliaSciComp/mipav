@@ -191,9 +191,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
     private double[] timeStamp = null;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private boolean useBlue = false;
 
     /** DOCUMENT ME! */
@@ -251,7 +248,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         this.paramVary = paramVary;
         this.radius = radius;
         this.diffusion = diffusion;
-        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -534,19 +530,18 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 colorsPresent++;
             }
 
-            bwImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_bw",
-                                     UI);
+            bwImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_bw");
 
             if (createRegImage && (colorsPresent >= 2)) {
                 bwImage2 = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(),
-                                          srcImage.getImageName() + "_bw2", UI);
+                                          srcImage.getImageName() + "_bw2");
                 colorImageReg = new ModelImage(srcImage.getType(), srcImage.getExtents(),
-                                               srcImage.getImageName() + "_registered", UI);
+                                               srcImage.getImageName() + "_registered");
             }
 
             if (createRegImage && (colorsPresent == 3)) {
                 bwImage3 = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(),
-                                          srcImage.getImageName() + "_bw3", UI);
+                                          srcImage.getImageName() + "_bw3");
             }
 
             if (useRed) {
@@ -1018,7 +1013,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         photoBleachedWidthY = Math.abs(newResY * (yBounds[1] - yBounds[0]));
         photoBleachedWidth = Math.min(photoBleachedWidthX, photoBleachedWidthY);
         Preferences.debug("photobleached region width = " + photoBleachedWidth + " microns\n");
-        UI.setDataText("photobleached region width = " + nf.format(photoBleachedWidth) + " microns\n");
+        ViewUserInterface.getReference().setDataText("photobleached region width = " + nf.format(photoBleachedWidth) + " microns\n");
         dataString += "photobleached region width = " + nf.format(photoBleachedWidth) + " microns\n";
 
         if (wholeOrganIndex >= 0) {
@@ -1031,7 +1026,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             Preferences.debug("whole organ length = " + wholeOrganLength + " microns\n");
-            UI.setDataText("whole organ length = " + nf.format(wholeOrganLength) + " microns\n");
+            ViewUserInterface.getReference().setDataText("whole organ length = " + nf.format(wholeOrganLength) + " microns\n");
             dataString += "whole organ length = " + nf.format(wholeOrganLength) + " microns\n";
         } // if (wholeOrganIndex >= 0)
 
@@ -1109,7 +1104,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             backgroundConstant = backgroundIntensity / backgroundCount;
             Preferences.debug("Background constant = " + backgroundConstant + "\n");
-            UI.setDataText("background constant = " + nf.format(backgroundConstant) + "\n");
+            ViewUserInterface.getReference().setDataText("background constant = " + nf.format(backgroundConstant) + "\n");
             dataString += "background constant = " + nf.format(backgroundConstant) + "\n";
         } // if (backgroundIndex >= 0)
 
@@ -1205,9 +1200,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 afterBeforeRatio = 1;
             }
 
-            UI.setDataText("The ratio of the whole organ region fluorescence after\n");
+            ViewUserInterface.getReference().setDataText("The ratio of the whole organ region fluorescence after\n");
             dataString += "The ratio of the whole organ region fluorescence after\n";
-            UI.setDataText("bleaching to before bleaching = " + nf.format(afterBeforeRatio) + "\n");
+            ViewUserInterface.getReference().setDataText("bleaching to before bleaching = " + nf.format(afterBeforeRatio) + "\n");
             dataString += "bleaching to before bleaching = " + nf.format(afterBeforeRatio) + "\n";
             Preferences.debug("The ratio of the whole organ region fluorescence after\n");
             Preferences.debug("bleaching to before bleaching = " + afterBeforeRatio + "\n");
@@ -1436,11 +1431,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 params[0] = 1.0 - params[0];
             }
 
-            UI.setDataText("In the recovery curve\n" +
+            ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
                            "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
             dataString += "In the recovery curve\n" +
                           "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-            UI.setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
+            ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                            nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                            nf.format(params[0]) + "\n");
             dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
@@ -1459,7 +1454,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 mf = 0.0f;
             }
 
-            UI.setDataText("Mobile fraction = " + nf.format(mf) + "\n");
+            ViewUserInterface.getReference().setDataText("Mobile fraction = " + nf.format(mf) + "\n");
             dataString += "Mobile fraction = " + nf.format(mf) + "\n";
             Preferences.debug("Mobile fraction = " + mf + "\n");
 
@@ -1493,17 +1488,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
             kd = num / denom;
             Dt = kdD / kd;
             ka = (2.0 * s1) - kd - (2.0 * kdD / (kd * (2.0 - afterBeforeRatio)));
-            UI.setDataText("Association rate = " + nf.format(ka) + "\n");
+            ViewUserInterface.getReference().setDataText("Association rate = " + nf.format(ka) + "\n");
             dataString += "Association rate = " + nf.format(ka) + "\n";
-            UI.setDataText("Dissociation rate = " + nf.format(kd) + "\n");
+            ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
             dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-            UI.setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n");
+            ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n");
             dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n";
             Preferences.debug("Association rate = " + ka + "\n");
             Preferences.debug("Dissociation rate = " + kd + "\n");
             Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n");
             Deff = Dt * photoBleachedWidth * (wholeOrganLength - photoBleachedWidth) / 4.0;
-            UI.setDataText("Effective diffusion constant = " + nf.format(Deff) + " um**2/sec\n\n");
+            ViewUserInterface.getReference().setDataText("Effective diffusion constant = " + nf.format(Deff) + " um**2/sec\n\n");
             dataString += "Effective diffusion constant = " + nf.format(Deff) + " um**2/sec\n\n";
             Preferences.debug("Effective diffusion constant = " + Deff + " um**2/sec\n\n");
 
@@ -1709,58 +1704,58 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 Preferences.debug("alpha and beta are incremented in multiplicative factors of " +
                                   Math.pow(400.0, 0.005) + "\n");
                 Preferences.debug("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
-                UI.setDataText("alpha and beta are incremented in multiplicative factors of " +
+                ViewUserInterface.getReference().setDataText("alpha and beta are incremented in multiplicative factors of " +
                                nf.format(Math.pow(400.0, 0.005)) + "\n");
                 dataString += "alpha and beta are incremented in multiplicative factors of " +
                               nf.format(Math.pow(400.0, 0.005)) + "\n";
-                UI.setDataText("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
+                ViewUserInterface.getReference().setDataText("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
                 dataString += "from 1/20 * original alpha and beta to 20 * original alpha and beta\n";
                 Preferences.debug("gamma is additively incremented by 0.01 from 0 to 1\n");
-                UI.setDataText("gamma is additively incremented by 0.01 from 0 to 1\n");
+                ViewUserInterface.getReference().setDataText("gamma is additively incremented by 0.01 from 0 to 1\n");
                 dataString += "gamma is additively incremented by 0.01 from 0 to 1\n";
 
                 if (indexmin != indexOriginal) {
                     Preferences.debug("sse original parameters = " + buffer[indexOriginal] + "\n");
-                    UI.setDataText("sse original parameters = " + buffer[indexOriginal] + "\n");
+                    ViewUserInterface.getReference().setDataText("sse original parameters = " + buffer[indexOriginal] + "\n");
                     dataString += "sse original parameters = " + buffer[indexOriginal] + "\n";
                 } // if (indexmin != indexOriginal)
 
                 Preferences.debug("sse global min = " + ssemin + "\n");
-                UI.setDataText("sse global min = " + ssemin + "\n");
+                ViewUserInterface.getReference().setDataText("sse global min = " + ssemin + "\n");
                 dataString += "sse global min = " + ssemin + "\n";
                 alphaScale = 0.05 * Math.pow(400.0, 0.005 * xmin);
                 Preferences.debug("x = " + xmin + " or new alpha = " + alphaScale + " * original alpha = " +
                                   (alphaScale * params[1]) + "\n");
-                UI.setDataText("x = " + xmin + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
+                ViewUserInterface.getReference().setDataText("x = " + xmin + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
                                nf.format(alphaScale * params[1]) + "\n");
                 dataString += "x = " + xmin + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
                               nf.format(alphaScale * params[1]) + "\n";
                 betaScale = 0.05 * Math.pow(400.0, 0.005 * ymin);
                 Preferences.debug("y = " + ymin + " or new beta = " + betaScale + " * original beta = " +
                                   (betaScale * params[2]) + "\n");
-                UI.setDataText("y = " + ymin + " or new beta = " + nf.format(betaScale) + " * original beta = " +
+                ViewUserInterface.getReference().setDataText("y = " + ymin + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                                nf.format(betaScale * params[2]) + "\n");
                 dataString += "y = " + ymin + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                               nf.format(betaScale * params[2]) + "\n";
                 Preferences.debug("slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
                                   " while original gamma = " + params[0] + "\n\n");
-                UI.setDataText("slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
+                ViewUserInterface.getReference().setDataText("slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
                                " while original gamma = " + nf.format(params[0]) + "\n\n");
                 dataString += "slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
                               " while original gamma = " + nf.format(params[0]) + "\n\n";
 
                 if (localMinNumber >= 1) {
                     Preferences.debug("In addition to the global minimum\n");
-                    UI.setDataText("In addition to the global minimum\n");
+                    ViewUserInterface.getReference().setDataText("In addition to the global minimum\n");
                     dataString += "In addition to the global minimum\n";
 
                     if (localMinNumber == 1) {
                         Preferences.debug("1 local minimum was located at:\n");
-                        UI.setDataText("1 local minimum was located at:\n");
+                        ViewUserInterface.getReference().setDataText("1 local minimum was located at:\n");
                         dataString += "1 local minimum was located at:\n";
                     } else {
                         Preferences.debug(localMinNumber + " local minima were located at:\n");
-                        UI.setDataText(localMinNumber + " local minima were located at:\n");
+                        ViewUserInterface.getReference().setDataText(localMinNumber + " local minima were located at:\n");
                         dataString += localMinNumber + " local minima were located at:\n";
                     }
 
@@ -1770,32 +1765,32 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         y = (index % xydim) / 201;
                         x = (index % xydim) % 201;
                         Preferences.debug("sse local min  = " + buffer[index] + "\n");
-                        UI.setDataText("sse local min min = " + buffer[index] + "\n");
+                        ViewUserInterface.getReference().setDataText("sse local min min = " + buffer[index] + "\n");
                         dataString += "sse local min min = " + buffer[index] + "\n";
                         alphaScale = 0.05 * Math.pow(400.0, 0.005 * x);
                         Preferences.debug("x = " + x + " or new alpha = " + alphaScale + " * original alpha = " +
                                           (alphaScale * params[1]) + "\n");
-                        UI.setDataText("x = " + x + " or new alpha = " + nf.format(alphaScale) +
+                        ViewUserInterface.getReference().setDataText("x = " + x + " or new alpha = " + nf.format(alphaScale) +
                                        " * original alpha = " + nf.format(alphaScale * params[1]) + "\n");
                         dataString += "x = " + x + " or new alpha = " + nf.format(alphaScale) + " * original alpha = " +
                                       nf.format(alphaScale * params[1]) + "\n";
                         betaScale = 0.05 * Math.pow(400.0, 0.005 * y);
                         Preferences.debug("y = " + y + " or new beta = " + betaScale + " * original beta = " +
                                           (betaScale * params[2]) + "\n");
-                        UI.setDataText("y = " + y + " or new beta = " + nf.format(betaScale) + " * original beta = " +
+                        ViewUserInterface.getReference().setDataText("y = " + y + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                                        nf.format(betaScale * params[2]) + "\n");
                         dataString += "y = " + y + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                                       nf.format(betaScale * params[2]) + "\n";
                         Preferences.debug("slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
                                           " while original gamma = " + params[0] + "\n\n");
-                        UI.setDataText("slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
+                        ViewUserInterface.getReference().setDataText("slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
                                        " while original gamma = " + nf.format(params[0]) + "\n\n");
                         dataString += "slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
                                       " while original gamma = " + nf.format(params[0]) + "\n\n";
                     } // for (i = 0; i < localMinNumber; i++)
                 } // if (localMinNumber >= 1)
 
-                errorImage = new ModelImage(ModelStorageBase.FLOAT, errExtents, srcImage.getImageName() + "_err", UI);
+                errorImage = new ModelImage(ModelStorageBase.FLOAT, errExtents, srcImage.getImageName() + "_err");
 
                 try {
                     errorImage.importData(0, buffer, true);
@@ -1948,9 +1943,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
             nonlinmod.driver();
             nonlinmod.dumpResults();
             params = nonlinmod.getParameters();
-            UI.setDataText("MATLAB nonlinear fit\n");
-            UI.setDataText("kon = " + params[0] + "\n");
-            UI.setDataText("koff = " + params[1] + "\n");
+            ViewUserInterface.getReference().setDataText("MATLAB nonlinear fit\n");
+            ViewUserInterface.getReference().setDataText("kon = " + params[0] + "\n");
+            ViewUserInterface.getReference().setDataText("koff = " + params[1] + "\n");
             dataString += "MATLAB nonlinear fit\n";
             dataString += "kon = " + params[0] + "\n";
             dataString += "koff = " + params[1] + "\n";
@@ -1997,9 +1992,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
             nlinmod2.dumpResults();
             residuals = nlinmod2.getResiduals();
             params = nlinmod2.getParameters();
-            UI.setDataText("ELSUNC nonlinear fit\n");
-            UI.setDataText("kon = " + params[0] + "\n");
-            UI.setDataText("koff = " + params[1] + "\n");
+            ViewUserInterface.getReference().setDataText("ELSUNC nonlinear fit\n");
+            ViewUserInterface.getReference().setDataText("kon = " + params[0] + "\n");
+            ViewUserInterface.getReference().setDataText("koff = " + params[1] + "\n");
             dataString += "ELSUNC nonlinear fit\n";
             dataString += "kon = " + params[0] + "\n";
             dataString += "koff = " + params[1] + "\n";
@@ -2130,40 +2125,40 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 if (indexmin != indexOriginal) {
                     Preferences.debug("sse original parameters = " + sses[indexOriginal] + "\n");
-                    UI.setDataText("sse original parameters = " + sses[indexOriginal] + "\n");
+                    ViewUserInterface.getReference().setDataText("sse original parameters = " + sses[indexOriginal] + "\n");
                     dataString += "sse original parameters = " + sses[indexOriginal] + "\n";
                 } // if (indexmin != indexOriginal)
 
                 Preferences.debug("sse global min = " + ssemin + "\n");
-                UI.setDataText("sse global min = " + ssemin + "\n");
+                ViewUserInterface.getReference().setDataText("sse global min = " + ssemin + "\n");
                 dataString += "sse global min = " + ssemin + "\n";
                 konScale = 0.02 * Math.pow(2500.0, 0.005 * xmin);
                 Preferences.debug("x = " + xmin + " or new kon = " + konScale + " * original kon = " +
                                   (konScale * params[0]) + "\n");
-                UI.setDataText("x = " + xmin + " or new kon = " + nf.format(konScale) + " * original kon = " +
+                ViewUserInterface.getReference().setDataText("x = " + xmin + " or new kon = " + nf.format(konScale) + " * original kon = " +
                                nf.format(konScale * params[0]) + "\n");
                 dataString += "x = " + xmin + " or new kon = " + nf.format(konScale) + " * original kon = " +
                               nf.format(konScale * params[0]) + "\n";
                 koffScale = 0.02 * Math.pow(2500.0, 0.005 * ymin);
                 Preferences.debug("y = " + ymin + " or new koff = " + koffScale + " * original koff = " +
                                   (koffScale * params[1]) + "\n");
-                UI.setDataText("y = " + ymin + " or new koff = " + nf.format(koffScale) + " * original koff = " +
+                ViewUserInterface.getReference().setDataText("y = " + ymin + " or new koff = " + nf.format(koffScale) + " * original koff = " +
                                nf.format(koffScale * params[1]) + "\n");
                 dataString += "y = " + ymin + " or new koff = " + nf.format(koffScale) + " * original koff = " +
                               nf.format(koffScale * params[1]) + "\n";
 
                 if (localMinNumber >= 1) {
                     Preferences.debug("In addition to the global minimum\n");
-                    UI.setDataText("In addition to the global minimum\n");
+                    ViewUserInterface.getReference().setDataText("In addition to the global minimum\n");
                     dataString += "In addition to the global minimum\n";
 
                     if (localMinNumber == 1) {
                         Preferences.debug("1 local minimum was located at:\n");
-                        UI.setDataText("1 local minimum was located at:\n");
+                        ViewUserInterface.getReference().setDataText("1 local minimum was located at:\n");
                         dataString += "1 local minimum was located at:\n";
                     } else {
                         Preferences.debug(localMinNumber + " local minima were located at:\n");
-                        UI.setDataText(localMinNumber + " local minima were located at:\n");
+                        ViewUserInterface.getReference().setDataText(localMinNumber + " local minima were located at:\n");
                         dataString += localMinNumber + " local minima were located at:\n";
                     }
 
@@ -2172,26 +2167,26 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         y = index / 201;
                         x = index % 201;
                         Preferences.debug("sse local min  = " + sses[index] + "\n");
-                        UI.setDataText("sse local min min = " + sses[index] + "\n");
+                        ViewUserInterface.getReference().setDataText("sse local min min = " + sses[index] + "\n");
                         dataString += "sse local min min = " + sses[index] + "\n";
                         konScale = 0.02 * Math.pow(2500.0, 0.005 * x);
                         Preferences.debug("x = " + x + " or new kon = " + konScale + " * original kon = " +
                                           (konScale * params[0]) + "\n");
-                        UI.setDataText("x = " + x + " or new kon = " + nf.format(konScale) + " * original kon = " +
+                        ViewUserInterface.getReference().setDataText("x = " + x + " or new kon = " + nf.format(konScale) + " * original kon = " +
                                        nf.format(konScale * params[0]) + "\n");
                         dataString += "x = " + x + " or new kon = " + nf.format(konScale) + " * original kon = " +
                                       nf.format(konScale * params[0]) + "\n";
                         koffScale = 0.02 * Math.pow(2500.0, 0.005 * y);
                         Preferences.debug("y = " + y + " or new koff = " + koffScale + " * original koff = " +
                                           (koffScale * params[1]) + "\n");
-                        UI.setDataText("y = " + y + " or new koff = " + nf.format(koffScale) + " * original koff = " +
+                        ViewUserInterface.getReference().setDataText("y = " + y + " or new koff = " + nf.format(koffScale) + " * original koff = " +
                                        nf.format(koffScale * params[1]) + "\n");
                         dataString += "y = " + y + " or new koff = " + nf.format(koffScale) + " * original koff = " +
                                       nf.format(koffScale * params[1]) + "\n";
                     } // for (i = 0; i < localMinNumber; i++)
                 } // if (localMinNumber >= 1)
 
-                errorImage = new ModelImage(ModelStorageBase.FLOAT, errExtents, srcImage.getImageName() + "_err", UI);
+                errorImage = new ModelImage(ModelStorageBase.FLOAT, errExtents, srcImage.getImageName() + "_err");
 
                 try {
                     errorImage.importData(0, sses, true);
@@ -2377,12 +2372,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 span = 1.0 - params[1];
             } // else no whole organ normalization
 
-            UI.setDataText("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
-            UI.setDataText("bottom = " + nf.format(bottom) + "\n");
-            UI.setDataText("span = " + nf.format(span) + "\n");
-            UI.setDataText("D/w**2 = " + nf.format(params[0]) + "\n");
+            ViewUserInterface.getReference().setDataText("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
+            ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + "\n");
+            ViewUserInterface.getReference().setDataText("span = " + nf.format(span) + "\n");
+            ViewUserInterface.getReference().setDataText("D/w**2 = " + nf.format(params[0]) + "\n");
             Deff = params[0] * photoBleachedWidth * photoBleachedWidth;
-            UI.setDataText("Deff = " + nf.format(Deff) + " um**2/sec\n");
+            ViewUserInterface.getReference().setDataText("Deff = " + nf.format(Deff) + " um**2/sec\n");
             Preferences.debug("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
             Preferences.debug("bottom = " + bottom + "\n");
             Preferences.debug("span = " + span + "\n");
@@ -2396,7 +2391,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 mf = 0.0f;
             }
 
-            UI.setDataText("Mobile fraction = " + nf.format(mf) + "\n");
+            ViewUserInterface.getReference().setDataText("Mobile fraction = " + nf.format(mf) + "\n");
             Preferences.debug("Mobile fraction = " + mf + "\n");
 
             // Plot the intensity of the photobleached region with time
@@ -2462,19 +2457,19 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
 
                     Preferences.debug("D/w**2 = " + dw2 + " sse = " + sse + "\n");
-                    UI.setDataText("D/w**2 = " + nf.format(dw2) + " sse = " + sse + "\n");
+                    ViewUserInterface.getReference().setDataText("D/w**2 = " + nf.format(dw2) + " sse = " + sse + "\n");
                 } // for (x = 0; x <= 200; x++)
 
                 Preferences.debug("D/w**2 is incremented in multiplicative factors of " + Math.pow(400.0, 0.005) +
                                   "\n");
                 Preferences.debug("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
-                UI.setDataText("D/w**2 is incremented in multiplicative factors of " +
+                ViewUserInterface.getReference().setDataText("D/w**2 is incremented in multiplicative factors of " +
                                nf.format(Math.pow(400.0, 0.005)) + "\n");
-                UI.setDataText("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
+                ViewUserInterface.getReference().setDataText("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
                 Preferences.debug("ssemin = " + ssemin + " found at new D/w**2 = " +
                                   (0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original D/w**2 = " +
                                   (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
-                UI.setDataText("ssemin = " + ssemin + " found at new D/w**2 = " +
+                ViewUserInterface.getReference().setDataText("ssemin = " + ssemin + " found at new D/w**2 = " +
                                nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original D/w**2 = " +
                                nf.format(0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
 
@@ -2562,10 +2557,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 span = 1.0 - params[1];
             } // else no whole organ normalization
 
-            UI.setDataText("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
-            UI.setDataText("bottom  = " + nf.format(bottom) + "\n");
-            UI.setDataText("span = " + nf.format(span) + "\n");
-            UI.setDataText("thalf = " + nf.format(params[0]) + "\n");
+            ViewUserInterface.getReference().setDataText("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
+            ViewUserInterface.getReference().setDataText("bottom  = " + nf.format(bottom) + "\n");
+            ViewUserInterface.getReference().setDataText("span = " + nf.format(span) + "\n");
+            ViewUserInterface.getReference().setDataText("thalf = " + nf.format(params[0]) + "\n");
             Preferences.debug("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
             Preferences.debug("bottom = " + bottom + "\n");
             Preferences.debug("span = " + span + "\n");
@@ -2578,7 +2573,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 mf = 0.0f;
             }
 
-            UI.setDataText("Mobile fraction = " + nf.format(mf) + "\n");
+            ViewUserInterface.getReference().setDataText("Mobile fraction = " + nf.format(mf) + "\n");
             Preferences.debug("Mobile fraction = " + mf + "\n");
 
             // Plot the intensity of the photobleached region with time
@@ -2640,18 +2635,18 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
 
                     Preferences.debug("thalf = " + thalf + " sse = " + sse + "\n");
-                    UI.setDataText("thalf = " + nf.format(thalf) + " sse = " + sse + "\n");
+                    ViewUserInterface.getReference().setDataText("thalf = " + nf.format(thalf) + " sse = " + sse + "\n");
                 } // for (x = 0; x <= 200; x++)
 
                 Preferences.debug("thalf is incremented in multiplicative factors of " + Math.pow(400.0, 0.005) + "\n");
                 Preferences.debug("from 1/20 * original thalf to 20 * original thalf\n");
-                UI.setDataText("thalf is incremented in multiplicative factors of " +
+                ViewUserInterface.getReference().setDataText("thalf is incremented in multiplicative factors of " +
                                nf.format(Math.pow(400.0, 0.005)) + "\n");
-                UI.setDataText("from 1/20 * original thalf to 20 * original thalf\n");
+                ViewUserInterface.getReference().setDataText("from 1/20 * original thalf to 20 * original thalf\n");
                 Preferences.debug("ssemin = " + ssemin + " found at new thalf = " +
                                   (0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original thalf = " +
                                   (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
-                UI.setDataText("ssemin = " + ssemin + " found at new thalf = " +
+                ViewUserInterface.getReference().setDataText("ssemin = " + ssemin + " found at new thalf = " +
                                nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original thalf = " +
                                nf.format(0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
 
@@ -2989,35 +2984,35 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             if (i == 0) {
                 Preferences.debug("Data Set A\n");
-                UI.setDataText("Data Set A\n");
+                ViewUserInterface.getReference().setDataText("Data Set A\n");
                 dataString += "Data Set A\n";
             } else if (i == 1) {
                 Preferences.debug("Data Set B\n");
-                UI.setDataText("Data Set B\n");
+                ViewUserInterface.getReference().setDataText("Data Set B\n");
                 dataString += "Data Set B\n";
             } else if (i == 2) {
                 Preferences.debug("Data Set C\n");
-                UI.setDataText("Data Set C\n");
+                ViewUserInterface.getReference().setDataText("Data Set C\n");
                 dataString += "Data Set C\n";
             } else if (i == 3) {
                 Preferences.debug("Data Set D\n");
-                UI.setDataText("Data Set D\n");
+                ViewUserInterface.getReference().setDataText("Data Set D\n");
                 dataString += "Data Set D\n";
             } else if (i == 4) {
                 Preferences.debug("Data Set E\n");
-                UI.setDataText("Data Set E\n");
+                ViewUserInterface.getReference().setDataText("Data Set E\n");
                 dataString += "Data Set E\n";
             } else if (i == 5) {
                 Preferences.debug("Data Set F\n");
-                UI.setDataText("Data Set F\n");
+                ViewUserInterface.getReference().setDataText("Data Set F\n");
                 dataString += "Data Set F\n";
             } else if (i == 6) {
                 Preferences.debug("Data Set G\n");
-                UI.setDataText("Data Set G\n");
+                ViewUserInterface.getReference().setDataText("Data Set G\n");
                 dataString += "Data Set G\n";
             } else {
                 Preferences.debug("Data Set H\n");
-                UI.setDataText("Data Set H\n");
+                ViewUserInterface.getReference().setDataText("Data Set H\n");
                 dataString += "Data Set H\n";
             }
 
@@ -3104,8 +3099,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             initial[0] = 2.0 * 0.01;
             initial[1] = 0.5 * 0.01;
-            UI.setDataText("initial kon = " + initial[0] + " is twice the actual value\n");
-            UI.setDataText("initial koff = " + initial[1] + " is half the actual value\n");
+            ViewUserInterface.getReference().setDataText("initial kon = " + initial[0] + " is twice the actual value\n");
+            ViewUserInterface.getReference().setDataText("initial koff = " + initial[1] + " is half the actual value\n");
             Preferences.debug("initial kon = " + initial[0] + " is twice the actual value\n");
             Preferences.debug("initial koff = " + initial[1] + " is half the actual value\n");
             // lmod2 = new FitFullModel2(tValues, abscissa, relEps, absEps, result, estErr, evaluations, errStatus,
@@ -3148,9 +3143,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
              * pIntensity, initial, nLaguerre,                                  sig0, sigmax, bmax, tols, tolb);
              * nlinmod9.driver(); nlinmod9.dumpResults();params = nlinmod9.getParameters();*/
 
-            UI.setDataText("MATLAB nonlinear fit\n");
-            UI.setDataText("kon = " + params[0] + "\n");
-            UI.setDataText("koff = " + params[1] + "\n");
+            ViewUserInterface.getReference().setDataText("MATLAB nonlinear fit\n");
+            ViewUserInterface.getReference().setDataText("kon = " + params[0] + "\n");
+            ViewUserInterface.getReference().setDataText("koff = " + params[1] + "\n");
             dataString += "MATLAB nonlinear fit\n";
             dataString += "kon = " + params[0] + "\n";
             dataString += "koff = " + params[1] + "\n";
@@ -3158,7 +3153,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             Preferences.debug("kon = " + params[0] + "\n");
             Preferences.debug("koff = " + params[1] + "\n");
             time = System.currentTimeMillis() - time;
-            UI.setDataText("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
+            ViewUserInterface.getReference().setDataText("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
             dataString += "Time in minutes = " + (time / (1000.0 * 60.0)) + "\n";
             Preferences.debug("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
 
@@ -3192,9 +3187,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
              *                   tols, tolb); nlinmod10.driver(); nlinmod10.dumpResults();params =
              * nlinmod10.getParameters();*/
 
-            UI.setDataText("ELSUNC nonlinear fit\n");
-            UI.setDataText("kon = " + params[0] + "\n");
-            UI.setDataText("koff = " + params[1] + "\n");
+            ViewUserInterface.getReference().setDataText("ELSUNC nonlinear fit\n");
+            ViewUserInterface.getReference().setDataText("kon = " + params[0] + "\n");
+            ViewUserInterface.getReference().setDataText("koff = " + params[1] + "\n");
             dataString += "ELSUNC nonlinear fit\n";
             dataString += "kon = " + params[0] + "\n";
             dataString += "koff = " + params[1] + "\n";
@@ -3202,7 +3197,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             Preferences.debug("kon = " + params[0] + "\n");
             Preferences.debug("koff = " + params[1] + "\n");
             time = System.currentTimeMillis() - time;
-            UI.setDataText("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
+            ViewUserInterface.getReference().setDataText("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
             dataString += "Time in minutes = " + (time / (1000.0 * 60.0)) + "\n";
             Preferences.debug("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
 
@@ -3323,7 +3318,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
         IntModel imod;
         int steps;
         double numInt;
-        double actualInt;
         double eps = 1.0e-8;
         imod = new IntModel(0.0, Math.PI, Integration.MIDPNT, eps);
         imod.driver();
@@ -3707,35 +3701,35 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 if (i == 0) {
                     Preferences.debug("Data Set A\n");
-                    UI.setDataText("Data Set A\n");
+                    ViewUserInterface.getReference().setDataText("Data Set A\n");
                     dataString += "Data Set A\n";
                 } else if (i == 1) {
                     Preferences.debug("Data Set B\n");
-                    UI.setDataText("Data Set B\n");
+                    ViewUserInterface.getReference().setDataText("Data Set B\n");
                     dataString += "Data Set B\n";
                 } else if (i == 2) {
                     Preferences.debug("Data Set C\n");
-                    UI.setDataText("Data Set C\n");
+                    ViewUserInterface.getReference().setDataText("Data Set C\n");
                     dataString += "Data Set C\n";
                 } else if (i == 3) {
                     Preferences.debug("Data Set D\n");
-                    UI.setDataText("Data Set D\n");
+                    ViewUserInterface.getReference().setDataText("Data Set D\n");
                     dataString += "Data Set D\n";
                 } else if (i == 4) {
                     Preferences.debug("Data Set E\n");
-                    UI.setDataText("Data Set E\n");
+                    ViewUserInterface.getReference().setDataText("Data Set E\n");
                     dataString += "Data Set E\n";
                 } else if (i == 5) {
                     Preferences.debug("Data Set F\n");
-                    UI.setDataText("Data Set F\n");
+                    ViewUserInterface.getReference().setDataText("Data Set F\n");
                     dataString += "Data Set F\n";
                 } else if (i == 6) {
                     Preferences.debug("Data Set G\n");
-                    UI.setDataText("Data Set G\n");
+                    ViewUserInterface.getReference().setDataText("Data Set G\n");
                     dataString += "Data Set G\n";
                 } else {
                     Preferences.debug("Data Set H\n");
-                    UI.setDataText("Data Set H\n");
+                    ViewUserInterface.getReference().setDataText("Data Set H\n");
                     dataString += "Data Set H\n";
                 }
 
@@ -3754,7 +3748,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     pIntensity[j] = pIntensity[j] / pMax;
                 }
 
-                UI.setDataText("Numerical recipes fitting engine pure 1D diffusion\n");
+                ViewUserInterface.getReference().setDataText("Numerical recipes fitting engine pure 1D diffusion\n");
                 Preferences.debug("Numercial recipes fitting engine pure 1D diffusion\n");
                 dataString += "Numerical recipes fitting engine pure 1D diffusion\n";
                 pMin = Float.MAX_VALUE;
@@ -3800,10 +3794,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 params = fp1DNW.getParameters();
                 bottom = params[1];
                 span = 1.0 - params[1];
-                UI.setDataText("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
-                UI.setDataText("bottom = " + nf.format(bottom) + "\n");
-                UI.setDataText("span = " + nf.format(span) + "\n");
-                UI.setDataText("D/w**2 = " + nf.format(params[0]) + "\n");
+                ViewUserInterface.getReference().setDataText("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + "\n");
+                ViewUserInterface.getReference().setDataText("span = " + nf.format(span) + "\n");
+                ViewUserInterface.getReference().setDataText("D/w**2 = " + nf.format(params[0]) + "\n");
                 Preferences.debug("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
                 Preferences.debug("bottom = " + bottom + "\n");
                 Preferences.debug("span = " + span + "\n");
@@ -3811,11 +3805,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 dataString += "In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n";
                 dataString += "bottom = " + nf.format(bottom) + "\n";
                 dataString += "D/w**2 = " + nf.format(params[0]) + "\n";
-                UI.setDataText("Mobile fraction = 1.0\n\n");
+                ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n\n");
                 dataString += "Mobile fraction = 1.0\n\n";
                 Preferences.debug("Mobile fraction = 1.0\n\n");
 
-                UI.setDataText("MATLAB fitting engine single exponential\n");
+                ViewUserInterface.getReference().setDataText("MATLAB fitting engine single exponential\n");
                 Preferences.debug("MATLAB fitting engine single exponential\n");
                 dataString += "MATLAB fitting engine single exponential\n";
 
@@ -3853,10 +3847,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 params = fsemnw.getParameters();
                 bottom = params[1];
                 span = 1.0 - params[1];
-                UI.setDataText("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
-                UI.setDataText("bottom  = " + nf.format(bottom) + "\n");
-                UI.setDataText("span = " + nf.format(span) + "\n");
-                UI.setDataText("thalf = " + nf.format(params[0]) + "\n");
+                ViewUserInterface.getReference().setDataText("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
+                ViewUserInterface.getReference().setDataText("bottom  = " + nf.format(bottom) + "\n");
+                ViewUserInterface.getReference().setDataText("span = " + nf.format(span) + "\n");
+                ViewUserInterface.getReference().setDataText("thalf = " + nf.format(params[0]) + "\n");
                 dataString += "In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n";
                 dataString += "bottom  = " + nf.format(bottom) + "\n";
                 dataString += "span = " + nf.format(span) + "\n";
@@ -3865,7 +3859,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 Preferences.debug("bottom = " + bottom + "\n");
                 Preferences.debug("span = " + span + "\n");
                 Preferences.debug("thalf = " + params[0] + "\n");
-                UI.setDataText("Mobile fraction = 1.0\n\n");
+                ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n\n");
                 dataString += "Mobile fraction = 1.0\n\n";
                 Preferences.debug("Mobile fraction = 1.0\n\n");
 
@@ -3906,7 +3900,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 Preferences.debug("beta guess initial[2] = " + initial[2] + "\n");
                 Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n");
 
-                UI.setDataText("MATLAB fitting engine double exponential\n");
+                ViewUserInterface.getReference().setDataText("MATLAB fitting engine double exponential\n");
                 Preferences.debug("MATLAB fitting engine double exponential\n");
                 dataString += "MATLAB fitting engine double exponential\n";
                 fdemNL3nw = new FitDoubleExponentialNoWholeNL3Model(200, tValues, pIntensity, initial);
@@ -3926,11 +3920,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     params[0] = 1.0 - params[0];
                 }
 
-                UI.setDataText("In the recovery curve\n" +
+                ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
                                "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 dataString += "In the recovery curve\n" +
                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                UI.setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                                nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                                nf.format(params[0]) + "\n");
                 dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
@@ -3940,7 +3934,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                   "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + params[1] +
                                   " beta = " + params[2] + " gamma = " + params[0] + "\n");
-                UI.setDataText("Mobile fraction = 1.0\n");
+                ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n");
                 dataString += "Mobile fraction = 1.0\n";
                 Preferences.debug("Mobile fraction = 1.0\n");
 
@@ -3962,17 +3956,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 Dt = s1 - (2.0 * params[0] * s2) + s2;
                 kd = kdD / Dt;
                 ka = (2.0 * s1) - kd - Dt;
-                UI.setDataText("Association rate = " + nf.format(ka) + "\n");
+                ViewUserInterface.getReference().setDataText("Association rate = " + nf.format(ka) + "\n");
                 dataString += "Association rate = " + nf.format(ka) + "\n";
-                UI.setDataText("Dissociation rate = " + nf.format(kd) + "\n");
+                ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
                 dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                UI.setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
+                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
                 Preferences.debug("Association rate = " + ka + "\n");
                 Preferences.debug("Dissociation rate = " + kd + "\n");
                 Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n");
 
-                UI.setDataText("Numerical recipes fitting engine double exponential\n");
+                ViewUserInterface.getReference().setDataText("Numerical recipes fitting engine double exponential\n");
                 Preferences.debug("Numercial recipes fitting engine double exponential\n");
                 dataString += "Numerical recipes fitting engine double exponential\n";
                 fdemnw = new FitDoubleExponentialNoWholeModel(200, tValues, pIntensity, initial);
@@ -3997,11 +3991,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     params[0] = 1.0 - params[0];
                 }
 
-                UI.setDataText("In the recovery curve\n" +
+                ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
                                "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 dataString += "In the recovery curve\n" +
                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                UI.setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                                nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                                nf.format(params[0]) + "\n");
                 dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
@@ -4011,7 +4005,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                   "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + params[1] +
                                   " beta = " + params[2] + " gamma = " + params[0] + "\n");
-                UI.setDataText("Mobile fraction = 1.0\n");
+                ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n");
                 dataString += "Mobile fraction = 1.0\n";
                 Preferences.debug("Mobile fraction = 1.0\n");
 
@@ -4033,17 +4027,17 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 Dt = s1 - (2.0 * params[0] * s2) + s2;
                 kd = kdD / Dt;
                 ka = (2.0 * s1) - kd - Dt;
-                UI.setDataText("Association rate = " + nf.format(ka) + "\n");
+                ViewUserInterface.getReference().setDataText("Association rate = " + nf.format(ka) + "\n");
                 dataString += "Association rate = " + nf.format(ka) + "\n";
-                UI.setDataText("Dissociation rate = " + nf.format(kd) + "\n");
+                ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
                 dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                UI.setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
+                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
                 Preferences.debug("Association rate = " + ka + "\n");
                 Preferences.debug("Dissociation rate = " + kd + "\n");
                 Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n");
 
-                UI.setDataText("ELSUNC fitting engine double exponential\n");
+                ViewUserInterface.getReference().setDataText("ELSUNC fitting engine double exponential\n");
                 Preferences.debug("ELSUNC fitting engine double exponential\n");
                 dataString += "ELSUNC fitting engine double exponential\n";
                 fdemConstrainednw = new FitDoubleExponentialNoWholeConstrainedModel(200, tValues, pIntensity, initial);
@@ -4063,11 +4057,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     params[0] = 1.0 - params[0];
                 }
 
-                UI.setDataText("In the recovery curve\n" +
+                ViewUserInterface.getReference().setDataText("In the recovery curve\n" +
                                "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 dataString += "In the recovery curve\n" +
                               "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n";
-                UI.setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
+                ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
                                nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                                nf.format(params[0]) + "\n");
                 dataString += "bottom = " + nf.format(bottom) + " span = " + nf.format(span) + "\n" + "alpha = " +
@@ -4077,7 +4071,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                   "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
                 Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + params[1] +
                                   " beta = " + params[2] + " gamma = " + params[0] + "\n");
-                UI.setDataText("Mobile fraction = 1.0\n");
+                ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n");
                 dataString += "Mobile fraction = 1.0\n";
                 Preferences.debug("Mobile fraction = 1.0\n");
 
@@ -4099,11 +4093,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 Dt = s1 - (2.0 * params[0] * s2) + s2;
                 kd = kdD / Dt;
                 ka = (2.0 * s1) - kd - Dt;
-                UI.setDataText("Association rate = " + nf.format(ka) + "\n");
+                ViewUserInterface.getReference().setDataText("Association rate = " + nf.format(ka) + "\n");
                 dataString += "Association rate = " + nf.format(ka) + "\n";
-                UI.setDataText("Dissociation rate = " + nf.format(kd) + "\n");
+                ViewUserInterface.getReference().setDataText("Dissociation rate = " + nf.format(kd) + "\n");
                 dataString += "Dissociation rate = " + nf.format(kd) + "\n";
-                UI.setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
+                ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
                 Preferences.debug("Association rate = " + ka + "\n");
                 Preferences.debug("Dissociation rate = " + kd + "\n");

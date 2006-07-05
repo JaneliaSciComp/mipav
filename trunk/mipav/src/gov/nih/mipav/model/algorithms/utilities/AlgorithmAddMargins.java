@@ -871,13 +871,9 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         boolean isDicom = false;
         int dataType;
         String imageName;
-        ViewUserInterface userInterface;
-        float[] res;
-        int color;
 
         dataType = srcImage.getType();
         imageName = srcImage.getImageName();
-        userInterface = srcImage.getUserInterface();
 
         int mod = destSliceArea / 100; // mod is 1 percent of length for the percentage in the progress bar
 
@@ -1009,7 +1005,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
             sourceSlice = null;
 
-            srcImage = new ModelImage(dataType, newExtents, imageName, userInterface);
+            srcImage = new ModelImage(dataType, newExtents, imageName);
 
 
             try {
@@ -1269,7 +1265,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 srcImage.disposeLocal();
                 srcImage = null;
 
-                srcImage = new ModelImage(dataType, newExtents, imageName, userInterface);
+                srcImage = new ModelImage(dataType, newExtents, imageName);
 
                 try {
                     srcImage.importData(0, destSlice, true);

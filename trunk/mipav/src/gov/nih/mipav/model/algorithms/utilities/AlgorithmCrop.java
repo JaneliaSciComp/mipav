@@ -566,7 +566,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         FileInfoBase[] fInfoBase;
         int dataType = srcImage.getType();
         String imageName = srcImage.getImageName();
-        ViewUserInterface userInterface = srcImage.getUserInterface();
         float[] resols;
         int[] axisOrient;
         int nDims = 2;
@@ -717,7 +716,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         buffer = null;
 
-        srcImage = new ModelImage(dataType, dimExtents, imageName, userInterface);
+        srcImage = new ModelImage(dataType, dimExtents, imageName);
         srcImage.setFileInfo(fInfoBase[0], 0);
         srcImage.setMatrix(mat);
 

@@ -42,9 +42,6 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
     /** DOCUMENT ME! */
     private float quality;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -55,7 +52,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
      * @param  outputDir    DOCUMENT ME!
      * @param  compression  DOCUMENT ME!
      */
-    public AlgorithmDICOMtoAVI(ViewUserInterface ui, String dir, String outputDir, int compression) {
+    public AlgorithmDICOMtoAVI(String dir, String outputDir, int compression) {
         this.dirPath = dir;
         this.outputPath = outputDir;
 
@@ -68,7 +65,6 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
             outputPath = outputPath.substring(0, outputPath.length() - 1);
         }
 
-        this.userInterface = ui;
         this.compression = compression;
 
         fileIO = new FileIO();
@@ -292,8 +288,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                     newExtents[1] = extents[1] + topPadding;
                     newExtents[2] = extents[2];
 
-                    ModelImage paddedImage = new ModelImage(dicomImage.getType(), newExtents, "TEMPImage",
-                                                            userInterface);
+                    ModelImage paddedImage = new ModelImage(dicomImage.getType(), newExtents, "TEMPImage");
 
                     progressBar.setMessage("Adding margins to image...");
 
@@ -323,7 +318,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                 // if the new directory structure doesnt exist, create it, then transcode to AVI
                 if (dicomFile.exists() || dicomFile.mkdirs()) {
                     FileAvi aviFile;
-                    aviFile = new FileAvi(userInterface, name, newDirectory);
+                    aviFile = new FileAvi(ViewUserInterface.getReference(), name, newDirectory);
                     aviFile.setCompressionQuality(quality);
 
                     aviFile.setProgressBarVisible(false);
