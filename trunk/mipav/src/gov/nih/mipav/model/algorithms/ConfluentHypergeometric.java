@@ -83,6 +83,8 @@ public class ConfluentHypergeometric {
     /** Number of digits required to represent the numbers with the required accuracy */
     private double rmax;
     
+    private int bit;
+    
     
 //  ~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -190,7 +192,6 @@ public class ConfluentHypergeometric {
         double denom;
         double realTemp;
         int i;
-        int bit;
         double sigfig;
         double ar2;
         double ar;
@@ -220,6 +221,9 @@ public class ConfluentHypergeometric {
         double realNum;
         double imagNum;
         double absVal;
+        int nmach;
+        int icount;
+        int ixcnt;
         
         if ((realZ != 0.0) && (imagZ != 0.0)) {
             ang = Math.atan2(imagZ, realZ);   
@@ -255,9 +259,9 @@ public class ConfluentHypergeometric {
             if (term2 < 1.0) {
                 if ((realA + nterm) > 2.0) {
                     if ((realB + nterm) > 2.0) {
-                        if ((term2 - term1) < 0.0) {
+                        if (term2 < term1) {
                             break;
-                        } // if ((term2 - term1) < 0.0)
+                        } // if (term2 < term1)
                     } // if ((realB + nterm) > 2.0)
                 } // if ((realA + nterm) > 2.0) 
             } // if (term2 < 1.0)
@@ -268,6 +272,7 @@ public class ConfluentHypergeometric {
             term1 = term2;
         } // while (true)
         bit = bits();
+        //Preferences.debug("bit = " + bit + "\n");
         max = max * 2.0/(bit * 0.693147181);
         L = (int)(max*ang) + 7;
         if (L < 5) {
@@ -276,11 +281,14 @@ public class ConfluentHypergeometric {
         if (ip > L) {
             L = ip;
         } // if (ip > L)
+        //Preferences.debug("L = " + L + "\n");
         
         // Sum the Kummer series and return the solution of the confluent hypergeometric
         // function
         rmax = Math.pow(2.0,bit/2);
         sigfig = Math.pow(2.0, bit/4);
+        
+        // Set to zero any arguments which are below the precision of the machine
         ar2 = realA * sigfig;
         ar = (int)ar2;
         ar2 = (int)((ar2-ar)*rmax + 0.5);
@@ -299,6 +307,40 @@ public class ConfluentHypergeometric {
         xi2 = imagZ * sigfig;
         xi = (int)xi2;
         xi2 = (int)((xi2-xi)*rmax + 0.5);
+        
+        // Warn the user that the input value was so close to zero that it
+        // was set equal to zero.
+        if ((realA != 0.0) && (ar == 0.0) && (ar2 == 0.0)) {
+            Preferences.debug("Warning! Real part of A was set to zero\n");
+        }
+        if ((imagA != 0.0) && (ai == 0.0) && (ai2 == 0.0)) {
+            Preferences.debug("Warning! Imaginary part of A was set to zero\n");
+        }
+        if ((realB != 0.0) && (cr == 0.0) && (cr2 == 0.0)) {
+            Preferences.debug("Warning! Real part of B was set to zero\n");
+        }
+        if ((imagB != 0.0) && (ci == 0.0) && (ci2 == 0.0)) {
+            Preferences.debug("Warning! Imaginary part of B was set to zero\n");
+        }
+        if ((realZ != 0.0) && (xr == 0.0) && (xr2 == 0.0)) {
+            Preferences.debug("Warning! Real part of Z was set to zero\n");
+        }
+        if ((imagZ != 0.0) && (xi == 0.0) && (xi2 == 0.0)) {
+            Preferences.debug("Warning! Imaginary part of Z was set to zero\n");
+        }
+        
+        // Screening of the case when B is zero or A negative integer
+        if ((cr == 0.0) && (cr2 == 0.0) && (ci == 0.0) && (ci2 == 0.0)) {
+            MipavUtil.displayError("Error! Argument B was equal to zero");
+            return;
+        }
+        nmach = (int)(0.4342944819*Math.log(Math.pow(2.0, bit)));
+        if ((ci == 0.0) && (ci2 == 0.0) && (realB < 0.0)) {
+            if (Math.abs(realB - (int)(realB + 0.5)) < Math.pow(10.0,-nmach)) {
+                MipavUtil.displayError("Error! Argument A was a negative integer");
+                return;
+            }
+        }
         sumr[0] = 1.0;
         sumi[0] = 1.0;
         numr[0] = 1.0;
@@ -317,6 +359,13 @@ public class ConfluentHypergeometric {
         numr[2] = 1.0;
         denomr[2] = 1.0;
         cnt = sigfig;
+        icount = -1;
+        if ((ai == 0.0) && (ai2 == 0.0) && (realA < 0.0)) {
+            if (Math.abs(realA - (int)(realA + 0.5)) < Math.pow(10.0,(-nmach))) {
+                icount = -(int)(realA + 0.5);
+            }
+        }
+        ixcnt = 0;
         while (true) {
             if (sumr[2] < 0.5) {
                 mx1 = sumi[L+2];
@@ -351,6 +400,10 @@ public class ConfluentHypergeometric {
                     } // if (absVal <= 1.0)
                 } // if (cr > 0.0)
             } // if ((mx1 - mx2) > 2.0)
+            if (ixcnt == icount) {
+                break;
+            }
+            ixcnt = ixcnt + 1;
             cmpmul(sumr, sumi, cr, ci, qr1, qi1);
             cmpmul(sumr, sumi, cr2, ci2, qr2, qi2);
             qr2[L+2] = qr2[L+2] - 1;
@@ -384,7 +437,352 @@ public class ConfluentHypergeometric {
             ar = ar + sigfig;
             cr = cr + sigfig;
         } // while (true)
+        arydiv(sumr, sumi, denomr, denomi);
+        return;
     } // firstKindComplex
+    
+    /**
+     * Returns the complex number resulting from the division of four arrays, representing
+     * two complex numbers.  The number returned will be in one of two different forms.  
+     * Either standard scientific or as the log of the number.
+     * @param ar
+     * @param ai
+     * @param br
+     * @param bi
+     */
+    private void arydiv(double ar[], double ai[], double br[], double bi[]) {
+        int rexp;
+        int ir10;
+        int ii10;
+        double phi;
+        double n1[] = new double[1];
+        double n2[] = new double[1];
+        double n3[] = new double[1];
+        double e1[] = new double[1];
+        double e2[] = new double[1];
+        double e3[] = new double[1];
+        double rr10;
+        double ri10;
+        double x;
+        double ae[][] = new double[2][2];
+        double be[][] = new double[2][2];
+        double x1;
+        double x2;
+        double dum1;
+        double dum2;
+        double ce[][] = new double[2][2];
+        double logRatio = Math.log(2.0)/Math.log(10.0);
+        
+        rexp = bit/2;
+        x = rexp*(ar[L+2] - 2);
+        rr10 = x * logRatio;
+        ir10 = (int)rr10;
+        rr10 = rr10 - ir10;
+        x = rexp*(ai[L+2] - 2);
+        ri10 = x * logRatio;
+        ii10 = (int)ri10;
+        ri10 = ri10 - ii10;
+        if (ar[0] >= 0) {
+            dum1 = Math.abs(ar[2]*rmax*rmax + ar[3]*rmax + ar[4]); 
+        }
+        else {
+            dum1 = -Math.abs(ar[2]*rmax*rmax + ar[3]*rmax + ar[4]);
+        }
+        if (ai[0] >= 0) {
+            dum2 = Math.abs(ai[2]*rmax*rmax + ai[3]*rmax + ai[4]); 
+        }
+        else {
+            dum2 = -Math.abs(ai[2]*rmax*rmax + ai[3]*rmax + ai[4]);
+        }
+        dum1 = dum1*Math.pow(10.0,rr10);
+        dum2 = dum2*Math.pow(10.0,ri10);
+        conv12(dum1, dum2, ae);
+        ae[0][1] = ae[0][1] + ir10;
+        ae[1][1] = ae[1][1] + ii10;
+        x = rexp*(br[L+2] - 2);
+        rr10 = x * logRatio;
+        ir10 = (int)rr10;
+        rr10 = rr10 - ir10;
+        x = rexp*(bi[L+2] - 2);
+        ri10 = x * logRatio;
+        ii10 = (int)ri10;
+        ri10 = ri10 - ii10;
+        if (br[0] >= 0) {
+            dum1 = Math.abs(br[2]*rmax*rmax + br[3]*rmax + br[4]); 
+        }
+        else {
+            dum1 = -Math.abs(br[2]*rmax*rmax + br[3]*rmax + br[4]);
+        }
+        if (bi[0] >= 0) {
+            dum2 = Math.abs(bi[2]*rmax*rmax + bi[3]*rmax + bi[4]); 
+        }
+        else {
+            dum2 = -Math.abs(bi[2]*rmax*rmax + bi[3]*rmax + bi[4]);
+        }
+        dum1 = dum1*Math.pow(10.0,rr10);
+        dum2 = dum2*Math.pow(10.0,ri10);
+        conv12(dum1, dum2, be);
+        be[0][1] = be[0][1] + ir10;
+        be[1][1] = be[1][1] + ii10;
+        ecpdiv(ae, be, ce);
+        if (Lnchf == 0) {
+            conv21(ce);    
+        }
+        else {
+            emult(ce[0][0], ce[0][1], ce[0][0], ce[0][1], n1, e1);
+            emult(ce[1][0], ce[1][1], ce[1][0], ce[1][1], n2, e2);
+            eadd(n1[0], e1[0], n2[0], e2[0], n3, e3);
+            n1[0] = ce[0][0];
+            e1[0] = ce[0][1] - ce[1][1];
+            x2 = ce[1][0];
+            if (e1[0] > 74.0) {
+                x1 = 1.0E75;
+            }
+            else if (e1[0] < -74.0) {
+                x1 = 0;
+            }
+            else {
+                x1 = n1[0] * Math.pow(10.0, e1[0]);
+            }
+            phi = Math.atan2(x2, x1);
+            realResult[0] = 0.50*(Math.log(n3[0]) + e3[0]*Math.log(10.0));
+            imagResult[0] = phi;
+        } // else 
+        return;
+    } // arydiv
+    
+    /**
+     * Converts a number represented in a 2x2 real array to the form of a 
+     * real and imaginary pair.
+     * @param cae
+     */
+    private void conv21(double cae[][]) {
+        if ((cae[0][1] > 75) || (cae[1][1] > 75)) {
+            realResult[0] = 1.0E75;
+            imagResult[0] = 1.0E75;
+        }
+        else if (cae[1][1] < -75) {
+            realResult[0] = cae[0][0] * Math.pow(10.0, cae[0][1]);
+            imagResult[0] = 0.0;
+        }
+        else {
+            realResult[0] = cae[0][0] * Math.pow(10.0, cae[0][1]);
+            imagResult[0] = cae[1][0] * Math.pow(10.0, cae[1][1]);
+        }
+        return;
+    } // conv21
+    
+    /**
+     * Takes one base and exponent and multplies it by another number's base
+     * and exponent to give the product in the form of base and exponent
+     * @param n1
+     * @param e1
+     * @param n2
+     * @param e2
+     * @param nf
+     * @param ef
+     */
+    private void emult(double n1, double e1, double n2, double e2,
+                       double nf[], double ef[]) {
+       nf[0] = n1 * n2;
+       ef[0] = e1 + e2;
+       if (Math.abs(nf[0]) >= 10.0) {
+           nf[0] = nf[0]/10.0;
+           ef[0] = ef[0] + 1.0;
+       }
+       return;
+    } // emult
+    
+    /**
+     * Returns the solution in the form of the base and exponent of the division
+     * of two exponential numbers.
+     * @param n1
+     * @param e1
+     * @param n2
+     * @param e2
+     * @param nf
+     * @param ef
+     */
+    private void ediv(double n1, double e1, double n2, double e2,
+                      double nf[], double ef[]) {
+        nf[0] = n1/n2;
+        ef[0] = e1 - e2;
+        if ((Math.abs(nf[0]) < 1.0) && (nf[0] != 0.0)) {
+            nf[0] = nf[0] * 10.0;
+            ef[0] = ef[0] - 1.0;
+        }
+        return;
+    } // ediv
+    
+    /**
+     * Returns the sum of two numbers in the form of a base and an
+     * exponent.
+     * @param n1
+     * @param e1
+     * @param n2
+     * @param e2
+     * @param nf
+     * @param ef
+     */
+    private void eadd(double n1, double e1, double n2, double e2,
+                      double nf[], double ef[]) {
+        double ediff;
+        
+        ediff = e1 - e2;
+        if (ediff > 36.0) {
+            nf[0] = n1;
+            ef[0] = e1;
+        }
+        else if (ediff < -36.0) {
+            nf[0] = n2;
+            ef[0] = e2;
+        }
+        else {
+            nf[0] = n1 * Math.pow(10.0, ediff) + n2;
+            ef[0] = n2;
+            while (true) {
+                if (Math.abs(nf[0]) < 10.0) {
+                    break;
+                }
+                nf[0] = nf[0]/10.0;
+                ef[0] = ef[0] + 1.0;
+            } // while (true)
+            while (true) {
+                if ((Math.abs(nf[0]) >= 1.0) || (nf[0] == 0.0)) {
+                    return;
+                }
+                nf[0] = nf[0] * 10.0;
+                ef[0] = ef[0] - 1.0;
+            } // while (true)
+        } // else
+    } // eadd
+    
+    /**
+     * Returns the solution to the subtraction of two numbers in the form of
+     * base and exponent.
+     * @param n1
+     * @param e1
+     * @param n2
+     * @param e2
+     * @param nf
+     * @param ef
+     */
+    private void esub(double n1, double e1, double n2, double e2,
+                      double nf[], double ef[]) {
+        eadd(n1, e1, n2*(-1.0), e2, nf, ef);
+        return;
+    } // esub
+    
+    /**
+     * Multiplies two numbers which are each represented in the form of a two by two
+     * array and returns the solution in the same form
+     * @param a
+     * @param b
+     * @param c
+     */
+    private void ecpmul(double a[][], double b[][], double c[][]) {
+        double n1[] = new double[1];
+        double e1[] = new double[1];
+        double n2[] = new double[1];
+        double e2[] = new double[1];
+        double c00[] = new double[1];
+        double c01[] = new double[1];
+        double c10[] = new double[1];
+        double c11[] = new double[1];
+        
+        emult(a[0][0], a[0][1], b[0][0], b[0][1], n1, e1);
+        emult(a[1][0], a[1][1], b[1][0], b[1][1], n2, e2);
+        esub(n1[0], e1[0], n2[0], e2[0], c00, c01);
+        emult(a[0][0], a[0][1], b[1][0], b[1][1], n1, e1);
+        emult(a[1][0], a[1][1], b[0][0], b[0][1], n2, e2);
+        eadd(n1[0], e1[0], n2[0], e2[0], c10, c11);
+        c[0][0] = c00[0];
+        c[0][1] = c01[0];
+        c[1][0] = c10[0];
+        c[1][1] = c11[0];
+        return;
+    } // ecpmul
+    
+    /**
+     * Divides two numbers and returns the solution.
+     * All numbers are represented by a 2x2 array.
+     * @param a
+     * @param b
+     * @param c
+     */
+    private void ecpdiv(double a[][], double b[][], double c[][]) {
+        double b2[][] = new double[2][2];
+        double c2[][] = new double[2][2];
+        double n1[] = new double[1];
+        double e1[] = new double[1];
+        double n2[] = new double[1];
+        double e2[] = new double[1];
+        double n3[] = new double[1];
+        double e3[] = new double[1];
+        double c00[] = new double[1];
+        double c01[] = new double[1];
+        double c10[] = new double[1];
+        double c11[] = new double[1];
+        
+        b2[0][0] = b[0][0];
+        b2[0][1] = b[0][1];
+        b2[1][0] = -1.0*b[1][0];
+        b2[1][1] = b[1][1];
+        ecpmul(a, b2, c2);
+        emult(b[0][0], b[0][1], b[0][0], b[0][1], n1, e1);
+        emult(b[1][0], b[1][1], b[1][0], b[1][1], n2, e2);
+        eadd(n1[0], e1[0], n2[0], e2[0], n3, e3);
+        ediv(c2[0][0], c2[0][1], n3[0], e3[0], c00, c01);
+        ediv(c2[1][0], c2[1][1], n3[0], e3[0], c10, c11);
+        c[0][0] = c00[0];
+        c[0][1] = c01[0];
+        c[1][0] = c10[0];
+        c[1][1] = c11[0];
+        return;
+    } // ecpdiv
+    
+    
+    
+    /**
+     * Converts a real and imaginary number pair to a form of a 2x2 real array.
+     * @param realCN
+     * @param imagCN
+     * @param cae
+     */
+    private void conv12 (double realCN, double imagCN, double cae[][]) {
+        cae[0][0] = realCN;
+        cae[0][1] = 0.0;
+        while (true) {
+            if (Math.abs(cae[0][0]) < 10.0) {
+                break;
+            }
+            cae[0][0] = cae[0][0]/10.0;
+            cae[0][1] = cae[0][1] + 1.0;
+        } // while (true)
+        while (true) {
+            if ((Math.abs(cae[0][0]) >= 1.0) || (cae[0][0] == 0.0)) {
+                break;
+            }
+            cae[0][0] = cae[0][0] * 10.0;
+            cae[0][1] = cae[0][1] - 1.0;
+        } // while (true)
+        cae[1][0] = imagCN;
+        cae[1][1] = 0.0;
+        while (true) {
+            if (Math.abs(cae[1][0]) < 10.0) {
+                break;
+            }
+            cae[1][0] = cae[1][0]/10.0;
+            cae[1][1] = cae[1][1] + 1.0;
+        } // while (true)
+        while (true) {
+            if ((Math.abs(cae[1][0]) >= 1.0)  || (cae[1][0] == 0.0)) {
+                return;
+            }
+            cae[1][0] = cae[1][0] * 10.0;
+            cae[1][1] = cae[1][1] - 1.0;
+        } // while (true)
+    } // conv12
     
     /**
      * Takes two arrays representing one real and one imaginary part, and adds two arrays 
@@ -406,7 +804,7 @@ public class ConfluentHypergeometric {
     
     /** 
      * Determines the number of significant figures of machine precision to arrive at the
-     * size of the array the numbers must be stored to get the accuracy of the solution.
+     * size of the array the numbers must be stored in to get the accuracy of the solution.
      */
     private int bits() {
         double bit, bit2;
@@ -423,7 +821,7 @@ public class ConfluentHypergeometric {
     } // bits
     
     /**
-     * This funciton forces its argument x to be stored in a memory location, thus providing
+     * This function forces its argument x to be stored in a memory location, thus providing
      * a means of determining floating point number characteristics (such as the machine 
      * precision) when it is necessary to avoid computation in high precision registers.
      * @param x The value to be stored
@@ -464,7 +862,7 @@ public class ConfluentHypergeometric {
     } // cmpmul
     
     /**
-     * Accepts two array a and scalar b, and returns the product array c.
+     * Accepts array a and scalar b, and returns the product array c.
      * @param a
      * @param b
      * @param c
@@ -473,10 +871,8 @@ public class ConfluentHypergeometric {
         double z[] = new double[length+2];
         double b2;
         double carry;
-        double rmax2;
         int i;
         
-        rmax2 = 1.0/rmax;
         if (b >= 0.0) {
             z[0] = a[0];
         }
@@ -631,13 +1027,13 @@ public class ConfluentHypergeometric {
                         z[i-1] = 1.0;
                     } // if (z[i] >= rmax)
                 } // for (i = L+1; i >= 2; i--)
-                if (z[0] > 0.5) {
-                    for (i = L+2; i >= 2; i--) {
+                if (z[1] > 0.5) {
+                    for (i = L+1; i >= 2; i--) {
                         z[i] = z[i-1];
-                    } // for (i = L+2; i >= 2; i--)
+                    } // for (i = L+1; i >= 2; i--)
                     z[L+2] = z[L+2] + 1.0;
                     z[1] = 0.0;
-                } // if (z[0] > 0.5)
+                } // if (z[1] > 0.5)
                 for (i = 0; i <= L+2; i++) {
                     c[i] = z[i];
                 } // for (i = 0; i <= L+2; i++)
@@ -659,10 +1055,10 @@ public class ConfluentHypergeometric {
                 for (i = ediff+1; i >= 2; i--) {
                     z[i] = a[i] + z[i];
                     if (z[i] >= rmax) {
-                        z[i] = z[i] -rmax;
+                        z[i] = z[i] - rmax;
                         z[i-1] = 1.0;
                     } // if (z[i] >= rmax)
-                } // for (i = ediff+1; i>= 2; i--)
+                } // for (i = ediff+1; i >= 2; i--)
                 if (z[1] > 0.5) {
                     for (i = L+1; i >= 2; i--) {
                         z[i] = z[i-1];
@@ -721,7 +1117,7 @@ public class ConfluentHypergeometric {
                         z[i] = z[i] + rmax;
                         z[i-1] = -1.0;
                     } // if (z[i] < 0.0)
-                } // for (i = L+1;i >= 2; i--)
+                } // for (i = L+1; i >= 2; i--)
                 seg6 = false;
                 seg7 = false;
                 seg8 = false;
@@ -731,7 +1127,7 @@ public class ConfluentHypergeometric {
             for (i = L+1; i >= 2+ediff; i--) {
                 z[i] = a[i] - b[i-ediff] + z[i];
                 if (z[i] < 0.0) {
-                    z[i] = z[i] +rmax;
+                    z[i] = z[i] + rmax;
                     z[i-1] = -1.0;
                 } // if (z[i] < 0.0)
             } // for (i = L+1; i >= 2+ediff; i--)
