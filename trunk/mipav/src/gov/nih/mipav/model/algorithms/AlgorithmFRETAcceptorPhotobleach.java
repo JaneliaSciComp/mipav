@@ -89,9 +89,6 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
     private int signalIndex;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private boolean useBlue = false;
 
     /** DOCUMENT ME! */
@@ -133,7 +130,6 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         this.register = register;
         this.cost = cost;
         this.createRegImage = createRegImage;
-        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -274,23 +270,21 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
                 colorsPresent++;
             }
 
-            bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI);
+            bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw");
 
             if (postImage != null) {
-                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, postImage.getImageName() + "_bw", UI);
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, postImage.getImageName() + "_bw");
             } else {
-                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
-                                             UI);
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw");
             }
 
             if (createRegImage && (colorsPresent >= 2)) {
-                bwImage2 = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw2", UI);
-                colorImageReg = new ModelImage(srcImage.getType(), srcExtents, srcImage.getImageName() + "_registered",
-                                               UI);
+                bwImage2 = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw2");
+                colorImageReg = new ModelImage(srcImage.getType(), srcExtents, srcImage.getImageName() + "_registered");
             }
 
             if (createRegImage && (colorsPresent == 3)) {
-                bwImage3 = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw3", UI);
+                bwImage3 = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw3");
             }
 
             if (useRed) {
@@ -421,7 +415,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         else {
 
             if (srcImage.getNDims() == 2) {
-                bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI);
+                bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw");
 
                 try {
                     srcImage.exportData(0, sliceSize, floatBuffer);
@@ -441,8 +435,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
                     return;
                 }
 
-                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
-                                             UI);
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw");
 
                 try {
                     postImage.exportData(0, sliceSize, floatBuffer);
@@ -465,7 +458,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
                 bwPostImage.setVOIs(VOIs);
             } // if (srcImage.getNDims() == 2)
             else { // 2 slice 3D image
-                bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw", UI);
+                bwImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_bw");
 
                 try {
                     srcImage.exportData(0, sliceSize, floatBuffer);
@@ -485,8 +478,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
                     return;
                 }
 
-                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw",
-                                             UI);
+                bwPostImage = new ModelImage(ModelStorageBase.FLOAT, srcExtents, srcImage.getImageName() + "_postbw");
 
                 try {
                     srcImage.exportData(sliceSize, sliceSize, floatBuffer);
@@ -853,37 +845,37 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         }
 
         if (backgroundIndex >= 0) {
-            UI.setDataText("Prebleached background intensity = " + preBackgroundIntensity + "\n");
+            ViewUserInterface.getReference().setDataText("Prebleached background intensity = " + preBackgroundIntensity + "\n");
         }
 
-        UI.setDataText("Prebleached donor intensity = " + preDonorIntensity + "\n");
+        ViewUserInterface.getReference().setDataText("Prebleached donor intensity = " + preDonorIntensity + "\n");
 
         if (signalIndex >= 0) {
-            UI.setDataText("Prebleached signal intensity = " + preSignalIntensity + "\n");
+            ViewUserInterface.getReference().setDataText("Prebleached signal intensity = " + preSignalIntensity + "\n");
         }
 
         if ((backgroundIndex >= 0) && (signalIndex >= 0)) {
-            UI.setDataText("Linearly scaled prebleached donor intensity = " + correctedPreDonorIntensity + "\n");
+            ViewUserInterface.getReference().setDataText("Linearly scaled prebleached donor intensity = " + correctedPreDonorIntensity + "\n");
         } else if (backgroundIndex >= 0) {
-            UI.setDataText("Background subtracted prebleached donor intensity = " + correctedPreDonorIntensity + "\n");
+            ViewUserInterface.getReference().setDataText("Background subtracted prebleached donor intensity = " + correctedPreDonorIntensity + "\n");
         }
 
         if (backgroundIndex >= 0) {
-            UI.setDataText("Postbleached background intensity = " + postBackgroundIntensity + "\n");
+            ViewUserInterface.getReference().setDataText("Postbleached background intensity = " + postBackgroundIntensity + "\n");
         }
 
-        UI.setDataText("Postbleached donor intensity = " + postDonorIntensity + "\n");
+        ViewUserInterface.getReference().setDataText("Postbleached donor intensity = " + postDonorIntensity + "\n");
 
         if (signalIndex >= 0) {
-            UI.setDataText("Postbleached signal intensity = " + postSignalIntensity + "\n");
+            ViewUserInterface.getReference().setDataText("Postbleached signal intensity = " + postSignalIntensity + "\n");
         }
 
         if ((signalIndex < 0) && (backgroundIndex >= 0)) {
-            UI.setDataText("Background subtracted postbleached donor intensity = " + correctedPostDonorIntensity +
+            ViewUserInterface.getReference().setDataText("Background subtracted postbleached donor intensity = " + correctedPostDonorIntensity +
                            "\n");
         }
 
-        UI.setDataText("Efficiency = " + efficiency + "\n");
+        ViewUserInterface.getReference().setDataText("Efficiency = " + efficiency + "\n");
 
         if (progressBar != null) {
             progressBar.dispose();

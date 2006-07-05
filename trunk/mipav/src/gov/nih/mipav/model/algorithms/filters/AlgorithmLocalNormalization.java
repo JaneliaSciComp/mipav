@@ -36,9 +36,6 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The ViewUserInterface is held for debugging purposes only. May be deprecated in the future. */
-    ViewUserInterface userInterface; // for debug only
-
     /** the AlgorithmFrequencyFilter, to lo-pass filter the image. */
     private AlgorithmFrequencyFilter FFTer;
 
@@ -174,15 +171,6 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
             gChannel = g;
             bChannel = b;
         }
-    }
-
-    /**
-     * The ViewUserInterface is set for debugging purposes only. This method may be deprecated in the future.
-     *
-     * @param  vui  DOCUMENT ME!
-     */
-    public void setUserInterface(ViewUserInterface vui) {
-        userInterface = vui;
     }
 
     /**

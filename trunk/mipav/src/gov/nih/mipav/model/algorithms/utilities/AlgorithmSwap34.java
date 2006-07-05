@@ -92,7 +92,6 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         int tempi;
         float tempf;
         int bufferType;
-        ViewUserInterface ui;
         int modality;
         String fileDir;
         int dataType;
@@ -186,7 +185,6 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         resolutions[2] = resolutions[3];
         resolutions[3] = tempf;
         bufferType = srcImage.getType();
-        ui = srcImage.getUserInterface();
         modality = fileInfo[0].getModality();
         fileDir = fileInfo[0].getFileDirectory();
         dataType = fileInfo[0].getDataType();
@@ -204,7 +202,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         String name = JDialogBase.makeImageName(srcImage.getImageName(), "_result");
 
         srcImage = null;
-        destImage = new ModelImage(bufferType, extents, name, ui);
+        destImage = new ModelImage(bufferType, extents, name);
         fileInfoR = destImage.getFileInfo();
 
         for (int i = 0; i < (zDim * tDim); i++) {

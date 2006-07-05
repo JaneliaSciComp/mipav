@@ -192,9 +192,6 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     private int transformDir;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private ModelImage waveletImage = null;
 
     /** DOCUMENT ME! */
@@ -217,7 +214,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
      * @param  userInterface   DOCUMENT ME!
      */
     public AlgorithmWaveletThreshold(ModelImage srcImg, int filterType, int cNum, int thresholdType, float threshold,
-                                     boolean doWaveletImage, ViewUserInterface userInterface) {
+                                     boolean doWaveletImage) {
         super(null, srcImg);
 
         this.filterType = filterType;
@@ -231,7 +228,6 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         this.thresholdType = thresholdType;
         this.threshold = threshold;
         this.doWaveletImage = doWaveletImage;
-        this.userInterface = userInterface;
     }
 
     /**
@@ -247,7 +243,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
      * @param  userInterface   DOCUMENT ME!
      */
     public AlgorithmWaveletThreshold(ModelImage destImg, ModelImage srcImg, int filterType, int cNum, int thresholdType,
-                                     float threshold, boolean doWaveletImage, ViewUserInterface userInterface) {
+                                     float threshold, boolean doWaveletImage) {
         super(destImg, srcImg);
 
         this.filterType = filterType;
@@ -261,7 +257,6 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         this.thresholdType = thresholdType;
         this.threshold = threshold;
         this.doWaveletImage = doWaveletImage;
-        this.userInterface = userInterface;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -752,7 +747,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
         wtn(aExp);
 
         if (doWaveletImage) {
-            waveletImage = new ModelImage(ModelImage.FLOAT, newExtents, "wavelet transform", userInterface);
+            waveletImage = new ModelImage(ModelImage.FLOAT, newExtents, "wavelet transform");
             waveletImage.setOriginalExtents(extents);
 
             try {
