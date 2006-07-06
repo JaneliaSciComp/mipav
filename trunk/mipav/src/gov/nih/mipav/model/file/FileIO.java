@@ -90,23 +90,6 @@ public class FileIO {
     }
 
     /**
-     * Creates a new FileIO object.
-     *
-     * @deprecated  Replaced by FileIO() - ViewUserInterface parameter no longer required Creates the FileIO and
-     *              displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets the user
-     *              interface, and initializes the unknown file dialog.
-     *
-     * @param       _UI  User interface needed to register model images.
-     */
-    public FileIO(ViewUserInterface _UI) {
-        UI = _UI;
-        unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
-        this.fileName = fileName;
-        this.fileDir = fileDir;
-        UI.setLoad(false); // default to "Opening "
-    }
-
-    /**
      * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
      * the user interface, sets the LUT, and initializes the unknown file dialog.
      *
@@ -118,22 +101,6 @@ public class FileIO {
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
     }
 
-    /**
-     * Creates a new FileIO object.
-     *
-     * @deprecated  Replaced by FileIO(ModelLUT) - ViewUserInterface parameter no longer required
-     *
-     *              <p>Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new
-     *              FileIO object, sets the user interface, sets the LUT, and initializes the unknown file dialog.</p>
-     *
-     * @param       _UI   User interface needed to register model images.
-     * @param       _LUT  Passes LUT into file IO object so that LUT can be store with image (i.e. TIFF).
-     */
-    public FileIO(ViewUserInterface _UI, ModelLUT _LUT) {
-        UI = _UI;
-        LUT = _LUT;
-        unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
-    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
