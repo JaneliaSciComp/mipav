@@ -179,7 +179,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
             colorFactor = 4;
         }
 
-        userInterface = ((ViewJFrameImage) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 

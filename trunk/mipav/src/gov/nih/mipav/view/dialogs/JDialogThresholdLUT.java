@@ -79,16 +79,14 @@ public class JDialogThresholdLUT extends JDialogBase {
      * Creates new threshold LUT dialog.
      *
      * @param  theParentFrame  Parent frame
-     * @param  UI              Reference to the user interface object
      * @param  im              Source image
      * @param  lowThreshold    Lower threshold bound
      * @param  upThreshold     Upper threshold bound
      */
-    public JDialogThresholdLUT(Frame theParentFrame, ViewUserInterface UI, ModelImage im, float lowThreshold,
-                               float upThreshold) {
+    public JDialogThresholdLUT(Frame theParentFrame, ModelImage im, float lowThreshold, float upThreshold) {
         super(theParentFrame, true);
         image = im;
-        userInterface = UI;
+        userInterface = ViewUserInterface.getReference();
         lowerThreshold = lowThreshold;
         upperThreshold = upThreshold;
         min = (float) im.getMin();

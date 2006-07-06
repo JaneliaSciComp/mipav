@@ -139,7 +139,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
     public JDialogAdaptivePathSmooth(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
@@ -154,7 +154,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
      */
     public JDialogAdaptivePathSmooth(ViewUserInterface UI, ModelImage im) {
         super();
-        userInterface = UI;
+        userInterface = ViewUserInterface.getReference();
         image = im;
         parentFrame = image.getParentFrame();
     }
