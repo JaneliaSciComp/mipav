@@ -131,9 +131,6 @@ public class ViewJPanelLUT extends JPanel
     /** DOCUMENT ME! */
     private JCheckBox updateCheckBoxA = null, updateCheckBoxB = null;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     /** Used to display the volume or area of the voxels/pixels between the upper and lower bounds. */
     private JLabel voxelVolumeLabel;
 
@@ -158,7 +155,6 @@ public class ViewJPanelLUT extends JPanel
      */
     public ViewJPanelLUT(ViewJFrameHistoLUT parent) {
         panelParent = parent;
-        userInterface = ViewUserInterface.getReference();
         entireFlag = parent.getWholeImageFlag();
 
         initGUI();
@@ -2283,7 +2279,7 @@ public class ViewJPanelLUT extends JPanel
             thresholds[0] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
             thresholds[1] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
 
-            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, userInterface, panelParent.getImageA(),
+            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageA(),
                                                                     thresholds[0], thresholds[1]);
 
             if ((dialogLUT.cancelFlag == false) && (panelParent.getImageA().getType() != ModelStorageBase.BOOLEAN)) {
@@ -2299,7 +2295,7 @@ public class ViewJPanelLUT extends JPanel
             thresholds[0] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
             thresholds[1] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
 
-            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, userInterface, panelParent.getImageB(),
+            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageB(),
                                                                     thresholds[0], thresholds[1]);
 
             if ((dialogLUT.cancelFlag == false) && (panelParent.getImageB().getType() != ModelStorageBase.BOOLEAN)) {
