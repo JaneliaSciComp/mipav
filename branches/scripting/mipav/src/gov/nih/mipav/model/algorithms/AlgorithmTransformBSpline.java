@@ -70,8 +70,6 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
     /** DOCUMENT ME! */
     private float[] outResolutions;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -95,7 +93,6 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
         // Save a copy of all the input parameters.
         m_kImageSource = kImageSource;
-        UI = m_kImageSource.getUserInterface();
         m_iBSplineDegree = iBSplineDegree;
         m_iBSplineNumControlPoints = iBSplineNumControlPoints;
         this.outResolutions = afResolutions;
@@ -126,7 +123,6 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
         // Save a copy of all the input parameters.
         m_kImageSource = kImageSource;
-        UI = m_kImageSource.getUserInterface();
         this.destExtents = destExtents;
         this.outResolutions = afResolutions;
         m_iBSplineDegree = iBSplineDegree;
@@ -203,13 +199,13 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                     if (m_kImageSource.getType() == ModelStorageBase.ARGB) {
                         m_kImageResult = new ModelImage(ModelStorageBase.ARGB, m_kSimpleImageSource.extents,
-                                                        m_kImageSource.getImageName() + "_registered", UI);
+                                                        m_kImageSource.getImageName() + "_registered");
                     } else if (m_kImageSource.getType() == ModelStorageBase.ARGB_USHORT) {
                         m_kImageResult = new ModelImage(ModelStorageBase.ARGB_USHORT, m_kSimpleImageSource.extents,
-                                                        m_kImageSource.getImageName() + "_registered", UI);
+                                                        m_kImageSource.getImageName() + "_registered");
                     } else {
                         m_kImageResult = new ModelImage(ModelStorageBase.FLOAT, m_kSimpleImageSource.extents,
-                                                        m_kImageSource.getImageName() + "_registered", UI);
+                                                        m_kImageSource.getImageName() + "_registered");
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("AlgorithmTransformBSpline: unable to allocate enough memory");
@@ -286,13 +282,13 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                     if (m_kImageSource.getType() == ModelStorageBase.ARGB) {
                         m_kImageResult = new ModelImage(ModelStorageBase.ARGB, destExtents,
-                                                        m_kImageSource.getImageName() + "_registered", UI);
+                                                        m_kImageSource.getImageName() + "_registered");
                     } else if (m_kImageSource.getType() == ModelStorageBase.ARGB_USHORT) {
                         m_kImageResult = new ModelImage(ModelStorageBase.ARGB_USHORT, destExtents,
-                                                        m_kImageSource.getImageName() + "_registered", UI);
+                                                        m_kImageSource.getImageName() + "_registered");
                     } else {
                         m_kImageResult = new ModelImage(ModelStorageBase.FLOAT, destExtents,
-                                                        m_kImageSource.getImageName() + "_registered", UI);
+                                                        m_kImageSource.getImageName() + "_registered");
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("AlgorithmTransformBSpline: unable to allocate enough memory");
@@ -304,7 +300,6 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                     setCompleted(false);
                     finalize();
-
                     return;
                 }
 
@@ -365,12 +360,9 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                                                                 m_kImageResult.isColorImage());
 
                     // create B-spline lattice
-                    m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
-                                                                 destExtents[0]);
-                    m_kBSplineBasisY = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
-                                                                 destExtents[1]);
-                    m_kBSplineBasisZ = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree,
-                                                                 destExtents[2]);
+                    m_kBSplineBasisX = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree, destExtents[0]);
+                    m_kBSplineBasisY = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree, destExtents[1]);
+                    m_kBSplineBasisZ = new BSplineBasisDiscretef(m_iBSplineNumControlPoints, m_iBSplineDegree, destExtents[2]);
                     m_kBSpline3D = new BSplineLattice3Df(m_kBSplineBasisX, m_kBSplineBasisY, m_kBSplineBasisZ);
 
                     Point3f kPoint = new Point3f();
@@ -448,5 +440,4 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                                        Integer.toString(m_iBSplineNumControlPoints) + ")\n");
         }
     }
-
 }

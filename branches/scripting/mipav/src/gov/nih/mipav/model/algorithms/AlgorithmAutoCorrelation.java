@@ -33,8 +33,9 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
     /** DOCUMENT ME! */
     private ModelImage destImageR = null;
 
-    /** full width at half maximum of the autocorrelation. */
+    /** Full width at half maximum of the autocorrelation. */
     private int fwhm;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -159,7 +160,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         boolean found;
         int xLast = 0;
         int yLast = yDim - 1;
-        ViewUserInterface UI = srcImage.getUserInterface();
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -316,11 +316,11 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
             /*System.out.println("c3 = "+ c3);
              *System.out.println("fwhm = " + fwhm);*/
-            UI.setDataText("\n -----------------------------------------------------------------------------\n");
-            UI.setDataText("Auto correlation full width at half maximum = " + fwhm);
+            ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+            ViewUserInterface.getReference().setDataText("Auto correlation full width at half maximum = " + fwhm);
         } else {
-            UI.setDataText("\n -----------------------------------------------------------------------------\n");
-            UI.setDataText("Auto correlation full width at half maximum too large to calculate");
+            ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+            ViewUserInterface.getReference().setDataText("Auto correlation full width at half maximum too large to calculate");
             fwhm = Integer.MAX_VALUE;
         }
 
@@ -614,7 +614,6 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         int xLast = 0;
         int yLast = yDim - 1;
         int zLast = 0;
-        ViewUserInterface UI = srcImage.getUserInterface();
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -808,11 +807,11 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
 
             /*System.out.println("c3 = "+ c3);
              *System.out.println("fwhm = " + fwhm);*/
-            UI.setDataText("\n -----------------------------------------------------------------------------\n");
-            UI.setDataText("Auto correlation full width at half maximum = " + fwhm);
+            ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+            ViewUserInterface.getReference().setDataText("Auto correlation full width at half maximum = " + fwhm);
         } else {
-            UI.setDataText("\n -----------------------------------------------------------------------------\n");
-            UI.setDataText("Auto correlation full width at half maximum too large to calculate");
+            ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+            ViewUserInterface.getReference().setDataText("Auto correlation full width at half maximum too large to calculate");
             fwhm = Integer.MAX_VALUE;
         }
 

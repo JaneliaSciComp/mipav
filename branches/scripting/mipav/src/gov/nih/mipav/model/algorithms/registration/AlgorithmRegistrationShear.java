@@ -394,14 +394,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
      */
     private float twoblur = 2.0f; // blurring factor for pass 1 of 2 pass registration
 
-    /**
-     * This should be a number >= 2.0 (which is the default). Larger values would be reasonable if pass 1 has to move
-     * imageB a long ways.
-     */
-    private int twosum = 1; // leave constant at 1
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
 
     /** DOCUMENT ME! */
     private int VL_final = -1;
@@ -471,15 +463,13 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
      * @param  imageA               image A
      * @param  imageB               image B, to be registered to imageA
      * @param  resultImgB           stores transformed imageB
-     * @param  userInterface        the user interface object
      * @param  interpolationMethod  HEPTIC, QUINTIC, or CUBIC Lagrangian
      */
     public AlgorithmRegistrationShear(ModelImage imageA, ModelImage imageB, ModelImage resultImgB,
-                                      ViewUserInterface userInterface, int interpolationMethod) {
+                                      int interpolationMethod) {
         this.imageA = imageA;
         this.imageB = imageB;
         this.resultImgB = resultImgB;
-        UI = userInterface;
         VL_resam = interpolationMethod;
     }
 

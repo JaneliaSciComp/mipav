@@ -112,9 +112,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
     private boolean stopped = false;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private int[] unitsOfMeasureA, unitsOfMeasureB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -136,7 +133,6 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         this.doOrigins = doOrigins_;
         this.doDimensions = doDimensions_;
         this.resByRef = resByRef_;
-        this.UI = sourceImgA.getUserInterface();
         nDims = sourceImgA.getNDims();
 
         try {
@@ -2311,14 +2307,14 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         if (nDims == 3) {
             Preferences.debug("Final ImageB origins in LPS order: " + (float) origLPS_B[0] + ", " +
                               (float) origLPS_B[1] + ", " + (float) origLPS_B[2] + "\n");
-            UI.setDataText("Image B origins (in LPS order) after matching orientation: " + (float) origLPS_B[0] + ", " +
+            ViewUserInterface.getReference().setDataText("Image B origins (in LPS order) after matching orientation: " + (float) origLPS_B[0] + ", " +
                            (float) origLPS_B[1] + ", " + (float) origLPS_B[2] + "\n");
             resultImgB.setImageOrientation(sourceImgA.getImageOrientation());
         } // if (nDims == 3)
         else { // nDims == 2
             Preferences.debug("Final ImageB origins in LPS order: " + (float) origLPS_B[0] + ", " +
                               (float) origLPS_B[1] + "\n");
-            UI.setDataText("Image B origins (in LPS order) after matching orientation: " + (float) origLPS_B[0] + ", " +
+            ViewUserInterface.getReference().setDataText("Image B origins (in LPS order) after matching orientation: " + (float) origLPS_B[0] + ", " +
                            (float) origLPS_B[1] + "\n");
         } // else nDims == 2
 

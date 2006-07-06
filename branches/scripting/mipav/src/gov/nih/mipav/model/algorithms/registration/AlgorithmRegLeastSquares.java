@@ -31,15 +31,20 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private int numCoords, dim;
+    private int numCoords;
+    
+    /** The number of dimensions (2D or 3D). */
+    private int dim;
 
-    /** DOCUMENT ME! */
-    private double[][] pointSetA, pointSetB;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface UI;
+    /** Input point set A (2D or 3D) */
+    private double[][] pointSetA;
+    
+    /** Input point set B (2D or 3D) */
+    private double[][] pointSetB;
 
-    /** DOCUMENT ME! */
+
+    /** The transformation matrix that describes the transform from point set B to point set A. */
     private TransMatrix xfrmBA;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -54,7 +59,6 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
     public AlgorithmRegLeastSquares(double[][] coordsA, double[][] coordsB, int dim2or3) {
         dim = dim2or3;
         numCoords = -1;
-        UI = ViewUserInterface.getReference();
         pointSetA = null;
         pointSetB = null;
         xfrmBA = null;
@@ -71,7 +75,6 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
     public AlgorithmRegLeastSquares(Point3Dd[] coordsA3D, Point3Dd[] coordsB3D, int dim2or3) {
         dim = dim2or3;
         numCoords = -1;
-        UI = ViewUserInterface.getReference();
         pointSetA = null;
         pointSetB = null;
         xfrmBA = null;
@@ -103,21 +106,6 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
             return;
         }
-    }
-
-    /**
-     * Creates a new AlgorithmRegLeastSquares object.
-     *
-     * @deprecated  AlgorithmRegLeastSquares - Constructor
-     *
-     * @param       coordsA        - double[dim][n] 3D or 2D point set
-     * @param       coordsB        - double[dim][n] 3D or 2D point set
-     * @param       dim2or3        - indicates whether data set is 2D or 3D
-     * @param       userInterface  - the user interface object
-     */
-    public AlgorithmRegLeastSquares(double[][] coordsA, double[][] coordsB, int dim2or3,
-                                    ViewUserInterface userInterface) {
-        this(coordsA, coordsB, dim2or3);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -199,7 +187,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
             xfrmBA.transform(ptB, ptBT);
             residual[j] = EuclideanDistance(ptA, ptBT);
-            UI.setDataText("Residual[" + j + "] = " + residual[j] + "\n");
+            ViewUserInterface.getReference().setDataText("Residual[" + j + "] = " + residual[j] + "\n");
         }
     }
 

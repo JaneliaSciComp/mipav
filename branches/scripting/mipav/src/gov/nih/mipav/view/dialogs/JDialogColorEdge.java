@@ -78,7 +78,7 @@ public class JDialogColorEdge extends JDialogBase
     public JDialogColorEdge(JFrame owner, ModelImage mi) {
         super(owner, false);
         setTitle("Color Edge");
-        userInterface = ((ViewJFrameBase) (owner)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         sourceImage = mi;
         if (!mi.isColorImage()) {
             MipavUtil.displayError("Must be a color image");
@@ -95,27 +95,7 @@ public class JDialogColorEdge extends JDialogBase
         setVisible(true);
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * <p>Replace is currently not supported.</p>
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogColorEdge(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        sourceImage = im;
-        if (!im.isColorImage()) {
-            MipavUtil.displayError("Must be a color image");
-            return;
-        }
-        displayLoc = NEW; // currently replace is not supported
-        parentFrame = im.getParentFrame();
-    }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     // ************************************************************************
@@ -585,7 +565,6 @@ public class JDialogColorEdge extends JDialogBase
             // Make algorithm
             algoColorEdge = new AlgorithmColorEdge(resultImage, sourceImage, red1, green1, blue1,
                                                    red2, green2, blue2);
-            algoColorEdge.setUserInterface(userInterface);
 
             // This is very important. Adding this object as a listener
             // allows the algorithm to notify this object when it

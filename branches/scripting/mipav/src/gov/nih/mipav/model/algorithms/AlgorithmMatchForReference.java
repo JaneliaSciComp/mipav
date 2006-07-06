@@ -42,8 +42,6 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
     /** reference image. */
     private ModelImage refImage;
 
-    /** the user interface...needed to create new modelimages. */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -56,7 +54,6 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
     public AlgorithmMatchForReference(ModelImage rImage, ModelImage aImage) {
         this.refImage = rImage;
         this.adjImage = aImage;
-        this.userInterface = rImage.getUserInterface();
 
         if (refImage.getNDims() != adjImage.getNDims()) {
             correctDims = false;
@@ -149,8 +146,7 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
             // change adjImage to color
             ModelImage tempImage = new ModelImage(ModelImage.ARGB, adjImage.getExtents(),
-                                                  JDialogBase.makeImageName(adjImage.getImageName(), "_rgb"),
-                                                  userInterface);
+                                                  JDialogBase.makeImageName(adjImage.getImageName(), "_rgb"));
 
             // get some important information from imageA and put it in
             // the result image
@@ -184,14 +180,11 @@ public class AlgorithmMatchForReference extends AlgorithmBase {
 
             // image was not previously transformed
             if (adjImage.getType() == ModelStorageBase.ARGB) {
-                tempImage = new ModelImage(ModelImage.UBYTE, adjImage.getExtents(), (adjImage.getImageName() + "Gray"),
-                                           userInterface);
+                tempImage = new ModelImage(ModelImage.UBYTE, adjImage.getExtents(), (adjImage.getImageName() + "Gray"));
             } else if (adjImage.getType() == ModelStorageBase.ARGB_USHORT) {
-                tempImage = new ModelImage(ModelImage.USHORT, adjImage.getExtents(), (adjImage.getImageName() + "Gray"),
-                                           userInterface);
+                tempImage = new ModelImage(ModelImage.USHORT, adjImage.getExtents(), (adjImage.getImageName() + "Gray"));
             } else if (adjImage.getType() == ModelStorageBase.ARGB_FLOAT) {
-                tempImage = new ModelImage(ModelImage.FLOAT, adjImage.getExtents(), (adjImage.getImageName() + "Gray"),
-                                           userInterface);
+                tempImage = new ModelImage(ModelImage.FLOAT, adjImage.getExtents(), (adjImage.getImageName() + "Gray"));
             }
 
             // get some important information from imageA and put it in

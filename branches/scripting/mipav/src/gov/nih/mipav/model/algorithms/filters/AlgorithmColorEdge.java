@@ -29,9 +29,6 @@ import java.io.*;
 public class AlgorithmColorEdge extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** The ViewUserInterface is held for debugging purposes only. May be deprecated in the future. */
-    ViewUserInterface userInterface; // for debug only
     
     private double red1;
     private double green1;
@@ -100,16 +97,6 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         } else { // there is no image but the original source.
             calcInPlace();
         }
-    }
-
-    
-    /**
-     * The ViewUserInterface is set for debugging purposes only. This method may be deprecated in the future.
-     *
-     * @param  vui  DOCUMENT ME!
-     */
-    public void setUserInterface(ViewUserInterface vui) {
-        userInterface = vui;
     }
 
     /**

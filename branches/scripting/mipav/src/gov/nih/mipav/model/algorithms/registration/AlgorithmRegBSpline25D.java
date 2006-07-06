@@ -314,9 +314,8 @@ iteration:
             BSplineBasisf kBasisX = akReg[0].getLattice().getBasisX();
             BSplineBasisf kBasisY = akReg[0].getLattice().getBasisY();
 
-            ViewUserInterface UI = m_kImageSource.getUserInterface();
             String fileName = m_kImageSource.getImageName() + ".nlt";
-            File file = new File(UI.getDefaultDirectory() + fileName);
+            File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "rw");
 
             // Necessary so that if this is an overwritten file there isn't any

@@ -123,7 +123,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
     public JDialogAdaptiveNR(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -136,7 +136,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
      */
     public JDialogAdaptiveNR(ViewUserInterface UI, ModelImage im) {
         super();
-        userInterface = UI;
+        userInterface = ViewUserInterface.getReference();
         image = im;
         parentFrame = image.getParentFrame();
     }

@@ -288,7 +288,7 @@ public class JDialogRegistrationShear extends JDialogBase implements AlgorithmIn
 
             // Make NEW result image of float type
             resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, UI);
-            RegShear = new AlgorithmRegistrationShear(imageA, imageB, resultImage, UI, interpolationMethod);
+            RegShear = new AlgorithmRegistrationShear(imageA, imageB, resultImage, interpolationMethod);
 
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("Dialog Register Shear: unable to allocate enough memory");

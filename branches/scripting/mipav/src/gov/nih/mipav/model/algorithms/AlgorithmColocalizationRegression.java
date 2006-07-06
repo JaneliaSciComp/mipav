@@ -819,7 +819,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float colocIntensityPercent2;
         String dataLine1;
         String dataLine2;
-        ViewUserInterface userInterface;
         NumberFormat nf;
 
         xDim = subtractedSrcImage.getExtents()[0];
@@ -827,7 +826,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         zDim = subtractedSrcImage.getExtents()[2];
         length = xDim * yDim;
         inputSliceMask = new BitSet(length);
-        userInterface = srcImage.getUserInterface();
 
         for (z = 0; z < zDim; z++) {
             Preferences.debug("Slice = " + (z + 1) + "\n");
@@ -874,10 +872,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (voiSliceSize == 0) {
                 Preferences.debug("No VOI found");
                 dataLine1 = "slice #" + (z + 1) + " has no VOI\n";
-                userInterface.setDataText(dataLine1);
-                userInterface.setDataText("\n");
-                userInterface.setGlobalDataText(dataLine1);
-                userInterface.setGlobalDataText("\n");
+                ViewUserInterface.getReference().setDataText(dataLine1);
+                ViewUserInterface.getReference().setDataText("\n");
+                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -1443,10 +1441,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (minPositiveThreshold < 0) {
                 Preferences.debug("No positive threshold found");
                 dataLine1 = "slice #" + (z + 1) + " has no positive threshold\n";
-                userInterface.setDataText(dataLine1);
-                userInterface.setDataText("\n");
-                userInterface.setGlobalDataText(dataLine1);
-                userInterface.setGlobalDataText("\n");
+                ViewUserInterface.getReference().setDataText(dataLine1);
+                ViewUserInterface.getReference().setDataText("\n");
+                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -1983,10 +1981,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 if (minPositiveThreshold < 0) {
                     Preferences.debug("No positive threshold found on second iteration");
                     dataLine1 = "slice #" + (z + 1) + " has no positive threshold on second iteration\n";
-                    userInterface.setDataText(dataLine1);
-                    userInterface.setDataText("\n");
-                    userInterface.setGlobalDataText(dataLine1);
-                    userInterface.setGlobalDataText("\n");
+                    ViewUserInterface.getReference().setDataText(dataLine1);
+                    ViewUserInterface.getReference().setDataText("\n");
+                    ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                    ViewUserInterface.getReference().setGlobalDataText("\n");
 
                     continue;
                 }
@@ -2020,12 +2018,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     dataLine2 = dataLine2 + sliceR + "\n";
                 }
 
-                userInterface.setDataText(dataLine1);
-                userInterface.setDataText(dataLine2);
-                userInterface.setDataText("\n");
-                userInterface.setGlobalDataText(dataLine1);
-                userInterface.setGlobalDataText(dataLine2);
-                userInterface.setGlobalDataText("\n");
+                ViewUserInterface.getReference().setDataText(dataLine1);
+                ViewUserInterface.getReference().setDataText(dataLine2);
+                ViewUserInterface.getReference().setDataText("\n");
+                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                ViewUserInterface.getReference().setGlobalDataText(dataLine2);
+                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 nf = NumberFormat.getNumberInstance();
                 nf.setMaximumFractionDigits(6);
@@ -2089,7 +2087,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float colocIntensityPercent2;
         String dataLine1;
         String dataLine2;
-        ViewUserInterface userInterface;
         NumberFormat nf;
 
         xDim = subtractedSrcImage.getExtents()[0];
@@ -2097,7 +2094,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         zDim = subtractedSrcImage.getExtents()[2];
         length = xDim * yDim;
         inputSliceMask = new BitSet(length);
-        userInterface = srcImage.getUserInterface();
 
         for (z = 0; z < zDim; z++) {
             Preferences.debug("Slice = " + (z + 1) + "\n");
@@ -2144,10 +2140,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (voiSliceSize == 0) {
                 Preferences.debug("No VOI found");
                 dataLine1 = "slice #" + (z + 1) + " has no VOI\n";
-                userInterface.setDataText(dataLine1);
-                userInterface.setDataText("\n");
-                userInterface.setGlobalDataText(dataLine1);
-                userInterface.setGlobalDataText("\n");
+                ViewUserInterface.getReference().setDataText(dataLine1);
+                ViewUserInterface.getReference().setDataText("\n");
+                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -2757,10 +2753,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
             if (minPositiveThreshold < 0) {
                 Preferences.debug("No positive threshold found");
                 dataLine1 = "slice #" + (z + 1) + " has no positive threshold\n";
-                userInterface.setDataText(dataLine1);
-                userInterface.setDataText("\n");
-                userInterface.setGlobalDataText(dataLine1);
-                userInterface.setGlobalDataText("\n");
+                ViewUserInterface.getReference().setDataText(dataLine1);
+                ViewUserInterface.getReference().setDataText("\n");
+                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 continue;
             }
@@ -3344,10 +3340,10 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 if (minPositiveThreshold < 0) {
                     Preferences.debug("No positive threshold found on second iteration");
                     dataLine1 = "slice #" + (z + 1) + " has no positive threshold on second iteration\n";
-                    userInterface.setDataText(dataLine1);
-                    userInterface.setDataText("\n");
-                    userInterface.setGlobalDataText(dataLine1);
-                    userInterface.setGlobalDataText("\n");
+                    ViewUserInterface.getReference().setDataText(dataLine1);
+                    ViewUserInterface.getReference().setDataText("\n");
+                    ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                    ViewUserInterface.getReference().setGlobalDataText("\n");
 
                     continue;
                 }
@@ -3389,12 +3385,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     dataLine2 = dataLine2 + sliceR + "\n";
                 }
 
-                userInterface.setDataText(dataLine1);
-                userInterface.setDataText(dataLine2);
-                userInterface.setDataText("\n");
-                userInterface.setGlobalDataText(dataLine1);
-                userInterface.setGlobalDataText(dataLine2);
-                userInterface.setGlobalDataText("\n");
+                ViewUserInterface.getReference().setDataText(dataLine1);
+                ViewUserInterface.getReference().setDataText(dataLine2);
+                ViewUserInterface.getReference().setDataText("\n");
+                ViewUserInterface.getReference().setGlobalDataText(dataLine1);
+                ViewUserInterface.getReference().setGlobalDataText(dataLine2);
+                ViewUserInterface.getReference().setGlobalDataText("\n");
 
                 nf = NumberFormat.getNumberInstance();
                 nf.setMaximumFractionDigits(6);
@@ -3891,7 +3887,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         VOI fitLineVOI;
         VOI pointVOI;
         double num, denom1, denom2, denom;
-        ViewUserInterface UI = srcImage.getUserInterface();
         String name;
         ModelImage resultImage = null;
         AlgorithmAutoCovariance algoAutoCovariance;
@@ -4362,7 +4357,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 progressBar.updateValueImmed(10);
 
                 name = srcImage.getImageName() + "_autocovarianceS";
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, UI);
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, subtractedSrcImage);
                 algoAutoCovariance.setProgressBarVisible(false);
@@ -4372,12 +4367,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = fwhmS;
 
                 if (fwhmS != Integer.MAX_VALUE) {
-                    UI.setDataText(srcImage.getImageName() + " auto covariance full width at half maximum = " + fwhmS +
+                    ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " auto covariance full width at half maximum = " + fwhmS +
                                    "\n");
                     Preferences.debug(srcImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmS + "\n");
                 } else {
-                    UI.setDataText("Cannot determine " + srcImage.getImageName() +
+                    ViewUserInterface.getReference().setDataText("Cannot determine " + srcImage.getImageName() +
                                    " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + srcImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
@@ -4394,12 +4389,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = Math.min(fwhmS, fwhmB);
 
                 if (fwhmB != Integer.MAX_VALUE) {
-                    UI.setDataText(baseImage.getImageName() + " auto covariance full width at half maximum = " + fwhmB +
+                    ViewUserInterface.getReference().setDataText(baseImage.getImageName() + " auto covariance full width at half maximum = " + fwhmB +
                                    "\n");
                     Preferences.debug(baseImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmB + "\n");
                 } else {
-                    UI.setDataText("Cannot determine " + baseImage.getImageName() +
+                    ViewUserInterface.getReference().setDataText("Cannot determine " + baseImage.getImageName() +
                                    " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + baseImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
@@ -6133,7 +6128,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         VOI fitLineVOI;
         VOI pointVOI;
         double num, denom1, denom2, denom;
-        ViewUserInterface UI = srcImage.getUserInterface();
         String name;
         ModelImage resultImage = null;
         AlgorithmAutoCovariance algoAutoCovariance;
@@ -6674,7 +6668,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 progressBar.setMessage("Calculating autocovariance");
                 progressBar.updateValueImmed(10);
                 name = srcImage.getImageName() + "_autocovarianceS";
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, UI);
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, subtractedSrcImage);
                 algoAutoCovariance.setProgressBarVisible(false);
@@ -6684,12 +6678,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = fwhmS;
 
                 if (fwhmS != Integer.MAX_VALUE) {
-                    UI.setDataText(srcImage.getImageName() + " auto covariance full width at half maximum = " + fwhmS +
+                    ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " auto covariance full width at half maximum = " + fwhmS +
                                    "\n");
                     Preferences.debug(srcImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmS + "\n");
                 } else {
-                    UI.setDataText("Cannot determine " + srcImage.getImageName() +
+                    ViewUserInterface.getReference().setDataText("Cannot determine " + srcImage.getImageName() +
                                    " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + srcImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
@@ -6706,12 +6700,12 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fwhm = Math.min(fwhmS, fwhmB);
 
                 if (fwhmB != Integer.MAX_VALUE) {
-                    UI.setDataText(baseImage.getImageName() + " auto covariance full width at half maximum = " + fwhmB +
+                    ViewUserInterface.getReference().setDataText(baseImage.getImageName() + " auto covariance full width at half maximum = " + fwhmB +
                                    "\n");
                     Preferences.debug(baseImage.getImageName() + " auto covariance full width at half maximum = " +
                                       fwhmB + "\n");
                 } else {
-                    UI.setDataText("Cannot determine " + baseImage.getImageName() +
+                    ViewUserInterface.getReference().setDataText("Cannot determine " + baseImage.getImageName() +
                                    " auto covariance full width at half maximum\n");
                     Preferences.debug("Cannot determine " + baseImage.getImageName() +
                                       " auto covariance full width at half maximum\n");
@@ -8498,7 +8492,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         VOI fitLineVOI;
         VOI pointVOI;
         double num, denom1, denom2, denom;
-        ViewUserInterface UI = srcImage.getUserInterface();
         String nameR, nameG, nameB;
         ModelImage resultImageR = null;
         ModelImage resultImageG = null;
@@ -9095,17 +9088,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 if (useRed) {
                     nameR = srcImage.getImageName() + "_autocovarianceR";
-                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameR, UI);
+                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameR);
                 }
 
                 if (useGreen) {
                     nameG = srcImage.getImageName() + "_autocovarianceG";
-                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameG, UI);
+                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameG);
                 }
 
                 if (useBlue) {
                     nameB = srcImage.getImageName() + "_autocovarianceB";
-                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameB, UI);
+                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameB);
                 }
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImageR, resultImageG, resultImageB,
@@ -9120,8 +9113,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     if (fwhmR != Integer.MAX_VALUE) {
                         Preferences.debug("Red auto covariance full width at half maximum = " + fwhmR + "\n");
                     } else {
-                        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                        UI.setDataText("Cannot determine red auto covariance full width at half maximum\n");
+                        ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                        ViewUserInterface.getReference().setDataText("Cannot determine red auto covariance full width at half maximum\n");
                         Preferences.debug("Cannot determine red auto covariance full width at half maximum\n");
                     }
                 }
@@ -9133,8 +9126,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     if (fwhmG != Integer.MAX_VALUE) {
                         Preferences.debug("Green auto covariance full width at half maximum = " + fwhmG + "\n");
                     } else {
-                        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                        UI.setDataText("Cannot determine green auto covariance full width at half maximum\n");
+                        ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                        ViewUserInterface.getReference().setDataText("Cannot determine green auto covariance full width at half maximum\n");
                         Preferences.debug("Cannot determine green auto covariance full width at half maximum\n");
                     }
                 }
@@ -9146,8 +9139,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     if (fwhmB != Integer.MAX_VALUE) {
                         Preferences.debug("Blue auto covariance full width at half maximum = " + fwhmB + "\n");
                     } else {
-                        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                        UI.setDataText("Cannot determine blue auto covariance full width at half maximum\n");
+                        ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                        ViewUserInterface.getReference().setDataText("Cannot determine blue auto covariance full width at half maximum\n");
                         Preferences.debug("Cannot determine blue auto covariance full width at half maximum\n");
                     }
                 }
@@ -11009,7 +11002,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         VOI fitLineVOI;
         VOI pointVOI;
         double num, denom1, denom2, denom;
-        ViewUserInterface UI = srcImage.getUserInterface();
         String nameR, nameG, nameB;
         ModelImage resultImageR = null;
         ModelImage resultImageG = null;
@@ -11641,17 +11633,17 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 if (useRed) {
                     nameR = srcImage.getImageName() + "_autocovarianceR";
-                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameR, UI);
+                    resultImageR = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameR);
                 }
 
                 if (useGreen) {
                     nameG = srcImage.getImageName() + "_autocovarianceG";
-                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameG, UI);
+                    resultImageG = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameG);
                 }
 
                 if (useBlue) {
                     nameB = srcImage.getImageName() + "_autocovarianceB";
-                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameB, UI);
+                    resultImageB = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), nameB);
                 }
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImageR, resultImageG, resultImageB,
@@ -11666,8 +11658,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     if (fwhmR != Integer.MAX_VALUE) {
                         Preferences.debug("Red auto covariance full width at half maximum = " + fwhmR + "\n");
                     } else {
-                        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                        UI.setDataText("Cannot determine red auto covariance full width at half maximum");
+                        ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                        ViewUserInterface.getReference().setDataText("Cannot determine red auto covariance full width at half maximum");
                         Preferences.debug("Cannot determine red auto covariance full width at half maximum\n");
                     }
                 }
@@ -11679,8 +11671,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     if (fwhmG != Integer.MAX_VALUE) {
                         Preferences.debug("Green auto covariance full width at half maximum = " + fwhmG + "\n");
                     } else {
-                        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                        UI.setDataText("Cannot determine green auto covariance full width at half maximum");
+                        ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                        ViewUserInterface.getReference().setDataText("Cannot determine green auto covariance full width at half maximum");
                         Preferences.debug("Cannot determine green auto covariance full width at half maximum\n");
                     }
                 }
@@ -11692,8 +11684,8 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     if (fwhmB != Integer.MAX_VALUE) {
                         Preferences.debug("Blue auto covariance full width at half maximum = " + fwhmB + "\n");
                     } else {
-                        UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                        UI.setDataText("Cannot determine blue auto covariance full width at half maximum");
+                        ViewUserInterface.getReference().setDataText("\n -----------------------------------------------------------------------------\n");
+                        ViewUserInterface.getReference().setDataText("Cannot determine blue auto covariance full width at half maximum");
                         Preferences.debug("Cannot determine blue auto covariance full width at half maximum\n");
                     }
                 }

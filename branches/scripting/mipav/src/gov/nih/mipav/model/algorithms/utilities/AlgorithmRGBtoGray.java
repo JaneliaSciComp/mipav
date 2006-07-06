@@ -453,7 +453,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         int[] extents;
         int sliceSize;
         String imageName;
-        ViewUserInterface userInterface;
         FileInfoBase[] fInfoBase = null;
 
         float averageR = 0.0f;
@@ -465,7 +464,6 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         extents = srcImage.getExtents();
         sliceSize = srcImage.getSliceSize();
         imageName = srcImage.getImageName();
-        userInterface = srcImage.getUserInterface();
 
         if (srcImage.getNDims() == 5) {
             f = extents[4];
@@ -690,7 +688,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
 
         buffer = null;
 
-        srcImage = new ModelImage(bwType, extents, imageName, userInterface);
+        srcImage = new ModelImage(bwType, extents, imageName);
 
         for (n = 0; n < srcImage.getFileInfo().length; n++) {
             srcImage.setFileInfo(fInfoBase[n], n);

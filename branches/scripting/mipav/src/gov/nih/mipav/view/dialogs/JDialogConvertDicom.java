@@ -224,7 +224,7 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
         Preferences.debug("Using file output directory: " + outputField.getText() + "\n");
         Preferences.debug("Using " + (String) compressionBox.getSelectedItem() + " compression" + "\n");
 
-        AlgorithmConvertDicom algoDicomConvert = new AlgorithmConvertDicom(userInterface, dirField.getText(),
+        AlgorithmConvertDicom algoDicomConvert = new AlgorithmConvertDicom(dirField.getText(),
                                                                            outputField.getText(), compression);
 
         /**

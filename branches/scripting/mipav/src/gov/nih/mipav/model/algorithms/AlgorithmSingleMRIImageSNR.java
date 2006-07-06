@@ -78,7 +78,8 @@ import java.text.*;
 public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+    /** Confluent Hypergeometric Function of the First Kind. */
+    private static final int CONFLUENT_HYPERGEOMETRIC_FIRST_KIND = 1;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The index of a rerquired noise background VOI */
@@ -95,6 +96,8 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     
     /** The number of NMR receivers */
     private int numReceivers;
+    
+    private DecimalFormat nf;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -185,8 +188,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double snr = 0.0;
         double snr2;
         double cnr;
-        
-        DecimalFormat nf;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -262,23 +263,20 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         Preferences.debug("Mean for signal 1 VOI = " + nf.format(mean) + "\n");
         meanDivStdDev = mean/backgroundStdDev;
         
-        if (numReceivers == 1) {
-            snr = func(meanDivStdDev, true); 
-            Preferences.debug("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
-            UI.setDataText("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
-        } // if (numReceivers == 1)
+        snr = funcC(meanDivStdDev, true);
+        Preferences.debug("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        UI.setDataText("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        
         if (signal2Index >= 0) {
             mean2 = mean2/mean2Count;
             Preferences.debug("Mean for signal 2 VOI = " + nf.format(mean2) + "\n");
             mean2DivStdDev = mean2/backgroundStdDev;
-            if (numReceivers == 1) {
-                snr2 = func(mean2DivStdDev, false);
-                Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
-                UI.setDataText("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
-                cnr = snr - snr2;
-                Preferences.debug("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
-                UI.setDataText("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
-            }
+            snr2 = funcC(mean2DivStdDev, false);
+            Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            UI.setDataText("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            cnr = snr - snr2;
+            Preferences.debug("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            UI.setDataText("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
         } // if (signal2Index >= 0)
 
         disposeProgressBar();
@@ -286,7 +284,65 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         return;
     }
     
-    private double func(double meanDivStdDev, boolean signal) {
+    private double funcC(double meanDivStdDev, boolean signal) {
+        double snr;
+        double lowerBound;
+        double upperBound;
+        int i;
+        int maxIters = 4;
+        snr = meanDivStdDev/2.0;
+        lowerBound = 0.0;
+        upperBound = meanDivStdDev;
+        double calculatedMeanDivStdDev;
+        double error = 0.0;
+        double square;
+        double constant = Math.sqrt(Math.PI/2.0);
+        double result[] = new double[1];
+        int kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
+        ConfluentHypergeometric cf;
+        int n;
+        for (n = 1; n <= numReceivers; n++) {
+            constant = constant * (2*n - 1);
+        }
+        constant = constant/Math.pow(2.0,numReceivers-1);
+        for (n = numReceivers - 1; n >= 2; n--) {
+            constant = constant/n;
+        }
+        for (i = 0; i < maxIters; i++) {
+            square = snr * snr / 2.0;
+            cf = new ConfluentHypergeometric(kind, -0.5, numReceivers, -square, result);
+            cf.run();
+            System.out.println("snr = " + snr + " result[0] = " + result[0]);
+            calculatedMeanDivStdDev = constant * result[0];
+            error = Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev;
+            if (error < 0.001) {
+                break;
+            }
+            if (calculatedMeanDivStdDev > meanDivStdDev) {
+                upperBound = snr;
+                snr = (snr + lowerBound)/2.0;
+            }
+            else {
+                lowerBound = snr;
+                snr = (snr + upperBound)/2.0;
+            }
+        } // for (i = 0; i < maxIters; i++)
+        if (signal) {
+            Preferences.debug("Error for signal 1 VOI SNR after " + i + 
+                                  " iterations  = " + nf.format(100 * error) + "%\n");
+        }
+        else {
+            Preferences.debug("Error for signal 2 VOI SNR after " + i + 
+                    " iterations  = " + nf.format(100 * error) + "%\n");
+        }
+        return snr;
+        
+    }
+    
+    /** This func is commented out because it only works for the case when the 
+     *  number of receivers equals one.
+     */
+    /**private double func(double meanDivStdDev, boolean signal) {
         double snr;
         double lowerBound;
         double upperBound;
@@ -353,7 +409,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         }
         return snr;
         
-    }
+    }*/
 
 
 }

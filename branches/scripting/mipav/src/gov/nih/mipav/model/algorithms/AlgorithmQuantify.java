@@ -247,16 +247,15 @@ public class AlgorithmQuantify extends AlgorithmBase {
          */
         public void output(ModelImage image, int objNo) {
             float area, volume;
-            ViewUserInterface UI = image.getUserInterface();
 
             if (image.getNDims() == 2) {
                 area = (nVoxels * image.getFileInfo(0).getResolutions()[0] * image.getFileInfo(0).getResolutions()[1]);
-                UI.setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity + "\t\t" + +area + "\n");
+                ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity + "\t\t" + +area + "\n");
             } else {
 
                 volume = (nVoxels * image.getFileInfo(0).getResolutions()[0] *
                               image.getFileInfo(0).getResolutions()[1] * image.getFileInfo(0).getResolutions()[2]);
-                UI.setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity + "\t\t" + +volume + "\n");
+                ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity + "\t\t" + +volume + "\n");
             }
         }
     }

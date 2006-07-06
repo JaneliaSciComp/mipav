@@ -140,7 +140,7 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
         this.fDivDImage = fDivDImage;
         this.fDivAImage = fDivAImage;
         this.efficiencyImage = efficiencyImage;
-        UI = srcImage.getUserInterface();
+        UI = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

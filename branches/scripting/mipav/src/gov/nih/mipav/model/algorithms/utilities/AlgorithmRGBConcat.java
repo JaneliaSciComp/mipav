@@ -368,7 +368,6 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         float maxB = (float) srcImageB.getMax();
         int[] extents;
         String imageName;
-        ViewUserInterface userInterface;
         FileInfoBase[] fInfoBase = null;
 
         int nImages = 1;
@@ -377,7 +376,6 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
         extents = srcImageR.getExtents();
         imageName = srcImageR.getImageName();
-        userInterface = srcImageR.getUserInterface();
 
         srcLength = srcImageR.getSliceSize();
         length = 4 * srcLength;
@@ -582,7 +580,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         bufferG = null;
         bufferB = null;
 
-        srcImageR = new ModelImage(ModelStorageBase.ARGB, extents, imageName, userInterface);
+        srcImageR = new ModelImage(ModelStorageBase.ARGB, extents, imageName);
 
         for (n = 0; n < srcImageR.getFileInfo().length; n++) {
             srcImageR.setFileInfo(fInfoBase[n], n);

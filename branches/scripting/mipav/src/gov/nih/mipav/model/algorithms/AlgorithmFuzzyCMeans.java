@@ -247,9 +247,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
     private float tolerance = 0.01f;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private boolean[] unusedCentroids;
 
     /** DOCUMENT ME! */
@@ -308,7 +305,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         oldMember = new float[nClass];
         sCentroids = new float[nClass];
         unusedCentroids = new boolean[nClass];
-        UI = srcImage.getUserInterface();
         classNumber = new int[nClass];
 
         if ((exponent - Math.floor(exponent)) < 0.01) {
@@ -363,7 +359,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         oldMember = new float[nClass];
         sCentroids = new float[nClass];
         unusedCentroids = new boolean[nClass];
-        UI = srcImage.getUserInterface();
         classNumber = new int[nClass];
 
         if ((exponent - Math.floor(exponent)) < 0.01) {
@@ -872,14 +867,14 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
 
                     for (i = 0; i < nClass; i++) {
-                        UI.setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
                                        classNumber[i] + " area = " + (pixelSize * classNumber[i]) + " square " +
                                        unitsStr + "\n");
                     } // for (i = 0; i < nClass; i++)
                 } else {
 
                     for (i = 0; i < nClass; i++) {
-                        UI.setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
                                        classNumber[i] + "\n");
                     } // for (i = 0; i < nClass; i++)
                 } // else
@@ -1362,14 +1357,14 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
 
                     for (i = 0; i < nClass; i++) {
-                        UI.setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
                                        classNumber[i] + " volume = " + (voxelSize * classNumber[i]) + " cubic " +
                                        unitsStr + "\n");
                     } // for (i = 0; i < nClass; i++)
                 } else {
 
                     for (i = 0; i < nClass; i++) {
-                        UI.setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
                                        classNumber[i] + "\n");
                     } // for (i = 0; i < nClass; i++)
                 }
