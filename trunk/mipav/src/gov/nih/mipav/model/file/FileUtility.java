@@ -258,21 +258,5 @@ public class FileUtility {
         return absolutePath;
     }
 
-    /**
-     * Returns the file type of the image file.
-     * @param absolutePath the image file name.
-     * @return             the file type of image file.
-     */
-    public static int getFileType(String absolutePath){
-        try{
-            if(FileAnalyze.isAnalyze(absolutePath)){
-                return ANALYZE;
-            }
-        }catch(FileNotFoundException e){
-            
-        }catch(IOException e){
-            
-        }
-        return UNSUPPORTED;
-    }
+   
 }
