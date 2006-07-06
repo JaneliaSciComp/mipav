@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.scripting;
 
 
+import gov.nih.mipav.view.Preferences;
+
 import java.util.Hashtable;
 
 
@@ -24,6 +26,7 @@ public class VariableTable extends Hashtable {
      */
     protected VariableTable() {
         super();
+        Preferences.debug("varTable:\tCreated." + "\n", Preferences.DEBUG_SCRIPTING);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -50,6 +53,7 @@ public class VariableTable extends Hashtable {
      * @return  The variable's value.
      */
     public String interpolate(String varName) {
+        Preferences.debug("varTable:\tRetrieving:\t" + varName + "\t->\t" + (String)super.get(varName) + "\n", Preferences.DEBUG_SCRIPTING);
         return (String) super.get(varName);
     }
 
@@ -70,6 +74,7 @@ public class VariableTable extends Hashtable {
      * @param  varName  The name of the variable to remove.
      */
     public void removeVariable(String varName) {
+        Preferences.debug("varTable:\tRemoving:\t" + varName + "\n", Preferences.DEBUG_SCRIPTING);
         super.remove(varName);
     }
 
@@ -80,6 +85,7 @@ public class VariableTable extends Hashtable {
      * @param  value    The variable value.
      */
     public void storeVariable(String varName, String value) {
+        Preferences.debug("varTable:\tStored:\t" + varName + "\t->\t" + value + "\n", Preferences.DEBUG_SCRIPTING);
         super.put(varName, value);
     }
 }

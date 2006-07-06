@@ -4,6 +4,7 @@ package gov.nih.mipav.model.scripting;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.util.Vector;
 
@@ -29,6 +30,9 @@ public class ScriptRecorder {
     
     /** Status indicating that the script recorder is currently stopped (either never started, or recording is over). */
     public static final int STOPPED = 0;
+    
+    /** Strings describing the various recorder statuses. */
+    public static final String[] statusStrings = {"Stopped", "Recording", "Paused"};
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -53,6 +57,7 @@ public class ScriptRecorder {
         script = new String();
         imageTable = new ImageVariableTable();
         recorderStatus = STOPPED;
+        Preferences.debug("script recorder:\tCreated" + "\n", Preferences.DEBUG_SCRIPTING);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -78,6 +83,7 @@ public class ScriptRecorder {
     public synchronized void addLine(ScriptableActionInterface scriptAction) {
         if (getRecorderStatus() == RECORDING) {
             scriptAction.insertScriptLine();
+            // no notification is necessary since the scriptAction must call one of the other addLine() methods to actually add to the script
         }
     }
 
@@ -89,6 +95,9 @@ public class ScriptRecorder {
     public synchronized void addLine(String line) {
         if (getRecorderStatus() == RECORDING) {
             script += line.trim() + LINE_SEPARATOR;
+            
+            Preferences.debug("script recorder:\tLine added:\t" + line.trim() + "\n", Preferences.DEBUG_SCRIPTING);
+            
             notifyListenersOfScriptChange();
         }
     }
@@ -103,6 +112,8 @@ public class ScriptRecorder {
         if (getRecorderStatus() == RECORDING) {
             script += action + "(" + parameterList + ")" + LINE_SEPARATOR;
             
+            Preferences.debug("script recorder:\tLine added:\t" + action + "(" + parameterList + ")" + "\n", Preferences.DEBUG_SCRIPTING);
+            
             notifyListenersOfScriptChange();
         }
     }
@@ -114,7 +125,24 @@ public class ScriptRecorder {
         script = new String();
         imageTable = new ImageVariableTable();
         
+        Preferences.debug("script recorder:\tScript reset" + "\n", Preferences.DEBUG_SCRIPTING);
+        
         notifyListenersOfScriptChange();
+    }
+    
+    /**
+     * Returns a reference to the image table being used to run the current script.
+     * 
+     * @return  The image table which should be used to run the current script, or <code>null</code> if no script is being run at the moment.
+     */
+    public synchronized ImageVariableTable getImageTable() {
+        if (getRecorderStatus() == RECORDING) {
+            return imageTable;
+        }
+        
+        // TODO: should an exception be thrown or a message displayed?
+        Preferences.debug("script recorder:\tRetrieved image table while no script is being recorded." + "\n", Preferences.DEBUG_SCRIPTING);
+        return null;
     }
 
     /**
@@ -141,6 +169,8 @@ public class ScriptRecorder {
      * @param  status  The new status for the script recorder.
      */
     protected synchronized void setRecorderStatus(int status) {
+        Preferences.debug("script recorder:\tStatus changed from\t" + statusStrings[recorderStatus] + "\tto\t" + statusStrings[status] + "\n", Preferences.DEBUG_SCRIPTING);
+        
         recorderStatus = status;
         
         notifyListenersOfScriptStatus();
@@ -153,6 +183,8 @@ public class ScriptRecorder {
     public synchronized void setScript(String newScript) {
         script = newScript;
         
+        Preferences.debug("script recorder:\tScript explictly set from outside of the recorder." + "\n", Preferences.DEBUG_SCRIPTING);
+        
         notifyListenersOfScriptChange();
     }
     
@@ -164,10 +196,12 @@ public class ScriptRecorder {
      */
     public synchronized boolean startRecording() {
         if (getRecorderStatus() == STOPPED) {
+            Preferences.debug("script recorder:\tNew script started." + "\n", Preferences.DEBUG_SCRIPTING);
             resetScript();
             setRecorderStatus(RECORDING);
             return true;
         } else if (getRecorderStatus() == PAUSED) {
+            Preferences.debug("script recorder:\tresumed." + "\n", Preferences.DEBUG_SCRIPTING);
             setRecorderStatus(RECORDING);
             return true;
         } else {
@@ -181,6 +215,7 @@ public class ScriptRecorder {
      */
     public synchronized void pauseRecording() {
         if (getRecorderStatus() == RECORDING) {
+            Preferences.debug("script recorder:\tPaused." + "\n", Preferences.DEBUG_SCRIPTING);
             setRecorderStatus(PAUSED);
         } else {
             MipavUtil.displayError("Cannot pause script recording.  Recording is either already paused or is stopped.");
@@ -193,6 +228,7 @@ public class ScriptRecorder {
      */
     public synchronized void stopRecording() {
         if (getRecorderStatus() != STOPPED) {
+            Preferences.debug("script recorder:\tStopped." + "\n", Preferences.DEBUG_SCRIPTING);
             setRecorderStatus(STOPPED);
         } else {
             MipavUtil.displayError("Cannot stop script recording.  No recording is currently taking place.");
@@ -201,10 +237,23 @@ public class ScriptRecorder {
     }
     
     /**
+     * Convenience method used to store the name of an image in the image table being recorded/used in the current script.
+     * 
+     * @param   imageName  The name of the image to store.
+     * 
+     * @return  The image variable placeholder which has been assigned to the image name (may not be a new variable if the name is already in the table).
+     */
+    public synchronized String storeImage(String imageName) {
+        Preferences.debug("script recorder:\tStoring image:\t" + imageName + "\n", Preferences.DEBUG_SCRIPTING);
+        return getImageTable().storeImageName(imageName);
+    }
+    
+    /**
      * Adds a class to the recorder's list of listeners.
      * @param  listener  A class which wants to be notified about changes in the recorder's status and script text.
      */
     public synchronized void addScriptRecordingListener(ScriptRecordingListener listener) {
+        Preferences.debug("script recorder:\tNew listener added:\t" + listener.getClass().getName() + "\n", Preferences.DEBUG_SCRIPTING);
         recordingListeners.add(listener);
     }
     
@@ -213,6 +262,7 @@ public class ScriptRecorder {
      * @param  listener  A class which no longer wants to know about changes in the recorder's state.
      */
     public synchronized void removeScriptRecordingListener(ScriptRecordingListener listener) {
+        Preferences.debug("script recorder:\tListener removed:\t" + listener.getClass().getName() + "\n", Preferences.DEBUG_SCRIPTING);
         recordingListeners.remove(listener);
     }
     
@@ -220,6 +270,7 @@ public class ScriptRecorder {
      * Notifies any ScriptRecorderListeners of the current script text, after it has changed in some manner.
      */
     protected synchronized void notifyListenersOfScriptChange() {
+        Preferences.debug("script recorder:\tNotifying listeners of a script change." + "\n", Preferences.DEBUG_SCRIPTING);
         for (int i = 0; i < recordingListeners.size(); i++) {
             ((ScriptRecordingListener)recordingListeners.elementAt(i)).updateScript(getScript());
         }
@@ -229,6 +280,7 @@ public class ScriptRecorder {
      * Notifies any ScriptRecorderListeners of the current recording status of the script recorder.
      */
     protected synchronized void notifyListenersOfScriptStatus() {
+        Preferences.debug("script recorder:\tNotifying listeners of a recorder status change." + "\n", Preferences.DEBUG_SCRIPTING);
         for (int i = 0; i < recordingListeners.size(); i++) {
             ((ScriptRecordingListener)recordingListeners.elementAt(i)).changeRecordingStatus(getRecorderStatus());
         }

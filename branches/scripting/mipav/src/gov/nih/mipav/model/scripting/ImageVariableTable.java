@@ -3,6 +3,7 @@ package gov.nih.mipav.model.scripting;
 
 import gov.nih.mipav.model.structures.ModelImage;
 
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
 import java.util.Enumeration;
@@ -58,6 +59,9 @@ public class ImageVariableTable extends Hashtable {
         if (imageVar != null) {
             removeImageVariable(imageVar);
             storeImageVariable(imageVar, newName);
+            Preferences.debug("imgTable:\tChanged image name:\t" + oldName + "\t(" + imageVar + ")\t->\t" + newName + "\n", Preferences.DEBUG_SCRIPTING);
+        } else {
+            Preferences.debug("imgTable:\tChanged image name failed:\tCould not find " + oldName + "\n", Preferences.DEBUG_SCRIPTING);
         }
     }
 
@@ -69,6 +73,7 @@ public class ImageVariableTable extends Hashtable {
      * @return  The associated image.
      */
     public ModelImage getImage(String imageVar) {
+        Preferences.debug("imgTable:\tGetting image:\t" + getImageName(imageVar) + "\t(" + imageVar + ")" + "\n", Preferences.DEBUG_SCRIPTING);
         return ViewUserInterface.getReference().getRegisteredImageByName(getImageName(imageVar));
     }
 
@@ -121,6 +126,7 @@ public class ImageVariableTable extends Hashtable {
      * @param  varName  The name of the image variable to remove.
      */
     public void removeImageVariable(String varName) {
+        Preferences.debug("imgTable:\tRemoving image:\t" + getImageName(varName) + "\t(" + varName + ")" + "\n", Preferences.DEBUG_SCRIPTING);
         super.remove(varName);
     }
 
@@ -140,8 +146,10 @@ public class ImageVariableTable extends Hashtable {
             imageVar = imageVariablePrefix + currentImageNumber;
             super.put(imageVar, imageName);
             currentImageNumber++;
+            Preferences.debug("imgTable:\tStored new image:\t" + imageName + "\t(" + imageName + ")" + "\n", Preferences.DEBUG_SCRIPTING);
         } else {
             imageVar = getImageVariable(imageName);
+            Preferences.debug("imgTable:\tTrying to store image already in table:\t" + imageName + "\t(" + imageVar + ")" + "\n", Preferences.DEBUG_SCRIPTING);
         }
 
         return imageVar;
@@ -154,6 +162,7 @@ public class ImageVariableTable extends Hashtable {
      * @param  imageName  The image name.
      */
     public void storeImageVariable(String imageVar, String imageName) {
+        Preferences.debug("imgTable:\tStoring image var:\t" + imageName + "\t(" + imageVar + ")" + "\n", Preferences.DEBUG_SCRIPTING);
         super.put(imageVar, imageName);
     }
 }

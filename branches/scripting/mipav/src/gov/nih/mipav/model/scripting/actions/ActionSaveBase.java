@@ -177,7 +177,7 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
             int collisionAvoidanceIndex = 1;
             File testImageFile = new File(saveFileDir, saveFileName);
             while (testImageFile.exists()) {
-                Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_MINOR);
+                Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
                 
                 String newSaveFileName = ActionSaveBase.stripExtension(saveFileName) + "_" + collisionAvoidanceIndex + extension;
                 testImageFile = null;
@@ -192,7 +192,7 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
             int collisionAvoidanceIndex = 1;
             File testImageFile = new File(saveFileDir, saveFileName);
             while (testImageFile.exists()) {
-                Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_MINOR);
+                Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
                 
                 saveFileName = savePrefix + image.getImageName() + saveSuffix + "_" + collisionAvoidanceIndex + extension;
                 testImageFile = null;
@@ -215,7 +215,7 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
         opts.setIsScript(true);
         
         int fileType = fileIO.getFileType(opts.getFileName(), opts.getFileDirectory());
-        Preferences.debug("File type is: " + fileType + "\n", Preferences.DEBUG_MINOR);
+        Preferences.debug("File type is: " + fileType + "\n", Preferences.DEBUG_SCRIPTING);
         opts.setFileType(fileType);
         
         // tiff only parameter (and may be optional even for tiffs)
@@ -265,7 +265,7 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
                 opts.setDigitNumber(digitNumber);
                 opts.setMultiFile(true);
             } catch (ParameterException pe) {
-                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n", Preferences.DEBUG_MINOR);
+                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n", Preferences.DEBUG_SCRIPTING);
             }
         } else if (fileType == FileBase.AVI) {
             try {
@@ -273,7 +273,7 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
                 opts.setAVICompression(aviCompression);
             } catch (ParameterException pe) {
                 // the above params are optional
-                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n", Preferences.DEBUG_MINOR);
+                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n", Preferences.DEBUG_SCRIPTING);
             }
         }
         
@@ -286,7 +286,7 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
                 opts.setEndSlice(endSlice);
             } catch (ParameterException pe) {
                 // the above params are optional
-                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n", Preferences.DEBUG_MINOR);
+                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n", Preferences.DEBUG_SCRIPTING);
             }
         }
         

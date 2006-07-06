@@ -58,8 +58,8 @@ public class Parser {
             imageVars[i] = (String) imageVarList.elementAt(i);
         }
 
-        Preferences.debug("Found " + numImages + " unique images used in script " + scriptFile + "\n",
-                          Preferences.DEBUG_MINOR);
+        Preferences.debug("parser:\tFound " + numImages + " unique images used in script " + scriptFile + "\n",
+                          Preferences.DEBUG_SCRIPTING);
 
         return imageVars;
     }
@@ -93,7 +93,7 @@ public class Parser {
             }
         }
 
-        Preferences.debug("Found " + numVOIs + " unique VOIs used in script " + scriptFile + "attached to image " + imageVarName + "\n", Preferences.DEBUG_MINOR);
+        Preferences.debug("parser:\tFound " + numVOIs + " unique VOIs used in script " + scriptFile + "attached to image " + imageVarName + "\n", Preferences.DEBUG_SCRIPTING);
 
         return numVOIs;
     }
@@ -132,9 +132,11 @@ public class Parser {
             ParsedActionLine parsedLine = parser.parseNextLine();
 
             if (parsedLine != null) {
-                Preferences.debug("\t" + parsedLine.convertToString(), Preferences.DEBUG_MINOR);
+                Preferences.debug("parser:\t\t" + parsedLine.convertToString(), Preferences.DEBUG_SCRIPTING);
 
                 ScriptableActionInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine.getAction());
+                
+                Preferences.debug("parser:\tRunning action:\t" + scriptAction.getClass().getCanonicalName() + "\n", Preferences.DEBUG_SCRIPTING);
                 scriptAction.scriptRun(parsedLine.getParameterTable());
             }
         }

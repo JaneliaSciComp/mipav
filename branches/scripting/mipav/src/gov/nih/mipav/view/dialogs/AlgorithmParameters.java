@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.ScriptRunner;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
@@ -271,7 +272,7 @@ public abstract class AlgorithmParameters {
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public String storeInputImage(ModelImage inputImage) throws ParserException {
-        String var = storeImage(inputImage);
+        String var = storeImageInRecorder(inputImage);
         params.put(ParameterFactory.newImage(getInputImageLabel(currentInputImageLabelNumber), var));
         currentInputImageLabelNumber++;
 
@@ -292,20 +293,31 @@ public abstract class AlgorithmParameters {
         params.put(ParameterFactory.newBoolean(DO_OUTPUT_NEW_IMAGE, isNewImage));
 
         if (isNewImage) {
-            return storeImage(outputImage);
+            return storeImageInRunner(outputImage);
         }
 
         return null;
     }
 
     /**
-     * Store an image in the scripting variable table.  Used to store input/output images while recording a script, and to store output images after the running of a script is completed.
+     * Store an image in the script recorder image variable table.  Used to store input/output images while recording a script.  Should not be used while running a script.
      *
      * @param   image  The image to store in the variable table.
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    protected String storeImage(ModelImage image) {
+    protected String storeImageInRecorder(ModelImage image) {
+        return ScriptRecorder.getReference().storeImage(image.getImageName());
+    }
+    
+    /**
+     * Store an image in the script runner image variable table.  Used to store input/output images while running a script.  Should not be used while recording a script.
+     *
+     * @param   image  The image to store in the variable table.
+     *
+     * @return  The image placeholder variable assigned to the image by the variable table.
+     */
+    protected String storeImageInRunner(ModelImage image) {
         return ScriptRunner.getReference().storeImage(image.getImageName());
     }
 

@@ -1045,7 +1045,7 @@ public class JDialogGaussianBlur extends JDialogBase
          */
         public void doPostAlgorithmActions() {
             if (outputOptionsPanel.isOutputNewImageSet()) {
-                storeImage(getResultImage());
+                storeImageInRunner(getResultImage());
             }
         }
 

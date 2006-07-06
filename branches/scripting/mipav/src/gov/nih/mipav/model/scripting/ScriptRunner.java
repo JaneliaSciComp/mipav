@@ -36,6 +36,7 @@ public class ScriptRunner {
      */
     protected ScriptRunner() {
         isRunning = false;
+        Preferences.debug("script runner:\tCreated." + "\n", Preferences.DEBUG_SCRIPTING);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -77,9 +78,11 @@ public class ScriptRunner {
             return false;
         }
         
+        Preferences.debug("script runner:\tStarting script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
+        
         setRunning(true);
         
-        scriptFile = new String();
+        scriptFile = file;
         imageTable = new ImageVariableTable();
         
         try {
@@ -87,6 +90,7 @@ public class ScriptRunner {
             if (imageVarsNeeded.length != imageNameList.size()) {
                 MipavUtil.displayError("Not enough images provided while attempting to run the script.\n Found: " +
                         imageNameList.size() + " Required: " + imageVarsNeeded.length);
+                Preferences.debug("script runner:\tAborted script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
                 setRunning(false);
                 return false;
             }
@@ -96,11 +100,15 @@ public class ScriptRunner {
             Parser.runScript(scriptFile);
         } catch (ParserException pe) {
             MipavUtil.displayError("Error executing script:\n" + pe);
+            Preferences.debug("script runner:\tAborted script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
             setRunning(false);
             return false;
         }
         
         setRunning(false);
+        
+        Preferences.debug("script runner:\tFinished script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
+        
         return true;
     }
     
@@ -114,7 +122,7 @@ public class ScriptRunner {
             String imageName = (String)imageNameList.elementAt(i);
             String imageVar = imageTable.storeImageName(imageName);
             
-            Preferences.debug("Added image to image table:\t" + imageVar + "\t->\t" + imageName, Preferences.DEBUG_MINOR);
+            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVar + "\t->\t" + imageName, Preferences.DEBUG_SCRIPTING);
         }
     }
     
@@ -124,6 +132,7 @@ public class ScriptRunner {
      * @param  running  Whether we are running a script.
      */
     protected synchronized void setRunning(boolean running) {
+        // TODO: maybe this should reset the scriptFile and imageTable when changed
         isRunning = running;
     }
     
@@ -138,6 +147,7 @@ public class ScriptRunner {
         }
         
         // TODO: should an exception be thrown or a message displayed?
+        Preferences.debug("script runner:\tRetrieved image table while no script is being run." + "\n", Preferences.DEBUG_SCRIPTING);
         return null;
     }
     
@@ -149,6 +159,7 @@ public class ScriptRunner {
      * @return  The image associated with the given image variable.
      */
     public synchronized ModelImage getImage(String imageVar) {
+        Preferences.debug("script runner:\tRetrieving image:\t" + imageVar + "\n", Preferences.DEBUG_SCRIPTING);
         return getImageTable().getImage(imageVar);
     }
     
@@ -160,6 +171,7 @@ public class ScriptRunner {
      * @return  The image variable placeholder which has been assigned to the image name (may not be a new variable if the name is already in the table).
      */
     public synchronized String storeImage(String imageName) {
+        Preferences.debug("script runner:\tStoring image:\t" + imageName + "\n", Preferences.DEBUG_SCRIPTING);
         return getImageTable().storeImageName(imageName);
     }
 }

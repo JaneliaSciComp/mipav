@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.scripting;
 
 
+import gov.nih.mipav.view.Preferences;
+
+
 /**
  * Given the name of a script action, this class searches a number of locations for a class to load with that name and returns a new instance of that class.
  */
@@ -49,8 +52,7 @@ public class ScriptableActionLoader {
     protected static Class attemptLoadFromPackage(String packageString, String action) throws ParserException {
 
         try {
-
-            // see if it's a plugin
+            Preferences.debug("script action loader:\tTrying action:\t" + action + "\tin\t" + packageString + "\n", Preferences.DEBUG_SCRIPTING);
             return Class.forName(packageString + action);
         } catch (ClassCastException err) {
 
@@ -80,7 +82,8 @@ public class ScriptableActionLoader {
             try {
                 return attemptLoadFromPackage(SCRIPT_ACTION_LOCATIONS[i], action);
             } catch (ParserException pe) {
-
+                Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t" + SCRIPT_ACTION_LOCATIONS[i] + "\n", Preferences.DEBUG_SCRIPTING);
+                
                 // TODO: not the best error handling -- should indicate the error for the location which probably holds
                 // the action, not always the last one.. if not at the end of the list of places to try, ignore the
                 // error and move on to the next location
