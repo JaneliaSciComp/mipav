@@ -9,19 +9,13 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 import gov.nih.mipav.view.dialogs.JDialogSaveMinc;
 
 
 /**
  * A script action which writes out an image to disk.
  */
-public abstract class ActionSaveBase implements ScriptableActionInterface {
-
-    /**
-     * The label to use for the input image parameter.
-     */
-    protected static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
+public abstract class ActionSaveBase extends ActionImageProcessorBase {
     
     /**
      * Label for the file name prefix parameter.
@@ -89,11 +83,6 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
     protected static final String AVI_COMPRESSION = "avi_compression";
     
     /**
-     * The image whose saving should be recorded in the script.  The actual saving must be done elsewhere.
-     */
-    protected ModelImage recordingInputImage;
-    
-    /**
      * The file saving options used to save the image, which should be recording in the script.  The action saving must be done elsewhere.
      */
     protected FileWriteOptions recordingOptions;
@@ -101,37 +90,22 @@ public abstract class ActionSaveBase implements ScriptableActionInterface {
     /**
      * Constructor for the dynamic instantiation and execution of the script action.
      */
-    public ActionSaveBase() {}
+    public ActionSaveBase() {
+        super();
+    }
     
     /**
      * Constructor used to record the script action line.
-     * @param input    The image which was saved.
-     * @param options  The options used during the image save.
+     * 
+     * @param  input    The image which was saved.
+     * @param  options  The options used during the image save.
      */
     public ActionSaveBase(ModelImage input, FileWriteOptions options) {
-        recordingInputImage = input;
+        super(input);
         recordingOptions = options;
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * {@inheritDoc}
-     */
-    public abstract void insertScriptLine();
-
-    /**
-     * {@inheritDoc}
-     */
-    public abstract void scriptRun(ParameterTable parameters);
-    
-    /**
-     * Changes the image which was saved.
-     * @param inputImage  The image which was saved.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
-    }
     
     /**
      * Changes the set of options used to save the image.

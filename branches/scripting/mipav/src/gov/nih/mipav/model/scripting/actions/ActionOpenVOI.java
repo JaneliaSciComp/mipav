@@ -11,34 +11,27 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewVOIVector;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which opens a VOI from disk and adds it to an image.
  */
-public class ActionOpenVOI implements ScriptableActionInterface {
-    /**
-     * The label to use for the input image parameter.
-     */
-    protected static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
-    
-    /**
-     * The image into which the VOI was loaded should be recorded in the script.  The actual opening/adding must be done elsewhere.
-     */
-    private ModelImage recordingInputImage;
+public class ActionOpenVOI extends ActionImageProcessorBase {
     
     /**
      * Constructor for the dynamic instantiation and execution of the OpenVOI script action.
      */
-    public ActionOpenVOI() {}
+    public ActionOpenVOI() {
+        super();
+    }
     
     /**
      * Constructor used to record the OpenVOI script action line.
-     * @param input  The image to which the VOI was added.
+     * 
+     * @param  input  The image to which the VOI was added.
      */
     public ActionOpenVOI(ModelImage input) {
-        recordingInputImage = input;
+        super(input);
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -49,13 +42,13 @@ public class ActionOpenVOI implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating parameters while recording OpenVOI script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("OpenVOI", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
         
         /*String imageName = getActiveImage().getImageName();
 

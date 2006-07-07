@@ -1,11 +1,8 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.ScriptRunner;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
-import gov.nih.mipav.model.scripting.parameters.ParameterTable;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.components.*;
@@ -272,8 +269,11 @@ public abstract class AlgorithmParameters {
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public String storeInputImage(ModelImage inputImage) throws ParserException {
+        boolean isExternalImage = isImageStoredInRecorder(inputImage);
+        
         String var = storeImageInRecorder(inputImage);
-        params.put(ParameterFactory.newImage(getInputImageLabel(currentInputImageLabelNumber), var));
+        params.put(ParameterFactory.newImage(getInputImageLabel(currentInputImageLabelNumber), var, isExternalImage));
+        
         currentInputImageLabelNumber++;
 
         return var;
@@ -298,7 +298,18 @@ public abstract class AlgorithmParameters {
 
         return null;
     }
-
+    
+    /**
+     * Returns whether an image has been registered in the script recorder.  If it has not been used, it must be specified externally when this script is run later.
+     * 
+     * @param   image  The image to look for in the recorder's image table.
+     * 
+     * @return  <code>True</code> if the image has been stored in the recorder's image table, <code>false</code> otherwise.
+     */
+    protected static final boolean isImageStoredInRecorder(ModelImage image) {
+        return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());
+    }
+    
     /**
      * Store an image in the script recorder image variable table.  Used to store input/output images while recording a script.  Should not be used while running a script.
      *
@@ -306,7 +317,7 @@ public abstract class AlgorithmParameters {
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    protected String storeImageInRecorder(ModelImage image) {
+    protected static final String storeImageInRecorder(ModelImage image) {
         return ScriptRecorder.getReference().storeImage(image.getImageName());
     }
     
@@ -317,7 +328,7 @@ public abstract class AlgorithmParameters {
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    protected String storeImageInRunner(ModelImage image) {
+    protected static final String storeImageInRunner(ModelImage image) {
         return ScriptRunner.getReference().storeImage(image.getImageName());
     }
 

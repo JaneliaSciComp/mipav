@@ -40,6 +40,20 @@ public class ParameterFactory {
     public static final ParameterDouble newDouble(String label, double value) throws ParserException {
         return (ParameterDouble) ParameterFactory.newParameter(label, Parameter.PARAM_DOUBLE, "" + value);
     }
+        
+    /**
+     * Creates a new externally-specified image placeholder variable parameter with a given label and value (e.g., '$image1').
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new image placeholder variable parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    protected static final ParameterExternalImage newExternalImage(String label, String value) throws ParserException {
+        return (ParameterExternalImage) ParameterFactory.newParameter(label, Parameter.PARAM_EXTERNAL_IMAGE, "" + value);
+    }
 
     /**
      * Creates a new floating point parameter with a given label and value.
@@ -65,8 +79,28 @@ public class ParameterFactory {
      *
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
-    public static final ParameterImage newImage(String label, String value) throws ParserException {
+    protected static final ParameterImage newImage(String label, String value) throws ParserException {
         return (ParameterImage) ParameterFactory.newParameter(label, Parameter.PARAM_IMAGE, "" + value);
+    }
+    
+    /**
+     * Creates a new image placeholder variable parameter with a given label and value (e.g., '$image1').
+     *
+     * @param   label            The label/name of the new parameter.
+     * @param   value            The value to assign to the new parameter (e.g., '$image1').
+     * @param   isExternalImage  Whether the new image needs to be externally-specified (as oppossed to generated from within the script).
+     *
+     * @return  A new image placeholder variable parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final ParameterImage newImage(String label, String value, boolean isExternalImage) throws ParserException {
+        if (isExternalImage) {
+            // the image wasn't already stored in the variable table, therefore it wasn't the result of another script action, so it needs to be specified before the script can be run
+            return ParameterFactory.newExternalImage(label, value);
+        } else {
+            return ParameterFactory.newImage(label, value);
+        }
     }
 
     /**
@@ -143,6 +177,10 @@ public class ParameterFactory {
 
             case Parameter.PARAM_DOUBLE:
                 param = new ParameterDouble(label, type, value);
+                break;
+                
+            case Parameter.PARAM_EXTERNAL_IMAGE:
+                param = new ParameterExternalImage(label, type, value);
                 break;
 
             case Parameter.PARAM_FLOAT:

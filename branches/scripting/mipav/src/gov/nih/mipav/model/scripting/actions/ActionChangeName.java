@@ -5,47 +5,46 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which changes the name of an image.
  */
-public class ActionChangeName implements ScriptableActionInterface {
+public class ActionChangeName extends ActionImageProcessorBase {
 
-    /**
-     * The label to use for the input image parameter.
-     */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
-    
     /**
      * The label to use for the parameter indicating the new image name.
      */
     private static final String IMAGE_NAME_LABEL = "new_image_name";
     
     /**
-     * The image whose name change should be recorded in the script.  The actual name change must be done elsewhere (after the recording).
+     * The new name given to the image.
      */
-    private ModelImage recordingInputImage;
+    private String recordingNewImageName;
     
     /**
-     * The new name given to the image
+     * The old image name.
      */
-    private String recordingImageName;
+    private String recordingOldImageName;
     
     /**
-     * Constructor for the dynamic instantiation and execution of the ChangeName script action.
+     * Constructor for the dynamic instantiation and execution of the script action.
      */
-    public ActionChangeName() {}
+    public ActionChangeName() {
+        super();
+    }
     
     /**
      * Constructor used to record the ChangeName script action line.
+     * 
      * @param  image         The image whose name was changed.
-     * @param  newImageName  The new name given to the image.
+     * @param  oldImageName  The old name of the image.
+     * @param  newImageName  The new name given to the image (the image's current name).
      */
-    public ActionChangeName(ModelImage image, String newImageName) {
-        recordingInputImage = image;
-        recordingImageName = newImageName;
+    public ActionChangeName(ModelImage image, String oldImageName, String newImageName) {
+        super(image);
+        recordingOldImageName = oldImageName;
+        recordingNewImageName = newImageName;
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -54,16 +53,23 @@ public class ActionChangeName implements ScriptableActionInterface {
      * {@inheritDoc}
      */
     public void insertScriptLine() {
+        // change the image name stored in the image table if it has been used in the script before.
+        // if it hasn't been used before storing it will be handled in createInputImageParameter()
+        ImageVariableTable imageTable = ScriptRecorder.getReference().getImageTable();
+        if (imageTable.isImageStored(recordingOldImageName)) {
+            imageTable.changeImageName(recordingOldImageName, recordingNewImageName);
+        }
+        
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
-            parameters.put(ParameterFactory.newString(IMAGE_NAME_LABEL, recordingImageName));
+            parameters.put(createInputImageParameter());
+            parameters.put(ParameterFactory.newString(IMAGE_NAME_LABEL, recordingNewImageName));
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered while recording ChangeName script action:\n" + pe);
+            MipavUtil.displayError("Error encountered while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("ChangeName", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -71,27 +77,30 @@ public class ActionChangeName implements ScriptableActionInterface {
      */
     public void scriptRun(ParameterTable parameters) {
         ModelImage inputImage = parameters.getImage(INPUT_IMAGE_LABEL);
-        String inputImagePlaceholder = parameters.get(INPUT_IMAGE_LABEL).getValueString();
+        
+        String oldImageName = inputImage.getImageName();
         String newImageName = parameters.getString(IMAGE_NAME_LABEL);
         
         inputImage.updateFileName(newImageName);
-        ScriptRunner.getReference().getImageTable().removeImageVariable(inputImagePlaceholder);
-        ScriptRunner.getReference().getImageTable().storeImageVariable(inputImagePlaceholder, newImageName);
-    }
-    
-    /**
-     * Changes the image whose name change should be recorded in the script.
-     * @param inputImage  The image whose name was changed.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
+        
+        ScriptRunner.getReference().getImageTable().changeImageName(oldImageName, newImageName);
     }
     
     /**
      * Changes the image name which should be recorded as given to the input image.
+     * 
      * @param name  The new name given to the input image.
      */
     public void setNewImageName(String name) {
-        recordingImageName = name;
+        recordingNewImageName = name;
+    }
+    
+    /**
+     * Changes the old name of the input image.
+     * 
+     * @param name  The old name of the input image.
+     */
+    public void setOldImageName(String name) {
+        recordingOldImageName = name;
     }
 }

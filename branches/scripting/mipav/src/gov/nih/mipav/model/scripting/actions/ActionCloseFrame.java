@@ -5,35 +5,25 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * An action which closes the frame containing an image.
  */
-public class ActionCloseFrame implements ScriptableActionInterface {
-
+public class ActionCloseFrame extends ActionImageProcessorBase {
     /**
-     * The label to use for the input image parameter.
+     * Constructor for the dynamic instantiation and execution of the script action.
      */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
+    public ActionCloseFrame() {
+        super();
+    }
     
     /**
-     * The image whose closing should be recorded in the script.  The actual closing must be done elsewhere.
+     * Constructor used to record the script action line.
+     * @param input  The image which was processed.
      */
-    private ModelImage recordingInputImage;
-    
-    /**
-     * Constructor for the dynamic instantiation and execution of the CloseFrame script action.
-     */
-    public ActionCloseFrame() {}
-    
-    /**
-     * Constructor used to record the CloseFrame script action line.
-     * @param image  The image whose frame was closed.
-     */
-    public ActionCloseFrame(ModelImage image) {
-        recordingInputImage = image;
+    public ActionCloseFrame(ModelImage input) {
+        super(input);
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -44,13 +34,13 @@ public class ActionCloseFrame implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating input image parameter while recording CloseFrame script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("CloseFrame", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -58,13 +48,5 @@ public class ActionCloseFrame implements ScriptableActionInterface {
      */
     public void scriptRun(ParameterTable parameters) {
         parameters.getImage(INPUT_IMAGE_LABEL).getParentFrame().close();
-    }
-    
-    /**
-     * Changes the image whose closing should be recorded in the script.
-     * @param inputImage  The image whose frame was closed.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
     }
 }

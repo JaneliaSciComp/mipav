@@ -83,20 +83,20 @@ public class ScriptRecorder {
     public synchronized void addLine(ScriptableActionInterface scriptAction) {
         if (getRecorderStatus() == RECORDING) {
             scriptAction.insertScriptLine();
-            // no notification is necessary since the scriptAction must call one of the other addLine() methods to actually add to the script
+            // no notification is necessary since the scriptAction must call the other addLine() method to actually add to the script
         }
     }
 
     /**
-     * Appends a line of text to the current script (if one is being recorded).
+     * Appends a comment line to the current script (if one is being recorded).
      *
-     * @param  line  A line of text to be added to the script (should not include an end-line character).
+     * @param  line  A comment to be added to the script (should not include an end-line character).
      */
-    public synchronized void addLine(String line) {
+    public synchronized void addCommentLine(String line) {
         if (getRecorderStatus() == RECORDING) {
-            script += line.trim() + LINE_SEPARATOR;
+            script += "# " + line.trim() + LINE_SEPARATOR;
             
-            Preferences.debug("script recorder:\tLine added:\t" + line.trim() + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script recorder:\tLine added:\t# " + line.trim() + "\n", Preferences.DEBUG_SCRIPTING);
             
             notifyListenersOfScriptChange();
         }
@@ -110,9 +110,9 @@ public class ScriptRecorder {
      */
     public synchronized void addLine(String action, ParameterTable parameterList) {
         if (getRecorderStatus() == RECORDING) {
-            script += action + "(" + parameterList + ")" + LINE_SEPARATOR;
+            script += action + "(" + parameterList.convertToString() + ")" + LINE_SEPARATOR;
             
-            Preferences.debug("script recorder:\tLine added:\t" + action + "(" + parameterList + ")" + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script recorder:\tLine added:\t" + action + "(" + parameterList.convertToString() + ")" + "\n", Preferences.DEBUG_SCRIPTING);
             
             notifyListenersOfScriptChange();
         }

@@ -3088,17 +3088,10 @@ public class ModelImage extends ModelStorageBase {
      * @param  newImageName  DOCUMENT ME!
      */
     public void updateFileName(String newImageName) {
-        String oldName = getImageName();
+        String oldImageName = getImageName();
         setImageName(newImageName);
-
-        ImageVariableTable varTable = ScriptRunner.getReference().getImageTable();
-        if (varTable.containsValue(oldName)) {
-            varTable.changeImageName(oldName, newImageName);
-        } else {
-            varTable.storeImageName(newImageName);
-        }
         
-        ScriptRecorder.getReference().addLine(new ActionChangeName(this, newImageName));
+        ScriptRecorder.getReference().addLine(new ActionChangeName(this, oldImageName, newImageName));
 
         try {
             UI.getFrameContainingImage(this).setTitle();

@@ -108,6 +108,17 @@ public class ImageVariableTable extends Hashtable {
         // did not find the image name in the table
         return null;
     }
+    
+    /**
+     * Checks to see if an image has been stored somewhere in the image table.
+     * 
+     * @param   imageName  The name of the image to check for.
+     * 
+     * @return  <code>True</code> if the image has been added to the table, <code>false</code> otherwise.
+     */
+    public boolean isImageStored(String imageName) {
+        return super.containsValue(imageName);
+    }
 
     /**
      * Checks to see if an image variable has been added to the table.

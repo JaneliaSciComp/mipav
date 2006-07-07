@@ -6,19 +6,13 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which converts all VOIs within an image to some type of mask image (short, binary, ubyte).
  */
-public class ActionVOIToMask implements ScriptableActionInterface {
+public class ActionVOIToMask extends ActionImageProcessorBase {
 
-    /**
-     * The label to use for the input image parameter.
-     */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
-    
     /**
      * The label to use for the mask output image data type parameter.
      */
@@ -40,11 +34,6 @@ public class ActionVOIToMask implements ScriptableActionInterface {
     public static final String MASK_UBYTE = "ubyte";
     
     /**
-     * The image which had its VOIs extracted to a mask (which should now be recorded).
-     */
-    private ModelImage recordingInputImage;
-    
-    /**
      * The type of mask extracted from the VOIs (which should now be recorded).
      */
     private String recordingMaskType;
@@ -52,15 +41,18 @@ public class ActionVOIToMask implements ScriptableActionInterface {
     /**
      * Constructor for the dynamic instantiation and execution of the VOIToMask script action.
      */
-    public ActionVOIToMask() {}
+    public ActionVOIToMask() {
+        super();
+    }
     
     /**
      * Constructor used to record the VOIToMask script action line.
-     * @param inputImage  The image whose VOIs were extracted to a mask image.
-     * @param maskType    The type of the extracted mask image.
+     * 
+     * @param  inputImage  The image whose VOIs were extracted to a mask image.
+     * @param  maskType    The type of the extracted mask image.
      */
     public ActionVOIToMask(ModelImage inputImage, String maskType) {
-        recordingInputImage = inputImage;
+        super(inputImage);
         recordingMaskType = maskType;
     }
     
@@ -72,14 +64,14 @@ public class ActionVOIToMask implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
             parameters.put(ParameterFactory.newString(MASK_DATA_TYPE, recordingMaskType));
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating parameters while recording VOIToMask script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("VOIToMask", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -111,14 +103,6 @@ public class ActionVOIToMask implements ScriptableActionInterface {
             MipavUtil.displayError("Out of memory: unable to create new mask image from VOI.");
             return;
         }
-    }
-    
-    /**
-     * Changes the image whose VOI to mask extraction should be recorded in the script.
-     * @param inputImage  The image whose VOIs were extracted.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
     }
     
     /**

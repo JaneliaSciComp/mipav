@@ -12,11 +12,7 @@ import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 /**
  * A script action which opens an image for use in MIPAV.
  */
-public class ActionOpenImage implements ScriptableActionInterface {
-    /**
-     * The label to use for the input image parameter.
-     */
-    protected static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
+public class ActionOpenImage extends ActionImageProcessorBase {
     
     /** Label of the parameter indicating whether we should try to open multi-file-capable image formats as multi-file images. */
     private static final String FILE_ALLOW_MULTIFILE = "allow_multifile_open";
@@ -40,11 +36,6 @@ public class ActionOpenImage implements ScriptableActionInterface {
     private static final String FILE_RAW_UNITS = "raw_units";
     
     /**
-     * The image whose opening should be recorded in the script.  The actual opening must be done elsewhere.
-     */
-    private ModelImage recordingInputImage;
-    
-    /**
      * Whether the image which was opened was opened with the multi-file option checked.
      */
     private boolean recordingAllowMultiFile;
@@ -52,7 +43,9 @@ public class ActionOpenImage implements ScriptableActionInterface {
     /**
      * Constructor for the dynamic instantiation and execution of the OpenImage script action.
      */
-    public ActionOpenImage() {}
+    public ActionOpenImage() {
+        super();
+    }
     
     /**
      * Constructor used to record the OpenImage script action line.
@@ -60,7 +53,8 @@ public class ActionOpenImage implements ScriptableActionInterface {
      * @param  allowMultiFile  Whether to try to open files as multi-file images.
      */
     public ActionOpenImage(ModelImage input, boolean allowMultiFile) {
-        recordingInputImage = input;
+        super(input);
+        recordingAllowMultiFile = allowMultiFile;
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -71,7 +65,7 @@ public class ActionOpenImage implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
             parameters.put(ParameterFactory.newBoolean(FILE_ALLOW_MULTIFILE, recordingAllowMultiFile));
             
             int fileFormat = recordingInputImage.getFileInfo(0).getFileFormat();
@@ -79,11 +73,11 @@ public class ActionOpenImage implements ScriptableActionInterface {
                 ActionOpenImage.addRawOptionsToParameters(parameters, recordingInputImage.getFileInfo(0));
             }
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating parameters while recording OpenImage script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("OpenImage", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**

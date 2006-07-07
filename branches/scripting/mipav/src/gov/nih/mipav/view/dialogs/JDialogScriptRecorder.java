@@ -100,7 +100,7 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
             String commentText = JOptionPane.showInputDialog("Enter comment");
 
             if (commentText != null) {
-                scriptRecorder.addLine("# " + commentText);
+                scriptRecorder.addCommentLine(commentText);
             }
         // TODO: somehow allow the user to specify prefixes/suffixes used in SaveImage/SaveImageAs commands (prefixes no longer a separate command)
         //} else if (command.equals("InsertPrefix")) {

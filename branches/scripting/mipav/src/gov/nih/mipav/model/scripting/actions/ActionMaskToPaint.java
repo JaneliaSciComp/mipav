@@ -8,35 +8,27 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which generates a paint mask based on a mask image.
  */
-public class ActionMaskToPaint implements ScriptableActionInterface {
-
-    /**
-     * The label to use for the input image parameter.
-     */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
-    
-    /**
-     * The mask image used to generate a paint mask (which should now be recorded).
-     */
-    private ModelImage recordingInputImage;
+public class ActionMaskToPaint extends ActionImageProcessorBase {
 
     /**
      * Constructor for the dynamic instantiation and execution of the MaskToPaint script action.
      */
-    public ActionMaskToPaint() {}
+    public ActionMaskToPaint() {
+        super();
+    }
     
     /**
      * Constructor used to record the MaskToPaint script action line.
-     * @param inputImage  The mask image which was used to generate the paint mask.
+     * 
+     * @param  inputImage  The mask image which was used to generate the paint mask.
      */
     public ActionMaskToPaint(ModelImage inputImage) {
-        recordingInputImage = inputImage;
+        super(inputImage);
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -47,13 +39,13 @@ public class ActionMaskToPaint implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating input image parameter while recording MaskToPaint script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("MaskToPaint", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -64,13 +56,5 @@ public class ActionMaskToPaint implements ScriptableActionInterface {
         ViewJFrameImage frame = inputImage.getParentFrame();
 
         frame.actionPerformed(new ActionEvent(frame, 0, "MaskToPaint"));
-    }
-    
-    /**
-     * Changes the mask image used to generate a new paint mask.
-     * @param inputImage  The mask image used to generate a paint mask.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
     }
 }

@@ -41,7 +41,7 @@ public class Parser {
 
                 for (int i = 0; i < params.length; i++) {
 
-                    if (params[i].getType() == Parameter.PARAM_IMAGE) {
+                    if (params[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
 
                         if (!imageVarList.contains(params[i].getValueString())) {
                             imageVarList.add(params[i].getValueString());

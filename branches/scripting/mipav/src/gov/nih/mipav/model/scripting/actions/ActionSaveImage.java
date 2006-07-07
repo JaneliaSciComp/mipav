@@ -16,7 +16,9 @@ public class ActionSaveImage extends ActionSaveBase {
     /**
      * Constructor for the dynamic instantiation and execution of the SaveImage script action.
      */
-    public ActionSaveImage() {}
+    public ActionSaveImage() {
+        super();
+    }
     
     /**
      * Constructor used to record the script action line.
@@ -35,14 +37,14 @@ public class ActionSaveImage extends ActionSaveBase {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
             addSaveOptionsToParameters(parameters, recordingOptions, recordingInputImage.getExtents());
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating input image parameter while recording SaveImage script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("SaveImage", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
