@@ -97,10 +97,12 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
         } else if (command.equals("InsertGC")) {
             scriptRecorder.addLine(new ActionCollectGarbage());
         } else if (command.equals("InsertComment")) {
-            String commentText = JOptionPane.showInputDialog("Enter comment");
+            if (scriptRecorder.getRecorderStatus() == ScriptRecorder.RECORDING) {
+                String commentText = JOptionPane.showInputDialog("Enter comment");
 
-            if (commentText != null) {
-                scriptRecorder.addCommentLine(commentText);
+                if (commentText != null) {
+                    scriptRecorder.addCommentLine(commentText);
+                }
             }
         // TODO: somehow allow the user to specify prefixes/suffixes used in SaveImage/SaveImageAs commands (prefixes no longer a separate command)
         //} else if (command.equals("InsertPrefix")) {
@@ -204,6 +206,7 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
         scriptTextArea = WidgetFactory.buildTextArea("", false);
         scriptTextArea.setRows(10);
         scriptTextArea.setColumns(30);
+        scriptTextArea.setBackground(Color.lightGray);
         
         JScrollPane scrollPane = WidgetFactory.buildScrollPane(scriptTextArea);
         scrollPanel.setLayout(new BorderLayout(25, 25));
@@ -402,11 +405,11 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
             }
             
             scriptTextArea.setEditable(true);
-            //scriptTextArea.setBackground(Color.white);
+            scriptTextArea.setBackground(Color.white);
             editButton.setText("Disable editing");
         } else {
             scriptTextArea.setEditable(false);
-            //scriptTextArea.setBackground(Color.lightGray);
+            scriptTextArea.setBackground(Color.lightGray);
             editButton.setText("Enable editing");
             
             scriptRecorder.setScript(scriptTextArea.getText());

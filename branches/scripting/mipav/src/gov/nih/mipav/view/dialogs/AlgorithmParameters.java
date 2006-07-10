@@ -269,7 +269,7 @@ public abstract class AlgorithmParameters {
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public String storeInputImage(ModelImage inputImage) throws ParserException {
-        boolean isExternalImage = isImageStoredInRecorder(inputImage);
+        boolean isExternalImage = !isImageStoredInRecorder(inputImage);
         
         String var = storeImageInRecorder(inputImage);
         params.put(ParameterFactory.newImage(getInputImageLabel(currentInputImageLabelNumber), var, isExternalImage));
@@ -293,7 +293,7 @@ public abstract class AlgorithmParameters {
         params.put(ParameterFactory.newBoolean(DO_OUTPUT_NEW_IMAGE, isNewImage));
 
         if (isNewImage) {
-            return storeImageInRunner(outputImage);
+            return storeImageInRecorder(outputImage);
         }
 
         return null;

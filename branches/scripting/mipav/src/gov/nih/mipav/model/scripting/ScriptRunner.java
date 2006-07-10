@@ -6,7 +6,7 @@ import gov.nih.mipav.view.Preferences;
 
 import gov.nih.mipav.model.structures.ModelImage;
 
-import java.util.Vector;
+import java.util.*;
 
 
 /**
@@ -115,14 +115,16 @@ public class ScriptRunner {
     /**
      * Populate the image table based on a list of image names we want to use in the execution of the script.
      * 
-     * @param  imageNameList  A list of image names, in the order they should be used in the script.
+     * @param   imageNameList  A list of image names, in the order they should be used in the script.
+     * 
+     * @throws  ParserException  If there is a problem encountered while reading the image variables used in the script.
      */
-    protected synchronized void fillImageTable(Vector imageNameList) {
+    protected synchronized void fillImageTable(Vector imageNameList) throws ParserException {
+        String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
         for (int i = 0; i < imageNameList.size(); i++) {
-            String imageName = (String)imageNameList.elementAt(i);
-            String imageVar = imageTable.storeImageName(imageName);
+            imageTable.put(imageVars[i], imageNameList.elementAt(i));
             
-            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVar + "\t->\t" + imageName, Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVars[i] + "\t->\t" + imageNameList.elementAt(i), Preferences.DEBUG_SCRIPTING);
         }
     }
     
@@ -132,7 +134,6 @@ public class ScriptRunner {
      * @param  running  Whether we are running a script.
      */
     protected synchronized void setRunning(boolean running) {
-        // TODO: maybe this should reset the scriptFile and imageTable when changed
         isRunning = running;
     }
     
@@ -146,7 +147,7 @@ public class ScriptRunner {
             return imageTable;
         }
         
-        // TODO: should an exception be thrown or a message displayed?
+        MipavUtil.displayError("Scripting error: tried to retrieve the image table while no script is being run.");
         Preferences.debug("script runner:\tRetrieved image table while no script is being run." + "\n", Preferences.DEBUG_SCRIPTING);
         return null;
     }

@@ -68,16 +68,14 @@ public class JDialogRunScriptController implements ActionListener {
      */
     private void populateScriptTree(String scriptFile) {
         
-         try{
-            
-            String[] images = gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile);
-            
-        model.setImagePlaceHolders(gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile));
-        int[] numberOfVOIs = new int[model.getImagePlaceHolders().length];
-        for (int i = 0; i < model.getImagePlaceHolders().length; i++) {
-            numberOfVOIs[i] = gov.nih.mipav.model.scripting.Parser.getNumberOfVOIsRequiredForImageVar(scriptFile,model.getImagePlaceHolders()[i]);
-        }//i
-        model.setNumberOfVOIs(numberOfVOIs);
+        try{
+            model.setImagePlaceHolders(gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile));
+            int[] numberOfVOIs = new int[model.getImagePlaceHolders().length];
+            for (int i = 0; i < model.getImagePlaceHolders().length; i++) {
+                numberOfVOIs[i] = gov.nih.mipav.model.scripting.Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, model.getImagePlaceHolders()[i]);
+            }//i
+        
+            model.setNumberOfVOIs(numberOfVOIs);
         } catch (Exception e){
             e.printStackTrace();
         }

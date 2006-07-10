@@ -303,9 +303,11 @@ public class JDialogGaussianBlur extends JDialogBase
      */
     public void insertScriptLine() {
         try {
-            AlgorithmParameters algoParams = new DialogParameters();
-            algoParams.storeParamsFromGUI();
-            ScriptRecorder.getReference().addLine("GaussianBlur", algoParams.getParams());
+            if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING) {
+                AlgorithmParameters algoParams = new DialogParameters();
+                algoParams.storeParamsFromGUI();
+                ScriptRecorder.getReference().addLine("GaussianBlur", algoParams.getParams());
+            }
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered recording GaussianBlur script line:\n" + pe);
         }
@@ -1057,6 +1059,10 @@ public class JDialogGaussianBlur extends JDialogBase
             userInterface = image.getUserInterface();
             parentFrame = image.getParentFrame();
 
+            outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+            sigmaPanel = new JPanelSigmas(image);
+            colorChannelPanel = new JPanelColorChannels(image);
+            
             outputOptionsPanel.setOutputNewImage(params.getBoolean(DO_OUTPUT_NEW_IMAGE));
             setSeparable(params.getBoolean(DO_PROCESS_SEPARABLE));
             setImage25D(params.getBoolean(DO_PROCESS_3D_AS_25D));
