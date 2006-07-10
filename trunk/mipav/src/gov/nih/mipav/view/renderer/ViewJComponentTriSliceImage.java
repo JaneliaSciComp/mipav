@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer;
 
 
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -29,17 +30,23 @@ public class ViewJComponentTriSliceImage {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    /* MipavCoordinateSystems upgrade: TODO: refactor XY, ZY, XZ, NA constant
+     * definitions to one class, so that all references are consistent: */
     /** Orientation static values. */
-    public static final int XY = 0;
+    //public static final int XY = 0;
+    public static final int XY = FileInfoBase.AXIAL;
 
     /** DOCUMENT ME! */
-    public static final int ZY = 1;
+    //public static final int ZY = 1;
+    public static final int ZY = FileInfoBase.SAGITTAL;
 
     /** DOCUMENT ME! */
-    public static final int XZ = 2;
+    //public static final int XZ = 2;
+    public static final int XZ = FileInfoBase.CORONAL;
 
     /** DOCUMENT ME! */
-    public static final int NA = 3;
+    //public static final int NA = 3;
+    public static final int NA = FileInfoBase.UNKNOWN_ORIENT;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -149,6 +156,7 @@ public class ViewJComponentTriSliceImage {
 
         orientation = _orientation;
 
+        /* MipavCoordinateSystems upgrade: TODO: */
         if ((orientation == NA) || (orientation == XY)) {
             imageDim = new Dimension(extents[0], extents[1]);
         } else if (orientation == XZ) {

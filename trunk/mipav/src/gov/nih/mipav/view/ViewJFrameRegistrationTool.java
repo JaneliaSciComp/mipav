@@ -2350,7 +2350,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             // Create the componentImageA which will be the reference image in the dual window
             componentImageA = new ViewJComponentSingleRegistration(this, imageA, LUTa, imageBufferA, pixBufferCompA, 1,
                                                                    newExtents, logMagDisplay, ViewJComponentBase.NA,
-                                                                   false, imageA.getAxisOrientation(),
                                                                    true);
 
             componentImageA.setBuffers(imageBufferA, null, pixBufferCompA, null);
@@ -2358,7 +2357,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             // Create the componentImageB which will be the adjusted image in the dual window
             componentImageB = new ViewJComponentSingleRegistration(this, imageB, LUTb, imageBufferB, pixBufferCompA, 1,
                                                                    newExtents, logMagDisplay, ViewJComponentBase.NA,
-                                                                   false, imageA.getAxisOrientation(),
                                                                    false);
 
             componentImageB.setBuffers(imageBufferA, null, pixBufferCompB, null);

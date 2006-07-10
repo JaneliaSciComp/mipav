@@ -687,8 +687,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             componentImage[i] = new ViewJComponentEditImage(this, imageA, LUTa, null, imageB, LUTb, null, null,
                                                             magnification / 100, extents, false,
-                                                            ViewJComponentEditImage.NA, false,
-                                                            imageA.getAxisOrientation());
+                                                            ViewJComponentEditImage.NA );
             componentImage[i].setFrameControls(controls);
             componentImage[i].setLocation(borderSize + selectedBorderSize, borderSize + selectedBorderSize);
 

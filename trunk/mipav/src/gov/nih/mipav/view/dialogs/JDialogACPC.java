@@ -150,7 +150,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,
                                                                                                     pt);
             setSuperiorEdge(pt);
@@ -161,7 +162,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_MARGIN,
                                                                                                     pt);
             setPosteriorMargin(pt);
@@ -172,7 +174,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,
                                                                                                     pt);
             setInferiorEdge(pt);
@@ -183,7 +186,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,
                                                                                                     pt);
             setFirstPt(pt);
@@ -194,7 +198,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,
                                                                                                     pt);
             setAnotherPt(pt);
@@ -227,7 +232,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.SUPERIOR_EDGE,
                                                                                                     pt);
             setSuperiorEdge(pt);
@@ -238,7 +244,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.POSTERIOR_MARGIN,
                                                                                                     pt);
             setPosteriorMargin(pt);
@@ -249,7 +256,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.INFERIOR_EDGE,
                                                                                                     pt);
             setInferiorEdge(pt);
@@ -260,7 +268,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.FIRST_PT,
                                                                                                     pt);
             setFirstPt(pt);
@@ -271,7 +280,8 @@ public class JDialogACPC extends JDialogBase {
         }
 
         if (pt.x != Float.POSITIVE_INFINITY) {
-            pt = frame.toDicom(pt, im);
+            /*pt = frame.toDicom(pt, im);*/
+            pt = im.toDicom(pt);
             ((ViewJComponentTriImage) frame.getTriImage(ViewJFrameTriImage.AXIAL_A)).setReferenceXY(ViewJComponentTriImage.ANOTHER_PT,
                                                                                                     pt);
             setAnotherPt(pt);
