@@ -188,6 +188,32 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double snr = 0.0;
         double snr2;
         double cnr;
+        boolean test = true;
+        
+        if (test) {
+            ConfluentHypergeometric cf;
+            int Lnchf = 0;
+            int ip = 776;
+            double result[] = new double[1];
+            double realResult[] = new double[1];
+            double imagResult[] = new double[1];
+            double x = -30.0;
+                for (x = -30.0; x <= 30.0; x++) {
+                    cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
+                                                                 -0.5, 1, x, result);
+                    cf.run();
+                    cf = new ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, x, 0.0,
+                                                       Lnchf, ip, realResult, imagResult);
+                    cf.run();
+                    Preferences.debug("x = " + x + " result[0] = " + result[0] + 
+                            " realResult[0] = " + realResult[0] + "\n");
+                    if (Math.abs((result[0] - realResult[0])/result[0]) > 1.0E-5) {
+                        Preferences.debug("Mismatch at x = " + x + "\n");
+                    }
+                }
+                setCompleted(true);
+                return;
+        }
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -289,7 +315,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double lowerBound;
         double upperBound;
         int i;
-        int maxIters = 4;
+        int maxIters = 100;
         snr = meanDivStdDev/2.0;
         lowerBound = 0.0;
         upperBound = meanDivStdDev;
@@ -300,6 +326,10 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double result[] = new double[1];
         int kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
         ConfluentHypergeometric cf;
+        int Lnchf = 0;
+        int ip = 700;
+        double realResult[] = new double[1];
+        double imagResult[] = new double[1];
         int n;
         for (n = 1; n <= numReceivers; n++) {
             constant = constant * (2*n - 1);
@@ -310,11 +340,15 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         }
         for (i = 0; i < maxIters; i++) {
             square = snr * snr / 2.0;
-            cf = new ConfluentHypergeometric(kind, -0.5, numReceivers, -square, result);
+            //cf = new ConfluentHypergeometric(kind, -0.5, numReceivers, -square, result);
+            //cf.run();
+            cf = new ConfluentHypergeometric(-0.5, 0.0, numReceivers, 0.0, -square, 0.0,
+                    Lnchf, ip, realResult, imagResult);
             cf.run();
-            System.out.println("snr = " + snr + " result[0] = " + result[0]);
-            calculatedMeanDivStdDev = constant * result[0];
+            Preferences.debug("snr = " + snr + " realResult[0] = " + realResult[0] + "\n");
+            calculatedMeanDivStdDev = constant * realResult[0];
             error = Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev;
+            Preferences.debug("error = " + error + "\n");
             if (error < 0.001) {
                 break;
             }
