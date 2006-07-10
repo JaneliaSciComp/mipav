@@ -1393,8 +1393,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
                                                                              (ModelImage) (modelImageVector.elementAt(currentIndex)),
                                                                              LUTa, imageBufferA, imageB, LUTb, null,
                                                                              null, magnification / 100, extents, false,
-                                                                             ViewJComponentEditImage.NA, false,
-                                                                             imageA.getAxisOrientation());
+                                                                             ViewJComponentEditImage.NA );
 
         componentImage.setLocation(borderSize + selectedBorderSize, borderSize + selectedBorderSize);
 

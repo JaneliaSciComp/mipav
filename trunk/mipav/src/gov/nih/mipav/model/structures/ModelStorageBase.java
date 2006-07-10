@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.structures;
 
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
@@ -824,6 +825,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice magnitude data into values array.
      *
@@ -850,6 +852,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XZ slice into values array.
      *
@@ -910,6 +913,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export ZY slice into values array.
      *
@@ -1472,292 +1476,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * export data to values array reversing the first dimension.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataR0(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = 0, j = 0; y <= (length1 - 1); y++) {
-
-                for (x = length0 - 1; x >= 0; x--, j++) {
-                    i = start + x + (y * length0);
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-
-    }
-
-    /**
-     * export data to values array reversing the first and second dimensions.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataR0R1(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = length1 - 1, j = 0; y >= 0; y--) {
-
-                for (x = length0 - 1; x >= 0; x--, j++) {
-                    i = start + x + (y * length0);
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-
-    }
-
-    /**
-     * export data to values array reversing the second dimension.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataR1(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = length1 - 1, j = 0; y >= 0; y--) {
-
-                for (x = 0; x <= (length0 - 1); x++, j++) {
-                    i = start + x + (y * length0);
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-
-    }
-
-    /**
-     * export data to values array interchanging first and second dimensions.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataXD(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = 0, j = 0; x <= (length0 - 1); x++) {
-
-                for (y = 0; y <= (length1 - 1); y++, j++) {
-                    i = start + (y * length0) + x;
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data to values array interchanging first and second dimensions read in original first dimension in reverse
-     * order.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataXDR0(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = length0 - 1, j = 0; x >= 0; x--) {
-
-                for (y = 0; y <= (length1 - 1); y++, j++) {
-                    i = start + (y * length0) + x;
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data to values array interchanging first and second dimensions read in both dimensions in the reverse
-     * direction.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataXDR0R1(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = length0 - 1, j = 0; x >= 0; x--) {
-
-                for (y = length1 - 1; y >= 0; y--, j++) {
-                    i = start + (y * length0) + x;
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data to values array interchanging first and second dimensions read in original second dimension in
-     * reverse order.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportDataXDR1(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = 0, j = 0; x <= (length0 - 1); x++) {
-
-                for (y = length1 - 1; y >= 0; y--, j++) {
-                    i = start + (y * length0) + x;
-                    values[j] = data.getFloat(i);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
      * export data to valuesr and valuesi arrays.
      *
      * @param   start    indicates starting position in data array
@@ -1857,379 +1575,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
             }
 
             releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array reversing first dimension.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        lenght of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataR0(int start, int length0, int length1, float[] values,
-                                                   boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = 0, j = 0; y <= (length1 - 1); y++) {
-
-                for (x = length0 - 1; x >= 0; x--, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array reversing first and second dimensions.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        length of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take the log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataR0R1(int start, int length0, int length1, float[] values,
-                                                     boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = length1 - 1, j = 0; y >= 0; y--) {
-
-                for (x = length0 - 1; x >= 0; x--, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array reversing second dimension.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        length of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataR1(int start, int length0, int length1, float[] values,
-                                                   boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = length1 - 1, j = 0; y >= 0; y--) {
-
-                for (x = 0; x <= (length0 - 1); x++, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array interchanging dimensions.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        length of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataXD(int start, int length0, int length1, float[] values,
-                                                   boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = 0, j = 0; x <= (length0 - 1); x++) {
-
-                for (y = 0; y <= (length1 - 1); y++, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array interchanging dimensions read in original first dimension in reverse
-     * direction.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        length of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataXDR0(int start, int length0, int length1, float[] values,
-                                                     boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = length0 - 1, j = 0; x >= 0; x--) {
-
-                for (y = 0; y <= (length1 - 1); y++, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array interchanging dimensions read in both dimensions in the reverse direction.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        length of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataXDR0R1(int start, int length0, int length1, float[] values,
-                                                       boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = length0 - 1, j = 0; x >= 0; x--) {
-
-                for (y = length1 - 1; y >= 0; y--, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export magnitude data to values array interchanging dimensions read in original second dimension in reverse
-     * direction.
-     *
-     * @param   start          indicates starting position in data array
-     * @param   length0        length of first dimension of magnitude data to be copied from data array
-     * @param   length1        length of second dimension of magnitude data to be copied from data array
-     * @param   values         array where magnitude data is to be deposited
-     * @param   logMagDisplay  if true take log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportMagDataXDR1(int start, int length0, int length1, float[] values,
-                                                     boolean logMagDisplay) throws IOException {
-        int i, j;
-        int x, y;
-        double real, imaginary;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + (2 * length)) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (x = 0, j = 0; x <= (length0 - 1); x++) {
-
-                for (y = length1 - 1; y >= 0; y--, j++) {
-                    i = start + (2 * x) + (2 * y * length0);
-                    real = (double) data.getFloat(i);
-                    imaginary = (double) data.getFloat(i + 1);
-                    values[j] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                }
-            }
-
-            releaseLock();
-
-            if (logMagDisplay) {
-
-                for (i = 0; i < length; i++) {
-
-                    // log10(x) = loge(x)/loge(10)
-                    values[i] = (float) (0.4342944819 * java.lang.Math.log((double) (1.0 + values[i])));
-                }
-            }
 
             return;
         }
@@ -2362,197 +1707,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /**
-     * export RGB data to values array reversing the first dimension.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBDataR0(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = 0, j = 0; y <= (length1 - 1); y++) {
-
-                for (x = length0 - 1; x >= 0; x -= 4, j += 4) {
-                    i = start + x + (y * length0);
-                    values[j + 3] = data.getFloat(i);
-                    values[j + 2] = data.getFloat(i - 1);
-                    values[j + 1] = data.getFloat(i - 2);
-                    values[j] = data.getFloat(i - 3);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-
-    }
-
-    /**
-     * export RGB data to values array reversing the first and second dimensions.
-     *
-     * @param   start    indicates starting position in data array
-     * @param   length0  length of first dimension of data to be copied from data array
-     * @param   length1  length of second dimension of data to be copied from data array
-     * @param   values   array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBDataR0R1(int start, int length0, int length1, float[] values)
-            throws IOException {
-        int i, j;
-        int x, y;
-        int length = length0 * length1;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (y = length1 - 1, j = 0; y >= 0; y--) {
-
-                for (x = length0 - 1; x >= 0; x -= 4, j += 4) {
-                    i = start + x + (y * length0);
-                    values[j + 3] = data.getFloat(i);
-                    values[j + 2] = data.getFloat(i - 1);
-                    values[j + 1] = data.getFloat(i - 2);
-                    values[j] = data.getFloat(i - 3);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-
-    }
-
-    /**
-     * export XZ slice into values array reading the x dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceXRZ(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4);
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start + ((xDim - 1) * 4); k >= start; k -= 4) {
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array reading both dimensions in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceXRZR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4) +
-                    ((zDim - 1) * stride);
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start + ((xDim - 1) * 4); k >= start; k -= 4) {
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-
-                start -= stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XZ slice into values array.
      *
@@ -2604,577 +1759,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /**
-     * export XZ slice into values array reading the z dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceXZR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4) +
-                    ((zDim - 1) * stride);
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + (xDim * 4)); k += 4) {
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-
-                start -= stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export YZ slice into values array reading the y dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceYRZ(int tSlice, int slice, float[] values) throws IOException {
-        int i, y, z, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int yStride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            yStride = dimExtents[0] * 4;
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * 4);
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = 0; z < zDim; z++) {
-
-                for (y = yDim - 1; y >= 0; y--) {
-                    k = start + (y * yStride) + (z * stride);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export YZ slice into values array reeading both directions in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceYRZR(int tSlice, int slice, float[] values) throws IOException {
-        int i, y, z, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int yStride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            yStride = dimExtents[0] * 4;
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * 4);
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = zDim - 1; z >= 0; z--) {
-
-                for (y = yDim - 1; y >= 0; y--) {
-                    k = start + (y * yStride) + (z * stride);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export YZ slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceYZ(int tSlice, int slice, float[] values) throws IOException {
-        int i, y, z, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int yStride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            yStride = dimExtents[0] * 4;
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * 4);
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = 0; z < zDim; z++) {
-
-                for (y = 0; y < yDim; y++) {
-                    k = start + (y * yStride) + (z * stride);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export YZ slice into values array reading the z dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceYZR(int tSlice, int slice, float[] values) throws IOException {
-        int i, y, z, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int yStride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            yStride = dimExtents[0] * 4;
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * 4);
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = zDim - 1; z >= 0; z--) {
-
-                for (y = 0; y < yDim; y++) {
-                    k = start + (y * yStride) + (z * stride);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZX slice into values array reading the z dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZRX(int tSlice, int slice, float[] values) throws IOException {
-        int i, x, z, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4);
-
-            for (x = 0; x < xDim; x++) {
-
-                for (z = zDim - 1; z >= 0; z--) {
-                    k = start + (z * stride) + (4 * x);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZX slice into values array reading both dimensions in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZRXR(int tSlice, int slice, float[] values) throws IOException {
-        int i, x, z, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4);
-
-            for (x = xDim - 1; x >= 0; x--) {
-
-                for (z = zDim - 1; z >= 0; z--) {
-                    k = start + (z * stride) + (4 * x);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array reading the z dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZRY(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-            slice = slice * 4;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = zDim - 1; k >= 0; k--) {
-                    values[i] = data.getFloat(start + slice + (k * stride));
-                    values[i + 1] = data.getFloat(start + slice + (k * stride) + 1);
-                    values[i + 2] = data.getFloat(start + slice + (k * stride) + 2);
-                    values[i + 3] = data.getFloat(start + slice + (k * stride) + 3);
-                    i += 4;
-                }
-
-                slice += xDim * 4;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array reading both dimensions in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZRYR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (4 * slice) +
-                    ((yDim - 1) * xDim * 4);
-
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = zDim - 1; k >= 0; k--) {
-                    values[i] = data.getFloat(start + (k * stride));
-                    values[i + 1] = data.getFloat(start + (k * stride) + 1);
-                    values[i + 2] = data.getFloat(start + (k * stride) + 2);
-                    values[i + 3] = data.getFloat(start + (k * stride) + 3);
-                    i += 4;
-                }
-
-                start -= xDim * 4;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZX slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZX(int tSlice, int slice, float[] values) throws IOException {
-        int i, x, z, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4);
-
-            for (x = 0; x < xDim; x++) {
-
-                for (z = 0; z < zDim; z++) {
-                    k = start + (z * stride) + (4 * x);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZX slice into values array reading the x dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZXR(int tSlice, int slice, float[] values) throws IOException {
-        int i, x, z, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4);
-
-            for (x = xDim - 1; x >= 0; x--) {
-
-                for (z = 0; z < zDim; z++) {
-                    k = start + (z * stride) + (4 * x);
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export ZY slice into values array.
      *
@@ -3228,157 +1813,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /**
-     * export ZY slice into values array reading the y dimension in the reverese direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZYR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (4 * slice) +
-                    ((yDim - 1) * xDim * 4);
-
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getFloat(start + (k * stride));
-                    values[i + 1] = data.getFloat(start + (k * stride) + 1);
-                    values[i + 2] = data.getFloat(start + (k * stride) + 2);
-                    values[i + 3] = data.getFloat(start + (k * stride) + 3);
-                    i += 4;
-                }
-
-                start -= xDim * 4;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array with x dimension read in reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXRZ(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim) + xDim - 1;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k > (start - xDim); k--) {
-                    values[i] = data.getFloat(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array with both dimensions read in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXRZR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim) + (stride * (zDim - 1)) +
-                    xDim - 1;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k > (start - xDim); k--) {
-                    values[i] = data.getFloat(k);
-                    i++;
-                }
-
-                start -= stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3393,6 +1828,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3407,6 +1843,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3421,6 +1858,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3435,6 +1873,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3449,6 +1888,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3463,6 +1903,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3477,6 +1918,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -3491,334 +1933,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, Number[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.get(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, BitSet values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-
-                    if (data.getBoolean(i)) {
-                        values.set(j);
-                    } else {
-                        values.clear(j);
-                    }
-
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, byte[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getByte(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, short[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getShort(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, int[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getInt(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, long[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getLong(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int slice, double[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getDouble(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XZ slice into values array.
      *
@@ -3867,148 +1982,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /**
-     * export XZ slice into values array with Z dimension read in reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim) + (stride * (zDim - 1));
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getFloat(k);
-                    i++;
-                }
-
-                start -= stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export YZ slice into values array reading the y dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceYRZ(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int y, z;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + slice;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = 0; z < zDim; z++) {
-
-                for (y = yDim - 1; y >= 0; y--, i++) {
-                    values[i] = data.getFloat(start + (y * xDim) + (z * stride));
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export YZ slice into values array reading both dimensions in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceYRZR(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int y, z;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + slice;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = zDim - 1; z >= 0; z--) {
-
-                for (y = yDim - 1; y >= 0; y--, i++) {
-                    values[i] = data.getFloat(start + (y * xDim) + (z * stride));
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export YZ slice into values array.
      *
@@ -4056,244 +2030,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /**
-     * export YZ slice into values array reading the z dimension in the reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceYZR(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int y, z;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + slice;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = zDim - 1; z >= 0; z--) {
-
-                for (y = 0; y < yDim; y++, i++) {
-                    values[i] = data.getFloat(start + (y * xDim) + (z * stride));
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZX slice into values array with Z dimension read in reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZRX(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int x, z;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim);
-
-            for (x = 0; x < xDim; x++) {
-
-                for (z = zDim - 1; z >= 0; z--, i++) {
-                    values[i] = data.getFloat(start + (z * stride) + x);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZX slice into values array wit both dimensions read in reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZRXR(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int x, z;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim);
-
-            for (x = xDim - 1; x >= 0; x--) {
-
-                for (z = zDim - 1; z >= 0; z--, i++) {
-                    values[i] = data.getFloat(start + (z * stride) + x);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array with z dimension reversed.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZRY(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2];
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = zDim - 1; k >= 0; k--) {
-                    values[i] = data.getFloat(start + slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array with both dimensions read in reverse.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZRYR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + ((yDim - 1) * xDim);
-
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = zDim - 1; k >= 0; k--) {
-                    values[i] = data.getFloat(start + slice + (k * stride));
-                    i++;
-                }
-
-                slice -= xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export ZX slice into values array.
      *
@@ -4340,373 +2077,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /**
-     * export ZX slice into values array with X read in reverse direction.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZXR(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int x, z;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim);
-
-            for (x = xDim - 1; x >= 0; x--) {
-
-                for (z = 0; z < zDim; z++, i++) {
-                    values[i] = data.getFloat(start + (z * stride) + x);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, Number[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.get(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, BitSet values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-
-                    if (data.getBoolean(i)) {
-                        values.set(j);
-                    } else {
-                        values.clear(j);
-                    }
-
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, byte[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getByte(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, short[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getShort(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, int[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getInt(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, long[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getLong(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int slice, double[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getDouble(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
+    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export ZY slice into values array.
      *
@@ -4742,539 +2113,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
                 for (k = 0; k < zDim; k++) {
                     values[i] = data.getFloat(start + slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array with y dimension reversed.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZYR(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + ((yDim - 1) * xDim);
-
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getFloat(start + slice + (k * stride));
-                    i++;
-                }
-
-                slice -= xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data into values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUData(int start, int length, short[] values) throws IOException {
-        int i, j;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getUByte(i);
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data in values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUData(int start, int length, int[] values) throws IOException {
-        int i, j;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getUShort(i);
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data in values array.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUData(int start, int length, long[] values) throws IOException {
-        int i, j;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getUInt(i);
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data into values array WITHOUT locking.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUDataNoLock(int start, int length, short[] values) throws IOException {
-        int i, j;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getUByte(i);
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data into values array WITHOUT LOCKING.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUDataNoLock(int start, int length, int[] values) throws IOException {
-        int i, j;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getUShort(i);
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export data into values array WITHOUT LOCKING.
-     *
-     * @param   start   indicates starting position in data array
-     * @param   length  length of data to be copied from data array
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUDataNoLock(int start, int length, long[] values) throws IOException {
-        int i, j;
-
-        if ((start >= 0) && ((start + length) <= dataSize) && (length <= values.length)) {
-
-            for (i = start, j = 0; j < length; i++, j++) {
-                values[j] = data.getUInt(i);
-            }
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final void exportUSliceXY(int slice, short[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
-
-        exportData(slice * length, length, values);
-    }
-
-    /**
-     * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final void exportUSliceXY(int slice, int[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
-
-        exportData(slice * length, length, values);
-    }
-
-    /**
-     * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final void exportUSliceXY(int slice, long[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
-
-        exportData(slice * length, length, values);
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUSliceXZ(int slice, short[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getUByte(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUSliceXZ(int slice, int[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getUShort(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUSliceXZ(int slice, long[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = slice * xDim;
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getUInt(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUSliceZY(int slice, short[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getUByte(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUSliceZY(int slice, int[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getUShort(slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportUSliceZY(int slice, long[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getUInt(slice + (k * stride));
                     i++;
                 }
 
@@ -9962,7 +6800,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor method for the m_bConvolve data memeber.
-     * @param bConvolve, true when this images is the 
+     * @param bConvolve, true when this images is the
      * product of fft( imageA ) fft( imageB )
      */
     public void setConvolve( boolean bConvolve )
@@ -9972,7 +6810,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Accessor method for the m_bConvolve data memeber.
-     * @return m_bConvolve, true when this images is the 
+     * @return m_bConvolve, true when this images is the
      * product of fft( imageA ) fft( imageB )
      */
     public boolean getConvolve()
@@ -9983,7 +6821,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Returns the resolutions for the image without regarding resolution
      * difference between slices.
-     * 
+     *
      * @return the resolutions for the image
      */
     public float[] getResolutions(int index ){
@@ -9992,7 +6830,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         return fileInfo[index].getResolutions();
     }
-    
+
     /**
      * Sets the resolutions to the specific
      * @param index
@@ -10004,7 +6842,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         fileInfo[index].setResolutions(resolutions);
     }
-    
+
     /**
      * Returns the axis orientation of image
      * @return the axis orientation of image
@@ -10015,7 +6853,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         return fileInfo[0].getAxisOrientation();
     }
-    
+
+    /**
+     * Gets the image orientation (sagittal, axial, ...).
+     *
+     * @return  integer representing the orientation
+     */
+    public int getImageOrientation() {
+
+        if (fileInfo != null) {
+            return fileInfo[0].getImageOrientation();
+        } else {
+            return FileInfoBase.UNKNOWN_ORIENT;
+        }
+    }
+
+
     /**
      * Returns the origin of the image
      * @return the origin of the image
@@ -10026,10 +6879,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         return fileInfo[0].getOrigin();
     }
-    
+
     /**
      * Returns the unit used to measure the specific dimension of image.
-     * @param index  the index of specific dimension 
+     * @param index  the index of specific dimension
      * @return       the unit used to measure the specific dimension
      */
     public int getUnitsOfMeasure(int index){
@@ -10037,9 +6890,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return -1;
         }
         return fileInfo[0].getUnitsOfMeasure(index);
-        
+
     }
-    
+
     /**
      * Returns the units used to measure all dimensions of the image.
      * @return the units used to measure all dimensions of the image.
@@ -10050,4 +6903,421 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         return fileInfo[0].getUnitsOfMeasure();
     }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /** 
+     * Exports data based on the mapping from ModelImage space to Patient
+     * space. The mapping parameters are passed in as the axisOrder and
+     * axisFlip arrays. This function replaces many hard-coded exportDataXXX
+     * functions. It will be upgraded when the axisOrder and axisFlip
+     * parameters are further isolated from the rendering code.
+     * @param axisOrder -- the mapping of ModelImage space volume axes to Patient space axes
+     * @param axisFlip -- the mapping of ModelImage space volume axes to Patient space axes (invert flags)
+     * @param tSlice -- for 4D volumes
+     * @param slice -- the constant slice
+     * @param values -- the array to write the data into
+     */
+    public final synchronized void export( int[] axisOrder, boolean[] axisFlip,
+                                           int tSlice, int slice,
+                                           float[] values ) throws IOException
+    {
+        try {
+            setLock(W_LOCKED);
+        } catch (IOException error) {
+            throw error;
+        }
+
+        /* Get the loop bounds, based on the coordinate-systems: transformation:  */
+        int iBound = dimExtents[ axisOrder[0] ];
+        int jBound = dimExtents[ axisOrder[1] ];
+        int kBound = dimExtents[ axisOrder[2] ];
+
+        /* Get the loop multiplication factors for indexing into the 1D array
+         * with 3 index variables: based on the coordinate-systems:
+         * transformation:  */
+        int[] aiFactors = new int[3];
+        aiFactors[0] = 1;
+        aiFactors[1] = dimExtents[0];
+        aiFactors[2] = dimExtents[0] * dimExtents[1];
+
+        int iFactor = aiFactors[ axisOrder[0] ];
+        int jFactor = aiFactors[ axisOrder[1] ];
+        int kFactor = aiFactors[ axisOrder[2] ];
+
+        int kIndex = slice;
+        if ( axisFlip[2] )
+        {
+            kIndex = (kBound - 1) - slice;
+        }
+
+        int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        /* loop over the 2D image (values) we're writing into */
+        for (int j = 0; j < jBound; j++)
+        {
+            for (int i = 0; i < iBound; i++)
+            {
+                /* calculate the ModelImage space index: */
+                int iIndex = i;
+                int jIndex = j;
+
+                if ( axisFlip[0] )
+                {
+                    iIndex = (iBound - 1) - i;
+                }
+                if ( axisFlip[1] )
+                {
+                    jIndex = (jBound - 1) - j;
+                }
+
+                int index =
+                    (iIndex * iFactor) +
+                    (jIndex * jFactor) +
+                    (kIndex * kFactor) +
+                    (tSlice * tFactor);
+
+                /* if color: */
+                if ((bufferType == ARGB) ||
+                    (bufferType == ARGB_USHORT) ||
+                    (bufferType == ARGB_FLOAT))
+                {
+                    values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
+                    values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
+                    values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
+                    values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
+                }
+                /* not color: */
+                else
+                {
+                    values[j * iBound + i] = getFloat(index);
+                }
+            }
+        }
+
+        releaseLock();
+        return;
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /** Returns the image width, based on the Patient Coordinates orientation
+     * from which the data will be viewed:
+     * @param orientation, the Patient-Viewing orientation
+     * @return dimExtents representing the image width for the viewing orientation
+     */
+    public int getWidth( int orientation )
+    {
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        return dimExtents[ aiAxisOrder[0] ];
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /** Returns the image height, based on the Patient Coordinates orientation
+     * from which the data will be viewed:
+     * @param orientation, the Patient-Viewing orientation
+     * @return dimExtents representing the image height for the viewing orientation
+     */
+    public int getHeight( int orientation )
+    {
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        return dimExtents[ aiAxisOrder[1] ];
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /**
+     * Returns the resolutions for the image translated into the
+     * Patient-Coordinate systsm:
+     * @param index, the fileInfo index
+     * @param orientation, the Patient-Coordinate view for which the
+     * resolutions are needed:
+     * @return the resolutions for the image in Patient Coordinates
+     */
+    public float[] getResolutions(int index, int orientation ){
+        if(fileInfo == null){
+            return null;
+        }
+        float[] resTemp = fileInfo[index].getResolutions();
+        float[] resReturn = new float[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        for ( int i = 0; i < 3; i++ )
+        {
+            resReturn[i] = resTemp[ aiAxisOrder[i] ];
+        }
+        return resReturn;
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /**
+     * Returns the units of measure for the image translated into the
+     * Patient-Coordinate systsm:
+     * @param index, the fileInfo index
+     * @param orientation, the Patient-Coordinate view for which the
+     * units of measure are needed:
+     * @return the units of measure for the image in Patient Coordinates
+     */
+    public int[] getUnitsOfMeasure( int index, int orientation ){
+        if(fileInfo == null){
+            return null;
+        }
+        int[] unitsTemp = fileInfo[index].getUnitsOfMeasure();
+        int[] unitsReturn = new int[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        for ( int i = 0; i < 3; i++ )
+        {
+            unitsReturn[i] = unitsTemp[ aiAxisOrder[i] ];
+        }
+        return unitsReturn;
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /**
+     * Returns the image extents translated into the Patient-Coordinate
+     * systsm:
+     * @param orientation, the Patient-Coordinate view for which the
+     * extents are needed:
+     * @return dimExtents[] for the image in Patient Coordinates
+     */
+    public final int[] getExtents( int orientation ) {
+        int[] extentsReturn = new int[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        for ( int i = 0; i < 3; i++ )
+        {
+            extentsReturn[i] = dimExtents[ aiAxisOrder[i] ];
+        }
+        return extentsReturn;
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /**
+     * Get the factors needed to iterate through the image volume in
+     * Patient-Coordinates. Can be multiplied against iterators to retreive
+     * the index into the image volume data.
+     * @param orientation, the Patient-Coordinate view for which the
+     * extents are needed:
+     * @return multiples of dimExtents[] for the image in Patient Coordinates
+     */
+    /**
+     *
+     * @return  the steps needed to iterate along the dimensions of the backing image volume data
+     */
+    public int[] getVolumeIterationFactors( int orientation ) {
+        int[] iterationFactors = { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
+        int[] iterationFactorsReturn = new int[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        for ( int i = 0; i < 3; i++ )
+        {
+            iterationFactorsReturn[i] = iterationFactors[ aiAxisOrder[i] ];
+        }
+        return iterationFactorsReturn;
+    }
+
+
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /** Moved from ViewJFrameTriImage: */
+    /** Will be moved into the MipavCoordinateSystems class: */
+    /**
+     * Converts to DICOM positions. TODO: This method really should be relocated as it is essentially just a worker
+     * method. Shouldn't be in a GUI class Convert from input image oriented x,y,z to Dicom x,y,z (x axis = R->L, y axis
+     * = A->P, z axis = I->S) Image distances are oriented the same as DICOM, just in a permuted order.
+     *
+     * @param   in     the input reference point in the original image
+     * @param   image  the image from which to translate the point <code>in</code>
+     *
+     * @return  the point <code>in</code> converted into Dicom space
+     */
+    public Point3Df toDicom(Point3Df in ) {
+        int[] orient = MipavCoordinateSystems.getAxisOrientation( this );
+        int xDim = dimExtents[0];
+        int yDim = dimExtents[1];
+        int zDim = dimExtents[2];
+
+        Point3Df out = new Point3Df(0.0f, 0.0f, 0.0f);
+
+        switch (orient[0]) {
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                out.x = in.x;
+                break;
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                out.x = xDim - 1 - in.x;
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                out.y = in.x;
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                out.y = xDim - 1 - in.x;
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                out.z = in.x;
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                out.z = xDim - 1 - in.x;
+                break;
+        }
+
+        switch (orient[1]) {
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                out.x = in.y;
+                break;
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                out.x = yDim - 1 - in.y;
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                out.y = in.y;
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                out.y = yDim - 1 - in.y;
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                out.z = in.y;
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                out.z = yDim - 1 - in.y;
+                break;
+        }
+
+        switch (orient[2]) {
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                out.x = in.z;
+                break;
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                out.x = zDim - 1 - in.z;
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                out.y = in.z;
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                out.y = zDim - 1 - in.z;
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                out.z = in.z;
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                out.z = zDim - 1 - in.z;
+                break;
+        }
+
+        return out;
+    }
+
+    /* MipavCoordinateSystems upgrade TODO: : */
+    /** Moved from ViewJFrameTriImage: */
+    /** Will be moved into the MipavCoordinateSystems class: */
+    /**
+     * Converts DICOM back to original. TODO: This method really should be relocated as it is essentially just a worker
+     * method. Shouldn't be in a GUI class
+     *
+     * @param   image   Image to convert.
+     * @param   in      Original point.
+     * @param   orient  The image orientation.
+     *
+     * @return  The point <code>in</code> converted from DICOM space into the space of the image
+     */
+    public Point3Df toOriginal(Point3Df in, int[] orient) {
+        int xDim = dimExtents[0];
+        int yDim = dimExtents[1];
+        int zDim = dimExtents[2];
+        Point3Df out = new Point3Df(0.0f, 0.0f, 0.0f);
+
+        switch (orient[0]) {
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                out.x = in.x;
+                break;
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                out.x = xDim - 1 - in.x;
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                out.x = in.y;
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                out.x = yDim - 1 - in.y;
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                out.x = in.z;
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                out.x = zDim - 1 - in.z;
+                break;
+        }
+
+        switch (orient[1]) {
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                out.y = in.x;
+                break;
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                out.y = xDim - 1 - in.x;
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                out.y = in.y;
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                out.y = yDim - 1 - in.y;
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                out.y = in.z;
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                out.y = zDim - 1 - in.z;
+                break;
+        }
+
+        switch (orient[2]) {
+
+            case FileInfoBase.ORI_R2L_TYPE:
+                out.z = in.x;
+                break;
+
+            case FileInfoBase.ORI_L2R_TYPE:
+                out.z = xDim - 1 - in.x;
+                break;
+
+            case FileInfoBase.ORI_A2P_TYPE:
+                out.z = in.y;
+                break;
+
+            case FileInfoBase.ORI_P2A_TYPE:
+                out.z = yDim - 1 - in.y;
+                break;
+
+            case FileInfoBase.ORI_I2S_TYPE:
+                out.z = in.z;
+                break;
+
+            case FileInfoBase.ORI_S2I_TYPE:
+                out.z = zDim - 1 - in.z;
+                break;
+        }
+
+        return out;
+    }
+
 }

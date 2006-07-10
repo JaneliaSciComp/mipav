@@ -119,6 +119,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /** Slider events used by the mouse recorder. */
     private MouseEventVector sliderEvents;
 
+    /* MipavCoordinateSystems upgrade TODO: */
     /** The positions of the sliders - and therefore how they map to x,y,z:. */
     private int sliderXPos, sliderYPos, sliderZPos;
 
@@ -1200,55 +1201,58 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /**
      * Sets the slice position based on a relative percentage of the X dimension.
      *
-     * @param  fSlice  DOCUMENT ME!
-     * @param  kColor  color of bar to be matched to the border of the 3D triplanar
+     * @param  iView   the Slice to set the position for
+     * @param  fSlice  the relative slize position
      */
-    public void setSlicePos(float fSlice, Color kColor) {
-        Color kXColor = colorButtonX.getBackground();
-
-        if ((kColor.getRed() == kXColor.getRed()) && (kColor.getGreen() == kXColor.getGreen()) &&
-                (kColor.getBlue() == kXColor.getBlue())) {
-
-            /* Determine what the Slider maps to x,y or z: */
-            if (sliderXPos == 0) {
+    public void setSlicePos( int iView, float fSlice )
+    {
+        if ( iView == ViewJComponentBase.AXIAL )
+        {
+            if ( sliderXPos == Z )
+            {
                 setXSlicePos(Math.round((xDim - 1) * fSlice));
-            } else if (sliderYPos == 0) {
+            }
+            else if ( sliderYPos == Z )
+            {
                 setYSlicePos(Math.round((yDim - 1) * fSlice));
-            } else if (sliderZPos == 0) {
+            }
+            else if ( sliderZPos == Z )
+            {
                 setZSlicePos(Math.round((zDim - 1) * fSlice));
             }
         }
-
-        Color kYColor = colorButtonY.getBackground();
-
-        if ((kColor.getRed() == kYColor.getRed()) && (kColor.getGreen() == kYColor.getGreen()) &&
-                (kColor.getBlue() == kYColor.getBlue())) {
-
-            /* Determine what the Slider maps to x,y or z: */
-            if (sliderXPos == 1) {
+        else if ( iView == ViewJComponentBase.SAGITTAL )
+        {
+            if ( sliderXPos == X )
+            {
                 setXSlicePos(Math.round((xDim - 1) * fSlice));
-            } else if (sliderYPos == 1) {
+            }
+            else if ( sliderYPos == X )
+            {
                 setYSlicePos(Math.round((yDim - 1) * fSlice));
-            } else if (sliderZPos == 1) {
+            }
+            else if ( sliderZPos == X )
+            {
                 setZSlicePos(Math.round((zDim - 1) * fSlice));
             }
         }
-
-        Color kZColor = colorButtonZ.getBackground();
-
-        if ((kColor.getRed() == kZColor.getRed()) && (kColor.getGreen() == kZColor.getGreen()) &&
-                (kColor.getBlue() == kZColor.getBlue())) {
-
-            /* Determine what the Slider maps to x,y or z: */
-            if (sliderXPos == 2) {
+        else if  ( iView == ViewJComponentBase.CORONAL )
+        {
+            if ( sliderXPos == Y )
+            {
                 setXSlicePos(Math.round((xDim - 1) * fSlice));
-            } else if (sliderYPos == 2) {
+            }
+            else if ( sliderYPos == Y )
+            {
                 setYSlicePos(Math.round((yDim - 1) * fSlice));
-            } else if (sliderZPos == 2) {
+            }
+            else if ( sliderZPos == Y )
+            {
                 setZSlicePos(Math.round((zDim - 1) * fSlice));
             }
         }
     }
+
 
     /**
      * Set probe x coordinate.
@@ -1391,17 +1395,18 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
             ((SurfaceRender) renderBase).updateBoxSlicePos();
 
             /* Update the SurfaceRender, and frame ViewJFrameVolumeView based
-             * on the mapping of the xSlice to x,y,z and the relative position
-             * of the slider */
-            if (sliderXPos == 0) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (xSlice) / (float) (xDim - 1),
-                                                             colorButtonX.getBackground());
-            } else if (sliderXPos == 1) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (xSlice) / (float) (xDim - 1),
-                                                             colorButtonY.getBackground());
-            } else if (sliderXPos == 2) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (xSlice) / (float) (xDim - 1),
-                                                             colorButtonZ.getBackground());
+             * on the relative position of the slider */
+            switch (sliderXPos)
+            {
+            case X:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.SAGITTAL, (float) (xSlice) / (float) (xDim - 1) );
+                break;
+            case Y:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.CORONAL, (float) (xSlice) / (float) (xDim - 1) );
+                break;
+            case Z:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.AXIAL, (float) (xSlice) / (float) (xDim - 1) );
+                break;
             }
         } else if (source == sliderY) {
 
@@ -1436,19 +1441,19 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
             ((SurfaceRender) renderBase).updateBoxSlicePos();
 
             /* Update the SurfaceRender, and frame ViewJFrameVolumeView based
-             * on the mapping of the ySlice to x,y,z and the relative position
-             * of the slider */
-            if (sliderYPos == 0) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (ySlice) / (float) (yDim - 1),
-                                                             colorButtonX.getBackground());
-            } else if (sliderYPos == 1) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (ySlice) / (float) (yDim - 1),
-                                                             colorButtonY.getBackground());
-            } else if (sliderYPos == 2) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (ySlice) / (float) (yDim - 1),
-                                                             colorButtonZ.getBackground());
+             * on the relative position of the slider */
+            switch (sliderYPos)
+            {
+            case X:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.SAGITTAL, (float) (ySlice) / (float) (yDim - 1) );
+                break;
+            case Y:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.CORONAL, (float) (ySlice) / (float) (yDim - 1) );
+                break;
+            case Z:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.AXIAL, (float) (ySlice) / (float) (yDim - 1) );
+                break;
             }
-
         } else if (source == sliderZ) {
 
             // Change the currently displayed z slice
@@ -1482,19 +1487,19 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
             ((SurfaceRender) renderBase).updateBoxSlicePos();
 
             /* Update the SurfaceRender, and frame ViewJFrameVolumeView based
-             * on the mapping of the zSlice to x,y,z and the relative position
-             * of the slider */
-            if (sliderZPos == 0) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (zSlice) / (float) (zDim - 1),
-                                                             colorButtonX.getBackground());
-            } else if (sliderZPos == 1) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (zSlice) / (float) (zDim - 1),
-                                                             colorButtonY.getBackground());
-            } else if (sliderZPos == 2) {
-                ((SurfaceRender) renderBase).updateTriPlanar((float) (zSlice) / (float) (zDim - 1),
-                                                             colorButtonZ.getBackground());
+             * on the relative position of the slider */
+            switch (sliderZPos)
+            {
+            case X:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.SAGITTAL, (float) (zSlice) / (float) (zDim - 1) );
+                break;
+            case Y:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.CORONAL, (float) (zSlice) / (float) (zDim - 1) );
+                break;
+            case Z:
+                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.AXIAL, (float) (zSlice) / (float) (zDim - 1) );
+                break;
             }
-
         } else if (source == sliderT) {
 
             // Change the currently displayed t slice

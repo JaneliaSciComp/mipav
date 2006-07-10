@@ -93,7 +93,7 @@ public class ViewJComponentSurface extends ViewJComponentBase {
      * @param  slice    Slice of 3D image to use, 0 if 2D image.
      */
     public ViewJComponentSurface(RenderViewBase _frame, ModelImage _imageA, ModelLUT _LUTa, int[] extents, int slice) {
-        super(extents, ViewJComponentBase.NA);
+        super(ViewJComponentBase.NA, _imageA);
 
         frame = _frame;
         imageA = _imageA;

@@ -69,6 +69,8 @@ public class SurfaceRender extends RenderViewBase {
     /** Value which indicates the probe entry point color. */
     public static final int ENTRY_POINT = 6;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** X, Y, Z label constants. */
     public static final int X = 0;
 
@@ -89,12 +91,16 @@ public class SurfaceRender extends RenderViewBase {
     /** Mode is tri-planar volume view or not. */
     boolean isTriPlanarVolView = false;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Axis orietation. */
     private int axisXOrient, axisYOrient, axisZOrient;
 
     /** Dialog to turn bounding box of surface renderer on and off, and to change the color of the frame. */
     private JPanelDisplay boxPanel;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** The frame around the x slice. */
     private ViewJComponentBoxSlice boxSliceX;
 
@@ -110,6 +116,8 @@ public class SurfaceRender extends RenderViewBase {
     /** Dialog to turn the clipping palne box on and off. */
     private JPanelClip clipPanel;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** XY image plane. */
     private ViewJComponentTriSliceImage componentImageXY;
 
@@ -157,6 +165,8 @@ public class SurfaceRender extends RenderViewBase {
 
     /*********************************************************************************/
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Buffer that holds image A data for the XY plane. */
     private float[] imageBufferA_XY;
 
@@ -193,9 +203,13 @@ public class SurfaceRender extends RenderViewBase {
      */
     private double m_dOriginalScreenScale = 1.0;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Map vectors. Mapping from the pixel space(0-256) to texture space(0, 1). */
     private Vector4f m_kCoordMapX, m_kCoordMapY, m_kCoordMapZ, m_kCoordMapZNeg;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** TransformGroups used to rotate the x,y,z slices and x,y,z boxes based on the probe angle and position:. */
     private TransformGroup m_kObjBoxSliceProbeX_TG; /* Rotates the X Box */
 
@@ -205,6 +219,8 @@ public class SurfaceRender extends RenderViewBase {
     /** DOCUMENT ME! */
     private TransformGroup m_kObjBoxSliceProbeZ_TG; /* Rotates the Z Box */
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** DOCUMENT ME! */
     private Point3f[] m_kObjBoxVertsX = null; /* Reference to the X-Box vertices */
 
@@ -214,6 +230,8 @@ public class SurfaceRender extends RenderViewBase {
     /** DOCUMENT ME! */
     private Point3f[] m_kObjBoxVertsZ = null; /* Reference to the Z-Box vertices */
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** DOCUMENT ME! */
     private TransformGroup m_kObjPlaneProbeX_TG; /* Rotates the X plane*/
 
@@ -253,6 +271,8 @@ public class SurfaceRender extends RenderViewBase {
     /** Initial center viewing point of the image. */
     private Point3d myEyePoint = new Point3d();
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Parent of the x slice. */
     private BranchGroup objBoxSliceX_BG;
 
@@ -262,6 +282,8 @@ public class SurfaceRender extends RenderViewBase {
     /** Parent of the z slice. */
     private BranchGroup objBoxSliceZ_BG;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Group dictating how the XY plane is translated. */
     private TransformGroup objTransXY_TG;
 
@@ -271,6 +293,8 @@ public class SurfaceRender extends RenderViewBase {
     /** Group dictating how the ZY plane is translated. */
     private TransformGroup objTransZY_TG;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Parent of the XY plane image. */
     private BranchGroup objXYPlaneBG;
 
@@ -315,15 +339,21 @@ public class SurfaceRender extends RenderViewBase {
     /** Tri planar view and the 3D texture volume view switch group. */
     private Switch switchGroup;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Currently unused. */
     private TransparencyAttributes taXY, taXZ, taZY;
 
     /** Reference to 3D texture node for the volume. */
     private VolumeTexture texture = null;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Tri planar slice use Texture2D to display the images. */
     private Texture2D texXY, texXZ, texZY;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Each texture2D add the ImageComponent2D as image. */
     private ImageComponent2D texXYImageComp2D, texXZImageComp2D, texZYImageComp2D;
 
@@ -360,6 +390,8 @@ public class SurfaceRender extends RenderViewBase {
      */
     private boolean volumeDisplayMode3D = false;
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /** Numbers dicatating the sizes of the planes based on the extents and resolutions of the image. */
     private float xBox, yBox, zBox, maxBox;
 
@@ -1586,15 +1618,6 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Returns the current color of the X Slice.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Color3f getXSliceColor() {
-        return boxSliceX.getColor();
-    }
-
-    /**
      * Get the y slider position.
      *
      * @return  int y slice value.
@@ -1621,15 +1644,6 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Returns the current color of the Y Slice.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Color3f getYSliceColor() {
-        return boxSliceY.getColor();
-    }
-
-    /**
      * Get the y slider position.
      *
      * @return  int y slice value.
@@ -1653,15 +1667,6 @@ public class SurfaceRender extends RenderViewBase {
         }
 
         return zPos;
-    }
-
-    /**
-     * Returns the current color of the Z Slice.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Color3f getZSliceColor() {
-        return boxSliceZ.getColor();
     }
 
     /**
@@ -2310,6 +2315,8 @@ public class SurfaceRender extends RenderViewBase {
         }
     }
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /**
      * Sets the color of the x slice frame.
      *
@@ -2319,13 +2326,14 @@ public class SurfaceRender extends RenderViewBase {
         boxSliceX.setColor(color);
 
         if (parent instanceof ViewJFrameVolumeView) {
-
             if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setXSliceHairColor(color);
+                ((ViewJFrameVolumeView) parent).setSliceHairColor( ViewJComponentBase.SAGITTAL, color );
             }
         }
     }
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /**
      * Sets the color of the y slice frame.
      *
@@ -2334,14 +2342,15 @@ public class SurfaceRender extends RenderViewBase {
     public void setSliceYColor(Color color) {
         boxSliceY.setColor(color);
 
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setYSliceHairColor(color);
-            }
-        }
+         if (parent instanceof ViewJFrameVolumeView) {
+             if (((ViewJFrameVolumeView) parent) != null) {
+                 ((ViewJFrameVolumeView) parent).setSliceHairColor(ViewJComponentBase.CORONAL, color);
+             }
+         }
     }
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /**
      * Sets the color of the z slice frame.
      *
@@ -2350,12 +2359,11 @@ public class SurfaceRender extends RenderViewBase {
     public void setSliceZColor(Color color) {
         boxSliceZ.setColor(color);
 
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setZSliceHairColor(color);
-            }
-        }
+         if (parent instanceof ViewJFrameVolumeView) {
+             if (((ViewJFrameVolumeView) parent) != null) {
+                ((ViewJFrameVolumeView) parent).setSliceHairColor( ViewJComponentBase.AXIAL, color);
+             }
+         }
     }
 
     /**
@@ -3165,19 +3173,18 @@ public class SurfaceRender extends RenderViewBase {
 
     }
 
+    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
+     * match correct names (axial, sagittal, coronal), etc. */
     /**
-     * Updates the ViewJFrameVolumeView slider positions. Sliders are matched based on the slider color -- which must
-     * match the zColor of the PlaneRender that it maps to, passed in as kColor:
+     * Updates the ViewJFrameVolumeView slider positions.
      *
-     * @param  fValue  DOCUMENT ME!
-     * @param  kColor  DOCUMENT ME!
+     * @param  iView The plane's view of the data (AXIAL, CORONAL, or SAGITTAL)
+     * @param  fValue The new slice value
      */
-    public void updateTriPlanar(float fValue, Color kColor) {
-
+    public void updateTriPlanar( int iView, float fValue) {
         if (parent instanceof ViewJFrameVolumeView) {
-
             if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setCoord(fValue, kColor);
+                ((ViewJFrameVolumeView) parent).setSliceFromSurface( iView, fValue );
             }
         }
     }
