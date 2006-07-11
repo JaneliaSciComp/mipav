@@ -153,6 +153,62 @@ public class ParameterFactory {
         }
     }
 
+ 
+    public static final Parameter newParameter(String label, double value) throws ParserException {
+         return new ParameterDouble(label,  Parameter.PARAM_DOUBLE,  value);
+    }
+    public static final Parameter newParameter(String label, float value) throws ParserException {
+        return new ParameterFloat(label,  Parameter.PARAM_FLOAT,  value);
+   }
+    public static final Parameter newParameter(String label, long value) throws ParserException {
+        return new ParameterLong(label,  Parameter.PARAM_LONG,  value);
+   }
+    public static final Parameter newParameter(String label, int value) throws ParserException {
+        return new ParameterInt(label,  Parameter.PARAM_INT,  value);
+   }
+    public static final Parameter newParameter(String label, short value) throws ParserException {
+        return new ParameterShort(label,  Parameter.PARAM_SHORT,  value);
+   }
+    public static final Parameter newParameter(String label, boolean value) throws ParserException {
+        return new ParameterBoolean(label,  Parameter.PARAM_BOOLEAN,  value);
+   }
+    public static final Parameter newParameter(String label, String value) throws ParserException {
+        return new ParameterString(label,  Parameter.PARAM_STRING,  value);
+   }
+    
+    public static final Parameter newParameter(String label, int[] values) throws ParserException {
+        StringBuffer valueString = new StringBuffer();
+        for (int i=0;i<values.length;i++){
+            valueString.append(values[i] + ",");
+        }
+        
+        return new ParameterList(label,  "list_int" , valueString.substring(0,valueString.length()-1));
+    
+    }
+    
+    
+    
+    
+    public static final Parameter newParameter(String label, Object value) throws ParserException {
+        Parameter param = null;
+        
+        if (value instanceof Double)       { param = new ParameterDouble(label,  Parameter.PARAM_DOUBLE,  value.toString());        
+        }else if (value instanceof Boolean){ param = new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, value.toString());
+        }else if (value instanceof Float)  { param = new ParameterFloat(label,   Parameter.PARAM_FLOAT,   value.toString());
+        }else if (value instanceof Integer){ param = new ParameterInt(label,     Parameter.PARAM_INT,     value.toString());
+        }else if (value instanceof Long)   { param = new ParameterLong(label,    Parameter.PARAM_LONG,    value.toString());
+        }else if (value instanceof String) { param = new ParameterString(label,  Parameter.PARAM_STRING,  value.toString());
+        }else if (value instanceof Short)  { param = new ParameterShort(label,   Parameter.PARAM_SHORT,   value.toString());
+        }
+
+        
+        System.out.println("param: " + param);
+        return param;
+    }
+
+    
+    
+    
     /**
      * Creates a new parameter with a given label and value.  The type of parameter returned is determined by the type given.  List parameters are not supported by this method.
      *
