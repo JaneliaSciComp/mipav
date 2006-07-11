@@ -56,13 +56,16 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private static int GROWREGION = 5;
 
     /** DOCUMENT ME! */
-    private static int XY = ViewJComponentBase.AXIAL;
+    private static int XY = 0;
+	//private static int XY = ViewJComponentBase.AXIAL;
 
     /** DOCUMENT ME! */
-    private static int XZ = ViewJComponentBase.CORONAL;
+    private static int XZ = 1;
+    //private static int XZ = ViewJComponentBase.CORONAL;
 
     /** DOCUMENT ME! */
-    private static int ZY = ViewJComponentBase.SAGITTAL;
+    private static int ZY = 2;
+    //private static int ZY = ViewJComponentBase.SAGITTAL;
 
     /** autosave elements. */
     private static int delay = 10;
@@ -487,7 +490,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
-            sliceDir = image.getImageOrientation();
+			int origDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
+                           .getOriginalOrientation();
+			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XY;
+			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XZ;
+			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XZ;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
             // triplanar image : XZ panel
             /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
@@ -497,7 +504,6 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                               (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())
                               );
-
             Point3Df pt = new Point3Df();
             MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
                                                                 image.getTriImageFrame().getCoronalComponentSlice() ),
@@ -505,7 +511,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
-            sliceDir = image.getImageOrientation();
+			int origDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
+                           .getOriginalOrientation();
+			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XZ;
+			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XY;
+			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = ZY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
             // triplanar image : ZY panel
             /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
@@ -523,7 +533,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
-            sliceDir = image.getImageOrientation();
+			int origDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
+                           .getOriginalOrientation();
+			if (origDir == ViewJComponentBase.AXIAL) sliceDir = ZY;
+			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = ZY;
+			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XY;
         }
 
         Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
@@ -2222,6 +2236,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         // find main object
         if ((backgroundDim == 2) && (sliceDir == XY)) {
+			System.out.println("XY");
             int[][] label;
 
             // extract the slice and invert
@@ -2252,6 +2267,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
+            System.out.println("XZ");
             int[][] label;
 
             // extract the slice and invert
@@ -2282,6 +2298,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
+            System.out.println("ZY");
             int[][] label;
 
             // extract the slice and invert
