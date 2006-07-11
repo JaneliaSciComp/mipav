@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 
 import gov.nih.mipav.view.*;
 
@@ -21,7 +23,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmAdaptiveSmooth
  */
-public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInterface, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -123,25 +125,46 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
     public JDialogAdaptiveSmooth(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface =  ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAdaptiveSmooth(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    
+    public void storeParamsFromGUI(){
+        try{
+            scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight","distWeight"));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
+         }catch (ParserException pe){
+            pe.printStackTrace();
+        }  
+     }
+ 
+   public void setGUIFromParams(){
+       distWeight = scriptParameters.getParams().getFloat("distWeight");
+       radiusY = scriptParameters.getParams().getFloat("radiusY");
+       radiusCr = scriptParameters.getParams().getFloat("radiusCr");
+       radiusCb = scriptParameters.getParams().getFloat("radiusCb");
+       reduce = scriptParameters.getParams().getBoolean("reduce");
+    } 
+    
+    
+    
+    
+    public void doPostAlgorithmParameterss() {
+            try{
+            scriptParameters.storeOutputImageParams(resultImage, true);
+            }catch (ParserException pe){
+                MipavUtil.displayError("Error encountered saving output image:\n" + pe);
+            }
+    }
+    
+    
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
      *
@@ -390,7 +413,7 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    public void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_adaptiveSmooth");
         int[] destExtents;
 
