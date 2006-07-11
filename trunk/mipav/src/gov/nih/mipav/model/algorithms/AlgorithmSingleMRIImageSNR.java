@@ -69,6 +69,10 @@ import java.text.*;
   As |x| approaches infinity,
   1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the
                  real part of x < 0.
+  More specifically from the Sato reference, the asymptotic behavior of the confluent
+  hypergeometric function is:
+  1F1(a, b, x) approaches (gamma(a)/gamma(b-a)*((-x)**(-a))*G(a, a-b+1, -x)
+  where G is an asymptotic series G(a, b, x) = 1 + (a*b)/(1!*x) + (a*(a+1)*b*(b+1))/(2!*x**2) + ...
                                                             
   References:
   1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers,
@@ -79,6 +83,9 @@ import java.text.*;
   Erratum in Magnetic Resonance in Medicine, July, 2004, 52(1), p. 219.
   3.) I. S. Gradshteyn and I. M. Rhyzik, Tables of integrals, series, and products, 
   Sixth edition.
+  4.) Tohru Sato, Liviu F. Chibotaru, and Arnout Ceulemans, The Exe dynamic Jahn-Teller problem:
+  A new insight from the strong coupling limit, The Journal of Chemical Physics, Vol. 122, 054104, 
+  2005, Appendix C.
   
   Derivation of Bessel function formula when number of receivers == 1
   E[M**v] = (2*sigma**2)**(v/2) * gamma(1 + v/2) * 1F1(-v/2, 1, -A**2/(2*sigma**2))
@@ -355,6 +362,11 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
          *  As |x| approaches infinity,
          *  1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the
          *  real part of x < 0.
+         *  More specifically from the Sato reference, the asymptotic behavior of the confluent
+         *  hypergeometric function is:
+         *  1F1(a, b, x) approaches (gamma(a)/gamma(b-a)*((-x)**(-a))*G(a, a-b+1, -x)
+         *  where G is an asymptotic series G(a, b, x) = 1 + (a*b)/(1!*x) + (a*(a+1)*b*(b+1))/(2!*x**2)
+         *  + ...
          */
         double snr;
         double lowerBound;
@@ -403,7 +415,8 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                 //Preferences.debug("realResult cf run = " + realResult[0] + "\n");
             }
             else {
-                realResult[0] = gamConstant * snr;
+                realResult[0] = gamConstant * snr * (1.0 + (-0.5)*(0.5-numReceivers)/square +
+                                (-0.25)*(0.5-numReceivers)*(1.5-numReceivers)/(2.0*square*square));
                 //Preferences.debug("realResult snr = " + realResult[0] + "\n");
             }
             calculatedMeanDivStdDev = constant * realResult[0];
