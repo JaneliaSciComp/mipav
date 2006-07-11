@@ -4,13 +4,43 @@ import gov.nih.mipav.view.*;
 
 /**  This code calculates the confluent hypergeometric function of input parameters
  *   a and b and input argument x
- *   A typcial usage would be:
+ *   A typical usage for the routine requiring real parameters and a real argument would be:
  *   double result[] = new double[1];
  *   ConfluentHypergeometric ch = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
  *                                                            -0.5, 1, 1.0, result);
  *   ch.run();
  *   Preferences.debug("Confluent hypergeomtric result = " + result[0] + "\n");
  *   UI.setDataText("Confluent hypergeometric result = " + result[0] + "\n");
+ *   
+ *   A typical usage for the routine allowing complex parameters and a complex argument would be:
+ *   ConfluentHypergeometric cf;
+ *   int Lnchf = 0;
+ *   int ip = 700;
+ *   double realResult[] = new double[1];
+ *   double imagResult[] = new double[1];
+ *   cf = new ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, 10.0, 0.0,
+ *                                    Lnchf, ip, realResult, imagResult);
+ *   cf.run();
+ *   System.out.println("realResult[0] = " + realResult[0]);
+ *   System.out.println("imagResult[0] = " + imagResult[0]);
+ *   Since this complex routine allows large magnitude x, it should generally be used 
+ *   instead of the real version routine.
+ *   
+ *   For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
+ *   Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
+ *   and Atul Bhalla the results were:
+ *   From x = -706 to x = +184 the results of the 2 routines matched to at least 1 part in 1E5.
+  
+ *   For x = -3055 to x = +184 the ACM routine seemed to give valid results.
+ *   For x <= -3056 the ACM routine results oscillated wildly and at x = -3200 the
+ *   result was frozen at 1.0E75.
+ *   For x >= +185 the ACM result was frozen at 1.0E75.
+ *   The log result was also seen to oscillate for x <= -3056.
+  
+ *   For x = -706 to x = +781 the CHGM routine seemed to give valid results.
+ *   For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the
+ *   CHGM routine gave NaN.
+ *   For x >= +783 the CHGM routine gave a result of -infinity.
 */
 
 public class ConfluentHypergeometric {
@@ -66,7 +96,7 @@ public class ConfluentHypergeometric {
      * is not always trivial to predict which cases these might be.
      * One pragmatic approach is to simply run the evaluator using a value of 10,
      * then increase ip, run the evaluator again and compare the returned results.
-     * Nardin et al. state that overwriting memory may occur if ip exceeds 777.
+     * Overwriting memory may occur if ip exceeds 776.
      * Setting IP = 0 causes the program to estimate the number of array positions */
     private int ip;
     
@@ -290,23 +320,23 @@ public class ConfluentHypergeometric {
         
         // Set to zero any arguments which are below the precision of the machine
         ar2 = realA * sigfig;
-        ar = (int)ar2;
-        ar2 = (int)((ar2-ar)*rmax + 0.5);
+        ar = Math.floor(ar2+0.5);
+        ar2 = Math.rint((ar2-ar)*rmax);
         ai2 = imagA * sigfig;
-        ai = (int)ai2;
-        ai2 = (int)((ai2-ai)*rmax + 0.5);
+        ai = Math.floor(ai2+0.5);
+        ai2 = Math.rint((ai2-ai)*rmax);
         cr2 = realB * sigfig;
-        cr = (int)cr2;
-        cr2 = (int)((cr2-cr)*rmax + 0.5);
+        cr = Math.floor(cr2+0.5);
+        cr2 = Math.rint((cr2-cr)*rmax);
         ci2 = imagB * sigfig;
-        ci = (int)ci2;
-        ci2 = (int)((ci2-ci)*rmax + 0.5);
+        ci = Math.floor(ci2+0.5);
+        ci2 = Math.rint((ci2-ci)*rmax);
         xr2 = realZ * sigfig;
-        xr = (int)xr2;
-        xr2 = (int)((xr2-xr)*rmax + 0.5);
+        xr = Math.floor(xr2+0.5);
+        xr2 = Math.rint((xr2-xr)*rmax);
         xi2 = imagZ * sigfig;
-        xi = (int)xi2;
-        xi2 = (int)((xi2-xi)*rmax + 0.5);
+        xi = Math.floor(xi2+0.5);
+        xi2 = Math.rint((xi2-xi)*rmax);
         
         // Warn the user that the input value was so close to zero that it
         // was set equal to zero.
@@ -336,8 +366,8 @@ public class ConfluentHypergeometric {
         }
         nmach = (int)(0.4342944819*Math.log(Math.pow(2.0, bit)));
         if ((ci == 0.0) && (ci2 == 0.0) && (realB < 0.0)) {
-            if (Math.abs(realB - (int)(realB + 0.5)) < Math.pow(10.0,-nmach)) {
-                MipavUtil.displayError("Error! Argument A was a negative integer");
+            if (Math.abs(realB - Math.rint(realB)) < Math.pow(10.0,-nmach)) {
+                MipavUtil.displayError("Error! Argument B was a negative integer");
                 return;
             }
         }
@@ -361,8 +391,8 @@ public class ConfluentHypergeometric {
         cnt = sigfig;
         icount = -1;
         if ((ai == 0.0) && (ai2 == 0.0) && (realA < 0.0)) {
-            if (Math.abs(realA - (int)(realA + 0.5)) < Math.pow(10.0,(-nmach))) {
-                icount = -(int)(realA + 0.5);
+            if (Math.abs(realA - Math.rint(realA)) < Math.pow(10.0,(-nmach))) {
+                icount = -(int)Math.round(realA);
             }
         }
         ixcnt = 0;
@@ -639,7 +669,7 @@ public class ConfluentHypergeometric {
         }
         else {
             nf[0] = n1 * Math.pow(10.0, ediff) + n2;
-            ef[0] = n2;
+            ef[0] = e2;
             while (true) {
                 if (Math.abs(nf[0]) < 10.0) {
                     break;
@@ -940,12 +970,11 @@ public class ConfluentHypergeometric {
         boolean seg5 = true;
         boolean seg6 = true;
         boolean seg7 = true;
-        boolean seg8 = true;
         
         for (i = 1; i <= L+2; i++) {
             z[i] = 0.0;
         }
-        ediff = (int)(a[L+2] - b[L+2] + 0.5);
+        ediff = (int)Math.round(a[L+2] - b[L+2]);
         if ((Math.abs(a[2]) < 0.5) || (ediff <= -L)) {
             for (i = 0; i <= L+2; i++) {
                 c[i] = b[i];
@@ -1043,7 +1072,7 @@ public class ConfluentHypergeometric {
                 } // if (c[2] < 0.5)
                 return;
             } // if (ediff == 0)
-            else if (ediff > 0.0) {
+            else if (ediff > 0) {
                 z[L+2] = a[L+2];
                 for (i = L+1; i >= 2+ediff; i--) {
                     z[i] = a[i] + b[i-ediff] + z[i];
@@ -1074,16 +1103,16 @@ public class ConfluentHypergeometric {
                     c[L+2] = 0.0;
                 } // if (c[2] < 0.5)
                 return;
-            } // else if (ediff > 0.0)
-            else { // ediff < 0.0
+            } // else if (ediff > 0)
+            else { // ediff < 0
                 z[L+2] = b[L+2];
-                for (i = L+1; L >= 2 - ediff; i--) {
+                for (i = L+1; i >= 2 - ediff; i--) {
                     z[i] = a[i+ediff] + b[i] + z[i];
                     if (z[i] >= rmax) {
                         z[i] = z[i] - rmax;
                         z[i-1] = 1.0;
                     } // if (z[i] >= rmax)
-                } // for (i = L+1; L >= 2 - ediff; i--)
+                } // for (i = L+1; i >= 2 - ediff; i--)
                 for (i = 1-ediff; i >= 2; i--) {
                     z[i] = b[i] + z[i];
                     if (z[i] >= rmax) {
@@ -1106,7 +1135,7 @@ public class ConfluentHypergeometric {
                     c[L+2] = 0.0;
                 } // if (c[2] < 0.5)
                 return;
-            } // else ediff < 0.0
+            } // else ediff < 0
         } // if (seg4)
         
         if (seg5) {
@@ -1120,7 +1149,6 @@ public class ConfluentHypergeometric {
                 } // for (i = L+1; i >= 2; i--)
                 seg6 = false;
                 seg7 = false;
-                seg8 = false;
             } // if (ediff <= 0)
         } // if (seg5)
         if (seg6) {
@@ -1139,7 +1167,6 @@ public class ConfluentHypergeometric {
                 } // if (z[i] < 0.0)
             } // for (i = ediff+1; i >= 2; i--)
             seg7 = false;
-            seg8 = false;
         } // if (seg6)
         
         if (seg7) {
@@ -1150,27 +1177,25 @@ public class ConfluentHypergeometric {
                         z[i] = z[i] + rmax;
                         z[i-1] = -1.0;
                     } // if (z[i] < 0.0)
-                } // for (i = L+1; i >= 2; i--)
-                seg8 = false;
+                } // for (i = L+1; i >= 2; i--
             } // if (ediff >= 0)
+            else { // ediff < 0
+                for (i = L+1; i >= 2 - ediff; i--) {
+                    z[i] = b[i] - a[i+ediff] + z[i];
+                    if(z[i] < 0.0) {
+                        z[i] = z[i] + rmax;
+                        z[i-1] = -1.0;
+                    } // if (z[i] < 0.0)
+                } // for (i = L+1; i >= 2 - ediff; i--)
+                for (i = 1-ediff; i >= 2; i--) {
+                    z[i] = b[i] + z[i];
+                    if (z[i] < 0.0) {
+                        z[i] = z[i] + rmax;
+                        z[i-1] = -1.0;
+                    } // if (z[i] < 0.0)
+                } // for (i = 1-ediff; i >= 2; i--)
+            } // else ediff < 0
         } // if (seg7)
-        
-        if (seg8) {
-            for (i = L+1; i >= 2 - ediff; i--) {
-                z[i] = b[i] - a[i+ediff] + z[i];
-                if(z[i] < 0.0) {
-                    z[i] = z[i] + rmax;
-                    z[i-1] = -1.0;
-                } // if (z[i] < 0.0)
-            } // for (i = L+1; i >= 2 - ediff; i--)
-            for (i = 1-ediff; i >= 2; i--) {
-                z[i] = b[i] + z[i];
-                if (z[i] < 0.0) {
-                    z[i] = z[i] + rmax;
-                    z[i-1] = -1.0;
-                } // if (z[i] < 0.0)
-            } // for (i = 1-ediff; i >= 2; i--)
-        } // if (seg8)
         
         if (z[2] <= 0.5) {
             i = 1;
@@ -1188,7 +1213,7 @@ public class ConfluentHypergeometric {
                     c[L+2] = 0.0;
                 } // if (c[2] < 0.5)
                 return;
-            } // if (i == (L+1))
+            } // if (i == (L+2))
             for (j = 2; j <= L+2-i; j++) {
                 z[j] = z[j+i-1];
             } // for (j = 2; j <= L+2-i; j++)
@@ -1234,8 +1259,6 @@ public class ConfluentHypergeometric {
      * a << -1 when x > 0 and a >> 1 when x < 0. In this exceptional case, the evaluation
      * involves the summation of a partially alternating series which results in a loss
      * of significant digits.
-     * Note that with a = -0.5, b = 1, x = 798.2, this code resulted in 
-     * Math.exp(x) == infinite.  So this code cannot be used for large x.
      */
     private void firstKindRealArgument() {
         double a0;
