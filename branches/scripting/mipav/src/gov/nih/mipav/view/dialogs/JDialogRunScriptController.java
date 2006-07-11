@@ -30,7 +30,7 @@ public class JDialogRunScriptController implements ActionListener {
     * that has defined the structure of the script the user will populate
     * 
     */     
-    public JDialogRunScriptController(String scriptFile) {       
+    public JDialogRunScriptController(String scriptFile) {     
         this.model = new JDialogRunScriptModel();       
         model.setScriptFile(scriptFile);
         populateModel(scriptFile);
@@ -42,8 +42,10 @@ public class JDialogRunScriptController implements ActionListener {
     
     
 
-    /*
+    /**
      * Calls methods to populate model and direct view to draw itself
+     * 
+     * @param scriptFile The name of the script file to use
      */
     private void populateModel(String scriptFile) {
         populateLists();
@@ -52,7 +54,7 @@ public class JDialogRunScriptController implements ActionListener {
      }
 
     
-    /*
+    /**
      * Populates image and voi lists by calling ViewUserInterface and getting
      * all images currently open, then getting all open VOIs associated with those images
      */
@@ -63,41 +65,26 @@ public class JDialogRunScriptController implements ActionListener {
         }
     }
     
-    /*
+    /**
      * Creates the tree structure from the parser code
+     * @param scriptFile The name of the script file to use
      */
     private void populateScriptTree(String scriptFile) {
         
-        try{
-            model.setImagePlaceHolders(gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile));
-            int[] numberOfVOIs = new int[model.getImagePlaceHolders().length];
-            for (int i = 0; i < model.getImagePlaceHolders().length; i++) {
-                numberOfVOIs[i] = gov.nih.mipav.model.scripting.Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, model.getImagePlaceHolders()[i]);
-            }//i
-        
-            model.setNumberOfVOIs(numberOfVOIs);
+         try{
+            
+            String[] images = gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile);
+             
+        model.setImagePlaceHolders(gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile));
+        int[] numberOfVOIs = new int[model.getImagePlaceHolders().length];
+        for (int i = 0; i < model.getImagePlaceHolders().length; i++) {
+            numberOfVOIs[i] = gov.nih.mipav.model.scripting.Parser.getNumberOfVOIsRequiredForImageVar(scriptFile,model.getImagePlaceHolders()[i]);
+        }//i
+        model.setNumberOfVOIs(numberOfVOIs);
         } catch (Exception e){
             e.printStackTrace();
         }
     }
-
-    
-    
-    
-   
-
-   
-
-
-  
-    
-    
-    
-    
-    
-    
-    
-    
     
     
     
@@ -127,6 +114,7 @@ public class JDialogRunScriptController implements ActionListener {
          * ********************************************************
          */
         if (e.getActionCommand().equalsIgnoreCase("Run script")) {
+             
             try {
                 if (!(view.parseTreeForPlaceHolders())) Parser.runScript(model.getScriptFile());
             } catch (ParserException pe) {
@@ -209,49 +197,9 @@ public class JDialogRunScriptController implements ActionListener {
                 return;
             }
             
-            
-            //adds the last voi to the voi vector in JDialogRunScriptModel
-            
-            //JDialogRunScriptModel.ScriptVOI scriptVOI = imageScript.new ScriptVOI(new VOI((short)3, "bigCircle", 32));
-            //vois[vois.length-1] = new VOI((short)3, "bigCircle", 32);
-            
-            int[] x = new int[2];
-            int[] y = new int[2];
-            int[] z = new int[2];
-            
-          /*
-            
-            try{
-            VOI[] voiArr = new FileVOI().readVOI(fileName, directory, 3, 32);
-           // System.out.println("VOI: " + voiArr[0]);
-            voiArr[0].getBounds(x,y,z);
-            System.out.println("** " + voiArr[0].area());
-           // System.out.println("x[0]: " + x[0] + ", y[0]: " + y[0] + ", z[0]: " + z[0]);
-           // System.out.println("x[1]: " + x[1] + ", y[1]: " + y[1] + ", z[1]: " + z[1]);
-            } catch (IOException ioe){
-                ioe.printStackTrace();
-            }
-            
-            */
-            
-          //  VOI voi = new VOI((short)1, fileName, imageScript.getZDim());
-         //   
-         //       voi.getBounds(x,y,z);
-         //       System.out.println("x[1]: " + x[1] + ", y[1]: " + y[1] + ", z[1]: " + z[1]);
-                
 
-          //  System.out.println("VOI: " + voi);
-            
-            
             model.addVOI(fileName,directory,selectedIndex);
-           // model.updateVector(vois[vois.length-1]);
-            
-            
-            
-        /*    
-            ((gov.nih.mipav.view.ViewJFrameImage)ViewUserInterface.getReference().getImageFrameVector().firstElement())
-            .actionPerformed(new ActionEvent(this,0,"Open all VOIs from..."));*/
-            
+          
         }//add voi from file
 
         /*
@@ -313,6 +261,24 @@ public class JDialogRunScriptController implements ActionListener {
 
     }//actionPerformed
 
+    public java.util.Vector getUserSelectedImages() {
+        java.util.Vector imageNames = new java.util.Vector(0);
+        javax.swing.JTree tree = view.tree;
+        TreeNode root = (TreeNode) tree.getModel().getRoot();
+        for (int i = 0; i < root.getChildCount(); i++) {
+            for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
+                 String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
+                imageNames.add(imageName);
+            }//j
+        }//i
+         return imageNames;
+    }
+        
+        
+    
+    
+    
+    
     String parseTreeToXML(javax.swing.JTree tree) {
         StringBuffer xmlDoc = new StringBuffer();
         TreeNode root = (TreeNode) tree.getModel().getRoot();
@@ -402,6 +368,11 @@ public class JDialogRunScriptController implements ActionListener {
         ("'", "____");*/
     }
 
+    
+    /**
+     * Exists only for debug 
+     * @param args not used
+     */
     public static void main(String[] args) {
         new JDialogRunScriptController("myScript");
     }
