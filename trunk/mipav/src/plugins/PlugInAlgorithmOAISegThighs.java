@@ -294,7 +294,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
     	 ModelImage boneMarrow = extractedBoneMarrow(CMeansSeg);
     	 // boneMarrow is a binary image containing only the bone marrow
 
-//  PFH         ShowImage(boneMarrow, "bone/morrow image");
+//  PFH    	 ShowImage(boneMarrow, "bone/morrow image");
     	 
     	 // use the bone marrow and input thigh image to segment out the bone
     	 ModelImage bone = extractBone(boneMarrow, thighInputImage);
@@ -325,19 +325,39 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
   *
   * @return  --image with labeled interstitial fat, subcutaneous fat, background and muscle (all but bone/bone marrow)
   */
-   	public ModelImage processHardFat(ModelImage Hard4Classes){	 
+   	public ModelImage processHardFat(ModelImage Hard4Classes) {
+// PFH   		ShowImage(Hard4Classes, "hard segmentation");
    		//ShowImage(obMask,"obMask");
    		//ShowImage(voiMask,"voiMask");
-	 progressBar.setMessage("Processing bundle fat");
+   		progressBar.setMessage("Processing bundle fat");
 	 	ModelImage fatImage = (ModelImage)Hard4Classes.clone();
-		convert(fatImage, voiMask, fatImage, 1, MUSCLE);	/**fill voi with muscle*/
-		convert(fatImage, Hard4Classes, fatImage, 189, FAT);		
-		convert(fatImage, Hard4Classes, fatImage, 252, FAT);		
-		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);	/**all outside voi labeled subcutfat*/
-		//ShowImage(fatImage,"after subcut/ before background");
-		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	/**all outside obMask labeled background*/
+	 	
+		// relabel all pixels inside the voi as muscle
+		convert(fatImage, voiMask, fatImage, 1, MUSCLE);
+//		 PFH		ShowImage(fatImage, "voiMask");
 		
-		cleanUp(fatImage, FAT, MUSCLE, 60*zDim/20); /**FAT FILTER (eliminates fat smaller than 60 pixels --for 20 slices)*/
+		// relabel all pixels classified as FAT_2_A, interstitial fat (189)
+		// in the Hard4Classes as FAT (255) in the fatImage
+		convert(fatImage, Hard4Classes, fatImage, 189, FAT);
+//		 PFH		ShowImage(fatImage, "fatA");
+		
+		// relabel all pixels classified as FAT_2_B, interstitial fat (252)
+		// in the Hard4Classes as FAT in the fatImage
+		convert(fatImage, Hard4Classes, fatImage, 252, FAT);
+//		 PFH		ShowImage(fatImage, "fatB");
+		
+		// label all pixels outside the VOI as subcutaneous fat
+		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
+//		 PFH		ShowImage(fatImage, "outside fat");
+		
+		// relabel pixels outside the outer boundary mask as background
+		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	/**all outside obMask labeled background*/
+//		 PFH		ShowImage(fatImage, "background");
+
+		// apply a fat cardinality filter to get rid of small regions of fat
+		cleanUp(fatImage, FAT, MUSCLE, 60*zDim/20);
+//		 PFH		ShowImage(fatImage, "fat suppression");
+
 		return fatImage;
  }  
     
@@ -350,19 +370,21 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
  */
    	public ModelImage extractedBoneMarrow(ModelImage hardSegImg) {
  
+   		//  PFH   		ShowImage(hardSegImg, "Hard Segmentation");
+
    		ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
    		// bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg)
    		// bMarrow is a binary image and remains binary through this method
    		//  PFH   		ShowImage(bMarrow, "BMarrow");
 
    		// find all objects in the thresholded image that have a cardinality within the specified range
-   		IDObjects(bMarrow, 100*zDim, 500*zDim);
-   		//  PFH    ShowImage(bMarrow, "IDObjects");
+   		IDObjects(bMarrow, 90*zDim, 500*zDim);
+   		//  PFH   		ShowImage(bMarrow, "IDObjects");
    		
         // find the single object closest to the center of the image
    		isolatingCenterObject(bMarrow);
    		// bMarrow is a binary image where 1's label bone marrow and 0's are elsewhere
-   		//  PFH   ShowImage(bMarrow, "isolatingCenterObject");
+   		//  PFH   		ShowImage(bMarrow, "isolatingCenterObject");
    		
    		return bMarrow;
    	} // end extractedBoneMarrow(...)
@@ -936,7 +958,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
         //aa=1 RIGHT THIGH, aa=2 LEFT THIGH
         for (aa = 1; aa <= 2; aa++) {
-            if (aa == 1) {
+             if (aa == 1) {
             	// set processedImage and obMask to the RIGHT thigh image 
                 getVariables(srcImageA, obMaskA);
             } else if (aa == 2) {
