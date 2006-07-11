@@ -492,11 +492,13 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         progressBar.setMessage("Fuzzy C-Means");
         nClasses = 3;
         HardSeg = HardFuzzy(srcImage, nClasses);
+//      PFH     ShowImage(HardSeg, "3 class seg");
          
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
         progressBar.updateValue(15, runningInSeparateThread);
         progressBar.setMessage("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
+//      PFH		ShowImage(obMask, "outer boundary mask");
 
         // To eliminate MR artifacts that appear away from the thighs, apply a connected
         // components anaylsis here and keep only the voxels in the two largest components
