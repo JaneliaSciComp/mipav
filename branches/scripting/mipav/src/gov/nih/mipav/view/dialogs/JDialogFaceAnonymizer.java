@@ -3,7 +3,12 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
+
 
 import gov.nih.mipav.view.*;
 
@@ -23,7 +28,7 @@ import javax.swing.*;
  * @version  May 17, 2004
  * @author   Alexandra A Bokinsky, Magic Software. Under contract from NIH.
  */
-public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInterface, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -155,7 +160,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
 
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         dialogPresent = true;
 
@@ -164,28 +169,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
         m_adImageRange[1] = image.getMax();
     }
 
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui  User interface.
-     * @param  im  Source image.
-     */
-    public JDialogFaceAnonymizer(ViewUserInterface ui, ModelImage im) {
-        super();
-        parentFrame = im.getParentFrame();
-
-        // setForeground(Color.black);
-        image = im;
-        this.userInterface = ui;
-
-        // init();
-        dialogPresent = false;
-
-        m_bAlgorithmLaunched = false;
-        m_adImageRange[0] = image.getMin();
-        m_adImageRange[1] = image.getMax();
-    }
+ 
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -217,6 +201,38 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
         }
     }
 
+    
+    //**  New scripting methods
+    
+    public void storeParamsFromGUI(){
+        try{
+            scriptParameters.getParams().put(ParameterFactory.newParameter("dialogPresent", dialogPresent));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("dialogPresent", dialogPresent));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("m_bAlgorithmLaunched", m_bAlgorithmLaunched));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("m_iBlurFactor", m_iBlurFactor));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinMax", m_iSkinMax));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinMin", m_iSkinMin));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinThickness", m_iSkinThickness));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("m_aiAxis", m_aiAxis));        
+        }catch (ParserException pe){
+            pe.printStackTrace();
+        }         
+    }
+    
+    public void setGUIFromParams(){  
+        dialogPresent =         scriptParameters.getParams().getBoolean("dialogPresent");
+        m_bAlgorithmLaunched =  scriptParameters.getParams().getBoolean("m_bAlgorithmLaunched");
+        m_iBlurFactor =         scriptParameters.getParams().getInt("m_iBlurFactor");
+        m_iSkinMax =            scriptParameters.getParams().getInt("m_iSkinMax");
+        m_iSkinMin =            scriptParameters.getParams().getInt("m_iSkinMin");
+        m_iSkinThickness =      scriptParameters.getParams().getInt("m_iSkinThickness");
+        Vector mAiAxisVector =  scriptParameters.getParams().getList("m_aiAxis").getList();
+        for (int i=0;i<mAiAxisVector.size();i++){
+            m_aiAxis[i] = ((Integer)mAiAxisVector.get(i)).intValue();
+        }
+    }
+    
+   
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
@@ -252,7 +268,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
 
             image.notifyImageDisplayListeners(null, true);
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             if (m_kFaceAnonymizerAlgorithm.isFinished() == true) {
                 m_kFaceAnonymizerAlgorithm.finalize();
@@ -357,84 +373,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
         }
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FaceAnonymizer " +
-                                                       userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(sEvent + " " + m_aiAxis[0] + " " + m_aiAxis[1] + " " +
-                                                       m_aiAxis[2] + " " + m_iSkinMin + " " + m_iSkinMax + " " +
-                                                       m_iSkinThickness /*+ " " +
-                                                                         *m_iBlurFactor      */ + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        dialogPresent = false;
-        m_bAlgorithmLaunched = false;
-        m_adImageRange[0] = image.getMin();
-        m_adImageRange[1] = image.getMax();
-
-        try {
-            setSEvent(parser.getNextString());
-
-            int[] axis = new int[3];
-
-            for (int i = 0; i < 3; i++) {
-                axis[i] = parser.getNextInteger();
-            }
-
-            setAxis(axis);
-            setMin(parser.getNextInteger());
-            setMax(parser.getNextInteger());
-            setThickness(parser.getNextInteger());
-            // setBlur(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
+ 
 
     /**
      * DOCUMENT ME!
