@@ -40,10 +40,6 @@ public class JDialogRunScriptController implements ActionListener {
         this.view = new JDialogRunScriptView(scriptFile, this, model);
         this.model.addObserver(view);
     }
-    
-    
-    
-    
 
     /**
      * Calls methods to populate model and direct view to draw itself
@@ -55,7 +51,6 @@ public class JDialogRunScriptController implements ActionListener {
         populateScriptTree(scriptFile);
        // view.displayView(scriptFile);
      }
-
     
     /**
      * Populates image and voi lists by calling ViewUserInterface and getting
@@ -87,7 +82,7 @@ public class JDialogRunScriptController implements ActionListener {
     }
     
     /**
-     *  Main event handler for MIPAV scripting tool
+     * Main event handler for MIPAV scripting tool
      * @see #actionPerformed(java.awt.event.ActionEvent)
      */
     public void actionPerformed(ActionEvent e) {
@@ -107,7 +102,16 @@ public class JDialogRunScriptController implements ActionListener {
          */
         if (e.getActionCommand().equalsIgnoreCase("Run script")) {
             if (!(view.parseTreeForPlaceHolders())) {
-                ScriptRunner.getReference().runScript(model.getScriptFile(), getUserSelectedImages());
+                view.setVisible(false);
+                
+                Vector scriptExecutors = getUserSelectedImages();
+                for (int i = 0; i < scriptExecutors.size(); i++) {
+                    Preferences.debug("run dialog:\tStarting script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
+                    ScriptRunner.getReference().runScript(model.getScriptFile(), (Vector)scriptExecutors.elementAt(i));
+                    Preferences.debug("run dialog:\tFinished script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
+                }
+                
+                view.dispose();
             }
         }//run script
 
@@ -255,9 +259,9 @@ public class JDialogRunScriptController implements ActionListener {
      * @return  A list of images to be used in the script.
      */
    public java.util.Vector getUserSelectedImages() {
-        java.util.Vector scriptExecuters = new java.util.Vector(0);
-        java.util.Vector imageNames = new java.util.Vector(0);
-        javax.swing.JTree tree = view.tree;
+        Vector scriptExecuters = new java.util.Vector(0);
+        Vector imageNames = new java.util.Vector(0);
+        JTree tree = view.tree;
         TreeNode root = (TreeNode) tree.getModel().getRoot();
         for (int i = 0; i < root.getChildCount(); i++) {           
             for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {

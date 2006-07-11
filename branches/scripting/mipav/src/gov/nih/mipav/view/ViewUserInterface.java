@@ -481,8 +481,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 return;
             } else {
                 JFileChooser chooser = new JFileChooser();
+                chooser.setCurrentDirectory(new File(Preferences.getScriptsDirectory()));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SCRIPT));
                 chooser.setDialogTitle("Choose a script file to execute");
                 if (chooser.showOpenDialog(getMainFrame()) == JFileChooser.APPROVE_OPTION) {
+                    Preferences.setScriptsDirectory(String.valueOf(chooser.getCurrentDirectory()));
                     new JDialogRunScriptController(chooser.getSelectedFile().getAbsolutePath());
                 }
             }

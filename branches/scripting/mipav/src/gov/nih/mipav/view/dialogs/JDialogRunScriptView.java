@@ -1,15 +1,23 @@
 package gov.nih.mipav.view.dialogs;
 
+
 import javax.swing.*;
 import javax.swing.tree.*;
+
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.dnd.*;
 import java.awt.datatransfer.*;
+
 import org.w3c.dom.Node;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.VOI;
+
+import gov.nih.mipav.view.MipavUtil;
+
+
 /**
  * @author Nathan Pollack -- Contractor (SSAI)
  * @version 0.1 May 24, 2006
@@ -136,7 +144,8 @@ public class JDialogRunScriptView extends JDialogBase implements Observer{
               
         frame.pack();
         frame.setSize(frame_size);
-        frame.setVisible(true);         
+        MipavUtil.centerOnScreen(frame);
+        frame.setVisible(true);
     }    
     
     
