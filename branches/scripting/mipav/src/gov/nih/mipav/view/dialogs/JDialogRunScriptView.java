@@ -212,13 +212,16 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         if (name.equalsIgnoreCase("Images List")) {
             contents = model.getImageList().toArray();
         }
+        
+        if (name.equalsIgnoreCase("VOIs from above image List")){
+            if ((model.getImageList() != null) && (model.getImageList().size() > 0))  
+            contents = ((JDialogRunScriptModel.ScriptModelImage)model.getImageList().get(0)).getScriptVOIs();
+         }
+        
 
-        if (name.equalsIgnoreCase("VOIs from above image List")) {
-            contents = ((JDialogRunScriptModel.ScriptModelImage) model
-                    .getImageList().get(0)).getScriptVOIs();
-        }
 
         populateModel(contents);
+
         JList list = new JList(listModel);
         list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         list.setDragEnabled(true);
@@ -457,7 +460,10 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         if (imageList.getSelectedIndex() == -1) {
             imageList.setSelectedIndex(0);
         }
+
         JList voiList = ((JList) ((JScrollPane) getComponentByName("VOIs from above image List: scroll")).getViewport().getView());
+
+        if ((model.getImageList() != null) && (model.getImageList().size() > 0)) 
         voiList.setListData((((JDialogRunScriptModel.ScriptModelImage) imageList.getSelectedValue()).getScriptVOIs()));
 
         frame.toFront();
