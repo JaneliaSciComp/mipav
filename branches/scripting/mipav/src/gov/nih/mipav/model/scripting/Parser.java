@@ -132,7 +132,7 @@ public class Parser {
             ParsedActionLine parsedLine = parser.parseNextLine();
 
             if (parsedLine != null) {
-                Preferences.debug("parser:\t\t" + parsedLine.convertToString(), Preferences.DEBUG_SCRIPTING);
+                Preferences.debug("parser:\t\t" + parsedLine.convertToString() + "\n", Preferences.DEBUG_SCRIPTING);
 
                 ScriptableActionInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine.getAction());
                 

@@ -1,27 +1,30 @@
 package gov.nih.mipav.view.dialogs;
 
+
+import java.awt.event.*;
 import java.io.File;
 import java.io.*;
-import java.awt.event.*;
+import java.util.*;
+
 import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import javax.xml.parsers.*;
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.model.scripting.*;
+
 
 /**
  * @author Nathan Pollack -- Contractor (SSAI)
  * @version 0.1 May 24, 2006
  * @see JDialogRunScriptView
  * @see JDialogRunScriptModel
- * <p></p>
- * 
  */
 public class JDialogRunScriptController implements ActionListener {
 
-    JDialogRunScriptView view;
-    JDialogRunScriptModel model;
+    private JDialogRunScriptView view;
+    private JDialogRunScriptModel model;
     
 
    /**
@@ -59,7 +62,7 @@ public class JDialogRunScriptController implements ActionListener {
      * all images currently open, then getting all open VOIs associated with those images
      */
     private void populateLists() {
-        java.util.Enumeration images = ViewUserInterface.getReference().getRegisteredImages();
+        Enumeration images = ViewUserInterface.getReference().getRegisteredImages();
         while (images.hasMoreElements()) {
             model.updateVector((ModelImage)images.nextElement());
         }
@@ -71,33 +74,22 @@ public class JDialogRunScriptController implements ActionListener {
      */
     private void populateScriptTree(String scriptFile) {
         
-         try{
-            
-            String[] images = gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile);
-             
-        model.setImagePlaceHolders(gov.nih.mipav.model.scripting.Parser.getImageVarsUsedInScript(scriptFile));
-        int[] numberOfVOIs = new int[model.getImagePlaceHolders().length];
-        for (int i = 0; i < model.getImagePlaceHolders().length; i++) {
-            numberOfVOIs[i] = gov.nih.mipav.model.scripting.Parser.getNumberOfVOIsRequiredForImageVar(scriptFile,model.getImagePlaceHolders()[i]);
-        }//i
-        model.setNumberOfVOIs(numberOfVOIs);
-        } catch (Exception e){
+         try {
+            model.setImagePlaceHolders(Parser.getImageVarsUsedInScript(scriptFile));
+            int[] numberOfVOIs = new int[model.getImagePlaceHolders().length];
+            for (int i = 0; i < model.getImagePlaceHolders().length; i++) {
+                numberOfVOIs[i] = Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, model.getImagePlaceHolders()[i]);
+            }// i
+            model.setNumberOfVOIs(numberOfVOIs);
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
     
-    
-    
-    
-    
-    
-    
-    /*
-    *  Main event handler for MIPAV scripting tool
-    * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
-    */ 
-    
-    
+    /**
+     *  Main event handler for MIPAV scripting tool
+     * @see #actionPerformed(java.awt.event.ActionEvent)
+     */
     public void actionPerformed(ActionEvent e) {
         /*
          * ********************************************************
@@ -114,11 +106,8 @@ public class JDialogRunScriptController implements ActionListener {
          * ********************************************************
          */
         if (e.getActionCommand().equalsIgnoreCase("Run script")) {
-             
-            try {
-                if (!(view.parseTreeForPlaceHolders())) Parser.runScript(model.getScriptFile());
-            } catch (ParserException pe) {
-                MipavUtil.displayError("Error encountered running script:\n" + pe);
+            if (!(view.parseTreeForPlaceHolders())) {
+                ScriptRunner.getReference().runScript(model.getScriptFile(), getUserSelectedImages());
             }
         }//run script
 
@@ -130,15 +119,15 @@ public class JDialogRunScriptController implements ActionListener {
         * ********************************************************
         */
         if (e.getActionCommand().equalsIgnoreCase("Add image from file")) {
-            gov.nih.mipav.view.ViewUserInterface.getReference().openImageFrame();
+            ViewUserInterface.getReference().openImageFrame();
             ModelImage lastModelImage = null;
-            java.util.Enumeration imageNames = ViewUserInterface.getReference().getRegisteredImageNames();
+            Enumeration imageNames = ViewUserInterface.getReference().getRegisteredImageNames();
             while (imageNames.hasMoreElements()) {
                 lastModelImage = (ModelImage) (ViewUserInterface.getReference().getRegisteredImageByName(
                         (String) imageNames.nextElement()));
             }
             model.updateVector(lastModelImage);
-            ((gov.nih.mipav.view.ViewJFrameImage)ViewUserInterface.getReference().getImageFrameVector().firstElement()).close();
+            ((ViewJFrameImage)ViewUserInterface.getReference().getImageFrameVector().firstElement()).close();
        }//add image from file
 
         
@@ -184,7 +173,7 @@ public class JDialogRunScriptController implements ActionListener {
             JFileChooser chooser = new JFileChooser();
 
             chooser.setDialogTitle("Open VOI");
-            chooser.setCurrentDirectory(new File(gov.nih.mipav.view.ViewUserInterface.getReference().getDefaultDirectory()));
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
             
             int returnValue = chooser.showOpenDialog(view.getFrame());
@@ -261,8 +250,12 @@ public class JDialogRunScriptController implements ActionListener {
 
     }//actionPerformed
 
-    public java.util.Vector getUserSelectedImages() {
-        java.util.Vector imageNames = new java.util.Vector(0);
+    /**
+     * Gets the list of images selected by the user in this dialog.  Should be in the order that the images are used in the script.
+     * @return  A list of images to be used in the script.
+     */
+    public Vector getUserSelectedImages() {
+        Vector imageNames = new Vector(0);
         javax.swing.JTree tree = view.tree;
         TreeNode root = (TreeNode) tree.getModel().getRoot();
         for (int i = 0; i < root.getChildCount(); i++) {
@@ -273,13 +266,8 @@ public class JDialogRunScriptController implements ActionListener {
         }//i
          return imageNames;
     }
-        
-        
-    
-    
-    
-    
-    String parseTreeToXML(javax.swing.JTree tree) {
+
+    private String parseTreeToXML(javax.swing.JTree tree) {
         StringBuffer xmlDoc = new StringBuffer();
         TreeNode root = (TreeNode) tree.getModel().getRoot();
         xmlDoc.append("<" + "root" + ">\n");
