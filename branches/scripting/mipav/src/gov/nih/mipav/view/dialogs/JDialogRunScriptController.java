@@ -104,10 +104,24 @@ public class JDialogRunScriptController implements ActionListener {
             if (!(view.parseTreeForPlaceHolders())) {
                 view.setVisible(false);
                 
+                String[] scriptVars;
+                try {
+                    scriptVars = Parser.getImageVarsUsedInScript(model.getScriptFile());
+                } catch (ParserException pe) {
+                    MipavUtil.displayError("Error getting script image vars:\n" + pe);
+                    return;
+                }
+                
                 Vector scriptExecutors = getUserSelectedImages();
                 for (int i = 0; i < scriptExecutors.size(); i++) {
+                    Vector scriptImages = (Vector) scriptExecutors.elementAt(i);
+                    Preferences.debug("run dialog:\tScript execution #" + i + " images to be used:\n", Preferences.DEBUG_SCRIPTING);
+                    for (int j = 0; j < scriptImages.size(); j++) {
+                        Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " -> " + scriptImages.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
+                    }
+                    
                     Preferences.debug("run dialog:\tStarting script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
-                    ScriptRunner.getReference().runScript(model.getScriptFile(), (Vector)scriptExecutors.elementAt(i));
+                    ScriptRunner.getReference().runScript(model.getScriptFile(), scriptImages);
                     Preferences.debug("run dialog:\tFinished script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
                 }
                 
