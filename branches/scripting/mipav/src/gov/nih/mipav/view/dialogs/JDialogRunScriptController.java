@@ -254,17 +254,19 @@ public class JDialogRunScriptController implements ActionListener {
      * Gets the list of images selected by the user in this dialog.  Should be in the order that the images are used in the script.
      * @return  A list of images to be used in the script.
      */
-    public Vector getUserSelectedImages() {
-        Vector imageNames = new Vector(0);
+   public java.util.Vector getUserSelectedImages() {
+        java.util.Vector scriptExecuters = new java.util.Vector(0);
+        java.util.Vector imageNames = new java.util.Vector(0);
         javax.swing.JTree tree = view.tree;
         TreeNode root = (TreeNode) tree.getModel().getRoot();
-        for (int i = 0; i < root.getChildCount(); i++) {
+        for (int i = 0; i < root.getChildCount(); i++) {           
             for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
-                 String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
+                String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
                 imageNames.add(imageName);
             }//j
+            scriptExecuters.add(imageNames);
         }//i
-         return imageNames;
+         return scriptExecuters;
     }
 
     private String parseTreeToXML(javax.swing.JTree tree) {
