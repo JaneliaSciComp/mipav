@@ -101,7 +101,7 @@ public class JDialogRunScriptController implements ActionListener {
          * ********************************************************
          */
         if (e.getActionCommand().equalsIgnoreCase("Run script")) {
-            if (!(view.parseTreeForPlaceHolders())) {
+            //if (!(view.parseTreeForPlaceHolders())) {
                 view.setVisible(false);
                 
                 String[] scriptVars;
@@ -126,7 +126,7 @@ public class JDialogRunScriptController implements ActionListener {
                 }
                 
                 view.dispose();
-            }
+            //}
         }//run script
 
 
@@ -274,10 +274,10 @@ public class JDialogRunScriptController implements ActionListener {
      */
    public java.util.Vector getUserSelectedImages() {
         Vector scriptExecuters = new java.util.Vector(0);
-        Vector imageNames = new java.util.Vector(0);
         JTree tree = view.tree;
         TreeNode root = (TreeNode) tree.getModel().getRoot();
         for (int i = 0; i < root.getChildCount(); i++) {           
+            Vector imageNames = new java.util.Vector(0);
             for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
                 String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
                 imageNames.add(imageName);
