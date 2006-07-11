@@ -101,8 +101,8 @@ public class JDialogRunScriptController implements ActionListener {
          * ********************************************************
          */
         if (e.getActionCommand().equalsIgnoreCase("Run script")) {
-            //if (!(view.parseTreeForPlaceHolders())) {
-                view.setVisible(false);
+            if (!(view.parseTreeForPlaceHolders())) {
+                view.getFrame().setVisible(false);
                 
                 String[] scriptVars;
                 try {
@@ -125,8 +125,8 @@ public class JDialogRunScriptController implements ActionListener {
                     Preferences.debug("run dialog:\tFinished script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
                 }
                 
-                view.dispose();
-            //}
+                view.getFrame().dispose();
+            }
         }//run script
 
 
