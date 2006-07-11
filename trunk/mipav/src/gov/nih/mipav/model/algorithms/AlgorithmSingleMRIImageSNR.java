@@ -32,6 +32,44 @@ import java.text.*;
   (mean/standard deviation) = sqrt(PI/2) * exp(-SNR*SNR/4)((1 + (SNR*SNR/2))*I0(SNR*SNR/4) +
                                                             (SNR*SNR/2)*I1(SNR*SNR/4))
                                                             
+  For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
+  Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
+  and Atul Bhalla the results were:
+  From x = -706 to x = +184 the results of the 2 routines matched to at least 1 part in 1E5.
+  
+  For x = -3055 to x = +184 the ACM routine seemed to give valid results.
+  For x <= -3056 the ACM routine results oscillated wildly and at x = -3200 the
+  result was frozen at 1.0E75.
+  For x >= +185 the ACM result was frozen at 1.0E75.
+  The log result was also seen to oscillate for x <= -3056.
+  
+  For x = -706 to x = +781 the CHGM routine seemed to give valid results.
+  For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the
+  CHGM routine gave NaN.
+  For x >= +783 the CHGM routine gave a result of -infinity.
+  
+  So for x = -(signal/noise)*(signal/noise)/2, the CHGM routine can handle a maximum
+  signal/noise value of 37.5 and in standard output the ACM routine can handle a 
+  maximum signal/noise value of 78.166.
+  
+  For 1F1(-1/2, 2, x) the results were very similar:
+  From x = -706 to x = +189 the results of the 2 routines matched to at least 1 part in 1E5.
+  
+  From x = -3058 to x = +189 the ACM routine seemed to give valid results.
+  At x <= -3059 the ACM results oscillated wildly.
+  For x > +189 the ACM result was frozen at 1.0E75.
+  
+  For x = -706 to x = +791 the CHGM routine seemed to give valid results.
+  For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the 
+  CHGM routine gave NaN.
+  For x >= +792 the CHGM routine gave a result of -infinity.
+  
+  In this module use the ACM routine for x >= -3000.
+  For large negative x, use the formula:
+  As |x| approaches infinity,
+  1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the
+                 real part of x < 0.
+                                                            
   References:
   1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers,
   Universiteit Antwerpen, Department Natuurkunde.
@@ -188,7 +226,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double snr = 0.0;
         double snr2;
         double cnr;
-        boolean test = true;
+        boolean test = false;
         
         if (test) {
             ConfluentHypergeometric cf;
@@ -198,22 +236,22 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             double realResult[] = new double[1];
             double imagResult[] = new double[1];
             double x = -30.0;
-                for (x = -30.0; x <= 30.0; x++) {
-                    cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
-                                                                 -0.5, 1, x, result);
-                    cf.run();
-                    cf = new ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, x, 0.0,
+                for (x = -3100.0; x <= -3000.0; x++) {
+                    //cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
+                                                                 //-0.5, 2.0, x, result);
+                    //cf.run();
+                    cf = new ConfluentHypergeometric(-0.5, 0.0, 2.0, 0.0, x, 0.0,
                                                        Lnchf, ip, realResult, imagResult);
                     cf.run();
-                    Preferences.debug("x = " + x + " result[0] = " + result[0] + 
+                    Preferences.debug("x = " + x + /*" result[0] = " + result[0] +*/ 
                             " realResult[0] = " + realResult[0] + "\n");
-                    if (Math.abs((result[0] - realResult[0])/result[0]) > 1.0E-5) {
-                        Preferences.debug("Mismatch at x = " + x + "\n");
-                    }
+                    //if (Math.abs((result[0] - realResult[0])/result[0]) > 1.0E-5) {
+                        //Preferences.debug("Mismatch at x = " + x + "\n");
+                    //}
                 }
                 setCompleted(true);
                 return;
-        }
+        } // if (test)
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -311,6 +349,13 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     }
     
     private double funcC(double meanDivStdDev, boolean signal) {
+        /** For 1F1(-1/2, 1, x) for the ACM code called the result is only
+         *  valid for x >= -3055 and for 1F1(-1/2, 2, x) the result is only
+         *  valid for x >= -3058.  For large negative x, use the formula:
+         *  As |x| approaches infinity,
+         *  1F1(a, b, x) approaches (gamma(b)/gamma(b-a))*((-x)**(-a))*[1 + Order(|x|**-1)} for the
+         *  real part of x < 0.
+         */
         double snr;
         double lowerBound;
         double upperBound;
@@ -323,14 +368,18 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double error = 0.0;
         double square;
         double constant = Math.sqrt(Math.PI/2.0);
-        double result[] = new double[1];
-        int kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
+        //double result[] = new double[1];
+        //int kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
         ConfluentHypergeometric cf;
-        int Lnchf = 0;
-        int ip = 700;
+        int Lnchf = 0; // 0 for standard output; 1 for log of result
+        int ip = 776; // Number of desired array positions; 776 is the maximum possible value.
         double realResult[] = new double[1];
         double imagResult[] = new double[1];
         int n;
+        Gamma gam;
+        double resultB[] = new double[1];
+        double resultBMinusA[] = new double[1];
+        double gamConstant;
         for (n = 1; n <= numReceivers; n++) {
             constant = constant * (2*n - 1);
         }
@@ -338,17 +387,28 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         for (n = numReceivers - 1; n >= 2; n--) {
             constant = constant/n;
         }
+        gam = new Gamma((double)numReceivers, resultB);
+        gam.run();
+        gam = new Gamma((numReceivers + 0.5), resultBMinusA);
+        gam.run();
+        gamConstant = resultB[0]/(resultBMinusA[0]*Math.sqrt(2.0));
         for (i = 0; i < maxIters; i++) {
             square = snr * snr / 2.0;
             //cf = new ConfluentHypergeometric(kind, -0.5, numReceivers, -square, result);
             //cf.run();
-            cf = new ConfluentHypergeometric(-0.5, 0.0, numReceivers, 0.0, -square, 0.0,
+            if (square <= 3000) {
+                cf = new ConfluentHypergeometric(-0.5, 0.0, (double)numReceivers, 0.0, -square, 0.0,
                     Lnchf, ip, realResult, imagResult);
-            cf.run();
-            Preferences.debug("snr = " + snr + " realResult[0] = " + realResult[0] + "\n");
+                cf.run();
+                //Preferences.debug("realResult cf run = " + realResult[0] + "\n");
+            }
+            else {
+                realResult[0] = gamConstant * snr;
+                //Preferences.debug("realResult snr = " + realResult[0] + "\n");
+            }
             calculatedMeanDivStdDev = constant * realResult[0];
             error = Math.abs(calculatedMeanDivStdDev - meanDivStdDev)/meanDivStdDev;
-            Preferences.debug("error = " + error + "\n");
+            //Preferences.debug("error = " + error + "\n");
             if (error < 0.001) {
                 break;
             }
