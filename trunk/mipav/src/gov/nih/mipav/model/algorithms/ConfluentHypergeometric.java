@@ -41,6 +41,18 @@ import gov.nih.mipav.view.*;
  *   For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the
  *   CHGM routine gave NaN.
  *   For x >= +783 the CHGM routine gave a result of -infinity.
+ *   
+ *   For 1F1(-1/2, 2, x) the results were very similar:
+ *   From x = -706 to x = +189 the results of the 2 routines matched to at least 1 part in 1E5.
+  
+ *   From x = -3058 to x = +189 the ACM routine seemed to give valid results.
+ *   At x <= -3059 the ACM results oscillated wildly.
+ *   For x > +189 the ACM result was frozen at 1.0E75.
+  
+ *   For x = -706 to x = +791 the CHGM routine seemed to give valid results.
+ *   For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the 
+ *   CHGM routine gave NaN.
+ *   For x >= +792 the CHGM routine gave a result of -infinity.
 */
 
 public class ConfluentHypergeometric {
