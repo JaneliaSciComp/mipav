@@ -106,7 +106,7 @@ public class PlugInDialogSCUP extends JDialogBase implements AlgorithmInterface 
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             resultImage = new ModelImage(imageA.getType(), imageA.getExtents(), (imageA.getImageName() + "_scup"),

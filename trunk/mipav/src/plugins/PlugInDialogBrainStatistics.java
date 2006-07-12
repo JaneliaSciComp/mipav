@@ -67,7 +67,7 @@ public class PlugInDialogBrainStatistics extends JDialogBase implements Algorith
     /**
      * Start up the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         brainAlgo = new PlugInAlgorithmBrainStatistics(image);
         brainAlgo.run();
     }

@@ -120,7 +120,7 @@ public class PlugInDialogAbsoluteValue extends JDialogBase implements AlgorithmI
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         // Make algorithm
         absAlgo = new PlugInAlgorithmAbsoluteValue(imageA);

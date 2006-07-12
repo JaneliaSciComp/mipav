@@ -217,7 +217,7 @@ public class PlugInDialogProcessICG extends JDialogBase implements
     /**
      *    Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 
