@@ -242,19 +242,44 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             double result[] = new double[1];
             double realResult[] = new double[1];
             double imagResult[] = new double[1];
+            double realResult2[] = new double[1];
+            double imagResult2[] = new double[1];
+            double mag;
+            double mag2;
             double x = -30.0;
-                for (x = -3100.0; x <= -3000.0; x++) {
-                    //cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
-                                                                 //-0.5, 2.0, x, result);
-                    //cf.run();
-                    cf = new ConfluentHypergeometric(-0.5, 0.0, 2.0, 0.0, x, 0.0,
-                                                       Lnchf, ip, realResult, imagResult);
+            double realZ;
+            double imagZ;
+            Gamma gam;
+            double resultB[] = new double[1];
+            double resultBMinusA[] = new double[1];
+            double gamConstant;
+            gam = new Gamma((double)numReceivers, resultB);
+            gam.run();
+            gam = new Gamma((numReceivers + 0.5), resultBMinusA);
+            gam.run();
+            gamConstant = resultB[0]/resultBMinusA[0];
+                for (realZ = -10.0; realZ <= 10.0; realZ++) {
+                    for (imagZ = -10.0; imagZ <= 10.0; imagZ++) {
+                    cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
+                                                                 -0.5, 1.0, realZ, imagZ, 
+                                                                 realResult, imagResult);
                     cf.run();
-                    Preferences.debug("x = " + x + /*" result[0] = " + result[0] +*/ 
-                            " realResult[0] = " + realResult[0] + "\n");
-                    //if (Math.abs((result[0] - realResult[0])/result[0]) > 1.0E-5) {
-                        //Preferences.debug("Mismatch at x = " + x + "\n");
-                    //}
+                    cf = new ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, realZ, imagZ,
+                                                       Lnchf, ip, realResult2, imagResult2);
+                    cf.run();
+                    //result[0] = gamConstant * Math.sqrt(-x) * (1.0 + (-0.5)*(0.5-numReceivers)/(-x) +
+                            //(-0.25)*(0.5-numReceivers)*(1.5-numReceivers)/(2.0*x*x));
+                    Preferences.debug("realZ = " + realZ + " imagZ = " + imagZ +
+                            " realResult[0] = " + realResult[0] +
+                            " imagResult[0] = " + imagResult[0] +
+                            " realResult2[0] = " + realResult2[0] +
+                            " imagResult2[0] = " + imagResult2[0] + "\n");
+                    if ((Math.abs((realResult[0] - realResult2[0])/realResult[0]) > 1.0E-5) ||
+                        (Math.abs((imagResult[0] - imagResult2[0])/imagResult[0]) > 1.0E-5)){
+                        Preferences.debug("Mismatch at realZ = " + realZ + 
+                                          " imagZ = " + imagZ + "\n");
+                    }
+                    }  
                 }
                 setCompleted(true);
                 return;
