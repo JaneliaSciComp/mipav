@@ -16,7 +16,7 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
     /**
      * Contains parameters used to run or record the dialog action, along with some common helper methods.
      */
-    protected ScriptParameters scriptParameters = null;
+    protected AlgorithmParameters scriptParameters = null;
     
     /**
      * Passthrough to JDialogBase constructor.
@@ -94,7 +94,7 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
             
             try{
                 if (scriptParameters == null) {
-                    scriptParameters = new ScriptParameters();
+                    scriptParameters = new AlgorithmParameters();
                 }
                 
                 storeParamsFromGUI();
@@ -113,7 +113,7 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
      * @throws  IllegalArgumentException  If there is a problem with the action arguments.
      */
     public void scriptRun(ParameterTable parameters) throws IllegalArgumentException {
-        scriptParameters = new ScriptParameters(parameters);
+        scriptParameters = new AlgorithmParameters(parameters);
         
         setScriptRunning(true);
         setSeparateThread(false);

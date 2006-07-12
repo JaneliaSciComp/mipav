@@ -6,7 +6,6 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
@@ -132,15 +131,9 @@ public class ActionOpenImage extends ActionImageProcessorBase {
         parameters.put(ParameterFactory.newInt(FILE_RAW_DATA_TYPE, fileInfo.getDataType()));
         parameters.put(ParameterFactory.newBoolean(FILE_RAW_ENDIANESS, fileInfo.getEndianess()));
         parameters.put(ParameterFactory.newInt(FILE_RAW_OFFSET, fileInfo.getOffset()));
-        
-        ParameterList extentsList = new ParameterList(FILE_RAW_EXTENTS, Parameter.PARAM_INT);
-        ParameterList resolutionsList = new ParameterList(FILE_RAW_RESOLUTIONS, Parameter.PARAM_FLOAT);
-        ParameterList unitsList = new ParameterList(FILE_RAW_UNITS, Parameter.PARAM_INT);
-        for (int i = 0; i < fileInfo.getExtents().length; i++) {
-            extentsList.addToList(ParameterFactory.newInt("", fileInfo.getExtents()[i]));
-            resolutionsList.addToList(ParameterFactory.newFloat("", fileInfo.getResolutions()[i]));
-            unitsList.addToList(ParameterFactory.newInt("", fileInfo.getUnitsOfMeasure()[i]));
-        }
+        parameters.put(ParameterFactory.newParameter(FILE_RAW_EXTENTS, fileInfo.getExtents()));
+        parameters.put(ParameterFactory.newParameter(FILE_RAW_RESOLUTIONS, fileInfo.getResolutions()));
+        parameters.put(ParameterFactory.newParameter(FILE_RAW_UNITS, fileInfo.getUnitsOfMeasure()));
     }
     
     /**

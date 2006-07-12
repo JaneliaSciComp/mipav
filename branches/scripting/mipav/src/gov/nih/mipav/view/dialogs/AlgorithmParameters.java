@@ -9,19 +9,11 @@ import gov.nih.mipav.view.components.*;
 
 
 /**
- * <p>An abstract base class to be inherited from by inner classes of scriptable algorithm dialogs to assist in the execution and recording of script actions.</p>
- * <p>Three methods must be implemented:
- * <ul>
- *   <li>@see #setGUIFromParams() Set up dialog GUI before running the algorithm (script execution).</li>
- *   <li>@see #doPostAlgorithmActions() Do anything else needed after the algorithm runs (script execution).</li>
- *   <li>@see #storeParamsFromGUI() Store parameters from the dialog GUI (script recording).</li>
- * </ul>
- * </p>
  * <p>This class standardizes the parameter names given to many common parameters used in algorithms.  It also provides helper methods to store/retrieve those common parameters.</p>
  * 
- * @see gov.nih.mipav.view.dialogs.JDialogGaussianBlur  For a reference inner subclass of AlgorithmParameters named DialogParameters.
+ * @see gov.nih.mipav.view.dialogs.JDialogGaussianBlur
  */
-public abstract class AlgorithmParameters {
+public class AlgorithmParameters {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -52,22 +44,9 @@ public abstract class AlgorithmParameters {
     protected static final String DO_PROCESS_3D_AS_25D = "do_process_in_2.5D";
 
     /**
-     * Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used in an
-     * algorithm in the X dimension.
+     * Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used.
      */
-    protected static final String SIGMA_X = "gauss_std_dev_x";
-
-    /**
-     * Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used in an
-     * algorithm in the Y dimension.
-     */
-    protected static final String SIGMA_Y = "gauss_std_dev_y";
-
-    /**
-     * Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used in an
-     * algorithm in the Z dimension.
-     */
-    protected static final String SIGMA_Z = "gauss_std_dev_z";
+    protected static final String SIGMAS = "gauss_std_dev";
 
     /**
      * Label used for the parameter indicating whether to correct the gaussian's standard deviation Z dimension using
@@ -76,22 +55,10 @@ public abstract class AlgorithmParameters {
     protected static final String SIGMA_DO_Z_RES_CORRECTION = "gauss_do_z_resolution_correction";
 
     /**
-     * Label used for the parameter indicating whether to process the red channel of an ARGB image (ignored for
+     * Label used for the parameter indicating whether to process the each channel of an RGB image (ignored for
      * grayscale images).
      */
-    protected static final String DO_PROCESS_RED_CHANNEL = "do_process_red_channel";
-
-    /**
-     * Label used for the parameter indicating whether to process the red channel of an ARGB image (ignored for
-     * grayscale images).
-     */
-    protected static final String DO_PROCESS_GREEN_CHANNEL = "do_process_green_channel";
-
-    /**
-     * Label used for the parameter indicating whether to process the red channel of an ARGB image (ignored for
-     * grayscale images).
-     */
-    protected static final String DO_PROCESS_BLUE_CHANNEL = "do_process_blue_channel";
+    protected static final String DO_PROCESS_RGB = "do_process_r_g_b_channel";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -128,23 +95,6 @@ public abstract class AlgorithmParameters {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * Performs any actions which should be done after an algorithm is finished, such as storing a newly-generated result image in the VariableTable.  Used when running the algorithm from a script.
-     */
-    public abstract void doPostAlgorithmActions();
-
-    /**
-     * Sets up the algorithm GUI based on the parameter table contents in preparation for running the algorithm.  Used when running the algorithm from a script.
-     */
-    public abstract void setGUIFromParams();
-
-    /**
-     * Creates and stores a set of algorithm parameters in a table based on selections made by the user in the algorithm's GUI.  Used when recording the execution of an algorithm in a new script.
-     * 
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
-     */
-    public abstract void storeParamsFromGUI() throws ParserException;
 
     /**
      * Returns the label which should be used for an input image parameter.
@@ -205,9 +155,10 @@ public abstract class AlgorithmParameters {
      * @param  colorChannelPanel  The color channel panel to set the values of.
      */
     public void setColorOptionsGUI(JPanelColorChannels colorChannelPanel) {
-        colorChannelPanel.setRedProcessingRequested(params.getBoolean(DO_PROCESS_RED_CHANNEL));
-        colorChannelPanel.setGreenProcessingRequested(params.getBoolean(DO_PROCESS_GREEN_CHANNEL));
-        colorChannelPanel.setBlueProcessingRequested(params.getBoolean(DO_PROCESS_BLUE_CHANNEL));
+        boolean[] rgb = params.getList(DO_PROCESS_RGB).getAsBooleanArray();
+        colorChannelPanel.setRedProcessingRequested(rgb[0]);
+        colorChannelPanel.setGreenProcessingRequested(rgb[1]);
+        colorChannelPanel.setBlueProcessingRequested(rgb[2]);
     }
 
     /**
@@ -225,9 +176,10 @@ public abstract class AlgorithmParameters {
      * @param  sigmaPanel  The sigmas panel to set up based on the parameters.
      */
     public void setSigmasGUI(JPanelSigmas sigmaPanel) {
-        sigmaPanel.setSigmaX(params.getFloat(SIGMA_X));
-        sigmaPanel.setSigmaY(params.getFloat(SIGMA_Y));
-        sigmaPanel.setSigmaZ(params.getFloat(SIGMA_Z));
+        float[] sigmas = params.getList(SIGMAS).getAsFloatArray();
+        sigmaPanel.setSigmaX(sigmas[0]);
+        sigmaPanel.setSigmaY(sigmas[1]);
+        sigmaPanel.setSigmaZ(sigmas[2]);
         sigmaPanel.enableResolutionCorrection(params.getBoolean(SIGMA_DO_Z_RES_CORRECTION));
     }
 
@@ -254,9 +206,8 @@ public abstract class AlgorithmParameters {
      */
     public void storeColorOptions(boolean processRed, boolean processGreen, boolean processBlue)
             throws ParserException {
-        params.put(ParameterFactory.newBoolean(DO_PROCESS_RED_CHANNEL, processRed));
-        params.put(ParameterFactory.newBoolean(DO_PROCESS_GREEN_CHANNEL, processGreen));
-        params.put(ParameterFactory.newBoolean(DO_PROCESS_BLUE_CHANNEL, processBlue));
+        boolean[] rgb = new boolean[] {processRed, processGreen, processBlue};
+        params.put(ParameterFactory.newParameter(DO_PROCESS_RGB, rgb));
     }
 
     /**
@@ -376,9 +327,7 @@ public abstract class AlgorithmParameters {
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     protected void storeSigmas(float[] sigmas, boolean isZCorrectionEnabled) throws ParserException {
-        params.put(ParameterFactory.newFloat(SIGMA_X, sigmas[0]));
-        params.put(ParameterFactory.newFloat(SIGMA_Y, sigmas[1]));
-        params.put(ParameterFactory.newFloat(SIGMA_Z, sigmas[2]));
+        params.put(ParameterFactory.newParameter(SIGMAS, sigmas));
         params.put(ParameterFactory.newBoolean(SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
     }
 }
