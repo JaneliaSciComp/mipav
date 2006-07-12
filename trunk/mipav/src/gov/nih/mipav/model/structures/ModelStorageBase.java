@@ -2040,6 +2040,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @throws  IOException  DOCUMENT ME!
      */
+    /*
     public final synchronized void exportSliceZX(int tSlice, int slice, float[] values) throws IOException {
         int i;
         int x, z;
@@ -2076,7 +2077,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Export data error - bounds incorrect");
     }
-
+*/
     /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export ZY slice into values array.
@@ -6904,8 +6905,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return fileInfo[0].getUnitsOfMeasure();
     }
 
+    public final synchronized void export( int orientation,
+                                           int tSlice, int slice,
+                                           float[] values ) throws IOException
+    {
+        int[] axisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
+        export( axisOrder, axisFlip, tSlice, slice, values );
+    }
+
+
     /* MipavCoordinateSystems upgrade TODO: : */
-    /** 
+    /**
      * Exports data based on the mapping from ModelImage space to Patient
      * space. The mapping parameters are passed in as the axisOrder and
      * axisFlip arrays. This function replaces many hard-coded exportDataXXX
@@ -6917,9 +6928,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param slice -- the constant slice
      * @param values -- the array to write the data into
      */
-    public final synchronized void export( int[] axisOrder, boolean[] axisFlip,
-                                           int tSlice, int slice,
-                                           float[] values ) throws IOException
+    private final synchronized void export( int[] axisOrder, boolean[] axisFlip,
+                                            int tSlice, int slice,
+                                            float[] values ) throws IOException
     {
         try {
             setLock(W_LOCKED);
@@ -7110,6 +7121,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return iterationFactorsReturn;
     }
 
+    public int[] getVolumeIterationFactors(  ) {
+        return new int[] { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
+    }
 
 
     /* MipavCoordinateSystems upgrade TODO: : */
