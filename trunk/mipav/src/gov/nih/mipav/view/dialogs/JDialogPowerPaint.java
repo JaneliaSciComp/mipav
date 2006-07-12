@@ -490,8 +490,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
-			int origDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
-                           .getOriginalOrientation();
+            int origDir = image.getImageOrientation();
 			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XY;
 			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XZ;
 			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XZ;
@@ -511,8 +510,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
-			int origDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
-                           .getOriginalOrientation();
+			int origDir = image.getImageOrientation();
 			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XZ;
 			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XY;
 			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = ZY;
@@ -533,8 +531,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
-			int origDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
-                           .getOriginalOrientation();
+			int origDir = image.getImageOrientation();
 			if (origDir == ViewJComponentBase.AXIAL) sliceDir = ZY;
 			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = ZY;
 			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XY;
