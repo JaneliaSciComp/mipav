@@ -1290,7 +1290,7 @@ public class JDialogRegistrationOAR3D extends JDialogBase implements AlgorithmIn
     /**
      * Calls the algorithm with the set-up parameters.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (doLS) {
             JDialogRegistrationLeastSquares lsDialog = new JDialogRegistrationLeastSquares(parentFrame, matchImage,

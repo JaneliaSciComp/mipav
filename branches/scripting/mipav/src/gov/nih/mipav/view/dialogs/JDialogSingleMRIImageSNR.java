@@ -190,7 +190,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

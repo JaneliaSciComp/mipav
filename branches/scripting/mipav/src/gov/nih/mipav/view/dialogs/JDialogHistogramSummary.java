@@ -238,7 +238,7 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
      * Once all the necessary variables are set, call the Histogram algorithm based on whehter the image is color or
      * not.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();

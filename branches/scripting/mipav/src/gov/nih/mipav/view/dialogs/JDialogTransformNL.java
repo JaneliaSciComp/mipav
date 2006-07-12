@@ -762,7 +762,7 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     /**
      * Calls the algorithm with the set variables.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         algoTrans = new AlgorithmRegNonlinear(image, targetXDim, targetYDim, targetZDim, resultResolutions, targetUnits,
                                               fmodel, es, interp, doClip, transformVOI);

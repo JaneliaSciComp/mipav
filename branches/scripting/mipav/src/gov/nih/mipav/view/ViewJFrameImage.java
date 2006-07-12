@@ -1529,9 +1529,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // JDialogPlotSurface  plotSur =
             new JDialogPlotSurface(this, getActiveImage(), zSlice);
         } else if (command.equals("InverseOrder")) {
-
-            // JDialogInverseOrder order =
-            new JDialogInverseOrder(this, getActiveImage()).run();
+            new JDialogInverseOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("performRAHE")) {
 
             // JDialogAHE ahe =
@@ -1687,7 +1685,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 new JDialogNLNoiseReduction(this, getActiveImage());
             }
         } else if (command.equals("RandOrder")) {
-            new JDialogRandomizeSliceOrder(this, getActiveImage()).run();
+            new JDialogRandomizeSliceOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("ReplaceValue")) {
             new JDialogReplaceValue(this, getActiveImage());
         } else if (command.equals("StereoDepth")) {

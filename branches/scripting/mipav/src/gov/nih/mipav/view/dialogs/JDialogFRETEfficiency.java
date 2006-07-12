@@ -626,7 +626,7 @@ public class JDialogFRETEfficiency extends JDialogBase
     /**
      * Once all the necessary variables are set, call AlgorithmFRETEfficiency.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int i;
         System.gc();
 

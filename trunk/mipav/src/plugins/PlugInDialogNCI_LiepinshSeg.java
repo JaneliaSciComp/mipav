@@ -141,7 +141,7 @@ public class PlugInDialogNCI_LiepinshSeg extends JDialogBase implements Algorith
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

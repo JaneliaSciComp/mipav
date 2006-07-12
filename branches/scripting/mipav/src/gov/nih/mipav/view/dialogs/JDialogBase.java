@@ -2,10 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ScriptParameters;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -87,12 +83,6 @@ public abstract class JDialogBase extends JDialog
 
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
-    
-    protected ScriptParameters scriptParameters = null;
-    
-    protected Hashtable varTable = new Hashtable();
-    
-    protected ParameterTable parameters = new ParameterTable();
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -206,40 +196,6 @@ public abstract class JDialogBase extends JDialog
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-   /**
-    * Empty method call used in scripting, classes that extend this class can override
-    */
-    public void storeParamsFromGUI() throws ParserException{}    
-    public void setGUIFromParams() {}
-    public void doPostAlgorithmActions() {}
-     
-    public void insertScriptLine() {
-        String className = this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") + 1);
-        if (className.contains("JDialog")){
-            className = className.replaceFirst("JDialog", "");
-        }
-        try{
-        if (scriptParameters == null) scriptParameters = new ScriptParameters();
-         storeParamsFromGUI();
-         ScriptRecorder.getReference().addLine(className, scriptParameters.getParams());
-        }catch (ParserException pe){
-            MipavUtil.displayError("Error encountered recording " + className + " scriptline:\n" + pe);
-        }
-     }
-    
-     
-    public void scriptRun() throws IllegalArgumentException{
-        setScriptRunning(true);
-        setGUIFromParams();
-        setSeparateThread(false);
-        callAlgorithm();
-        doPostAlgorithmActions();
-     }
-    
-    
-
-    
     
     /**
      * Helper method for making the result image's name. Strips the current extension from the original name, adds the
@@ -1103,10 +1059,4 @@ public abstract class JDialogBase extends JDialog
             }
         }
     }
-    
-    //empty method that subclasses can override if desired
-    public void callAlgorithm() {}
-    
-    
-    
 }

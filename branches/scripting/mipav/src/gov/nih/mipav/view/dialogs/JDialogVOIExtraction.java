@@ -85,7 +85,7 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

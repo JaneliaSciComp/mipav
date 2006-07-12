@@ -146,7 +146,7 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         // crop out the last VOI
 

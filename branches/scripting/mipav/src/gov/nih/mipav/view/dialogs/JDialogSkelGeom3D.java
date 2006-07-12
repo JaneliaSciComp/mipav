@@ -183,7 +183,7 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

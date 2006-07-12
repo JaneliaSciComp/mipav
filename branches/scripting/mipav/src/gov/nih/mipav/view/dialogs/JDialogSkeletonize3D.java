@@ -284,7 +284,7 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
         double[] xvf = null;
         double[] yvf = null;
         double[] zvf = null;

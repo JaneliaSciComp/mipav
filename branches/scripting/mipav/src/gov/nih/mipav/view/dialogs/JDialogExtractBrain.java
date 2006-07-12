@@ -542,7 +542,7 @@ public class JDialogExtractBrain extends JDialogBase
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();

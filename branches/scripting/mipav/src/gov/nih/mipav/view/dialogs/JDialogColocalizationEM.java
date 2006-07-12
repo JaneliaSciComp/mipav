@@ -1069,7 +1069,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
         String segName = makeImageName(firstImage.getImageName(), "_seg");
 

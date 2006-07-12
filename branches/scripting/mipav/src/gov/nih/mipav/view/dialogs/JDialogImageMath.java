@@ -638,7 +638,7 @@ public class JDialogImageMath extends JDialogBase
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (image.getNDims() <= 5) {
 

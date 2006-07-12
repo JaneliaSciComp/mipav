@@ -1034,7 +1034,7 @@ public class JDialogVOIStatistics extends JDialogBase
     /**
      * Once all the necessary variables are set, call the VOI Props algorithm to run the statistic calculation.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         AlgorithmVOIProps da = new AlgorithmVOIProps(ui.getActiveImageFrame().getComponentImage().getActiveImage(),
                                                      checkBoxPanel, outputOptionsPanel.isBySlice(), rangeFlag);
         da.setPrecisionDisplay(precision, doForce);

@@ -121,7 +121,7 @@ public abstract class AlgorithmParameters {
     /**
      * Creates a new AlgorithmParameters object to be used to set up the algorithm's GUI from stored parameters.
      *
-     * @param  parsedParams  stored parameters which should be used to set up the algorithm's variables/GUI
+     * @param  parsedParams  stored parameters which should be used to set up the algorithm's variables/GUI.
      */
     public AlgorithmParameters(ParameterTable parsedParams) {
         params = parsedParams;
@@ -328,7 +328,7 @@ public abstract class AlgorithmParameters {
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
      */
-    protected static final String storeImageInRunner(ModelImage image) {
+    public static final String storeImageInRunner(ModelImage image) {
         return ScriptRunner.getReference().storeImage(image.getImageName());
     }
 

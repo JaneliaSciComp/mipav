@@ -137,20 +137,6 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogExtractSlicesVolumes(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        srcImage = im;
-        parentFrame = srcImage.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -165,7 +151,7 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
         if (command.equals("Extract")) {
 
             if (setVariables()) {
-                run();
+                callAlgorithm();
             }
         } else if (command.equals("Cancel")) {
             dispose();
@@ -437,7 +423,7 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
         }
 
         setSeparateThread(false);
-        run();
+        callAlgorithm();
     }
 
     /**
@@ -639,9 +625,9 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridwidth = 2;
         checkPanel.add(rangePanel, gbc);
 
@@ -666,7 +652,7 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
      * Once all the necessary variables are set, call the Remove Slices algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void run() {
+    protected void callAlgorithm() {
         System.gc();
 
         nSlices = srcImage.getExtents()[2];

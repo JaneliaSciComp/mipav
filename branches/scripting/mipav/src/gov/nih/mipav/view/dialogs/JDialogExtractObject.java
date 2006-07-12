@@ -299,7 +299,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
         float[] uvf = null;
         float[] vvf = null;
         float[] wvf = null;

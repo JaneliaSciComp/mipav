@@ -69,7 +69,7 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
 
         userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
     }
-
+    
     /**
      * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
      * up info and result image will be stored here.
@@ -88,17 +88,11 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     * Does nothing.
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-
-        if (command.equals("Script")) {
-            run();
-        }
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -250,9 +244,9 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
     }
 
     /**
-     * run.
+     * Run the algorithm.
      */
-    public void run() {
+    public void callAlgorithm() {
 
         try {
             System.gc();
@@ -425,7 +419,7 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
         }
 
         setSeparateThread(false);
-        run();
+        callAlgorithm();
         parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 

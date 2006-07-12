@@ -210,7 +210,7 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
     /**
      * run.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();

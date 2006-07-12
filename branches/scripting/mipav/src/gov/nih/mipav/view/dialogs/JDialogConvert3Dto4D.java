@@ -197,7 +197,7 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
     /**
      * Runs the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();

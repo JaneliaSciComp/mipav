@@ -480,7 +480,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

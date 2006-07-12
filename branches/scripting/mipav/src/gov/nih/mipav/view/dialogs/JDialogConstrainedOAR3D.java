@@ -1497,7 +1497,7 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
     /**
      * Calls the algorithm with the set-up parameters.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         System.out.println("Reference image name is " + refImage.getImageName());
         System.out.println("Moving image name is " + matchImage.getImageName());
 

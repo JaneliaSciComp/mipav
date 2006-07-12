@@ -502,7 +502,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int kernel = 0;
 
         if (image.getNDims() == 2) { // source image is 2D

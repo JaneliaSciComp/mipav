@@ -292,7 +292,7 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
     /**
      * Once all the necessary variables are set, call the Plot surface algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

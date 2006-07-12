@@ -227,7 +227,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();

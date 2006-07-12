@@ -267,7 +267,7 @@ public class JDialogBoundaryAttenuation extends JDialogBase
     /**
      * Construct and run the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
 
         attenuationAlgo = new AlgorithmBoundaryAttenuation(srcImage, numErosions, maxAttenuation);

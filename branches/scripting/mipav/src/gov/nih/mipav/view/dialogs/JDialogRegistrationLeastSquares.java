@@ -371,7 +371,7 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
     /**
      * Sets arrays appropriately and calls registration algorithm, running it in it's own thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int nPtsA = 0; // = baseImage.getVOIs().size();
         int nPtsB = 0; // = matchImage.getVOIs().size()
         Point3Df[] tmpptA = null;

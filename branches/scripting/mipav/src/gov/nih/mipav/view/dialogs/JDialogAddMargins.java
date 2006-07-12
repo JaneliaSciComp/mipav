@@ -580,7 +580,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
      * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (displayLoc == NEW) {
             int[] destExtents = null; // length along an axis of the destination image

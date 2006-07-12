@@ -326,7 +326,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
      * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
      * or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         start = System.currentTimeMillis();
 
         String name;

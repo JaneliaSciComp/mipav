@@ -437,7 +437,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
     /**
      * Sets arrays appropriately and calls registration algorithm, running it in it's own thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             evalSeg = new AlgorithmEvaluateMaskSegmentation(trueImage, testImage);

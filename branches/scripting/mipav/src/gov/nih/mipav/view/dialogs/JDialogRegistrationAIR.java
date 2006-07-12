@@ -657,7 +657,7 @@ public class JDialogRegistrationAIR extends JDialogBase implements AlgorithmInte
     /**
      * Runs the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         targetXDim = refImage.getExtents()[0];
         targetYDim = refImage.getExtents()[1];
 

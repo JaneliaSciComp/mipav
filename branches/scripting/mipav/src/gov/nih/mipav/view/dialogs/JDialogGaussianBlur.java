@@ -31,8 +31,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmGaussianBlur
  */
-public class JDialogGaussianBlur extends JDialogBase
-        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface {
+public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -298,21 +297,6 @@ public class JDialogGaussianBlur extends JDialogBase
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     */
-    public void insertScriptLine() {
-        try {
-            if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING) {
-                AlgorithmParameters algoParams = new DialogParameters();
-                algoParams.storeParamsFromGUI();
-                ScriptRecorder.getReference().addLine("GaussianBlur", algoParams.getParams());
-            }
-        } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered recording GaussianBlur script line:\n" + pe);
-        }
-    }
-
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -373,25 +357,6 @@ public class JDialogGaussianBlur extends JDialogBase
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param  parameters  table of parameters for the script to use
-     */
-    public void scriptRun(ParameterTable parameters) {
-        setScriptRunning(true);
-
-        AlgorithmParameters algoParams = new DialogParameters(parameters);
-        algoParams.setGUIFromParams();
-
-        // setActiveImage(parser.isActiveImage());
-        setSeparateThread(false);
-
-        callAlgorithm();
-
-        algoParams.doPostAlgorithmActions();
-    }
-
-    /**
      * Accessor that sets the slicing flag.
      *
      * @param  flag  <code>true</code> indicates slices should be blurred independently.
@@ -413,7 +378,7 @@ public class JDialogGaussianBlur extends JDialogBase
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gblur");
 
         if ((image.getNDims() == 2) && separable) { // source image is 2D and kernel is separable
@@ -1019,70 +984,46 @@ public class JDialogGaussianBlur extends JDialogBase
         return true;
     }
 
-    //~ Inner Classes --------------------------------------------------------------------------------------------------
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    public void doPostAlgorithmActions() {
+        if (outputOptionsPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
     /**
-     * This class records parameters used in the algorithm's dialog.  It also sets up the dialog's GUI based on parameters parsed out while running it as part of a script.
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
      */
-    private class DialogParameters extends AlgorithmParameters {
+    public void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
 
-        /**
-         * Creates a new DialogParameters object.  Called when recording the parameters for this algorithm.
-         */
-        public DialogParameters() {
-            super();
-        }
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+        colorChannelPanel = new JPanelColorChannels(image);
+        
+        outputOptionsPanel.setOutputNewImage(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
+        setSeparable(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE));
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmaPanel);
+        scriptParameters.setColorOptionsGUI(colorChannelPanel);
+    }
 
-        /**
-         * Creates a new DialogParameters object.  Called when setting up the dialog GUI when running a script.
-         *
-         * @param  parsedParams  The parsed table of parameters from the script being run.
-         */
-        public DialogParameters(ParameterTable parsedParams) {
-            super(parsedParams);
-        }
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     * 
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
 
-        /**
-         * Perform any actions required after the running of the algorithm is complete.
-         */
-        public void doPostAlgorithmActions() {
-            if (outputOptionsPanel.isOutputNewImageSet()) {
-                storeImageInRunner(getResultImage());
-            }
-        }
-
-        /**
-         * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
-         */
-        public void setGUIFromParams() {
-            image = retrieveInputImage();
-            userInterface = image.getUserInterface();
-            parentFrame = image.getParentFrame();
-
-            outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
-            sigmaPanel = new JPanelSigmas(image);
-            colorChannelPanel = new JPanelColorChannels(image);
-            
-            outputOptionsPanel.setOutputNewImage(params.getBoolean(DO_OUTPUT_NEW_IMAGE));
-            setSeparable(params.getBoolean(DO_PROCESS_SEPARABLE));
-            setImage25D(params.getBoolean(DO_PROCESS_3D_AS_25D));
-            super.setSigmasGUI(sigmaPanel);
-            super.setColorOptionsGUI(colorChannelPanel);
-        }
-
-        /**
-         * Store the parameters from the dialog to record the execution of this algorithm.
-         * 
-         * @throws  ParserException  If there is a problem creating one of the new parameters.
-         */
-        public void storeParamsFromGUI() throws ParserException {
-            storeInputImage(image);
-            storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
-
-            super.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
-            params.put(ParameterFactory.newBoolean(DO_PROCESS_SEPARABLE, separable));
-            super.storeSigmas(sigmaPanel);
-            super.storeColorOptions(colorChannelPanel);
-        }
+        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.getParams().put(ParameterFactory.newBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE, separable));
+        scriptParameters.storeSigmas(sigmaPanel);
+        scriptParameters.storeColorOptions(colorChannelPanel);
     }
 }

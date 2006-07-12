@@ -217,7 +217,7 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
     /**
      * Method for calling the Dicom to AVI algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
 
         Preferences.debug("Using DICOM input directory: " + dirField.getText() + "\n");

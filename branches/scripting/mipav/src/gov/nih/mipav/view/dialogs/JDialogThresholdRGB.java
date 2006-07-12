@@ -713,7 +713,7 @@ public class JDialogThresholdRGB extends JDialogBase implements AlgorithmInterfa
      * Once all the necessary variables are set, call the threshold rgb algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         String name = makeImageName(image.getImageName(), "_threshold");
         int[] destExtents = null;

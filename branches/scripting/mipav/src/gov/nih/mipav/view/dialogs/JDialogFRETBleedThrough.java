@@ -498,7 +498,7 @@ public class JDialogFRETBleedThrough extends JDialogBase
     /**
      * Once all the necessary variables are set, call AlgorithmFRETBleedThrough.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int i;
         System.gc();
 

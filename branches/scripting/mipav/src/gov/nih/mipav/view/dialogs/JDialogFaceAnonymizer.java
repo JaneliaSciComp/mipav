@@ -28,7 +28,7 @@ import javax.swing.*;
  * @version  May 17, 2004
  * @author   Alexandra A Bokinsky, Magic Software. Under contract from NIH.
  */
-public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInterface, ScriptableActionInterface {
+public class JDialogFaceAnonymizer extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -63,12 +63,6 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
     public static final int FACING_OUT_OF_SCREEN = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private String command;
-
-    /** DOCUMENT ME! */
-    private boolean dialogPresent;
 
     /** DOCUMENT ME! */
     private ModelImage image = null; // source image
@@ -162,14 +156,11 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        dialogPresent = true;
 
         m_bAlgorithmLaunched = false;
         m_adImageRange[0] = image.getMin();
         m_adImageRange[1] = image.getMax();
     }
-
- 
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -180,9 +171,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
      * @param  event  event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
-        command = event.getActionCommand();
-
-        Object source = event.getSource();
+        String command = event.getActionCommand();
 
         if (command.equals("OK") || command.equals(FIND_BUTTON) ||
                 command.equals(DELETE_BUTTON) /* ||
@@ -200,38 +189,38 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
             MipavUtil.showHelp("10045");
         }
     }
-
     
-    //**  New scripting methods
-    
+    /**
+     * {@inheritDoc}
+     */
     public void storeParamsFromGUI(){
         try{
-            scriptParameters.getParams().put(ParameterFactory.newParameter("dialogPresent", dialogPresent));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("dialogPresent", dialogPresent));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("m_bAlgorithmLaunched", m_bAlgorithmLaunched));
+            scriptParameters.storeInputImage(image);
+            
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iBlurFactor", m_iBlurFactor));
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinMax", m_iSkinMax));
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinMin", m_iSkinMin));
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinThickness", m_iSkinThickness));
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_aiAxis", m_aiAxis));        
-        }catch (ParserException pe){
-            pe.printStackTrace();
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered storing parameters for " + JDialogScriptableBase.getDialogActionString(getClass()) + "\n" + pe);
         }         
     }
     
-    public void setGUIFromParams(){  
-        dialogPresent =         scriptParameters.getParams().getBoolean("dialogPresent");
-        m_bAlgorithmLaunched =  scriptParameters.getParams().getBoolean("m_bAlgorithmLaunched");
-        m_iBlurFactor =         scriptParameters.getParams().getInt("m_iBlurFactor");
-        m_iSkinMax =            scriptParameters.getParams().getInt("m_iSkinMax");
-        m_iSkinMin =            scriptParameters.getParams().getInt("m_iSkinMin");
-        m_iSkinThickness =      scriptParameters.getParams().getInt("m_iSkinThickness");
-        Vector mAiAxisVector =  scriptParameters.getParams().getList("m_aiAxis").getList();
-        for (int i=0;i<mAiAxisVector.size();i++){
-            m_aiAxis[i] = ((Integer)mAiAxisVector.get(i)).intValue();
-        }
-    }
-    
+    /**
+     * {@inheritDoc}
+     */
+    public void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        m_iBlurFactor = scriptParameters.getParams().getInt("m_iBlurFactor");
+        m_iSkinMax = scriptParameters.getParams().getInt("m_iSkinMax");
+        m_iSkinMin = scriptParameters.getParams().getInt("m_iSkinMin");
+        m_iSkinThickness = scriptParameters.getParams().getInt("m_iSkinThickness");
+        m_aiAxis = scriptParameters.getParams().getList("m_aiAxis").getAsIntArray();
+    }    
    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -280,7 +269,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();
@@ -308,12 +297,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
             // Tell the Algorithm which button was just pressed:
             if (sEvent.equals("OK")) {
                 m_kFaceAnonymizerAlgorithm.setOK();
-
-                if (dialogPresent) {
-
-                    // Hide dialog
-                    setVisible(false);
-                }
+                setVisible(false);
             } else if (sEvent.equals(FIND_BUTTON)) {
                 m_kFaceAnonymizerAlgorithm.setFind();
             } else if (sEvent.equals(DELETE_BUTTON)) {
@@ -323,12 +307,7 @@ public class JDialogFaceAnonymizer extends JDialogBase implements AlgorithmInter
              * { m_kFaceAnonymizerAlgorithm.setBlur();}*/
             else if (sEvent.equals("Cancel")) {
                 m_kFaceAnonymizerAlgorithm.setCancel();
-
-                if (dialogPresent) {
-
-                    // Hide dialog
-                    setVisible(false);
-                }
+                setVisible(false);
             }
 
 

@@ -2272,7 +2272,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     /**
      * Calls the algorithm with the set variables.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
             xfrm.invert();

@@ -516,7 +516,7 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
     /**
      * Calls the time series registration algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         algoReg = new AlgorithmRegTSOAR(image, cost, DOF, interp, reference, refImageNum,
                                         sincNormalizedCrossCorrelation, doGraph, doSubsample,
                                         finalRegistrationAtLevel2);

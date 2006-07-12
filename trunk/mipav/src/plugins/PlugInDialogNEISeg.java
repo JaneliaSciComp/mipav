@@ -136,7 +136,7 @@ public class PlugInDialogNEISeg extends JDialogBase implements AlgorithmInterfac
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

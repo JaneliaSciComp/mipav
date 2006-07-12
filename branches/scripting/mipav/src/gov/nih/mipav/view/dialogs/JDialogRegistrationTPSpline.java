@@ -301,7 +301,7 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
     /**
      * Runs the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (matchImage.getNDims() == 2) {
             DIM = 2;

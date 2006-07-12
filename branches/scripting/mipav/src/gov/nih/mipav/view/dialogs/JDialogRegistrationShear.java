@@ -276,7 +276,7 @@ public class JDialogRegistrationShear extends JDialogBase implements AlgorithmIn
     /**
      * Calls the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             int[] destExtents = new int[3];

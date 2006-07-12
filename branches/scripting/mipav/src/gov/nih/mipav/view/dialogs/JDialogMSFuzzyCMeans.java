@@ -866,7 +866,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
      * Once all the necessary variables are set, call the Fuzzy C Means algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int i;
         System.gc();
 

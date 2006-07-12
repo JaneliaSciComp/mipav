@@ -418,7 +418,7 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
      * Once all the necessary variables are set, call the Graph Based Segmentation algorithm based on whether or not
      * there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_graphBasedSeg");
 
         if (displayLoc == NEW) {

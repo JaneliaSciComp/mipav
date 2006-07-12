@@ -215,7 +215,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();

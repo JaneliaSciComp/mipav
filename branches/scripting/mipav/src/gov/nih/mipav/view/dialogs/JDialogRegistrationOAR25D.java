@@ -1183,7 +1183,7 @@ public class JDialogRegistrationOAR25D extends JDialogBase
     /**
      * Calls the algorithm with the set-up parameters.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         BitSet mask = null;
 
         if (voisOnly) {

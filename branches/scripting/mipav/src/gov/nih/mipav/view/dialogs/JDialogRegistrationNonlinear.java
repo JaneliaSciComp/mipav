@@ -786,7 +786,7 @@ public class JDialogRegistrationNonlinear extends JDialogBase implements Algorit
     /**
      * Runs the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (!doInternal) {
 

@@ -1182,7 +1182,7 @@ public class JDialogColocalizationRegression extends JDialogBase implements Algo
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         componentImage1.getVOIHandler().setPresetHue(-1.0f);
 
         if (componentImage2 != null) {

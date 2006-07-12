@@ -278,7 +278,7 @@ public class JDialogReplaceValue extends JDialogBase implements AlgorithmInterfa
     /**
      * Calls the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
 
         if (displayLoc == NEW) {

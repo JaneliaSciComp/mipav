@@ -788,7 +788,7 @@ public class JDialogColocalizationDENCLUE extends JDialogBase implements Algorit
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
         String segName = makeImageName(firstImage.getImageName(), "_seg");
 

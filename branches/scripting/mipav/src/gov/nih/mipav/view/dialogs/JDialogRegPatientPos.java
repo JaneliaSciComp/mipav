@@ -281,7 +281,7 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
     /**
      * Calls the algorithm with the set-up parameters.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             RegPatPos = new AlgorithmRegPatientPos(imageA, imageB, doMatch);

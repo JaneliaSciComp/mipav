@@ -207,7 +207,7 @@ public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterfac
      *
      * @param  doStageOne  DOCUMENT ME!
      */
-    public void callAlgorithm(boolean doStageOne) {
+    protected void callAlgorithm(boolean doStageOne) {
 
         if (doStageOne) {
 

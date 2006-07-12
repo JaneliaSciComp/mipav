@@ -405,7 +405,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         System.err.println("Use threshold: " + useThreshold + " threshold: " + threshold);
         pointAlgo = new AlgorithmPointArea(srcImage, xLoc, yLoc, xSpacing, ySpacing, leftPad, topPad, useThreshold,

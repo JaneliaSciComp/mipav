@@ -500,7 +500,7 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
     /**
      * Runs the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

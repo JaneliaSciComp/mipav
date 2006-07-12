@@ -210,7 +210,7 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(firstImage.getImageName(), "_sDepth");
 
         try {

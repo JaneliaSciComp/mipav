@@ -8,6 +8,9 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.JPanelColorChannels;
+import gov.nih.mipav.view.components.JPanelSigmas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -23,7 +26,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmAdaptiveSmooth
  */
-public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInterface, ScriptableActionInterface {
+public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -41,16 +44,14 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
     /** DOCUMENT ME! */
     private JPanel destinationPanel;
 
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    // or if the source image is to be replaced
-
+    /** Indicates if a new image is to be generated or if the source image is to be replaced. */
+    private int displayLoc;
+    
     /** DOCUMENT ME! */
     private float distWeight;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** Source image. */
+    private ModelImage image;
 
     /** DOCUMENT ME! */
     private JLabel labelDistWeight;
@@ -88,8 +89,8 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** Result image. */
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private JTextField textDistWeight;
@@ -129,41 +130,49 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
         init();
     }
 
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    
+    /**
+     * {@inheritDoc}
+     */
     public void storeParamsFromGUI(){
-        try{
-            scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight","distWeight"));
+        try {
+            scriptParameters.storeInputImage(image);
+            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+            
+            scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight", distWeight));
             scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
             scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
             scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
             scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
-         }catch (ParserException pe){
-            pe.printStackTrace();
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered storing parameters for " + JDialogScriptableBase.getDialogActionString(getClass()) + "\n" + pe);
         }  
-     }
- 
-   public void setGUIFromParams(){
-       distWeight = scriptParameters.getParams().getFloat("distWeight");
-       radiusY = scriptParameters.getParams().getFloat("radiusY");
-       radiusCr = scriptParameters.getParams().getFloat("radiusCr");
-       radiusCb = scriptParameters.getParams().getFloat("radiusCb");
-       reduce = scriptParameters.getParams().getBoolean("reduce");
-    } 
-    
-    
-    
-    
-    public void doPostAlgorithmParameterss() {
-            try{
-            scriptParameters.storeOutputImageParams(resultImage, true);
-            }catch (ParserException pe){
-                MipavUtil.displayError("Error encountered saving output image:\n" + pe);
-            }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        distWeight = scriptParameters.getParams().getFloat("distWeight");
+        radiusY = scriptParameters.getParams().getFloat("radiusY");
+        radiusCr = scriptParameters.getParams().getFloat("radiusCr");
+        radiusCb = scriptParameters.getParams().getFloat("radiusCb");
+        reduce = scriptParameters.getParams().getBoolean("reduce");
     }
     
+    /**
+     * {@inheritDoc}
+     */
+    public void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
@@ -242,7 +251,10 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
             }
         }
 
-        insertScriptLine(adaptiveSmoothAlgo);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         dispose();
     }
 
@@ -253,99 +265,6 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AdaptiveSmooth " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + radiusY + " " + radiusCr + " " + radiusCb + " " +
-                                                           distWeight + " " + reduce);
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + radiusY + " " + radiusCr + " " + radiusCb + " " +
-                                                           distWeight + " " + reduce);
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRadiusY(parser.getNextFloat());
-            setRadiusCr(parser.getNextFloat());
-            setRadiusCb(parser.getNextFloat());
-            setDistWeight(parser.getNextFloat());
-            setReduce(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -413,7 +332,7 @@ public class JDialogAdaptiveSmooth extends JDialogBase implements AlgorithmInter
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_adaptiveSmooth");
         int[] destExtents;
 

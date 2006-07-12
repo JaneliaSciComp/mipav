@@ -448,7 +448,7 @@ public class JDialogHomomorphicFilter extends JDialogBase
      * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_homomorphic");
 
         if (displayLoc == NEW) {

@@ -239,7 +239,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
     /**
      * Once all the necessary variables are set, call the SUV_PET algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

@@ -482,7 +482,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
     /**
      * Once all the necessary variables are set, call the IHN3 Correction algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         String newName = makeImageName(image.getImageName(), "_N3Corrected");
 

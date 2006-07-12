@@ -316,7 +316,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
     /**
      * When OK button is clicked, this method is invoked.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         int kernel = 0;
         String name = makeImageName(image.getImageName(), "_FillObjects");

@@ -338,7 +338,7 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(matchImage.getImageName(), "_histMatch");
 
         if (displayLoc == NEW) {

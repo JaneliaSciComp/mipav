@@ -190,7 +190,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
     /**
      * Calls the algorithm, assuming the variables are already set up. Runs algorithm in separate thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (image25D) {
             chamfer = new AlgorithmRegChamfer(baseImage, matchImage, regionFlag, image25D);

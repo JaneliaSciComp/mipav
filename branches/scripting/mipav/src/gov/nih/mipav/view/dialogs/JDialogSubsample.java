@@ -406,7 +406,7 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
     /**
      * Method for calling the Subsample algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
 
         // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)

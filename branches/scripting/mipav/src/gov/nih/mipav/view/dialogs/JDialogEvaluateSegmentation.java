@@ -374,7 +374,7 @@ public class JDialogEvaluateSegmentation extends JDialogBase implements Algorith
     /**
      * Sets arrays appropriately and calls registration algorithm, running it in it's own thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             evalSeg = new AlgorithmEvaluateSegmentation(trueImage, testImage);

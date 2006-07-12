@@ -51,7 +51,7 @@ public class JDialogRandomizeSliceOrder extends JDialogBase implements Algorithm
     public JDialogRandomizeSliceOrder() { }
 
     /**
-     * Creates new dialog.
+     * Run the algorithm.
      *
      * @param  theParentFrame  parent frame
      * @param  im              source image
@@ -63,30 +63,14 @@ public class JDialogRandomizeSliceOrder extends JDialogBase implements Algorithm
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogRandomizeSliceOrder(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     * Do nothing.
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -176,7 +160,7 @@ public class JDialogRandomizeSliceOrder extends JDialogBase implements Algorithm
     /**
      * Locks the images, then runs the inverse slice order algorithm.
      */
-    public void run() {
+    public void callAlgorithm() {
 
         try {
             System.gc();
@@ -250,7 +234,7 @@ public class JDialogRandomizeSliceOrder extends JDialogBase implements Algorithm
         parentFrame = image.getParentFrame();
 
         setSeparateThread(false);
-        run();
+        callAlgorithm();
     }
 
     /**

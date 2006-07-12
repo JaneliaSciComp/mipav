@@ -875,7 +875,7 @@ public class JDialogLocalNormalization extends JDialogBase
      * Once all the necessary variables are set, call the local normalization algorithm based on what type of image this
      * is and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(sourceImage.getImageName(), "_LocalNormalization");
 
         // stuff to do when working on 2-D images.

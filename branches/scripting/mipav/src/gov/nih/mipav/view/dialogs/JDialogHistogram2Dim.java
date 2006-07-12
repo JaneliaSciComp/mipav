@@ -760,7 +760,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
 
         try {

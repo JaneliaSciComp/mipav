@@ -239,7 +239,7 @@ public class JDialogReslice extends JDialogBase implements AlgorithmInterface, S
     /**
      * Calls the algorithm using the mode.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         System.gc();
 
         int[] destExtents = new int[3];

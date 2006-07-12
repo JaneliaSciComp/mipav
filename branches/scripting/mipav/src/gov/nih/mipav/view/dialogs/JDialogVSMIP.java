@@ -165,7 +165,7 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(srcImage.getImageName(), "_vsMIP");
 
         try {

@@ -433,7 +433,7 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
      * Once all the necessary variables are set, call the Extract Surface algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (image.getNDims() == 3) {
 

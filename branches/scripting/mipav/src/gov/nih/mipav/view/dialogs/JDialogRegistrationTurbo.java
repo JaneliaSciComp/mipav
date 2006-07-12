@@ -279,7 +279,7 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
     /**
      * Once all the variables have been set, calls the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         System.gc();
 
         try {

@@ -137,12 +137,11 @@ public class JDialogRunScriptController implements ActionListener {
         * ********************************************************
         */
         if (e.getActionCommand().equalsIgnoreCase("Add image from file")) {
-            ViewUserInterface.getReference().openImageFrame();
+            openImageWithoutFrame();
             ModelImage lastModelImage = null;
             Enumeration imageNames = ViewUserInterface.getReference().getRegisteredImageNames();
             while (imageNames.hasMoreElements()) {
-                lastModelImage = (ModelImage) (ViewUserInterface.getReference().getRegisteredImageByName(
-                        (String) imageNames.nextElement()));
+                lastModelImage = (ModelImage) (ViewUserInterface.getReference().getRegisteredImageByName((String) imageNames.nextElement()));
             }
             model.updateVector(lastModelImage);
             ((ViewJFrameImage)ViewUserInterface.getReference().getImageFrameVector().firstElement()).close();
@@ -272,12 +271,12 @@ public class JDialogRunScriptController implements ActionListener {
      * Gets the list of images selected by the user in this dialog.  Should be in the order that the images are used in the script.
      * @return  A list of images to be used in the script.
      */
-   public java.util.Vector getUserSelectedImages() {
-        Vector scriptExecuters = new java.util.Vector(0);
+   private Vector getUserSelectedImages() {
+        Vector scriptExecuters = new Vector(0);
         JTree tree = view.tree;
         TreeNode root = (TreeNode) tree.getModel().getRoot();
         for (int i = 0; i < root.getChildCount(); i++) {           
-            Vector imageNames = new java.util.Vector(0);
+            Vector imageNames = new Vector(0);
             for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
                 String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
                 imageNames.add(imageName);
@@ -285,6 +284,79 @@ public class JDialogRunScriptController implements ActionListener {
             scriptExecuters.add(imageNames);
         }//i
          return scriptExecuters;
+    }
+   
+    /**
+     * Opens a file chooser, allowing the user to select an image which should be opened.  Exactly the same 
+     * as ViewUserInterface.openImageFrame() but skips image frame creation.
+     * 
+     * @see ViewUserInterface#openImageFrame()
+     */
+    public void openImageWithoutFrame() {
+        ViewOpenFileUI openFile = new ViewOpenFileUI(true);
+
+        boolean stackFlag = ViewUserInterface.getReference().getLastStackFlag();
+
+        // set the filter type to the preferences saved filter
+        int filter = ViewImageFileFilter.TECH;
+
+        try {
+            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
+        } catch (NumberFormatException nfe) {
+
+            // an invalid value was set in preferences -- so fix it!
+            filter = ViewImageFileFilter.TECH;
+            Preferences.setProperty("FilenameFilter", Integer.toString(filter));
+        }
+
+        openFile.setFilterType(filter);
+        
+        openFile.setPutInFrame(false);
+
+        // Matt through in a _false_ to get it to compile - 12/31/2002
+        Vector openImageNames = openFile.open(stackFlag, false);
+
+        // if open failed, then imageNames will be null
+        if (openImageNames == null) {
+            return;
+        } 
+
+        boolean sizeChanged = false;
+
+        // if the SaveAllOnSave preference flag is set, then
+        // load all the files associated with this image (VOIs, LUTs, etc.)
+        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+            Enumeration e = openImageNames.elements();
+
+            while (e.hasMoreElements()) {
+
+                try {
+                    String name = (String) e.nextElement();
+                    ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
+
+                    // get frame for image
+                    ViewJFrameImage imgFrame = img.getParentFrame();
+
+                    // if the image size was changed to FLOAT, then don't
+                    // load any luts (chances are they won't work)
+                    if (!sizeChanged) {
+
+                        // load any luts
+                        imgFrame.loadLUT(true, true);
+                    }
+
+                    // load any vois
+                    imgFrame.loadAllVOIs(true);
+                } catch (IllegalArgumentException iae) {
+
+                    // MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                    Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). " +
+                                      "Somehow the Image list sent an incorrect name to " +
+                                      "the image image hashtable. " + "\n", 1);
+                    Preferences.debug("Bad argument.");
+                }
+            }
+        }
     }
 
     private String parseTreeToXML(javax.swing.JTree tree) {

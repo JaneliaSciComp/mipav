@@ -442,7 +442,7 @@ public class JDialogAutoCovariance extends JDialogBase implements AlgorithmInter
     /**
      * Calls the algorithm with the set variables.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         // Can correlate from 0 to extents - 1 in every dimension.
         // Therefore, make the source image and result image
         // extents identical.

@@ -3,6 +3,8 @@ package gov.nih.mipav.model.scripting.parameters;
 
 import gov.nih.mipav.model.scripting.ParserException;
 
+import gov.nih.mipav.view.Preferences;
+
 
 /**
  * Factory methods for the creation of various types of Parameters.
@@ -152,62 +154,196 @@ public class ParameterFactory {
             return newParameter(label, Parameter.getTypeFromString(type), value);
         }
     }
-
- 
-    public static final Parameter newParameter(String label, double value) throws ParserException {
-         return new ParameterDouble(label,  Parameter.PARAM_DOUBLE,  value);
-    }
-    public static final Parameter newParameter(String label, float value) throws ParserException {
-        return new ParameterFloat(label,  Parameter.PARAM_FLOAT,  value);
-   }
-    public static final Parameter newParameter(String label, long value) throws ParserException {
-        return new ParameterLong(label,  Parameter.PARAM_LONG,  value);
-   }
-    public static final Parameter newParameter(String label, int value) throws ParserException {
-        return new ParameterInt(label,  Parameter.PARAM_INT,  value);
-   }
-    public static final Parameter newParameter(String label, short value) throws ParserException {
-        return new ParameterShort(label,  Parameter.PARAM_SHORT,  value);
-   }
-    public static final Parameter newParameter(String label, boolean value) throws ParserException {
-        return new ParameterBoolean(label,  Parameter.PARAM_BOOLEAN,  value);
-   }
-    public static final Parameter newParameter(String label, String value) throws ParserException {
-        return new ParameterString(label,  Parameter.PARAM_STRING,  value);
-   }
     
-    public static final Parameter newParameter(String label, int[] values) throws ParserException {
-        StringBuffer valueString = new StringBuffer();
-        for (int i=0;i<values.length;i++){
-            valueString.append(values[i] + ",");
+    /**
+     * Creates a new double prescision parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new double parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, double value) throws ParserException {
+        return new ParameterDouble(label, Parameter.PARAM_DOUBLE, value);
+    }
+    
+    /**
+     * Creates a new floating point parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new float parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, float value) throws ParserException {
+        return new ParameterFloat(label, Parameter.PARAM_FLOAT, value);
+    }
+    
+    /**
+     * Creates a new long integer parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new long parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, long value) throws ParserException {
+        return new ParameterLong(label, Parameter.PARAM_LONG, value);
+    }
+    
+    /**
+     * Creates a new integer parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new integer parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, int value) throws ParserException {
+        return new ParameterInt(label, Parameter.PARAM_INT, value);
+    }
+    
+    /**
+     * Creates a new signed short parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new short parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, short value) throws ParserException {
+        return new ParameterShort(label, Parameter.PARAM_SHORT, value);
+    }
+    
+    /**
+     * Creates a new boolean parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new boolean parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, boolean value) throws ParserException {
+        return new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, value);
+    }
+    
+    /**
+     * Creates a new string parameter with a given label and value.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.
+     *
+     * @return  A new string parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, String value) throws ParserException {
+        return new ParameterString(label, Parameter.PARAM_STRING, value);
+    }
+    
+    /**
+     * Creates a new ParameterList of ParameterBooleans from an array of booleans.
+     * 
+     * @param   label   The label/name of the new parameter.
+     * @param   values  The array of booleans to put into the parameter list.
+     * 
+     * @return  A new list parameter.
+     * 
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, boolean[] values) throws ParserException {
+        ParameterList list = new ParameterList(label, Parameter.PARAM_BOOLEAN);
+        for (int i = 0; i < values.length; i++) {
+            list.addToList(ParameterFactory.newBoolean("", values[i]));
         }
         
-        return new ParameterList(label,  "list_int" , valueString.substring(0,valueString.length()-1));
-    
+        return list;
     }
     
+    /**
+     * Creates a new ParameterList of ParameterFloats from an array of floats.
+     * 
+     * @param   label   The label/name of the new parameter.
+     * @param   values  The array of floats to put into the parameter list.
+     * 
+     * @return  A new list parameter.
+     * 
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, float[] values) throws ParserException {
+        ParameterList list = new ParameterList(label, Parameter.PARAM_FLOAT);
+        for (int i = 0; i < values.length; i++) {
+            list.addToList(ParameterFactory.newFloat("", values[i]));
+        }
+        
+        return list;
+    }
     
+    /**
+     * Creates a new ParameterList of ParameterInts from an array of ints.
+     * 
+     * @param   label   The label/name of the new parameter.
+     * @param   values  The array of ints to put into the parameter list.
+     * 
+     * @return  A new list parameter.
+     * 
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
+    public static final Parameter newParameter(String label, int[] values) throws ParserException {
+        ParameterList list = new ParameterList(label, Parameter.PARAM_INT);
+        for (int i = 0; i < values.length; i++) {
+            list.addToList(ParameterFactory.newInt("", values[i]));
+        }
+        
+        return list;
+    }
     
-    
+    /**
+     * Creates a new parameter with a given label and value.  The parameter type is determined by the type of the value passed in.
+     *
+     * @param   label  The label/name of the new parameter.
+     * @param   value  The value to assign to the new parameter.  Should be the of the type object associated with a primative type, or String.
+     *
+     * @return  A new parameter.
+     *
+     * @throws  ParserException  If there is a problem creating the new parameter.
+     */
     public static final Parameter newParameter(String label, Object value) throws ParserException {
         Parameter param = null;
         
-        if (value instanceof Double)       { param = new ParameterDouble(label,  Parameter.PARAM_DOUBLE,  value.toString());        
-        }else if (value instanceof Boolean){ param = new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, value.toString());
-        }else if (value instanceof Float)  { param = new ParameterFloat(label,   Parameter.PARAM_FLOAT,   value.toString());
-        }else if (value instanceof Integer){ param = new ParameterInt(label,     Parameter.PARAM_INT,     value.toString());
-        }else if (value instanceof Long)   { param = new ParameterLong(label,    Parameter.PARAM_LONG,    value.toString());
-        }else if (value instanceof String) { param = new ParameterString(label,  Parameter.PARAM_STRING,  value.toString());
-        }else if (value instanceof Short)  { param = new ParameterShort(label,   Parameter.PARAM_SHORT,   value.toString());
+        if (value instanceof Double) {
+            param = new ParameterDouble(label, Parameter.PARAM_DOUBLE, value.toString());        
+        } else if (value instanceof Boolean) {
+            param = new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, value.toString());
+        } else if (value instanceof Float) {
+            param = new ParameterFloat(label, Parameter.PARAM_FLOAT, value.toString());
+        } else if (value instanceof Integer) {
+            param = new ParameterInt(label, Parameter.PARAM_INT, value.toString());
+        } else if (value instanceof Long) {
+            param = new ParameterLong(label, Parameter.PARAM_LONG, value.toString());
+        } else if (value instanceof String) {
+            param = new ParameterString(label, Parameter.PARAM_STRING, value.toString());
+        } else if (value instanceof Short)  {
+            param = new ParameterShort(label, Parameter.PARAM_SHORT, value.toString());
+        } else {
+            throw new ParserException("Unsupported value type passed into parameter creation.");
         }
-
         
-        System.out.println("param: " + param);
+        Preferences.debug("param factory:\tCreated:\t" + param + "\n", Preferences.DEBUG_SCRIPTING);
         return param;
     }
-
-    
-    
     
     /**
      * Creates a new parameter with a given label and value.  The type of parameter returned is determined by the type given.  List parameters are not supported by this method.

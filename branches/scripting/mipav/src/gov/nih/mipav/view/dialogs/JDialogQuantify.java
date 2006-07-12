@@ -220,7 +220,7 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
     /**
      * Once all the necessary variables are set, call the quantify mask algorithm using the previously set file name.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

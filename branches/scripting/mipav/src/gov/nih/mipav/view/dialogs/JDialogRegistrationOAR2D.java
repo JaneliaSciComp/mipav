@@ -1421,7 +1421,7 @@ public class JDialogRegistrationOAR2D extends JDialogBase implements AlgorithmIn
     /**
      * Calls the algorithm with the set-up parameters.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (voisOnly) {
             float[] refRes = new float[] {

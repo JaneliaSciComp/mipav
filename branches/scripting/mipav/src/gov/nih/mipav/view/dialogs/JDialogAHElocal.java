@@ -1005,7 +1005,7 @@ public class JDialogAHElocal extends JDialogBase implements AlgorithmInterface, 
      *
      * @see  AlgorithmAHElocal
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         String name = makeImageName(image.getImageName(), "_LocalAHE");
         int[] destExtents = new int[image.getNDims()];

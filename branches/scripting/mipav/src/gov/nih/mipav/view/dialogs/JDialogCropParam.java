@@ -240,7 +240,7 @@ public class JDialogCropParam extends JDialogBase implements AlgorithmInterface,
     /**
      * DOCUMENT ME!
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (displayLoc == NEW) {
 

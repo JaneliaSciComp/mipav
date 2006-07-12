@@ -141,7 +141,7 @@ public class PlugInDialogRemoveBlinks
     /**
      *    Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 

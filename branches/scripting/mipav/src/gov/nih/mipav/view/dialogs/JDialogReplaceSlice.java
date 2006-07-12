@@ -124,7 +124,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         sliceImage = userInterface.getRegisteredImageByName((String) sliceBox.getSelectedItem());
 
