@@ -71,7 +71,7 @@ public abstract class ActionImageProcessorBase extends ActionBase {
      * @throws  ParserException  If there is a problem encountered while creating the new parameter.
      */
     protected ParameterImage createInputImageParameter() throws ParserException {
-        boolean isExternalImage = isImageStoredInRecorder(recordingInputImage);
+        boolean isExternalImage = !isImageStoredInRecorder(recordingInputImage);
         
         String var = storeImageInRecorder(recordingInputImage);
         

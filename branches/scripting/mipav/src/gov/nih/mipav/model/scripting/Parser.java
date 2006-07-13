@@ -136,8 +136,17 @@ public class Parser {
 
                 ScriptableActionInterface scriptAction = ScriptableActionLoader.getScriptableAction(parsedLine.getAction());
                 
-                Preferences.debug("parser:\tRunning action:\t" + scriptAction.getClass().getCanonicalName() + "\n", Preferences.DEBUG_SCRIPTING);
-                scriptAction.scriptRun(parsedLine.getParameterTable());
+                Preferences.debug("parser:\tRunning action:\t" + scriptAction.getClass().getName() + "\n", Preferences.DEBUG_SCRIPTING);
+                
+                try {
+                    scriptAction.scriptRun(parsedLine.getParameterTable());
+                } catch (Exception e) {
+                    String message = "\n\n" + e.getClass().getName() + "\n";
+                    for (int i = 0; i < e.getStackTrace().length; i++) {
+                        message += "\t" + e.getStackTrace()[i] + "\n";
+                    }
+                    throw new ParserException(scriptFile, parser.getCurrentLineNumber(), message);
+                }
             }
         }
     }
@@ -151,22 +160,6 @@ public class Parser {
      */
     private static String getVOIParentImage(ParsedActionLine parsedLine) {
         return parsedLine.getParameterTable().get(AlgorithmParameters.getInputImageLabel(1)).getValueString();
-    }
-
-    /**
-     * Returns whether a action string would result in the opening of a new image.
-     *
-     * @param   action  The action string to check.
-     *
-     * @return  Whether the given action will open a new image.
-     */
-    private static boolean isOpenImageAction(String action) {
-
-        if (action.equalsIgnoreCase("OpenImage")) {
-            return true;
-        }
-
-        return false;
     }
 
     /**
