@@ -336,21 +336,34 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
      * @param  destImg           list of image models where result image is to stored
      * @param  srcImg            list of source image models
      * @param  _nClass           number of classes into which the image will be segmented
-     * @param  _pyramidLevels    number of levels
-     * @param  _jacobiIters1     DOCUMENT ME!
-     * @param  _jacobiIters2     DOCUMENT ME!
-     * @param  _q                DOCUMENT ME!
-     * @param  _smooth1          DOCUMENT ME!
-     * @param  _smooth2          DOCUMENT ME!
-     * @param  _outputGainField  DOCUMENT ME!
-     * @param  _segmentation     DOCUMENT ME!
-     * @param  _cropBackground   DOCUMENT ME!
-     * @param  _maxIter          DOCUMENT ME!
-     * @param  _tolerance        DOCUMENT ME!
-     * @param  _doRed            DOCUMENT ME!
-     * @param  _doGreen          DOCUMENT ME!
-     * @param  _doBlue           DOCUMENT ME!
-     * @param  _wholeImage       DOCUMENT ME!
+     * @param  _pyramidLevels    Not used in the present version of the code
+     * @param  _jacobiIters1     Not used in the present version of the code
+     * @param  _jacobiIters2     Not used in the present version of the code
+     * @param  _q                a weighing exponent on each membership value and determines the amount of
+     *                           "fuzziness" of the resulting segmentation. q is required to be greater
+     *                           than 1 and is typically set to 2.
+     * @param  _smooth1          Not used in the present version of the code
+     * @param  _smooth2          Not used in the present version of the code
+     * @param  _outputGainField  Not used in the present version of the code
+     * @param  _segmentation     possible values are hard only, fuzzy only, or both hard and fuzzy
+     * @param  _cropBackground   unchecked by default. This function finds the smallest bounding box outside of
+     *                           which all image pixel values are below the image threshold. Values inside the
+     *                           bounding box are copied to a smaller array to save space and calculations are
+     *                           performed with this reduced array.  However, these pixels outside the box are
+     *                           restored for the production of the hard and fuzzy segmented images. In the hard
+     *                           segmentation case values outside the box all have a value of 0. In the fuzzy
+     *                           segmentation case values outside the box all have a value equal to the image minimum.
+     * @param  _max_iter         Maximum allowed iterations of main program loop
+     * @param  _tolerance        The iteration continues until either the user specified maximum number of
+     *                           iterations has occcured or until convergence has been detected. Convergence occurs
+     *                           when all membership functions over all pixel locations j change byless than the
+     *                           tolerance value between 2 iterations.
+     * @param  _doRed            If true, do red component of color image
+     * @param  _doGreen          If true, do green component of color image
+     * @param  _doBlue           If true, do blue component of color image
+     * @param  _wholeImage       If true apply algorithm to the whole image - constrained to be true
+     *                           if background cropping is selected.  If false, only apply to
+     *                           VOI regions.
      */
     public AlgorithmMSpectralFuzzyCMeans(ModelImage[] destImg, ModelImage[] srcImg, int _nClass, int _pyramidLevels,
                                          int _jacobiIters1, int _jacobiIters2, float _q, float _smooth1, float _smooth2,
