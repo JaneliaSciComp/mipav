@@ -17,20 +17,44 @@ import java.text.*;
   The contrast to noise ratio is simply the signal to noise ratio for signal VOI 1 minus the signal to 
   noise ratio for signal VOI 2.  This program requires a single MRI magnitude image.  The program 
   mathematics assumes a Rician probability distribution characteristic of a MRI magnitude image.
-  The noise standard deviation equals the 
+  The program follows the general 3 step approach outlined in the Constantinides reference:
+  1.) The noise standard deviation equals the 
   square root((sum over i for background VOI of pixel(i) * pixel(i))/
               (2 * number of background pixels * number of NMR receivers))
-  For each signal VOI the mean is calculated.
-  The the mean is divided by the noise standard deviation
+  2.) For each signal VOI the mean is calculated.
+  3.) The the mean is divided by the noise standard deviation
   The signal to noise ratio is calculated from the VOI mean to noise ratio using an equation
   (mean/standard deviation) = 1 * 3 * 5 * ... (2n - 1) * (1/((2**(n-1))*((n - 1)!))) *
                               sqrt(PI/2) * 1F1(-1/2, n, -SNR*SNR/2)
   where n = number of NMR receivers in the phase array
-  1F1 is the confluent hypergeometric function
+  1F1 is the confluent hypergeometric function of the first kind
   For the case of 1 NMR receiver the confluent hypergometric function can be replaced by modified
   Bessel functions as follows:
   (mean/standard deviation) = sqrt(PI/2) * exp(-SNR*SNR/4)((1 + (SNR*SNR/2))*I0(SNR*SNR/4) +
                                                             (SNR*SNR/2)*I1(SNR*SNR/4))
+  However, since this Bessel function equivalence can only be used in the case of 1 receiver,
+  a port of the ACM Algorithm 707 conhyp routine is used to find the confluent hypergeometric 
+  function for values of SNR * SNR/2 <= 3000.  The port of the conhyp routine failed for values
+  of SNR*SNR/2 > 3055, so for SNR*SNR/2 > 3000 the asymptotic limiting formula of the 
+  confluent hypergeometric function used in Appendix C of the Sato reference was used.
+  
+  Testing the validity of this program is easy enough.  Each receiver in the phase array has
+  2 standard deviations - one associated with the real part of the complex image and one
+  associated with the imaginary part of the complex image. 
+  signal with noise = square root((signal without noise)**2 + sum from k = 1 to n of
+                                   (sigmak real)**2 + (simgak imaginary)**2)
+  So to simulate noisy data at each pixel we simply use 2*n Gaussian distributions in
+  the above fashion.
+  Running testAlgorithm with 1000 counts of a 100.0 signal and 1000 counts of a 
+  varying background for the 1 receiver case gave:
+  background               Calculated SNR                 Ideal SNR
+    0.5                        198.0                         200.0
+    1.0                        101.0                         100.0
+    2.0                        48.9                           50.0
+    5.0                        19.7                           20.0
+   20.0                         5.10                           5.00
+   50.0                         2.28                           2.00  
+  100.0                         1.09                           1.00                
                                                             
   For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
   Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
@@ -234,6 +258,12 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double snr2;
         double cnr;
         boolean test = false;
+        boolean validityTest = false;
+        
+        if (validityTest) {
+            testAlgorithm();
+            return;
+        }
         
         if (test) {
             ConfluentHypergeometric cf;
@@ -379,6 +409,56 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         setCompleted(true);
         return;
     }
+    
+    private void testAlgorithm() {
+        double signal = 100.0;
+        double stdDev = 0.5;
+        int backgroundCount = 1000;
+        int signalCount = 1000;
+        int numReceivers = 1;
+        double backgroundVariance = 0.0;
+        double backgroundStdDev;
+        int i;
+        int n;
+        double noise;
+        RandomNumberGen randomGen;
+        double pixelSquare;
+        double mean = 0.0;
+        double meanDivStdDev;
+        double snr;
+        
+        nf = new DecimalFormat("0.00E0");
+        
+        randomGen = new RandomNumberGen();
+        
+        for (i = 0; i < backgroundCount; i++) {
+            for (n = 0; n < 2*numReceivers; n++) {
+                 noise = stdDev * randomGen.genStandardGaussian();
+                 backgroundVariance += noise * noise;
+            }
+        }
+        
+        backgroundVariance = backgroundVariance/(2.0f * backgroundCount * numReceivers);
+        backgroundStdDev = Math.sqrt(backgroundVariance);
+        Preferences.debug("Noise standard deviation = " + nf.format(backgroundStdDev) + "\n");
+        
+        for (i = 0; i < signalCount; i++) {
+           pixelSquare = signal * signal;
+           for (n = 0; n < 2*numReceivers; n++) {
+               noise = stdDev * randomGen.genStandardGaussian();
+               pixelSquare += noise * noise;
+           }
+           mean += Math.sqrt(pixelSquare);
+        }
+        
+        mean = mean/signalCount;
+        Preferences.debug("Mean = " + nf.format(mean) + "\n");
+        meanDivStdDev = mean/backgroundStdDev;
+        
+        snr = funcC(meanDivStdDev, true);
+        Preferences.debug("SNR = " + nf.format(snr) + "\n");
+        return;
+    } // testAlgorithm
     
     private double funcC(double meanDivStdDev, boolean signal) {
         /** For 1F1(-1/2, 1, x) for the ACM code called the result is only
