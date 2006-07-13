@@ -267,15 +267,15 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
      *
      * @param  srcImg            source image model
      * @param  _nClass           number of classes into which the image will be segmented
-     * @param  _pyramidLevels    number of levels
-     * @param  _jacobiIters1     DOCUMENT ME!
-     * @param  _jacobiIters2     DOCUMENT ME!
+     * @param  _pyramidLevels    Not used in the present version of the code
+     * @param  _jacobiIters1     Not used in the present version of the code
+     * @param  _jacobiIters2     Not used in the present version of the code
      * @param  _q                a weighing exponent on each membership value and determines the amount of
      *                           "fuzziness" of the resulting segmentation. q is required to be greater
      *                           than 1 and is typically set to 2.
-     * @param  _smooth1          DOCUMENT ME!
-     * @param  _smooth2          DOCUMENT ME!
-     * @param  _outputGainField  Always false; image of output gain field not produced any more
+     * @param  _smooth1          Not used in the present version of the code
+     * @param  _smooth2          Not used in the present version of the code
+     * @param  _outputGainField  Not used in the present version of the code
      * @param  _segmentation     possible values are hard only, fuzzy only, or both hard and fuzzy
      * @param  _cropBackground   unchecked by default. This function finds the smallest bounding box outside of
      *                           which all image pixel values are below the image threshold. Values inside the
@@ -337,15 +337,15 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
      * @param  destImg           list of image models where result image is to stored
      * @param  srcImg            source image model
      * @param  _nClass           number of classes into which the image will be segmented
-     * @param  _pyramidLevels    number of levels
-     * @param  _jacobiIters1     DOCUMENT ME!
-     * @param  _jacobiIters2     DOCUMENT ME!
+     * @param  _pyramidLevels    Not used in the present version of the code
+     * @param  _jacobiIters1     Not used in the present version of the code
+     * @param  _jacobiIters2     Not used in the present version of the code
      * @param  _q                a weighing exponent on each membership value and determines the amount of
      *                           "fuzziness" of the resulting segmentation. q is required to be greater
      *                           than 1 and is typically set to 2.
-     * @param  _smooth1          DOCUMENT ME!
-     * @param  _smooth2          DOCUMENT ME!
-     * @param  _outputGainField  Always false; image of output gain field not produced any more
+     * @param  _smooth1          Not used in the present version of the code
+     * @param  _smooth2          Not used in the present version of the code
+     * @param  _outputGainField  Not used in the present version of the code
      * @param  _segmentation     possible values are hard only, fuzzy only, or both hard and fuzzy
      * @param  _cropBackground   unchecked by default. This function finds the smallest bounding box outside of
      *                           which all image pixel values are below the image threshold. Values inside the
