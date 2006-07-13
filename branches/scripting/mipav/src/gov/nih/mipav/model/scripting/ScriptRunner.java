@@ -88,7 +88,7 @@ public class ScriptRunner {
         try {
             String[] imageVarsNeeded = Parser.getImageVarsUsedInScript(scriptFile);
             if (imageVarsNeeded.length != imageNameList.size()) {
-                MipavUtil.displayError("Not enough images provided while attempting to run the script.\n Found: " +
+                MipavUtil.displayError("Incorrect number of images specified to use to run the script.\n Found: " +
                         imageNameList.size() + " Required: " + imageVarsNeeded.length);
                 Preferences.debug("script runner:\tAborted script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
                 setRunning(false);
@@ -101,6 +101,12 @@ public class ScriptRunner {
         } catch (ParserException pe) {
             MipavUtil.displayError("Error executing script:\n" + pe);
             Preferences.debug("script runner:\tAborted script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
+            
+            // if this exception was caused by another exception, print it to stderr
+            if (pe.getCause() != null) {
+                pe.printStackTrace();
+            }
+            
             setRunning(false);
             return false;
         }

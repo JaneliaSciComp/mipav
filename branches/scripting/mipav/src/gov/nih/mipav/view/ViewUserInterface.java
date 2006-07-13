@@ -469,7 +469,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     pipeline = null;
                 }
             }
-        } else if (command.equals("RecordScript")) {
+        } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
             if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.STOPPED) {
                 new JDialogScriptRecorder();
             } else {
@@ -484,9 +484,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 chooser.setCurrentDirectory(new File(Preferences.getScriptsDirectory()));
                 chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SCRIPT));
                 chooser.setDialogTitle("Choose a script file to execute");
+                
                 if (chooser.showOpenDialog(getMainFrame()) == JFileChooser.APPROVE_OPTION) {
                     Preferences.setScriptsDirectory(String.valueOf(chooser.getCurrentDirectory()));
-                    new JDialogRunScriptController(chooser.getSelectedFile().getAbsolutePath());
+                    
+                    String scriptFile = chooser.getSelectedFile().getAbsolutePath();
+                    new JDialogRunScriptController(scriptFile);
                 }
             }
         } else if (command.equals("CreateBlankImage")) {
@@ -1527,7 +1530,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * This method opens an image and puts it into a frame.
      */
     public void openImageFrame() {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(this, true);
+        ViewOpenFileUI openFile = new ViewOpenFileUI(true);
 
         boolean stackFlag = getLastStackFlag();
 
@@ -1618,7 +1621,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  multiFile  If true, the image is composed of image slices each in their own file.
      */
     public void openImageFrame(String imageFile, boolean multiFile) {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
+        ViewOpenFileUI openFile = new ViewOpenFileUI(false);
         String imageName;
 
         imageName = openFile.open(imageFile, multiFile, null);
@@ -1693,7 +1696,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             return;
         }
 
-        ViewOpenFileUI fileUI = new ViewOpenFileUI(ViewUserInterface.getReference(), false);
+        ViewOpenFileUI fileUI = new ViewOpenFileUI(false);
 
         String name = fileUI.open(temp, multiFile, null);
 

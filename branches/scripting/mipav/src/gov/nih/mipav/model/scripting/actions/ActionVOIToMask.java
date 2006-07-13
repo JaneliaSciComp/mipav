@@ -85,12 +85,21 @@ public class ActionVOIToMask extends ActionImageProcessorBase {
             
             if (maskType.equals(MASK_BINARY)) {
                 maskImage = inputImage.generateBinaryImage();
+                if (maskImage == null) {
+                    return;
+                }
                 maskImage.setImageName(inputImage.getImageName() + "_binary_mask");
             } else if (maskType.equals(MASK_SHORT)) {
                 maskImage = inputImage.generateShortImage(1);
+                if (maskImage == null) {
+                    return;
+                }
                 maskImage.setImageName(inputImage.getImageName() + "_short_mask");
             } else if (maskType.equals(MASK_UBYTE)) {
                 maskImage = inputImage.generateUnsignedByteImage(1);
+                if (maskImage == null) {
+                    return;
+                }
                 maskImage.setImageName(inputImage.getImageName() + "_ubyte_mask");
             } else {
                 MipavUtil.displayError("Unrecognized mask data type: " + maskType);

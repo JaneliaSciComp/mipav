@@ -145,7 +145,9 @@ public class Parser {
                     for (int i = 0; i < e.getStackTrace().length; i++) {
                         message += "\t" + e.getStackTrace()[i] + "\n";
                     }
-                    throw new ParserException(scriptFile, parser.getCurrentLineNumber(), message);
+                    ParserException exception = new ParserException(scriptFile, parser.getCurrentLineNumber(), message);
+                    exception.initCause(e);
+                    throw exception;
                 }
             }
         }

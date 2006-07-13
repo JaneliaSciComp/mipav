@@ -968,7 +968,7 @@ public class ViewToolBarBuilder implements ItemListener {
             if (state == ItemEvent.SELECTED) {
                 currentSelectedScript = (String) currentScriptComboBox.getSelectedItem();
                 ((ViewJFrameBase) UI).getUserInterface().setLastScript(currentSelectedScript);
-                Preferences.debug("Current selected script is: " + currentSelectedScript + "\n");
+                Preferences.debug("toolbar:\tCurrent selected script is: " + currentSelectedScript + "\n", Preferences.DEBUG_SCRIPTING);
             }
         } else if (source instanceof AbstractButton) {
             ((AbstractButton) source).setBorderPainted(state == ItemEvent.SELECTED);
@@ -982,10 +982,14 @@ public class ViewToolBarBuilder implements ItemListener {
         try {
             String scriptFile = getSelectedScriptFileName();
             String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
-            
-            if (imageVars.length == 1 && Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0) {
-                // TODO: add the current active image as $image1
-                Parser.runScript(scriptFile);
+
+            if (imageVars.length == 0) {
+                ScriptRunner.getReference().runScript(scriptFile, new Vector());
+            } else if (imageVars.length == 1 && Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0) {
+                Vector imageVector = new Vector();
+                String imageName = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage().getImageName();
+                imageVector.addElement(imageName);
+                ScriptRunner.getReference().runScript(scriptFile, imageVector);
             } else {
                 new JDialogRunScriptController(scriptFile);
             }
@@ -1189,14 +1193,14 @@ public class ViewToolBarBuilder implements ItemListener {
         try {
             filenames = filter.listFiles(dirFile);
         } catch (Exception e) {
-            Preferences.debug("Unable to access script files in " + dirName);
+            Preferences.debug("toolbar:\tUnable to access script files in " + dirName + "\n", Preferences.DEBUG_SCRIPTING);
             currentScriptComboBox.setEnabled(false);
 
             return;
         }
 
         if ((filenames == null) || (filenames.length == 0)) {
-            Preferences.debug("Found no script files in " + dirName);
+            Preferences.debug("toolbar:\tFound no script files in " + dirName + "\n", Preferences.DEBUG_SCRIPTING);
             currentScriptComboBox.setEnabled(false);
 
             return;
