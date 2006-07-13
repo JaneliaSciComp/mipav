@@ -116,6 +116,7 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
                 scriptRecorder.pauseRecording();
             } else {
                 scriptRecorder.startRecording();
+                changeScriptEditingAbility(false);
             }
         } else if (command.equals("Save")) {
             try {
