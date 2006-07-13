@@ -148,6 +148,13 @@ public class RandomNumberGen extends Random {
 
         return ((rNum * (endRange - stRange)) + stRange);
     }
+    
+    public final double genStandardGaussian() {
+        double rNum;
+        
+        rNum = nextGaussian();
+        return rNum;
+    }
 
     /**
      * Generates a uniform random number greater or equal to the stRange and less than or equal to the endRange.
