@@ -22,10 +22,12 @@ public class ActionClone extends ActionImageProcessorBase {
     
     /**
      * Constructor used to record the script action line.
-     * @param input  The image which was processed.
+     * 
+     * @param  input   The image which was processed.
+     * @param  result  The result image generated.
      */
-    public ActionClone(ModelImage input) {
-        super(input);
+    public ActionClone(ModelImage input, ModelImage result) {
+        super(input, result);
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -37,6 +39,7 @@ public class ActionClone extends ActionImageProcessorBase {
         ParameterTable parameters = new ParameterTable();
         try {
             parameters.put(createInputImageParameter());
+            storeImageInRecorder(recordingResultImage);
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;

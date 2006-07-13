@@ -1058,7 +1058,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), ActionVOIToMask.MASK_BINARY));
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
             ModelImage shortImage = null;
 
@@ -1086,7 +1086,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), ActionVOIToMask.MASK_SHORT));
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
             ModelImage uByteImage = null;
 
@@ -1114,7 +1114,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), ActionVOIToMask.MASK_UBYTE));
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
         } else if (command.equals("MaskToVOI")) {
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
             //VOIExtractionAlgo.setActiveImage(false);
@@ -1124,8 +1124,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             
             updateImages();
         } else if (command.equals("MaskToPaint")) {
+            // TODO: only runs with an imageB mask, not if imageA is a mask itself.
             handleMaskToPaint(true);
 
+            // TODO: the script action is recorded regardless of the conversion success
             ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
         } else if (command.equals("PaintToVOI")) {
 
@@ -1162,9 +1164,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             updateImages();
         } else if (command.equals("PaintToShortMask")) {
-            String maskImageName = componentImage.commitPaintToMask();
+            ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(componentImage.commitPaintToMask());
 
-            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), ActionPaintToMask.MASK_SHORT));
+            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
         } else if (command.equals("Open VOI")) {
             boolean success = openVOI(false);
 
@@ -1335,7 +1337,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                     getActiveImage().getLogMagDisplay());
                 System.gc();
 
-                ScriptRecorder.getReference().addLine(new ActionClone(getActiveImage()));
+                ScriptRecorder.getReference().addLine(new ActionClone(getActiveImage(), clonedImage));
             } catch (OutOfMemoryError error) {
 
                 if (clonedImage != null) {

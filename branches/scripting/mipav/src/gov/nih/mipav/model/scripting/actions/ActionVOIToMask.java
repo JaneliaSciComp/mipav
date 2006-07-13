@@ -48,11 +48,12 @@ public class ActionVOIToMask extends ActionImageProcessorBase {
     /**
      * Constructor used to record the VOIToMask script action line.
      * 
-     * @param  inputImage  The image whose VOIs were extracted to a mask image.
-     * @param  maskType    The type of the extracted mask image.
+     * @param  inputImage   The image whose VOIs were extracted to a mask image.
+     * @param  resultImage  The result image generated.
+     * @param  maskType     The type of the extracted mask image.
      */
-    public ActionVOIToMask(ModelImage inputImage, String maskType) {
-        super(inputImage);
+    public ActionVOIToMask(ModelImage inputImage, ModelImage resultImage, String maskType) {
+        super(inputImage, resultImage);
         recordingMaskType = maskType;
     }
     
@@ -66,6 +67,7 @@ public class ActionVOIToMask extends ActionImageProcessorBase {
         try {
             parameters.put(createInputImageParameter());
             parameters.put(ParameterFactory.newString(MASK_DATA_TYPE, recordingMaskType));
+            storeImageInRecorder(recordingResultImage);
         } catch (ParserException pe) {
             MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
