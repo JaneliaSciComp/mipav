@@ -130,7 +130,7 @@ public class ScriptRunner {
         for (int i = 0; i < imageNameList.size(); i++) {
             imageTable.put(imageVars[i], imageNameList.elementAt(i));
             
-            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVars[i] + "\t->\t" + imageNameList.elementAt(i), Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("script runner:\tAdded image to image table:\t" + imageVars[i] + "\t->\t" + imageNameList.elementAt(i) + "\n", Preferences.DEBUG_SCRIPTING);
         }
     }
     

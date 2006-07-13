@@ -155,9 +155,15 @@ public class ImageVariableTable extends Hashtable {
 
         if (!super.containsValue(imageName)) {
             imageVar = imageVariablePrefix + currentImageNumber;
+            // make sure we didn't use the currentImageNumber for an externally-specified image
+            while (isImageVariableSet(imageVar)) {
+                currentImageNumber++;
+                imageVar = imageVariablePrefix + currentImageNumber;
+            }
+            
             super.put(imageVar, imageName);
             currentImageNumber++;
-            Preferences.debug("imgTable:\tStored new image:\t" + imageName + "\t(" + imageName + ")" + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("imgTable:\tStored new image:\t" + imageName + "\t(" + imageVar + ")" + "\n", Preferences.DEBUG_SCRIPTING);
         } else {
             imageVar = getImageVariable(imageName);
             Preferences.debug("imgTable:\tTrying to store image already in table:\t" + imageName + "\t(" + imageVar + ")" + "\n", Preferences.DEBUG_SCRIPTING);

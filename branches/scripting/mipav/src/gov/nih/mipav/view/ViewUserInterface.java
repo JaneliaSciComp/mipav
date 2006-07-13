@@ -83,23 +83,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     
     private JXCEDEExplorer xcedeExplorer;
 
-    /** The directories where the image files set from the command line are located. */
-    Vector imageFileDirs = new Vector();
-
     /**
      * A list of image file names and multifile tags, set by the command line, to be opened (and processed by a script,
      * if one is used).
      */
-    Vector imageFileNames = new Vector();
+    protected Vector imageFileNames = new Vector();
 
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
-    boolean isAppFrameVisible = true;
+    private boolean isAppFrameVisible = true;
 
     /** A list of script files to be run, set by the command line. */
-    Vector scriptFileNames = new Vector();
+    private Vector scriptFileNames = new Vector();
 
     /** A list of voi files, set by the command line, to be used in a script. */
-    Vector voiFileNames = new Vector();
+    private Vector voiFileNames = new Vector();
 
     /** Vector to hold the clipped Polygons arrays (is this actually used??). */
     private Vector clippedPolygons = new Vector();
@@ -1937,23 +1934,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
         Vector imageNames = new Vector();
         for (int i = 0; i < imageFileNames.size(); i++) {
-            String fileName = ((OpenFileInfo) imageFileNames.elementAt(i)).getPath();
-            boolean isMulti = ((OpenFileInfo) imageFileNames.elementAt(i)).isMulti();
-            
-            int index = fileName.lastIndexOf(File.separatorChar);
+            OpenFileInfo file = (OpenFileInfo) imageFileNames.elementAt(i);
+            String fileName = file.getFullFileName();
+            boolean isMulti = file.isMulti();
 
-            if (index < 0) {
-                fileName = (String) imageFileDirs.elementAt(i) + File.separator + fileName;
-            }
-
-            Preferences.debug("FILE NAME: " + fileName, Preferences.DEBUG_MINOR);
+            Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
             fileOpener.open(fileName, isMulti, null);
 
             imageNames.addElement(fileOpener.getImage().getImageName());
 
             this.setDefaultDirectory(new File(fileName).getParent());
 
-            Preferences.debug("Default dir: " + this.getDefaultDirectory(), Preferences.DEBUG_MINOR);
+            Preferences.debug("Default dir: " + this.getDefaultDirectory() + "\n", Preferences.DEBUG_MINOR);
             
             try {
                 VOI[] voi;
@@ -1964,7 +1956,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                     for (int x = 0; x < ((Vector) (voiFileNames.elementAt(i))).size(); x++) {
                         String fileNameIn = (String) (((Vector) (voiFileNames.elementAt(i))).elementAt(x));
-                        index = fileNameIn.lastIndexOf(File.separatorChar);
+                        int index = fileNameIn.lastIndexOf(File.separatorChar);
 
                         String directory = fileNameIn.substring(0, index + 1);
                         String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
@@ -1977,7 +1969,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                 }
             } catch (Exception e) {
-                MipavUtil.displayError("Command line executing VOI error, check file names");
+                MipavUtil.displayError("Command line executing VOI error, check file names.");
 
                 return;
             }
@@ -1990,15 +1982,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * DOCUMENT ME!
      */
     public void saveSRBFile() {
-
-        /**
-         * Gets the active ViewJFrameImage instance.
-         */
+        // Gets the active ViewJFrameImage instance.
         ViewJFrameImage currentImageFrame = getActiveImageFrame();
 
-        /**
-         * Gets the current image file opened inside the active ViewJFrameImage.
-         */
+        // Gets the current image file opened inside the active ViewJFrameImage.
         if (currentImageFrame == null) {
             return;
         }
@@ -3114,14 +3101,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         // imgName = this.getDefaultDirectory() + File.separatorChar + imgName;
                         // System.err.println(" ra 1= " + this.getDefaultDirectory());
                         setDefaultDirectory(System.getProperty("user.dir"));
-                        imageFileDirs.add(this.getDefaultDirectory());
-                        imageFileNames.add(new OpenFileInfo(imgName, isMulti));
+                        imageFileNames.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
                     } else {
 
                         // System.err.println(" ra 2 = " + imgName.substring( 0, index + 1 ));
-                        imageFileDirs.add(imgName.substring(0, index + 1)); // ends with File.separator
-                        setDefaultDirectory(imgName.substring(0, index + 1));
-                        imageFileNames.add(new OpenFileInfo(imgName.substring(index + 1, imgName.length()), isMulti));
+                        
+                        String dir = imgName.substring(0, index + 1);
+                        String name = imgName.substring(index + 1);
+                        setDefaultDirectory(dir);
+                        imageFileNames.add(new OpenFileInfo(dir, name, isMulti));
                     }
                     // imageFileNames.add(args[++i]);
 
@@ -3255,40 +3243,66 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private class OpenFileInfo {
 
-        /** DOCUMENT ME! */
+        /** Whether the file is opened as a multifile image. */
         private boolean isMulti = false;
 
-        /** DOCUMENT ME! */
-        private String path;
+        /** Path to the file (no file name). */
+        private String directory;
+        
+        /** The filename (no path). */
+        private String fileName;
 
         /**
          * Creates a new OpenFileInfo object.
          *
-         * @param  path     DOCUMENT ME!
-         * @param  isMulti  DOCUMENT ME!
+         * @param  dir      The directory the file is located in.
+         * @param  name     The file name (no path).
+         * @param  isMulti  Whether the file is opened as a multifile image.
          */
-        public OpenFileInfo(String path, boolean isMulti) {
-            this.path = path;
+        public OpenFileInfo(String dir, String name, boolean isMulti) {
+            directory = dir;
+            fileName = name;
             this.isMulti = isMulti;
         }
 
         /**
-         * DOCUMENT ME!
+         * Get the directory containg the file.
          *
-         * @return  DOCUMENT ME!
+         * @return  The directory containg the file
          */
-        public String getPath() {
-            return path;
+        public String getDirectory() {
+            return directory;
+        }
+        
+        /**
+         * Get the full file name (path and file name).
+         * 
+         * @return  The full file name (path and file name).
+         */
+        public String getFullFileName() {
+            if (directory.endsWith(File.separator)) {
+                return directory + fileName;
+            } else {
+                return directory + File.separator + fileName;
+            }
+        }
+        
+        /**
+         * Get the file name (no path).
+         * 
+         * @return  The file name (no path).
+         */
+        public String getFileName() {
+            return fileName;
         }
 
         /**
-         * DOCUMENT ME!
+         * Return whether the file should be opened as a multifile image.
          *
-         * @return  DOCUMENT ME!
+         * @return  Whether the file should be opened as a multifile image.
          */
         public boolean isMulti() {
             return isMulti;
         }
-
     }
 }
