@@ -133,12 +133,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** used when graphing a VOI. */
     //protected float[] graphImgBuff;
 
-
-
-
-    /** true if image is known to be in patient orientation and is displayed in ViewJFrameTriImage. */
-    protected boolean hasOrientation = false;
-
     /** in setPaintBuffers and setPaintBuffers zero out buffer values below threshold. */
     protected boolean hasThreshold1 = false;
 
@@ -251,9 +245,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected boolean onTop = false;
 
     /** DOCUMENT ME! */
-    protected int[] orient; // Gives the orientation of each of 3 axes
-
-    /** DOCUMENT ME! */
     protected int orientation = NA;
 
     /** DOCUMENT ME! */
@@ -264,8 +255,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected int lastMouseY = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
-
-
 
     /** DOCUMENT ME! */
     protected BitSet paintBitmap;
@@ -290,9 +279,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * shortcuts (by pressing 1, 2, 3, 4).
      */
     protected int previousPaintBrush = -1;
-
-    /** DOCUMENT ME! */
-    protected float[] res = new float[2];
 
     /** DOCUMENT ME! */
     protected ModelRGB RGBTA;
@@ -342,12 +328,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     protected int slice = -99;
 
-
-
     /** String used to override the slice number in the lower left corner. */
     protected String stringOverride = null;
-
-
 
     /** DOCUMENT ME! */
     protected float threshold1;
@@ -369,8 +351,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected Color toppedColor = ACTIVE_IMAGE_COLOR;
-
-
 
     /** DOCUMENT ME! */
     protected boolean useBlueThreshold = false;
@@ -444,11 +424,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     private int windowedRegionSize = 100;
 
-
     /**
      * Handles all aspects of VOIs, including mouse responses, movements, VOI graphing etc
      */
     protected VOIHandler voiHandler = null;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -467,15 +447,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  extents          initial display dimensions of the image
      * @param  logMagDisplay    display log magnitude of image
      * @param  _orientation     orientation of the image
-     * @param  _hasOrientation  true if the image is known to be in axial orientation and is displayed in
-     *                          ViewJFrameTriImage
-     * @param  _orient          a 3 integer array containing the orientation of each axis
      */
     public ViewJComponentEditImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
                                    ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer,
-                                   float zoom, int[] extents, boolean logMagDisplay, int _orientation,
-                                   boolean _hasOrientation, int[] _orient) {
-        super(extents, _orientation, _hasOrientation, _orient);
+                                   float zoom, int[] extents, boolean logMagDisplay, int _orientation )
+    {
+        super( _orientation, _imageA );
 
         frame = _frame;
         imageA = _imageA;
@@ -484,15 +461,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         imageExtents = extents;
 
         orientation = _orientation;
-        hasOrientation = _hasOrientation;
-        orient = _orient;
 
         LUTa = _LUTa;
         LUTb = _LUTb;
 
         lutBufferRemapped = new int[1];
-
-
 
         showSliceNumber = (imageA.getNDims() > 2) && !(this instanceof ViewJComponentTriImage);
 
@@ -533,16 +506,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         if (imgBufferA == null) {
             int bufferFactor = (imageA.isColorImage() ? 4 : 1);
-            imgBufferA = new float[bufferFactor * imageA.getExtents()[axisOrder[0]] * imageA.getExtents()[axisOrder[1]]];
+            imgBufferA = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
         if ((imgBufferB == null) && (imageB != null)) {
             int bufferFactor = (imageB.isColorImage() ? 4 : 1);
-            imgBufferB = new float[bufferFactor * imageB.getExtents()[axisOrder[0]] * imageB.getExtents()[axisOrder[1]]];
+            imgBufferB = new float[bufferFactor * imageDim.width * imageDim.height];
         }
 
         if (pixelBuffer == null) {
-            pixelBuffer = new int[imageA.getExtents()[axisOrder[0]] * imageA.getExtents()[axisOrder[1]]];
+            pixelBuffer = new int[imageDim.width * imageDim.height];
         }
 
         imageBufferA = imgBufferA;
@@ -552,12 +525,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         paintBitmap = imageA.getMask();
         paintBitmapBU = imageA.getMaskBU();
 
-        // borderDetector = new AlgorithmVOIExtractionPaint( imageActive );
 
         imageBufferActive = imageBufferA;
         this.logMagDisplay = logMagDisplay;
 
-        setZoom(zoom, zoom);
+        super.setZoom(zoom, zoom);
 
         voiHandler = new VOIHandler(this);
 
@@ -585,41 +557,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             magSettings = new JDialogMagnificationControls((Frame) frame, this, getZoomX(), imageA.getImageName());
         }
 
-        if ((orientation == NA) || (orientation == AXIAL)) {
-            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
-
-            if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
-                res[0] = 1.0f;
-                res[1] = 1.0f;
-            }
-
-            maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
-            maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
-        } else if (orientation == CORONAL) {
-            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
-
-            if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
-                res[0] = 1.0f;
-                res[1] = 1.0f;
-            }
-
-            maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
-            maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
-        } else { // orientation == ZY
-            res[0] = Math.abs(imageActive.getResolutions(0)[axisOrder[0]]);
-            res[1] = Math.abs(imageActive.getResolutions(0)[axisOrder[1]]);
-
-            if ((res[0] == 0.0f) || (res[1] == 0.0f)) {
-                res[0] = 1.0f;
-                res[1] = 1.0f;
-            }
-
-            maxExtents[0] = imageActive.getExtents()[axisOrder[0]];
-            maxExtents[1] = imageActive.getExtents()[axisOrder[1]];
-        }
-
+        maxExtents[0] = imageDim.width;
+        maxExtents[1] = imageDim.height;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -6783,7 +6722,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         ViewControlsImage vci = vjfb.getControls();
         vci.setAlphaSliderEnabled(false);
 
-        // maxExtents[0], maxExtents[1] are xy, xz, or zy depending on the orientation
         xDim = maxExtents[0];
         yDim = maxExtents[1];
 
@@ -7139,6 +7077,4 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)));
         }
     }
-
-
 }

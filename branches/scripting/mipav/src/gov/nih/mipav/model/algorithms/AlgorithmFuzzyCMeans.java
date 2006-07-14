@@ -64,7 +64,7 @@ import java.util.*;
  *
  * <p>The initial dialog asks the user for a signal threshold value. The default value is the image minimum value. In
  * the centroid calculation only those pixels whose values equal or exceed threshold are used in the centroid
- * calculaton. In the hard segmentation pixels whose values are less than threshold or not in a selected VOI if if the
+ * calculaton. In the hard segmentation pixels whose values are less than threshold or not in a selected VOI if the
  * whole image is not used are set to a segmentation value of 0, meaning that these pixels are outside of the specified
  * classes.</p>
  *
@@ -252,7 +252,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int volSize;
 
-    /** wholeImage is constrained to be true. */
+    /** wholeImage is constrained to be true if background cropping is selected. */
     private boolean wholeImage = true; // true = apply algorithm to the whole image
 
     // false = apply algorithm only to VOI regions
@@ -267,19 +267,36 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
      *
      * @param  srcImg            source image model
      * @param  _nClass           number of classes into which the image will be segmented
-     * @param  _pyramidLevels    number of levels
-     * @param  _jacobiIters1     DOCUMENT ME!
-     * @param  _jacobiIters2     DOCUMENT ME!
-     * @param  _q                DOCUMENT ME!
-     * @param  _smooth1          DOCUMENT ME!
-     * @param  _smooth2          DOCUMENT ME!
-     * @param  _outputGainField  DOCUMENT ME!
-     * @param  _segmentation     DOCUMENT ME!
-     * @param  _cropBackground   DOCUMENT ME!
-     * @param  _threshold        DOCUMENT ME!
-     * @param  _max_iter         DOCUMENT ME!
-     * @param  _tolerance        DOCUMENT ME!
-     * @param  _wholeImage       DOCUMENT ME!
+     * @param  _pyramidLevels    Not used in the present version of the code
+     * @param  _jacobiIters1     Not used in the present version of the code
+     * @param  _jacobiIters2     Not used in the present version of the code
+     * @param  _q                a weighing exponent on each membership value and determines the amount of
+     *                           "fuzziness" of the resulting segmentation. q is required to be greater
+     *                           than 1 and is typically set to 2.
+     * @param  _smooth1          Not used in the present version of the code
+     * @param  _smooth2          Not used in the present version of the code
+     * @param  _outputGainField  Not used in the present version of the code
+     * @param  _segmentation     possible values are hard only, fuzzy only, or both hard and fuzzy
+     * @param  _cropBackground   unchecked by default. This function finds the smallest bounding box outside of
+     *                           which all image pixel values are below the image threshold. Values inside the
+     *                           bounding box are copied to a smaller array to save space and calculations are
+     *                           performed with this reduced array.  However, these pixels outside the box are
+     *                           restored for the production of the hard and fuzzy segmented images. In the hard
+     *                           segmentation case values outside the box all have a value of 0. In the fuzzy
+     *                           segmentation case values outside the box all have a value equal to the image minimum.
+     * @param  _threshold        The default value is the image minimum value. In the centroid calculation
+     *                           only those pixels whose values equal or exceed threshold are used in the centroid
+     *                           calculaton. In the hard segmentation pixels whose values are less than threshold
+     *                           or not in a selected VOI if the whole image is not used are set to a segmentation
+     *                            value of 0, meaning that these pixels are outside of the specified classes.
+     * @param  _max_iter         Maximum allowed iterations of main program loop
+     * @param  _tolerance        The iteration continues until either the user specified maximum number of
+     *                           iterations has occcured or until convergence has been detected. Convergence occurs
+     *                           when all membership functions over all pixel locations j change byless than the
+     *                           tolerance value between 2 iterations.
+     * @param  _wholeImage       If true apply algorithm to the whole image - constrained to be true
+     *                           if background cropping is selected.  If false, only apply to
+     *                           VOI regions.
      */
     public AlgorithmFuzzyCMeans(ModelImage srcImg, int _nClass, int _pyramidLevels, int _jacobiIters1,
                                 int _jacobiIters2, float _q, float _smooth1, float _smooth2, boolean _outputGainField,
@@ -320,19 +337,36 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
      * @param  destImg           list of image models where result image is to stored
      * @param  srcImg            source image model
      * @param  _nClass           number of classes into which the image will be segmented
-     * @param  _pyramidLevels    number of levels
-     * @param  _jacobiIters1     DOCUMENT ME!
-     * @param  _jacobiIters2     DOCUMENT ME!
-     * @param  _q                DOCUMENT ME!
-     * @param  _smooth1          DOCUMENT ME!
-     * @param  _smooth2          DOCUMENT ME!
-     * @param  _outputGainField  DOCUMENT ME!
-     * @param  _segmentation     DOCUMENT ME!
-     * @param  _cropBackground   DOCUMENT ME!
-     * @param  _threshold        DOCUMENT ME!
-     * @param  _max_iter         DOCUMENT ME!
-     * @param  _tolerance        DOCUMENT ME!
-     * @param  _wholeImage       DOCUMENT ME!
+     * @param  _pyramidLevels    Not used in the present version of the code
+     * @param  _jacobiIters1     Not used in the present version of the code
+     * @param  _jacobiIters2     Not used in the present version of the code
+     * @param  _q                a weighing exponent on each membership value and determines the amount of
+     *                           "fuzziness" of the resulting segmentation. q is required to be greater
+     *                           than 1 and is typically set to 2.
+     * @param  _smooth1          Not used in the present version of the code
+     * @param  _smooth2          Not used in the present version of the code
+     * @param  _outputGainField  Not used in the present version of the code
+     * @param  _segmentation     possible values are hard only, fuzzy only, or both hard and fuzzy
+     * @param  _cropBackground   unchecked by default. This function finds the smallest bounding box outside of
+     *                           which all image pixel values are below the image threshold. Values inside the
+     *                           bounding box are copied to a smaller array to save space and calculations are
+     *                           performed with this reduced array.  However, these pixels outside the box are
+     *                           restored for the production of the hard and fuzzy segmented images. In the hard
+     *                           segmentation case values outside the box all have a value of 0. In the fuzzy
+     *                           segmentation case values outside the box all have a value equal to the image minimum.
+     * @param  _threshold        The default value is the image minimum value. In the centroid calculation
+     *                           only those pixels whose values equal or exceed threshold are used in the centroid
+     *                           calculaton. In the hard segmentation pixels whose values are less than threshold
+     *                           or not in a selected VOI if the whole image is not used are set to a segmentation
+     *                            value of 0, meaning that these pixels are outside of the specified classes.
+     * @param  _max_iter         Maximum allowed iterations of main program loop
+     * @param  _tolerance        The iteration continues until either the user specified maximum number of
+     *                           iterations has occcured or until convergence has been detected. Convergence occurs
+     *                           when all membership functions over all pixel locations j change byless than the
+     *                           tolerance value between 2 iterations.
+     * @param  _wholeImage       If true apply algorithm to the whole image - constrained to be true
+     *                           if background cropping is selected.  If false, only apply to
+     *                           VOI regions.
      */
     public AlgorithmFuzzyCMeans(ModelImage[] destImg, ModelImage srcImg, int _nClass, int _pyramidLevels,
                                 int _jacobiIters1, int _jacobiIters2, float _q, float _smooth1, float _smooth2,

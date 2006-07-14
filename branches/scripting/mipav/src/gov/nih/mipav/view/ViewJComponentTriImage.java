@@ -39,7 +39,8 @@ import javax.swing.*;
  * @see     ViewJFrameTriImage
  * @see     ViewJComponentDualTriImage
  */
-public class ViewJComponentTriImage extends ViewJComponentEditImage implements MouseWheelListener, ActionListener {
+public class ViewJComponentTriImage extends ViewJComponentEditImage
+    implements MouseWheelListener, KeyListener, ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -103,9 +104,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * to repeat the process.
      */
     private Point anchorPt = new Point(0, 0);
-
-    /** The x and y coordinate of the cursor position in screen space of this component. */
-    private Point2Df crosshairPt = new Point2Df(0.0f, 0.0f);
 
     /**
      * Whether to show the center of rotation point in the volume and allow the user to change it. <code>doCenter</code>
@@ -214,6 +212,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /** color of the crosshairs. */
     private Color xColor, yColor, zColor;
 
+    /** imageActive extents in the local (Patient) coordinate system: */
+    private int[] localImageExtents = new int[3];
+
+    /** true if the imageActive has an orientation, false if imageActive is of UNKNOWN_ORIENT */
+    private boolean hasOrientation = false;
+
+    /** Cursor 3D point in Local Patient-Coordinates */
+    private Point3Df m_kLocalPoint = new Point3Df();
+    /** Cursor 3D point in ModelImage-Coordinates */
+    private Point3Df m_kVolumePoint = new Point3Df();
+
+    /** The x and y coordinate of the cursor position in screen space of this component. */
+    private Point2Df crosshairPt = new Point2Df(0.0f, 0.0f);
+
+    /** Screen Scale factor in x,y = zoomX * resolutionsX, zoomY * resolutionsY */
+    private Point2Df m_kScreenScale = new Point2Df();
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -236,17 +251,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param  extents                   initial display dimensions of the image
      * @param  logMagDisplay             display log magnitude of the image
      * @param  _triComponentOrientation  display orientation of the image
-     * @param  _hasOrientation           true if image is known to be in axial or standard dicom orientation and is
-     *                                   displayed in ViewJFrameTriImage
-     * @param  _orient                   a 3 integer array containing the orientation of each axis
      */
     public ViewJComponentTriImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
                                   ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer, float zoom,
-                                  int[] extents, boolean logMagDisplay, int _triComponentOrientation,
-                                  boolean _hasOrientation, int[] _orient) {
-
+                                  int[] extents, boolean logMagDisplay, int _triComponentOrientation )
+    {
         super(_frame, _imageA, _LUTa, imgBufferA, _imageB, _LUTb, imgBufferB, pixelBuffer, zoom, extents, logMagDisplay,
-              _triComponentOrientation, _hasOrientation, _orient);
+              _triComponentOrientation );
+        setZoom(zoom, zoom);
+
+        if (imageA.getImageOrientation() == FileInfoBase.UNKNOWN_ORIENT)
+        {
+            hasOrientation = false;
+        }
+        else
+        {
+            hasOrientation = true;
+        }
 
         triImageFrame = (ViewJFrameTriImage) frame;
 
@@ -255,42 +276,35 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         removeMouseListener(voiHandler.getPopupVOI());
         removeMouseListener(voiHandler.getPopupPt());
 
-        res[0] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[0]]);
-        res[1] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[1]]);
-        res[2] = Math.abs(imageActive.getFileInfo(0).getResolutions()[axisOrder[2]]);
-
+        res = imageActive.getResolutions( 0, triComponentOrientation );
         if ((res[0] == 0.0f) || (res[1] == 0.0f) || (res[2] == 0.0f)) {
             res[0] = 1.0f;
             res[1] = 1.0f;
             res[2] = 1.0f;
         }
+        unitsOfMeasure = imageActive.getUnitsOfMeasure( 0, triComponentOrientation );
 
-        unitsOfMeasure[0] = imageActive.getFileInfo(0).getUnitsOfMeasure()[axisOrder[0]];
-        unitsOfMeasure[1] = imageActive.getFileInfo(0).getUnitsOfMeasure()[axisOrder[1]];
-        unitsOfMeasure[2] = imageActive.getFileInfo(0).getUnitsOfMeasure()[axisOrder[2]];
+        localImageExtents = imageActive.getExtents( triComponentOrientation );
 
         removeMouseWheelListener(this); // remove listener from superclass
         addMouseWheelListener((ViewJComponentTriImage) this);
 
-        if (orientation == AXIAL) {
+        if (orientation == AXIAL)
+        {
             xColor = Color.yellow;
             yColor = Color.green;
             zColor = Color.red;
-        } else if (orientation == CORONAL) {
+        }
+        else if (orientation == CORONAL)
+        {
             xColor = Color.yellow;
             yColor = Color.red;
             zColor = Color.green;
-        } else // SAGITTAL
+        }
+        else // SAGITTAL
         {
-
-            if (hasOrientation) {
-                xColor = Color.green;
-                yColor = Color.red;
-            } else {
-                xColor = Color.red;
-                yColor = Color.green;
-            }
-
+            xColor = Color.green;
+            yColor = Color.red;
             zColor = Color.yellow;
         }
     }
@@ -311,7 +325,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             repaint();
         } else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
         {
-            showIntensityGraph(axisOrder[0], axisOrder[1]);
+            showIntensityGraph();
         }
     }
 
@@ -542,6 +556,56 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 (int)boundingBoxPoints[ViewJFrameTriImage.UPPER_RIGHT_FRONT].z + 1);
     }
 
+    /* MipavCoordinateSystems upgrade: */
+    /**
+     * setCenter, sets the crosshairPt and the local copies of the
+     * volumePosition (in ModelCoordinates and PatientCoordinates)
+     * @param i, ModelCoordinates
+     * @param j, ModelCoordinates
+     * @param k, ModelCoordinates
+     */
+    public void setCenter( int i, int j, int k )
+    {
+        m_kVolumePoint.x = i;
+        m_kVolumePoint.y = j;
+        m_kVolumePoint.z = k;
+        MipavCoordinateSystems.ModelToPatient( m_kVolumePoint, m_kLocalPoint,
+                                               imageActive, triComponentOrientation );
+        slice = (int)m_kLocalPoint.z;
+        //System.err.println( triComponentOrientation + " volume slice = " + k + " local slice = " + slice );
+
+        MipavCoordinateSystems.PatientToScreen( m_kLocalPoint, crosshairPt, m_kScreenScale,
+                                                imageActive,
+                                                triComponentOrientation );
+    }
+
+    /* MipavCoordinateSystems upgrade: */
+    /**
+     * sets the screen scale variable when setResolutions is called:
+     * @param rX, new resolution in X
+     * @param rY, new resolution in Y
+     */
+    public void setResolutions(float rX, float rY)
+    {
+        super.setResolutions( rX, rY );
+        m_kScreenScale.x = zoomX * resolutionX;
+        m_kScreenScale.y = zoomY * resolutionY;
+    }
+
+    /* MipavCoordinateSystems upgrade: */
+    /**
+     * sets the screen scale variable when setZoom is called:
+     * @param zX, new zoom factor in X
+     * @param zY, new zoom factor in Y
+     */
+    public void setZoom(float zX, float zY)
+    {
+        super.setZoom( zX, zY );
+        m_kScreenScale.x = zoomX * resolutionX;
+        m_kScreenScale.y = zoomY * resolutionY;
+    }
+
+
     /**
      * DOCUMENT ME!
      *
@@ -551,137 +615,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         return crosshairPt;
     }
 
-    /**
-     * Gets the original triComponentOrientation.
-     *
-     * @return  the original triComponentOrientation
-     */
-    public final int getOriginalOrientation() {
-
-        if (!hasOrientation) {
-            return NA;
-        }
-
-        if (axisOrder[2] == 2) {
-            return orientation;
-        }
-
-        int originalOrientation = NA;
-
-        if (orientation == CORONAL) {
-
-            switch (axisOrder[2]) {
-
-                case 0:
-                    originalOrientation = SAGITTAL;
-                    break;
-
-                case 1:
-                    originalOrientation = AXIAL;
-                    break;
-            }
-        }
-
-        if (orientation == SAGITTAL) {
-
-            switch (axisOrder[0]) {
-
-                case 1:
-                    originalOrientation = AXIAL;
-                    break;
-
-                case 2:
-                    originalOrientation = CORONAL;
-                    break;
-            }
-        }
-
-        if (orientation == AXIAL) {
-
-            switch (axisOrder[0]) {
-
-                case 0:
-                    originalOrientation = CORONAL;
-                    break;
-
-                case 2:
-                    originalOrientation = SAGITTAL;
-                    break;
-            }
-        }
-
-        return originalOrientation;
-    }
-
-    /**
-     * Accepts a point in volume space and converts it to screen space.
-     *
-     * @param   point3d  Point3D the point in volume space
-     *
-     * @return  Point
-     */
-    public Point2Df getScreenCoordinates(Point3Df point3d) {
-        float x = 0, y = 0;
-
-        switch (axisOrder[0]) {
-
-            case 0:
-                x = point3d.x;
-                if (axisFlip[0]) {
-                    x = (imageActive.getExtents()[0] - point3d.x - 1);
-                }
-
-                break;
-
-            case 1:
-                x = point3d.y;
-                if (axisFlip[0]) {
-                    x = (imageActive.getExtents()[1] - point3d.y - 1);
-                }
-
-                break;
-
-            case 2:
-                x = point3d.z;
-                if (axisFlip[0]) {
-                    x = (imageActive.getExtents()[2] - point3d.z - 1);
-                }
-
-                break;
-        }
-
-        switch (axisOrder[1]) {
-
-            case 0:
-                y = point3d.x;
-                if (axisFlip[1]) {
-                    y = (imageActive.getExtents()[0] - point3d.x - 1);
-                }
-
-                break;
-
-            case 1:
-                y = point3d.y;
-                if (axisFlip[1]) {
-                    y = (imageActive.getExtents()[1] - point3d.y - 1);
-                }
-
-                break;
-
-            case 2:
-                y = point3d.z;
-                if (axisFlip[1]) {
-                    y = (imageActive.getExtents()[2] - point3d.z - 1);
-                }
-
-                break;
-        }
-
-        x = (x * getZoomX() * resolutionX);
-        y =  (y * getZoomY() * resolutionY);
-
-        return new Point2Df(x, y);
-    }
 
     /**
      * Accessor that returns the protractor angle.
@@ -699,263 +632,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      */
     public int getTriComponentOrientation() {
         return triComponentOrientation;
-    }
-
-    /**
-     * Translate a point from screen space into image volume space. Assumes input parameters are in screen space
-     * (includes zoom and voxel resolutions).
-     *
-     * @param   x  the x screen coordinate
-     * @param   y  the y screen coordinate
-     *
-     * @return  the point position within the volume
-     */
-    public final Point3Df getTriImagePosition(float x, float y) {
-        float xPt, yPt;
-        xPt =  (x / (getZoomX() * getResolutionX()));
-        yPt =  (y / (getZoomY() * getResolutionY()));
-
-        return getVolumePosition(xPt, yPt, slice);
-    }
-
-    /**
-     * Gets the label for a point VOI (reordered to show the proper two dimensions which are being shown in the
-     * tri-image component).
-     *
-     * @param   x  x value of the volume space coordinate
-     * @param   y  y value of the volume space coordinate
-     * @param   z  z value of the volume space coordinate
-     *
-     * @return  the label that the point should have
-     */
-    public Point getVOILabel(int x, int y, int z) {
-        Point label = new Point(-1, -1);
-
-        switch (axisOrder[0]) {
-
-            case 0:
-                label.x = x;
-                break;
-
-            case 1:
-                label.x = y;
-                break;
-
-            case 2:
-                label.x = z;
-                break;
-        }
-
-        switch (axisOrder[1]) {
-
-            case 0:
-                label.y = x;
-                break;
-
-            case 1:
-                label.y = y;
-                break;
-
-            case 2:
-                label.y = z;
-                break;
-        }
-
-        return label;
-    }
-
-    /**
-     * Translate a point on the x-y tri-image component into image volume space. Assumes input parameters have zoom and
-     * voxel resolution already factored out.
-     *
-     * @param   x  x value of the point within the component
-     * @param   y  y value of the point within the component
-     * @param   z  the z coordinate ( usually == slice ) (the out-of-component dimension)
-     *
-     * @return  the point translated into the image volume
-     */
-    public final Point3D getVolumePosition(int x, int y, int z) {
-        Point3D pt = new Point3D();
-
-        switch (axisOrder[0]) {
-
-            case 0:
-                pt.x = x;
-                if (axisFlip[0]) {
-                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
-                }
-
-                break;
-
-            case 1:
-                pt.y = x;
-                if (axisFlip[0]) {
-                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
-                }
-
-                break;
-
-            case 2:
-                pt.z = x;
-                if (axisFlip[0]) {
-                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
-                }
-
-                break;
-        }
-
-        switch (axisOrder[1]) {
-
-            case 0:
-                pt.x = y;
-                if (axisFlip[1]) {
-                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
-                }
-
-                break;
-
-            case 1:
-                pt.y = y;
-                if (axisFlip[1]) {
-                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
-                }
-
-                break;
-
-            case 2:
-                pt.z = y;
-                if (axisFlip[1]) {
-                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
-                }
-
-                break;
-        }
-
-        switch (axisOrder[2]) {
-
-            case 0:
-                pt.x = z;
-                if (axisFlip[2]) {
-                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
-                }
-
-                break;
-
-            case 1:
-                pt.y = z;
-                if (axisFlip[2]) {
-                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
-                }
-
-                break;
-
-            case 2:
-                pt.z = z;
-                if (axisFlip[2]) {
-                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
-                }
-
-                break;
-        }
-
-        return pt;
-    }
-
-    /**
-     * Translate a point on the x-y tri-image component into image volume space. Assumes input parameters have zoom and
-     * voxel resolution already factored out.
-     *
-     * @param   x  x value of the point within the component
-     * @param   y  y value of the point within the component
-     * @param   z  the z coordinate ( usually == slice ) (the out-of-component dimension)
-     *
-     * @return  the point translated into the image volume
-     */
-    public final Point3Df getVolumePosition(float x, float y, float z) {
-        Point3Df pt = new Point3Df();
-
-        switch (axisOrder[0]) {
-
-            case 0:
-                pt.x = x;
-                if (axisFlip[0]) {
-                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
-                }
-
-                break;
-
-            case 1:
-                pt.y = x;
-                if (axisFlip[0]) {
-                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
-                }
-
-                break;
-
-            case 2:
-                pt.z = x;
-                if (axisFlip[0]) {
-                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
-                }
-
-                break;
-        }
-
-        switch (axisOrder[1]) {
-
-            case 0:
-                pt.x = y;
-                if (axisFlip[1]) {
-                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
-                }
-
-                break;
-
-            case 1:
-                pt.y = y;
-                if (axisFlip[1]) {
-                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
-                }
-
-                break;
-
-            case 2:
-                pt.z = y;
-                if (axisFlip[1]) {
-                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
-                }
-
-                break;
-        }
-
-        switch (axisOrder[2]) {
-
-            case 0:
-                pt.x = z;
-                if (axisFlip[2]) {
-                    pt.x = imageActive.getExtents()[0] - pt.x - 1;
-                }
-
-                break;
-
-            case 1:
-                pt.y = z;
-                if (axisFlip[2]) {
-                    pt.y = imageActive.getExtents()[1] - pt.y - 1;
-                }
-
-                break;
-
-            case 2:
-                pt.z = z;
-                if (axisFlip[2]) {
-                    pt.z = imageActive.getExtents()[2] - pt.z - 1;
-                }
-
-                break;
-        }
-
-        return pt;
     }
 
     /**
@@ -1013,43 +689,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Retrieves the center point from the frame and shows a slice intersecting the center point.
-     */
-    public void makeCenter() {
-        int[] center = new int[3];
-        doCenter = true;
-
-        center[0] = triImageFrame.getCenter()[0];
-        center[1] = triImageFrame.getCenter()[1];
-        center[2] = triImageFrame.getCenter()[2];
-
-        setSlice(center[axisOrder[2]]);
-
-        if (orientation == AXIAL) {
-
-            if (axisFlip[2]) {
-                slice = imageActive.getExtents()[axisOrder[2]] - slice - 1;
-            }
-
-            triImageFrame.setAxialComponentSlice(slice);
-        } else if (orientation == SAGITTAL) {
-
-            if (axisFlip[2]) {
-                slice = imageActive.getExtents()[axisOrder[2]] - slice - 1;
-            }
-
-            triImageFrame.setSagittalComponentSlice(slice);
-        } else {
-
-            if (axisFlip[2]) {
-                slice = imageActive.getExtents()[axisOrder[2]] - slice - 1;
-            }
-
-            triImageFrame.setCoronalComponentSlice(slice);
-        }
-    }
-
-    /**
      * Constructs and initializes one of the 3 protractors, depending on which component this is.
      */
     public void makeProtractor() {
@@ -1072,21 +711,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if ((triComponentOrientation == AXIAL) || !hasOrientation) {
                 voiProtractor = new VOI((short) imageActive.getVOIs().size(), "protractor.voi",
-                                        imageActive.getExtents()[axisOrder[2]], VOI.PROTRACTOR, 0.0f); // 0.0f for first segment red hue
+                                        localImageExtents[2], VOI.PROTRACTOR, 0.0f); // 0.0f for first segment red hue
 
             } else if (triComponentOrientation == CORONAL) {
 
                 // 1.0f/3.0f for first segment green hue
                 voiProtractor = new VOI((short) imageActive.getVOIs().size(), "protractor.voi",
-                                        imageActive.getExtents()[axisOrder[2]], VOI.PROTRACTOR, 0.3333f);
+                                        localImageExtents[2], VOI.PROTRACTOR, 0.3333f);
             } else {
 
                 // triComponentOrientation == SAGITTAL
                 voiProtractor = new VOI((short) imageActive.getVOIs().size(), "protractor.voi",
-                                        imageActive.getExtents()[axisOrder[2]], VOI.PROTRACTOR, 1.0f / 6.0f);
+                                        localImageExtents[2], VOI.PROTRACTOR, 1.0f / 6.0f);
             }
 
-            for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+            for (j = 0; j < localImageExtents[2]; j++) {
                 x[0] = 3 * imageDim.width / 8;
                 x[1] = 4 * imageDim.width / 8;
                 x[2] = 5 * imageDim.width / 8;
@@ -1136,16 +775,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         // this logic changes the slice of the 2D image in the ViewJFrameImage. Note that it only
         // works when you double click on the image that has the original orientation
         if (((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) && (mouseEvent.getClickCount() == 2)) {
-
-            if (axisOrder[2] == 2) {
-                int flippedSlice = slice;
-
-                if (axisFlip[2]) {
-                    flippedSlice = imageA.getExtents()[2] - slice - 1;
-                }
-
-                ((ViewJFrameImage) triImageFrame.getParentFrame()).setSlice(flippedSlice);
-            }
+            ((ViewJFrameImage) triImageFrame.getParentFrame()).setSlice((int)m_kVolumePoint.z);
         }
 
     }
@@ -1212,7 +842,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 intensityLine.setActive(true);
                 ((VOILine) (intensityLine.getCurves()[slice].elementAt(0))).setActive(true);
 
-                for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+                for (j = 0; j < localImageExtents[2]; j++) {
                     intensityLine.moveVOI(j, imageDim.width, imageDim.height, 0, distX, distY, 0);
                 }
 
@@ -1231,19 +861,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (doCenter) {
                 setCursor(MipavUtil.blankCursor);
 
-                Point3D point3d = getVolumePosition(xS, yS, slice);
-
-                triImageFrame.setVolumeCenter(point3d);
-
-                triImageFrame.setCrosshairs(xfS, yfS, slice, this);
-
-                // Because the upper left hand of the image is the origin and therefore the y coordinate must be
-                // inverted.
-                if (hasOrientation && ((triComponentOrientation == SAGITTAL) || (triComponentOrientation == CORONAL))) {
-                    yS = (int)(imageActive.getExtents()[axisOrder[1]] - yfS - 1);
-                }
-
-                triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
+                /* MipavCoordinateSystems upgrade: TODO: */
+                Point3Df point3d = new Point3Df();
+                MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice),
+                                                      point3d, m_kScreenScale, imageActive, triComponentOrientation );
+                triImageFrame.setCenter( (int)point3d.x, (int)point3d.y, (int)point3d.z);
 
                 frame.updateImages();
 
@@ -1254,42 +876,24 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         if ((mode == DEFAULT) || (mode == MOVE_VOIPOINT) || (mode == PROTRACTOR)) {
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
-
                 // adjust window and level when in DEFAULT mode and dragging with right-button
                 super.mouseDragged(mouseEvent);
-
                 return;
             }
-
-            // get the volume position of the mouse event
-            Point3Df volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
-
-            if ((volumeMousePoint.x < 0) || (volumeMousePoint.y < 0) || (volumeMousePoint.z < 0) ||
-                    (volumeMousePoint.x >= imageA.getExtents()[0]) || (volumeMousePoint.y >= imageA.getExtents()[1]) ||
-                    (volumeMousePoint.z >= imageA.getExtents()[2])) {
-                return;
-            }
-
             // Hides the cursor during dragging so it doesn't get in the way.
             if (showCrosshairs == true) {
                 setCursor(MipavUtil.blankCursor);
             }
 
-            updateFrameLabels(frame, xfS, yfS);
-            //System.out.println("x = " + xS + " y = " + yS + " z = " + slice);
-
-            triImageFrame.setCrosshairs(xfS, yfS, slice, this);
-
-            // Because the upper left hand of the image is the origin and therefore the y coordinate must be inverted.
-            if (hasOrientation && ((triComponentOrientation == SAGITTAL) || (triComponentOrientation == CORONAL))) {
-                yS = (int)(imageActive.getExtents()[axisOrder[1]] - yfS - 1);
-            }
-
-            triImageFrame.setDisplaySlices(xS, yS, slice, triComponentOrientation);
+            /* MipavCoordinateSystems upgrade: TODO: */
+            MipavCoordinateSystems.ScreenToPatient( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice ),
+                                                    m_kLocalPoint, m_kScreenScale, imageActive, triComponentOrientation );
+            MipavCoordinateSystems.PatientToModel( m_kLocalPoint, m_kVolumePoint,
+                                                   imageActive, triComponentOrientation );
+            triImageFrame.setCenter( (int)m_kVolumePoint.x, (int)m_kVolumePoint.y, (int)m_kVolumePoint.z );
 
             if (mode == DEFAULT) {
-                triImageFrame.updateImageSubset(this);
-
+//                 triImageFrame.updateImageSubset(this);
                 return;
             }
         } // if (mode == DEFAULT || mode == MOVE_VOIPOINT || mode == CUBE_BOUNDS || mode == PROTRACTOR)
@@ -1299,14 +903,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if ((voiProtractor != null) && voiProtractor.isVisible() && moveProtractor) {
 
-                for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+                for (j = 0; j < localImageExtents[2]; j++) {
                     voiProtractor.moveVOI(j, imageDim.width, imageDim.height, 0, distX, distY, 0);
                 }
             }
 
             if ((intensityLine != null) && intensityLine.isVisible() && moveLine) {
 
-                for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+                for (j = 0; j < localImageExtents[2]; j++) {
                     intensityLine.moveVOI(j, imageDim.width, imageDim.height, 0, distX, distY, 0);
                 }
             }
@@ -1326,7 +930,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
 
                     if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                        Point3Df mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                        /* MipavCoordinateSystems upgrade: TODO: */
+                        Point3Df mouse2D = new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice );
+                        Point3Df mousePt = new Point3Df();
+                        MipavCoordinateSystems.ScreenToModel( mouse2D, mousePt, m_kScreenScale, imageActive, triComponentOrientation );
 
                         found = true;
 
@@ -1383,183 +990,88 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         } // end of else if (mode == MOVE_VOIPOINT)
         else if (mode == CUBE_BOUNDS) {
 
+            /* MipavCoordinateSystems upgrade: TODO: */
             // get array representing the 8 corners of the bounding box
             Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+            Point3Df[] patientBoundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+
+            for (i = 0; i < boundingBoxPoints.length; i++)
+            {
+                MipavCoordinateSystems.ModelToPatient( boundingBoxPoints[i], patientBoundingBoxPoints[i],
+                                                       imageActive, triComponentOrientation );
+            }
 
             // get the volume position of the mouse event
-            Point3Df volumeMousePoint = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+            Point3Df mouse2D = new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice );
+            Point3Df patientMousePoint = new Point3Df();
+            MipavCoordinateSystems.ScreenToPatient( mouse2D, patientMousePoint, m_kScreenScale, imageActive, triComponentOrientation );
+
+            Point3Df volumeMousePoint = new Point3Df();
+            MipavCoordinateSystems.ScreenToModel( mouse2D, volumeMousePoint, m_kScreenScale, imageActive, triComponentOrientation );
+
 
             if ((volumeMousePoint.x < 0) || (volumeMousePoint.y < 0) || (volumeMousePoint.z < 0)) {
                 return;
             }
 
-            // if this is the image's original orientation
-            if (axisOrder[2] == 2) {
+            // if we are not already dragging a point, see if the mouse event is near one of the corners
+            if (dragBBpt == -1) {
 
-                // if we are not already dragging a point, see if the mouse event is near one of the corners
-                if (dragBBpt == -1) {
+                for (i = 0; i < patientBoundingBoxPoints.length; i++) {
+                    if ((Math.abs(patientBoundingBoxPoints[i].x - patientMousePoint.x) < 5) &&
+                        (Math.abs(patientBoundingBoxPoints[i].y - patientMousePoint.y) < 5)) {
 
-                    for (i = 0; i < boundingBoxPoints.length; i++) {
-
-                        if ((Math.abs(boundingBoxPoints[i].x - volumeMousePoint.x) < 5) &&
-                                (Math.abs(boundingBoxPoints[i].y - volumeMousePoint.y) < 5)) {
-
-                            // if we are dragging near a box corner, set 'dragBBpt' to indicate that point
-                            dragBBpt = i;
-
-                            break;
-                        }
+                        // if we are dragging near a box corner, set 'dragBBpt' to indicate that point
+                        dragBBpt = i;
+                        break;
                     }
-                }
-
-                // if a point is being dragged
-                if (dragBBpt != -1) {
-
-                    // create Vector to hold points that are coplanar
-                    Vector coplanarPoints = new Vector();
-
-                    // find other points that are coplanar with this one
-                    for (i = 0; i < boundingBoxPoints.length; i++) {
-
-                        if (i == dragBBpt) {
-                            continue;
-                        }
-
-                        Point3Df potentiallyCoplanarPoint = boundingBoxPoints[i];
-
-                        // test the potentially coplanar point to see if it is, in fact, coplanar
-                        if ((boundingBoxPoints[dragBBpt].x == potentiallyCoplanarPoint.x) ||
-                                (boundingBoxPoints[dragBBpt].y == potentiallyCoplanarPoint.y)) {
-                            coplanarPoints.add(potentiallyCoplanarPoint);
-                        }
-                    }
-
-                    // for each coplanar point
-                    for (i = 0; i < coplanarPoints.size(); i++) {
-                        Point3Df commonPoint = (Point3Df) coplanarPoints.elementAt(i);
-
-                        // set coplanar dimensions equal, therefore equalizing the point on a common plane
-                        if (boundingBoxPoints[dragBBpt].x == commonPoint.x) {
-                            commonPoint.x = (int)volumeMousePoint.x;
-                        }
-
-                        // set coplanar dimensions equal, therefore equalizing the point on a common plane
-                        if (boundingBoxPoints[dragBBpt].y == commonPoint.y) {
-                            commonPoint.y = (int)volumeMousePoint.y;
-                        }
-                    }
-
-                    // finally, set dragged point to new mouse value
-                    boundingBoxPoints[dragBBpt].x = (int)volumeMousePoint.x;
-                    boundingBoxPoints[dragBBpt].y = (int)volumeMousePoint.y;
-
                 }
             }
 
-            // the following 2 code sections are the same as the one above, except they have
-            // been modified for their individual orientations (i.e. point.x becomes point.z, etc)
-            if (axisOrder[2] == 1) {
+            // if a point is being dragged
+            if (dragBBpt != -1) {
+                // create Vector to hold points that are coplanar
+                Vector coplanarPoints = new Vector();
 
-                if (dragBBpt == -1) {
-
-                    for (i = 0; i < boundingBoxPoints.length; i++) {
-
-                        if ((Math.abs(boundingBoxPoints[i].x - (int)volumeMousePoint.x) < 5) &&
-                                (Math.abs(boundingBoxPoints[i].z - (int)volumeMousePoint.z) < 5)) {
-                            dragBBpt = i;
-
-                            break;
-                        }
+                // find other points that are coplanar with this one
+                for (i = 0; i < patientBoundingBoxPoints.length; i++) {
+                    if (i == dragBBpt) {
+                        continue;
                     }
 
+                    Point3Df potentiallyCoplanarPoint = patientBoundingBoxPoints[i];
+
+                    // test the potentially coplanar point to see if it is, in fact, coplanar
+                    if ((patientBoundingBoxPoints[dragBBpt].x == potentiallyCoplanarPoint.x) ||
+                        (patientBoundingBoxPoints[dragBBpt].y == potentiallyCoplanarPoint.y)) {
+                        coplanarPoints.add(potentiallyCoplanarPoint);
+                    }
                 }
 
-                if (dragBBpt != -1) {
-                    Vector commonPoints = new Vector();
+                // for each coplanar point
+                for (i = 0; i < coplanarPoints.size(); i++) {
+                    Point3Df commonPoint = (Point3Df) coplanarPoints.elementAt(i);
 
-                    // find other points that correlate with this one
-                    for (i = 0; i < boundingBoxPoints.length; i++) {
-
-                        if (i == dragBBpt) {
-                            continue;
-                        }
-
-                        Point3Df potentiallyCommonPoint = boundingBoxPoints[i];
-
-                        if ((boundingBoxPoints[dragBBpt].x == potentiallyCommonPoint.x) ||
-                                (boundingBoxPoints[dragBBpt].z == potentiallyCommonPoint.z)) {
-                            commonPoints.add(potentiallyCommonPoint);
-                        }
+                    // set coplanar dimensions equal, therefore equalizing the point on a common plane
+                    if ( patientBoundingBoxPoints[dragBBpt].x == commonPoint.x) {
+                        commonPoint.x = (int)patientMousePoint.x;
                     }
 
-                    for (i = 0; i < commonPoints.size(); i++) {
-                        Point3Df commonPoint = (Point3Df) commonPoints.elementAt(i);
-
-                        if (boundingBoxPoints[dragBBpt].x == commonPoint.x) {
-                            commonPoint.x = (int)volumeMousePoint.x;
-                        }
-
-                        if (boundingBoxPoints[dragBBpt].z == commonPoint.z) {
-                            commonPoint.z = (int)volumeMousePoint.z;
-                        }
+                    // set coplanar dimensions equal, therefore equalizing the point on a common plane
+                    if ( patientBoundingBoxPoints[dragBBpt].y == commonPoint.y) {
+                        commonPoint.y = (int)patientMousePoint.y;
                     }
-
-                    boundingBoxPoints[dragBBpt].x = (int)volumeMousePoint.x;
-                    boundingBoxPoints[dragBBpt].z = (int)volumeMousePoint.z;
                 }
+
+                // finally, set dragged point to new mouse value
+                patientBoundingBoxPoints[dragBBpt].x = (int)patientMousePoint.x;
+                patientBoundingBoxPoints[dragBBpt].y = (int)patientMousePoint.y;
             }
-
-            if (axisOrder[2] == 0) {
-
-                if (dragBBpt == -1) {
-
-                    for (i = 0; i < boundingBoxPoints.length; i++) {
-
-                        if ((Math.abs(boundingBoxPoints[i].y - (int)volumeMousePoint.y) < 5) &&
-                                (Math.abs(boundingBoxPoints[i].z - (int)volumeMousePoint.z) < 5)) {
-                            dragBBpt = i;
-
-                            break;
-                        }
-                    }
-
-                }
-
-                if (dragBBpt != -1) {
-                    Vector commonPoints = new Vector();
-
-                    // find other points that correlate with this one
-                    for (i = 0; i < boundingBoxPoints.length; i++) {
-
-                        if (i == dragBBpt) {
-                            continue;
-                        }
-
-                        Point3Df potentiallyCommonPoint = boundingBoxPoints[i];
-
-                        if ((boundingBoxPoints[dragBBpt].y == potentiallyCommonPoint.y) ||
-                                (boundingBoxPoints[dragBBpt].z == potentiallyCommonPoint.z)) {
-                            commonPoints.add(potentiallyCommonPoint);
-                        }
-                    }
-
-                    for (i = 0; i < commonPoints.size(); i++) {
-                        Point3Df commonPoint = (Point3Df) commonPoints.elementAt(i);
-
-                        if (boundingBoxPoints[dragBBpt].y == commonPoint.y) {
-                            commonPoint.y = (int)volumeMousePoint.y;
-                        }
-
-                        if (boundingBoxPoints[dragBBpt].z == commonPoint.z) {
-                            commonPoint.z = (int)volumeMousePoint.z;
-                        }
-                    }
-
-                    boundingBoxPoints[dragBBpt].y = (int)volumeMousePoint.y;
-                    boundingBoxPoints[dragBBpt].z = (int)volumeMousePoint.z;
-                }
+            for (i = 0; i < boundingBoxPoints.length; i++)
+            {
+                MipavCoordinateSystems.PatientToModel( patientBoundingBoxPoints[i], boundingBoxPoints[i],
+                                                       imageActive, triComponentOrientation );
             }
-
         } else if ((mode == LINE) && (intensityLine == null) && intensityLineVisible &&
                        ((anchorPt.x != getScaledX(mouseEvent.getX())) || (anchorPt.y !=
                                                                               getScaledY(mouseEvent.getY())))) {
@@ -1582,22 +1094,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             VOIs = imageActive.getVOIs(); // Get the VOIs from the active image.
 
+            /* MipavCoordinateSystems upgrade: TODO: */
             if ((triComponentOrientation == AXIAL) || !hasOrientation) {
                 intensityLine = new VOI((short) imageActive.getVOIs().size(), "xyline.voi",
-                                        imageActive.getExtents()[axisOrder[2]], VOI.LINE, 0.0f); // 0.0f for first
+                                        localImageExtents[2], VOI.LINE, 0.0f); // 0.0f for first
                                                                                                  // segment red hue
             } else if (triComponentOrientation == CORONAL) {
 
                 // 1.0f/3.0f for first segment green hue
                 intensityLine = new VOI((short) imageActive.getVOIs().size(), "xzline.voi",
-                                        imageActive.getExtents()[axisOrder[2]], VOI.LINE, 0.3333f);
+                                        localImageExtents[2], VOI.LINE, 0.3333f);
             } else // (triComponentOrientation == SAGITTAL)
             {
                 intensityLine = new VOI((short) imageActive.getVOIs().size(), "zyline.voi",
-                                        imageActive.getExtents()[axisOrder[2]], VOI.LINE, 1.0f / 6.0f);
+                                        localImageExtents[2], VOI.LINE, 1.0f / 6.0f);
             }
 
-            for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+            for (j = 0; j < localImageExtents[2]; j++) {
                 x[0] = anchorPt.x;
                 x[1] = xS;
                 y[0] = anchorPt.y;
@@ -1675,7 +1188,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public void mouseEntered(MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
-        triImageFrame.setOrientation(triComponentOrientation);
+        /* Get focus from the ViewJFrameTriImage for key events: */
+        this.requestFocusInWindow();
     }
 
     /**
@@ -1691,6 +1205,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         if ((mode == PAINT_VOI) || (mode == ERASER_PAINT)) {
             paintComponent(getGraphics());
         }
+        /* Return key-event focus to the ViewJFrameTriImage: */
+        triImageFrame.requestFocusInWindow();
     }
 
     /**
@@ -1735,26 +1251,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         if (mode == PAINT_CAN) {
 
             if (growDialog != null) {
-                Point3Df point = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                /* MipavCoordinateSystems upgrade: TODO: */
+                Point3Df mouse2D = new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice );
+                Point3Df point = new Point3Df();
+                MipavCoordinateSystems.ScreenToModel( mouse2D, point, m_kScreenScale, imageActive, triComponentOrientation );
 
                 // the "++" here is to make the display 1-based, like the crosshairs, instead of 0-based
                 point.x++;
                 point.y++;
                 point.z++;
 
-                if ((triComponentOrientation == AXIAL) || !hasOrientation) {
-                    growDialog.setPositionText("  X: " + String.valueOf(point.x) + " Y: " + String.valueOf(point.y) +
-                                               " Z: " + String.valueOf(point.z) + "  Intensity:  " +
-                                               String.valueOf(imageBufferActive[(yS * imageDim.width) + xS]));
-                } else if (triComponentOrientation == CORONAL) {
-                    growDialog.setPositionText("  X: " + String.valueOf(point.x) + " Y: " + String.valueOf(point.y) +
-                                               " Z: " + String.valueOf(point.z) + "  Intensity:  " +
-                                               String.valueOf(imageBufferActive[(yS * imageDim.width) + xS]));
-                } else { // triComponentOrientation == SAGITTAL
-                    growDialog.setPositionText("  X: " + String.valueOf(point.x) + " Y: " + String.valueOf(point.y) +
-                                               " Z: " + String.valueOf(point.z) + "  Intensity:  " +
-                                               String.valueOf(imageBufferActive[(yS * imageDim.width) + xS]));
-                }
+                growDialog.setPositionText("  X: " + String.valueOf(point.x) + " Y: " + String.valueOf(point.y) +
+                                           " Z: " + String.valueOf(point.z) + "  Intensity:  " +
+                                           String.valueOf(imageBufferActive[(yS * imageDim.width) + xS]));
             }
 
             return;
@@ -1832,14 +1341,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if (doCenter) {
                 // TODO: include logic to ensure we're on the proper slice...
-
-                Point3D volumePoint3d = getVolumePosition(xS, yS, slice);
-                int[] volumePoint = new int[] { volumePoint3d.x, volumePoint3d.y, volumePoint3d.z };
-
-                if ((Math.abs(triImageFrame.getCenter()[axisOrder[0]] - volumePoint[axisOrder[0]]) < 6) &&
-                        (Math.abs(triImageFrame.getCenter()[axisOrder[1]] - volumePoint[axisOrder[1]]) < 6)) {
+                /* MipavCoordinateSystems upgrade: TODO: */
+                Point3Df newLocalPoint = new Point3Df();
+                MipavCoordinateSystems.ScreenToPatient( new Point3Df( mouseEvent.getX(), mouseEvent.getY(), (float)slice ),
+                                                        newLocalPoint, m_kScreenScale,
+                                                        imageActive, triComponentOrientation );
+                if ( (Math.abs( m_kLocalPoint.x - newLocalPoint.x ) < 6) &&
+                     (Math.abs( m_kLocalPoint.y - newLocalPoint.y ) < 6)    )
+                {
                     dragCenterPt = true;
-                } else {
+                }
+                else
+                {
                     dragCenterPt = false;
                 }
             }
@@ -1954,7 +1467,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                 theta = ((VOIProtractor) (voiProtractor.getCurves()[slice].elementAt(0))).getTheta2();
 
-                for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+                for (j = 0; j < localImageExtents[2]; j++) {
                     voiProtractor.removeCurves(j);
                     z[0] = j;
                     z[1] = j;
@@ -1982,7 +1495,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
                 intensityLine.exportArrays(x, y, z, slice);
 
-                for (j = 0; j < imageActive.getExtents()[axisOrder[2]]; j++) {
+                for (j = 0; j < localImageExtents[2]; j++) {
                     intensityLine.removeCurves(j);
                     z[0] = j;
                     z[1] = j;
@@ -1998,7 +1511,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             setMode(DEFAULT);
             imageActive.notifyImageDisplayListeners(null, true);
         } else if (mode == PAINT_CAN) {
-            Point3D volumePt = getVolumePosition(xS + 1, yS + 1, slice + 1);
+            /* MipavCoordinateSystems upgrade: TODO: */
+            Point3Df volumePt = new Point3Df();
+            MipavCoordinateSystems.ScreenToModel( new Point3Df(xS + 1, yS + 1, slice + 1),
+                                                  volumePt, m_kScreenScale, imageActive, triComponentOrientation );
 
             xPG = (short) volumePt.x;
             yPG = (short) volumePt.y;
@@ -2021,10 +1537,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         else if (mode == POINT_VOI) {
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON1_MASK) != 0) {
-                Point3D mousePt = getVolumePosition(xS, yS, slice);
-                xOrg = mousePt.x;
-                yOrg = mousePt.y;
-                zOrg = mousePt.z;
+                /* MipavCoordinateSystems upgrade: TODO: */
+                Point3Df mousePt = new Point3Df();
+                MipavCoordinateSystems.ScreenToModel( new Point3Df(xS, yS, slice),
+                                                      mousePt, m_kScreenScale, imageActive, triComponentOrientation );
+
+                xOrg = (int)mousePt.x;
+                yOrg = (int)mousePt.y;
+                zOrg = (int)mousePt.z;
 
                 imageActive = imageA;
 
@@ -2091,52 +1611,56 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      *
      * @param  event  the mouse wheel rotation event
      */
-    public void mouseWheelMoved(MouseWheelEvent event) {
+    public void mouseWheelMoved( MouseWheelEvent event )
+    {
+        updateSlice( slice - event.getWheelRotation() );
+    }
 
-        int newSlice = slice;
+    /**
+     * keyReleased event method for KeyListener.
+     *
+     * @param  e  KeyEvent
+     */
+    public void keyPressed( KeyEvent e )
+    {
+        int keyCode = e.getKeyCode();
+        switch (keyCode)
+        {
+        case KeyEvent.VK_PAGE_DOWN:
+            updateSlice( slice - 1 );
+            break;
+        case KeyEvent.VK_PAGE_UP:
+            updateSlice( slice + 1 );
+            break;
+        }
+    }
 
-        newSlice += (-event.getWheelRotation());
-
-        if (newSlice < 0) {
+    /* MipavCoordinateSystems upgrade: TODO: */
+    /**
+     *  updates the slice value when the wheel is moved or the page_up,
+     *  page_down keys are pressed. Does bounds checking and comparison with
+     *  the current slice value. Sets the new position and updates the
+     *  triImageFrame.
+     * @param newSlice the new slice value
+     */
+    private void updateSlice( int newSlice )
+    {
+        if ( newSlice < 0 )
+        {
             newSlice = 0;
         }
-
-        if (newSlice >= imageActive.getExtents()[axisOrder[2]]) {
-            newSlice = imageActive.getExtents()[axisOrder[2]] - 1;
+        if ( newSlice >= localImageExtents[2] )
+        {
+            newSlice = localImageExtents[2] - 1;
         }
-
-        slice = newSlice;
-
-        float xS = (crosshairPt.x / (getZoomX() * resolutionX));
-        float yS = (crosshairPt.y / (getZoomY() * resolutionY));
-
-        triImageFrame.setCrosshairs(xS, yS, slice, this);
-
-        Point3Df newLabel = null;
-
-        int coronalSlice = triImageFrame.getCoronalComponentSlice();
-        int sagittalSlice = triImageFrame.getSagittalComponentSlice();
-        int axialSlice = triImageFrame.getAxialComponentSlice();
-
-        if (triComponentOrientation == CORONAL) {
-            triImageFrame.setCoronalComponentSlice(newSlice);
-
-            triImageFrame.fireCoordinateChange(sagittalSlice, newSlice, axialSlice);
-        } else if (triComponentOrientation == SAGITTAL) {
-            triImageFrame.setSagittalComponentSlice(newSlice);
-
-            triImageFrame.fireCoordinateChange(newSlice, coronalSlice, axialSlice);
-        } else {
-            triImageFrame.setAxialComponentSlice(newSlice);
-
-            triImageFrame.fireCoordinateChange(sagittalSlice, coronalSlice, newSlice);
+        if ( newSlice != slice )
+        {
+            m_kLocalPoint.z = newSlice;
+            MipavCoordinateSystems.PatientToModel( m_kLocalPoint, m_kVolumePoint, imageActive, triComponentOrientation );
+            triImageFrame.setCenter( (int)m_kVolumePoint.x, (int)m_kVolumePoint.y, (int)m_kVolumePoint.z );
         }
-
-        newLabel = getTriImagePosition(crosshairPt.x, crosshairPt.y);
-        triImageFrame.setPositionLabels((int)newLabel.x, (int)newLabel.y, (int)newLabel.z);
-
-        triImageFrame.updateImages();
     }
+
 
     /**
      * Returns true if mouse point is close to bounds point.
@@ -2151,7 +1675,10 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     public boolean nearBoundsPoint(int mouseX, int mouseY, int boundsX, int boundsY) {
         double dist;
 
-        Point3Df pt = getTriImagePosition(mouseX, mouseY);
+        /* MipavCoordinateSystems upgrade: TODO: */
+        Point3Df mouse2D = new Point3Df( mouseX, mouseY, slice );
+        Point3Df pt = new Point3Df();
+        MipavCoordinateSystems.ScreenToModel( mouse2D, pt, m_kScreenScale, imageActive, triComponentOrientation );
         mouseX = (int)pt.x;
         mouseY = (int)pt.y;
 
@@ -2198,6 +1725,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         super.paintComponent(offscreenGraphics2d);
 
+        /* MipavCoordinateSystems upgrade: TODO: */
         if (triComponentOrientation == AXIAL) {
 
             if (showBoundingRect) {
@@ -2211,8 +1739,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid) {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
 
-                Point2Df pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-                computeTalairachVoxelPosition((int)pt.x, (int)pt.y);
+                computeTalairachVoxelPosition((int)crosshairPt.x, (int)crosshairPt.y);
             }
 
         } // end of if (triComponentOrientation == AXIAL)
@@ -2229,8 +1756,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid) {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
 
-                Point2Df pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-                computeTalairachVoxelPosition((int)pt.x, (int)pt.y);
+                computeTalairachVoxelPosition((int)crosshairPt.x, (int)crosshairPt.y);
             }
 
         } // end of else if (triComponentOrientation == CORONAL)
@@ -2247,8 +1773,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (showTalairachGrid) {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
 
-                Point2Df pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
-                computeTalairachVoxelPosition((int)pt.x, (int)pt.y);
+                computeTalairachVoxelPosition((int)crosshairPt.x, (int)crosshairPt.y);
             } // if (showTalairach)
         } // end of else if (triComponentOrientation == SAGITTAL)
 
@@ -2262,7 +1787,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             drawVOIIntensityLine(offscreenGraphics2d);
         }
 
-        if ((doCenter) && (getCurrentTriImageSlice() == triImageFrame.getCenter()[axisOrder[2]])) {
+        if ( doCenter )
+        {
             drawCenterMark(offscreenGraphics2d);
         }
 
@@ -2366,6 +1892,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         protractorVisible = visible;
     }
 
+    /* MipavCoordinateSystems upgrade: TODO: */
     /**
      * Set a talairach / ACPC reference point.
      *
@@ -2378,89 +1905,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         float[] z = new float[1];
         VOI newPointVOI;
 
-        if ((triComponentOrientation == AXIAL) || !hasOrientation) {
-
-            switch (axisOrder[0]) {
-
-                case 0:
-                    x[0] = pt.x;
-                    if (axisFlip[0]) {
-                        x[0] = imageActive.getExtents()[0] - x[0] - 1;
-                    }
-
-                    break;
-
-                case 1:
-                    y[0] = pt.x;
-                    if (axisFlip[0]) {
-                        y[0] = imageActive.getExtents()[1] - y[0] - 1;
-                    }
-
-                    break;
-
-                case 2:
-                    z[0] = pt.x;
-                    if (axisFlip[0]) {
-                        z[0] = imageActive.getExtents()[2] - z[0] - 1;
-                    }
-
-                    break;
-            }
-
-            switch (axisOrder[1]) {
-
-                case 0:
-                    x[0] = pt.y;
-                    if (axisFlip[1]) {
-                        x[0] = imageActive.getExtents()[0] - x[0] - 1;
-                    }
-
-                    break;
-
-                case 1:
-                    y[0] = pt.y;
-                    if (axisFlip[1]) {
-                        y[0] = imageActive.getExtents()[1] - y[0] - 1;
-                    }
-
-                    break;
-
-                case 2:
-                    z[0] = pt.y;
-                    if (axisFlip[1]) {
-                        z[0] = imageActive.getExtents()[2] - z[0] - 1;
-                    }
-
-                    break;
-            }
-
-            switch (axisOrder[2]) {
-
-                case 0:
-                    x[0] = pt.z;
-                    if (axisFlip[2]) {
-                        x[0] = imageActive.getExtents()[0] - x[0] - 1;
-                    }
-
-                    break;
-
-                case 1:
-                    y[0] = pt.z;
-                    if (axisFlip[2]) {
-                        y[0] = imageActive.getExtents()[1] - y[0] - 1;
-                    }
-
-                    break;
-
-                case 2:
-                    z[0] = pt.z;
-                    if (axisFlip[2]) {
-                        z[0] = imageActive.getExtents()[2] - z[0] - 1;
-                    }
-
-                    break;
-            }
-        } // if (triComponentOrientation == XY)
+        /* MipavCoordinateSystems upgrade: TODO: */
+        Point3Df localPoint = new Point3Df();
+        MipavCoordinateSystems.ModelToPatient( pt, localPoint, imageActive, triComponentOrientation );
+        x[0] = localPoint.x;
+        y[0] = localPoint.y;
+        z[0] = localPoint.z;
 
         try {
             voiHandler.setVOI_ID(imageActive.getVOIs().size());
@@ -2586,18 +2036,26 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         this.showTalairachGridmarkers = doShowTalairachGridmarkers;
     }
 
+    public boolean show(int tSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow,
+                        int _interpMode )
+    {
+        return show( tSlice, (int)m_kLocalPoint.z, _LUTa, _LUTb, forceShow, _interpMode );
+    }
+
     /**
      * For generating the display of 1 or 2 RGB images.
      *
      * @param   tSlice     t (time) slice to show
-     * @param   zSlice     z slice to show
      * @param   forceShow  forces this method to import image and recalculate java image
      *
      * @return  boolean to indicate if the show was successful
      */
-    public boolean showUsingOrientation(int tSlice, int zSlice, boolean forceShow) {
+    private boolean showUsingOrientation(int tSlice, boolean forceShow) {
         // Note that alphaBlending is applied with 1 component taken as zero if both components are not present -for
         // example, if either imageA or imageB but not both has red, then the red component is alphaBlended with zero.
+
+        /* MipavCoordinateSystems upgrade: TODO: */
+        int zSlice = (int)m_kLocalPoint.z;
 
         int i, j;
         int ind4, index;
@@ -2615,376 +2073,128 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             RGBIndexBufferB = RGBTB.exportIndexedRGB();
         }
 
-        if (triComponentOrientation == AXIAL) {
+        if ((slice != zSlice) ||
+            (timeSlice != tSlice) ||
+            (forceShow == true)  ) {
+            slice = zSlice;
+            timeSlice = tSlice;
 
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
+            if (imageA.getNDims() < 4) {
+                timeSliceA = 0;
+            } else {
+                timeSliceA = timeSlice;
+            }
 
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
+            if ((imageB != null) && (imageB.getNDims() < 4)) {
+                timeSliceB = 0;
+            } else {
+                timeSliceB = timeSlice;
+            }
 
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
+            fillImageBuffer(zSlice);
+        } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
 
-                fillImageColorBuffer(showAxis, zSlice);
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
+        if (imageB == null) {
 
-            if (imageB == null) {
+            for (j = 0; j < localImageExtents[1]; j++) {
 
-                for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
+                for (i = 0; i < localImageExtents[0]; i++) {
+                    ind4 = (j * localImageExtents[0]) + i;
+                    index = 4 * ind4;
 
-                    for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                        ind4 = (j * imageExtents[axisOrder[0]]) + i;
-                        index = 4 * ind4;
+                    if (RGBTA != null) {
 
-                        if (RGBTA != null) {
-
-                            if (RGBTA.getROn()) {
-                                redMapped = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                redMapped = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                greenMapped = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                greenMapped = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                blueMapped = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                            } else {
-                                blueMapped = 0;
-                            }
-                        } // if (RGBTA != null)
-                        else {
-                            redMapped = imageBufferA[index + 1];
-                            greenMapped = imageBufferA[index + 2];
-                            blueMapped = imageBufferA[index + 3];
+                        if (RGBTA.getROn()) {
+                            redMapped = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
+                        } else {
+                            redMapped = 0;
                         }
 
-                        pixValue = 0xff000000 |
-                                       (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                        cleanImageBufferA[ind4] = pixValue;
-                    } // for (i = 0; i < imageExtents[xy0]; i++)
-                } // for (j = 0; j < imageExtents[xy1]; j++)
-            } // if (imageB == null )
-            else { // imageB != null
-
-                for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                    for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                        ind4 = (j * imageExtents[axisOrder[0]]) + i;
-                        index = 4 * ind4;
-
-                        if ((RGBTA != null) && (RGBTB != null)) {
-
-                            if (RGBTA.getROn()) {
-                                Ra = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                Ra = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                Rb = (RGBIndexBufferB[(int) imageBufferB[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                Rb = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                Ga = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                Ga = 0;
-                            }
-
-                            if (RGBTB.getROn()) {
-                                Gb = (RGBIndexBufferB[(int) imageBufferB[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                Gb = 0;
-                            }
-
-                            if (RGBTB.getGOn()) {
-                                Ba = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                            } else {
-                                Ba = 0;
-                            }
-
-                            if (RGBTB.getBOn()) {
-                                Bb = (RGBIndexBufferB[(int) imageBufferB[index + 3]] & 0x000000ff);
-                            } else {
-                                Bb = 0;
-                            }
-                        } // if ((RGBTA != null) && (RGBTB != null))
-                        else {
-                            Ra = (int) imageBufferA[index + 1];
-                            Rb = (int) imageBufferB[index + 1];
-                            Ga = (int) imageBufferA[index + 2];
-                            Gb = (int) imageBufferB[index + 2];
-                            Ba = (int) imageBufferA[index + 3];
-                            Bb = (int) imageBufferB[index + 3];
+                        if (RGBTA.getGOn()) {
+                            greenMapped = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
+                        } else {
+                            greenMapped = 0;
                         }
 
-                        pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                        cleanImageBufferA[ind4] = pixValue;
-                        cleanImageBufferB[ind4] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-                    } // for (i = 0; i < imageExtents[xy0]; i++)
-                } // for (j = 0; j < imageExtents[xy1]; j++)
-            } // else for imageB != null
-        } // if ((triComponentOrientation == XY) || (!hasOrientation))
-        else if (triComponentOrientation == CORONAL) {
+                        if (RGBTA.getBOn()) {
+                            blueMapped = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
+                        } else {
+                            blueMapped = 0;
+                        }
+                    } // if (RGBTA != null)
+                    else {
+                        redMapped = imageBufferA[index + 1];
+                        greenMapped = imageBufferA[index + 2];
+                        blueMapped = imageBufferA[index + 3];
+                    }
 
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
+                    pixValue = 0xff000000 |
+                        (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
+                    cleanImageBufferA[ind4] = pixValue;
+                } // for (i = 0; i < imageExtents[xy0]; i++)
+            } // for (j = 0; j < imageExtents[xy1]; j++)
+        } // if (imageB == null )
+        else { // imageB != null
 
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
+            for (j = 0; j < localImageExtents[1]; j++) {
 
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
+                for (i = 0; i < localImageExtents[0]; i++) {
+                    ind4 = (j * localImageExtents[0]) + i;
+                    index = 4 * ind4;
 
-                fillImageColorBuffer(showAxis, zSlice);
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
+                    if ((RGBTA != null) && (RGBTB != null)) {
 
-            if (imageB == null) {
-
-                for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                    for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                        ind4 = (j * imageExtents[axisOrder[0]]) + i;
-                        index = 4 * ind4;
-
-                        if (RGBTA != null) {
-
-                            if (RGBTA.getROn()) {
-                                redMapped = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                redMapped = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                greenMapped = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                greenMapped = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                blueMapped = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                            } else {
-                                blueMapped = 0;
-                            }
-                        } // end of if (RGBTA != null)
-                        else {
-                            redMapped = imageBufferA[index + 1];
-                            greenMapped = imageBufferA[index + 2];
-                            blueMapped = imageBufferA[index + 3];
+                        if (RGBTA.getROn()) {
+                            Ra = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
+                        } else {
+                            Ra = 0;
                         }
 
-                        pixValue = 0xff000000 |
-                                       (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                        cleanImageBufferA[ind4] = pixValue;
-
-                    } // for (i = 0; i < imageExtents[xz0]; i++)
-                } // for (j = 0; j < imageExtents[xz1]; j++)
-            } // if (imageB == null )
-            else { // imageB != null
-
-                for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                    for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                        ind4 = (j * imageExtents[axisOrder[0]]) + i;
-                        index = 4 * ind4;
-
-                        if ((RGBTA != null) && (RGBTB != null)) {
-
-                            if (RGBTA.getROn()) {
-                                Ra = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                Ra = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                Rb = (RGBIndexBufferB[(int) imageBufferB[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                Rb = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                Ga = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                Ga = 0;
-                            }
-
-                            if (RGBTB.getROn()) {
-                                Gb = (RGBIndexBufferB[(int) imageBufferB[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                Gb = 0;
-                            }
-
-                            if (RGBTB.getGOn()) {
-                                Ba = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                            } else {
-                                Ba = 0;
-                            }
-
-                            if (RGBTB.getBOn()) {
-                                Bb = (RGBIndexBufferB[(int) imageBufferB[index + 3]] & 0x000000ff);
-                            } else {
-                                Bb = 0;
-                            }
-                        } // end of if ((RGBTA != null) && (RGBTB != null))
-                        else {
-                            Ra = (int) imageBufferA[index + 1];
-                            Rb = (int) imageBufferB[index + 1];
-                            Ga = (int) imageBufferA[index + 2];
-                            Gb = (int) imageBufferB[index + 2];
-                            Ba = (int) imageBufferA[index + 3];
-                            Bb = (int) imageBufferB[index + 3];
+                        if (RGBTA.getGOn()) {
+                            Rb = (RGBIndexBufferB[(int) imageBufferB[index + 1]] & 0x00ff0000) >> 16;
+                        } else {
+                            Rb = 0;
                         }
 
-                        pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                        cleanImageBufferA[ind4] = pixValue;
-                        cleanImageBufferB[ind4] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-                    } // for (i = 0; i < imageExtents[xz0]; i++)
-                } // for (j = 0; j < imageExtents[xz1]; j++)
-            } // else for imageB != null
-        } // else if (triComponentOrientation == XZ)
-        else { // for triComponentOrientation == ZY
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                fillImageColorBuffer(showAxis, zSlice);
-            } // end of if ( slice != zSlice || timeSlice !=   || forceShow == true)
-
-            if (imageB == null) {
-
-                for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                    for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                        ind4 = (j * imageExtents[axisOrder[0]]) + i;
-                        index = 4 * ind4;
-
-                        if (RGBTA != null) {
-
-                            if (RGBTA.getROn()) {
-                                redMapped = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                redMapped = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                greenMapped = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                greenMapped = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                blueMapped = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                            } else {
-                                blueMapped = 0;
-                            }
-                        } // end of if (RGBTA != null)
-                        else {
-                            redMapped = imageBufferA[index + 1];
-                            greenMapped = imageBufferA[index + 2];
-                            blueMapped = imageBufferA[index + 3];
+                        if (RGBTA.getBOn()) {
+                            Ga = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
+                        } else {
+                            Ga = 0;
                         }
 
-                        pixValue = 0xff000000 |
-                                       (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                        cleanImageBufferA[ind4] = pixValue;
-                    } // for (i = 0; i < imageExtents[yz0]; i++)
-                } // for (j = 0; j < imageExtents[yz1]; j++)
-            } // if (imageB == null )
-            else { // imageB != null
-
-                for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                    for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                        ind4 = (j * imageExtents[axisOrder[0]]) + i;
-                        index = 4 * ind4;
-
-                        if ((RGBTA != null) && (RGBTB != null)) {
-
-                            if (RGBTA.getROn()) {
-                                Ra = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                Ra = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                Rb = (RGBIndexBufferB[(int) imageBufferB[index + 1]] & 0x00ff0000) >> 16;
-                            } else {
-                                Rb = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                Ga = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                Ga = 0;
-                            }
-
-                            if (RGBTA.getROn()) {
-                                Gb = (RGBIndexBufferB[(int) imageBufferB[index + 2]] & 0x0000ff00) >> 8;
-                            } else {
-                                Gb = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                Ba = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                            } else {
-                                Ba = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                Bb = (RGBIndexBufferB[(int) imageBufferB[index + 3]] & 0x000000ff);
-                            } else {
-                                Bb = 0;
-                            }
-                        } // if ((RGBTA != null) && (RGBTB != null))
-                        else {
-                            Ra = (int) imageBufferA[index + 1];
-                            Rb = (int) imageBufferB[index + 1];
-                            Ga = (int) imageBufferA[index + 2];
-                            Gb = (int) imageBufferB[index + 2];
-                            Ba = (int) imageBufferA[index + 3];
-                            Bb = (int) imageBufferB[index + 3];
+                        if (RGBTB.getROn()) {
+                            Gb = (RGBIndexBufferB[(int) imageBufferB[index + 2]] & 0x0000ff00) >> 8;
+                        } else {
+                            Gb = 0;
                         }
 
-                        pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                        cleanImageBufferA[ind4] = pixValue;
-                        cleanImageBufferB[ind4] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-                    } // for (i = 0; i < imageExtents[yz0]; i++)
-                } // for (j = 0; j < imageExtents[yz1]; j++)
-            } // else for imageB != null
-        } // else for triComponentOrientation == ZY
+                        if (RGBTB.getGOn()) {
+                            Ba = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
+                        } else {
+                            Ba = 0;
+                        }
+
+                        if (RGBTB.getBOn()) {
+                            Bb = (RGBIndexBufferB[(int) imageBufferB[index + 3]] & 0x000000ff);
+                        } else {
+                            Bb = 0;
+                        }
+                    } // if ((RGBTA != null) && (RGBTB != null))
+                    else {
+                        Ra = (int) imageBufferA[index + 1];
+                        Rb = (int) imageBufferB[index + 1];
+                        Ga = (int) imageBufferA[index + 2];
+                        Gb = (int) imageBufferB[index + 2];
+                        Ba = (int) imageBufferA[index + 3];
+                        Bb = (int) imageBufferB[index + 3];
+                    }
+
+                    pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
+                    cleanImageBufferA[ind4] = pixValue;
+                    cleanImageBufferB[ind4] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
+                } // for (i = 0; i < imageExtents[xy0]; i++)
+            } // for (j = 0; j < imageExtents[xy1]; j++)
+        } // else for imageB != null
 
         time = System.currentTimeMillis() - time;
 
@@ -2995,21 +2205,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         return true;
     }
 
+
     /**
-     * Shows the image and the VOI(s) - used in ViewJFrameTriImage to get the proper triComponentOrientation of the
-     * image displaye (i.e. DICOM)
+     * For generating the display of 1 or 2 RGB images.
      *
-     * @param   tSlice       t (time) slice to show
-     * @param   zSlice       z slice to show
-     * @param   _LUTa        LUTa - to change to new LUT for imageA else null
-     * @param   _LUTb        LUTb - to change to new LUT for imageB else null
-     * @param   forceShow    forces this method to import image and recalculate java image
-     * @param   _interpMode  image interpolation method (Nearest or Smooth)
+     * @param   tSlice     t (time) slice to show
+     * @param   forceShow  forces this method to import image and recalculate java image
      *
      * @return  boolean to indicate if the show was successful
      */
-    public boolean showUsingOrientation(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow,
-                                        int _interpMode) {
+    public boolean showUsingOrientation(int tSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow,
+                                        int _interpMode ) {
+
+        /* MipavCoordinateSystems upgrade: TODO: */
+        int zSlice = (int)m_kLocalPoint.z;
+
         int lutHeightA = 0;
         int index;
         float[][] RGB_LUTa = null, RGB_LUTb = null;
@@ -3029,7 +2239,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             if (imageA.isColorImage() == true) {
 
                 // call the show method for displaying RGB images
-                return (showUsingOrientation(tSlice, zSlice, forceShow));
+                return (showUsingOrientation(tSlice, forceShow));
             }
 
             if (imageA == null) {
@@ -3071,208 +2281,78 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             } else {
                 LUTa.exportIndexedLUT(lutBufferRemapped);
             }
+            if ((slice != zSlice) ||
+                (timeSlice != tSlice) ||
+                (forceShow == true) ) {
 
-            if ((triComponentOrientation == AXIAL)) {
+                slice = zSlice;
+                timeSlice = tSlice;
 
-                if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                    slice = zSlice;
-                    timeSlice = tSlice;
+                if (imageA.getNDims() < 4) {
+                    timeSliceA = 0;
+                } else {
+                    timeSliceA = timeSlice;
+                }
 
-                    if (imageA.getNDims() < 4) {
-                        timeSliceA = 0;
-                    } else {
-                        timeSliceA = timeSlice;
-                    }
+                if ((imageB != null) && (imageB.getNDims() < 4)) {
+                    timeSliceB = 0;
+                } else {
+                    timeSliceB = timeSlice;
+                }
 
-                    if ((imageB != null) && (imageB.getNDims() < 4)) {
-                        timeSliceB = 0;
-                    } else {
-                        timeSliceB = timeSlice;
-                    }
+                fillImageBuffer(zSlice);
 
-                    fillImageBuffer(showAxis, zSlice);
+            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
 
-                } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
+            if (imageB == null) {
+                pix = 0;
 
-                if (imageB == null) {
-                    pix = 0;
+                TransferFunction tf_imgA = LUTa.getTransferFunction();
 
-                    TransferFunction tf_imgA = LUTa.getTransferFunction();
+                for (j = 0; j < localImageExtents[1]; j++) {
 
-                    for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
+                    for (i = 0; i < localImageExtents[0]; i++) {
+                        index = (j * localImageExtents[0]) + i;
+                        pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
 
-                        for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                            index = (j * imageExtents[axisOrder[0]]) + i;
-                            pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-
-                            try {
-                                cleanImageBufferA[index] = lutBufferRemapped[pix];
-                            } catch (ArrayIndexOutOfBoundsException e) {
-                                Preferences.debug("error = " + e + "\n");
-                                Preferences.debug("index = " + index + " pix = " + pix + "\n");
-                            }
-                        } // for (i = 0; i < imageExtents[xy0]; i++)
-                    } // for (j = 0; j < imageExtents[xy1]; j++)
-                } // if (imageB == null)
-                else if (imageB != null) { // imageB != null
-                    indexA = indexB = 0;
-
-                    TransferFunction tf_imgA = LUTa.getTransferFunction();
-                    TransferFunction tf_imgB = LUTb.getTransferFunction();
-
-                    for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                        for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                            index = (j * imageExtents[axisOrder[0]]) + i;
-
-                            indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                            indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-
-                            Ra = iRGB_LUTa[0][indexA];
-                            Ga = iRGB_LUTa[1][indexA];
-                            Ba = iRGB_LUTa[2][indexA];
-
-                            pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                            cleanImageBufferA[index] = pix;
-                            cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                                                           ((int) (RGB_LUTb[1][indexB]) << 8) |
-                                                           (int) (RGB_LUTb[2][indexB]);
-
-                        } // for (i = 0; i < imageExtents[xy0]; i++)
-                    } // for (j = 0; j < imageExtents[xy1]; j++)
-                } // else for imageB != null
-            } // if ((triComponentOrientation == XY) || (!hasOrientation))
-            else if (triComponentOrientation == CORONAL) {
-
-                if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                    slice = zSlice;
-                    timeSlice = tSlice;
-
-                    if (imageA.getNDims() < 4) {
-                        timeSliceA = 0;
-                    } else {
-                        timeSliceA = timeSlice;
-                    }
-
-                    if ((imageB != null) && (imageB.getNDims() < 4)) {
-                        timeSliceB = 0;
-                    } else {
-                        timeSliceB = timeSlice;
-                    }
-
-                    fillImageBuffer(showAxis, zSlice);
-
-                } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-                if (imageB == null) {
-                    pix = 0;
-
-                    TransferFunction tf_imgA = LUTa.getTransferFunction();
-
-                    for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                        for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                            index = (j * imageExtents[axisOrder[0]]) + i;
-
-                            pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-
-                            pixBuffer[index] = lutBufferRemapped[pix];
-                        } // end of for (i = 0; i < imageExtents[xz0]; i++)
-                    } // end of for (j = 0; j < imageExtents[xz1]; j++)
-                } // end of if (imageB == null)
-                else if (imageB != null) { // imageB != null
-                    indexA = indexB = 0;
-
-                    TransferFunction tf_imgA = LUTa.getTransferFunction();
-                    TransferFunction tf_imgB = LUTb.getTransferFunction();
-
-                    for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                        for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                            index = (j * imageExtents[axisOrder[0]]) + i;
-
-                            indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                            indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-
-                            Ra = iRGB_LUTa[0][indexA];
-                            Ga = iRGB_LUTa[1][indexA];
-                            Ba = iRGB_LUTa[2][indexA];
-
-                            pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                            cleanImageBufferA[index] = pix;
-                            cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                                                           ((int) (RGB_LUTb[1][indexB]) << 8) |
-                                                           (int) (RGB_LUTb[2][indexB]);
-                        } // end of for (i = 0; i < imageExtents[xz0]; i++)
-                    } // end of for (j = 0; j < imageExtents[xz1]; j++)
-                } // end of else for imageB != null
-            } // end of else if (triComponentOrientation == XZ)
-            else { // triComponentOrientation == ZY
-
-                if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                    slice = zSlice;
-                    timeSlice = tSlice;
-
-                    if (imageA.getNDims() < 4) {
-                        timeSliceA = 0;
-                    } else {
-                        timeSliceA = timeSlice;
-                    }
-
-                    if ((imageB != null) && (imageB.getNDims() < 4)) {
-                        timeSliceB = 0;
-                    } else {
-                        timeSliceB = timeSlice;
-                    }
-
-                    fillImageBuffer(showAxis, zSlice);
-
-                } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-                if (imageB == null) {
-                    pix = 0;
-
-                    TransferFunction tf_imgA = LUTa.getTransferFunction();
-
-                    for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
-
-                        for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                            index = (j * imageExtents[axisOrder[0]]) + i;
-                            pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
+                        try {
                             cleanImageBufferA[index] = lutBufferRemapped[pix];
-                        } // end of for (i = 0; i < imageExtents[yz0]; i++)
-                    } // end of for (j = 0; j < imageExtents[yz1]; j++)
-                } // end of if (imageB == null)
-                else if (imageB != null) { // imageB != null
-                    indexA = indexB = 0;
+                        } catch (ArrayIndexOutOfBoundsException e) {
+                            Preferences.debug("error = " + e + "\n");
+                            Preferences.debug("index = " + index + " pix = " + pix + "\n");
+                        }
+                    } // for (i = 0; i < imageExtents[xy0]; i++)
+                } // for (j = 0; j < imageExtents[xy1]; j++)
+            } // if (imageB == null)
+            else if (imageB != null) { // imageB != null
+                indexA = indexB = 0;
 
-                    TransferFunction tf_imgA = LUTa.getTransferFunction();
-                    TransferFunction tf_imgB = LUTb.getTransferFunction();
+                TransferFunction tf_imgA = LUTa.getTransferFunction();
+                TransferFunction tf_imgB = LUTb.getTransferFunction();
 
-                    for (j = 0; j < imageExtents[axisOrder[1]]; j++) {
+                for (j = 0; j < localImageExtents[1]; j++) {
 
-                        for (i = 0; i < imageExtents[axisOrder[0]]; i++) {
-                            index = (j * imageExtents[axisOrder[0]]) + i;
+                    for (i = 0; i < localImageExtents[0]; i++) {
+                        index = (j * localImageExtents[0]) + i;
 
-                            indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                            indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
+                        indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
+                        indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
 
-                            Ra = iRGB_LUTa[0][indexA];
-                            Ga = iRGB_LUTa[1][indexA];
-                            Ba = iRGB_LUTa[2][indexA];
+                        Ra = iRGB_LUTa[0][indexA];
+                        Ga = iRGB_LUTa[1][indexA];
+                        Ba = iRGB_LUTa[2][indexA];
 
-                            pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                            cleanImageBufferA[index] = pix;
-                            cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                                                           ((int) (RGB_LUTb[1][indexB]) << 8) |
-                                                           (int) (RGB_LUTb[2][indexB]);
-                        } // end of for (i = 0; i < imageExtents[yz0]; i++)
-                    } // end of for (j = 0; j < imageExtents[yz1]; j++)
-                } // end of else for imageB != null
-            } // end of else for triComponentOrientation == ZY
+                        pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
+                        cleanImageBufferA[index] = pix;
+                        cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
+                            ((int) (RGB_LUTb[1][indexB]) << 8) |
+                            (int) (RGB_LUTb[2][indexB]);
+
+                    } // for (i = 0; i < imageExtents[xy0]; i++)
+                } // for (j = 0; j < imageExtents[xy1]; j++)
+            } // else for imageB != null
 
             setSliceString(String.valueOf(slice + 1));
-
             repaint();
             time = System.currentTimeMillis() - time;
         } catch (OutOfMemoryError oome) {
@@ -3295,17 +2375,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Sets the crosshair coordinate (in screen space) from an image volume point.
-     *
-     * @param  pt3D  volume point (3D) to be converted to screen point
-     */
-    public void updateCrosshairPosition(Point3Df pt3D) {
-        Point2Df screenPt = getScreenCoordinates(pt3D);
-        crosshairPt.x = screenPt.x;
-        crosshairPt.y = screenPt.y;
-    }
-
-    /**
      * Changes the crosshair coordinate (screen coordinate) that this component should display.
      *
      * @param  x  which x screen coordinate to show
@@ -3321,22 +2390,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     }
 
     /**
-     * Updates the TriImage frame position labels based on the currently shown slices in this component.
-     *
-     * @param   triFrame  the frame to set the position labels of
-     * @param   xS        the x coordinate within the tri-image component
-     * @param   yS        the y coordinate within the tri-image component
-     *
-     * @return  DOCUMENT ME!
-     */
-    public Point3Df updateFrameLabels(ViewJFrameBase triFrame, float xS, float yS) {
-        Point3Df point = getVolumePosition(xS, yS, slice);
-        ((ViewJFrameTriImage) triFrame).setPositionLabels((int)point.x, (int)point.y, (int)point.z);
-
-        return point;
-    }
-
-    /**
      * Clean up memory used by the component.
      *
      * @throws  Throwable  if there is a problem encountered during memory clean-up
@@ -3348,75 +2401,26 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         super.finalize();
     }
 
-
-    /**
-     * Gets the current out-of-component slice the component is displaying in volume space (ie, post reversal, if
-     * needed).
-     *
-     * @return  the currently displayed slice in this component
-     */
-    protected final int getCurrentTriImageSlice() {
-        int volumeSlice;
-
-        if (axisFlip[2]) {
-            volumeSlice = imageActive.getExtents()[axisOrder[2]] - 1 - slice;
-        } else {
-            volumeSlice = slice;
-        }
-
-        return volumeSlice;
-    }
-
     /**
      * Returns the extents of the tri planar component (in the component's order, not the image volume's).
      *
      * @return  the extents of the tri image component
      */
-    protected final int[] getTriImageExtents() {
-        int[] extents = new int[3];
-
-        extents[0] = imageActive.getExtents()[axisOrder[0]];
-        extents[1] = imageActive.getExtents()[axisOrder[1]];
-        extents[2] = imageActive.getExtents()[axisOrder[2]];
-
-        return extents;
+    public int[] getExtents()
+    {
+        return localImageExtents;
     }
 
-    /**
-     * Get the factors needed to iterate through the image volume using 0-based indexes. Can be multiplied against
-     * iterators to retreive the index into the image volume data.
-     *
-     * @return  the steps needed to iterate along the dimensions of the backing image volume data
-     */
-    protected int[] getVolumeIterationFactors() {
-        int[] iterationFactors = new int[3];
-
-        if (axisOrder[0] == 0) {
-            iterationFactors[0] = 1;
-        } else if (axisOrder[0] == 1) {
-            iterationFactors[0] = imageActive.getExtents()[0];
-        } else { // axisOrder[0] == 2
-            iterationFactors[0] = imageActive.getSliceSize();
-        }
-
-        if (axisOrder[1] == 0) {
-            iterationFactors[1] = 1;
-        } else if (axisOrder[1] == 1) {
-            iterationFactors[1] = imageActive.getExtents()[0];
-        } else { // axisOrder[1] == 2
-            iterationFactors[1] = imageActive.getSliceSize();
-        }
-
-        if (axisOrder[2] == 0) {
-            iterationFactors[2] = 1;
-        } else if (axisOrder[2] == 1) {
-            iterationFactors[2] = imageActive.getExtents()[0];
-        } else { // axisOrder[2] == 2
-            iterationFactors[2] = imageActive.getSliceSize();
-        }
-
-        return iterationFactors;
+    public float[] getResolutions()
+    {
+        return res;
     }
+
+    public int[] getUnits()
+    {
+        return unitsOfMeasure;
+    }
+
 
     /**
      * This method creates a buffer that will be used to make an image of the painted area on-screen.
@@ -3432,31 +2436,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         opacityInt = opacityInt << 24;
 
         if (slice >= 0) {
-            int[] extents = getTriImageExtents();
+            Point3Df paintPoint = new Point3Df();
+            int iIndex;
+            int[] iterFactors = imageActive.getVolumeIterationFactors( );
 
-            // boolean [] invert = getTriImageReversal();
-            int[] iterFactors = getVolumeIterationFactors();
-            int iZIndex = getCurrentTriImageSlice();
+            for (int iX = 0; iX < localImageExtents[0]; iX++) {
 
-            for (int iX = 0; iX < extents[0]; iX++) {
+                for (int iY = 0; iY < localImageExtents[1]; iY++) {
+                    MipavCoordinateSystems.PatientToModel( new Point3Df( iX, iY, slice ), paintPoint,
+                                                           imageActive, triComponentOrientation );
 
-                for (int iY = 0; iY < extents[1]; iY++) {
-                    int iXIndex = iX;
-                    int iYIndex = iY;
-
-                    if (axisFlip[0]) {
-                        iXIndex = (extents[0] - 1) - iX;
-                    }
-
-                    if (axisFlip[1]) {
-                        iYIndex = (extents[1] - 1) - iY;
-                    }
-
-                    int iIndex = (iZIndex * iterFactors[2]) + (iYIndex * iterFactors[1]) + (iXIndex * iterFactors[0]);
+                    iIndex = (int)((iterFactors[0] * paintPoint.x) +
+                                   (iterFactors[1] * paintPoint.y) +
+                                   (iterFactors[2] * paintPoint.z)   );
 
                     if (paintBitmap.get(iIndex)) {
                         color = color & 0x00ffffff;
-                        paintImageBuffer[iX + (iY * extents[0])] = color | opacityInt;
+                        paintImageBuffer[iX + (iY * localImageExtents[0])] = color | opacityInt;
                     }
                 }
             }
@@ -3481,30 +2477,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int iMin = Math.max(x - hBrushSize, 0);
         int iMax = Math.min(x - hBrushSize + brushSize - 1, imageDim.width - 1);
 
-        int i, j, ri, rj, index;
+        int i, j, index;
 
-        int volSlice = getCurrentTriImageSlice();
+        int[] iterFactors = imageActive.getVolumeIterationFactors( );
 
-        int[] iterFactors = getVolumeIterationFactors();
+        Point3Df paintPoint = new Point3Df();
+        Point2Df scalePoint = new Point2Df( 1, 1 );
 
         for (j = jMin; j <= jMax; j++) {
-
-            if (axisFlip[1]) {
-                rj = imageActive.getExtents()[axisOrder[1]] - 1 - j;
-            } else {
-                rj = j;
-            }
-
             for (i = iMin; i <= iMax; i++) {
+                MipavCoordinateSystems.ScreenToModel( new Point3Df( i, j, slice ), paintPoint,
+                                                      scalePoint, imageActive, triComponentOrientation );
 
-                if (axisFlip[0]) {
-                    ri = imageActive.getExtents()[axisOrder[0]] - 1 - i;
-                } else {
-                    ri = i;
-                }
-
-                index = (iterFactors[0] * ri) + (iterFactors[1] * rj) + (iterFactors[2] * volSlice);
-
+                index = (int)((iterFactors[0] * paintPoint.x) +
+                              (iterFactors[1] * paintPoint.y) +
+                              (iterFactors[2] * paintPoint.z)   );
                 if (paintPixels) {
                     paintBitmap.set(index);
                 } else {
@@ -3512,81 +2499,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                 }
             }
         }
-
-        if (imageActive.getType() == ModelStorageBase.COMPLEX) {
-            int yFactor, zFactor;
-            int temp, sliceC, offset, st;
-
-            temp = iMin;
-            iMin = imageDim.width - Math.max(iMax, 1);
-            iMax = imageDim.width - Math.max(temp, 1);
-            temp = jMin;
-            jMin = imageDim.height - Math.max(jMax, 1);
-            jMax = imageDim.height - Math.max(temp, 1);
-            sliceC = imageActive.getExtents()[2] - Math.max(slice, 1);
-
-            if ((triComponentOrientation == AXIAL) || !hasOrientation) {
-                offset = imageDim.width * imageDim.height * sliceC;
-
-                for (j = jMin; j <= jMax; j++) {
-
-                    for (i = iMin; i <= iMax; i++) {
-                        st = (j * imageDim.width) + i;
-
-                        if (paintPixels) {
-                            paintBitmap.set(offset + st);
-                        } else {
-                            paintBitmap.clear(offset + st);
-                        }
-                    }
-                }
-            } // end of if (triComponentOrientation == XY)
-            else if (triComponentOrientation == CORONAL) {
-                offset = imageActive.getExtents()[0] * sliceC;
-                zFactor = imageActive.getSliceSize();
-
-                for (j = jMin; j <= jMax; j++) {
-
-                    for (i = iMin; i <= iMax; i++) {
-
-                        if (hasOrientation) {
-                            index = (zFactor * (imageActive.getExtents()[2] - 1 - j)) + offset + i;
-                        } else {
-                            index = (zFactor * j) + offset + i;
-                        }
-
-                        if (paintPixels) {
-                            paintBitmap.set(index);
-                        } else {
-                            paintBitmap.clear(index);
-                        }
-                    }
-                }
-            } // end of else if (triComponentOrientation == XZ)
-            else { // triComponentOrientation == ZY
-                zFactor = imageActive.getSliceSize();
-                yFactor = imageActive.getExtents()[0];
-
-                for (j = jMin; j <= jMax; j++) {
-
-                    for (i = iMin; i <= iMax; i++) {
-
-                        if (hasOrientation) {
-                            index = (zFactor * (imageActive.getExtents()[2] - 1 - j)) + (yFactor * i) + sliceC;
-                        } else {
-                            index = (zFactor * i) + (yFactor * j) + sliceC;
-                        }
-
-                        if (paintPixels) {
-                            paintBitmap.set(index);
-                        } else {
-                            paintBitmap.clear(index);
-                        }
-                    }
-                }
-            } // end of else for triComponentOrientation == ZY
-        } // if (imageActive.getType() == ModelStorageBase.COMPLEX)
-
         triImageFrame.updatePaint(paintBitmap);
     }
 
@@ -3697,7 +2609,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             offscreenGraphics2d.drawLine(15, componentHeight - 36, 10, componentHeight - 41);
         } else {
             offscreenGraphics2d.setColor(xColor);
-            offscreenGraphics2d.drawString("Z", 45, 15);
+            offscreenGraphics2d.drawString("Y", 45, 15);
             offscreenGraphics2d.drawLine(10, 9, 39, 9);
             offscreenGraphics2d.drawLine(10, 10, 40, 10);
             offscreenGraphics2d.drawLine(10, 11, 39, 11);
@@ -3705,7 +2617,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             offscreenGraphics2d.drawLine(35, 15, 40, 10);
 
             offscreenGraphics2d.setColor(yColor);
-            offscreenGraphics2d.drawString("Y", 10, 55);
+            offscreenGraphics2d.drawString("Z", 10, 55);
             offscreenGraphics2d.drawLine(9, 10, 9, 39);
             offscreenGraphics2d.drawLine(10, 10, 10, 40);
             offscreenGraphics2d.drawLine(11, 10, 11, 39);
@@ -3725,17 +2637,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int[] indices = new int[4];
 
 
-        if (getOriginalOrientation() == CORONAL) {
+        if (imageA.getImageOrientation() == CORONAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_RIGHT_BACK;
             indices[2] = ViewJFrameTriImage.UPPER_RIGHT_FRONT;
             indices[3] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
-        } else if (getOriginalOrientation() == AXIAL) {
+        } else if (imageA.getImageOrientation() == AXIAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
             indices[1] = ViewJFrameTriImage.UPPER_RIGHT_FRONT;
             indices[2] = ViewJFrameTriImage.LOWER_RIGHT_FRONT;
             indices[3] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
-        } else if (getOriginalOrientation() == SAGITTAL) {
+        } else if (imageA.getImageOrientation() == SAGITTAL) {
 
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
@@ -3749,11 +2661,19 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
+        Point2Df screenPoint1 = new Point2Df();
+        Point2Df screenPoint2 = new Point2Df();
+        Point2Df screenPoint3 = new Point2Df();
+        Point2Df screenPoint4 = new Point2Df();
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[0]], screenPoint1, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[1]], screenPoint2, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[2]], screenPoint3, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[3]], screenPoint4, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
 
-        Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
-        Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
-        Point2Df screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
-        Point2Df screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
 
         graphics.drawLine((int)screenPoint1.x, (int)screenPoint1.y, (int)screenPoint2.x, (int)screenPoint2.y);
         graphics.drawLine((int)screenPoint2.x, (int)screenPoint2.y, (int)screenPoint3.x, (int)screenPoint3.y);
@@ -3764,190 +2684,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         graphics.fillRect((int)screenPoint2.x - 2, (int)screenPoint2.y - 2, 4, 4);
         graphics.fillRect((int)screenPoint3.x - 2, (int)screenPoint3.y - 2, 4, 4);
         graphics.fillRect((int)screenPoint4.x - 2, (int)screenPoint4.y - 2, 4, 4);
-
-        if (true) {
-            return;
-        }
-
-        /*
-                int lowDX;
-                int highDX;
-                int lowDY;
-                int highDY;
-
-                switch (axisOrder[0])
-                {
-                    case 0:
-                        if (axisFlip[0])
-                        {
-                            lowDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - lowX) * zoomX * resolutionX);
-                            highDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - highX) * zoomX * resolutionX);
-                        }
-                        else
-                        {
-                            lowDX = (int) (lowX * zoomX * resolutionX);
-                            highDX = (int) (highX * zoomX * resolutionX);
-                        }
-                        break;
-                    case 1:
-                        if (axisFlip[0])
-                        {
-                            lowDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - lowY) * zoomX * resolutionX);
-                            highDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - highY) * zoomX * resolutionX);
-                        }
-                        else
-                        {
-                            lowDX = (int) (lowY * zoomX * resolutionX);
-                            highDX = (int) (highY * zoomX * resolutionX);
-                        }
-                        break;
-                    case 2:
-                    default:
-                        if (axisFlip[0])
-                        {
-                            lowDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - lowZ) * zoomX * resolutionX);
-                            highDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - highZ) * zoomX * resolutionX);
-                        }
-                        else
-                        {
-                            lowDX = (int) (lowZ * zoomX * resolutionX);
-                            highDX = (int) (highZ * zoomX * resolutionX);
-                        }
-                        break;
-                }
-                switch (axisOrder[1])
-                {
-                    case 0:
-                        if (axisFlip[1])
-                        {
-                            lowDY = (int) ( (imageActive.getExtents()[axisOrder[1]] - lowX) * zoomY * resolutionY);
-                            highDY = (int) ( (imageActive.getExtents()[axisOrder[1]] - highX) * zoomY * resolutionY);
-                        }
-                        else
-                        {
-                            lowDY = (int) (lowX * zoomY * resolutionY);
-                            highDY = (int) (highX * zoomY * resolutionY);
-                        }
-                        break;
-                    case 1:
-                        if (axisFlip[1])
-                        {
-                            lowDY = (int) ( (imageActive.getExtents()[axisOrder[1]] - lowY) * zoomY * resolutionY);
-                            highDY = (int) ( (imageActive.getExtents()[axisOrder[1]] - highY) * zoomY * resolutionY);
-                        }
-                        else
-                        {
-                            lowDY = (int) (lowY * zoomY * resolutionY);
-                            highDY = (int) (highY * zoomY * resolutionY);
-                        }
-                        break;
-                    case 2:
-                    default:
-                        if (axisFlip[1])
-                        {
-                            lowDY = (int) ( (imageActive.getExtents()[axisOrder[1]] - lowZ) * zoomY * resolutionY);
-                            highDY = (int) ( (imageActive.getExtents()[axisOrder[1]] - highZ) * zoomY * resolutionY);
-                        }
-                        else
-                        {
-                            lowDY = (int) (lowZ * zoomY * resolutionY);
-                            highDY = (int) (highZ * zoomY * resolutionY);
-                        }
-                        break;
-                }
-
-                graphics.setColor(Color.red.darker());
-
-                graphics.drawLine(lowDX, lowDY, highDX, lowDY);
-                graphics.drawLine(highDX, lowDY, highDX, highDY);
-                graphics.drawLine(highDX, highDY, lowDX, highDY);
-                graphics.drawLine(lowDX, highDY, lowDX, lowDY);
-                graphics.fillRect(lowDX - 2, lowDY - 2, 5, 5);
-                graphics.fillRect(highDX - 2, lowDY - 2, 5, 5);
-                graphics.fillRect(highDX - 2, highDY - 2, 5, 5);
-                graphics.fillRect(lowDX - 2, highDY - 2, 5, 5);
-
-                // display the height/width of the bounding box above (or below) the top
-                // midpoint and to the right of (or left of) the right midpoint
-                int width = (int) (highX - lowX);
-                int height = (int) (highY - lowY);
-
-                String widthString = String.valueOf(width);
-                String heightString = String.valueOf(height);
-
-                float measuredWidth = (highX - lowX) * res[0];
-                float measuredHeight = (highY - lowY) * res[1];
-
-                String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
-                String yUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]);
-
-                String measuredWidthString = String.valueOf(measuredWidth) + " " + xUnitsString;
-                String measuredHeightString = String.valueOf(measuredHeight) + " " + yUnitsString;
-
-                graphics.setColor(Color.black);
-
-                if ( (lowDY - 45) < 0)
-                {
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY + 21);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY + 19);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDY + 20);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDY + 20);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY + 36);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY + 34);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDY + 35);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDY + 35);
-
-                    graphics.setColor(Color.white);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY + 20);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY + 35);
-                }
-                else
-                {
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY - 24);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY - 26);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDY - 25);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDY - 25);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY - 9);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY - 11);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDY - 10);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDY - 10);
-
-                    graphics.setColor(Color.white);
-                    graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY - 25);
-                    graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDY - 10);
-                }
-
-                graphics.setColor(Color.black);
-                if ( (lowDX - 40) < 0)
-                {
-                    graphics.drawString(measuredHeightString, lowDX + 10, lowDY + 10 + (highDY - lowDY) / 2 + 1);
-                    graphics.drawString(measuredHeightString, lowDX + 10, lowDY + 10 + (highDY - lowDY) / 2 - 1);
-                    graphics.drawString(measuredHeightString, lowDX + 9, lowDY + 10 + (highDY - lowDY) / 2);
-                    graphics.drawString(measuredHeightString, lowDX + 11, lowDY + 10 + (highDY - lowDY) / 2);
-                    graphics.drawString(heightString, lowDX + 10, lowDY + 25 + (highDY - lowDY) / 2 + 1);
-                    graphics.drawString(heightString, lowDX + 10, lowDY + 25 + (highDY - lowDY) / 2 - 1);
-                    graphics.drawString(heightString, lowDX + 9, lowDY + 25 + (highDY - lowDY) / 2);
-                    graphics.drawString(heightString, lowDX + 11, lowDY + 25 + (highDY - lowDY) / 2);
-
-                    graphics.setColor(Color.white);
-                    graphics.drawString(measuredHeightString, lowDX + 10, lowDY + 10 + (highDY - lowDY) / 2);
-                    graphics.drawString(heightString, lowDX + 10, lowDY + 25 + (highDY - lowDY) / 2);
-                }
-                else
-                {
-                    graphics.drawString(measuredHeightString, lowDX - 35, lowDY + 10 + (highDY - lowDY) / 2 + 1);
-                    graphics.drawString(measuredHeightString, lowDX - 35, lowDY + 10 + (highDY - lowDY) / 2 - 1);
-                    graphics.drawString(measuredHeightString, lowDX - 36, lowDY + 10 + (highDY - lowDY) / 2);
-                    graphics.drawString(measuredHeightString, lowDX - 34, lowDY + 10 + (highDY - lowDY) / 2);
-                    graphics.drawString(heightString, lowDX - 35, lowDY + 25 + (highDY - lowDY) / 2 + 1);
-                    graphics.drawString(heightString, lowDX - 35, lowDY + 25 + (highDY - lowDY) / 2 - 1);
-                    graphics.drawString(heightString, lowDX - 36, lowDY + 25 + (highDY - lowDY) / 2);
-                    graphics.drawString(heightString, lowDX - 34, lowDY + 25 + (highDY - lowDY) / 2);
-
-                    graphics.setColor(Color.white);
-                    graphics.drawString(measuredHeightString, lowDX - 35, lowDY + 10 + (highDY - lowDY) / 2);
-                    graphics.drawString(heightString, lowDX - 35, lowDY + 25 + (highDY - lowDY) / 2);
-                }*/
     }
 
     /**
@@ -3960,17 +2696,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         int[] indices = new int[4];
 
-        if (getOriginalOrientation() == CORONAL) {
+        if (imageA.getImageOrientation() == CORONAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
             indices[1] = ViewJFrameTriImage.UPPER_RIGHT_FRONT;
             indices[2] = ViewJFrameTriImage.LOWER_RIGHT_FRONT;
             indices[3] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
-        } else if (getOriginalOrientation() == AXIAL) {
+        } else if (imageA.getImageOrientation() == AXIAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_RIGHT_BACK;
             indices[2] = ViewJFrameTriImage.UPPER_RIGHT_FRONT;
             indices[3] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
-        } else if (getOriginalOrientation() == SAGITTAL) {
+        } else if (imageA.getImageOrientation() == SAGITTAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
             indices[2] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
@@ -3983,12 +2719,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
-
-
-        Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
-        Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
-        Point2Df screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
-        Point2Df screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
+        Point2Df screenPoint1 = new Point2Df();
+        Point2Df screenPoint2 = new Point2Df();
+        Point2Df screenPoint3 = new Point2Df();
+        Point2Df screenPoint4 = new Point2Df();
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[0]], screenPoint1, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[1]], screenPoint2, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[2]], screenPoint3, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[3]], screenPoint4, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
 
         graphics.drawLine((int)screenPoint1.x, (int)screenPoint1.y, (int)screenPoint2.x, (int)screenPoint2.y);
         graphics.drawLine((int)screenPoint2.x, (int)screenPoint2.y, (int)screenPoint3.x, (int)screenPoint3.y);
@@ -3999,260 +2741,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         graphics.fillRect((int)screenPoint2.x - 2, (int)screenPoint2.y - 2, 4, 4);
         graphics.fillRect((int)screenPoint3.x - 2, (int)screenPoint3.y - 2, 4, 4);
         graphics.fillRect((int)screenPoint4.x - 2, (int)screenPoint4.y - 2, 4, 4);
-
-        if (true) {
-            return;
-                  /*
-                          int lowDX;
-                          int highDX;
-                          int lowDZ;
-                          int highDZ;
-
-                          graphics.setColor(Color.red.darker());
-
-
-                          // not doing - 1 on reversal, but i don't quite know why (and my head hurts too much to think about it more)
-                          switch (axisOrder[0])
-                          {
-                              case 0:
-                                  if (axisFlip[0])
-                                  {
-                                      lowDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - lowX) * zoomX * resolutionX);
-                                      highDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - highX) * zoomX * resolutionX);
-                                  }
-                                  else
-                                  {
-                                      lowDX = (int) (lowX * zoomX * resolutionX);
-                                      highDX = (int) (highX * zoomX * resolutionX);
-                                  }
-                                  break;
-                              case 1:
-                                  if (axisFlip[0])
-                                  {
-                                      lowDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - lowY) * zoomX * resolutionX);
-                                      highDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - highY) * zoomX * resolutionX);
-                                  }
-                                  else
-                                  {
-                                      lowDX = (int) (lowY * zoomX * resolutionX);
-                                      highDX = (int) (highY * zoomX * resolutionX);
-                                  }
-                                  break;
-                              case 2:
-                              default:
-                                  if (axisFlip[0])
-                                  {
-                                      lowDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - lowZ) * zoomX * resolutionX);
-                                      highDX = (int) ( (imageActive.getExtents()[axisOrder[0]] - highZ) * zoomX * resolutionX);
-                                  }
-                                  else
-                                  {
-                                      lowDX = (int) (lowZ * zoomX * resolutionX);
-                                      highDX = (int) (highZ * zoomX * resolutionX);
-                                  }
-                                  break;
-                          }
-                          switch (axisOrder[1])
-                          {
-                              case 0:
-                                  if (axisFlip[1])
-                                  {
-                                      lowDZ = (int) ( (imageActive.getExtents()[axisOrder[1]] - lowX) * zoomY * resolutionY);
-                                      highDZ = (int) ( (imageActive.getExtents()[axisOrder[1]] - highX) * zoomY * resolutionY);
-                                  }
-                                  else
-                                  {
-                                      lowDZ = (int) (lowX * zoomY * resolutionY);
-                                      highDZ = (int) (highX * zoomY * resolutionY);
-                                  }
-                                  break;
-                              case 1:
-                                  if (axisFlip[1])
-                                  {
-                                      lowDZ = (int) ( (imageActive.getExtents()[axisOrder[1]] - lowY) * zoomY * resolutionY);
-                                      highDZ = (int) ( (imageActive.getExtents()[axisOrder[1]] - highY) * zoomY * resolutionY);
-                                  }
-                                  else
-                                  {
-                                      lowDZ = (int) (lowY * zoomY * resolutionY);
-                                      highDZ = (int) (highY * zoomY * resolutionY);
-                                  }
-                                  break;
-                              case 2:
-                              default:
-                                  if (axisFlip[1])
-                                  {
-                                      lowDZ = (int) ( (imageActive.getExtents()[axisOrder[1]] - lowZ) * zoomY * resolutionY);
-                                      highDZ = (int) ( (imageActive.getExtents()[axisOrder[1]] - highZ) * zoomY * resolutionY);
-                                  }
-                                  else
-                                  {
-                                      lowDZ = (int) (lowZ * zoomY * resolutionY);
-                                      highDZ = (int) (highZ * zoomY * resolutionY);
-                                  }
-                                  break;
-                          }
-
-                          graphics.drawLine(lowDX, lowDZ, highDX, lowDZ);
-                          graphics.drawLine(highDX, lowDZ, highDX, highDZ);
-                          graphics.drawLine(highDX, highDZ, lowDX, highDZ);
-                          graphics.drawLine(lowDX, highDZ, lowDX, lowDZ);
-                          graphics.fillRect(lowDX - 2, lowDZ - 2, 5, 5);
-                          graphics.fillRect(highDX - 2, lowDZ - 2, 5, 5);
-                          graphics.fillRect(highDX - 2, highDZ - 2, 5, 5);
-                          graphics.fillRect(lowDX - 2, highDZ - 2, 5, 5);
-
-                          // display the height/width of the bounding box above (or below) the top
-                          // midpoint and to the right of (or left of) the right midpoint
-
-                          int width = (int) (highX - lowX);
-                          int height = (int) (highZ - lowZ);
-
-                          String widthString = String.valueOf(width);
-                          String heightString = String.valueOf(height);
-
-                          float measuredWidth = (highX - lowX) * res[0];
-                          float measuredHeight = (highZ - lowZ) * res[1];
-
-                          String xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]);
-                          String yUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]);
-
-                          String measuredWidthString = String.valueOf(measuredWidth) + " " + xUnitsString;
-                          String measuredHeightString = String.valueOf(measuredHeight) + " " + yUnitsString;
-
-                          graphics.setColor(Color.black);
-
-                          if (!hasOrientation)
-                          {
-                              if ( (lowDZ - 45) < 0)
-                              {
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 21);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 19);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDZ + 20);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDZ + 20);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 36);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 34);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDZ + 35);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDZ + 35);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 20);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ + 35);
-                              }
-                              else
-                              {
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 24);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 26);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDZ - 25);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDZ - 25);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 9);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 11);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, lowDZ - 10);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, lowDZ - 10);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 25);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, lowDZ - 10);
-                              }
-
-                              graphics.setColor(Color.black);
-                              if ( (lowDX - 40) < 0)
-                              {
-                                  graphics.drawString(measuredHeightString, lowDX + 10, lowDZ + 10 + (highDZ - lowDZ) / 2 + 1);
-                                  graphics.drawString(measuredHeightString, lowDX + 10, lowDZ + 10 + (highDZ - lowDZ) / 2 - 1);
-                                  graphics.drawString(measuredHeightString, lowDX + 9, lowDZ + 10 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(measuredHeightString, lowDX + 11, lowDZ + 10 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(heightString, lowDX + 10, lowDZ + 25 + (highDZ - lowDZ) / 2 + 1);
-                                  graphics.drawString(heightString, lowDX + 10, lowDZ + 25 + (highDZ - lowDZ) / 2 - 1);
-                                  graphics.drawString(heightString, lowDX + 9, lowDZ + 25 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(heightString, lowDX + 11, lowDZ + 25 + (highDZ - lowDZ) / 2);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredHeightString, lowDX + 10, lowDZ + 10 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(heightString, lowDX + 10, lowDZ + 25 + (highDZ - lowDZ) / 2);
-                              }
-                              else
-                              {
-                                  graphics.drawString(measuredHeightString, lowDX - 35, lowDZ + 10 + (highDZ - lowDZ) / 2 + 1);
-                                  graphics.drawString(measuredHeightString, lowDX - 35, lowDZ + 10 + (highDZ - lowDZ) / 2 - 1);
-                                  graphics.drawString(measuredHeightString, lowDX - 36, lowDZ + 10 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(measuredHeightString, lowDX - 34, lowDZ + 10 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(heightString, lowDX - 35, lowDZ + 25 + (highDZ - lowDZ) / 2 + 1);
-                                  graphics.drawString(heightString, lowDX - 35, lowDZ + 25 + (highDZ - lowDZ) / 2 - 1);
-                                  graphics.drawString(heightString, lowDX - 36, lowDZ + 25 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(heightString, lowDX - 34, lowDZ + 25 + (highDZ - lowDZ) / 2);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredHeightString, lowDX - 35, lowDZ + 10 + (highDZ - lowDZ) / 2);
-                                  graphics.drawString(heightString, lowDX - 35, lowDZ + 25 + (highDZ - lowDZ) / 2);
-                              }
-                          } // if (!hasOrientation)
-                          else
-                          { // hasOrientation
-                              if ( (highDZ - 45) < 0)
-                              {
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 21);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 19);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 21, highDZ + 20);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 19, highDZ + 20);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 36);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 34);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, highDZ + 35);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, highDZ + 35);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 20);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ + 35);
-                              }
-                              else
-                              {
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 24);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 26);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 21, highDZ - 25);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 19, highDZ - 25);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 9);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 11);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 21, highDZ - 10);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 19, highDZ - 10);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredWidthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 25);
-                                  graphics.drawString(widthString, (lowDX + (highDX - lowDX) / 2) - 20, highDZ - 10);
-                              }
-
-                              graphics.setColor(Color.black);
-                              if ( (lowDX - 40) < 0)
-                              {
-                                  graphics.drawString(measuredHeightString, lowDX + 10, highDZ + 10 + (lowDZ - highDZ) / 2 + 1);
-                                  graphics.drawString(measuredHeightString, lowDX + 10, highDZ + 10 + (lowDZ - highDZ) / 2 - 1);
-                                  graphics.drawString(measuredHeightString, lowDX + 9, highDZ + 10 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(measuredHeightString, lowDX + 11, highDZ + 10 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(heightString, lowDX + 10, highDZ + 25 + (lowDZ - highDZ) / 2 + 1);
-                                  graphics.drawString(heightString, lowDX + 10, highDZ + 25 + (lowDZ - highDZ) / 2 - 1);
-                                  graphics.drawString(heightString, lowDX + 9, highDZ + 25 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(heightString, lowDX + 11, highZ + 25 + (lowDZ - highDZ) / 2);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredHeightString, lowDX + 10, highDZ + 10 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(heightString, lowDX + 10, highDZ + 25 + (lowDZ - highDZ) / 2);
-                              }
-                              else
-                              {
-                                  graphics.drawString(measuredHeightString, lowDX - 35, highDZ + 10 + (lowDZ - highDZ) / 2 + 1);
-                                  graphics.drawString(measuredHeightString, lowDX - 35, highDZ + 10 + (lowDZ - highDZ) / 2 - 1);
-                                  graphics.drawString(measuredHeightString, lowDX - 36, highDZ + 10 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(measuredHeightString, lowDX - 34, highDZ + 10 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(heightString, lowDX - 35, highDZ + 25 + (lowDZ - highDZ) / 2 + 1);
-                                  graphics.drawString(heightString, lowDX - 35, highDZ + 25 + (lowDZ - highDZ) / 2 - 1);
-                                  graphics.drawString(heightString, lowDX - 36, highDZ + 25 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(heightString, lowDX - 34, highDZ + 25 + (lowDZ - highDZ) / 2);
-
-                                  graphics.setColor(Color.white);
-                                  graphics.drawString(measuredHeightString, lowDX - 35, highDZ + 10 + (lowDZ - highDZ) / 2);
-                                  graphics.drawString(heightString, lowDX - 35, highDZ + 25 + (lowDZ - highDZ) / 2);
-                              }
-                          } // hasOrientation*/
-        }
     }
 
     /**
@@ -4265,17 +2753,17 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
         int[] indices = new int[4];
 
-        if (getOriginalOrientation() == CORONAL) {
+        if (imageA.getImageOrientation() == CORONAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
             indices[2] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
             indices[3] = ViewJFrameTriImage.LOWER_LEFT_BACK;
-        } else if (getOriginalOrientation() == AXIAL) {
+        } else if (imageA.getImageOrientation() == AXIAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_BACK;
             indices[1] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
             indices[2] = ViewJFrameTriImage.LOWER_LEFT_FRONT;
             indices[3] = ViewJFrameTriImage.LOWER_LEFT_BACK;
-        } else if (getOriginalOrientation() == SAGITTAL) {
+        } else if (imageA.getImageOrientation() == SAGITTAL) {
             indices[0] = ViewJFrameTriImage.UPPER_LEFT_FRONT;
             indices[1] = ViewJFrameTriImage.UPPER_RIGHT_FRONT;
             indices[2] = ViewJFrameTriImage.LOWER_RIGHT_FRONT;
@@ -4288,11 +2776,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
 
         Point3Df[] boundingBoxPoints = triImageFrame.getBoundingBoxPoints();
-
-        Point2Df screenPoint1 = getScreenCoordinates(boundingBoxPoints[indices[0]]);
-        Point2Df screenPoint2 = getScreenCoordinates(boundingBoxPoints[indices[1]]);
-        Point2Df screenPoint3 = getScreenCoordinates(boundingBoxPoints[indices[2]]);
-        Point2Df screenPoint4 = getScreenCoordinates(boundingBoxPoints[indices[3]]);
+        Point2Df screenPoint1 = new Point2Df();
+        Point2Df screenPoint2 = new Point2Df();
+        Point2Df screenPoint3 = new Point2Df();
+        Point2Df screenPoint4 = new Point2Df();
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[0]], screenPoint1, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[1]], screenPoint2, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[2]], screenPoint3, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
+        MipavCoordinateSystems.ModelToScreen( boundingBoxPoints[indices[3]], screenPoint4, m_kScreenScale,
+                                              imageActive, triComponentOrientation );
 
         graphics.drawLine((int)screenPoint1.x, (int)screenPoint1.y, (int)screenPoint2.x, (int)screenPoint2.y);
         graphics.drawLine((int)screenPoint2.x, (int)screenPoint2.y, (int)screenPoint3.x, (int)screenPoint3.y);
@@ -4303,128 +2798,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         graphics.fillRect((int)screenPoint2.x - 2, (int)screenPoint2.y - 2, 4, 4);
         graphics.fillRect((int)screenPoint3.x - 2, (int)screenPoint3.y - 2, 4, 4);
         graphics.fillRect((int)screenPoint4.x - 2, (int)screenPoint4.y - 2, 4, 4);
-
-        if (true) {
-            return;
-        }
-
-
-        /*String widthString;
-         * String heightString; String measuredWidthString; String measuredHeightString; float measuredWidth; float
-         * measuredHeight; String xUnitsString; String yUnitsString; int width; int height; int lowDY; int highDY; int
-         * lowDZ; int highDZ;
-         *
-         * graphics.setColor(Color.red.darker());
-         *
-         *
-         *
-         * width = (int) (highZ - lowZ); height = (int) (highY - lowY);
-         *
-         * widthString = String.valueOf(width); heightString = String.valueOf(height);
-         *
-         * if (hasOrientation) { measuredWidth = (highZ - lowZ) * res[1]; measuredHeight = (highY - lowY) * res[0]; } else
-         * { measuredWidth = (highZ - lowZ) * res[0]; measuredHeight = (highY - lowY) * res[1]; }
-         *
-         * xUnitsString = FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[0]); yUnitsString =
-         * FileInfoBase.getUnitsOfMeasureAbbrevStr(unitsOfMeasure[1]);
-         *
-         * measuredWidthString = String.valueOf(measuredWidth) + " " + xUnitsString; measuredHeightString =
-         * String.valueOf(measuredHeight) + " " + yUnitsString;
-         *
-         * graphics.setColor(Color.black); if (!hasOrientation) { if ( (lowDY - 45) < 0) {
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY + 21);
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY + 19);
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 21, lowDY + 20);
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 19, lowDY + 20);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY + 36);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY + 34);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 21, lowDY + 35);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 19, lowDY + 35);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2)
-         * - 20, lowDY + 20);     graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY + 35); }
-         * else {     graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY - 24);
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY - 26);
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 21, lowDY - 25);
-         * graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2) - 19, lowDY - 25);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY - 9);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY - 11);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 21, lowDY - 10);
-         * graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 19, lowDY - 10);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredWidthString, (lowDZ + (highDZ - lowDZ) / 2)
-         * - 20, lowDY - 25);     graphics.drawString(widthString, (lowDZ + (highDZ - lowDZ) / 2) - 20, lowDY - 10); }
-         *
-         * graphics.setColor(Color.black); if ( (lowDZ - 40) < 0) {     graphics.drawString(measuredHeightString, lowDZ +
-         * 10, lowDY + 10 + (highDY - lowDY) / 2 + 1);     graphics.drawString(measuredHeightString, lowDZ + 10, lowDY +
-         * 10 + (highDY - lowDY) / 2 - 1);     graphics.drawString(measuredHeightString, lowDZ + 9, lowDY + 10 + (highDY
-         * - lowDY) / 2);     graphics.drawString(measuredHeightString, lowDZ + 11, lowDY + 10 + (highDY - lowDY) / 2);
-         *    graphics.drawString(heightString, lowDZ + 10, lowDY + 25 + (highDY - lowDY) / 2 + 1);
-         * graphics.drawString(heightString, lowDZ + 10, lowDY + 25 + (highDY - lowDY) / 2 - 1);
-         * graphics.drawString(heightString, lowDZ + 9, lowDY + 25 + (highDY - lowDY) / 2);
-         * graphics.drawString(heightString, lowDZ + 11, lowDY + 25 + (highDY - lowDY) / 2);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredHeightString, lowDZ + 10, lowDY + 10 +
-         * (highDY - lowDY) / 2);     graphics.drawString(heightString, lowDZ + 10, lowDY + 25 + (highDY - lowDY) / 2);
-         * } else {     graphics.drawString(measuredHeightString, lowDZ - 35, lowDY + 10 + (highDY - lowDY) / 2 + 1);
-         *  graphics.drawString(measuredHeightString, lowDZ - 35, lowDY + 10 + (highDY - lowDY) / 2 - 1);
-         * graphics.drawString(measuredHeightString, lowDZ - 36, lowDY + 10 + (highDY - lowDY) / 2);
-         * graphics.drawString(measuredHeightString, lowDZ - 34, lowDY + 10 + (highDY - lowDY) / 2);
-         * graphics.drawString(heightString, lowDZ - 35, lowDY + 25 + (highDY - lowDY) / 2 + 1);
-         * graphics.drawString(heightString, lowDZ - 35, lowDY + 25 + (highDY - lowDY) / 2 - 1);
-         * graphics.drawString(heightString, lowDZ - 36, lowDY + 25 + (highDY - lowDY) / 2);
-         * graphics.drawString(heightString, lowDZ - 34, lowDY + 25 + (highDY - lowDY) / 2);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredHeightString, lowDZ - 35, lowDY + 10 +
-         * (highDY - lowDY) / 2);     graphics.drawString(heightString, lowDZ - 35, lowDY + 25 + (highDY - lowDY) / 2);
-         * } } // if (!hasOrientation) else { // hasOrientation if ( (highDY - 45) < 0) {
-         * graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY + 21);
-         * graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY + 19);
-         * graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 21, highDY + 20);
-         * graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 19, highDY + 20);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY + 36);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY + 34);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 21, highDY + 35);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 19, highDY + 35);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) /
-         * 2) - 20, highDY + 20);     graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY +
-         * 35); } else {     graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY -
-         * 24);     graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY - 26);
-         * graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 21, highDY - 25);
-         * graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) / 2) - 19, highDY - 25);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY - 9);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY - 11);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 21, highDY - 10);
-         * graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 19, highDY - 10);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredHeightString, (lowDZ + (highDZ - lowDZ) /
-         * 2) - 20, highDY - 25);     graphics.drawString(heightString, (lowDZ + (highDZ - lowDZ) / 2) - 20, highDY -
-         * 10); }
-         *
-         * graphics.setColor(Color.black); if ( (lowDZ - 40) < 0) {     graphics.drawString(measuredWidthString, lowDZ +
-         * 10, highDY + 10 + (lowDY - highDY) / 2 + 1);     graphics.drawString(measuredWidthString, lowDZ + 10, highDY
-         * + 10 + (lowDY - highDY) / 2 - 1);     graphics.drawString(measuredWidthString, lowDZ + 9, highDY + 10 +
-         * (lowDY - highDY) / 2);     graphics.drawString(measuredWidthString, lowDZ + 11, highDY + 10 + (lowDY -
-         * highDY) / 2);     graphics.drawString(widthString, lowDZ + 10, highDY + 25 + (lowDY - highDY) / 2 + 1);
-         * graphics.drawString(widthString, lowDZ + 10, highDY + 25 + (lowDY - highDY) / 2 - 1);
-         * graphics.drawString(widthString, lowDZ + 9, highDY + 25 + (lowDY - highDY) / 2);
-         * graphics.drawString(widthString, lowDZ + 11, highDY + 25 + (lowDY - highDY) / 2);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredWidthString, lowDZ + 10, highDY + 10 +
-         * (lowDY - highDY) / 2);     graphics.drawString(widthString, lowDZ + 10, highDY + 25 + (lowDY - highDY) / 2);
-         * } else {     graphics.drawString(measuredWidthString, lowDZ - 35, highDY + 10 + (lowDY - highDY) / 2 + 1);
-         *  graphics.drawString(measuredWidthString, lowDZ - 35, highDY + 10 + (lowDY - highDY) / 2 - 1);
-         * graphics.drawString(measuredWidthString, lowDZ - 36, highDY + 10 + (lowDY - highDY) / 2);
-         * graphics.drawString(measuredWidthString, lowDZ - 34, highDY + 10 + (lowDY - highDY) / 2);
-         * graphics.drawString(widthString, lowDZ - 35, highDY + 25 + (lowDY - highDY) / 2 + 1);
-         * graphics.drawString(widthString, lowDZ - 35, highDY + 25 + (lowDY - highDY) / 2 - 1);
-         * graphics.drawString(widthString, lowDZ - 36, highDY + 25 + (lowDY - highDY) / 2);
-         * graphics.drawString(widthString, lowDZ - 34, highDY + 25 + (lowDY - highDY) / 2);
-         *
-         *   graphics.setColor(Color.white);     graphics.drawString(measuredWidthString, lowDZ - 35, highDY + 10 +
-         * (lowDY - highDY) / 2);     graphics.drawString(widthString, lowDZ - 35, highDY + 25 + (lowDY - highDY) / 2);
-         * }} // else hasOrientation*/
     }
 
     /**
@@ -4455,7 +2828,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
      * @param  offscreenGraphics2d  Graphics2D
      */
     private void drawCrosshairLines(Graphics2D offscreenGraphics2d) {
-
         // This snaps the crosshair to the voxel boundary
         Point2Df pt = crosshairPt;
 
@@ -4489,7 +2861,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     private void drawCrosshairStubs(Graphics2D offscreenGraphics2d) {
 
         // This snaps the crosshair to the voxel boundary
-        // Point pt = getScreenCoordinates(getTriImagePosition(crosshairPt.x, crosshairPt.y));
         Point2Df pt = crosshairPt;
 
         // border
@@ -5019,32 +3390,30 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                         Point3Df[] voiPoints = VOIs.VOIAt(i).exportPoints(k);
 
                         for (int j = 0; j < voiPoints.length; j++) {
-                            Point2Df pt = getScreenCoordinates(new Point3Df((int) voiPoints[j].x, (int) voiPoints[j].y,
-                                                                        (int) voiPoints[j].z));
 
-                            int flipSlice = slice;
+                            Point2Df screenPt = new Point2Df();
+                            Point3Df patientPt = new Point3Df();
+                            MipavCoordinateSystems.ModelToPatient( new Point3Df(voiPoints[j].x, voiPoints[j].y,
+                                                                                voiPoints[j].z),
+                                                                   patientPt, imageActive, triComponentOrientation );
+                            MipavCoordinateSystems.PatientToScreen( patientPt, screenPt, m_kScreenScale,
+                                                                    imageActive, triComponentOrientation );
 
-                            if (axisFlip[2] == true) {
-                                flipSlice = imageActive.getExtents()[axisOrder[2]] - slice - 1;
-                            }
-
-                            int[] orderedVOIPoint = new int[] {
-                                                        (int) voiPoints[j].x, (int) voiPoints[j].y, (int) voiPoints[j].z
-                                                    };
-
-                            if ((!(((int)pt.x == -1) && ((int)pt.y == -1))) && (orderedVOIPoint[axisOrder[2]] == flipSlice)) {
+                            if ((!(((int)screenPt.x == -1) && ((int)screenPt.y == -1))) &&
+                                (patientPt.z == slice) )
+                            {
                                 offscreenGraphics2d.setColor(VOIs.VOIAt(i).getColor());
 
-                                if (hasOrientation) {
-                                    Point label = getVOILabel((int) voiPoints[j].x, (int) voiPoints[j].y,
-                                                              (int) voiPoints[j].z);
-
+                                if (hasOrientation)
+                                {
                                     ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).drawAxialSelf(offscreenGraphics2d,
-                                                                                                           (int)pt.x, (int)pt.y,
-                                                                                                           label.x,
-                                                                                                           label.y);
-                                } // if (hasOrientation)
-                                else {
+                                                                                                           (int)screenPt.x,
+                                                                                                           (int)screenPt.y,
+                                                                                                           (int)patientPt.x,
+                                                                                                           (int)patientPt.y);
+                                }
+                                else
+                                {
                                     ((VOIPoint) (VOIs.VOIAt(i).getCurves()[k].elementAt(j))).drawSelf(zoomX, zoomY,
                                                                                                       resolutionX,
                                                                                                       resolutionY, 0f,
@@ -5077,910 +3446,28 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  show   DOCUMENT ME!
-     * @param  slice  DOCUMENT ME!
-     */
-    private void fillImageBuffer(int show, int slice) {
-        int xDim, yDim, zDim;
 
-        xDim = imageA.getExtents()[0];
-        yDim = imageA.getExtents()[1];
-        zDim = imageA.getExtents()[2];
+    /* MipavCoordinateSystems upgrade: TODO: */
+    /**
+     * Gets the image data based on the triComponentOrientation.
+     *
+     * @param  slice  data slize
+     */
+    private void fillImageBuffer(int slice)
+    {
 
         try {
-
-            switch (show) {
-
-                case SHOW012:
-                    imageA.exportSliceXY((timeSliceA * zDim) + slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXY((timeSliceB * zDim) + slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW012R:
-                    imageA.exportSliceXY((timeSliceA * zDim) + (zDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXY((timeSliceB * zDim) + (zDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW01R2:
-                    imageA.exportDataR1(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR1(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW01R2R:
-                    imageA.exportDataR1(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                        imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR1(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                            imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R12:
-
-                    imageA.exportDataR0(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-
-                    if (imageB != null) {
-                        imageB.exportDataR0(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R12R:
-                    imageA.exportDataR0(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                        imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR0(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                            imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R1R2:
-
-                    imageA.exportDataR0R1(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR0R1(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R1R2R:
-                    imageA.exportDataR0R1(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR0R1(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                              imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW102:
-
-                    imageA.exportDataXD(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXD(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW102R:
-
-                    imageA.exportDataXD(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                        imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXD(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                            imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW10R2:
-
-                    imageA.exportDataXDR0(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW10R2R:
-                    imageA.exportDataXDR0(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                              imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R02:
-
-                    imageA.exportDataXDR1(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR1(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R02R:
-
-                    imageA.exportDataXDR1(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR1(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                              imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R0R2:
-                    imageA.exportDataXDR0R1(((timeSliceA * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0R1(((timeSliceB * zDim) + slice) * xDim * yDim, xDim, yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R0R2R:
-                    imageA.exportDataXDR0R1(((timeSliceA * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                            imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0R1(((timeSliceB * zDim) + (zDim - 1 - slice)) * xDim * yDim, xDim, yDim,
-                                                imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW021:
-
-                    // z was y in the original image
-                    imageA.exportSliceXZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW021R:
-
-                    imageA.exportSliceXZ(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXZ(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW02R1:
-
-                    imageA.exportSliceXZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW02R1R:
-
-                    imageA.exportSliceXZR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXZR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R21:
-
-                    imageA.exportSliceXRZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXRZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R21R:
-
-                    imageA.exportSliceXRZ(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXRZ(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R2R1:
-
-                    imageA.exportSliceXRZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXRZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R2R1R:
-
-                    imageA.exportSliceXRZR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceXRZR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW201:
-
-                    imageA.exportSliceZX(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZX(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW201R:
-
-                    imageA.exportSliceZX(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZX(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW20R1:
-
-                    imageA.exportSliceZXR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZXR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW20R1R:
-
-                    imageA.exportSliceZXR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZXR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R01:
-
-                    imageA.exportSliceZRX(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRX(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R01R:
-
-                    imageA.exportSliceZRX(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRX(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R0R1:
-
-                    imageA.exportSliceZRXR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRXR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R0R1R:
-
-                    imageA.exportSliceZRXR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRXR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW120:
-
-                    imageA.exportSliceYZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW120R:
-
-                    imageA.exportSliceYZ(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYZ(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW12R0:
-
-                    imageA.exportSliceYZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW12R0R:
-
-                    imageA.exportSliceYZR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYZR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R20:
-
-                    imageA.exportSliceYRZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYRZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R20R:
-
-                    imageA.exportSliceYRZ(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYRZ(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R2R0:
-
-                    imageA.exportSliceYRZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYRZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R2R0R:
-
-                    imageA.exportSliceYRZR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceYRZR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW210:
-
-                    imageA.exportSliceZY(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZY(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW210R:
-
-                    imageA.exportSliceZY(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZY(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW21R0:
-
-                    imageA.exportSliceZYR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZYR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW21R0R:
-
-                    imageA.exportSliceZYR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZYR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R10:
-
-                    imageA.exportSliceZRY(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRY(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R10R:
-
-                    imageA.exportSliceZRY(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRY(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R1R0:
-
-                    imageA.exportSliceZRYR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRYR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R1R0R:
-
-                    imageA.exportSliceZRYR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportSliceZRYR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-            } // end switch(show)
-        } // end try
+            imageA.export( triComponentOrientation, timeSliceA, slice, imageBufferA );
+            if (imageB != null)
+            {
+                imageB.export( triComponentOrientation, timeSliceB, slice, imageBufferB );
+            }
+        }
         catch (IOException error) {
-            MipavUtil.displayError("" + error); // Need to fix this
-            error.printStackTrace();
-
-            return;
-        }
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  show   DOCUMENT ME!
-     * @param  slice  DOCUMENT ME!
-     */
-    private void fillImageColorBuffer(int show, int slice) {
-
-        int xDim, yDim, zDim;
-
-        xDim = imageA.getExtents()[0];
-        yDim = imageA.getExtents()[1];
-        zDim = imageA.getExtents()[2];
-
-        try {
-
-            switch (show) {
-
-                case SHOW012:
-                    imageA.exportData(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportData(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                          imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW012R:
-                    imageA.exportData(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                      imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportData(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                          imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW01R2:
-                    imageA.exportDataR1(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR1(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                            imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW01R2R:
-                    imageA.exportDataR1(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                        imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataR1(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                            yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R12:
-                    imageA.exportRGBDataR0(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                           imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBDataR0(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                               imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R12R:
-                    imageA.exportRGBDataR0(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                           imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBDataR0(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                               yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R1R2:
-                    imageA.exportRGBDataR0R1(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                             imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBDataR0R1(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                                 imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R1R2R:
-                    imageA.exportRGBDataR0R1(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                             yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBDataR0R1(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                                 yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW102:
-                    imageA.exportDataXD(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXD(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                            imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW102R:
-                    imageA.exportDataXD(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                        imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXD(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                            yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW10R2:
-                    imageA.exportDataXDR0(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                              imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW10R2R:
-                    imageA.exportDataXDR0(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                              yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R02:
-                    imageA.exportDataXDR1(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR1(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                              imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R02R:
-                    imageA.exportDataXDR1(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                          imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR1(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                              yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R0R2:
-                    imageA.exportDataXDR0R1(((timeSliceA * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                            imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0R1(((timeSliceB * zDim) + slice) * 4 * xDim * yDim, 4 * xDim, yDim,
-                                                imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R0R2R:
-                    imageA.exportDataXDR0R1(((timeSliceA * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                            yDim, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportDataXDR0R1(((timeSliceB * zDim) + (zDim - 1 - slice)) * 4 * xDim * yDim, 4 * xDim,
-                                                yDim, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW021:
-
-                    // z was y in the original image
-                    imageA.exportRGBSliceXZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW021R:
-                    imageA.exportRGBSliceXZ(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXZ(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW02R1:
-                    imageA.exportRGBSliceXZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW02R1R:
-                    imageA.exportRGBSliceXZR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXZR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R21:
-                    imageA.exportRGBSliceXRZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXRZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R21R:
-                    imageA.exportRGBSliceXRZ(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXRZ(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R2R1:
-                    imageA.exportRGBSliceXRZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXRZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW0R2R1R:
-                    imageA.exportRGBSliceXRZR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXRZR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW201:
-                    imageA.exportRGBSliceZX(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZX(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW201R:
-                    imageA.exportRGBSliceZX(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZX(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW20R1:
-                    imageA.exportRGBSliceZXR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZXR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW20R1R:
-                    imageA.exportRGBSliceZXR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZXR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R01:
-                    imageA.exportRGBSliceZRX(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRX(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R01R:
-                    imageA.exportRGBSliceZRX(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRX(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R0R1:
-                    imageA.exportRGBSliceZRXR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRXR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R0R1R:
-                    imageA.exportRGBSliceZRXR(timeSliceA, (yDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRXR(timeSliceB, (yDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW120:
-                    imageA.exportRGBSliceYZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW120R:
-                    imageA.exportRGBSliceYZ(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYZ(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW12R0:
-                    imageA.exportRGBSliceYZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW12R0R:
-                    imageA.exportRGBSliceYZR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYZR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R20:
-                    imageA.exportRGBSliceYRZ(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYRZ(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R20R:
-                    imageA.exportRGBSliceYRZ(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYRZ(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R2R0:
-                    imageA.exportRGBSliceYRZR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYRZR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW1R2R0R:
-                    imageA.exportRGBSliceYRZR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceYRZR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW210:
-                    imageA.exportRGBSliceZY(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZY(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW210R:
-                    imageA.exportRGBSliceZY(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZY(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW21R0:
-                    imageA.exportRGBSliceZYR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZYR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW21R0R:
-                    imageA.exportRGBSliceZYR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZYR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R10:
-                    imageA.exportRGBSliceZRY(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRY(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R10R:
-                    imageA.exportRGBSliceZRY(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRY(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R1R0:
-                    imageA.exportRGBSliceZRYR(timeSliceA, slice, imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRYR(timeSliceB, slice, imageBufferB);
-                    }
-
-                    break;
-
-                case SHOW2R1R0R:
-                    imageA.exportRGBSliceZRYR(timeSliceA, (xDim - 1 - slice), imageBufferA);
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZRYR(timeSliceB, (xDim - 1 - slice), imageBufferB);
-                    }
-
-                    break;
-            } // end switch(showXY)
-        } catch (IOException error) {
             MipavUtil.displayError("" + error);
-
+            error.printStackTrace();
             return;
         }
-
     }
 
     /**
@@ -6046,13 +3533,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             VOIs.VOIAt(i).setAllActive(false); // deactivate all other VOIs
         }
 
-        int originalOrientation = getOriginalOrientation();
+        int originalOrientation = imageA.getImageOrientation();
 
         for (int i = 0; i < nVOI; i++) {
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) // curve type is a VOI point
             {
-                Point3Df mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
+                Point3Df mouse2D = new Point3Df( mouseEvent.getX(), mouseEvent.getY(), slice );
+                Point3Df mousePt = new Point3Df();
+                MipavCoordinateSystems.ScreenToModel( mouse2D, mousePt, m_kScreenScale, imageActive, triComponentOrientation );
+                //Point3Df mousePt = getTriImagePosition(mouseEvent.getX(), mouseEvent.getY());
                 int xOrg = (int)mousePt.x;
                 int yOrg = (int)mousePt.y;
                 int zOrg = (int)mousePt.z;
@@ -6126,10 +3616,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     /**
      * DOCUMENT ME!
      *
-     * @param  idx0  DOCUMENT ME!
-     * @param  idx1  DOCUMENT ME!
      */
-    private void showIntensityGraph(int idx0, int idx1) {
+    private void showIntensityGraph()
+        {
         ViewJFrameGraph lineGraph;
         int length;
         int c;
@@ -6162,8 +3651,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                                                                                                               c,
                                                                                                               getActiveImageBuffer(),
                                                                                                               res,
-                                                                                                              getActiveImage().getExtents()[idx0],
-                                                                                                              getActiveImage().getExtents()[idx1]);
+                                                                                                              localImageExtents[0],
+                                                                                                              localImageExtents[0]);
 
                 if (c == 0) {
                     rgbPos = new float[3][pts];
@@ -6178,14 +3667,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if (intensityLine.getContourGraph() == null) {
                 ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbInten, "Intensity Graph", intensityLine,
-                                                                   FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(idx0)));
+                                                                   FileInfoBase.getUnitsOfMeasureAbbrevStr( unitsOfMeasure[0] ));
 
                 contourGraph.setDefaultDirectory(getActiveImage().getUserInterface().getDefaultDirectory());
                 contourGraph.setVisible(true);
                 intensityLine.setContourGraph(contourGraph);
                 contourGraph.setVOI(intensityLine);
             } else {
-                intensityLine.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(idx0)));
+                intensityLine.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr( unitsOfMeasure[1] ));
                 intensityLine.getContourGraph().saveNewFunction(rgbPos, rgbInten, 0);
             }
         } else {
@@ -6194,8 +3683,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             position = new float[(length * 2) + 1];
             intensity = new float[(length * 2) + 1];
             pts = intensityLine.findPositionAndIntensity(slice, 0, position, intensity, imageBufferActive, res,
-                                                         imageActive.getExtents()[idx0],
-                                                         imageActive.getExtents()[idx1]);
+                                                         localImageExtents[0], localImageExtents[1] );
             pos = new float[pts];
             inten = new float[pts];
 
@@ -6206,13 +3694,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             if (intensityLine.getContourGraph() == null) {
                 lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", intensityLine,
-                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(idx0)));
+                                                FileInfoBase.getUnitsOfMeasureAbbrevStr( unitsOfMeasure[0] ) );
                 lineGraph.setDefaultDirectory(imageActive.getUserInterface().getDefaultDirectory());
                 lineGraph.setVisible(true);
                 intensityLine.setContourGraph(lineGraph);
                 lineGraph.setVOI(intensityLine);
             } else {
-                intensityLine.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(imageActive.getFileInfo(0).getUnitsOfMeasure(idx0)));
+                intensityLine.getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr( unitsOfMeasure[1] ) );
                 intensityLine.getContourGraph().replaceFunction(pos, inten, intensityLine, 0);
             }
         }

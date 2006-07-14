@@ -1216,7 +1216,12 @@ public class FileDicom extends FileDicomBase {
 
         double slope = fileInfo.getRescaleSlope();
         double intercept = fileInfo.getRescaleIntercept();
-
+        
+        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE){
+            slope = 1;
+            intercept = 0;
+        }
+        
         for (int i = 0; i < buffer.length; i++) {
             tmp = buffer[i];
 
@@ -1376,6 +1381,11 @@ public class FileDicom extends FileDicomBase {
 
         float slope = (float) fileInfo.getRescaleSlope();
         float intercept = (float) fileInfo.getRescaleIntercept();
+        
+        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE){
+            slope = 1;
+            intercept = 0;
+        }
 
         for (int i = 0; i < buffer.length; i++) {
             tmp = buffer[i];
@@ -1822,8 +1832,6 @@ public class FileDicom extends FileDicomBase {
         }
 
         fileInfo.setEndianess(LITTLE_ENDIAN);
-        fileInfo.setFileName(fileName);
-        fileInfo.setFileDirectory(fileDir);
     }
 
     /**

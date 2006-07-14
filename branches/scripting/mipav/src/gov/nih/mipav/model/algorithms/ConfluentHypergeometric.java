@@ -4,13 +4,63 @@ import gov.nih.mipav.view.*;
 
 /**  This code calculates the confluent hypergeometric function of input parameters
  *   a and b and input argument x
- *   A typcial usage would be:
+ *   A typical usage for the routine requiring real parameters and a real argument would be:
  *   double result[] = new double[1];
  *   ConfluentHypergeometric ch = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
  *                                                            -0.5, 1, 1.0, result);
  *   ch.run();
  *   Preferences.debug("Confluent hypergeomtric result = " + result[0] + "\n");
  *   UI.setDataText("Confluent hypergeometric result = " + result[0] + "\n");
+ *   
+ *   A typcial usage for the routine requiring real parameters and a complex argument would be:
+ *   ConfluentHypergeometric cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
+ *                                                               -0.5, 1.0, realZ, imagZ, 
+ *                                                               realResult, imagResult);
+ *   ch.run();
+ *   System.out.println("realResult[0] = " + realResult[0]);
+ *   System.out.println("imagResult[0] = " + imagResult[0]);
+ *   
+ *   A typical usage for the routine allowing complex parameters and a complex argument would be:
+ *   ConfluentHypergeometric cf;
+ *   int Lnchf = 0;
+ *   int ip = 700;
+ *   double realResult[] = new double[1];
+ *   double imagResult[] = new double[1];
+ *   cf = new ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, 10.0, 0.0,
+ *                                    Lnchf, ip, realResult, imagResult);
+ *   cf.run();
+ *   System.out.println("realResult[0] = " + realResult[0]);
+ *   System.out.println("imagResult[0] = " + imagResult[0]);
+ *   Since this complex routine allows large magnitude x, it should generally be used 
+ *   instead of the real version routine.
+ *   
+ *   For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
+ *   Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
+ *   and Atul Bhalla the results were:
+ *   From x = -706 to x = +184 the results of the 2 routines matched to at least 1 part in 1E5.
+  
+ *   For x = -3055 to x = +184 the ACM routine seemed to give valid results.
+ *   For x <= -3056 the ACM routine results oscillated wildly and at x = -3200 the
+ *   result was frozen at 1.0E75.
+ *   For x >= +185 the ACM result was frozen at 1.0E75.
+ *   The log result was also seen to oscillate for x <= -3056.
+  
+ *   For x = -706 to x = +781 the CHGM routine seemed to give valid results.
+ *   For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the
+ *   CHGM routine gave NaN.
+ *   For x >= +783 the CHGM routine gave a result of -infinity.
+ *   
+ *   For 1F1(-1/2, 2, x) the results were very similar:
+ *   From x = -706 to x = +189 the results of the 2 routines matched to at least 1 part in 1E5.
+  
+ *   From x = -3058 to x = +189 the ACM routine seemed to give valid results.
+ *   At x <= -3059 the ACM results oscillated wildly.
+ *   For x > +189 the ACM result was frozen at 1.0E75.
+  
+ *   For x = -706 to x = +791 the CHGM routine seemed to give valid results.
+ *   For x = -707 to x = -745 the CHGM routine gave infinity and for x <= -746 the 
+ *   CHGM routine gave NaN.
+ *   For x >= +792 the CHGM routine gave a result of -infinity.
 */
 
 public class ConfluentHypergeometric {
@@ -25,6 +75,8 @@ public class ConfluentHypergeometric {
     public static final int REAL_VERSION = 1;
     
     public static final int COMPLEX_VERSION = 2;
+    
+    public static final int REALPARAM_COMPLEXARG_VERSION = 3;
     
     /** Tells whether confluent hypergeometric function is of first or second kind */
     private int kind;
@@ -66,7 +118,7 @@ public class ConfluentHypergeometric {
      * is not always trivial to predict which cases these might be.
      * One pragmatic approach is to simply run the evaluator using a value of 10,
      * then increase ip, run the evaluator again and compare the returned results.
-     * Nardin et al. state that overwriting memory may occur if ip exceeds 777.
+     * Overwriting memory may occur if ip exceeds 776.
      * Setting IP = 0 causes the program to estimate the number of array positions */
     private int ip;
     
@@ -102,6 +154,27 @@ public class ConfluentHypergeometric {
         this.x = x;
         this.result = result;
         this.version = REAL_VERSION;
+    }
+    
+    /**
+     * @param kind Tells whether confluent hypergeometric function is of first or second kind
+     * @param a input real parameter
+     * @param b input real parameter
+     * @param realZ input real part of argument
+     * @param imagZ input imaginary part of argument
+     * @param realResult real part of outputted result
+     * @param imagResult imaginary part of outputted result
+     */
+    public ConfluentHypergeometric(int kind, double a, double b, 
+            double realZ, double imagZ, double realResult[], double imagResult[]) {
+        this.kind = kind;
+        this.a = a;
+        this.b = b;
+        this.realZ = realZ;
+        this.imagZ = imagZ;
+        this.realResult = realResult;
+        this.imagResult = imagResult;
+        this.version = REALPARAM_COMPLEXARG_VERSION;
     }
     
     /**
@@ -149,6 +222,10 @@ public class ConfluentHypergeometric {
     public void run() {
         if ((kind == CONFLUENT_HYPERGEOMETRIC_FIRST_KIND) && (version == REAL_VERSION)) {
             firstKindRealArgument();
+        }
+        else if ((kind == CONFLUENT_HYPERGEOMETRIC_FIRST_KIND) &&
+                (version == REALPARAM_COMPLEXARG_VERSION)) {
+            firstKindComplexArgument();
         }
         else if ((kind == CONFLUENT_HYPERGEOMETRIC_FIRST_KIND) && (version == COMPLEX_VERSION)) {
             firstKindComplex();
@@ -290,23 +367,23 @@ public class ConfluentHypergeometric {
         
         // Set to zero any arguments which are below the precision of the machine
         ar2 = realA * sigfig;
-        ar = (int)ar2;
-        ar2 = (int)((ar2-ar)*rmax + 0.5);
+        ar = Math.floor(ar2+0.5);
+        ar2 = Math.rint((ar2-ar)*rmax);
         ai2 = imagA * sigfig;
-        ai = (int)ai2;
-        ai2 = (int)((ai2-ai)*rmax + 0.5);
+        ai = Math.floor(ai2+0.5);
+        ai2 = Math.rint((ai2-ai)*rmax);
         cr2 = realB * sigfig;
-        cr = (int)cr2;
-        cr2 = (int)((cr2-cr)*rmax + 0.5);
+        cr = Math.floor(cr2+0.5);
+        cr2 = Math.rint((cr2-cr)*rmax);
         ci2 = imagB * sigfig;
-        ci = (int)ci2;
-        ci2 = (int)((ci2-ci)*rmax + 0.5);
+        ci = Math.floor(ci2+0.5);
+        ci2 = Math.rint((ci2-ci)*rmax);
         xr2 = realZ * sigfig;
-        xr = (int)xr2;
-        xr2 = (int)((xr2-xr)*rmax + 0.5);
+        xr = Math.floor(xr2+0.5);
+        xr2 = Math.rint((xr2-xr)*rmax);
         xi2 = imagZ * sigfig;
-        xi = (int)xi2;
-        xi2 = (int)((xi2-xi)*rmax + 0.5);
+        xi = Math.floor(xi2+0.5);
+        xi2 = Math.rint((xi2-xi)*rmax);
         
         // Warn the user that the input value was so close to zero that it
         // was set equal to zero.
@@ -336,8 +413,8 @@ public class ConfluentHypergeometric {
         }
         nmach = (int)(0.4342944819*Math.log(Math.pow(2.0, bit)));
         if ((ci == 0.0) && (ci2 == 0.0) && (realB < 0.0)) {
-            if (Math.abs(realB - (int)(realB + 0.5)) < Math.pow(10.0,-nmach)) {
-                MipavUtil.displayError("Error! Argument A was a negative integer");
+            if (Math.abs(realB - Math.rint(realB)) < Math.pow(10.0,-nmach)) {
+                MipavUtil.displayError("Error! Argument B was a negative integer");
                 return;
             }
         }
@@ -361,8 +438,8 @@ public class ConfluentHypergeometric {
         cnt = sigfig;
         icount = -1;
         if ((ai == 0.0) && (ai2 == 0.0) && (realA < 0.0)) {
-            if (Math.abs(realA - (int)(realA + 0.5)) < Math.pow(10.0,(-nmach))) {
-                icount = -(int)(realA + 0.5);
+            if (Math.abs(realA - Math.rint(realA)) < Math.pow(10.0,(-nmach))) {
+                icount = -(int)Math.round(realA);
             }
         }
         ixcnt = 0;
@@ -639,7 +716,7 @@ public class ConfluentHypergeometric {
         }
         else {
             nf[0] = n1 * Math.pow(10.0, ediff) + n2;
-            ef[0] = n2;
+            ef[0] = e2;
             while (true) {
                 if (Math.abs(nf[0]) < 10.0) {
                     break;
@@ -940,12 +1017,11 @@ public class ConfluentHypergeometric {
         boolean seg5 = true;
         boolean seg6 = true;
         boolean seg7 = true;
-        boolean seg8 = true;
         
         for (i = 1; i <= L+2; i++) {
             z[i] = 0.0;
         }
-        ediff = (int)(a[L+2] - b[L+2] + 0.5);
+        ediff = (int)Math.round(a[L+2] - b[L+2]);
         if ((Math.abs(a[2]) < 0.5) || (ediff <= -L)) {
             for (i = 0; i <= L+2; i++) {
                 c[i] = b[i];
@@ -1043,7 +1119,7 @@ public class ConfluentHypergeometric {
                 } // if (c[2] < 0.5)
                 return;
             } // if (ediff == 0)
-            else if (ediff > 0.0) {
+            else if (ediff > 0) {
                 z[L+2] = a[L+2];
                 for (i = L+1; i >= 2+ediff; i--) {
                     z[i] = a[i] + b[i-ediff] + z[i];
@@ -1074,16 +1150,16 @@ public class ConfluentHypergeometric {
                     c[L+2] = 0.0;
                 } // if (c[2] < 0.5)
                 return;
-            } // else if (ediff > 0.0)
-            else { // ediff < 0.0
+            } // else if (ediff > 0)
+            else { // ediff < 0
                 z[L+2] = b[L+2];
-                for (i = L+1; L >= 2 - ediff; i--) {
+                for (i = L+1; i >= 2 - ediff; i--) {
                     z[i] = a[i+ediff] + b[i] + z[i];
                     if (z[i] >= rmax) {
                         z[i] = z[i] - rmax;
                         z[i-1] = 1.0;
                     } // if (z[i] >= rmax)
-                } // for (i = L+1; L >= 2 - ediff; i--)
+                } // for (i = L+1; i >= 2 - ediff; i--)
                 for (i = 1-ediff; i >= 2; i--) {
                     z[i] = b[i] + z[i];
                     if (z[i] >= rmax) {
@@ -1106,7 +1182,7 @@ public class ConfluentHypergeometric {
                     c[L+2] = 0.0;
                 } // if (c[2] < 0.5)
                 return;
-            } // else ediff < 0.0
+            } // else ediff < 0
         } // if (seg4)
         
         if (seg5) {
@@ -1120,7 +1196,6 @@ public class ConfluentHypergeometric {
                 } // for (i = L+1; i >= 2; i--)
                 seg6 = false;
                 seg7 = false;
-                seg8 = false;
             } // if (ediff <= 0)
         } // if (seg5)
         if (seg6) {
@@ -1139,7 +1214,6 @@ public class ConfluentHypergeometric {
                 } // if (z[i] < 0.0)
             } // for (i = ediff+1; i >= 2; i--)
             seg7 = false;
-            seg8 = false;
         } // if (seg6)
         
         if (seg7) {
@@ -1150,27 +1224,25 @@ public class ConfluentHypergeometric {
                         z[i] = z[i] + rmax;
                         z[i-1] = -1.0;
                     } // if (z[i] < 0.0)
-                } // for (i = L+1; i >= 2; i--)
-                seg8 = false;
+                } // for (i = L+1; i >= 2; i--
             } // if (ediff >= 0)
+            else { // ediff < 0
+                for (i = L+1; i >= 2 - ediff; i--) {
+                    z[i] = b[i] - a[i+ediff] + z[i];
+                    if(z[i] < 0.0) {
+                        z[i] = z[i] + rmax;
+                        z[i-1] = -1.0;
+                    } // if (z[i] < 0.0)
+                } // for (i = L+1; i >= 2 - ediff; i--)
+                for (i = 1-ediff; i >= 2; i--) {
+                    z[i] = b[i] + z[i];
+                    if (z[i] < 0.0) {
+                        z[i] = z[i] + rmax;
+                        z[i-1] = -1.0;
+                    } // if (z[i] < 0.0)
+                } // for (i = 1-ediff; i >= 2; i--)
+            } // else ediff < 0
         } // if (seg7)
-        
-        if (seg8) {
-            for (i = L+1; i >= 2 - ediff; i--) {
-                z[i] = b[i] - a[i+ediff] + z[i];
-                if(z[i] < 0.0) {
-                    z[i] = z[i] + rmax;
-                    z[i-1] = -1.0;
-                } // if (z[i] < 0.0)
-            } // for (i = L+1; i >= 2 - ediff; i--)
-            for (i = 1-ediff; i >= 2; i--) {
-                z[i] = b[i] + z[i];
-                if (z[i] < 0.0) {
-                    z[i] = z[i] + rmax;
-                    z[i-1] = -1.0;
-                } // if (z[i] < 0.0)
-            } // for (i = 1-ediff; i >= 2; i--)
-        } // if (seg8)
         
         if (z[2] <= 0.5) {
             i = 1;
@@ -1188,7 +1260,7 @@ public class ConfluentHypergeometric {
                     c[L+2] = 0.0;
                 } // if (c[2] < 0.5)
                 return;
-            } // if (i == (L+1))
+            } // if (i == (L+2))
             for (j = 2; j <= L+2-i; j++) {
                 z[j] = z[j+i-1];
             } // for (j = 2; j <= L+2-i; j++)
@@ -1234,8 +1306,6 @@ public class ConfluentHypergeometric {
      * a << -1 when x > 0 and a >> 1 when x < 0. In this exceptional case, the evaluation
      * involves the summation of a partially alternating series which results in a loss
      * of significant digits.
-     * Note that with a = -0.5, b = 1, x = 798.2, this code resulted in 
-     * Math.exp(x) == infinite.  So this code cannot be used for large x.
      */
     private void firstKindRealArgument() {
         double a0;
@@ -1376,4 +1446,290 @@ public class ConfluentHypergeometric {
         x = x0;
         return;
     } // firstKindRealArgument
+    
+    /**
+     * This code is a port of the FORTRAN routine CCHG from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 400-402.  It computes confluent hypergeometric functions of the first
+     * kind for real parameters and a complex argument.  It works well except for the case of 
+     * a << -1 when x > 0 and a >> 1 when x < 0. In this exceptional case, the evaluation
+     * involves the summation of a partially alternating series which results in a loss
+     * of significant digits.
+     */
+    private void firstKindComplexArgument() {
+        double realCI;
+        double imagCI;
+        double a0;
+        double a1;
+        double realZ0;
+        double imagZ0;
+        int m;
+        double realCR;
+        double imagCR;
+        int k;
+        double x0;
+        int nL;
+        int La = 0;
+        int n;
+        int j;
+        double realCHW = 0.0;
+        double imagCHW = 0.0;
+        double g1[] = new double[1];
+        double g2[] = new double[1];
+        double ba;
+        double g3[] = new double[1];
+        double realCS1;
+        double imagCS1;
+        double realCS2;
+        double imagCS2;
+        double realCR1;
+        double imagCR1;
+        double realCR2;
+        double imagCR2;
+        int i;
+        double phi;
+        int ns;
+        double realCFAC;
+        double imagCFAC;
+        double realCHG1;
+        double imagCHG1;
+        double realCHG2;
+        double imagCHG2;
+        double realCY0 = 0.0;
+        double imagCY0 = 0.0;
+        double realCY1 = 0.0;
+        double imagCY1 = 0.0;
+        double denom;
+        double realCRG;
+        double imagCRG;
+        double realEPS;
+        double imagEPS;
+        Gamma gam;
+        double realTemp;
+        double magZ;
+        double angZ;
+        double realZtoPow;
+        double imagZtoPow;
+        double realVar;
+        double imagVar;
+        
+        realCI = 0.0;
+        imagCI = 1.0;
+        a0 = a;
+        a1 = a;
+        realZ0 = realZ;
+        imagZ0 = imagZ;
+        if ((b == 0.0) || (b == -(int)Math.abs(b))) {
+            // For b = 0, -1, -2,...
+            realResult[0] = Double.POSITIVE_INFINITY;
+            imagResult[0] = 0.0;
+        }
+        else if ((a == 0.0) || ((realZ == 0.0) && (imagZ == 0.0))) {
+            // 1F1(a, b, 0) = 1F1(0, b, z) = 1
+            realResult[0] = 1.0;
+            imagResult[0] = 0.0;
+        }
+        else if (a == -1.0) {
+            // Special case for a = -1
+            realResult[0] = 1.0 - realZ/b;
+            imagResult[0] = -imagZ/b;
+        }
+        else if (a == b) {
+            // Special case for a = b
+            realResult[0] = Math.exp(realZ) * Math.cos(imagZ);
+            imagResult[0] = Math.exp(realZ) * Math.sin(imagZ);
+        }
+        else if ((a - b) == 1.0) {
+            // Special case for a = b + 1
+            realResult[0] = (1.0 + realZ/b) * Math.exp(realZ) * Math.cos(imagZ) 
+                          - (imagZ/b) * Math.exp(realZ) * Math.sin(imagZ);
+            imagResult[0] = (1.0 + realZ/b) * Math.exp(realZ) * Math.sin(imagZ)
+                          + (imagZ/b) * Math.exp(realZ) * Math.cos(imagZ);
+        }
+        else if ((a == 1.0) && (b == 2.0)) {
+            // Special case for a = 1 and b = 2
+            denom = realZ*realZ + imagZ*imagZ;
+            realResult[0] = ((Math.exp(realZ)*Math.cos(imagZ) - 1.0)*realZ
+                             + (Math.exp(realZ)*Math.sin(imagZ)*imagZ))/denom;
+            imagResult[0] = ((Math.exp(realZ)*Math.cos(imagZ) - 1.0)*(-imagZ)
+                             + (Math.exp(realZ)*Math.sin(imagZ)*realZ))/denom;
+        }
+        else if ((a == (int)a) && (a < 0.0)) {
+            // When a is a negative integer
+            // 1F1(-n, b, z) = sum from k = 0 to n of 
+            // (Pochhammer(-n,k)*(z**k))/(k! * Pochammer(b,k))) for n > 0
+            m = (int)(-a);
+            realCR = 1.0;
+            imagCR = 0.0;
+            realResult[0] = 1.0;
+            imagResult[0] = 0.0;
+            for (k = 1; k <= m; k++) {
+                realTemp = realCR * (a + k - 1.0)/k/(b+k-1.0)*realZ
+                         - imagCR * (a + k - 1.0)/k/(b+k-1.0)*imagZ;
+                imagCR = realCR * (a + k - 1.0)/k/(b+k-1.0)*imagZ
+                         + imagCR * (a + k - 1.0)/k/(b+k-1.0)*realZ;
+                realCR = realTemp;
+                realResult[0] = realResult[0] + realCR;
+                imagResult[0] = imagResult[0] + imagCR;
+            } // for (k = 1; k <= m; k++)
+        } // else if ((a == (int)a) && (a < 0.0))
+        else {
+            x0 = realZ;
+            if (x0 < 0.0) {
+                // For realZ < 0 use 1F1(a, b, z) = exp(z)*1F1(b-a, b, -z)
+                a = b - a;
+                a0 = a;
+                realZ = -realZ;
+                imagZ = -imagZ;
+            } // if (x0 < 0.0)
+            if (a < 2.0) {
+                nL = 0;
+            }
+            else { // a >= 2.0
+                // For a >= 2 use
+                // (2a - b + z)*1F1(a, b, z) = a*1F1(a+1, b, z) - (b-a)*1F1(a-1, b, z)
+                nL = 1;
+                La = (int)a;
+                a = a - La - 1.0;
+            } // else (a >= 2.0)
+            for (n = 0; n <= nL; n++) {
+                if (a0 >= 2.0) {
+                    a = a + 1.0;
+                }
+                if ((Math.sqrt(realZ*realZ + imagZ*imagZ) < 20.0 + Math.abs(b)) || (a < 0.0)) {
+                    // 1F1(a, b, z) = sum from k = 0 to n of 
+                    // (Pochhammer(a,k)*(z**k))/(k! * Pochammer(b,k))) for b not an integer
+                    realResult[0] = 1.0;
+                    imagResult[0] = 0.0;
+                    realCRG = 1.0;
+                    imagCRG = 0.0;
+                    for (j = 1; j <= 500; j++) {
+                        realTemp = realCRG*(a+j-1.0)/(j*(b+j-1.0))*realZ
+                                - imagCRG*(a+j-1.0)/(j*(b+j-1.0))*imagZ;
+                        imagCRG = realCRG*(a+j-1.0)/(j*(b+j-1.0))*imagZ
+                                + imagCRG*(a+j-1.0)/(j*(b+j-1.0))*realZ;
+                        realCRG = realTemp;
+                        realResult[0] = realResult[0] + realCRG;
+                        imagResult[0] = imagResult[0] + imagCRG;
+                        realEPS = realResult[0] - realCHW;
+                        imagEPS = imagResult[0] - imagCHW;
+                        if (Math.sqrt((realEPS*realEPS + imagEPS*imagEPS)/
+                                      (realResult[0]*realResult[0] + imagResult[0]*imagResult[0]))
+                                      < 1.0E-15) {
+                            break;
+                        }
+                        realCHW = realResult[0];
+                        imagCHW = imagResult[0];
+                    } // for (j = 1; j <= 500; j++)
+                } // if ((Math.sqrt(realZ*realZ + imagZ*imagZ) < 20.0 + Math.abs(b)) || (a < 0.0))
+                else {
+                    gam = new Gamma(a, g1);
+                    gam.run();
+                    gam = new Gamma(b, g2);
+                    gam.run();
+                    ba = b - a;
+                    gam = new Gamma(ba, g3);
+                    gam.run();
+                    realCS1 = 1.0;
+                    imagCS1 = 0.0;
+                    realCS2 = 1.0;
+                    imagCS2 = 0.0;
+                    realCR1 = 1.0;
+                    imagCR1 = 0.0;
+                    realCR2 = 1.0;
+                    imagCR2 = 0.0;
+                    for (i = 1; i <= 8; i++) {
+                        realTemp = -realCR1*(a+i-1.0)*(a-b+i)/(realZ*i)
+                                + imagCR1*(a+i-1.0)*(a-b+i)/(imagZ*i);
+                        imagCR1 = -realCR1*(a+i-1.0)*(a-b+i)/(imagZ*i)
+                                  -imagCR1*(a+i-1.0)*(a-b+i)/(realZ*i);
+                        realCR1 = realTemp;
+                        realTemp = realCR2*(b-a+i-1.0)*(i-a)/(realZ*i)
+                                 - imagCR2*(b-a+i-1.0)*(i-a)/(imagZ*i);
+                        imagCR2 =  realCR2*(b-a+i-1.0)*(i-a)/(imagZ*i)
+                                +  imagCR2*(b-a+i-1.0)*(i-a)/(realZ*i);
+                        realCR2 =  realTemp;
+                        realCS1 = realCS1 + realCR1;
+                        imagCS1 = imagCS1 + imagCR1;
+                        realCS2 = realCS2 + realCR2;
+                        imagCS2 = imagCS2 + imagCR2;
+                    } // for (i = 1; i <= 8; i++)
+                    if ((realZ == 0.0) && (imagZ >= 0.0)) {
+                        phi = 0.5 * Math.PI;
+                    }
+                    else if ((realZ == 0.0) && (imagZ < 0.0)) {
+                        phi = -0.5 * Math.PI;
+                    }
+                    else {
+                        phi = Math.atan(imagZ/realZ);
+                    }
+                    if ((phi > -0.5*Math.PI) && (phi < 1.5*Math.PI)) {
+                        ns = 1;
+                    }
+                    else {
+                        ns = -1;
+                    }
+                    if (imagZ != 0.0) {
+                        realCFAC = Math.exp(ns*realCI*Math.PI*a)*Math.cos(ns*imagCI*Math.PI*a);
+                        imagCFAC = Math.exp(ns*realCI*Math.PI*a)*Math.sin(ns*imagCI*Math.PI*a);
+                    }
+                    else { // else imagZ == 0.0
+                        realCFAC = Math.cos(Math.PI*a);
+                        imagCFAC = 0.0;
+                    } // else imagZ == 0.0
+                    magZ = Math.sqrt(realZ*realZ+imagZ*imagZ);
+                    angZ = Math.atan2(imagZ, realZ);
+                    realZtoPow = Math.pow(magZ,-a)*Math.cos(-a*angZ);
+                    imagZtoPow = Math.pow(magZ,-a)*Math.sin(-a*angZ);
+                    realVar = g2[0]/g3[0]*realZtoPow*realCFAC - g2[0]/g3[0]*imagZtoPow*imagCFAC;
+                    imagVar = g2[0]/g3[0]*realZtoPow*imagCFAC + g2[0]/g3[0]*imagZtoPow*realCFAC;
+                    realCHG1 = realVar*realCS1 - imagVar*imagCS1;
+                    imagCHG1 = realVar*imagCS1 + imagVar*realCS1;
+                    realZtoPow = Math.pow(magZ,a-b)*Math.cos((a-b)*angZ);
+                    imagZtoPow = Math.pow(magZ,b-a)*Math.sin((a-b)*angZ);
+                    realVar = g2[0]/g1[0]*Math.exp(realZ)*Math.cos(imagZ)*realZtoPow
+                            - g2[0]/g1[0]*Math.exp(realZ)*Math.sin(imagZ)*imagZtoPow;
+                    imagVar = g2[0]/g1[0]*Math.exp(realZ)*Math.cos(imagZ)*imagZtoPow
+                            + g2[0]/g1[0]*Math.exp(realZ)*Math.sin(imagZ)*realZtoPow;
+                    realCHG2 = realVar*realCS2 - imagVar*imagCS2;
+                    imagCHG2 = realVar*imagCS2 + imagVar*realCS2;
+                    realResult[0] = realCHG1 + realCHG2;
+                    imagResult[0] = imagCHG1 + imagCHG2;
+                } // else
+                if (n == 0) {
+                    realCY0 = realResult[0];
+                    imagCY0 = imagResult[0];
+                } // if (n == 0)
+                if (n == 1) {
+                    realCY1 = realResult[0];
+                    imagCY1 = imagResult[0];
+                } // if (n == 1)
+            } // for (n = 0; n <= nL; n++)
+            if (a0 >= 2.0) {
+                // For a0 >= 2 use
+                // (2a - b + z)*1F1(a, b, z) = a*1F1(a+1, b, z) - (b-a)*1F1(a-1, b, z) 
+                for (i = 1; i <= La-1; i++) {
+                    realResult[0] = ((2.0*a-b+realZ)*realCY1 - imagZ*imagCY1 + (b-a)*realCY0)/a;
+                    imagResult[0] = ((2.0*a-b+realZ)*imagCY1 + imagZ*realCY1 + (b-a)*imagCY0)/a;
+                    realCY0 = realCY1;
+                    imagCY0 = imagCY1;
+                    realCY1 = realResult[0];
+                    imagCY1 = imagResult[0];
+                    a = a + 1.0;
+                } // for (i = 1; i <= La-1; i++)
+            } // if (a0 >= 2.0)
+            if (x0 < 0.0) {
+                realTemp = realResult[0]*Math.exp(-realZ)*Math.cos(-imagZ)
+                         - imagResult[0]*Math.exp(-realZ)*Math.sin(-imagZ);
+                imagResult[0] = realResult[0]*Math.exp(-realZ)*Math.sin(-imagZ)
+                              + imagResult[0]*Math.exp(-realZ)*Math.cos(-imagZ);
+                realResult[0] = realTemp;
+            } // if (x0 < 0.0)
+        } // else
+        a = a1;
+        realZ = realZ0;
+        imagZ = imagZ0;
+        return;
+    } // firstKindComplexArgument
+ 
 }

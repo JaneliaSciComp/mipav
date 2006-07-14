@@ -56,17 +56,12 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
      * @param  extents            initial display dimensions of the image
      * @param  logMagDisplay      display log magnitude of image
      * @param  _orientation       orientation of the image
-     * @param  _axialOrientation  true if the image is known to be in axial orientation and is displayed in
-     *                            ViewJFrameTriImage
-     * @param  _orient            a 3 integer array containing the orientation of each axis
      * @param  isReference        DOCUMENT ME!
      */
     public ViewJComponentSingleRegistration(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa,
                                             float[] imgBufferA, int[] pixelBuffer, float zoom, int[] extents,
-                                            boolean logMagDisplay, int _orientation, boolean _axialOrientation,
-                                            int[] _orient, boolean isReference) {
-        super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
-              _orientation, _axialOrientation, _orient);
+                                            boolean logMagDisplay, int _orientation, boolean isReference) {
+        super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay, _orientation );
 
 
         this.isReference = isReference;

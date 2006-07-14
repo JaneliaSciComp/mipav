@@ -78,7 +78,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      * @param  _parent  Frame that called this
      */
     public ViewJComponentPreviewImage(ModelImage _image, int[] extents, PreviewImageContainer _parent) {
-        super(extents, NA, false, _image.getFileInfo(0).getAxisOrientation());
+        super(NA, _image);
         image = _image;
         imageSize = extents[0] * extents[1];
 

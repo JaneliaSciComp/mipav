@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.dialogs;
 
 
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -54,13 +56,16 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private static int GROWREGION = 5;
 
     /** DOCUMENT ME! */
-    private static int XY = ViewJComponentBase.AXIAL;
+    private static int XY = 0;
+	//private static int XY = ViewJComponentBase.AXIAL;
 
     /** DOCUMENT ME! */
-    private static int XZ = ViewJComponentBase.CORONAL;
+    private static int XZ = 1;
+    //private static int XZ = ViewJComponentBase.CORONAL;
 
     /** DOCUMENT ME! */
-    private static int ZY = ViewJComponentBase.SAGITTAL;
+    private static int ZY = 2;
+    //private static int ZY = ViewJComponentBase.SAGITTAL;
 
     /** autosave elements. */
     private static int delay = 10;
@@ -268,9 +273,6 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private BitSet se2xy, se2yz, se2xz, se3; // structuring elements
 
     /** DOCUMENT ME! */
-    private int sliceDir = XY;
-
-    /** DOCUMENT ME! */
     private float structureSize = 5.0f;
 
     /** DOCUMENT ME! */
@@ -454,7 +456,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      * @param  mouseEvent  MouseEvent
      */
     public void mouseClicked(MouseEvent mouseEvent) {
-        int xS = 0, yS = 0, zS = 0;
+        int xS = 0, yS = 0, zS = 0, sliceDir = XY;
 
         if (getMouseInput == NONE) {
             return;
@@ -472,65 +474,67 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             zS = image.getParentFrame().getComponentImage().getSlice();
             sliceDir = XY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))) {
-
             // triplanar image : XY panel
-            xS = Math.round((mouseEvent.getX() /
-                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomX() *
-                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionX())) -
-                            0.5f); // zoomed x.  Used as cursor
-            yS = Math.round((mouseEvent.getY() /
-                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomY() *
-                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY())) -
-                            0.5f); // zoomed y.  Used as cursor
-            zS = image.getTriImageFrame().getAxialComponentSlice();
+            /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
+            Point2Df screenFactor =
+                new Point2Df( (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomX() *
+                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionX()),
+                              (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomY() *
+                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY())
+                              );
 
-            Point3D pt = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
-                             .getVolumePosition(xS, yS, zS);
-            xS = pt.x;
-            yS = pt.y;
-            zS = pt.z;
-            sliceDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))
-                           .getOriginalOrientation();
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
+                                                                image.getTriImageFrame().getAxialComponentSlice() ),
+                                                  pt, screenFactor, image, FileInfoBase.AXIAL );
+            xS = (int)pt.x;
+            yS = (int)pt.y;
+            zS = (int)pt.z;
+            int origDir = image.getImageOrientation();
+			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XY;
+			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XZ;
+			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XZ;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
-
             // triplanar image : XZ panel
-            xS = Math.round((mouseEvent.getX() /
-                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomX() *
-                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionX())) -
-                            0.5f); // zoomed x.  Used as cursor
-            yS = Math.round((mouseEvent.getY() /
-                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
-                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())) -
-                            0.5f); // zoomed y.  Used as cursor
-            zS = image.getTriImageFrame().getCoronalComponentSlice();
-
-            Point3D pt = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))
-                             .getVolumePosition(xS, yS, zS);
-            xS = pt.x;
-            yS = pt.y;
-            zS = pt.z;
-            sliceDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))
-                           .getOriginalOrientation();
+            /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
+            Point2Df screenFactor =
+                new Point2Df( (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomX() *
+                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionX()),
+                              (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
+                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())
+                              );
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
+                                                                image.getTriImageFrame().getCoronalComponentSlice() ),
+                                                  pt, screenFactor, image, FileInfoBase.CORONAL );
+            xS = (int)pt.x;
+            yS = (int)pt.y;
+            zS = (int)pt.z;
+			int origDir = image.getImageOrientation();
+			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XZ;
+			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XY;
+			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = ZY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
-
             // triplanar image : ZY panel
-            xS = Math.round((mouseEvent.getX() /
-                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomX() *
-                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionX())) -
-                            0.5f); // zoomed x.  Used as cursor
-            yS = Math.round((mouseEvent.getY() /
-                                 (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomY() *
-                                      image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY())) -
-                            0.5f); // zoomed y.  Used as cursor
-            zS = image.getTriImageFrame().getSagittalComponentSlice();
+            /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
+            Point2Df screenFactor =
+                new Point2Df( (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomX() *
+                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionX()),
+                              (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomY() *
+                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY())
+                              );
 
-            Point3D pt = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))
-                             .getVolumePosition(xS, yS, zS);
-            xS = pt.x;
-            yS = pt.y;
-            zS = pt.z;
-            sliceDir = ((ViewJComponentTriImage) image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))
-                           .getOriginalOrientation();
+            Point3Df pt = new Point3Df();
+            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
+                                                                image.getTriImageFrame().getSagittalComponentSlice() ),
+                                                  pt, screenFactor, image, FileInfoBase.SAGITTAL );
+            xS = (int)pt.x;
+            yS = (int)pt.y;
+            zS = (int)pt.z;
+			int origDir = image.getImageOrientation();
+			if (origDir == ViewJComponentBase.AXIAL) sliceDir = ZY;
+			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = ZY;
+			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XY;
         }
 
         Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
@@ -552,27 +556,27 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         if (getMouseInput == GROWREGION) {
             buttonGrowRegion.setText("growing...");
             buttonGrowRegion.repaint();
-            growRegion(xS, yS, zS);
+            growRegion(xS, yS, zS, sliceDir);
             buttonGrowRegion.setText("Grow Region");
         } else if (getMouseInput == BACKGROUND) {
             buttonFillBackground.setText("filling...");
             buttonFillBackground.repaint();
-            fillBackground(xS, yS, zS);
+            fillBackground(xS, yS, zS, sliceDir);
             buttonFillBackground.setText("Fill Background");
         } else if (getMouseInput == ALLBACKGROUNDS) {
             buttonFillBackgrounds.setText("filling...");
             buttonFillBackgrounds.repaint();
-            fillAllBackgrounds(xS, yS, zS);
+            fillAllBackgrounds(xS, yS, zS, sliceDir);
             buttonFillBackgrounds.setText("Fill All Background");
         } else if (getMouseInput == REMOVE) {
             buttonRmObject.setText("removing...");
             buttonRmObject.repaint();
-            removeObject(xS, yS, zS);
+            removeObject(xS, yS, zS, sliceDir);
             buttonRmObject.setText("Remove Object");
         } else if (getMouseInput == REMOVEALL) {
             buttonRmObjects.setText("removing...");
             buttonRmObjects.repaint();
-            removeAllObjects(xS, yS, zS);
+            removeAllObjects(xS, yS, zS, sliceDir);
             buttonRmObjects.setText("Remove All Objects");
         }
 
@@ -2016,11 +2020,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * background filling algorithm.
      *
-     * @param  xS  DOCUMENT ME!
-     * @param  yS  DOCUMENT ME!
-     * @param  zS  DOCUMENT ME!
+     * @param  xS  ModelImage-Space x coordinate
+     * @param  yS  ModelImage-Space y coordinate
+     * @param  zS  ModelImage-Space z coordinate
+     * @param  sliceDir (XY, XZ, ZY)
      */
-    private void fillAllBackgrounds(int xS, int yS, int zS) {
+    private void fillAllBackgrounds(int xS, int yS, int zS, int sliceDir) {
 
         if (image == null) {
             System.gc();
@@ -2191,11 +2196,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * background filling algorithm.
      *
-     * @param  xS  DOCUMENT ME!
-     * @param  yS  DOCUMENT ME!
-     * @param  zS  DOCUMENT ME!
+     * @param  xS  ModelImage-Space x coordinate
+     * @param  yS  ModelImage-Space y coordinate
+     * @param  zS  ModelImage-Space z coordinate
+     * @param  sliceDir (XY, XZ, ZY)
      */
-    private void fillBackground(int xS, int yS, int zS) {
+    private void fillBackground(int xS, int yS, int zS, int sliceDir) {
 
         if (image == null) {
             System.gc();
@@ -2227,6 +2233,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
         // find main object
         if ((backgroundDim == 2) && (sliceDir == XY)) {
+			System.out.println("XY");
             int[][] label;
 
             // extract the slice and invert
@@ -2257,6 +2264,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == XZ)) {
+            System.out.println("XZ");
             int[][] label;
 
             // extract the slice and invert
@@ -2287,6 +2295,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 }
             }
         } else if ((backgroundDim == 2) && (sliceDir == ZY)) {
+            System.out.println("ZY");
             int[][] label;
 
             // extract the slice and invert
@@ -2362,11 +2371,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * region growing algorithm.
      *
-     * @param  xS  DOCUMENT ME!
-     * @param  yS  DOCUMENT ME!
-     * @param  zS  DOCUMENT ME!
+     * @param  xS  ModelImage-Space x coordinate
+     * @param  yS  ModelImage-Space y coordinate
+     * @param  zS  ModelImage-Space z coordinate
+     * @param  sliceDir (XY, XZ, ZY)
      */
-    private void growRegion(int xS, int yS, int zS) {
+    private void growRegion(int xS, int yS, int zS, int sliceDir) {
 
         if (image == null) {
             System.gc();
@@ -3193,11 +3203,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * object removal algorithm.
      *
-     * @param  xS  DOCUMENT ME!
-     * @param  yS  DOCUMENT ME!
-     * @param  zS  DOCUMENT ME!
+     * @param  xS  ModelImage-Space x coordinate
+     * @param  yS  ModelImage-Space y coordinate
+     * @param  zS  ModelImage-Space z coordinate
+     * @param  sliceDir (XY, XZ, ZY)
      */
-    private void removeAllObjects(int xS, int yS, int zS) {
+    private void removeAllObjects(int xS, int yS, int zS, int sliceDir) {
 
         if (image == null) {
             System.gc();
@@ -3364,11 +3375,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /**
      * object removal algorithm.
      *
-     * @param  xS  DOCUMENT ME!
-     * @param  yS  DOCUMENT ME!
-     * @param  zS  DOCUMENT ME!
+     * @param  xS  ModelImage-Space x coordinate
+     * @param  yS  ModelImage-Space y coordinate
+     * @param  zS  ModelImage-Space z coordinate
+     * @param  sliceDir (XY, XZ, ZY)
      */
-    private void removeObject(int xS, int yS, int zS) {
+    private void removeObject(int xS, int yS, int zS, int sliceDir) {
 
         if (image == null) {
             System.gc();

@@ -1091,20 +1091,6 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Gets the image orientation (sagittal, axial, ...).
-     *
-     * @return  integer representing the orientation
-     */
-    public int getImageOrientation() {
-
-        if (fileInfo != null) {
-            return fileInfo[0].getImageOrientation();
-        } else {
-            return FileInfoBase.UNKNOWN_ORIENT;
-        }
-    }
-
-    /**
      * Method that returns the lightbox frame if it exists else returns null.
      *
      * @return  lightbox frame

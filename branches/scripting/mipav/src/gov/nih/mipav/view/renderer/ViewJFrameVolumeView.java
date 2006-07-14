@@ -1204,9 +1204,22 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 }
 
                 m_akPlaneRender = new PlaneRender[3];
-                m_akPlaneRender[0] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, 0, false);
-                m_akPlaneRender[1] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, 1, false);
-                m_akPlaneRender[2] = new PlaneRender(this, imageA, LUTa, imageB, LUTb, config, 2, false);
+                /* MipavCoordinateSystems upgrade: TODO: refactor AXIAL, SAGITTAL, CORONAL defs. */
+                m_akPlaneRender[0] = new PlaneRender(this,
+                                                     imageA, LUTa,
+                                                     imageB, LUTb,
+                                                     config, 
+                                                     ViewJComponentBase.AXIAL, false);
+                m_akPlaneRender[1] = new PlaneRender(this,
+                                                     imageA, LUTa,
+                                                     imageB, LUTb,
+                                                     config, 
+                                                     ViewJComponentBase.SAGITTAL, false);
+                m_akPlaneRender[2] = new PlaneRender(this,
+                                                     imageA, LUTa,
+                                                     imageB, LUTb,
+                                                     config, 
+                                                     ViewJComponentBase.CORONAL, false);
             }
 
             if (isShearWarpEnable) {
@@ -2234,28 +2247,41 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public void setAlphaBlend(int value) { }
 
+
+    /* MipavCoordinateSystems upgrade: TODO: */
     /**
-     * Changes the x or y bar value for the PlaneRender with the x or y bar color that matches the input parameter
-     * kBarColor. The bar value is set as a relative percentage of the X or Y range for that PlaneRender object.
+     * Sets the PlaneRender z-slice value for the view iView. Called from
+     * PlaneRender.
+     * @param iView, AXIAL, SAGITTAL, or CORONAL
+     * @param fValue, the normalized z-slice value:
      *
-     * @param  kBarColor  which bar to change, by matching the bar color
-     * @param  fBar       relative bar position value
      */
-    public void setBar(Color3f kBarColor, float fBar) {
+    public void setSlice( int iView, float fValue )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneRender[ i ].setSlice( iView, fValue );
+        }
+        surRender.getSlicePanel().setSlicePos( iView, fValue );
+    }
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-
-            if ((m_akPlaneRender[iPlane].getXBarColor().x == kBarColor.x) &&
-                    (m_akPlaneRender[iPlane].getXBarColor().y == kBarColor.y) &&
-                    (m_akPlaneRender[iPlane].getXBarColor().z == kBarColor.z)) {
-                m_akPlaneRender[iPlane].setXBar(fBar);
-            } else if ((m_akPlaneRender[iPlane].getYBarColor().x == kBarColor.x) &&
-                           (m_akPlaneRender[iPlane].getYBarColor().y == kBarColor.y) &&
-                           (m_akPlaneRender[iPlane].getYBarColor().z == kBarColor.z)) {
-                m_akPlaneRender[iPlane].setYBar(fBar);
-            }
+    /* MipavCoordinateSystems upgrade: TODO: */
+    /**
+     * Sets the PlaneRender z-slice value for the view iView. Called from
+     * SurfaceRenderer
+     * @param iView, AXIAL, SAGITTAL, or CORONAL
+     * @param fValue, the normalized z-slice value:
+     *
+     */
+    /* MipavCoordinateSystems upgrade: TODO: */
+    public void setSliceFromSurface( int iView, float fValue )
+    {
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_akPlaneRender[ i ].setSlice( iView, fValue );
         }
     }
+
 
     /**
      * Called when the JPanelSurface color button changes.
@@ -2274,33 +2300,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Required by the parent super class, do nothing.
      */
     public void setControls() { }
-
-    /**
-     * Sets the Z Coordinate, or Slice value for the PlaneRender that has the same color as the slider in JPanelSlices:
-     *
-     * @param  fValue  float relative bar position value
-     * @param  kColor  Color which bar to change, by matching the bar color
-     */
-    public void setCoord(float fValue, Color kColor) {
-        Color3f kPlaneColor = new Color3f(kColor);
-
-        this.setBar(kPlaneColor, fValue);
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-
-            /* If the color of this PlaneRender -- the slice color matches the
-             * color of the slider that was moved, then use the new relative
-             * value to update the slice value: */
-            if ((m_akPlaneRender[iPlane].getColor().x == kPlaneColor.x) &&
-                    (m_akPlaneRender[iPlane].getColor().y == kPlaneColor.y) &&
-                    (m_akPlaneRender[iPlane].getColor().z == kPlaneColor.z)) {
-                m_akPlaneRender[iPlane].setSlice(fValue);
-
-                break;
-            }
-        }
-
-    }
 
     /**
      * Do nothing methods, just extend the ViewJframeBase.
@@ -2538,120 +2537,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public void setSlice(int slice) { }
 
     /**
-     * Changes the slice value for the PlaneRender with the ZSlice color that matches the input parameter kPlaneColor.
-     * The slice value is set as a relative percentage of the Z range for that PlaneRender object.
-     *
-     * @param  kPlaneColor  the slice to change, by matching the slice color
-     * @param  fSlice       relative slice value
-     */
-    public void setSlice(Color3f kPlaneColor, float fSlice) {
-        surRender.getSlicePanel().setSlicePos(fSlice, new Color(kPlaneColor.x, kPlaneColor.y, kPlaneColor.z));
-    }
-
-    /**
-     * Called from the surface renderer, sets the slices for the tri planar view to display. Parameters are in terms of
-     * the image and so must be converted.
-     *
-     * @param  x  X Slice of image.
-     * @param  y  Y Slice of image.
-     * @param  z  Z Slice of image.
-     */
-    public void setSlicesFromSurface(int x, int y, int z) {
-
-        y = imageA.getExtents()[1] - 1 - y;
-        z = imageA.getExtents()[2] - 1 - z;
-
-        int newX = x;
-        int newY = y;
-        int newZ = z;
-
-        switch (orient[0]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                newX = x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                newX = imageA.getExtents()[0] - 1 - x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                newY = x;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                newY = imageA.getExtents()[0] - 1 - x;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                newZ = x;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                newZ = imageA.getExtents()[0] - 1 - x;
-                break;
-        }
-
-        switch (orient[1]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                newX = y;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                newX = imageA.getExtents()[1] - 1 - y;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                newY = y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                newY = imageA.getExtents()[1] - 1 - y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                newZ = y;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                newZ = imageA.getExtents()[1] - 1 - y;
-                break;
-        }
-
-        switch (orient[2]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                newX = z;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                newX = imageA.getExtents()[2] - 1 - z;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                newY = z;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                newY = imageA.getExtents()[2] - 1 - z;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                newZ = z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                newZ = imageA.getExtents()[2] - 1 - z;
-                break;
-        }
-
-        updateImages(true);
-
-        setPositionLabels(newX, newY, newZ);
-    }
-
-    /**
      * Required by the parent super class, do nothing.
      *
      * @param  slice  int
@@ -2673,41 +2558,16 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         }
     }
 
+    /* MipavCoordinateSystems upgrade: TODO: */
     /**
-     * Sets the color for the PlaneRender XSlice.
+     * Sets the color for the PlaneRender iView (AXIAL, SAGITTAL, CORONAL) slice.
      *
+     * @param iView (AXIAL, SAGITTAL, CORONAL)
      * @param  color  the z axis color attribute.
      */
-    public void setXSliceHairColor(Color color) {
-
+    public void setSliceHairColor( int iView, Color color ) {
         for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setXSliceHairColor(new Color3f(color));
-            m_akPlaneRender[iPlane].update();
-        }
-    }
-
-    /**
-     * Sets the color for the PlaneRender YSlice.
-     *
-     * @param  color  the y axis color attribute.
-     */
-    public void setYSliceHairColor(Color color) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setYSliceHairColor(new Color3f(color));
-            m_akPlaneRender[iPlane].update();
-        }
-    }
-
-    /**
-     * Sets the color for the PlaneRender ZSlice.
-     *
-     * @param  color  the z axis color attribute.
-     */
-    public void setZSliceHairColor(Color color) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setZSliceHairColor(new Color3f(color));
+            m_akPlaneRender[iPlane].setSliceHairColor( iView, new Color3f(color));
             m_akPlaneRender[iPlane].update();
         }
     }

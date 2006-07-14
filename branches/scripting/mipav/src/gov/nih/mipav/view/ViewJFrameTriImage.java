@@ -216,12 +216,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Label heading for the absolute x, y, z values in the image volume. */
     protected JLabel absLabel;
 
-    /**
-     * Z slice that this image is on. The Z component in the axial (XY) orientation of the image volume. To get the
-     * current image volume coords: <code>triImage[XYAB].getVolumePosition(xSlice, ySlice, zSlice);</code>
-     */
-    protected int axialComponentSlice;
-
     /** DOCUMENT ME! */
     protected JToggleButton[] btnInvisible = new JToggleButton[NUM_INVISIBLE_BUTTONS];
 
@@ -255,12 +249,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     protected Vector coordinateListeners = new Vector();
 
-    /**
-     * Y slice that this image is on. The Y component in the axial (XY) orientation of the image volume. To get the
-     * current image volume coords: <code>triImage[XYAB].getVolumePosition(xSlice, ySlice, zSlice);</code>
-     */
-    protected int coronalComponentSlice;
-
     /** The current values of the absolute position labels. */
     protected Point3D currentAbsolutePositionLabels;
 
@@ -276,7 +264,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * if it is not already in this format. Note that axis reversal is not required in ANALYZE, NIFTI, and DICOM, but it
      * is required in AFNI and MINC.
      */
-    protected boolean hasOrientation;
 
     /** Image control toolbar. */
     protected JToolBar imageToolBar;
@@ -318,21 +305,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected boolean oldLayout = Preferences.is(Preferences.PREF_TRIPLANAR_2X2_LAYOUT); // flag to indicated whether
                                                                                          // or not to use the old
                                                                                          // tri-planar layout
-
     /** Opacity of paint. */
     protected float OPACITY = 0.25f;
-
-    /** Orientations of the three axes. */
-    protected int[] orient = new int[3];
-
-    /**
-     * Indicates which of the 3 components was last interacted with.
-     *
-     * @see  #AXIAL
-     * @see  #CORONAL
-     * @see  #SAGITTAL
-     */
-    protected int orientation;
 
     /** Paint tool bar. */
     protected JToolBar paintToolBar;
@@ -363,12 +337,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Resolutions of image. */
     protected float[] resols = new float[3];
-
-    /**
-     * X slice that this image is on. The X component in the axial (XY) orientation of the image volume. To get the
-     * current image volume coords: <code>triImage[XYAB].getVolumePosition(xSlice, ySlice, zSlice);</code>
-     */
-    protected int sagittalComponentSlice;
 
     /** DOCUMENT ME! */
     protected JLabel scannerLabelX;
@@ -500,106 +468,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Converts to DICOM positions. TODO: This method really should be relocated as it is essentially just a worker
-     * method. Shouldn't be in a GUI class Convert from input image oriented x,y,z to Dicom x,y,z (x axis = R->L, y axis
-     * = A->P, z axis = I->S) Image distances are oriented the same as DICOM, just in a permuted order.
-     *
-     * @param   in     the input reference point in the original image
-     * @param   image  the image from which to translate the point <code>in</code>
-     *
-     * @return  the point <code>in</code> converted into Dicom space
-     */
-    public static Point3Df toDicom(Point3Df in, ModelImage image) {
-        int[] orient = image.getFileInfo(0).getAxisOrientation();
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-        int zDim = image.getExtents()[2];
-        Point3Df out = new Point3Df(0.0f, 0.0f, 0.0f);
-
-        switch (orient[0]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.x;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.x;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = xDim - 1 - in.x;
-                break;
-        }
-
-        switch (orient[1]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.y;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.y;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = yDim - 1 - in.y;
-                break;
-        }
-
-        switch (orient[2]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.z;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = zDim - 1 - in.z;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.z;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = zDim - 1 - in.z;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = zDim - 1 - in.z;
-                break;
-        }
-
-        return out;
-    }
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -788,13 +656,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             btnInvisible[3].setSelected(!centerButtonSelected);
 
             if (centerButtonSelected) {
-
-                for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                    if (triImage[i] != null) {
-                        triImage[i].makeCenter();
-                    }
-                }
+                setCenter( extents[0]/2, extents[1]/2, extents[2]/2 );
             } else {
 
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -1371,13 +1233,44 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         parentFrame.triPlanarClosing();
     }
 
+
+    /* MipavCoordinateSystems upgrade: TODO: */
+    /**
+     * sets the crosshair positions and slices for each of the triImages. The
+     * inputs are in ModelImage Coordinates, and are passed to the triImages
+     * in ModelImage Coordinates. Each triImage converts from ModelImage space
+     * to the local Patient Coordinate space.
+     *
+     * @param i, model space coordinate
+     * @param j, model space coordinate
+     * @param k, model space coordinate
+     */
+    public void setCenter( int i, int j, int k )
+    {
+        i = ( i < 0 ) ? 0 : ( i >= extents[0] ) ? extents[0] - 1 : i;
+        j = ( j < 0 ) ? 0 : ( j >= extents[1] ) ? extents[1] - 1 : j;
+        k = ( k < 0 ) ? 0 : ( k >= extents[2] ) ? extents[2] - 1 : k;
+
+        setVolumeCenter( i, j, k );
+        for (int image = 0; image < MAX_TRI_IMAGES; image++)
+        {
+            if (triImage[image] != null)
+            {
+                triImage[image].setCenter( i, j, k );
+            }
+        }
+        fireCoordinateChange( i, j, k );
+        setPositionLabels( i, j, k );
+        updateImages(true);
+    }
+
     /**
      * Gets the axial position of the slice.
      *
      * @return  The axial location in the slice.
      */
     public int getAxialComponentSlice() {
-        return axialComponentSlice;
+        return triImage[AXIAL_A].getSlice();
     }
 
     /**
@@ -1413,7 +1306,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @return  The y location in the slice.
      */
     public int getCoronalComponentSlice() {
-        return coronalComponentSlice;
+        return triImage[CORONAL_A].getSlice();
     }
 
     /**
@@ -1476,9 +1369,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  The x location in the slice.
      */
-    public int getSagittalComponentSlice() {
-        return sagittalComponentSlice;
-    }
+     public int getSagittalComponentSlice() {
+         return triImage[SAGITTAL_A].getSlice();
+     }
 
     /**
      * Returns an integer which represents the image that is selected. The possible values are ViewJComponentBase.BOTH,
@@ -1660,79 +1553,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         int keyCode = e.getKeyCode();
 
         switch (keyCode) {
-
-            case KeyEvent.VK_PAGE_DOWN:
-                if ((orientation == ViewJComponentBase.AXIAL) || !hasOrientation) {
-
-                    if (axialComponentSlice == 0) {
-                        return;
-                    }
-
-                    axialComponentSlice--;
-                } else if (orientation == ViewJComponentBase.CORONAL) {
-
-                    if (coronalComponentSlice == 0) {
-                        return;
-                    }
-
-                    coronalComponentSlice--;
-                } else { // orientation == SAGITTAL
-
-                    if (sagittalComponentSlice == 0) {
-                        return;
-                    }
-
-                    sagittalComponentSlice--;
-                }
-
-                Point3D newLabel = triImage[AXIAL_A].getVolumePosition(sagittalComponentSlice, coronalComponentSlice,
-                                                                       axialComponentSlice);
-                setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
-
-                fireCoordinateChange(sagittalComponentSlice, coronalComponentSlice, axialComponentSlice);
-
-                updateImages();
-                break;
-
-            case KeyEvent.VK_PAGE_UP:
-
-                int[] axisOrder = triImage[AXIAL_A].getAxisOrder();
-                int xDim = imageA.getExtents()[axisOrder[0]];
-                int yDim = imageA.getExtents()[axisOrder[1]];
-                int zDim = imageA.getExtents()[axisOrder[2]];
-
-                if ((orientation == ViewJComponentBase.AXIAL) || !hasOrientation) {
-
-                    if (axialComponentSlice == (zDim - 1)) {
-                        return;
-                    }
-
-                    axialComponentSlice++;
-                } else if (orientation == ViewJComponentBase.CORONAL) {
-
-                    if (coronalComponentSlice == (yDim - 1)) {
-                        return;
-                    }
-
-                    coronalComponentSlice++;
-                } else { // orientation == SAGITTAL
-
-                    if (sagittalComponentSlice == (xDim - 1)) {
-                        return;
-                    }
-
-                    sagittalComponentSlice++;
-                }
-
-                newLabel = triImage[AXIAL_A].getVolumePosition(sagittalComponentSlice, coronalComponentSlice,
-                                                               axialComponentSlice);
-                setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
-
-                fireCoordinateChange(sagittalComponentSlice, coronalComponentSlice, axialComponentSlice);
-
-                updateImages();
-                break;
-
             case KeyEvent.VK_B:
 
                 // swap the border painting
@@ -1882,203 +1702,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Sets axialComponentSlice.
-     *
-     * @param  _axialComponentSlice  the slice to set
-     */
-    public void setAxialComponentSlice(int _axialComponentSlice) {
-        axialComponentSlice = _axialComponentSlice;
-
-        if (linkTriFrame != null) {
-            linkTriFrame.setAxialComponentSlice(_axialComponentSlice);
-        }
-    }
-
-    /**
      * Sets the menu and controls (i.e. toolbars) of the main frame! This puts the menus and controls needed to controls
      * the operations of this frame. Different image frames have different menu and controls. Currently unused.
      */
     public void setControls() { }
-
-    /**
-     * Sets coronalComponentSlice.
-     *
-     * @param  _coronalComponentSlice  the slice to set
-     */
-    public void setCoronalComponentSlice(int _coronalComponentSlice) {
-        coronalComponentSlice = _coronalComponentSlice;
-
-        if (linkTriFrame != null) {
-            linkTriFrame.setCoronalComponentSlice(_coronalComponentSlice);
-        }
-    }
-
-    /**
-     * Sets the crosshairs for each plane of image. Should be zero indexed.
-     *
-     * @param  x            slice index in the patient
-     * @param  y            slice index in the patient
-     * @param  z            slice index in the patient
-     * @param  sourceImage  the triImage that called this method
-     */
-    public void setCrosshairs(float x, float y, float z, ViewJComponentTriImage sourceImage) {
-
-        if (sourceImage == null) {
-            return;
-        }
-
-        Point3Df volPt = sourceImage.getVolumePosition(x, y, z);
-
-        int orientation = sourceImage.getOrientation();
-
-        boolean affectA = false;
-        boolean affectB = false;
-
-        if ((sourceImage == triImage[AXIAL_A]) || (sourceImage == triImage[SAGITTAL_A]) ||
-                (sourceImage == triImage[CORONAL_A]) || (sourceImage == triImage[AXIAL_AB]) ||
-                (sourceImage == triImage[SAGITTAL_AB]) || (sourceImage == triImage[CORONAL_AB])) {
-            affectA = true;
-        }
-
-        if ((sourceImage == triImage[AXIAL_B]) || (sourceImage == triImage[SAGITTAL_B]) ||
-                (sourceImage == triImage[CORONAL_B]) || (sourceImage == triImage[AXIAL_AB]) ||
-                (sourceImage == triImage[SAGITTAL_AB]) || (sourceImage == triImage[CORONAL_AB])) {
-            affectB = true;
-        }
-
-        // This updates positions of the cursors in the other components.
-        if ((orientation == ViewJComponentBase.AXIAL) || (orientation == ViewJComponentBase.NA)) {
-
-            if ((triImage[SAGITTAL_A] != null) && affectA) {
-                triImage[SAGITTAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_B] != null) && affectB) {
-                triImage[SAGITTAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) && affectA && affectB) {
-                triImage[SAGITTAL_AB].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_A] != null) && affectA) {
-                triImage[CORONAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_B] != null) && affectB) {
-                triImage[CORONAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_AB] != null) && affectA && affectB) {
-                triImage[CORONAL_AB].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_A] != null) && affectA) {
-                triImage[AXIAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_B] != null) && affectB) {
-                triImage[AXIAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_AB] != null) && affectA && affectB) {
-                triImage[AXIAL_AB].updateCrosshairPosition(volPt);
-            }
-
-        } else if (orientation == ViewJComponentBase.CORONAL) {
-
-            if ((triImage[AXIAL_A] != null) && affectA) {
-                triImage[AXIAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_B] != null) && affectB) {
-                triImage[AXIAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_AB] != null) && affectA && affectB) {
-                triImage[AXIAL_AB].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_A] != null) && affectA) {
-                triImage[SAGITTAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_B] != null) && affectB) {
-                triImage[SAGITTAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) && affectA && affectB) {
-                triImage[SAGITTAL_AB].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_A] != null) && affectA) {
-                triImage[CORONAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_B] != null) && affectB) {
-                triImage[CORONAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_AB] != null) && affectA && affectB) {
-                triImage[CORONAL_AB].updateCrosshairPosition(volPt);
-            }
-        } else // SAGITTAL
-        {
-
-            if ((triImage[AXIAL_A] != null) && affectA) {
-                triImage[AXIAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_B] != null) && affectB) {
-                triImage[AXIAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[AXIAL_AB] != null) && affectA && affectB) {
-                triImage[AXIAL_AB].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_A] != null) && affectA) {
-                triImage[CORONAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_B] != null) && affectB) {
-                triImage[CORONAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[CORONAL_AB] != null) && affectA && affectB) {
-                triImage[CORONAL_AB].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_A] != null) && affectA) {
-                triImage[SAGITTAL_A].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_B] != null) && affectB) {
-                triImage[SAGITTAL_B].updateCrosshairPosition(volPt);
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) && affectA && affectB) {
-                triImage[SAGITTAL_AB].updateCrosshairPosition(volPt);
-            }
-        }
-
-
-        if (linkTriFrame != null) {
-            ViewJComponentTriImage linkTriImage = null;
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (sourceImage == triImage[i]) {
-                    linkTriImage = linkTriFrame.getTriImage(i);
-                }
-            }
-
-            if (linkTriImage != null) {
-                linkTriFrame.setCrosshairs(x, y, z, linkTriImage);
-                linkTriFrame.updateImages(true);
-            }
-        }
-    }
 
     /**
      * Sets modes in all images to ViewJComponentBase.DEFAULT.
@@ -2091,45 +1718,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 triImage[i].setMode(ViewJComponentBase.DEFAULT);
             }
         }
-    }
-
-    /**
-     * Sets the slice index for each plane in the frame and components. Should be zero indexed.
-     *
-     * @param  x                     slice index in the patient
-     * @param  y                     slice index in the patient
-     * @param  z                     slice index in the patient
-     * @param  componentOrientation  DOCUMENT ME!
-     */
-    public void setDisplaySlices(int x, int y, int z, int componentOrientation) {
-
-        if (componentOrientation == ViewJComponentBase.AXIAL) {
-            sagittalComponentSlice = x;
-            coronalComponentSlice = y;
-            axialComponentSlice = z;
-        } else if (componentOrientation == ViewJComponentBase.CORONAL) {
-            sagittalComponentSlice = x;
-            coronalComponentSlice = z;
-            axialComponentSlice = y;
-        } else // SAGITTAL
-        {
-
-            if (hasOrientation == false) {
-                sagittalComponentSlice = z;
-                coronalComponentSlice = y;
-                axialComponentSlice = x;
-            } else {
-                sagittalComponentSlice = z;
-                coronalComponentSlice = x;
-                axialComponentSlice = y;
-            }
-        }
-
-        if (linkTriFrame != null) {
-            linkTriFrame.setDisplaySlices(x, y, z, componentOrientation);
-        }
-
-        fireCoordinateChange(sagittalComponentSlice, coronalComponentSlice, axialComponentSlice);
     }
 
     /**
@@ -2401,15 +1989,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Sets the orientation variable, which determines the last component tha was interacted with.
-     *
-     * @param  orientation  int
-     */
-    public void setOrientation(int orientation) {
-        this.orientation = orientation;
-    }
-
-    /**
      * When switching the active image, take the paintBitmap of the previous active image as the paintBitmap of the new
      * active image Currenlty unused.
      *
@@ -2488,19 +2067,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Sets sagittalComponentSlice.
-     *
-     * @param  _sagittalComponentSlice  the slice to set
-     */
-    public void setSagittalComponentSlice(int _sagittalComponentSlice) {
-        sagittalComponentSlice = _sagittalComponentSlice;
-
-        if (linkTriFrame != null) {
-            linkTriFrame.setSagittalComponentSlice(_sagittalComponentSlice);
-        }
-    }
-
-    /**
      * Does nothing.
      *
      * @param  slice  the slice to show
@@ -2515,11 +2081,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  z  slice index in the patient
      */
     public void setSlices(int x, int y, int z) {
-        sagittalComponentSlice = x;
-        coronalComponentSlice = y;
-        axialComponentSlice = z;
-
-        fireCoordinateChange(sagittalComponentSlice, coronalComponentSlice, axialComponentSlice);
+        setCenter( x, y, z );
     }
 
     /**
@@ -2530,100 +2092,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  y  Y Slice of image.
      * @param  z  Z Slice of image.
      */
+
     public void setSlicesFromFrame(int x, int y, int z) {
-        int newX = x;
-        int newY = y;
-        int newZ = z;
+        Point3Df inPoint = new Point3Df();
+        inPoint.x = x;
+        inPoint.y = y;
+        inPoint.z = z;
 
-        switch (orient[0]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                newX = x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                newX = imageA.getExtents()[0] - 1 - x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                newY = x;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                newY = imageA.getExtents()[0] - 1 - x;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                newZ = x;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                newZ = imageA.getExtents()[0] - 1 - x;
-                break;
-        }
-
-        switch (orient[1]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                newX = y;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                newX = imageA.getExtents()[1] - 1 - y;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                newY = y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                newY = imageA.getExtents()[1] - 1 - y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                newZ = y;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                newZ = imageA.getExtents()[1] - 1 - y;
-                break;
-        }
-
-        switch (orient[2]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                newX = z;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                newX = imageA.getExtents()[2] - 1 - z;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                newY = z;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                newY = imageA.getExtents()[2] - 1 - z;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                newZ = z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                newZ = imageA.getExtents()[2] - 1 - z;
-                break;
-        }
-
-        setSlices(newX, newY, newZ);
-
-        updateImages(true);
+        Point3Df outPoint = imageA.toDicom( inPoint );
+        setCenter( (int)outPoint.x, (int)outPoint.y, (int)outPoint.z );
 
         // x, y, z passed in from ViewJComponentEditImage.mouseReleased() are already in image volume space
         setPositionLabels(x, y, z);
-
-        fireCoordinateChange(x, y, z);
     }
 
     /**
@@ -2806,112 +2286,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @return  boolean confirming successful update
      */
     public boolean updateImages() {
-
-        if (imageA.getType() != ModelImage.COMPLEX) {
-
-            if ((triImage[AXIAL_A] != null) &&
-                    (triImage[AXIAL_A].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_A] != null) &&
-                    (triImage[CORONAL_A].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_A] != null) &&
-                    (triImage[SAGITTAL_A].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_B] != null) &&
-                    (triImage[AXIAL_B].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_B] != null) &&
-                    (triImage[CORONAL_B].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_B] != null) &&
-                    (triImage[SAGITTAL_B].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_AB] != null) &&
-                    (triImage[AXIAL_AB].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_AB] != null) &&
-                    (triImage[CORONAL_AB].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) &&
-                    (triImage[SAGITTAL_AB].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true,
-                                                                    -1) == false)) {
-                return false;
-            }
-        } // if not COMPLEX
-        else {
-
-            if ((triImage[AXIAL_AB] != null) &&
-                    (triImage[AXIAL_AB].show(tSlice, axialComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_AB] != null) &&
-                    (triImage[CORONAL_AB].show(tSlice, coronalComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) &&
-                    (triImage[SAGITTAL_AB].show(tSlice, sagittalComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_A] != null) &&
-                    (triImage[AXIAL_A].show(tSlice, axialComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_A] != null) &&
-                    (triImage[CORONAL_A].show(tSlice, coronalComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_A] != null) &&
-                    (triImage[SAGITTAL_A].show(tSlice, sagittalComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_B] != null) &&
-                    (triImage[AXIAL_B].show(tSlice, axialComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_B] != null) &&
-                    (triImage[CORONAL_B].show(tSlice, coronalComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_B] != null) &&
-                    (triImage[SAGITTAL_B].show(tSlice, sagittalComponentSlice, null, null, true, -1) == false)) {
-                return false;
-            }
-        } // else COMPLEX
-
-        return true;
+        return updateImages( null, null, true, -1 );
     }
 
     /**
@@ -2921,113 +2296,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  boolean confirming successful update
      */
-    public boolean updateImages(boolean forceShow) {
-
-        if (imageA.getType() != ModelImage.COMPLEX) {
-
-            if ((triImage[AXIAL_AB] != null) &&
-                    (triImage[AXIAL_AB].showUsingOrientation(tSlice, axialComponentSlice, null, null, forceShow, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_AB] != null) &&
-                    (triImage[CORONAL_AB].showUsingOrientation(tSlice, coronalComponentSlice, null, null, forceShow,
-                                                                   -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) &&
-                    (triImage[SAGITTAL_AB].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, forceShow,
-                                                                    -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_A] != null) &&
-                    (triImage[AXIAL_A].showUsingOrientation(tSlice, axialComponentSlice, null, null, forceShow, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_A] != null) &&
-                    (triImage[CORONAL_A].showUsingOrientation(tSlice, coronalComponentSlice, null, null, forceShow,
-                                                                  -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_A] != null) &&
-                    (triImage[SAGITTAL_A].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, forceShow,
-                                                                   -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_B] != null) &&
-                    (triImage[AXIAL_B].showUsingOrientation(tSlice, axialComponentSlice, null, null, forceShow, -1) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_B] != null) &&
-                    (triImage[CORONAL_B].showUsingOrientation(tSlice, coronalComponentSlice, null, null, forceShow,
-                                                                  -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_B] != null) &&
-                    (triImage[SAGITTAL_B].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, forceShow,
-                                                                   -1) == false)) {
-                return false;
-            }
-        } // if (hasOrientation)
-        else {
-
-            if ((triImage[AXIAL_AB] != null) &&
-                    (triImage[AXIAL_AB].show(tSlice, axialComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_AB] != null) &&
-                    (triImage[CORONAL_AB].show(tSlice, coronalComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) &&
-                    (triImage[SAGITTAL_AB].show(tSlice, sagittalComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_A] != null) &&
-                    (triImage[AXIAL_A].show(tSlice, axialComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_A] != null) &&
-                    (triImage[CORONAL_A].show(tSlice, coronalComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_A] != null) &&
-                    (triImage[SAGITTAL_A].show(tSlice, sagittalComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_B] != null) &&
-                    (triImage[AXIAL_B].show(tSlice, axialComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_B] != null) &&
-                    (triImage[CORONAL_B].show(tSlice, coronalComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_B] != null) &&
-                    (triImage[SAGITTAL_B].show(tSlice, sagittalComponentSlice, null, null, forceShow, -1) == false)) {
-                return false;
-            }
-        } // else not hasOrientation
-
-        return true;
+    public boolean updateImages(boolean forceShow)
+    {
+        return updateImages( null, null, forceShow, -1 );
     }
 
     /**
@@ -3041,118 +2312,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @return  boolean confirming successful update
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
-
-        if (imageA.getType() != ModelImage.COMPLEX) {
-
-            if ((triImage[AXIAL_AB] != null) &&
-                    (triImage[AXIAL_AB].showUsingOrientation(tSlice, axialComponentSlice, LUTa, LUTb, forceShow,
-                                                                 interpMode) == false)) {
-                return false;
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+            if (triImage[i] != null)
+            {
+                if (imageA.getType() != ModelImage.COMPLEX) {
+                    if ( triImage[i].showUsingOrientation(tSlice, LUTa, LUTb, forceShow, interpMode) == false)
+                    {
+                        return false;
+                    }
+                }
+                else if ( triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false)
+                {
+                    return false;
+                }
             }
-
-            if ((triImage[CORONAL_AB] != null) &&
-                    (triImage[CORONAL_AB].showUsingOrientation(tSlice, coronalComponentSlice, LUTa, LUTb, forceShow,
-                                                                   interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) &&
-                    (triImage[SAGITTAL_AB].showUsingOrientation(tSlice, sagittalComponentSlice, LUTa, LUTb, forceShow,
-                                                                    interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_A] != null) &&
-                    (triImage[AXIAL_A].showUsingOrientation(tSlice, axialComponentSlice, LUTa, LUTb, forceShow,
-                                                                interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_A] != null) &&
-                    (triImage[CORONAL_A].showUsingOrientation(tSlice, coronalComponentSlice, LUTa, LUTb, forceShow,
-                                                                  interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_A] != null) &&
-                    (triImage[SAGITTAL_A].showUsingOrientation(tSlice, sagittalComponentSlice, LUTa, LUTb, forceShow,
-                                                                   interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_B] != null) &&
-                    (triImage[AXIAL_B].showUsingOrientation(tSlice, axialComponentSlice, LUTa, LUTb, forceShow,
-                                                                interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_B] != null) &&
-                    (triImage[CORONAL_B].showUsingOrientation(tSlice, coronalComponentSlice, LUTa, LUTb, forceShow,
-                                                                  interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_B] != null) &&
-                    (triImage[SAGITTAL_B].showUsingOrientation(tSlice, sagittalComponentSlice, LUTa, LUTb, forceShow,
-                                                                   interpMode) == false)) {
-                return false;
-            }
-        } // if (hasOrientation)
-        else {
-
-            if ((triImage[AXIAL_AB] != null) &&
-                    (triImage[AXIAL_AB].show(tSlice, axialComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_AB] != null) &&
-                    (triImage[CORONAL_AB].show(tSlice, coronalComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_AB] != null) &&
-                    (triImage[SAGITTAL_AB].show(tSlice, sagittalComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_A] != null) &&
-                    (triImage[AXIAL_A].show(tSlice, axialComponentSlice, LUTa, LUTb, forceShow, interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_A] != null) &&
-                    (triImage[CORONAL_A].show(tSlice, coronalComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_A] != null) &&
-                    (triImage[SAGITTAL_A].show(tSlice, sagittalComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[AXIAL_B] != null) &&
-                    (triImage[AXIAL_B].show(tSlice, axialComponentSlice, LUTa, LUTb, forceShow, interpMode) == false)) {
-                return false;
-            }
-
-            if ((triImage[CORONAL_B] != null) &&
-                    (triImage[CORONAL_B].show(tSlice, coronalComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-
-            if ((triImage[SAGITTAL_B] != null) &&
-                    (triImage[SAGITTAL_B].show(tSlice, sagittalComponentSlice, LUTa, LUTb, forceShow, interpMode) ==
-                         false)) {
-                return false;
-            }
-        } // else not hasOrientation
-
+        }
         return true;
     }
 
@@ -3161,20 +2335,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @param  triImage  DOCUMENT ME!
      */
-    public void updateImageSubset(ViewJComponentTriImage triImage) {
+    public void updateImageSubset(ViewJComponentTriImage triImage ) {
 
         if ((triImage == this.triImage[AXIAL_A]) || (triImage == this.triImage[CORONAL_A]) ||
                 (triImage == this.triImage[SAGITTAL_A])) {
-            this.triImage[AXIAL_A].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1);
-            this.triImage[CORONAL_A].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1);
-            this.triImage[SAGITTAL_A].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1);
+            this.triImage[AXIAL_A].showUsingOrientation(tSlice, null, null, true, -1);
+            this.triImage[CORONAL_A].showUsingOrientation(tSlice, null, null, true, -1);
+            this.triImage[SAGITTAL_A].showUsingOrientation(tSlice, null, null, true, -1);
         }
 
         if ((triImage == this.triImage[AXIAL_B]) || (triImage == this.triImage[CORONAL_B]) ||
                 (triImage == this.triImage[SAGITTAL_B])) {
-            this.triImage[AXIAL_B].showUsingOrientation(tSlice, axialComponentSlice, null, null, true, -1);
-            this.triImage[CORONAL_B].showUsingOrientation(tSlice, coronalComponentSlice, null, null, true, -1);
-            this.triImage[SAGITTAL_B].showUsingOrientation(tSlice, sagittalComponentSlice, null, null, true, -1);
+            this.triImage[AXIAL_B].showUsingOrientation(tSlice, null, null, true, -1);
+            this.triImage[CORONAL_B].showUsingOrientation(tSlice, null, null, true, -1);
+            this.triImage[SAGITTAL_B].showUsingOrientation(tSlice, null, null, true, -1);
         }
 
         if ((triImage == this.triImage[AXIAL_AB]) || (triImage == this.triImage[CORONAL_AB]) ||
@@ -3226,105 +2400,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         this.disposeLocal();
     }
 
-    /**
-     * Converts DICOM back to original. TODO: This method really should be relocated as it is essentially just a worker
-     * method. Shouldn't be in a GUI class
-     *
-     * @param   image   Image to convert.
-     * @param   in      Original point.
-     * @param   orient  The image orientation.
-     *
-     * @return  The point <code>in</code> converted from DICOM space into the space of the image
-     */
-    protected static Point3Df toOriginal(ModelImage image, Point3Df in, int[] orient) {
-        int xDim = image.getExtents()[0];
-        int yDim = image.getExtents()[1];
-        int zDim = image.getExtents()[2];
-        Point3Df out = new Point3Df(0.0f, 0.0f, 0.0f);
-
-        switch (orient[0]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.x = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.x = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.x = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.x = zDim - 1 - in.z;
-                break;
-        }
-
-        switch (orient[1]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.y = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.y = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.y = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.y = zDim - 1 - in.z;
-                break;
-        }
-
-        switch (orient[2]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.z = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.z = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.z = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.z = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = zDim - 1 - in.z;
-                break;
-        }
-
-        return out;
-    }
 
     /**
      * Builds the active image panel for choosing which image (A, B, or BOTH) to perform operations on.
@@ -3804,28 +2879,29 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                                    int orientation) {
         ViewJComponentTriImage triImage = new ViewJComponentTriImage(this, imageA, lutA, null, imageB, lutB, null, null,
                                                                      zoom, extents, imageA.getLogMagDisplay(),
-                                                                     orientation, hasOrientation, orient);
+                                                                     orientation);
 
-        int[] axisOrder = triImage.getAxisOrder();
+        int[] triExtents = triImage.getExtents();
         float[] tmpResols = new float[3];
         float minResol = 0;
 
-        minResol = resols[0];
+        float[] triResols = triImage.getResolutions();
+        minResol = triResols[0];
 
-        if (resols[1] < minResol) {
-            minResol = resols[1];
+        if (triResols[1] < minResol) {
+            minResol = triResols[1];
         }
 
-        if (resols[2] < minResol) {
-            minResol = resols[2];
+        if (triResols[2] < minResol) {
+            minResol = triResols[2];
         }
 
-        tmpResols[0] = resols[0] / minResol;
-        tmpResols[1] = resols[1] / minResol;
-        tmpResols[2] = resols[2] / minResol;
+        tmpResols[0] = triResols[0] / minResol;
+        tmpResols[1] = triResols[1] / minResol;
+        tmpResols[2] = triResols[2] / minResol;
 
         triImage.setBuffers(triImage.getImageBufferA(), triImage.getImageBufferB(), triImage.getPixBuffer(),
-                            new int[extents[axisOrder[0]] * extents[axisOrder[1]]]);
+                            new int[triExtents[0] * triExtents[1]]);
 
         triImage.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
 
@@ -3836,18 +2912,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         if (imageA.getType() == ModelImage.COMPLEX) {
             triImage.setResolutions(1, 1);
-        } else if ((tmpResols[axisOrder[1]] > tmpResols[axisOrder[0]]) &&
-                       (tmpResols[axisOrder[1]] < (50.0f * tmpResols[axisOrder[0]])) &&
-                       (units[axisOrder[0]] == units[axisOrder[1]])) {
-            axialHeightResFactor = tmpResols[axisOrder[1]] / tmpResols[axisOrder[0]];
+        } else if ((tmpResols[1] > tmpResols[0]) &&
+                       (tmpResols[1] < (50.0f * tmpResols[0])) &&
+                       (units[0] == units[1])) {
+            axialHeightResFactor = tmpResols[1] / tmpResols[0];
             triImage.setResolutions(1, axialHeightResFactor);
-        } else if ((tmpResols[axisOrder[0]] > tmpResols[axisOrder[1]]) &&
-                       (tmpResols[axisOrder[0]] < (50.0f * tmpResols[axisOrder[1]])) &&
-                       (units[axisOrder[0]] == units[axisOrder[1]])) {
-            axialWidthResFactor = tmpResols[axisOrder[0]] / tmpResols[axisOrder[1]];
+        } else if ((tmpResols[0] > tmpResols[1]) &&
+                       (tmpResols[0] < (50.0f * tmpResols[1])) &&
+                       (units[0] == units[1])) {
+            axialWidthResFactor = tmpResols[0] / tmpResols[1];
             triImage.setResolutions(axialWidthResFactor, 1);
-        } else if ((tmpResols[axisOrder[0]] == tmpResols[axisOrder[1]])) {
-            triImage.setResolutions(tmpResols[axisOrder[0]], tmpResols[axisOrder[0]]);
+        } else if ((tmpResols[0] == tmpResols[1])) {
+            triImage.setResolutions(tmpResols[0], tmpResols[0]);
         } else {
             triImage.setResolutions(1, 1);
         }
@@ -4049,10 +3125,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         updateLayout();
 
-        volumeCenter[0] = (extents[0]) / 2;
-        volumeCenter[1] = (extents[1]) / 2;
-        volumeCenter[2] = (extents[2]) / 2;
-
         tSlice = 0;
 
         setupBoundingBoxPoints();
@@ -4065,22 +3137,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             if (triImage[i] != null) {
                 triImage[i].setZoom(zoom, zoom);
-                triImage[i].makeCenter();
                 triImage[i].setDoCenter(false);
-
-                int[] axisOrder = triImage[i].getAxisOrder();
-
-                int x = volumeCenter[axisOrder[0]];
-                x = (int) (x * triImage[i].getZoomX() * triImage[i].getResolutionX());
-
-                int y = volumeCenter[axisOrder[1]];
-                y = (int) (y * triImage[i].getZoomY() * triImage[i].getResolutionY());
-
-                triImage[i].updateCrosshairPosition(x, y);
             }
         }
 
-        fireCoordinateChange(sagittalComponentSlice, coronalComponentSlice, axialComponentSlice);
+        /* set the center after the triImage[].setResolutions and
+         * triImage[].setZoom calls have been made: */
+        setCenter( extents[0]/2, extents[1]/2, extents[2]/2 );
 
         setTitle();
 
@@ -4199,22 +3262,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  y  the y coordinate
      * @param  z  the z coordinate
      */
-    protected void fireCoordinateChange(int x, int y, int z) {
-        Point3D volPt = null;
-
-        if ((orientation == ViewJComponentBase.AXIAL) && (triImage[AXIAL_A] != null)) {
-            volPt = triImage[AXIAL_A].getVolumePosition(x, y, z);
-        } else if ((orientation == ViewJComponentBase.CORONAL) && (triImage[CORONAL_A] != null)) {
-            volPt = triImage[CORONAL_A].getVolumePosition(x, y, z);
-        } else if ((orientation == ViewJComponentBase.SAGITTAL) && (triImage[SAGITTAL_A] != null)) {
-            volPt = triImage[SAGITTAL_A].getVolumePosition(x, y, z);
-        }
-
-        if (volPt != null) {
-
-            for (Enumeration e = coordinateListeners.elements(); e.hasMoreElements();) {
-                ((CoordinateChangeListener) e.nextElement()).coordinateChanged(volPt.x, volPt.y, volPt.z);
-            }
+    protected void fireCoordinateChange( int i, int j, int k ) {
+        for (Enumeration e = coordinateListeners.elements(); e.hasMoreElements();) {
+            ((CoordinateChangeListener) e.nextElement()).coordinateChanged( i, j, k );
         }
     }
 
@@ -4549,35 +3599,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             color = controls.getTools().getPaintColor();
         }
 
-        int imageOrientation = imageA.getImageOrientation();
-
-        if (imageOrientation == FileInfoBase.UNKNOWN_ORIENT) {
-            hasOrientation = false;
-
-        } else {
-            hasOrientation = true;
-
-            orient = imageA.getAxisOrientation();
-
-            if (orient[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
-
-                // set to default values if axis orientation is unknown
-                if (imageOrientation == FileInfoBase.AXIAL) {
-                    orient[0] = FileInfoBase.ORI_R2L_TYPE;
-                    orient[1] = FileInfoBase.ORI_A2P_TYPE;
-                    orient[2] = FileInfoBase.ORI_I2S_TYPE;
-                } else if (imageOrientation == FileInfoBase.CORONAL) {
-                    orient[0] = FileInfoBase.ORI_R2L_TYPE;
-                    orient[1] = FileInfoBase.ORI_S2I_TYPE;
-                    orient[2] = FileInfoBase.ORI_A2P_TYPE;
-                } else { // imageOrientation == FileInfoBase.SAGITTAL
-                    orient[0] = FileInfoBase.ORI_A2P_TYPE;
-                    orient[1] = FileInfoBase.ORI_S2I_TYPE;
-                    orient[2] = FileInfoBase.ORI_R2L_TYPE;
-                }
-            } // if (orient[0] == -1)
-        }
-
         imageA.setImageOrder(ModelImage.IMAGE_A);
 
         if (imageB != null) {
@@ -4640,11 +3661,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
         configureFrame();
-
-        // set up the initial values for the frame's labels
-        Point3D newLabel = triImage[AXIAL_A].getVolumePosition(sagittalComponentSlice, coronalComponentSlice,
-                                                               axialComponentSlice);
-        setPositionLabels(newLabel.x, newLabel.y, newLabel.z);
     }
 
     /**
@@ -4888,31 +3904,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         strY = String.valueOf(nf.format(yTal));
         strZ = String.valueOf(nf.format(zTal));
 
-        int[] axisOrder = triImage[AXIAL_A].getAxisOrder();
+        int[] triExtents = triImage[AXIAL_A].getExtents();
 
-        if ((x >= 0) && (x < imageA.getExtents()[axisOrder[0]])) {
+        if ((x >= 0) && (x < triExtents[0])) {
             labelXTal.setText(strX);
         }
 
-        if ((y >= 0) && (y < imageA.getExtents()[axisOrder[1]])) {
+        if ((y >= 0) && (y < triExtents[1])) {
             labelYTal.setText(strY);
         }
 
-        if ((z >= 0) && (z < imageA.getExtents()[axisOrder[2]])) {
+        if ((z >= 0) && (z < triExtents[2])) {
             labelZTal.setText(strZ);
         }
 
         if (volumePositionFrame != null) {
 
-            if ((x >= 0) && (x < imageA.getExtents()[axisOrder[0]])) {
+            if ((x >= 0) && (x < triExtents[0])) {
                 volumePositionFrame.labelXTal.setText(strX);
             }
 
-            if ((y >= 0) && (y < imageA.getExtents()[axisOrder[1]])) {
+            if ((y >= 0) && (y < triExtents[1])) {
                 volumePositionFrame.labelYTal.setText(strY);
             }
 
-            if ((z >= 0) && (z < imageA.getExtents()[axisOrder[2]])) {
+            if ((z >= 0) && (z < triExtents[2])) {
                 volumePositionFrame.labelZTal.setText(strZ);
             }
         }
@@ -5320,27 +4336,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *          desired height
      */
     private float getOptimalZoom(int desiredWidth, int desiredHeight) {
-        int[] axisOrderAxial = triImage[AXIAL_A].getAxisOrder();
-        int[] axisOrderSagittal = triImage[SAGITTAL_A].getAxisOrder();
-        int[] axisOrderCoronal = triImage[CORONAL_A].getAxisOrder();
+        int[] extentsAxial = triImage[AXIAL_A].getExtents();
+        int[] extentsSagittal = triImage[SAGITTAL_A].getExtents();
+        int[] extentsCoronal = triImage[CORONAL_A].getExtents();
 
         float zoomAxialWidth = desiredWidth /
-                                   (imageA.getExtents()[axisOrderAxial[0]] * triImage[AXIAL_A].getResolutionX());
+            (extentsAxial[0] * triImage[AXIAL_A].getResolutionX());
         float zoomSagittalWidth = desiredWidth /
-                                      (imageA.getExtents()[axisOrderSagittal[0]] *
-                                           triImage[SAGITTAL_A].getResolutionX());
+            (extentsSagittal[0] *
+             triImage[SAGITTAL_A].getResolutionX());
         float zoomCoronalWidth = desiredWidth /
-                                     (imageA.getExtents()[axisOrderCoronal[0]] * triImage[CORONAL_A].getResolutionX());
-
+            (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
+        
         float optimalZoomWidth = Math.min(zoomAxialWidth, Math.min(zoomSagittalWidth, zoomCoronalWidth));
 
         float zoomAxialHeight = desiredHeight /
-                                    (imageA.getExtents()[axisOrderAxial[1]] * triImage[AXIAL_A].getResolutionY());
+            (extentsAxial[1] * triImage[AXIAL_A].getResolutionY());
         float zoomSagittalHeight = desiredHeight /
-                                       (imageA.getExtents()[axisOrderSagittal[1]] *
-                                            triImage[SAGITTAL_A].getResolutionY());
+            (extentsSagittal[1] * triImage[SAGITTAL_A].getResolutionY());
         float zoomCoronal = desiredHeight /
-                                (imageA.getExtents()[axisOrderCoronal[1]] * triImage[CORONAL_A].getResolutionY());
+            (extentsCoronal[1] * triImage[CORONAL_A].getResolutionY());
 
         float optimalZoomHeight = Math.min(zoomAxialHeight, Math.min(zoomSagittalHeight, zoomCoronal));
 

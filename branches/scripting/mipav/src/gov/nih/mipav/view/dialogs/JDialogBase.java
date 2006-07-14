@@ -534,7 +534,7 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
                 fileInfo[i].setImageOrientation(image.getImageOrientation());
                 fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
-                fileInfo[i].setTransformID(image.getFileInfo()[i].getTransformID());
+                fileInfo[i].setTransformID(image.getFileInfo()[j].getTransformID());
                 fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
                 fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
                 fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());

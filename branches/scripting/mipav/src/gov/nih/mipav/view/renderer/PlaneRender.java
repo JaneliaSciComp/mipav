@@ -23,6 +23,7 @@ import javax.media.j3d.*;
 import javax.vecmath.*;
 
 
+/* MipavCoordinateSystems upgrade TODO: use new coordinate system class to do all transformations: */
 /**
  * Class PlaneRender: renders a single dimension of the ModelImage data as a texture-mapped polygon. The PlaneRender
  * class keeps track of whether it is rendering the Axial, Sagital, or Coronal view of the data. Depending on which view
@@ -74,13 +75,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private ImageComponent2D[] m_akImageComponent;
 
     /** Set of colors used to draw the X and Y Bars and the Z box:. */
-    private Color3f[] m_akXColors = { new Color3f(1, 1, 0), new Color3f(0, 1, 0), new Color3f(1, 1, 0) };
-
-    /** DOCUMENT ME! */
-    private Color3f[] m_akYColors = { new Color3f(0, 1, 0), new Color3f(1, 0, 0), new Color3f(1, 0, 0) };
-
-    /** DOCUMENT ME! */
-    private Color3f[] m_akZColors = { new Color3f(1, 0, 0), new Color3f(1, 1, 0), new Color3f(0, 1, 0) };
+    private Color3f[] m_akColors = { new Color3f(1, 0, 0), new Color3f(0, 1, 0), new Color3f(1, 1, 0) };
 
     /**
      * Colormap, these store the information for the imageA and imageB colormaps, they are initialized when the colormap
@@ -116,7 +111,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private boolean m_bMemoryUsage;
 
     /** Actual image orietation. */
-    private boolean m_bPatientOrientation = true;
+    //private boolean m_bPatientOrientation = true;
 
     /** DOCUMENT ME! */
     private boolean m_bRightMousePressed = false;
@@ -199,9 +194,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** Canvas width . */
     private int m_iCanvasWidth;
 
-    /** Image orientation . */
-    private int m_iImageOrientation = 3;
-
     /** Height of LUTA. */
     private int m_iLutHeightA = 0;
 
@@ -212,7 +204,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private int m_iNumChildren = 0;
 
     /** Which dimension of the ModelImage to render. */
-    private int m_iPlane = 0;
+    private int m_iPlaneOrientation = 0;
 
     /** Which slice is currently displayed in the XY plane. */
     private int m_iSlice;
@@ -327,15 +319,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** The SimpleUniverse object which is the parent of everything else in the scene. */
     private SimpleUniverse m_kUniverse;
 
-    /** Mapping of colors to actual x,y,z. */
-    private Color3f m_kXSliceHairColor;
-
-    /** DOCUMENT ME! */
-    private Color3f m_kYSliceHairColor;
-
-    /** DOCUMENT ME! */
-    private Color3f m_kZSliceHairColor;
-
     /** Max color value for imageA. */
     private float m_maxColorA = 255;
 
@@ -390,7 +373,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                        ModelLUT kLUTb, GraphicsConfiguration kConfig, int iPlane, boolean bMemory) {
         super(kConfig);
         m_kParent = kParent;
-        m_iPlane = iPlane;
+        m_iPlaneOrientation = iPlane;
         m_bMemoryUsage = bMemory;
 
         m_kConfig = kConfig;
@@ -406,17 +389,16 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         }
 
         /* Determine the image orientation for the Model Image */
-        m_iImageOrientation = m_kImageA.getImageOrientation();
         m_aiOrientation = new int[3];
         m_aiOrientation = m_kImageA.getAxisOrientation();
 
         if (m_aiOrientation[0] == FileInfoBase.ORI_UNKNOWN_TYPE) {
-
-            if (m_iImageOrientation == FileInfoBase.AXIAL) {
+            int iImageOrientation = m_kImageA.getImageOrientation();
+            if (iImageOrientation == FileInfoBase.AXIAL) {
                 m_aiOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
                 m_aiOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
                 m_aiOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
-            } else if (m_iImageOrientation == FileInfoBase.CORONAL) {
+            } else if ( iImageOrientation == FileInfoBase.CORONAL) {
                 m_aiOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
                 m_aiOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
                 m_aiOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
@@ -466,9 +448,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kImageB = null;
 
         for (int iColor = 0; iColor < 3; iColor++) {
-            m_akXColors[iColor] = null;
-            m_akYColors[iColor] = null;
-            m_akZColors[iColor] = null;
+            m_akColors[iColor] = null;
         }
 
         m_kLabelX = null;
@@ -631,15 +611,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Returns the Z bar color.
-     *
-     * @return  color of the z color bar
-     */
-    public Color3f getColor() {
-        return m_kZSliceHairColor;
-    }
-
-    /**
      * Accessor that returns the reference to image A.
      *
      * @return  Image A.
@@ -657,23 +628,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         return m_kImageB;
     }
 
-    /**
-     * Returns the X bar color.
-     *
-     * @return  color of the x color bar
-     */
-    public Color3f getXBarColor() {
-        return m_kXSliceHairColor;
-    }
-
-    /**
-     * Returns the Y bar color.
-     *
-     * @return  color of the y color bar
-     */
-    public Color3f getYBarColor() {
-        return m_kYSliceHairColor;
-    }
 
     /**
      * One of the overrides necessary to be a MouseListener. This function is called when there is a double-click event.
@@ -1006,7 +960,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             fZSlice = 1 - fZSlice;
         }
 
-        m_kParent.setSlice(m_kZSliceHairColor, fZSlice);
+        m_kParent.setSlice( m_iPlaneOrientation, fZSlice );
 
         fPosition = null;
     }
@@ -1101,7 +1055,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      *
      * @param  fSlice  The new position of the XBar in plane coordinates:
      */
-    public void setXBar(float fSlice) {
+    private void setXBar(float fSlice) {
 
         if (m_bLeftMousePressed) {
             return;
@@ -1116,19 +1070,12 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Sets the default color for the XSliceHairColor.
+     * Sets the default color for the SliceHairColor.
      *
      * @param  kColor  set the hair color to this color
      */
-    public void setXSliceHairColor(Color3f kColor) {
-        m_akXColors[0] = kColor;
-        m_akXColors[2] = kColor;
-        m_akZColors[1] = kColor;
-
-        m_kXSliceHairColor = m_akXColors[m_iPlane];
-        m_kYSliceHairColor = m_akYColors[m_iPlane];
-        m_kZSliceHairColor = m_akZColors[m_iPlane];
-
+    public void setSliceHairColor(int iView, Color3f kColor) {
+        m_akColors[iView] = kColor;
         initAxes();
     }
 
@@ -1137,7 +1084,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      *
      * @param  fSlice  The new position of the YBar in plane coordinates:
      */
-    public void setYBar(float fSlice) {
+    private void setYBar(float fSlice) {
 
         if (m_bLeftMousePressed) {
             return;
@@ -1151,39 +1098,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         drawLabels();
     }
 
-    /**
-     * Sets the default color fot the YSliceHairColor.
-     *
-     * @param  kColor  set the hair color to this color
-     */
-    public void setYSliceHairColor(Color3f kColor) {
-        m_akXColors[1] = kColor;
-        m_akYColors[0] = kColor;
-        m_akZColors[2] = kColor;
-
-        m_kXSliceHairColor = m_akXColors[m_iPlane];
-        m_kYSliceHairColor = m_akYColors[m_iPlane];
-        m_kZSliceHairColor = m_akZColors[m_iPlane];
-
-        initAxes();
-    }
-
-    /**
-     * Sets the default color fot the ZSliceHairColor.
-     *
-     * @param  kColor  set the hair color to this color
-     */
-    public void setZSliceHairColor(Color3f kColor) {
-        m_akYColors[1] = kColor;
-        m_akYColors[2] = kColor;
-        m_akZColors[0] = kColor;
-
-        m_kXSliceHairColor = m_akXColors[m_iPlane];
-        m_kYSliceHairColor = m_akYColors[m_iPlane];
-        m_kZSliceHairColor = m_akZColors[m_iPlane];
-
-        initAxes();
-    }
 
     /**
      * Turns displaying the Axis labes on or off:
@@ -1599,21 +1513,21 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         LineArray kBox = new LineArray(8, GeometryArray.COORDINATES | GeometryArray.COLOR_3);
 
         kBox.setCoordinate(0, new Point3d(m_fX0, m_fY0, 0.1));
-        kBox.setColor(0, m_kZSliceHairColor);
+        kBox.setColor(0, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(1, new Point3d(m_fX1, m_fY0, 0.1));
-        kBox.setColor(1, m_kZSliceHairColor);
+        kBox.setColor(1, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(2, new Point3d(m_fX1, m_fY0, 0.1));
-        kBox.setColor(2, m_kZSliceHairColor);
+        kBox.setColor(2, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(3, new Point3d(m_fX1, m_fY1, 0.1));
-        kBox.setColor(3, m_kZSliceHairColor);
+        kBox.setColor(3, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(4, new Point3d(m_fX1, m_fY1, 0.1));
-        kBox.setColor(4, m_kZSliceHairColor);
+        kBox.setColor(4, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(5, new Point3d(m_fX0, m_fY1, 0.1));
-        kBox.setColor(5, m_kZSliceHairColor);
+        kBox.setColor(5, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(6, new Point3d(m_fX0, m_fY1, 0.1));
-        kBox.setColor(6, m_kZSliceHairColor);
+        kBox.setColor(6, m_akColors[ m_iPlaneOrientation ] );
         kBox.setCoordinate(7, new Point3d(m_fX0, m_fY0, 0.1));
-        kBox.setColor(7, m_kZSliceHairColor);
+        kBox.setColor(7, m_akColors[ m_iPlaneOrientation ] );
 
         Shape3D kBoxShape = new Shape3D();
 
@@ -1633,19 +1547,32 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kTranslationTG.addChild(kBoxBranchGroup);
 
         TransformGroup kTransformGroup = new TransformGroup(new Transform3D());
-
+        
         if (m_bDrawXHairs) {
+            Color3f kXSliceHairColor = m_akColors[2];
+            Color3f kYSliceHairColor = m_akColors[0];
+            if ( m_iPlaneOrientation == ViewJComponentBase.AXIAL )
+            {
+                kXSliceHairColor = m_akColors[2];
+                kYSliceHairColor = m_akColors[1];
+            }
+            else if ( m_iPlaneOrientation == ViewJComponentBase.SAGITTAL )
+            {
+                kXSliceHairColor = m_akColors[1];
+                kYSliceHairColor = m_akColors[0];
+            }
+
             LineArray kYBar = new LineArray(4, GeometryArray.COORDINATES | GeometryArray.COLOR_3);
 
             kYBar.setCoordinate(0, new Point3d(m_fX0, m_fCenterY, 0.1));
-            kYBar.setColor(0, m_kYSliceHairColor);
+            kYBar.setColor(0, kYSliceHairColor);
             kYBar.setCoordinate(1, new Point3d(m_fCenterX - .10, m_fCenterY, 0.1));
-            kYBar.setColor(1, m_kYSliceHairColor);
+            kYBar.setColor(1, kYSliceHairColor);
 
             kYBar.setCoordinate(2, new Point3d(m_fCenterX + .10, m_fCenterY, 0.1));
-            kYBar.setColor(2, m_kYSliceHairColor);
+            kYBar.setColor(2, kYSliceHairColor);
             kYBar.setCoordinate(3, new Point3d(m_fX1, m_fCenterY, 0.1));
-            kYBar.setColor(3, m_kYSliceHairColor);
+            kYBar.setColor(3, kYSliceHairColor);
 
             /* Create the Shape3D object to contain the LineArray: */
             Shape3D kYBarShape = new Shape3D();
@@ -1656,14 +1583,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             LineArray kXBar = new LineArray(4, GeometryArray.COORDINATES | GeometryArray.COLOR_3);
 
             kXBar.setCoordinate(0, new Point3d(m_fCenterX, m_fY0, 0.1));
-            kXBar.setColor(0, m_kXSliceHairColor);
+            kXBar.setColor(0, kXSliceHairColor);
             kXBar.setCoordinate(1, new Point3d(m_fCenterX, m_fCenterY - 0.1, 0.1));
-            kXBar.setColor(1, m_kXSliceHairColor);
+            kXBar.setColor(1, kXSliceHairColor);
 
             kXBar.setCoordinate(2, new Point3d(m_fCenterX, m_fCenterY + .10, 0.1));
-            kXBar.setColor(2, m_kXSliceHairColor);
+            kXBar.setColor(2, kXSliceHairColor);
             kXBar.setCoordinate(3, new Point3d(m_fCenterX, m_fY1, 0.1));
-            kXBar.setColor(3, m_kXSliceHairColor);
+            kXBar.setColor(3, kXSliceHairColor);
 
             /* Create the Shape3D object to contain the LineArray: */
             Shape3D kXBarShape = new Shape3D();
@@ -1879,16 +1806,30 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         Text3D kYText = new Text3D(new Font3D(MipavUtil.courier12B, new FontExtrusion()), m_kLabelY,
                                    new Point3f(-2f, -25f, 0f));
 
-        if (m_bPatientOrientation && (m_iPlane != 0)) {
+        if ( //m_bPatientOrientation &&
+            (m_iPlaneOrientation != ViewJComponentBase.AXIAL) ) {
             kYText.setPosition(new Point3f(-2f, 31f, 0f));
         }
 
         QuadArray kXGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.COLOR_3);
 
-        kXGeometry.setColor(0, m_kXSliceHairColor);
-        kXGeometry.setColor(1, m_kXSliceHairColor);
-        kXGeometry.setColor(2, m_kXSliceHairColor);
-        kXGeometry.setColor(3, m_kXSliceHairColor);
+        Color3f kXSliceHairColor = m_akColors[0];
+        Color3f kYSliceHairColor = m_akColors[2];
+        if ( m_iPlaneOrientation == ViewJComponentBase.AXIAL )
+        {
+            kXSliceHairColor = m_akColors[2];
+            kYSliceHairColor = m_akColors[1];
+        }
+        else if ( m_iPlaneOrientation == ViewJComponentBase.SAGITTAL )
+        {
+            kXSliceHairColor = m_akColors[0];
+            kYSliceHairColor = m_akColors[1];
+        }
+
+        kXGeometry.setColor(0, kXSliceHairColor);
+        kXGeometry.setColor(1, kXSliceHairColor);
+        kXGeometry.setColor(2, kXSliceHairColor);
+        kXGeometry.setColor(3, kXSliceHairColor);
         kXGeometry.setCoordinate(0, new Point3d(2f, 4f, 0.5f));
         kXGeometry.setCoordinate(1, new Point3d(18f, 4f, 0.5f));
         kXGeometry.setCoordinate(2, new Point3d(18f, 6f, 0.5f));
@@ -1896,21 +1837,22 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         TriangleArray kXTri = new TriangleArray(3, TriangleArray.COORDINATES | TriangleArray.COLOR_3);
 
-        kXTri.setColor(0, m_kXSliceHairColor);
-        kXTri.setColor(1, m_kXSliceHairColor);
-        kXTri.setColor(2, m_kXSliceHairColor);
+        kXTri.setColor(0, kXSliceHairColor);
+        kXTri.setColor(1, kXSliceHairColor);
+        kXTri.setColor(2, kXSliceHairColor);
         kXTri.setCoordinate(0, new Point3d(18f, 9f, 0.5f));
         kXTri.setCoordinate(1, new Point3d(18f, 1f, 0.5f));
         kXTri.setCoordinate(2, new Point3d(23f, 5f, 0.5f));
 
         QuadArray kYGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.COLOR_3);
 
-        kYGeometry.setColor(0, m_kYSliceHairColor);
-        kYGeometry.setColor(1, m_kYSliceHairColor);
-        kYGeometry.setColor(2, m_kYSliceHairColor);
-        kYGeometry.setColor(3, m_kYSliceHairColor);
+        kYGeometry.setColor(0, kYSliceHairColor);
+        kYGeometry.setColor(1, kYSliceHairColor);
+        kYGeometry.setColor(2, kYSliceHairColor);
+        kYGeometry.setColor(3, kYSliceHairColor);
 
-        if (m_bPatientOrientation && (m_iPlane != 0)) {
+        if (//m_bPatientOrientation &&
+            (m_iPlaneOrientation != ViewJComponentBase.AXIAL)) {
             kYGeometry.setCoordinate(0, new Point3d(2f, 4f, 0.5f));
             kYGeometry.setCoordinate(1, new Point3d(0f, 4f, 0.5f));
             kYGeometry.setCoordinate(2, new Point3d(0f, 22f, 0.5f));
@@ -1924,11 +1866,12 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         TriangleArray kYTri = new TriangleArray(3, TriangleArray.COORDINATES | TriangleArray.COLOR_3);
 
-        kYTri.setColor(0, m_kYSliceHairColor);
-        kYTri.setColor(1, m_kYSliceHairColor);
-        kYTri.setColor(2, m_kYSliceHairColor);
+        kYTri.setColor(0, kYSliceHairColor);
+        kYTri.setColor(1, kYSliceHairColor);
+        kYTri.setColor(2, kYSliceHairColor);
 
-        if (m_bPatientOrientation && (m_iPlane != 0)) {
+        if (//m_bPatientOrientation &&
+            (m_iPlaneOrientation != ViewJComponentBase.AXIAL)) {
             kYTri.setCoordinate(0, new Point3d(5f, 22f, 0.5f));
             kYTri.setCoordinate(1, new Point3d(-4f, 22f, 0.5f));
             kYTri.setCoordinate(2, new Point3d(1f, 27f, 0.5f));
@@ -1942,10 +1885,10 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         kPolygonAttributes.setCullFace(PolygonAttributes.CULL_NONE);
 
-        Material kXMaterial = new Material(m_kXSliceHairColor, m_kXSliceHairColor, m_kXSliceHairColor,
-                                           m_kXSliceHairColor, 1.0f);
-        Material kYMaterial = new Material(m_kYSliceHairColor, m_kYSliceHairColor, m_kYSliceHairColor,
-                                           m_kYSliceHairColor, 1.0f);
+        Material kXMaterial = new Material( kXSliceHairColor, kXSliceHairColor, kXSliceHairColor,
+                                            kXSliceHairColor, 1.0f);
+        Material kYMaterial = new Material( kYSliceHairColor, kYSliceHairColor, kYSliceHairColor,
+                                            kYSliceHairColor, 1.0f);
 
         Appearance kXAppearance = new Appearance();
 
@@ -1967,7 +1910,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
         float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
 
-        if (m_bPatientOrientation && (m_iPlane != 0)) {
+        if (//m_bPatientOrientation &&
+            (m_iPlaneOrientation != ViewJComponentBase.AXIAL)) {
             fYTrans = -fYTrans;
         }
 
@@ -2158,20 +2102,58 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         if (m_bInvertX) {
             fCenterX = 1 - fCenterX;
         }
-
-        m_kParent.setSlice(m_kXSliceHairColor, fCenterX);
-        m_kParent.setBar(m_kXSliceHairColor, fCenterX);
-
         float fCenterY = (m_fCenterY - m_fY0) / m_fYRange;
-
         if (!m_bInvertY) {
             fCenterY = 1 - fCenterY;
         }
 
-        m_kParent.setSlice(m_kYSliceHairColor, fCenterY);
-        m_kParent.setBar(m_kYSliceHairColor, fCenterY);
+        if ( m_iPlaneOrientation == ViewJComponentBase.AXIAL )
+        {
+            m_kParent.setSlice( ViewJComponentBase.CORONAL, fCenterY );
+            m_kParent.setSlice( ViewJComponentBase.SAGITTAL, fCenterX );
+        }
+        else if ( m_iPlaneOrientation == ViewJComponentBase.SAGITTAL )
+        {
+            m_kParent.setSlice( ViewJComponentBase.AXIAL, fCenterY );
+            m_kParent.setSlice( ViewJComponentBase.CORONAL, fCenterX );
+        }
+        else if ( m_iPlaneOrientation == ViewJComponentBase.CORONAL )
+        {
+            m_kParent.setSlice( ViewJComponentBase.AXIAL, fCenterY );
+            m_kParent.setSlice( ViewJComponentBase.SAGITTAL, fCenterX );
+        }
+
+
         m_kParent.setAbsPositionLabels();
     }
+
+    public void setSlice( int iView, float fValue )
+    {
+        if ( m_iPlaneOrientation == iView )
+        {
+            setSlice( fValue );
+        }
+        else if ( m_iPlaneOrientation == ViewJComponentBase.AXIAL )
+        {
+            if ( iView == ViewJComponentBase.CORONAL )
+            {
+                setYBar( fValue );
+            }
+            else
+            {
+                setXBar( fValue );
+            }
+        }
+        else if ( iView == ViewJComponentBase.AXIAL )
+        {
+            setYBar( fValue );
+        }
+        else
+        {
+            setXBar( fValue );
+        }
+    }
+
 
     /**
      * If the right mouse button is pressed and dragged. processRightMouseDrag updates the HistoLUT window and level
@@ -2347,73 +2329,68 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      */
     private void setOrientation() {
 
-        if (m_iImageOrientation != FileInfoBase.UNKNOWN_ORIENT) {
-
-            for (int iOrient = 0; iOrient < 3; iOrient++) {
-
-                if (m_aiOrientation[iOrient] == FileInfoBase.ORI_R2L_TYPE) {
-
-                    if ((m_iPlane == 0) || (m_iPlane == 2)) {
-                        m_iXIndex = iOrient;
-                    } else {
-                        m_iZIndex = iOrient;
-                    }
-                } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_L2R_TYPE) {
-
-                    if ((m_iPlane == 0) || (m_iPlane == 2)) {
-                        m_iXIndex = iOrient;
-                        m_bInvertX = true;
-                    } else {
-                        m_iZIndex = iOrient;
-                        m_bInvertZ = true;
-                    }
-
-                } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_A2P_TYPE) {
-
-                    if (m_iPlane == 0) {
-                        m_iYIndex = iOrient;
-                    } else if (m_iPlane == 1) {
-                        m_iXIndex = iOrient;
-                    } else {
-                        m_iZIndex = iOrient;
-                    }
-                } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_P2A_TYPE) {
-
-                    if (m_iPlane == 0) {
-                        m_iYIndex = iOrient;
-                        m_bInvertY = true;
-                    } else if (m_iPlane == 1) {
-                        m_iXIndex = iOrient;
-                        m_bInvertX = true;
-                    } else {
-                        m_iZIndex = iOrient;
-                        m_bInvertZ = true;
-                    }
-                } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_S2I_TYPE) {
-
-                    if (m_iPlane == 0) {
-                        m_iZIndex = iOrient;
-                        m_bInvertZ = true;
-                    } else {
-                        m_iYIndex = iOrient;
-                    }
-                } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_I2S_TYPE) {
-
-                    if (m_iPlane == 0) {
-                        m_iZIndex = iOrient;
-                    } else {
-                        m_iYIndex = iOrient;
-                        m_bInvertY = true;
-                    }
+        for (int iOrient = 0; iOrient < 3; iOrient++) {
+            if (m_aiOrientation[iOrient] == FileInfoBase.ORI_R2L_TYPE) {
+                
+                if ((m_iPlaneOrientation == ViewJComponentBase.AXIAL) ||
+                    (m_iPlaneOrientation == ViewJComponentBase.CORONAL)) {
+                    m_iXIndex = iOrient;
+                } else {
+                    m_iZIndex = iOrient;
+                }
+            } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_L2R_TYPE) {
+                
+                if ((m_iPlaneOrientation == ViewJComponentBase.AXIAL) ||
+                    (m_iPlaneOrientation == ViewJComponentBase.CORONAL)) {
+                    m_iXIndex = iOrient;
+                    m_bInvertX = true;
+                } else {
+                    m_iZIndex = iOrient;
+                    m_bInvertZ = true;
+                }
+                
+            } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_A2P_TYPE) {
+                
+                if (m_iPlaneOrientation == ViewJComponentBase.AXIAL) {
+                    m_iYIndex = iOrient;
+                } else if (m_iPlaneOrientation == ViewJComponentBase.SAGITTAL) {
+                    m_iXIndex = iOrient;
+                } else {
+                    m_iZIndex = iOrient;
+                }
+            } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_P2A_TYPE) {
+                
+                if (m_iPlaneOrientation == ViewJComponentBase.AXIAL) {
+                    m_iYIndex = iOrient;
+                    m_bInvertY = true;
+                } else if (m_iPlaneOrientation == ViewJComponentBase.SAGITTAL) {
+                    m_iXIndex = iOrient;
+                    m_bInvertX = true;
+                } else {
+                    m_iZIndex = iOrient;
+                    m_bInvertZ = true;
+                }
+            } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_S2I_TYPE) {
+                
+                if (m_iPlaneOrientation == ViewJComponentBase.AXIAL) {
+                    m_iZIndex = iOrient;
+                    m_bInvertZ = true;
+                } else {
+                    m_iYIndex = iOrient;
+                }
+            } else if (m_aiOrientation[iOrient] == FileInfoBase.ORI_I2S_TYPE) {
+                if (m_iPlaneOrientation == ViewJComponentBase.AXIAL) {
+                    m_iZIndex = iOrient;
+                } else {
+                    m_iYIndex = iOrient;
+                    m_bInvertY = true;
                 }
             }
-        } else if (m_iPlane == 1) {
-            m_iXIndex = 2;
-            m_iZIndex = 0;
-        } else if (m_iPlane == 2) {
-            m_iYIndex = 2;
-            m_iZIndex = 1;
         }
+
+        System.err.println( m_iXIndex + " " + m_iYIndex + " " + m_iZIndex
+                            + " " + m_bInvertX + " " + m_bInvertY + " " + m_bInvertZ );
+
 
         m_iXBound = m_kImageA.getExtents()[m_iXIndex];
         m_iYBound = m_kImageA.getExtents()[m_iYIndex];
@@ -2446,50 +2423,32 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             m_fMaxBox = m_fYBox;
         }
 
-        m_kXSliceHairColor = m_akXColors[m_iPlane];
-        m_kYSliceHairColor = m_akYColors[m_iPlane];
-        m_kZSliceHairColor = m_akZColors[m_iPlane];
-
-        if ((m_iPlane == 1) && (m_iImageOrientation == FileInfoBase.UNKNOWN_ORIENT)) {
-            m_kXSliceHairColor = new Color3f(0, 0, 1);
-            m_kYSliceHairColor = new Color3f(0, 1, 0);
-        }
-
         m_iXFactor = m_aiBuffFactors[m_iXIndex];
         m_iYFactor = m_aiBuffFactors[m_iYIndex];
         m_iZFactor = m_aiBuffFactors[m_iZIndex];
 
-        if (m_iImageOrientation == FileInfoBase.UNKNOWN_ORIENT) {
-            m_bPatientOrientation = false;
-
-            if ((m_iPlane == 0) || (m_iPlane == 2)) {
-                m_kLabelX = new String("X");
-            } else {
-                m_kLabelX = new String("Z");
-            }
-
-            if ((m_iPlane == 0) || (m_iPlane == 1)) {
-                m_kLabelY = new String("Y");
-            } else {
-                m_kLabelY = new String("Z");
-            }
+        if ((m_iPlaneOrientation == ViewJComponentBase.AXIAL) ||
+            (m_iPlaneOrientation == ViewJComponentBase.CORONAL)) {
+            m_kLabelX = new String("L");
         } else {
-
-            if ((m_iPlane == 0) || (m_iPlane == 2)) {
-                m_kLabelX = new String("L");
-            } else {
-                m_kLabelX = new String("P");
-            }
-
-            if ((m_iPlane == 1) || (m_iPlane == 2)) {
-                m_kLabelY = new String("S");
-            } else {
-                m_kLabelY = new String("P");
-            }
+            m_kLabelX = new String("P");
+        }
+        
+        if ((m_iPlaneOrientation == ViewJComponentBase.SAGITTAL) ||
+            (m_iPlaneOrientation == ViewJComponentBase.CORONAL)) {
+            m_kLabelY = new String("S");
+        } else {
+            m_kLabelY = new String("P");
         }
 
         afResolutions = null;
     }
+
+    public int getViewOrientation()
+    {
+        return m_iPlaneOrientation;
+    }
+
 
     /**
      * This function calculates the scale factor for zooming in parallel projection. The scenario is to calculate the
