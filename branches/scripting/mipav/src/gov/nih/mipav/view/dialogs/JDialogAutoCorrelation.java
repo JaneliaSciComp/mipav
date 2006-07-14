@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +19,7 @@ import javax.swing.*;
 /**
  * Dialog to call AlgorithmAutoCorrelation.
  */
-public class JDialogAutoCorrelation extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAutoCorrelation extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -85,42 +87,7 @@ public class JDialogAutoCorrelation extends JDialogBase implements AlgorithmInte
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAutoCorrelation(ViewUserInterface UI, ModelImage im) {
-        super();
-        this.UI = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-
-        if (image.isColorImage()) {
-            minR = image.getMinR();
-            maxR = image.getMaxR();
-
-            if (minR != maxR) {
-                haveRed = true;
-            }
-
-            minG = image.getMinG();
-            maxG = image.getMaxG();
-
-            if (minG != maxG) {
-                haveGreen = true;
-            }
-
-            minB = image.getMinB();
-            maxB = image.getMaxB();
-
-            if (minB != maxB) {
-                haveBlue = true;
-            }
-        }
-    }
+   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -142,6 +109,78 @@ public class JDialogAutoCorrelation extends JDialogBase implements AlgorithmInte
         }
     }
 
+ 
+    
+/*    
+    private boolean haveBlue = false;
+    private boolean haveGreen = false;
+    private boolean haveRed = false;
+    private double maxR, maxG, maxB;
+    private double minR, minG, minB;*/
+ 
+    
+    
+    
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected  void storeParamsFromGUI() throws ParserException{
+        try{
+
+            scriptParameters.storeInputImage(image);
+            
+            scriptParameters.getParams().put(ParameterFactory.newParameter("haveBlue",haveBlue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("haveGreen",haveGreen));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("haveRed",haveRed));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("maxR",maxR));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("maxG",maxG));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("maxB",maxB));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("minR",minR));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("minG",minG));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("minB",minB));
+        }catch (ParserException pe){
+            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
+        }  
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        haveBlue = scriptParameters.getParams().getBoolean("haveBlue");
+        haveGreen = scriptParameters.getParams().getBoolean("haveGreen");
+        haveRed = scriptParameters.getParams().getBoolean("haveRed");
+        maxR = scriptParameters.getParams().getDouble("maxR");
+        maxG = scriptParameters.getParams().getDouble("maxG");
+        maxB = scriptParameters.getParams().getDouble("maxB");
+        minR = scriptParameters.getParams().getDouble("minR");
+        minG = scriptParameters.getParams().getDouble("minG");
+        minB = scriptParameters.getParams().getDouble("minB");
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    public void doPostAlgorithmActions() {
+             AlgorithmParameters.storeImageInRunner(getResultImage());
+             AlgorithmParameters.storeImageInRunner(getResultImageB());
+             AlgorithmParameters.storeImageInRunner(getResultImageG());
+             AlgorithmParameters.storeImageInRunner(getResultImageR());
+                }
+       
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
