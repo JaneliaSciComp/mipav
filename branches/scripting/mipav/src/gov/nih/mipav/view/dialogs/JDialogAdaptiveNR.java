@@ -4,6 +4,9 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
 import gov.nih.mipav.view.*;
 
@@ -21,7 +24,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmAdaptiveNR
  */
-public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAdaptiveNR extends JDialogScriptableBase implements AlgorithmInterface, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -127,22 +130,45 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAdaptiveNR(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = ViewUserInterface.getReference();
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    public void storeParamsFromGUI(){
+        try{
+            scriptParameters.storeInputImage(image);
+            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+            
+            scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight",distWeight));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb",radiusCb));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr",radiusCr));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY",radiusY));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("reduce",reduce)); 
+        }catch (ParserException pe){
+            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
+        }  
+     }
+    
+    public void setGUIFromParams(){
+        // TODO ModelImage image;   does this need to be retreived??
+        distWeight = scriptParameters.getParams().getFloat("distWeight");
+        radiusCb = scriptParameters.getParams().getFloat("radiusCb");
+        radiusCr = scriptParameters.getParams().getFloat("radiusCr");
+        radiusY = scriptParameters.getParams().getFloat("radiusY");
+        reduce = scriptParameters.getParams().getBoolean("reduce");
+    }
+ 
+    
+    /**
+     * {@inheritDoc}
+     */
+    public void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+    
+     
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
      *
@@ -220,7 +246,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
             }
         }
 
-        insertScriptLine(adaptiveNRAlgo);
+        insertScriptLine();
         adaptiveNRAlgo.finalize();
         adaptiveNRAlgo = null;
         dispose();
@@ -235,96 +261,8 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "AdaptiveNR " + userInterface.getScriptDialog().getVar(image.getImageName()) + " ";
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " " + radiusY + " " +
-                            radiusCr + " " + radiusCb + " " + distWeight + " " + reduce;
-                } else {
-                    line += userInterface.getScriptDialog().getVar(image.getImageName()) + " " + radiusY + " " +
-                            radiusCr + " " + radiusCb + " " + distWeight + " " + reduce;
-                }
-
-                line += "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRadiusY(parser.getNextFloat());
-            setRadiusCr(parser.getNextFloat());
-            setRadiusCb(parser.getNextFloat());
-            setDistWeight(parser.getNextFloat());
-            setReduce(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+   
+   
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
