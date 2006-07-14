@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.asc.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -39,7 +41,7 @@ import javax.swing.*;
  * @see      ModelSurfaceDecimator
  * @see      ModelTriangleMesh
  */
-public class JDialogASC extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogASC extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -214,6 +216,44 @@ public class JDialogASC extends JDialogBase implements AlgorithmInterface, Scrip
         }
     }
 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+     protected void storeParamsFromGUI(){
+        try{
+            scriptParameters.getParams().put(ParameterFactory.newParameter("blurFlag",blurFlag));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("blurValue",blurValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("coarseEnd",coarseEnd));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("coarseValue",coarseValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("level",level));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("mode",mode));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("triMode",triMode));
+       }catch (ParserException pe){
+            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
+        }  
+     }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+   protected void setGUIFromParams(){
+        blurFlag = scriptParameters.getParams().getBoolean("blurFlag");
+        blurValue = scriptParameters.getParams().getFloat("blurValue");
+        coarseEnd = scriptParameters.getParams().getInt("coarseEnd");
+        coarseValue = scriptParameters.getParams().getInt("coarseValue");
+        level = scriptParameters.getParams().getFloat("level");
+        mode = scriptParameters.getParams().getInt("mode");
+        triMode = scriptParameters.getParams().getInt("triMode");
+   }
+ 
+    
+   
+    
+    
+    
+    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
@@ -232,64 +272,11 @@ public class JDialogASC extends JDialogBase implements AlgorithmInterface, Scrip
             image.clearMask();
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         dispose();
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ASC " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + fileName + " ");
-
-                String modeStr;
-
-                if (mode == VOI_MODE) {
-                    modeStr = "VOI\n";
-                } else if (mode == MASK_MODE) {
-                    modeStr = "MASK\n";
-                } else {
-                    modeStr = "LEVEL " + level + " ";
-                }
-
-                String triModeStr;
-
-                if (triMode == ASC_Climb3DDecompose.NONE_MODE) {
-                    triModeStr = "NONE ";
-                } else if (triMode == ASC_Climb3DDecompose.ADJ_MODE) {
-                    triModeStr = "ADJACIENT ";
-                } else {
-                    triModeStr = "SMOOTH ";
-                }
-                // ** need to add matt 4/2003
-                // extractSurAlgo.setFLevel (level);
-                // if (coarseValue > 7) coarseValue = 7;
-                // extractSurAlgo.setIDepth (coarseValue);
-                // extractSurAlgo.setIOrientTriangles(-1);
-
-                modeStr = modeStr + triModeStr + blurFlag + " " + blurValue + " " + coarseValue + "\n";
-                userInterface.getScriptDialog().append(modeStr);
-            }
-        }
-    }
 
     // *******************************************************************
     // ************************* Item Events ****************************
@@ -314,66 +301,7 @@ public class JDialogASC extends JDialogBase implements AlgorithmInterface, Scrip
         }
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        try {
-            setFileName(parser.getNextString());
-
-            String mode = parser.getNextString();
-
-            if (mode.equals("VOI")) {
-                setMode(VOI_MODE);
-            } else if (mode.equals("MASK")) {
-                setMode(MASK_MODE);
-            } else if (mode.equals("LEVEL")) {
-                setMode(LEVEL_MODE);
-                setLevel(parser.getNextFloat());
-            } else {
-                throw new Exception("Illegal mode variable.");
-            }
-
-            mode = parser.getNextString();
-
-            if (mode.equals("NONE")) {
-                setTriangleMode(AlgorithmExtractSurface.NONE_MODE);
-            } else if (mode.equals("ADJACIENT")) {
-                setTriangleMode(AlgorithmExtractSurface.ADJ_MODE);
-            } else if (mode.equals("SMOOTH")) {
-                setTriangleMode(AlgorithmExtractSurface.SMOOTH_MODE);
-            } else {
-                throw new Exception("Illegal mode variable.");
-            }
-
-            setBlurFlag(parser.getNextBoolean());
-            setBlurValue(parser.getNextFloat());
-            setCoarseness(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
+ 
 
     /**
      * Accessor that sets the blurring flag (if the surface is generated from a VOI or mask the surface image will need
