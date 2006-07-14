@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +19,7 @@ import javax.swing.*;
  * Dialog to get user input, then call a specified diffusion algorithm. It should be noted that the algorithms are
  * executed in their own thread.
  */
-public class JDialogCoherenceEnhancingDiffusion extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -91,27 +93,63 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogBase implements A
         super(frame, false);
 
         srcImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogDiffusion(...)
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogCoherenceEnhancingDiffusion(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        srcImage = im;
-        resultImage = im; // will be overridden if the algorithm is actually run..
-        parentFrame = im.getParentFrame();
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+    try{
+        scriptParameters.storeInputImage(srcImage);
+        
+        
+       
+        scriptParameters.getParams().put(ParameterFactory.newParameter("derivativeScale",derivativeScale));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusitivityDenom",diffusitivityDenom));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do25D",do25D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end",end));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("entireImage",entireImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussianScale",gaussianScale));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("numIterations",numIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("start",start));
+        
+    }catch (ParserException pe){
+        MipavUtil.displayError("Error encountered saving script params:\n" + pe);
+    }  
+    }
+
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        derivativeScale = scriptParameters.getParams().getFloat("derivativeScale");
+        diffusitivityDenom = scriptParameters.getParams().getFloat("diffusitivityDenom");
+        do25D = scriptParameters.getParams().getBoolean("do25D");
+        end = scriptParameters.getParams().getLong("end");
+        entireImage = scriptParameters.getParams().getBoolean("entireImage");
+        gaussianScale = scriptParameters.getParams().getFloat("gaussianScale");
+        numIterations = scriptParameters.getParams().getInt("numIterations");
+        start = scriptParameters.getParams().getLong("start");
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    public void doPostAlgorithmActions() {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+     }
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -156,7 +194,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogBase implements A
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             coherenceEnhancingDiffusionAlgo.finalize();
             coherenceEnhancingDiffusionAlgo = null;
@@ -172,88 +210,8 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogBase implements A
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
 
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("CoherenceEnhancingDiffusion " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-
-                // if (displayLoc == NEW) {
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + numIterations + " " + diffusitivityDenom + " " +
-                                                       derivativeScale + " " + gaussianScale + " " + do25D + " " +
-                                                       entireImage + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        srcImage = im;
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setNumIterations(parser.getNextInteger());
-            setDiffusitivityDenom(parser.getNextFloat());
-            setDerivativeScale(parser.getNextFloat());
-            setGaussianScale(parser.getNextFloat());
-            setDo25D(parser.getNextBoolean());
-            entireImage = parser.getNextBoolean();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
+ 
     /**
      * Accessor that sets the derivativeScale.
      *
