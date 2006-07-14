@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -26,8 +28,8 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmGaussianBlur
  */
-public class JDialogAnisotropicDiffusion extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -180,6 +182,65 @@ public class JDialogAnisotropicDiffusion extends JDialogBase
         }
     }
 
+    
+    
+     
+   /** Record the parameters just used to run this algorithm in a script.
+    * 
+    * @throws  ParserException  If there is a problem creating/recording the new parameters.
+    */
+   protected void storeParamsFromGUI() throws ParserException{
+       
+       scriptParameters.storeInputImage(image);
+       scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+       
+       scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("image25D",image25D));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("iters",iters));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("konst",konst));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("normFactor",normFactor));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("regionFlag",regionFlag));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX",scaleX));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY",scaleY));
+       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ",scaleZ));
+
+   }
+   
+   /**
+    * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+    */
+   protected void setGUIFromParams(){
+       displayLoc = scriptParameters.getParams().getInt("displayLoc");
+       image25D = scriptParameters.getParams().getBoolean("image25D");
+       iters = scriptParameters.getParams().getInt("iters");
+       konst = scriptParameters.getParams().getFloat("konst");
+       normFactor = scriptParameters.getParams().getFloat("normFactor");
+       konst = scriptParameters.getParams().getFloat("konst");
+       regionFlag = scriptParameters.getParams().getBoolean("regionFlag");
+       scaleX = scriptParameters.getParams().getFloat("scaleX");
+       scaleY = scriptParameters.getParams().getFloat("scaleY");
+       scaleZ = scriptParameters.getParams().getFloat("scaleZ");
+             
+   }
+   
+   /**
+    * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+    * Defaults to no action, override to actually have it do something.
+    */
+    public void doPostAlgorithmActions() {
+       if (displayLoc == NEW) {
+           AlgorithmParameters.storeImageInRunner(getResultImage());
+       }
+   }
+    
+    
+    
+    
+    
+    
+    
+    
+    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
