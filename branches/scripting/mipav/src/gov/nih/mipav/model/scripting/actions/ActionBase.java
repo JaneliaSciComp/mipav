@@ -22,12 +22,23 @@ public abstract class ActionBase implements ScriptableActionInterface {
     public abstract void scriptRun(ParameterTable parameters);
     
     /**
-     * Returns the script command string for this action.
+     * Returns the script action command string for this action.
      * 
-     * @return  The script command which should be used for this action class (e.g., Clone for ActionClone).
+     * @return  The script command which should be used for this action (e.g., Clone for ActionClone).
      */
-    protected String getActionName() {
-        String name = getClass().getName();
+    public String getActionName() {
+        return ActionBase.getActionName(this.getClass());
+    }
+    
+    /**
+     * Returns the script command string for an action.
+     * 
+     * @param   actionClass  The class to find the script command string for.
+     * 
+     * @return  The script command which should be used for the given class (e.g., Clone for ActionClone).
+     */
+    public static final String getActionName(Class actionClass) {
+        String name = actionClass.getName();
         
         int index = name.lastIndexOf("Action");
         

@@ -45,7 +45,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * A reference to the only ViewUserInterface object in MIPAV.
      *
-     * @see  #ViewUserInterface(String[])
+     * @see  #ViewUserInterface()
      * @see  #getReference()
      */
     protected static ViewUserInterface userInterfaceReference;
@@ -92,12 +92,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
     private boolean isAppFrameVisible = true;
 
-    /** A list of script files to be run, set by the command line. */
-    private Vector scriptFileNames = new Vector();
-
-    /** A list of voi files, set by the command line, to be used in a script. */
-    private Vector voiFileNames = new Vector();
-
     /** Vector to hold the clipped Polygons arrays (is this actually used??). */
     private Vector clippedPolygons = new Vector();
 
@@ -106,9 +100,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
-
-    /** Command line string argument -- should be image file name. */
-    private String[] commArgs = null;
 
     /** Reference to the DICOM receiver that listens for DICOM formatted images sent by a DICOM server. */
     private DICOM_Receiver DICOMcatcher = null;
@@ -172,9 +163,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = OPENING_STR;
 
-    /** Script cmd line saved image file name. */
-    private String savedImageFileName;
-
     /** Indicates whether the user is currently recording a new keyboard shortcut using the shortcut editor dialog. */
     private boolean shortcutRecording = false;
 
@@ -185,11 +173,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * in DICOM files and starts the catcher, if appropriate. This method cannot be called directly. To use this
      * constructor, you must call createReference. This class is a singleton, which means that only one type of this
      * class is allowed to be instantiated in a single VM.
-     *
-     * @param  arg  command line arguments to be parsed by MIPAV
      */
-    protected ViewUserInterface(String[] arg) {
-        commArgs = arg;
+    protected ViewUserInterface() {
         mainFrame = new JFrame();
         imageFrameVector = new Vector();
         imageHashtable = new CustomHashtable();
@@ -205,14 +190,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * This method should only be called once, and it should only be called by MipavMain to during the initialization of
      * MIPAV.
      *
-     * @param   args  String[]
-     *
      * @return  ViewUserInterface
      */
-    public static ViewUserInterface create(String[] args) {
+    public static ViewUserInterface create() {
 
         if (userInterfaceReference == null) {
-            userInterfaceReference = new ViewUserInterface(args);
+            userInterfaceReference = new ViewUserInterface();
         }
 
         return userInterfaceReference;
@@ -1357,8 +1340,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Initializes the user interface. Starts by reading out some starting options out of the preferences file; setting
      * up the main frame; building the message frame and setting the message frame into the preferences; building the
      * menu; setting controls; performing a Macintosh JDK check; initialising the DICOM dictionary; setting up the
-     * message field that is used in the main frame; setting the application titles; showing the main frame and acting
-     * on the starting argument.
+     * message field that is used in the main frame; setting the application titles; and showing the main frame.
      *
      * <p>Recommendations for how to most easily perform modifications to the initialisation procedure are included with
      * the individual method comments, although in most cases, it suffices to simply over-ride an individual method.</p>
@@ -1373,7 +1355,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see  DICOMDictionaryBuilder#getDicomTagTable()
      * @see  #initCreateMessageField(String)
      * @see  #initSetTitles(String, String)
-     * @see  #parseArguments(String[])
      */
     public void initialize() {
         initPrefsFile();
@@ -1406,8 +1387,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         mainFrame.setFocusable(true);
         mainFrame.addKeyListener(this);
-
-        parseArguments(commArgs);
     }
 
     /**
@@ -1925,16 +1904,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * This method is used when running MIPAV from the command line.
      *
-     * @see  #printUsageAndExit()
+     * @param  scriptFile  The script to run.
+     * @param  imageList   A list of OpenImageFile objects to use in the script.
+     * @param  voiList     A list of VOIs to put into the various images.
+     *
+     * @see    #printUsageAndExit()
      */
-    public void runCmdLine() {
-        // TODO: revamp this method to use the new scripting system
-        String scriptFile = (String)scriptFileNames.elementAt(0);
-        
+    protected void runCmdLine(String scriptFile, Vector imageList, Vector voiList) {
         ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
         Vector imageNames = new Vector();
-        for (int i = 0; i < imageFileNames.size(); i++) {
-            OpenFileInfo file = (OpenFileInfo) imageFileNames.elementAt(i);
+        for (int i = 0; i < imageList.size(); i++) {
+            OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
             String fileName = file.getFullFileName();
             boolean isMulti = file.isMulti();
 
@@ -1952,10 +1932,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 FileVOI fileVOI;
                 ModelImage image = fileOpener.getImage();
 
-                if ((voiFileNames.size() >= 1) && (voiFileNames.elementAt(i) != null)) {
+                if ((voiList.size() >= 1) && (voiList.elementAt(i) != null)) {
 
-                    for (int x = 0; x < ((Vector) (voiFileNames.elementAt(i))).size(); x++) {
-                        String fileNameIn = (String) (((Vector) (voiFileNames.elementAt(i))).elementAt(x));
+                    for (int x = 0; x < ((Vector) (voiList.elementAt(i))).size(); x++) {
+                        String fileNameIn = (String) (((Vector) (voiList.elementAt(i))).elementAt(x));
                         int index = fileNameIn.lastIndexOf(File.separatorChar);
 
                         String directory = fileNameIn.substring(0, index + 1);
@@ -1975,7 +1955,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
         
-        ScriptRunner.getReference().runScript(scriptFile, imageNames);
+        if (scriptFile != null) {
+            ScriptRunner.getReference().runScript(scriptFile, imageNames);
+        }
     }
 
     /**
@@ -2982,13 +2964,17 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      * @param  args  command arguments
      */
-    protected void parseArguments(String[] args) {
+    public void parseArguments(String[] args) {
         int i = 0, j, idx, index;
         String arg;
         Vector voiPerImages = new Vector();
         boolean voiFollowImage = false;
         int[] voiCount;
         int imgCount = 0;
+        
+        String scriptFile = null;
+        Vector imageList = new Vector();
+        Vector voiList = new Vector();
 
         if (args.length == 0) {
             return;
@@ -2999,9 +2985,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         System.err.println("Command line argument list:");
         Preferences.debug("Command line argument list:\n");
 
-        for (i = 0; i < commArgs.length; i++) {
-            System.err.println("argument[" + i + "]= " + commArgs[i]);
-            Preferences.debug("argument[" + i + "]= " + commArgs[i] + "\n");
+        for (i = 0; i < args.length; i++) {
+            System.err.println("argument[" + i + "]= " + args[i]);
+            Preferences.debug("argument[" + i + "]= " + args[i] + "\n");
 
         }
 
@@ -3101,7 +3087,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         // imgName = this.getDefaultDirectory() + File.separatorChar + imgName;
                         // System.err.println(" ra 1= " + this.getDefaultDirectory());
                         setDefaultDirectory(System.getProperty("user.dir"));
-                        imageFileNames.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
+                        imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
                     } else {
 
                         // System.err.println(" ra 2 = " + imgName.substring( 0, index + 1 ));
@@ -3109,16 +3095,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         String dir = imgName.substring(0, index + 1);
                         String name = imgName.substring(index + 1);
                         setDefaultDirectory(dir);
-                        imageFileNames.add(new OpenFileInfo(dir, name, isMulti));
+                        imageList.add(new OpenFileInfo(dir, name, isMulti));
                     }
                     // imageFileNames.add(args[++i]);
 
                 } else if (arg.equalsIgnoreCase("-hide")) {
                     isAppFrameVisible = false;
                 } else if (arg.equalsIgnoreCase("-s")) {
-
                     // System.out.println("script name = " + args[i+1]);
-                    scriptFileNames.add(args[++i]);
+                    scriptFile = args[++i];
                 } else if (arg.equalsIgnoreCase("-v")) {
                     String voiName = args[++i];
                     index = voiName.lastIndexOf(File.separatorChar);
@@ -3133,14 +3118,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         voiIdx++;
 
                         if (voiIdx == voiCount[imgIdx]) {
-                            voiFileNames.add(voiPerImages);
+                            voiList.add(voiPerImages);
                             imgIdx++;
                             voiFollowImage = false;
                             voiPerImages = new Vector();
                         }
                     }
                 } else if (arg.equalsIgnoreCase("-o")) {
-                    savedImageFileName = args[++i];
+                    String varValue = args[++i];
+                    Preferences.debug("cmd var:\tDefining parameter variable value from -o arg " + ActionSaveImageAs.SAVE_AS_FILE_NAME + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
+                    VariableTable.getReference().storeVariable(ActionSaveImageAs.SAVE_AS_FILE_NAME, varValue);
+                } else if (arg.equalsIgnoreCase("-d")) {
+                    String varName = args[++i];
+                    String varValue = args[++i];
+                    Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
+                    VariableTable.getReference().storeVariable(varName, varValue);
                 } else {
                     printUsageAndExit();
                 }
@@ -3158,6 +3150,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else {
             Preferences.debug("Command line parsing success!", Preferences.DEBUG_MINOR);
         }
+        
+        // scriptFile may be null if we don't have a script to run (e.g., if we just want to open images/vois specified on cmd line)
+        runCmdLine(scriptFile, imageList, voiList);
     }
 
     /**
@@ -3202,11 +3197,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private void printUsageAndExit() {
         String helpInfo = "Usage: mipav " + "[-hH] " + "[-iI] imageFileName " + "[-sS] ScriptFileName " +
-                          "[-vV] voiFileName " + "[-oO] imageFileName " + "[-hideHide]" + "\n" +
+                          "[-vV] voiFileName " + "[-oO] imageFileName " + "[-dD] scriptVariableName scriptVariableValue " + "[-hideHide]" + "\n" +
                           "[-h][-H][--help]  Display this help" + "\n" + "[-hide][-HIDE]    Hide application frame" +
                           "\n" + "[-i][-I]          Image file name" + "\n" + "[-m][-M]          Image multifile name" +
                           "\n" + "[-s][-S]          Script file name" + "\n" + "[-v][-V]          VOI file name" +
-                          "\n" + "[-o][-O]          Saved image file name" + "\n" + "\n" + "Examples:" + "\n" +
+                          "\n" + "[-o][-O]          Saved image file name (sets " + ActionSaveImageAs.SAVE_AS_FILE_NAME + ")" + 
+                          "\n" + "[-d][-D]          Set the value of a variable used in a script" + "\n" + "\n" + "Examples:" + "\n" +
                           "> mipav" + "\n" + "> mipav imageFileName" + "\n" +
                           "> mipav -i imageFileName -s scriptFileName -hide" + "\n" +
                           "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3";

@@ -16,7 +16,7 @@ public class ActionSaveImageAs extends ActionSaveBase {
     /**
      * The name of the parameter variable which allows the user to specify the name to save the image as from the command line (or the script run dialog, possibly).
      */
-    protected static final String SAVE_AS_FILE_NAME = "$save_as_file_name";
+    public static final String SAVE_AS_FILE_NAME = "$save_as_file_name";
     
     /**
      * Constructor for the dynamic instantiation and execution of the SaveImage script action.
