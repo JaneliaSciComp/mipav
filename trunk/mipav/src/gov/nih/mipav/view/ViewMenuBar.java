@@ -450,6 +450,8 @@ public class ViewMenuBar {
                                                                      new JMenuItem[] {
                                                                          menuBuilder.buildMenuItem("Single MRI image", "SMRISNR", 0, null,
                                                                                                     false),
+                                                                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null,
+                                                                                                    false),
                                                                      }),        
                                         
                                         menuBuilder.makeMenu("Transformation tools", false,
@@ -1269,6 +1271,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
             menuBuilder.setMenuItemEnabled("Single MRI image", false);
+            menuBuilder.setMenuItemEnabled("Two MRI images", false);
         } else {
             menuBuilder.setMenuItemEnabled("RGB -> Gray", false);
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
