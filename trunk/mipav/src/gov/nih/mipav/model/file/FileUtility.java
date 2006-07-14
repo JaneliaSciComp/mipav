@@ -253,6 +253,10 @@ public class FileUtility {
         }
         int index = absolutePath.lastIndexOf(File.separator);
         if(index >= 0){
+            if (index == absolutePath.length() - 1) {
+                return null;
+            }
+            
             return absolutePath.substring(index + 1);
         }
         return absolutePath;

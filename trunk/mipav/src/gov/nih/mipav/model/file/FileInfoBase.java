@@ -2004,7 +2004,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  fname  image file name
      */
     public void setFileName(String fname) {
-        fileName = fname;
+        if (fname == null || fname.length() == 0) {
+            fileName = FileUtility.getFileDirectory(fileName);
+        } else if (FileUtility.getFileDirectory(fname) == null) {
+            fileName = FileUtility.getFileDirectory(fileName) + fname;
+        } else {
+            fileName = fname;
+        }
     }
 
     /**
