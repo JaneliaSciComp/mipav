@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -28,7 +30,7 @@ import javax.swing.*;
  * <p>The user chooses a value for the margins, with the image minimum the default. If Color, values are chosen for red,
  * green, and blue. A new image or replacement of the old image may be selected.</p>
  */
-public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAddMargins extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -274,7 +276,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
 
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         imageMarginsAlgo.finalize();
         imageMarginsAlgo = null;
@@ -290,132 +292,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AddMargins " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                if (resultImage.getExtents().length == 2) {
-                    userInterface.getScriptDialog().append("" + leftSide + " " + rightSide + " " + topSide + " " +
-                                                           bottomSide + " ");
-                } else {
-                    userInterface.getScriptDialog().append("" + leftSide + " " + rightSide + " " + topSide + " " +
-                                                           bottomSide + " " + front + " " + back + " ");
-                }
-
-                if (colorFactor == 1) {
-                    userInterface.getScriptDialog().append("" + defaultValue + "\n");
-                } else {
-                    userInterface.getScriptDialog().append("" + redValue + " " + greenValue + " " + blueValue + "\n");
-                }
-
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        if (image.isColorImage() == false) {
-            colorFactor = 1;
-        } else {
-            colorFactor = 4;
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-
-            if (image.getExtents().length == 2) {
-                setLeft(parser.getNextInteger());
-                setRight(parser.getNextInteger());
-                setTop(parser.getNextInteger());
-                setBottom(parser.getNextInteger());
-            } else {
-                setLeft(parser.getNextInteger());
-                setRight(parser.getNextInteger());
-                setTop(parser.getNextInteger());
-                setBottom(parser.getNextInteger());
-                setFront(parser.getNextInteger());
-                setBack(parser.getNextInteger());
-            }
-
-            if (image.isColorImage() == false) {
-                setDefault(parser.getNextDouble());
-            } else {
-                setRed(parser.getNextDouble());
-                setGreen(parser.getNextDouble());
-                setRed(parser.getNextDouble());
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+  
 
     /**
      * Accessor that sets the back value.
@@ -576,6 +453,75 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
         }
     }
 
+   
+    /**
+     * {@inheritDoc}
+     */
+    public void storeParamsFromGUI(){
+        try {
+            scriptParameters.storeInputImage(image);
+            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+            
+            scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("blueValue", blueValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("bottomSide", bottomSide));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("bv", bv));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("colorFactor", colorFactor));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("defaultValue",defaultValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("dv",dv));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("front",front));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("greenValue",greenValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("gv",gv));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("leftSide",leftSide));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("redValue",redValue));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("rightSide",rightSide));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("rv",rv));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("topSide",topSide));
+       } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered storing parameters for " + JDialogScriptableBase.getDialogActionString(getClass()) + "\n" + pe);
+        }  
+    }
+ 
+   
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        back = scriptParameters.getParams().getInt("back");
+        blueValue = scriptParameters.getParams().getDouble("blueValue");
+        bottomSide = scriptParameters.getParams().getInt("bottomSide");
+        bv  = Double.valueOf(scriptParameters.getParams().getDouble("bv"));
+        colorFactor = scriptParameters.getParams().getInt("colorFactor");
+        defaultValue = scriptParameters.getParams().getDouble("defaultValue");
+        displayLoc = scriptParameters.getParams().getInt("displayLoc");
+        dv = Double.valueOf(scriptParameters.getParams().getDouble("dv"));
+        front = scriptParameters.getParams().getInt("front");
+        greenValue = scriptParameters.getParams().getDouble("greenValue");
+        gv = Double.valueOf(scriptParameters.getParams().getDouble("gv"));
+        leftSide = scriptParameters.getParams().getInt("leftSide");
+        redValue = scriptParameters.getParams().getDouble("redValue");
+        rightSide = scriptParameters.getParams().getInt("rightSide");
+        rv = Double.valueOf(scriptParameters.getParams().getDouble("rv"));
+        topSide = scriptParameters.getParams().getInt("topSide");
+           }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+    
+    
+    
     /**
      * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is
      * and whether or not there is a separate destination image.

@@ -3,7 +3,10 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
 
 import gov.nih.mipav.view.*;
 
@@ -21,8 +24,8 @@ import javax.swing.*;
  *
  * @see  AlgorithmAdaptivePathSmooth
  */
-public class JDialogAdaptivePathSmooth extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
+        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -161,6 +164,46 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    //resultImage, image, float radiusY, float radiusCr,float radiusCb, 
+    //float threshold, boolean includeNeighbors, boolean reduce, boolean image25D
+    
+    
+    public void storeParamsFromGUI(){
+        try{
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("includeNeighbors", includeNeighbors));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("image25D", image25D));
+        }catch (ParserException pe){
+            pe.printStackTrace();
+        }  
+     }
+ 
+   public void setGUIFromParams(){
+       radiusY = scriptParameters.getParams().getFloat("radiusY");
+       radiusCr = scriptParameters.getParams().getFloat("radiusCr");
+       radiusCb = scriptParameters.getParams().getFloat("radiusCb");
+       threshold = scriptParameters.getParams().getFloat("threshold");
+       includeNeighbors = scriptParameters.getParams().getBoolean("includeNeighbors");
+       reduce = scriptParameters.getParams().getBoolean("reduce");
+       image25D = scriptParameters.getParams().getBoolean("image25D");
+   }
+   
+   public void doPostAlgorithmActions() {
+       try{
+           scriptParameters.storeOutputImageParams(resultImage, true);
+           }catch (ParserException pe){
+               MipavUtil.displayError("Error encountered saving output image:\n" + pe);
+           }       
+   }
+    
+    
+    
+    
+    
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
      *
@@ -242,7 +285,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
             }
         }
 
-        insertScriptLine(adaptivePathSmoothAlgo);
+        insertScriptLine();
         adaptivePathSmoothAlgo.finalize();
         adaptivePathSmoothAlgo = null;
         dispose();
@@ -282,42 +325,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AdaptivePathSmooth " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" "));
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + getParameterString(" "));
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
-    }
+    
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -367,63 +375,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
 
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRadiusY(parser.getNextFloat());
-            setRadiusCr(parser.getNextFloat());
-            setRadiusCb(parser.getNextFloat());
-            setThreshold(parser.getNextFloat());
-            setIncludeNeighbors(parser.getNextBoolean());
-            setReduce(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.

@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +29,7 @@ import javax.swing.*;
  * @author   parsonsd
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogAHE extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -267,7 +269,7 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
             }
         }
 
-        insertScriptLine(aheAlgo);
+        insertScriptLine();
         aheAlgo.finalize();
         aheAlgo = null;
         dispose();
@@ -283,103 +285,59 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+  
+
+
+
+    
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue",blue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clamp",clamp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clampValue",clampValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("green",green));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("heightDivisions",heightDivisions));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("isColorImage",isColorImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red",red));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("widthDivisions",widthDivisions));
+     }
+    
+
+
+
+/**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AHE " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + clamp + " " + clampValue + " " + heightDivisions +
-                                                           " " + widthDivisions + " " + red + " " + green + " " + blue +
-                                                           "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + clamp + " " + clampValue + " " + heightDivisions +
-                                                           " " + widthDivisions + " " + red + " " + green + " " + blue +
-                                                           "\n");
-                }
-            }
-        }
+    protected  void setGUIFromParams(){
+        blue = scriptParameters.getParams().getBoolean("blue");
+        clamp = scriptParameters.getParams().getBoolean("clamp");
+        clampValue = scriptParameters.getParams().getInt("clampValue");
+        displayLoc = scriptParameters.getParams().getInt("displayLoc");
+        green = scriptParameters.getParams().getBoolean("green");
+        heightDivisions = scriptParameters.getParams().getInt("heightDivisions");
+        isColorImage = scriptParameters.getParams().getBoolean("isColorImage");
+        red = scriptParameters.getParams().getBoolean("red");
+        widthDivisions = scriptParameters.getParams().getInt("widthDivisions");
     }
+    
 
+    
+    
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+     public void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setClampFlag(parser.getNextBoolean());
-            setClampingValue(parser.getNextInteger());
-            setHeightDivisions(parser.getNextInteger());
-            setWidthDivisions(parser.getNextInteger());
-            setRGBChannelFilter(parser.getNextBoolean(), parser.getNextBoolean(), parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
+    }    
+    
+    
     /**
      * Accessor that sets the clamp flag.
      *
