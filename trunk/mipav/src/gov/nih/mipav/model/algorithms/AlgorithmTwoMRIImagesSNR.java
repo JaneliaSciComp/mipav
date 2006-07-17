@@ -15,10 +15,12 @@ import java.text.DecimalFormat;
 /**
  * This module implements the National Electrical Manufacturers Association (NEMA) standard for SNR estimation
  * in diagnostic MRI.
- * This method requires a perfect geometrical registration of 2 MRI images.
+ * This method requires a perfect geometrical registration of 2 MRI images scanned sequentailly with less than
+ * five minutes elapsed time from the end of the first scan to the beginning of the second scan.
  * A simple 2 step process is used:
- * 1.) Determine the standard deviation of the difference image
- * difference variance = (1/(imageLength - 1)) * sum over all i of (image[i] - image2[i])**2
+ * 1.) Determine the standard deviation of the difference image over the same VOI region used for
+ * the signal mean
+ * difference variance = (1/(VOI pixel number - 1)) * sum over VOI region of (image[i] - image2[i])**2
  * difference standard deviation = square root(difference variance)
  * 
  * 2.) SNR for a signal VOI = square root(2) * (voi mean)/difference standard deviation
@@ -34,8 +36,8 @@ import java.text.DecimalFormat;
  * 
  * <p> Note that even for 2 perfectly aligned images the results differ substantially for processing without
  * and with registration.  In 1 example for 2 aligned images without registration the standard deviation 
- * equalled 10.5 and the SNR equalled 10.7.  With registration the standard deviation equalled 8.08 and
- * the SNR equalled 13.9.
+ * equalled 12.3 and the SNR equalled 8.44.  With registration the standard deviation equalled 7.66 and
+ * the SNR equalled 13.6.
  *
  * <p>The code here assumes the presence of 1 or 2 VOI regions - a required signal region and optional second
  * signal region. The VOIs must all be placed in the the same image. Radio buttons
@@ -46,6 +48,10 @@ import java.text.DecimalFormat;
  * Reference: 
  * 1.) PhD. Thesis Signal and Noise Estimation From Magnetic Resonance Images by Jan Sijbers,
   Universiteit Antwerpen, Department Natuurkunde, Section 7.1.2 The NEMA standard, p. 49.
+ *
+ * 2.) Acceptance Testing of Magnetic Resonance Imaging Systems, AAPM Report No. 34, Published by
+ * the American Assoication of Physicists in Medicine by the American Institute of Physics, March,
+ * 1992 (Reprinted from Medical Physics, Vol. 19, Issue 1, 1992).
  *
  */
 public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
@@ -332,19 +338,8 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
                 return;
             }        
         } // else
-        
-        for (i = 0; i < imageLength; i++) {
-            difference = floatBuffer[i] - floatBuffer2[i];
-            differenceVar = differenceVar + (difference * difference);
-        }
-        differenceVar = differenceVar/((double)imageLength - 1.0);
-        differenceStdDev = Math.sqrt(differenceVar);
-        Preferences.debug("Image difference standard deviation = " + 
-                          nf.format(differenceStdDev) + "\n");
-        UI.setDataText("Image difference standard deviation = " + 
-                nf.format(differenceStdDev) + "\n");
 
-        progressBar.setMessage("Cacluating average intensities");
+        progressBar.setMessage("Cacluating snr");
         mask = new short[imageLength];
 
         for (i = 0; i < mask.length; i++) {
@@ -380,6 +375,8 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             if (mask[i] == signalIndex) {
                 mean += floatBuffer[i];
                 meanCount++;
+                difference = floatBuffer[i] - floatBuffer2[i];
+                differenceVar = differenceVar + (difference * difference);
             }
             
             if (signal2Index >= 0) {
@@ -390,15 +387,20 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             } // if (signal2Index >= 0)
         } // for (i = 0; i < imageLength; i++)
         
-        mean = mean/meanCount;
+        differenceVar = differenceVar/((double)meanCount - 1.0);
+        differenceStdDev = Math.sqrt(differenceVar);
+        Preferences.debug("Image difference standard deviation = " + 
+                          nf.format(differenceStdDev) + "\n");
+        UI.setDataText("Image difference standard deviation = " + 
+                nf.format(differenceStdDev) + "\n");
         
+        mean = mean/meanCount;
         snr = Math.sqrt(2.0)*mean/differenceStdDev;
         Preferences.debug("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
         UI.setDataText("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
         
         if (signal2Index >= 0) {
             mean2 = mean2/mean2Count;
-            
             snr2 = Math.sqrt(2.0)*mean2/differenceStdDev;
             Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
             UI.setDataText("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
