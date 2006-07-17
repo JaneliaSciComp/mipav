@@ -86,15 +86,6 @@ public class ScriptRunner {
         imageTable = new ImageVariableTable();
         
         try {
-            String[] imageVarsNeeded = Parser.getImageVarsUsedInScript(scriptFile);
-            if (imageVarsNeeded.length != imageNameList.size()) {
-                MipavUtil.displayError("Incorrect number of images specified to use to run the script.\n Found: " +
-                        imageNameList.size() + " Required: " + imageVarsNeeded.length);
-                Preferences.debug("script runner:\tAborted script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
-                setRunning(false);
-                return false;
-            }
-            
             fillImageTable(imageNameList);
             
             Parser.runScript(scriptFile);

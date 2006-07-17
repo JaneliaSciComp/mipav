@@ -38,9 +38,6 @@ public class ParserEngine {
     /** The number of the current (or last if not currently parsing) line being parsed (1-based). */
     private int currentScriptLineNumber = 0;
 
-    /** Whether to print debugging output while parsing the script. */
-    private boolean doDebugOutput = false;
-
     /** The path to the script file to be parsed ('-' if the script is already in memory and has no related file). */
     private String scriptFile;
 
@@ -158,15 +155,6 @@ public class ParserEngine {
         } catch (IOException ioe) {
             throw new ParserException(scriptFile, currentScriptLineNumber, "Error resetting parser: " + ioe.getMessage());
         }
-    }
-
-    /**
-     * Changes whether parser debugging output should be printed.
-     *
-     * @param  flag  Whether parser debugging output should be printed.
-     */
-    public void setDoDebugOutput(boolean flag) {
-        doDebugOutput = flag;
     }
 
     /**
