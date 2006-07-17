@@ -2,25 +2,25 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
 
-/**  This code calculates the confluent hypergeometric function of input parameters
- *   a and b and input argument x
- *   A typical usage for the routine requiring real parameters and a real argument would be:
+/**  This code calculates the confluent hypergeometric function of the first and second kinds
+ *   For the confluent hypergeometric function of the first kind a typical usage for the
+ *   routine requiring real parameters and a real argument would be:
  *   double result[] = new double[1];
- *   ConfluentHypergeometric ch = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
- *                                                            -0.5, 1, 1.0, result);
+ *   ConfluentHypergeometric ch = new ConfluentHypergeometric(-0.5, 1, 1.0, result);
  *   ch.run();
  *   Preferences.debug("Confluent hypergeomtric result = " + result[0] + "\n");
  *   UI.setDataText("Confluent hypergeometric result = " + result[0] + "\n");
  *   
- *   A typcial usage for the routine requiring real parameters and a complex argument would be:
- *   ConfluentHypergeometric cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
- *                                                               -0.5, 1.0, realZ, imagZ, 
+ *   For the confluent hypergeometric function of the first kind a typcial usage for the
+ *   routine requiring real parameters and a complex argument would be:
+ *   ConfluentHypergeometric cf = new ConfluentHypergeometric(-0.5, 1.0, realZ, imagZ, 
  *                                                               realResult, imagResult);
  *   ch.run();
  *   System.out.println("realResult[0] = " + realResult[0]);
  *   System.out.println("imagResult[0] = " + imagResult[0]);
  *   
- *   A typical usage for the routine allowing complex parameters and a complex argument would be:
+ *   For the confluent hypergeometric function of the first kind a typical usage for the
+ *   routine allowing complex parameters and a complex argument would be:
  *   ConfluentHypergeometric cf;
  *   int Lnchf = 0;
  *   int ip = 700;
@@ -95,6 +95,9 @@ public class ConfluentHypergeometric {
     
     /** Outputted result */
     private double result[];
+    
+   /** Method used in calculating the confluent hypergeometric function of the second kind. */
+    private int method[];
    
     /** Input parameter */
     private double realA;
@@ -141,23 +144,39 @@ public class ConfluentHypergeometric {
 //  ~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * @param kind Tells whether confluent hypergeometric function is of first or second kind
      * @param a input parameter
      * @param b input parameter
      * @param x input argument
      * @param result outputted result
      */
     public ConfluentHypergeometric(int kind, double a, double b, double x, double result[]) {
-        this.kind = kind;
         this.a = a;
         this.b = b;
         this.x = x;
         this.result = result;
+        this.kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
         this.version = REAL_VERSION;
     }
     
     /**
-     * @param kind Tells whether confluent hypergeometric function is of first or second kind
+     * @param a input parameter
+     * @param b input parameter
+     * @param x input argument
+     * @param result outputted result
+     * @param method method code used
+     */
+    public ConfluentHypergeometric(double a, double b, double x, double result[],
+                                   int method[]) {
+        this.a = a;
+        this.b = b;
+        this.x = x;
+        this.result = result;
+        this.method = method;
+        this.kind = CONFLUENT_HYPERGEOMETRIC_SECOND_KIND;
+        this.version = REAL_VERSION;
+    }
+    
+    /**
      * @param a input real parameter
      * @param b input real parameter
      * @param realZ input real part of argument
@@ -165,15 +184,15 @@ public class ConfluentHypergeometric {
      * @param realResult real part of outputted result
      * @param imagResult imaginary part of outputted result
      */
-    public ConfluentHypergeometric(int kind, double a, double b, 
+    public ConfluentHypergeometric(double a, double b, 
             double realZ, double imagZ, double realResult[], double imagResult[]) {
-        this.kind = kind;
         this.a = a;
         this.b = b;
         this.realZ = realZ;
         this.imagZ = imagZ;
         this.realResult = realResult;
         this.imagResult = imagResult;
+        this.kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
         this.version = REALPARAM_COMPLEXARG_VERSION;
     }
     
@@ -231,8 +250,7 @@ public class ConfluentHypergeometric {
             firstKindComplex();
         }
         else if (kind == CONFLUENT_HYPERGEOMETRIC_SECOND_KIND) {
-            MipavUtil.displayError("Second kind not implemented");
-            return;
+            secondKindRealArgument();
         }
         else {
             MipavUtil.displayError("Illegal kind argument");
@@ -1731,5 +1749,9 @@ public class ConfluentHypergeometric {
         imagZ = imagZ0;
         return;
     } // firstKindComplexArgument
+    
+    private void secondKindRealArgument() {
+        
+    } // secondKindRealArgument
  
 }
