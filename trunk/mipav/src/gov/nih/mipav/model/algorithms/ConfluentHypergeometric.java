@@ -34,6 +34,15 @@ import gov.nih.mipav.view.*;
  *   Since this complex routine allows large magnitude x, it should generally be used 
  *   instead of the real version routine.
  *   
+ *   For the confluent hypergeometric function of the second kind a typical usage for the
+ *   routine requiring real parameters and a real argument would be:
+ *   double result[] = new double[1];
+ *   int method[] = new int[1];
+ *   ConfluentHypergeometric ch = new ConfluentHypergeometric(-0.5, 1, 1.0, result, method);
+ *   ch.run();
+ *   Preferences.debug("Confluent hypergeomtric result = " + result[0] +  " method = " + 
+ *                       method + \n");
+ *   
  *   For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
  *   Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
  *   and Atul Bhalla the results were:
@@ -161,7 +170,7 @@ public class ConfluentHypergeometric {
     /**
      * @param a input parameter
      * @param b input parameter
-     * @param x input argument
+     * @param x input argument, x > 0
      * @param result outputted result
      * @param method method code used
      */
@@ -1750,8 +1759,527 @@ public class ConfluentHypergeometric {
         return;
     } // firstKindComplexArgument
     
+    /**
+     * This code is a port of the FORTRAN routine CHGU from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 403-405.  It computes confluent hypergeometric functions of the second
+     * kind for real parameters and argument.  It works well except for the case of 
+     * a << -1 because in this case the evaluation involves a summation of a partially
+     * alternating series which results in a loss of significant digits. 
+     * Routines called:
+     * chgus for small x method = 1
+     * chgul for large x method = 2
+     * chgubi for integer b method = 3
+     * chguit for numerical integration method = 4
+     */
     private void secondKindRealArgument() {
+        boolean iL1;
+        boolean iL2;
+        boolean iL3;
+        boolean bL1;
+        boolean bL2;
+        boolean bL3;
+        boolean bn;
+        double aa;
+        int id1[] = new int[1];
+        double hu1 = 0.0;
+        int id[] = new int[1];
+        double a00;
+        double b00;
         
+        aa = a - b + 1.0;
+        iL1 = ((a == (int)a) && (a <= 0.0));
+        iL2 = ((aa == (int)aa) && (aa <= 0.0));
+        iL3 = Math.abs(a*(a-b+1.0))/x <= 2.0;
+        bL1 = (x <= 5.0 || ((x <= 10.0) && (a <= 2.0)));
+        bL2 = (((x > 5.0) && (x<= 12.5)) && ((a >= 1.0) && (b >= a+4.0)));
+        bL3 = (x > 12.5) && (a >= 5.0) && (b >= a+5.0);
+        bn = (b == (int)b) && (b != 0.0);
+        id1[0] = -100;
+        if (b != (int)b) {
+            chgus(id1);
+            method[0] = 1;
+            if (id1[0] >= 6) {
+                return;
+            }
+            hu1 = result[0];
+        } // if (b != (int)b)
+        if (iL1 || iL2 || iL3) {
+            chgul(id);
+            method[0] = 2;
+            if (id[0] >= 6) {
+                return;
+            }
+            if (id1[0] > id[0]) {
+                method[0] = 1;
+                id[0] = id1[0];
+                result[0] = hu1;
+            } // if (id1[0] > id[0])
+        } // if (iL1 || iL2 || iL3)
+        if (a >= 0.0) {
+            if (bn && (bL1 || bL2 || bL3)) {
+                chgubi(id);
+                method[0] = 3;
+            }
+            else {
+                chguit(id);
+                method[0] = 4;
+            }
+        } // if (a >= 0.0)
+        else { // a < 0.0
+            if (b <= a) {
+                a00 = a;
+                b00 = b;
+                a = a - b + 1.0;
+                b = 2.0 - b;
+                chguit(id);
+                result[0] = Math.pow(x,1.0-b00)*result[0];
+                a = a00;
+                b = b00;
+                method[0] = 4;
+            } // if (b <= a)
+            else if (bn && (!iL1)) {
+                chgubi(id);
+                method[0] = 3;
+            }
+        } // else a < 0.0
+        if (id[0] < 6) {
+            MipavUtil.displayError("No accurate result obtained");
+        }
+        return;
     } // secondKindRealArgument
  
+    /*
+     * This code is a port of the FORTRAN routine CHGUS from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 405-406.  It computes confluent hypergeometric functions of the second
+     * kind for small argument x.
+     * Parameter b is not equal to 0, -1, -2, ...
+     * @param id Estimated number of significant digits
+     */
+    private void chgus(int id[]) {
+        double ga[] = new double[1];
+        double gb[] = new double[1];
+        double xg1;
+        double gab[] = new double[1];
+        double xg2;
+        double gb2[] = new double[1];
+        double hu0;
+        double r1;
+        double r2;
+        double hmax;
+        double hmin;
+        int j;
+        double h0 = 0.0;
+        double d1;
+        double d2 = 0.0;
+        Gamma gam;
+        double hua;
+        
+        id[0] = -100;
+        // For b != integer use
+        // U(a, b, z) = (PI/sin(PI*b))* [(M(a, b, z)/(gamma(1 + a - b)*gamma(b)) - z**(1-b)
+        //                               * (M(a+1-b,2-b,z)/(gamma(a)*gamma(2-b))]
+        gam = new Gamma(a, ga);
+        gam.run();
+        gam = new Gamma(b, gb);
+        gam.run();
+        xg1 = 1.0 + a - b;
+        gam = new Gamma(xg1, gab);
+        gam.run();
+        xg2 = 2.0 - b;
+        gam = new Gamma(xg2, gb2);
+        gam.run();
+        hu0 = Math.PI/Math.sin(Math.PI*b);
+        r1 = hu0/(gab[0]*gb[0]);
+        r2 = hu0 * Math.pow(x,1.0-b)/(ga[0]*gb2[0]);
+        result[0] = r1 - r2;
+        hmax = 0.0;
+        hmin = Double.MAX_VALUE;
+        for (j = 1; j <= 150; j++) {
+            r1 = r1*(a+j-1.0)/(j*(b+j-1.0))*x;
+            r2 = r2*(a-b+j)/(j*(1.0-b+j))*x;
+            result[0] = result[0] + r1 - r2;
+            hua = Math.abs(result[0]);
+            if (hua > hmax) {
+                hmax = hua;
+            }
+            if (hua < hmin) {
+                hmin = hua;
+            }
+            if (Math.abs(result[0] - h0) < Math.abs(result[0])*1.0E-15) {
+                break;
+            }
+            h0 = result[0];
+        } // for (j = 1; j <= 150; j++)
+        d1 = 0.4342944819*Math.log(hmax);
+        if (hmin != 0.0) {
+            d2 = 0.4342944819*Math.log(hmin);
+        }
+        id[0] = (int)(15 - Math.abs(d1-d2));
+        return;
+    } // chgus
+    
+    /*
+     * This code is a port of the FORTRAN routine CHGUL from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 406-407.  It computes confluent hypergeometric functions of the second
+     * kind for a large argument x.
+     * @param id Estimated number of significant digits
+     */
+    private void chgul(int id[]) {
+        boolean iL1;
+        boolean iL2;
+        double aa;
+        double r;
+        int k;
+        int nm = 0;
+        double ra;
+        double r0 = 0.0;
+        
+        id[0] = -100;
+        aa = a - b + 1.0;
+        iL1 = (a == (int)a) && (a <= 0.0);
+        iL2 = (aa == (int)aa) && (aa <= 0.0);
+        if (iL1) {
+            nm = (int)Math.abs(a);
+        }
+        if (iL2) {
+            nm = (int)Math.abs(aa);
+        }
+        if (iL1 || iL2) {
+            // For a = -m or a-b+1 = -m, m = 0, 1, 2,...
+            // U(a, b, z) = z**(-a)*sum from k = 0 to R-1 of 
+            // Pochhammer(a,k)*Pochhammer(1+a-b,k)*(-z**-k)/k!
+            result[0] = 1.0;
+            r = 1.0;
+            for (k = 1; k <= nm; k++) {
+               r = -r*(a+k-1.0)*(a-b+k)/(k*x);
+               result[0] = result[0] + r;
+            } // for (k = 1; k <= nm; k++)
+            result[0] = Math.pow(x,-a)*result[0];
+            id[0] = 10;
+        } // if (iL1 || iL2)
+        else {
+            // For x >= 0.5a*(a-b+1) use
+            // U(a, b, z) = z**(-a)*sum from k = 0 to R-1 of 
+            // Pochhammer(a,k)*Pochhammer(1+a-b,k)*(-z**-k)/k!
+            result[0] = 1.0;
+            r = 1.0;
+            for (k = 1; k <= 25; k++) {
+                r = -r*(a+k-1.0)*(a-b+k)/(k*x);
+                ra = Math.abs(r);
+                if (k > 5 && ra >= r0 || ra < 1.0E-15) {
+                    break;
+                }
+                r0 = ra;
+                result[0] = result[0] + r;
+            } // for (k = 1; k <= 25; k++)
+            result[0] = Math.pow(x,-a)*result[0];
+        } // else
+        return;
+    } // chgul
+    
+    /*
+     * This code is a port of the FORTRAN routine CHGUBI from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 407-409.  It computes confluent hypergeometric functions of the second
+     * kind when parameter b is an integer, b = +-1, +-2, ...
+     * @param id Estimated number of significant digits
+     */
+    private void chgubi(int id[]) {
+        double eL;
+        int n;
+        double rn1;
+        double rn;
+        int j;
+        double ps[] = new double[1];
+        double ga[] = new double[1];
+        double a0;
+        double a1;
+        double a2;
+        double ga1[] = new double[1];
+        double ua;
+        double ub;
+        double hm1;
+        double r;
+        double hmax;
+        double hmin;
+        int k;
+        double h0 = 0.0;
+        double da1;
+        double da2 = 0.0;
+        double s0;
+        int m;
+        double hm2;
+        double s1;
+        double s2;
+        double hw;
+        double hu2;
+        double db1;
+        double db2 = 0.0;
+        int id1;
+        double hm3;
+        double sa;
+        double sb;
+        Psi psi;
+        Gamma gam;
+        double hu1;
+        int id2 = 0;
+        
+        id[0] = -100;
+        eL = 0.5772156649015329;
+        n = (int)Math.abs(b-1.0);
+        rn1 = 1.0;
+        rn = 1.0;
+        for (j = 1; j <= n; j++) {
+            rn = rn * j;
+            if (j == (n-1)) {
+                rn1 = rn;
+            }
+        } // for (j = 1; j <= n; j++)
+        psi = new Psi(a, ps);
+        psi.run();
+        gam = new Gamma(a, ga);
+        gam.run();
+        if (b > 0.0) {
+            a0 = a;
+            a1 = a - n;
+            a2 = a1;
+            gam = new Gamma(a1, ga1);
+            gam.run();
+            ua = Math.pow(-1,n-1)/(rn*ga1[0]);
+            ub = rn1/ga[0]*Math.pow(x,-n);
+        } // if (b > 0.0)
+        else {
+            a0 = a + n;
+            a1 = a0;
+            a2 = a;
+            gam = new Gamma(a1,ga1);
+            gam.run();
+            ua = Math.pow(-1,n-1)/(rn*ga[0])*Math.pow(x,n);
+            ub = rn1/ga1[0];
+        } // else
+        hm1 = 1.0;
+        r = 1.0;
+        hmax = 0.0;
+        hmin = Double.MAX_VALUE;
+        for (k = 1; k <= 150; k++) {
+            r = r*(a0+k-1.0)*x/((n+k)*k);
+            hm1 = hm1 + r;
+            hu1 = Math.abs(hm1);
+            if (hu1 > hmax) {
+                hmax = hu1;
+            }
+            if (hu1 < hmin) {
+                hmin = hu1;
+            }
+            if (Math.abs(hm1-h0) < Math.abs(hm1)*1.0E-15) {
+                break;
+            }
+            h0 = hm1;
+        } // for (k = 1; k <= 150; k++)
+        da1 = 0.4342944819*Math.log(hmax);
+        if (hmin != 0.0) {
+            da2 = 0.4342944819*Math.log(hmin);
+        }
+        id[0] = (int)(15 - Math.abs(da1-da2));
+        hm1 = hm1 * Math.log(x);
+        s0 = 0.0;
+        for (m = 1; m <= n; m++) {
+            if (b >= 0.0) {
+                s0 = s0 - 1.0/m;
+            }
+            else {
+                s0 = s0 + (1.0-a)/(m*(a+m-1.0));
+            }
+        } // for (m = 1; m <= n; m++)
+        hm2 = ps[0] + 2.0*eL + s0;
+        r = 1.0;
+        hmax = 0.0;
+        hmin = Double.MAX_VALUE;
+        for (k = 1; k <= 150; k++) {
+            s1 = 0.0;
+            s2 = 0.0;
+            if (b > 0.0) {
+                for (m = 1; m <= k; m++) {
+                    s1 = s1 - (m + 2.0*a - 2.0)/(m*(m+a-1.0));
+                }
+                for (m = 1; m <= n; m++) {
+                    s2 = s2 + 1.0/(k+m);
+                }
+            } // if (b > 0.0)
+            else {
+                for (m = 1; m <= k+n; m++) {
+                    s1 = s1 + (1.0-a)/(m*(m+a-1.0));
+                }
+                for (m = 1; m <= k; m++) {
+                    s2 = s2 + 1.0/m;
+                }
+            } // else
+            hw = 2.0*eL + ps[0] + s1 - s2;
+            r = r*(a0+k-1.0)*x/((n+k)*k);
+            hm2 = hm2 + r*hw;
+            hu2 = Math.abs(hm2);
+            if (hu2 > hmax) {
+                hmax = hu2;
+            }
+            if (hu2 < hmin) {
+                hmin = hu2;
+            }
+            if (Math.abs((hm2-h0)/hm2) < 1.0E-15) {
+                break;
+            }
+            h0 = hm2;
+        } // for (k = 1; k <= 150; k++)
+        db1 = 0.4342944819*Math.log(hmax);
+        if (hmin != 0.0) {
+            db2 = 0.4342944819*Math.log(hmin);
+        }
+        id1 = (int)(15 - Math.abs(db1-db2));
+        if (id1 < id[0]) {
+            id[0] = id1;
+        }
+        hm3 = 1.0;
+        if (n == 0) {
+            hm3 = 0.0;
+        }
+        r = 1.0;
+        for (k = 1; k <= n-1; k++) {
+            r = r*(a2+k-1.0)/((k-n)*k)*x;
+            hm3 = hm3 + r;
+        } // for (k = 1; k <= n-1; k++)
+        sa = ua * (hm1 + hm2);
+        sb = ub * hm3;
+        result[0] = sa + sb;
+        if (sa != 0.0) {
+            id1 = (int)(0.4342944819*Math.log(Math.abs(sa)));
+        }
+        if (result[0] != 0.0) {
+            id2 = (int)(0.4342944819*Math.log(Math.abs(result[0])));
+        }
+        if (sa*sb < 0.0) {
+            id[0] = (int)(id[0] - Math.abs(id1-id2));
+        }
+        return;
+    } // chgubi
+    
+    /*
+     * This code is a port of the FORTRAN routine CHGUIT from the book Computation of
+     * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
+     * 1996, pp. 409-411.  It computes confluent hypergeometric functions of the second
+     * kind using Gaussian-Legendre integration
+     * Parameter a >= 0
+     * Parameter x > 0
+     * @param id Estimated number of significant digits
+     */
+    private void chguit(int id[]) {
+        double t[] = new double[]{2.59597723012478E-2, 7.78093339495366E-2,
+                                 1.29449135396945E-1, 1.80739964873425E-1,
+                                 2.31543551376029E-1, 2.81722937423262E-1,
+                                 3.31142848268448E-1, 3.79670056576798E-1,
+                                 4.27173741583078E-1, 4.73525841761707E-1,
+                                 5.18601400058570E-1, 5.62278900753945E-1,
+                                 6.04440597048510E-1, 6.44972828489477E-1,
+                                 6.83766327381356E-1, 7.20716513355730E-1,
+                                 7.55723775306586E-1, 7.88693739932264E-1,
+                                 8.19537526162146E-1, 8.48171984785930E-1,
+                                 8.74519922646898E-1, 8.98510310810046E-1,
+                                 9.20078476177628E-1, 9.39166276116423E-1,
+                                 9.55722255839996E-1, 9.69701788765053E-1,
+                                 9.81067201752598E-1, 9.89787895222222E-1,
+                                 9.95840525118838E-1, 9.99210123227436E-1};
+        double w[] = new double[]{5.19078776312206E-2, 5.17679431749102E-2,
+                                  5.14884515009810E-2, 5.10701560698557E-2,
+                                  5.05141845325094E-2, 4.98220356905502E-2,
+                                  4.89955754557568E-2, 4.80370318199712E-2,
+                                  4.69489888489122E-2, 4.57343797161145E-2,
+                                  4.43964787957872E-2, 4.29388928359356E-2,
+                                  4.13655512355848E-2, 3.96806954523808E-2,
+                                  3.78888675692434E-2, 3.59948980510845E-2,
+                                  3.40038927249464E-2, 3.19212190192963E-2,
+                                  2.97524915007890E-2, 2.75035567499248E-2,
+                                  2.51804776215213E-2, 2.27895169439978E-2,
+                                  2.03371207294572E-2, 1.78299010142074E-2,
+                                  1.52746185967848E-2, 1.26781664768159E-2,
+                                  1.00475571822880E-2, 7.38993116334531E-3,
+                                  4.71272992695363E-3, 2.02681196887362E-3};
+        double a1;
+        double b1;
+        double c;
+        int m;
+        double hu1 = 0.0;
+        double g;
+        int j;
+        double s;
+        int k;
+        double t1;
+        double t2;
+        double f1;
+        double f2;
+        double d;
+        double hu0 = 0.0;
+        double ga[] = new double[1];
+        Gamma gam;
+        double hu2 = 0.0;
+        double t3;
+        double t4;
+        
+        id[0] = 7;
+        a1 = a - 1.0;
+        b1 = b - a - 1.0;
+        c = 12.0/x;
+        for (m = 10; m <= 100; m += 5) {
+            hu1 = 0.0;
+            g = 0.5*c/m;
+            d = g;
+            for (j = 1; j <= m; j++) {
+                s = 0.0;
+                for (k = 1; k <= 30; k++) {
+                    t1 = d + g*t[k-1];
+                    t2 = d - g*t[k-1];
+                    f1 = Math.exp(-x*t1)*Math.pow(t1,a1)*Math.pow(1.0+t1,b1);
+                    f2 = Math.exp(-x*t2)*Math.pow(t2,a1)*Math.pow(1.0+t2,b1);
+                    s = s + w[k-1]*(f1+f2);
+                } // for (k = 1; k <= 30; k++)
+                hu1 = hu1 + s*g;
+                d = d + 2.0*g;
+            } // for (j = 1; j <= m; j++)
+            if (Math.abs(1.0-hu0/hu1) < 1.0E-7) {
+                break;
+            }
+            hu0 = hu1;
+        } // for (m = 10; m <= 100; m += 5)
+        gam = new Gamma(a, ga);
+        gam.run();
+        hu1 = hu1/ga[0];
+        for (m = 2; m <= 10; m += 2) {
+            hu2 = 0.0;
+            g = 0.5/m;
+            d = g;
+            for (j = 1; j <= m; j++) {
+                s = 0.0;
+                for (k = 1; k <= 30; k++) {
+                    t1 = d + g*t[k-1];
+                    t2 = d - g*t[k-1];
+                    t3 = c/(1.0-t1);
+                    t4 = c/(1.0-t2);
+                    f1 = t3*t3/c*Math.exp(-x*t3)*Math.pow(t3,a1)*Math.pow(1.0+t3,b1);
+                    f2 = t4*t4/c*Math.exp(-x*t4)*Math.pow(t4,a1)*Math.pow(1.0+t4,b1);
+                    s = s + w[k-1]*(f1+f2);
+                } // for (k = 1; k <= 30; k++)
+                hu2 = hu2 + s*g;
+                d = d + 2.0*g;
+            } // for (j = 1; j <= m; j++)
+            if (Math.abs(1.0-hu0/hu2) < 1.0E-7) {
+                break;
+            }
+            hu0 = hu2;
+        } // for (m = 2; m <= 10; m += 2)
+        gam = new Gamma(a, ga);
+        gam.run();
+        hu2 = hu2/ga[0];
+        result[0] = hu1 + hu2;
+        return;
+    } // chguit
 }
