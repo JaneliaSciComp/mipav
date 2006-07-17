@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,8 +21,8 @@ import javax.swing.*;
 /**
  
  */
-public class JDialogColorEdge extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogColorEdge extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -97,6 +99,45 @@ public class JDialogColorEdge extends JDialogBase
 
     
     //~ Methods --------------------------------------------------------------------------------------------------------
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected  void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(sourceImage);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red1", red1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("green1", green1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue1",blue1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("red2", red2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("green2", green2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blue2",blue2));        
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected  void setGUIFromParams(){
+        red1 = scriptParameters.getParams().getInt("red1");
+        green1 = scriptParameters.getParams().getInt("green1");
+        blue1 = scriptParameters.getParams().getInt("blue1");
+        red2 = scriptParameters.getParams().getInt("red2");
+        green2 = scriptParameters.getParams().getInt("green2");
+        blue2 = scriptParameters.getParams().getInt("blue2");
+        
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    public void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
     // ************************************************************************
     // ************************** Action Events *******************************
@@ -187,7 +228,7 @@ public class JDialogColorEdge extends JDialogBase
                 System.gc();
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
         } // else not a Color Edge algorithm
         else {
             Preferences.debug("JDialogColorEdge caught algorithm performed for: " +
@@ -236,41 +277,7 @@ public class JDialogColorEdge extends JDialogBase
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(sourceImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(sourceImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(sourceImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ColorEdge " +
-                                                       userInterface.getScriptDialog().getVar(sourceImage.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(sourceImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                }
-            }
-        }
-    }
-
+  
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
@@ -305,61 +312,7 @@ public class JDialogColorEdge extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        sourceImage = im;
-        if (!im.isColorImage()) {
-            MipavUtil.displayError("Must be a color image");
-            return;
-        }
-        displayLoc = NEW;
-        userInterface = sourceImage.getUserInterface();
-        parentFrame = sourceImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setRed1(parser.getNextInteger());
-            setGreen1(parser.getNextInteger());
-            setBlue1(parser.getNextInteger());
-            setRed2(parser.getNextInteger());
-            setGreen2(parser.getNextInteger());
-            setBlue2(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     
     /**
