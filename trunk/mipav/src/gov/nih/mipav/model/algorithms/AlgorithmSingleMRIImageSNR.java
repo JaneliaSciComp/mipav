@@ -146,9 +146,6 @@ import java.text.*;
  */
 public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-    /** Confluent Hypergeometric Function of the First Kind. */
-    private static final int CONFLUENT_HYPERGEOMETRIC_FIRST_KIND = 1;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The index of a rerquired noise background VOI */
@@ -485,7 +482,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double square;
         double constant = Math.sqrt(Math.PI/2.0);
         //double result[] = new double[1];
-        //int kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
         ConfluentHypergeometric cf;
         int Lnchf = 0; // 0 for standard output; 1 for log of result
         int ip = 776; // Number of desired array positions; 776 is the maximum possible value.
