@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,7 +26,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmConcat
  */
-public class JDialogConcat extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -92,19 +94,7 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogConcat(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        imageA = im;
-        parentFrame = im.getParentFrame();
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -134,6 +124,30 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
     // ************************** Algorithm Events ****************************
     // ************************************************************************
 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{        
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do3D",do3D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("dontOpenFrame",dontOpenFrame));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){ 
+        do3D = scriptParameters.getParams().getBoolean("do3D"); 
+        dontOpenFrame = scriptParameters.getParams().getBoolean("dontOpenFrame"); 
+   }
+    
+ 
+    
+    
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
@@ -248,7 +262,7 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
             }
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
         mathAlgo.finalize();
         mathAlgo = null;
         dispose();
@@ -292,52 +306,7 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the first image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                // check to see if the second image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageB.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageB.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageB.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Concat " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(imageB.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                           "\n");
-
-                }
-            }
-        }
-    }
-
+ 
     /**
      * DOCUMENT ME!
      *
@@ -372,60 +341,7 @@ public class JDialogConcat extends JDialogBase implements AlgorithmInterface, Sc
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String imageAKey = null;
-        String imageBKey = null;
-        String destImageKey = null;
-
-        try {
-            imageAKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage imA = parser.getImage(imageAKey);
-        ModelImage imB = parser.getImage(imageBKey);
-
-        setModal(false);
-        imageA = imA;
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            do3D = parser.getNextBoolean();
-        } catch (Exception e) {
-            // do nothing, if no boolean here assume do3D is true
-        }
-
-        setDisplayLocNew();
-
-        try {
-            setImageB(imB);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!imageAKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
