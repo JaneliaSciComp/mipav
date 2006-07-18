@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,8 +24,8 @@ import javax.swing.*;
  * @version  1.0 Jan 25, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogConvertType extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ItemListener, DialogDefaultsInterface {
+public class JDialogConvertType extends JDialogScriptableBase
+        implements AlgorithmInterface, ItemListener, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -191,22 +193,52 @@ public class JDialogConvertType extends JDialogBase
         setVisible(true);
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogConvertType(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("inTempMin",inTempMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("inTempMax",inTempMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("outTempMin",outTempMin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("outTempMax",outTempMax));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("processIndep", processIndep));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        inTempMin = scriptParameters.getParams().getDouble("inTempMin");
+        inTempMax = scriptParameters.getParams().getDouble("inTempMax");
+        outTempMin = scriptParameters.getParams().getDouble("outTempMin");
+        outTempMax = scriptParameters.getParams().getDouble("outTempMax");
+        processIndep = scriptParameters.getParams().getBoolean("processIndep");
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
+    
+    
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and sets the variables.
      *
@@ -328,7 +360,7 @@ public class JDialogConvertType extends JDialogBase
             }
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -385,55 +417,7 @@ public class JDialogConvertType extends JDialogBase
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if (useDefaultRanges == true) {
-                    userInterface.getScriptDialog().append("ConvertType " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                    if (displayLoc == NEW) {
-                        userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    }
-                } else { // not using default ranges
-                    userInterface.getScriptDialog().append("ConvertType " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                    if (displayLoc == NEW) {
-                        userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    }
-                } // end if useDefaultRanges
-            }
-        }
-    }
+ 
 
     /**
      * Sets the flags for the checkboxes and resets labels.
@@ -699,77 +683,7 @@ public class JDialogConvertType extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        Preferences.debug("Script run of converttype");
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        Preferences.debug("about to read variables");
-
-        try {
-            setDataType(parser.getNextInteger());
-            setEndianess(parser.getNextBoolean());
-
-            if (parser.getNextBoolean()) {
-                setUseDefaultRanges(true);
-                setDefaultRanges();
-            } else {
-                setUseDefaultRanges(false);
-                setInputRangeMin(parser.getNextDouble());
-                setInputRangeMax(parser.getNextDouble());
-            }
-
-            setOutputRangeMin(parser.getNextDouble());
-            setOutputRangeMax(parser.getNextDouble());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        Preferences.debug("got past var read");
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     /**
      * Accessor that sets the data type for what the converted image is to be.
