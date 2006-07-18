@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +21,7 @@ import java.util.*;
  * future require user input and to be consistent with the dialog/algorithm paradigm. In should be noted, that the
  * algorithms are executed in their own thread.** replaces image
  */
-public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogConvert4Dto3D extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -62,22 +64,30 @@ public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterf
         userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogConvert4Dto3D(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+ 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);       
+        scriptParameters.getParams().put(ParameterFactory.newParameter("successful",successful));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        successful = scriptParameters.getParams().getBoolean("successful");
+    }
+    
+   
+    
+    
     /**
      * Calls run on the algorithm from the script parser.
      *
@@ -128,7 +138,7 @@ public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterf
 
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         convert4Dto3DAlgo.finalize();
         convert4Dto3DAlgo = null;
@@ -190,31 +200,7 @@ public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterf
     }
 
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Convert4Dto3D " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       "\n");
-            }
-        }
-    }
+  
 
     /**
      * Accessor that returns the whether or not the algorithm completed successfully.
@@ -226,31 +212,6 @@ public class JDialogConvert4Dto3D extends JDialogBase implements AlgorithmInterf
     }
 
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setForeground(Color.black);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
+   
 
 }
