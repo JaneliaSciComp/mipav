@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 June 10, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogCrop extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -188,6 +190,45 @@ public class JDialogCrop extends JDialogBase implements AlgorithmInterface, Scri
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+   // borderSize, xBounds, yBounds, zBounds
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("borderSize",borderSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("xBounds",xBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("yBounds",yBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("zBounds",zBounds));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        borderSize = scriptParameters.getParams().getInt("borderSize");         
+       xBounds = scriptParameters.getParams().getList("xBounds").getAsIntArray();
+       yBounds = scriptParameters.getParams().getList("yBounds").getAsIntArray();
+       zBounds = scriptParameters.getParams().getList("zBounds").getAsIntArray();
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
