@@ -525,7 +525,7 @@ public class Preferences {
                 levels[index] = Boolean.valueOf(st.nextToken()).booleanValue();
                 index++;
             } catch (Exception e) {
-                debug("exception: " + e, DEBUG_MINOR);
+                System.err.println("exception: " + e);
             }
         }
 
