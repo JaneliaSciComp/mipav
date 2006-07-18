@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * thickness = spacing. Only works for DICOM or XML files, since they include the sliceSpacing field.
  */
 
-public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogCorrectSpacing extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -119,6 +121,39 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+ //numRepIm, numBlank
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+            scriptParameters.storeInputImage(image);            
+            scriptParameters.getParams().put(ParameterFactory.newParameter("numRepIm",numRepIm));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("numBlank",numBlank));
+      }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        numRepIm =  scriptParameters.getParams().getInt("numRepIm");
+        numBlank =  scriptParameters.getParams().getInt("numBlank"); 
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    
+    
+    
+    
     /**
      * Have to define actionPerformed b/c this dialog extends JDialogBase.
      *
@@ -189,7 +224,7 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
             }
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         if (parentFrame != null) {
             ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
@@ -268,108 +303,7 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append("CorrectSpacing " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        setVisible(false);
-
-        fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
-        fileFormat = fileInfoBuffer.getFileFormat();
-        space = fileInfoBuffer.getSliceSpacing();
-        thick = fileInfoBuffer.getResolutions()[2];
-
-        if (image.getNDims() == 3) {
-            extents = new int[4];
-        } else if (image.getNDims() == 4) {
-            extents = new int[3];
-        } else {
-            MipavUtil.displayError("This utility only works with 3 and 4 D files.");
-
-            return;
-        }
-
-        if (fileFormat != FileBase.XML) {
-            MipavUtil.displayError("This utility only works with XML files.");
-
-            return;
-        }
-
-        if (space > thick) {
-            extents = image.getExtents();
-            numIm = extents[2];
-            gap = space - thick;
-            Preferences.debug("\nIn original image set, slice thickness is " + thick + " and gap between slices is " +
-                              gap + ".");
-            zStart = fileInfoBuffer.getOrigin(2);
-            getNewInfo();
-            Preferences.debug("New slice thickness: " + newThick +
-                              ".  To create new images, each original image is repeated " + numRepIm + " times and " +
-                              numBlank + " blanks are inserted.");
-            generateNewImages();
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     /**
      * This method corrects spacing for cases where the space is less than the thickness, by assigning space value to
