@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +22,7 @@ import javax.swing.*;
  * require user input and to be consistent with the dialog/algorithm paradigm. In should be noted, that the algorithms
  * are executed in their own thread.** replaces image
  */
-public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogConvert3Dto4D extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -102,24 +104,45 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
         init();
     }
 
+    
+    //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    
     /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
      */
-    public JDialogConvert3Dto4D(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        imageName = image.getImageName();
-        parentFrame = im.getParentFrame();
-        doClose = false;
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);       
+        scriptParameters.getParams().put(ParameterFactory.newParameter("volumeLength",volumeLength));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("res3",res3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("res4",res4));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("measure3",measure3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("measure4",measure4));
+        
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        volumeLength = scriptParameters.getParams().getInt("volumeLength");
+        res3 = scriptParameters.getParams().getFloat("res3");
+        res4 = scriptParameters.getParams().getFloat("res4");
+        measure3 = scriptParameters.getParams().getInt("measure3");
+        measure4 = scriptParameters.getParams().getInt("measure4");        
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {        
+         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
     /**
      * Calls run on the algorithm from the script parser.
      *
@@ -182,7 +205,7 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
             }
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         if ((parentFrame != null) && doClose && !userInterface.isScriptRecording()) {
             ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
@@ -243,84 +266,7 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append("Convert3Dto4D " +
-                                                       userInterface.getScriptDialog().getVar(imageName) + " " +
-                                                       userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + volumeLength + " " + res3 + " " + res4 + " " + measure3 +
-                                                       " " + measure4 + " " + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        doClose = false;
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setVolumeLength(parser.getNextInteger());
-            setResolution3Dim(parser.getNextFloat());
-            setResolution4Dim(parser.getNextFloat());
-            setResolutionUnit3Dim(parser.getNextInteger());
-            setResolutionUnit4Dim(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     /**
      * Accessor that sets the resolution for the 3rd dimension.
