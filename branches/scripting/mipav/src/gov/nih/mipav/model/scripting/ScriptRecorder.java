@@ -140,7 +140,6 @@ public class ScriptRecorder {
             return imageTable;
         }
         
-        // TODO: should an exception be thrown or a message displayed?
         Preferences.debug("script recorder:\tRetrieved image table while no script is being recorded." + "\n", Preferences.DEBUG_SCRIPTING);
         return null;
     }

@@ -2,8 +2,6 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ScriptRecorder;
-import gov.nih.mipav.model.scripting.actions.ActionOpenImage;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -357,11 +355,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
         secondImage = fileIO.getSecondImage();
 
-        // RAW files need special info appended so it's done in that function of FileIO.
-        if ((image.getFileInfo(0).getFileFormat() != FileBase.RAW) && (image.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-            ScriptRecorder.getReference().addLine(new ActionOpenImage(image, multiFile));
-        }
-
         if (secondImage != 0) {
 
             try {
@@ -389,11 +382,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     MipavUtil.displayError("Out of memory!");
 
                     return images; // we did successfully open the first image
-                }
-
-                // RAW files need special info appended so it's done in that function of FileIO.
-                if ((image2.getFileInfo(0).getFileFormat() != FileBase.RAW) && (image2.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-                    ScriptRecorder.getReference().addLine(new ActionOpenImage(image2, multiFile));
                 }
             }
         } // if (secondImage != 0)
@@ -508,12 +496,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
             return null;
         }
-
-        // RAW files need special info appended so it's done in that function of FileIO.
-        if ((image.getFileInfo(0).getFileFormat() != FileBase.RAW) && (image.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-            ScriptRecorder.getReference().addLine(new ActionOpenImage(image, multiFile));
-        }
-
+        
         if (secondImage != 0) {
 
             try {
@@ -551,12 +534,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             }
 
             // UI.getMainFrame().pack();
-            
-            // RAW files need special info appended so it's done in that function of FileIO.
-            if ((image2.getFileInfo(0).getFileFormat() != FileBase.RAW) && (image2.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-                ScriptRecorder.getReference().addLine(new ActionOpenImage(image2, multiFile));
-            }
-
         } // if (secondImage != 0)
 
 

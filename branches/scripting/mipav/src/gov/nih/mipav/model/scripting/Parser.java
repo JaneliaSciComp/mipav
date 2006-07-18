@@ -4,7 +4,6 @@ package gov.nih.mipav.model.scripting;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.scripting.parameters.Parameter;
 
-import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
@@ -98,26 +97,6 @@ public class Parser {
         Preferences.debug("parser:\tFound " + numVOIs + " unique VOIs used in script " + scriptFile + "attached to image " + imageVarName + "\n", Preferences.DEBUG_SCRIPTING);
 
         return numVOIs;
-    }
-
-    /**
-     * Testing main method.
-     * TODO: remove this method once testing is completed.
-     *
-     * @param  args  path to a script to parse and run.
-     */
-    public static final void main(String[] args) {
-
-        try {
-            String[] imageVarNames = Parser.getImageVarsUsedInScript(args[0]);
-            for (int i = 0; i < imageVarNames.length; i++) {
-                int numVOIs = Parser.getNumberOfVOIsRequiredForImageVar(args[0], imageVarNames[i]);
-                System.out.println(imageVarNames[i] + " ===> " + numVOIs);
-            }
-            Parser.runScript(args[0]);
-        } catch (ParserException pe) {
-            MipavUtil.displayError("Fatal error encountered running script:\n" + pe);
-        }
     }
 
     /**

@@ -6745,8 +6745,6 @@ public class FileIO {
             return null;
         }
 
-        ScriptRecorder.getReference().addLine(new ActionOpenImage(image, false));
-
         return image;
     }
 
@@ -6916,8 +6914,6 @@ public class FileIO {
         }
 
         progressBar.dispose();
-
-        ScriptRecorder.getReference().addLine(new ActionOpenImage(image, true));
 
         return image;
 
