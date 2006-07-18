@@ -1,7 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
-/**  This code calculates the gamma function of an input argument x
+/**  This code calculates the psi function of an input argument x
  *   A typical real variable usage would be:
  *   double result[] = new double[1];
  *   Psi psiTest = new Psi(5.0, result);
@@ -104,8 +104,8 @@ public class Psi {
         int n;
         int k;
         double x2;
-        double a1 = -8.333333333333E-2;
-        double a2 = 8.333333333333E-3;
+        double a1 = -8.3333333333333333E-2;
+        double a2 = 8.3333333333333333E-3;
         double a3 = -3.9682539682539683E-3;
         double a4 = 4.1666666666666667E-3;
         double a5 = -7.5757575757575758E-3;
@@ -121,6 +121,7 @@ public class Psi {
             return;
         }
         else if (xa == (int)xa) {
+            // For |x| == n, psi(n) = -gamma + sum from k = 1 to n-1  of (1/k)
             n = (int)xa;
             for (k = 1; k <= n-1; k++) {
                 s = s + 1.0/k;
@@ -128,6 +129,8 @@ public class Psi {
             result[0] = -eL + s;
         } // else if (xa == (int)xa)
         else if ((xa + 0.5) == (int)(xa + 0.5)) {
+            // For |x| = n + 1/2, psi(n+1/2) = -gamma - 2ln2 + sum from k = 1 to n of 
+            // (2/(2k-1))
             n = (int)(xa - 0.5);
             for (k = 1; k <= n; k++) {
                 s = s + 1.0/(2.0*k-1.0);
@@ -168,7 +171,7 @@ public class Psi {
      * 1996, pp. 59-60.
      */
     public void complexPsi() {
-        double a[] = new double [] {-8.333333333333E-2, 8.333333333333E-3,
+        double a[] = new double [] {-8.3333333333333333E-2, 8.3333333333333333E-3,
                                     -3.9682539682539683E-3, 4.1666666666666667E-3,
                                     -7.5757575757575758E-3, 2.1092796092796093E-2,
                                     -8.3333333333333333E-2, 0.4432598039215686};
@@ -241,7 +244,7 @@ public class Psi {
             if (x1 < 0.0) {
                 // When realX < 0, apply
                 // psi(-z) = psi(z) + 1/2 + pi*cot(pi*z)
-                tn = Math.atan(Math.PI*realX);
+                tn = Math.tan(Math.PI*realX);
                 tm = Math.tanh(Math.PI*imagX);
                 ct2 = tn*tn + tm*tm;
                 realResult[0] = realResult[0] + realX/(realX*realX + imagX*imagX)
