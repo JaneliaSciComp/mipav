@@ -146,9 +146,6 @@ import java.text.*;
  */
 public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-    /** Confluent Hypergeometric Function of the First Kind. */
-    private static final int CONFLUENT_HYPERGEOMETRIC_FIRST_KIND = 1;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** The index of a rerquired noise background VOI */
@@ -290,8 +287,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             gamConstant = resultB[0]/resultBMinusA[0];
                 for (realZ = -10.0; realZ <= 10.0; realZ++) {
                     for (imagZ = -10.0; imagZ <= 10.0; imagZ++) {
-                    cf = new ConfluentHypergeometric(CONFLUENT_HYPERGEOMETRIC_FIRST_KIND,
-                                                                 -0.5, 1.0, realZ, imagZ, 
+                    cf = new ConfluentHypergeometric(-0.5, 1.0, realZ, imagZ, 
                                                                  realResult, imagResult);
                     cf.run();
                     cf = new ConfluentHypergeometric(-0.5, 0.0, 1.0, 0.0, realZ, imagZ,
@@ -486,7 +482,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double square;
         double constant = Math.sqrt(Math.PI/2.0);
         //double result[] = new double[1];
-        //int kind = CONFLUENT_HYPERGEOMETRIC_FIRST_KIND;
         ConfluentHypergeometric cf;
         int Lnchf = 0; // 0 for standard output; 1 for log of result
         int ip = 776; // Number of desired array positions; 776 is the maximum possible value.
@@ -511,7 +506,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         gamConstant = resultB[0]/(resultBMinusA[0]*Math.sqrt(2.0));
         for (i = 0; i < maxIters; i++) {
             square = snr * snr / 2.0;
-            //cf = new ConfluentHypergeometric(kind, -0.5, numReceivers, -square, result);
+            //cf = new ConfluentHypergeometric(-0.5, numReceivers, -square, result);
             //cf.run();
             if (square <= 3000) {
                 cf = new ConfluentHypergeometric(-0.5, 0.0, (double)numReceivers, 0.0, -square, 0.0,

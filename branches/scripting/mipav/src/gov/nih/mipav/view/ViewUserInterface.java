@@ -950,7 +950,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (fileInfo.getExtents().length > 2) { // Set file info
 
             for (int i = 0; i < fileInfo.getExtents()[2]; i++) {
-                fileInfo = image.getFileInfo(i);
                 image.setFileInfo(fileInfo, i);
             }
         } else {
