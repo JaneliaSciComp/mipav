@@ -190,7 +190,6 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-   // borderSize, xBounds, yBounds, zBounds
     
     /**
      * Record the parameters just used to run this algorithm in a script.
@@ -354,7 +353,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
 
             } else if ((cropAlgo.isCompleted() == true) && (resultImage == null)) {
 
@@ -367,7 +366,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
 
             } else if (cropAlgo.isCompleted() == false) {
 
@@ -533,90 +532,8 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Crop " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + displayLoc + " " + borderSize + " " + xBounds[0] + " " +
-                                                       xBounds[1] + " " + yBounds[0] + " " + yBounds[1] + " " +
-                                                       zBounds[0] + " " + zBounds[1] + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setBorderSize(parser.getNextInteger());
-
-            xBounds[0] = parser.getNextInteger();
-            xBounds[1] = parser.getNextInteger();
-
-            yBounds[0] = parser.getNextInteger();
-            yBounds[1] = parser.getNextInteger();
-
-            zBounds[0] = parser.getNextInteger();
-            zBounds[1] = parser.getNextInteger();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+  
+ 
 
     /**
      * Accessor that sets the borderSize.
