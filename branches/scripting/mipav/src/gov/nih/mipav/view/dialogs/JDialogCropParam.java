@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -29,7 +31,7 @@ import javax.swing.*;
  *
  * A new image or replacement of the old image may be selected.
  */
-public class JDialogCropParam extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogCropParam extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -131,26 +133,48 @@ public class JDialogCropParam extends JDialogBase implements AlgorithmInterface,
     public JDialogCropParam(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameImage) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogCropParam(ViewUserInterface UI, ModelImage im) {
-        super();
-        image = im;
-        parentFrame = image.getParentFrame();
-        userInterface = UI;
-    }
+  
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("borderSize",borderSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("xBounds",xBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("yBounds",yBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("zBounds",zBounds));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        borderSize = scriptParameters.getParams().getInt("borderSize");         
+       xBounds = scriptParameters.getParams().getList("xBounds").getAsIntArray();
+       yBounds = scriptParameters.getParams().getList("yBounds").getAsIntArray();
+       zBounds = scriptParameters.getParams().getList("zBounds").getAsIntArray();
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -195,7 +219,7 @@ public class JDialogCropParam extends JDialogBase implements AlgorithmInterface,
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
 
             } else if ((cropAlgo.isCompleted() == true) && (resultImage == null)) {
 
@@ -208,7 +232,7 @@ public class JDialogCropParam extends JDialogBase implements AlgorithmInterface,
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
 
             } else if (cropAlgo.isCompleted() == false) {
 
@@ -367,122 +391,9 @@ public class JDialogCropParam extends JDialogBase implements AlgorithmInterface,
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
+  
 
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("CropParam " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                if (resultImage.getExtents().length == 2) {
-                    userInterface.getScriptDialog().append("" + leftSide + " " + rightSide + " " + topSide + " " +
-                                                           bottomSide + "\n");
-                } else {
-                    userInterface.getScriptDialog().append("" + leftSide + " " + rightSide + " " + topSide + " " +
-                                                           bottomSide + " " + front + " " + back + "\n");
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-
-            if (image.getExtents().length == 2) {
-                setLeft(parser.getNextInteger());
-                setRight(parser.getNextInteger());
-                setTop(parser.getNextInteger());
-                setBottom(parser.getNextInteger());
-            } else {
-                setLeft(parser.getNextInteger());
-                setRight(parser.getNextInteger());
-                setTop(parser.getNextInteger());
-                setBottom(parser.getNextInteger());
-                setFront(parser.getNextInteger());
-                setBack(parser.getNextInteger());
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        xBounds[0] = leftSide;
-        xBounds[1] = image.getExtents()[0] - 1 - rightSide;
-        yBounds[0] = topSide;
-        yBounds[1] = image.getExtents()[1] - 1 - bottomSide;
-
-        if (image.getNDims() >= 3) {
-            zBounds[0] = front;
-            zBounds[1] = image.getExtents()[2] - 1 - back;
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
+  
     /**
      * Accessor that sets the back value.
      *
