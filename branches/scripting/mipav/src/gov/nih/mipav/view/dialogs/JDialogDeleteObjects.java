@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogDeleteObjects extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -126,35 +128,49 @@ public class JDialogDeleteObjects extends JDialogBase implements AlgorithmInterf
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogDeleteObjects(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+   // private boolean regionFlag = false;
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */ 
+    public void storeParamsFromGUI(){
+        try{
+            scriptParameters.storeInputImage(image);
+            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));           
+            scriptParameters.getParams().put(ParameterFactory.newParameter("regionFlag",regionFlag));
+        }catch (ParserException pe){
+            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
+        }  
+     }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    public void setGUIFromParams(){
+        // TODO ModelImage image;   does this need to be retreived??
+         regionFlag = scriptParameters.getParams().getBoolean("regionFlag");
+    }
+ 
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    public void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }   
+    
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
      *
