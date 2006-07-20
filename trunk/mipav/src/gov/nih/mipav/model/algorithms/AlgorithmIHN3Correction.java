@@ -3079,7 +3079,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             transMatrix = new TransMatrix(4);
             transMatrix.setZoom(Sx, Sy, Sz);
             xfrm = new float[4][4];
-            xfrm = matrixtoInverseArray(transMatrix);
+            //xfrm = matrixtoInverseArray(transMatrix);
             transformTrilinear(workingBuffer, xfrm);
         } // else shrink != 1.0f
 
