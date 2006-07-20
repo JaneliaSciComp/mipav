@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +21,7 @@ import javax.swing.*;
  * Dialog to get user input, then call AlgorithmEvaluateMaskSegmentation. Selected image is test image, the image that
  * is compared to a gold standard true image. Algorithms are executed in their own thread.
  */
-public class JDialogEvaluateMaskSegmentation extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -100,7 +101,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         }
 
         trueImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         length = trueImage.getExtents()[0];
 
         for (int i = 1; i < trueImage.getNDims(); i++) {
@@ -143,31 +144,28 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogEvaluateMaskSegmentation(ViewUserInterface _UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = _UI;
-        trueImage = im;
-        parentFrame = im.getParentFrame();
-    }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+ //   trueImage, testImage
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(trueImage);
+        scriptParameters.storeInputImage(testImage);
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){}
+    
+    
+    
+    
     /**
      * Closes dialog box when the OK button is pressed, set variables, and calls the algorithm.
      *
@@ -217,7 +215,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
                 }
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             if (parentFrame != null) {
                 userInterface.registerFrame(parentFrame);
@@ -227,79 +225,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         }
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the true image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(trueImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(trueImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(trueImage.getImageName());
-                    }
-                }
-
-                // check to see if the test image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(testImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(testImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(testImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("EvaluateMaskSegmentation " +
-                                                       userInterface.getScriptDialog().getVar(trueImage.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(testImage.getImageName()) +
-                                                       "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-
-        try {
-            image1Key = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im1 = parser.getImage(image1Key);
-        ModelImage im2 = parser.getImage(image2Key);
-
-        if ((im1.getType() != ModelImage.BOOLEAN) && (im1.getType() != ModelImage.UBYTE) &&
-                (im1.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        trueImage = im1;
-        setTestImage(im2);
-        userInterface = trueImage.getUserInterface();
-        parentFrame = trueImage.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
+ 
 
     /**
      * Accessor to set the reference image.
