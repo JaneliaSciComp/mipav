@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +19,7 @@ import javax.swing.*;
  * Dialog to get user input, then call AlgorithmEvaluateSegmentation. Selected image is test image, the image that is
  * compared to a gold standard true image. Algorithms are executed in their own thread.
  */
-public class JDialogEvaluateSegmentation extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogEvaluateSegmentation extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -83,7 +84,7 @@ public class JDialogEvaluateSegmentation extends JDialogBase implements Algorith
     public JDialogEvaluateSegmentation(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         trueImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         trueVOIs = trueImage.getVOIs();
         nVOIs = trueVOIs.size();
 
@@ -112,22 +113,24 @@ public class JDialogEvaluateSegmentation extends JDialogBase implements Algorith
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogEvaluateSegmentation(ViewUserInterface _UI, ModelImage im) {
-        super();
-        userInterface = _UI;
-        trueImage = im;
-        parentFrame = im.getParentFrame();
-    }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(trueImage);
+        scriptParameters.storeInputImage(testImage);
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){}
+    
     /**
      * Closes dialog box when the OK button is pressed, set variables, and calls the algorithm.
      *
@@ -177,7 +180,7 @@ public class JDialogEvaluateSegmentation extends JDialogBase implements Algorith
                 }
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             if (parentFrame != null) {
                 userInterface.registerFrame(parentFrame);
@@ -187,71 +190,7 @@ public class JDialogEvaluateSegmentation extends JDialogBase implements Algorith
         }
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the true image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(trueImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(trueImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(trueImage.getImageName());
-                    }
-                }
-
-                // check to see if the test image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(testImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(testImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(testImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("EvaluateSegmentation " +
-                                                       userInterface.getScriptDialog().getVar(trueImage.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(testImage.getImageName()) +
-                                                       "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String trueImageKey = null;
-        String testImageKey = null;
-
-        try {
-            trueImageKey = parser.getNextString();
-            testImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage trueIm = parser.getImage(trueImageKey);
-        ModelImage testIm = parser.getImage(testImageKey);
-
-        trueImage = trueIm;
-        setTestImage(testIm);
-        userInterface = trueImage.getUserInterface();
-        parentFrame = trueImage.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
+ 
 
     /**
      * Accessor to set the reference image.
