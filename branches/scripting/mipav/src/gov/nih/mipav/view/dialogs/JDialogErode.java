@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogErode extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogErode extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -144,35 +146,54 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogErode(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+   // resultImage, kernelErode, kernelSizeErode,AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, regionFlag);
+ 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelErode",kernelErode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelSizeErode",kernelSizeErode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("iters",iters));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("regionFlag",regionFlag));        
+    }
+    
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        kernelErode = scriptParameters.getParams().getInt("kernelErode");
+        kernelSizeErode = scriptParameters.getParams().getInt("kernelSizeErode");
+        iters = scriptParameters.getParams().getInt("iters");
+        regionFlag = scriptParameters.getParams().getBoolean("regionFlag");              
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    } 
+    
+    
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -334,7 +355,7 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
             }
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -366,43 +387,7 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Erode " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + iters + " " + kernelErode + " " +
-                                                           kernelSizeErode + " " + do25D + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + iters + " " + kernelErode + " " +
-                                                           kernelSizeErode + " " + do25D + "\n");
-
-                }
-            }
-        }
-    }
+  
 
     // *******************************************************************
     // ************************* Item Events ****************************
@@ -428,67 +413,7 @@ public class JDialogErode extends JDialogBase implements AlgorithmInterface, Scr
         }
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setNumErosions(parser.getNextInteger());
-            setKernelType(parser.getNextInteger());
-            setKernelSize(parser.getNextFloat());
-            setImage25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+  
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
