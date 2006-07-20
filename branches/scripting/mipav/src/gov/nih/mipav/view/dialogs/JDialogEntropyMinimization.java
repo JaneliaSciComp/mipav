@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +19,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogEntropyMinimization extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogEntropyMinimization extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -108,26 +110,55 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
     public JDialogEntropyMinimization(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface =  ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogEntropyMinimization(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+  //  thresholdSelected, thresholdLevel,subsample, noiseType
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdSelected",thresholdSelected)); 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdLevel",thresholdLevel)); 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("subsample",subsample)); 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noiseType",noiseType)); 
+           }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        thresholdSelected = scriptParameters.getParams().getBoolean("thresholdSelected");    
+        thresholdLevel = scriptParameters.getParams().getFloat("thresholdLevel");    
+        subsample = scriptParameters.getParams().getBoolean("subsample");    
+        noiseType = scriptParameters.getParams().getInt("noiseType");    
+   }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+    
+    
+    
+    
+    
+    
+    
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -218,7 +249,7 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         emAlgo.finalize();
         emAlgo = null;
@@ -234,96 +265,7 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("EntropyMinimization " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + thresholdSelected + " " + thresholdLevel + " " +
-                                                           subsample + " " + noiseType + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + thresholdSelected + " " + thresholdLevel + " " +
-                                                           subsample + " " + noiseType + "\n");
-
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setThresholdSelected(parser.getNextBoolean());
-            setThresholdLevel(parser.getNextFloat());
-            setSubsample(parser.getNextBoolean());
-            setNoiseType(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
