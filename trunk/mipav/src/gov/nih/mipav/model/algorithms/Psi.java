@@ -88,7 +88,7 @@ public class Psi {
             realPsi();
         }
         else if (version == COMPLEX_VERSION) {
-            complexPsi();
+            //complexPsi();
         }
     }
 
@@ -170,7 +170,7 @@ public class Psi {
      * Special Functions by Shanjie Zhang and Jianming Jin, John Wiley & Sons, Inc.,
      * 1996, pp. 59-60.
      */
-    public void complexPsi() {
+    /*public void complexPsi() {
         double a[] = new double [] {-8.3333333333333333E-2, 8.3333333333333333E-3,
                                     -3.9682539682539683E-3, 4.1666666666666667E-3,
                                     -7.5757575757575758E-3, 2.1092796092796093E-2,
@@ -256,6 +256,6 @@ public class Psi {
             } // if (x1 < 0.0)
         } // else
         return;
-    } // complexPsi
+    } // complexPsi*/
    
 }
