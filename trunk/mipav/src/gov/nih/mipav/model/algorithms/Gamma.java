@@ -111,7 +111,7 @@ public class Gamma {
             lgamma();
         }
         else if (version == CGAMMA) {
-            cgamma();
+            //cgamma();
         }
     }
 
@@ -250,7 +250,7 @@ public class Gamma {
      * the ln(gamma(x)) for the function code = 0.  x is complex and the output is
      * complex.
      */
-    private void cgamma() {
+   /*private void cgamma() {
         double a[] = new double[]{8.333333333333333E-2, -2.777777777777778E-3,
                                   7.936507936507937E-4, -5.952380952380952E-4,
                                   8.417508417508418E-4, -1.917526917526918E-3,
@@ -342,6 +342,6 @@ public class Gamma {
             imagResult[0] = g0*Math.sin(imagResult[0]);
         } // if (functionCode == 1)
         return;
-    } // cgamma
+    } // cgamma */
    
 }
