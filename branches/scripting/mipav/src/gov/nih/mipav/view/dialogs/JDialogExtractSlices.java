@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +22,7 @@ import java.util.*;
  * @version  0.1 Nov 17, 1998
  * @author   Lynne M. Pusanik
  */
-public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogExtractSlices extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -67,26 +69,36 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
         srcImage = image;
         extractList = eList;
 
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
     }
     
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI     The user interface, needed to create the image frame.
-     * @param  image  Source image.
-     * @param  eList  DOCUMENT ME!
-     */
-    public JDialogExtractSlices(ViewUserInterface UI, ModelImage image, Vector eList) {
-        super(false);
-        userInterface = UI;
-        srcImage = image;
-        extractList = eList;
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+//srcImage, resultImage, selected
+ 
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(srcImage);
+     }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){}
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+    
     /**
      * Does nothing.
      *
@@ -179,7 +191,7 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
                 ((ViewJFrameBase) parentFrame).updateImages(true);
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
         }
 
     } // end algorithmPerformed()
@@ -193,41 +205,7 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ExtractSlices " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " ");
-
-                for (int i = 0; i < extractList.size(); i++) {
-                    userInterface.getScriptDialog().append(" " + extractList.elementAt(i));
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
-
-    }
+  
 
     /**
      * Accessor that returns the whether or not the algorithm completed successfully.
@@ -372,56 +350,7 @@ public class JDialogExtractSlices extends JDialogBase implements AlgorithmInterf
         }
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        srcImage = im;
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            Vector extractList = new Vector();
-
-            for (;;) {
-
-                try {
-                    extractList.addElement(parser.getNextString());
-                } catch (NoSuchElementException e) {
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
-    }
+  
 
     /**
      * DOCUMENT ME!
