@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -25,7 +27,7 @@ import javax.swing.*;
  * @author   David Parsons (parsonsd@cbel.cit.nih.gov) (with vast help from M.McAuliffe)
  * @version  v0.12 1 Nov 1999 (processes most images)
  */
-public class JDialogExtractSlicesVolumes extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -133,12 +135,30 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
     public JDialogExtractSlicesVolumes(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         srcImage = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+     
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+   
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("checkListExtract",checkListExtract));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+   protected void setGUIFromParams(){
+        checkListExtract = scriptParameters.getParams().getList("checkListExtract").getAsBooleanArray(); 
+    }
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -196,7 +216,7 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
 
         if (algorithm instanceof AlgorithmExtractSlicesVolumes) {
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
                 int numExtracted = 0;
@@ -260,40 +280,7 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ExtractSlicesVolumes " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()));
-
-                for (int i = 0; i < checkListExtract.length; i++) {
-
-                    if (checkListExtract[i]) {
-                        userInterface.getScriptDialog().append(" " + i);
-                    }
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
-
-    }
+ 
 
     /**
      * Returns <code>true</code> if only the even image slices have been selected.
@@ -375,56 +362,7 @@ public class JDialogExtractSlicesVolumes extends JDialogBase implements Algorith
         }
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String nextToken = null;
-        int selectedIndex = -1;
 
-        try {
-            srcImageKey = parser.getNextString();
-            System.err.println("srcImageKey = " + srcImageKey);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-        System.out.println("imaname = " + im.getImageName());
-        setModal(false);
-        srcImage = im;
-        nSlices = srcImage.getExtents()[2];
-        checkListExtract = new boolean[nSlices];
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-
-        try {
-
-            int i = 0;
-
-            for (;;) {
-
-                try {
-                    nextToken = parser.getNextString();
-                    selectedIndex = Integer.parseInt(nextToken);
-                    checkListExtract[selectedIndex] = true;
-                    i++;
-                } catch (NoSuchElementException e) {
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
 
     /**
      * Accessor that sets the which slices to remove according to the boolean array paramater.
