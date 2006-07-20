@@ -191,10 +191,11 @@ public class JDialogFaceAnonymizer extends JDialogScriptableBase implements Algo
     }
     
     /**
-     * {@inheritDoc}
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
      */
-    public void storeParamsFromGUI(){
-        try{
+    public void storeParamsFromGUI() throws ParserException{
             scriptParameters.storeInputImage(image);
             
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iBlurFactor", m_iBlurFactor));
@@ -202,19 +203,12 @@ public class JDialogFaceAnonymizer extends JDialogScriptableBase implements Algo
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinMin", m_iSkinMin));
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_iSkinThickness", m_iSkinThickness));
             scriptParameters.getParams().put(ParameterFactory.newParameter("m_aiAxis", m_aiAxis));        
-        } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered storing parameters for " + JDialogScriptableBase.getDialogActionString(getClass()) + "\n" + pe);
-        }         
-    }
+      }
     
     /**
-     * {@inheritDoc}
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
     public void setGUIFromParams(){
-        image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        
         m_iBlurFactor = scriptParameters.getParams().getInt("m_iBlurFactor");
         m_iSkinMax = scriptParameters.getParams().getInt("m_iSkinMax");
         m_iSkinMin = scriptParameters.getParams().getInt("m_iSkinMin");
