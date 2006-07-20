@@ -3152,10 +3152,10 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             JDialogExtractSlices dialogES = null;
 
             if (!singleTSlice) {
-                dialogES = new JDialogExtractSlices(getUserInterface(), srcImage, selectedImages);
+                dialogES = new JDialogExtractSlices(this, srcImage, selectedImages);
                 // System.err.println("set up extract slice dialog normally (no 4d->3dconversion)");
             } else {
-                dialogES = new JDialogExtractSlices(getUserInterface(), srcImage, selectedTimeSlices);
+                dialogES = new JDialogExtractSlices(this, srcImage, selectedTimeSlices);
                 dialogES.setConvert4Dto3D(true);
             }
 
