@@ -148,7 +148,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
     public JDialogEdgeLaplacian(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
