@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,8 +24,8 @@ import javax.vecmath.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogExtractBrain extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogExtractBrain extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -170,7 +172,7 @@ public class JDialogExtractBrain extends JDialogBase
 
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface =  ViewUserInterface.getReference();
         init();
         loadDefaults();
 
@@ -190,7 +192,50 @@ public class JDialogExtractBrain extends JDialogBase
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("orientation",orientation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("justEllipse",justEllipse));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useSphere",useSphere));
+      //TODO not sure how to save this properly
+        // scriptParameters.getParams().put(ParameterFactory.newParameter("initCenterPoint",initCenterPoint));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("nIterations",nIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("depth",depth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("imageRatio",imageRatio));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("stiffness",stiffness));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("secondStageErosion",secondStageErosion));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("aboveMedian",aboveMedian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("extractToPaint",extractToPaint));
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        orientation = scriptParameters.getParams().getInt("orientation"); 
+        justEllipse = scriptParameters.getParams().getBoolean("justEllipse"); 
+        useSphere = scriptParameters.getParams().getBoolean("useSphere"); 
+        //TODO  not sure how to retreive this properly, or if needed.
+       // initCenterPoint = scriptParameters.getParams().getBoolean("initCenterPoint"); 
+        nIterations = scriptParameters.getParams().getInt("nIterations"); 
+        depth = scriptParameters.getParams().getInt("depth"); 
+        imageRatio = scriptParameters.getParams().getFloat("imageRatio"); 
+        stiffness = scriptParameters.getParams().getFloat("stiffness"); 
+        secondStageErosion = scriptParameters.getParams().getBoolean("secondStageErosion"); 
+        aboveMedian = scriptParameters.getParams().getFloat("aboveMedian"); 
+        extractToPaint = scriptParameters.getParams().getBoolean("extractToPaint"); 
+   }
+    
+    
+    
+    
     /**
      * Calculate the center of the sphere / ellipsoid.
      *
@@ -520,7 +565,7 @@ public class JDialogExtractBrain extends JDialogBase
             userInterface.setGlobalDataText(image.getImageName() + " volume = \t" +
                                             (extractBrainAlgo.getBrainVolume() / 1000.0f) + " cc\n");
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             if (parentFrame != null) {
                 userInterface.registerFrame(parentFrame);
@@ -633,32 +678,7 @@ public class JDialogExtractBrain extends JDialogBase
         return str;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ExtractBrain " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(getParameterString(" ") + "\n");
-            }
-        }
-    }
+  
 
     /**
      * Initial center position checkbox listener.
@@ -800,58 +820,7 @@ public class JDialogExtractBrain extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        theParentFrame = image.getParentFrame();
-        parentFrame = image.getParentFrame();
-
-        try {
-            setOrientation(parser.getNextInteger());
-            setJustEllipse(parser.getNextBoolean());
-            setIterations(parser.getNextInteger());
-            setMaxDepth(parser.getNextInteger());
-            setImageRatio(parser.getNextFloat());
-            setStiffness(parser.getNextFloat());
-            setUseSphere(parser.getNextBoolean());
-            setSecondStageErosion(parser.getNextBoolean());
-            setAboveMedian(parser.getNextFloat());
-            useCenterOfMass = parser.getNextBoolean();
-            extractToPaint = parser.getNextBoolean();
-            initCenterX = parser.getNextFloat();
-            initCenterY = parser.getNextFloat();
-            initCenterZ = parser.getNextFloat();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (useCenterOfMass) {
-            centerOfMass = computeCenter(image, orientation, useSphere);
-            initCenterPoint = centerOfMass;
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
+  
 
     /**
      * Set the factor above the median at which second stage erosion occurs.
