@@ -146,7 +146,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase imple
 
     
     //~ Methods --------------------------------------------------------------------------------------------------------
- //   trueImage, testImage
     
     /**
      * Record the parameters just used to run this algorithm in a script.
