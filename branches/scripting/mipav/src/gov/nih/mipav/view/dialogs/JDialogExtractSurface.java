@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -39,7 +41,7 @@ import javax.swing.*;
  * @see      ModelSurfaceDecimator
  * @see      ModelTriangleMesh
  */
-public class JDialogExtractSurface extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogExtractSurface extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -121,25 +123,46 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
     public JDialogExtractSurface(JFrame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogExtractSurface(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+//    extractSurAlgo = new AlgorithmExtractSurface(image, level, mode, AlgorithmExtractSurface.ADJ_MODE,
+//            decimateFlag, blurFlag, blurValue, fileName
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+         
+         scriptParameters.getParams().put(ParameterFactory.newParameter("level",level));
+         scriptParameters.getParams().put(ParameterFactory.newParameter("decimateFlag",decimateFlag));
+         scriptParameters.getParams().put(ParameterFactory.newParameter("blurFlag",blurFlag));
+         scriptParameters.getParams().put(ParameterFactory.newParameter("blurValue",blurValue));
+         scriptParameters.getParams().put(ParameterFactory.newParameter("fileName",fileName));
+                
+    }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        level = scriptParameters.getParams().getFloat("level");
+        decimateFlag = scriptParameters.getParams().getBoolean("decimateFlag");
+        blurFlag = scriptParameters.getParams().getBoolean("blurFlag");
+        blurValue = scriptParameters.getParams().getFloat("blurValue");
+        fileName = scriptParameters.getParams().getString("fileName");              
+    }
+ 
+    
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -211,7 +234,7 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
             System.gc();
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         // Fix VOI IDs
         // int     nVOI  = 0;
@@ -233,47 +256,7 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
         dispose();
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ExtractSurface " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + decimateFlag + " " + fileName + " ");
-
-                String modeStr;
-
-                if (mode == AlgorithmExtractSurface.VOI_MODE) {
-                    modeStr = "VOI ";
-                } else if (mode == AlgorithmExtractSurface.MASK_MODE) {
-                    modeStr = "MASK ";
-                } else {
-                    modeStr = "LEVEL " + level + " ";
-                }
-
-                String triModeStr = "ADJACIENT ";
-
-                modeStr = modeStr + triModeStr + blurFlag + " " + blurValue + "\n";
-                userInterface.getScriptDialog().append(modeStr);
-            }
-        }
-    }
-
+  
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -297,53 +280,7 @@ public class JDialogExtractSurface extends JDialogBase implements AlgorithmInter
         }
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
 
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-
-        try {
-            setDecimationFlag(parser.getNextBoolean());
-            setFileName(parser.getNextString());
-
-            String mode = parser.getNextString();
-
-            if (mode.equals("VOI")) {
-                setMode(AlgorithmExtractSurface.VOI_MODE);
-            } else if (mode.equals("MASK")) {
-                setMode(AlgorithmExtractSurface.MASK_MODE);
-            } else if (mode.equals("LEVEL")) {
-                setMode(AlgorithmExtractSurface.LEVEL_MODE);
-                setLevel(parser.getNextFloat());
-            } else {
-                throw new Exception("Illegal mode variable.");
-            }
-
-            setBlurFlag(parser.getNextBoolean());
-            setBlurValue(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
 
     /**
      * Accessor that sets the blurring flag (if the surface is generated from a VOI or mask the surface image will need
