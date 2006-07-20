@@ -990,7 +990,7 @@ public class FileIO {
      *
      * @see     FileBase
      */
-    public String getSuffix(int fileType) {
+    public static final String getSuffix(int fileType) {
         String suffix = null;
 
         switch (fileType) {
@@ -4179,16 +4179,16 @@ public class FileIO {
         ((FileBRUKER) imageFile).setFileName("acqp");
         directoryFile = new File(fileDir);
 
-        File tmpFile = new File(fileDir + "\\" + "acqp");
+        File tmpFile = new File(fileDir + File.separator + "acqp");
 
         if (!tmpFile.exists()) {
 
             // go up 2 parent directories
             parentDirectoryName = directoryFile.getParent();
             directoryFile = new File(parentDirectoryName);
-            ((FileBRUKER) imageFile).setFileDir(directoryFile.getParent() + "\\");
+            ((FileBRUKER) imageFile).setFileDir(directoryFile.getParent() + File.separator);
         } else {
-            ((FileBRUKER) imageFile).setFileDir(directoryFile + "\\");
+            ((FileBRUKER) imageFile).setFileDir(directoryFile + File.separator);
         }
 
         try {
