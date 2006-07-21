@@ -298,7 +298,7 @@ public class ParameterList extends Parameter {
         for (int i = 0; i < strList.size(); i++) {
             String str = ParameterList.replaceEscapedSpecialCharacters((String) strList.elementAt(i));
 
-            newList.add(ParameterFactory.newParameter("" + i, listContentsType, str));
+            newList.add(ParameterFactory.newNonListParameter("" + i, listContentsType, str));
         }
 
         return newList;

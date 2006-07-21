@@ -3125,8 +3125,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                 } else if (arg.equalsIgnoreCase("-o")) {
                     String varValue = args[++i];
-                    Preferences.debug("cmd var:\tDefining parameter variable value from -o arg " + ActionSaveImageAs.SAVE_AS_FILE_NAME + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
-                    VariableTable.getReference().storeVariable(ActionSaveImageAs.SAVE_AS_FILE_NAME, varValue);
+                    Preferences.debug("cmd var:\tDefining parameter variable value from -o arg " + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
+                    VariableTable.getReference().storeVariable(ActionSaveBase.SAVE_FILE_NAME, varValue);
                 } else if (arg.equalsIgnoreCase("-d")) {
                     String varName = args[++i];
                     String varValue = args[++i];
@@ -3200,7 +3200,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                           "[-h][-H][--help]  Display this help" + "\n" + "[-hide][-HIDE]    Hide application frame" +
                           "\n" + "[-i][-I]          Image file name" + "\n" + "[-m][-M]          Image multifile name" +
                           "\n" + "[-s][-S]          Script file name" + "\n" + "[-v][-V]          VOI file name" +
-                          "\n" + "[-o][-O]          Saved image file name (sets " + ActionSaveImageAs.SAVE_AS_FILE_NAME + ")" + 
+                          "\n" + "[-o][-O]          Saved image file name (sets " + ActionSaveBase.SAVE_FILE_NAME + " parameter)" + 
                           "\n" + "[-d][-D]          Set the value of a variable used in a script" + "\n" + "\n" + "Examples:" + "\n" +
                           "> mipav" + "\n" + "> mipav imageFileName" + "\n" +
                           "> mipav -i imageFileName -s scriptFileName -hide" + "\n" +

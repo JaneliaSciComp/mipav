@@ -28,7 +28,7 @@ public class ParserEngine {
     private static final Pattern scriptLineRegex = Pattern.compile("^([A-Za-z][\\w_]*)\\s*\\(\\s*(\".+\")*\\s*\\)\\s*$");
 
     /** This regular expression pattern breaks apart an action parameter string into three parts: param label, param data type, and param data. */
-    private static final Pattern paramInfoRegex = Pattern.compile("^([\\w_.-]+)\\s+([\\w_]+)\\s+(.*)$");
+    private static final Pattern paramInfoRegex = Pattern.compile("^([$\\w_.-]+)\\s+([\\w_]+)\\s+(.*)$");
 
     /** The delimiter used to split up a String containing all of the parameters which should be parsed and passed to an action. */
     private static final String paramListDelimiter = "\",\\s*\"";
@@ -261,7 +261,7 @@ public class ParserEngine {
         while (matcher.find()) {
 
             if (matcher.groupCount() == 3) {
-                param = ParameterFactory.newParameter(matcher.group(1), matcher.group(2), matcher.group(3));
+                param = ParameterFactory.parseParameter(matcher.group(1), matcher.group(2), matcher.group(3));
 
                 // Preferences.debug(param.convertToString(), Preferences.DEBUG_SCRIPTING);
             } else {

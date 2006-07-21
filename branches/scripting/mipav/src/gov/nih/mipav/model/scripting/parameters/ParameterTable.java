@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.scripting.parameters;
 
 
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.util.Enumeration;
@@ -38,7 +39,7 @@ public class ParameterTable {
     }
 
     /**
-     * Converts all of the parameters in the table into a comma delimited list of parameters, suitable for inclusion in a script.
+     * Converts all of the parameters in the table into a comma delimited list of parameters, suitable for inclusion in a script.  No command line overriding is performed.
      *
      * @return  The information on the parameters in the table in string form. 
      */
@@ -68,7 +69,21 @@ public class ParameterTable {
      */
     public Parameter get(String paramLabel) {
         try {
-            return (Parameter) paramTable.get(paramLabel);
+            Parameter param = (Parameter) paramTable.get(paramLabel);
+            
+            if (!(param instanceof ParameterImage) && !(param instanceof ParameterList)) {
+                VariableTable varTable = VariableTable.getReference();
+                if (varTable.isVariableSet(paramLabel)) {
+                    try {
+                        String overrideValue = varTable.interpolate(paramLabel);
+                        param = ParameterFactory.newNonListParameter(paramLabel, param.getType(), overrideValue);
+                    } catch (ParserException pe) {
+                        throw new ParameterException(paramLabel, "Overriding of parameter value failed: " + pe.getLocalizedMessage());
+                    }
+                }
+            }
+            
+            return param;
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -85,6 +100,7 @@ public class ParameterTable {
      */
     public boolean getBoolean(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterBoolean) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -102,6 +118,7 @@ public class ParameterTable {
      */
     public double getDouble(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterDouble) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -119,6 +136,7 @@ public class ParameterTable {
      */
     public float getFloat(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterFloat) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -153,6 +171,7 @@ public class ParameterTable {
      */
     public int getInt(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterInt) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -170,6 +189,7 @@ public class ParameterTable {
      */
     public ParameterList getList(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable?
             return (ParameterList) get(paramLabel);
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -187,6 +207,7 @@ public class ParameterTable {
      */
     public long getLong(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterLong) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -196,7 +217,7 @@ public class ParameterTable {
     }
 
     /**
-     * Get an array containing all of the parameters in the parameter table.
+     * Get an array containing all of the parameters in the parameter table.  No command line overriding is performed.
      *
      * @return  The parameters in the table, in no particular order.
      */
@@ -223,6 +244,7 @@ public class ParameterTable {
      */
     public short getShort(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterShort) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -240,6 +262,7 @@ public class ParameterTable {
      */
     public String getString(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterString) get(paramLabel)).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
@@ -257,24 +280,8 @@ public class ParameterTable {
      */
     public short getUShort(String paramLabel) {
         try {
+            // TODO: allow overriding the value from the VariableTable
             return ((ParameterUShort) get(paramLabel)).getValue();
-        } catch (NullPointerException npe) {
-            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
-        } catch (ClassCastException cce) {
-            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
-        }
-    }
-
-    /**
-     * Return one of the parameters from the table (cast as a ParameterVariable).
-     *
-     * @param   paramLabel  The label/name of the variable parameter to retrieve.
-     *
-     * @return  The requested parameter's value.
-     */
-    public ParameterVariable getVariable(String paramLabel) {
-        try {
-            return (ParameterVariable) get(paramLabel);
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {

@@ -66,12 +66,6 @@ public abstract class Parameter {
     public static final int PARAM_LIST = 8;
 
     /**
-     * Parameter data type indicating a variable string value.
-     * @see ParameterVariable
-     */
-    public static final int PARAM_VARIABLE = 9;
-
-    /**
      * Parameter data type indicating an image placeholder variable string value.
      * @see ParameterImage
      */
@@ -85,7 +79,7 @@ public abstract class Parameter {
 
     /** String values for all of the parameter value data types (the strings written out to the script). */
     private static final String[] PARAM_STRINGS_TABLE = {
-        "boolean", "int", "long", "short", "ushort", "float", "double", "string", "list_", "var", "image", "ext_image"
+        "boolean", "int", "long", "short", "ushort", "float", "double", "string", "list_", "image", "ext_image"
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

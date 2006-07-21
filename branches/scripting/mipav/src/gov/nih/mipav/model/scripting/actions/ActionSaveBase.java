@@ -20,67 +20,67 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
     /**
      * Label for the file name prefix parameter.
      */
-    protected static final String SAVE_PREFIX = "file_name_prefix";
+    public static final String SAVE_PREFIX = "file_name_prefix";
     
     /**
      * Label for the file name suffix parameter.
      */
-    protected static final String SAVE_SUFFIX = "file_name_suffix";
+    public static final String SAVE_SUFFIX = "file_name_suffix";
     
     /**
      * Label for the file name parameter (overrides the file_type parameter).
      */
-    protected static final String SAVE_FILE_NAME = "file_name";
+    public static final String SAVE_FILE_NAME = "file_name";
     
     /**
      * Label for the file type (extension, generally) parameter.
      */
-    protected static final String SAVE_FILE_TYPE = "file_type";
+    public static final String SAVE_FILE_TYPE = "file_type";
     
     /**
      * Label for first slice to save from an image parameter.
      */
-    protected static final String START_SLICE = "start_slice";
+    public static final String START_SLICE = "start_slice";
     
     /**
      * Label for last slice to save from an image parameter.
      */
-    protected static final String END_SLICE = "end_slice";
+    public static final String END_SLICE = "end_slice";
     
     /**
      * Label for the tiff set write pack bit parameter.
      */
-    protected static final String TIFF_SET_WRITE_PACK_BIT = "tiff_do_write_pack_bet";
+    public static final String TIFF_SET_WRITE_PACK_BIT = "tiff_do_write_pack_bet";
     
     /**
      * Label for the tiff initial image number parameter.
      */
-    protected static final String TIFF_START_NUMBER = "tiff_start_number";
+    public static final String TIFF_START_NUMBER = "tiff_start_number";
     
     /**
      * Label for the parameter indicating the number of digits to use in tiff image file naming.
      */
-    protected static final String TIFF_DIGIT_NUMBER = "tiff_digit_number";
+    public static final String TIFF_DIGIT_NUMBER = "tiff_digit_number";
     
     /**
      * Label for the parameter indicating the first time slice to save.
      */
-    protected static final String START_TIME = "start_time";
+    public static final String START_TIME = "start_time";
     
     /**
      * Label for the parameter indicating the last time slice to save.
      */
-    protected static final String END_TIME = "end_time";
+    public static final String END_TIME = "end_time";
     
     /**
      * Label for the parameter indicating which time slice to save when saving 4D images in a format which only supports 3D image writing.
      */
-    protected static final String TIME_SLICE = "time_slice";
+    public static final String TIME_SLICE = "time_slice";
     
     /**
      * Label for the avi compression parameter.
      */
-    protected static final String AVI_COMPRESSION = "avi_compression";
+    public static final String AVI_COMPRESSION = "avi_compression";
     
     /**
      * The file saving options used to save the image, which should be recording in the script.  The action saving must be done elsewhere.
@@ -144,7 +144,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         
         // prefer the file name over the file type if it is set
         // TODO: maybe make the file type change the type of the file name?
-        if (parameters.containsParameter(SAVE_FILE_NAME)) {
+        if (isSaveAsAction && parameters.containsParameter(SAVE_FILE_NAME)) {
             String extension = ActionSaveBase.getFileExtension(saveFileName);
             saveFileName = savePrefix + ActionSaveBase.stripExtension(saveFileName) + saveSuffix + extension;
 
@@ -159,7 +159,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 
                 collisionAvoidanceIndex++;
             }
-        } else if (parameters.containsParameter(SAVE_FILE_TYPE)) {
+        } else if (isSaveAsAction && parameters.containsParameter(SAVE_FILE_TYPE)) {
             String extension = parameters.getString(SAVE_FILE_TYPE);
             saveFileName = savePrefix + image.getImageName() + saveSuffix + extension;
             
@@ -174,13 +174,23 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 
                 collisionAvoidanceIndex++;
             }
+        } else {
+            // not a save as action
+            String extension = FileIO.getSuffixFrom(image.getImageFileName());
+            saveFileName = savePrefix + image.getImageName() + saveSuffix + extension;
+            
+            int collisionAvoidanceIndex = 1;
+            File testImageFile = new File(saveFileDir, saveFileName);
+            while (testImageFile.exists()) {
+                Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
+                
+                saveFileName = savePrefix + image.getImageName() + saveSuffix + "_" + collisionAvoidanceIndex + extension;
+                testImageFile = null;
+                testImageFile = new File(saveFileDir, saveFileName);
+                
+                collisionAvoidanceIndex++;
+            }
         }
-        
-        // TODO: is this correct?
-        //if (runningInSeparateThread) {
-        //} else {
-        //    opts = new FileWriteOptions(fname, (String) fileDirs.elementAt(currFileIndex) + File.separator, saveAs);
-        //}
         
         FileWriteOptions opts = new FileWriteOptions(saveFileName, saveFileDir, isSaveAsAction);
 
@@ -288,6 +298,11 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
      */
     protected void addSaveOptionsToParameters(ParameterTable parameters, FileWriteOptions options, int[] extents) throws ParserException {
         int nDims = extents.length;
+        
+        // if not a save as, always save the same type of file
+        if (options.isSaveAs()) {
+            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileIO.getSuffix(options.getFileType())));
+        }
 
         if ((options.getFileType() == FileBase.TIFF) && options.isPackBitEnabled()) {
             parameters.put(ParameterFactory.newBoolean(TIFF_SET_WRITE_PACK_BIT, options.isWritePackBit()));
@@ -298,17 +313,21 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         }
 
         if (nDims == 3) {
-            parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));
-            parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
+            if (options.getBeginSlice() != 0 || options.getEndSlice() != extents[2] - 1) {
+                parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));
+                parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
+            }
 
             if ((options.getFileType() == FileBase.TIFF) && options.isMultiFile()) {
                 parameters.put(ParameterFactory.newInt(TIFF_START_NUMBER, options.getStartNumber()));
                 parameters.put(ParameterFactory.newInt(TIFF_DIGIT_NUMBER, options.getDigitNumber()));
             }
         } else if (nDims == 4) {
-            parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));
-            parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
-
+            if (options.getBeginSlice() != 0 || options.getEndSlice() != extents[2] - 1) {
+                parameters.put(ParameterFactory.newInt(START_SLICE, options.getBeginSlice()));
+                parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
+            }
+            
             // we can read 4d minc and tiff, but can't write out again as 4d (so just save a specific time point)
             if ((options.getFileType() == FileBase.TIFF) || (options.getFileType() == FileBase.MINC)) {
                 parameters.put(ParameterFactory.newInt(TIME_SLICE, options.getTimeSlice()));
@@ -318,8 +337,10 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                     parameters.put(ParameterFactory.newInt(TIFF_DIGIT_NUMBER, options.getDigitNumber()));
                 }
             } else {
-                parameters.put(ParameterFactory.newInt(START_TIME, options.getBeginTime()));
-                parameters.put(ParameterFactory.newInt(END_TIME, options.getEndTime()));                
+                if (options.getBeginTime() != 0 || options.getEndTime() != extents[3] - 1) {
+                    parameters.put(ParameterFactory.newInt(START_TIME, options.getBeginTime()));
+                    parameters.put(ParameterFactory.newInt(END_TIME, options.getEndTime()));
+                }
             }
         }
     }

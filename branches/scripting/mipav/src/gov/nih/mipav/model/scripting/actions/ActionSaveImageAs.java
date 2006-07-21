@@ -14,11 +14,6 @@ import gov.nih.mipav.view.MipavUtil;
  */
 public class ActionSaveImageAs extends ActionSaveBase {
     /**
-     * The name of the parameter variable which allows the user to specify the name to save the image as from the command line (or the script run dialog, possibly).
-     */
-    public static final String SAVE_AS_FILE_NAME = "$save_as_file_name";
-    
-    /**
      * Constructor for the dynamic instantiation and execution of the SaveImage script action.
      */
     public ActionSaveImageAs() {
@@ -58,16 +53,8 @@ public class ActionSaveImageAs extends ActionSaveBase {
     public void scriptRun(ParameterTable parameters) {
         ModelImage image = parameters.getImage(INPUT_IMAGE_LABEL);
         
-        String saveImageFileName = parameters.getVariable(SAVE_AS_FILE_NAME).getValue();
-        
-        // TODO: get the savedImageFileName from the -o option on the command line?  maybe have commandline opts that set the values of ParameterVariables (and use one for the file name)
-        if (saveImageFileName != null) {
-            FileWriteOptions options = getSaveImageOptions(parameters, image, true);
-            options.setFileName(saveImageFileName);
-            image.getParentFrame().save(options, -1);
-        } else {
-            image.getParentFrame().saveImageInfo();
-            image.getParentFrame().save(getSaveImageOptions(parameters, image, true), -1);
-        }
+        FileWriteOptions options = getSaveImageOptions(parameters, image, true);
+        image.getParentFrame().saveImageInfo();
+        image.getParentFrame().save(options, -1);
     }
 }

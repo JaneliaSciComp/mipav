@@ -992,7 +992,7 @@ public class FileIO {
      *
      * @see     FileBase
      */
-    public String getSuffix(int fileType) {
+    public static final String getSuffix(int fileType) {
         String suffix = null;
 
         switch (fileType) {

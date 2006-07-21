@@ -26,7 +26,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterBoolean newBoolean(String label, boolean value) throws ParserException {
-        return (ParameterBoolean) ParameterFactory.newParameter(label, Parameter.PARAM_BOOLEAN, "" + value);
+        return new ParameterBoolean(label, Parameter.PARAM_BOOLEAN, value);
     }
 
     /**
@@ -40,7 +40,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterDouble newDouble(String label, double value) throws ParserException {
-        return (ParameterDouble) ParameterFactory.newParameter(label, Parameter.PARAM_DOUBLE, "" + value);
+        return new ParameterDouble(label, Parameter.PARAM_DOUBLE, value);
     }
         
     /**
@@ -54,7 +54,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     protected static final ParameterExternalImage newExternalImage(String label, String value) throws ParserException {
-        return (ParameterExternalImage) ParameterFactory.newParameter(label, Parameter.PARAM_EXTERNAL_IMAGE, "" + value);
+        return new ParameterExternalImage(label, Parameter.PARAM_EXTERNAL_IMAGE, value);
     }
 
     /**
@@ -68,7 +68,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterFloat newFloat(String label, float value) throws ParserException {
-        return (ParameterFloat) ParameterFactory.newParameter(label, Parameter.PARAM_FLOAT, "" + value);
+        return new ParameterFloat(label, Parameter.PARAM_FLOAT, value);
     }
 
     /**
@@ -82,7 +82,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     protected static final ParameterImage newImage(String label, String value) throws ParserException {
-        return (ParameterImage) ParameterFactory.newParameter(label, Parameter.PARAM_IMAGE, "" + value);
+        return new ParameterImage(label, Parameter.PARAM_IMAGE, value);
     }
     
     /**
@@ -116,7 +116,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterInt newInt(String label, int value) throws ParserException {
-        return (ParameterInt) ParameterFactory.newParameter(label, Parameter.PARAM_INT, "" + value);
+        return new ParameterInt(label, Parameter.PARAM_INT, value);
     }
 
     /**
@@ -130,7 +130,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterLong newLong(String label, long value) throws ParserException {
-        return (ParameterLong) ParameterFactory.newParameter(label, Parameter.PARAM_LONG, "" + value);
+        return new ParameterLong(label, Parameter.PARAM_LONG, value);
     }
 
     /**
@@ -144,14 +144,14 @@ public class ParameterFactory {
      *
      * @throws  ParserException  If there is a problem creating the new parameter.
      * 
-     * @see #newParameter(String, int, String)
+     * @see #newNonListParameter(String, int, String)
      */
-    public static final Parameter newParameter(String label, String type, String value) throws ParserException {
+    public static final Parameter parseParameter(String label, String type, String value) throws ParserException {
 
         if (Parameter.getTypeFromString(type) == Parameter.PARAM_LIST) {
             return new ParameterList(label, type, value);
         } else {
-            return newParameter(label, Parameter.getTypeFromString(type), value);
+            return newNonListParameter(label, Parameter.getTypeFromString(type), value);
         }
     }
     
@@ -266,7 +266,7 @@ public class ParameterFactory {
     public static final Parameter newParameter(String label, boolean[] values) throws ParserException {
         ParameterList list = new ParameterList(label, Parameter.PARAM_BOOLEAN);
         for (int i = 0; i < values.length; i++) {
-            list.addToList(ParameterFactory.newBoolean("", values[i]));
+            list.addToList(ParameterFactory.newBoolean("" + i, values[i]));
         }
         
         return list;
@@ -285,7 +285,7 @@ public class ParameterFactory {
     public static final Parameter newParameter(String label, float[] values) throws ParserException {
         ParameterList list = new ParameterList(label, Parameter.PARAM_FLOAT);
         for (int i = 0; i < values.length; i++) {
-            list.addToList(ParameterFactory.newFloat("", values[i]));
+            list.addToList(ParameterFactory.newFloat("" + i, values[i]));
         }
         
         return list;
@@ -304,7 +304,7 @@ public class ParameterFactory {
     public static final Parameter newParameter(String label, int[] values) throws ParserException {
         ParameterList list = new ParameterList(label, Parameter.PARAM_INT);
         for (int i = 0; i < values.length; i++) {
-            list.addToList(ParameterFactory.newInt("", values[i]));
+            list.addToList(ParameterFactory.newInt("" + i, values[i]));
         }
         
         return list;
@@ -356,9 +356,9 @@ public class ParameterFactory {
      *
      * @throws  ParserException  If there is a problem creating the new parameter.
      * 
-     * @see #newParameter(String, String, String)
+     * @see #parseParameter(String, String, String)
      */
-    public static final Parameter newParameter(String label, int type, String value) throws ParserException {
+    public static final Parameter newNonListParameter(String label, int type, String value) throws ParserException {
         Parameter param = null;
 
         switch (type) {
@@ -407,10 +407,6 @@ public class ParameterFactory {
                 param = new ParameterUShort(label, type, value);
                 break;
 
-            case Parameter.PARAM_VARIABLE:
-                param = new ParameterVariable(label, type, value);
-                break;
-
             default:
                 throw new ParserException(label + ": Unrecognized parameter type number: " + type);
         }
@@ -429,7 +425,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterShort newShort(String label, short value) throws ParserException {
-        return (ParameterShort) ParameterFactory.newParameter(label, Parameter.PARAM_SHORT, "" + value);
+        return new ParameterShort(label, Parameter.PARAM_SHORT, value);
     }
 
     /**
@@ -443,7 +439,7 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterString newString(String label, String value) throws ParserException {
-        return (ParameterString) ParameterFactory.newParameter(label, Parameter.PARAM_STRING, "" + value);
+        return new ParameterString(label, Parameter.PARAM_STRING, value);
     }
 
     /**
@@ -457,20 +453,6 @@ public class ParameterFactory {
      * @throws  ParserException  If there is a problem creating the new parameter.
      */
     public static final ParameterUShort newUShort(String label, short value) throws ParserException {
-        return (ParameterUShort) ParameterFactory.newParameter(label, Parameter.PARAM_USHORT, "" + value);
-    }
-
-    /**
-     * Creates a new string variable parameter with a given label and value.
-     *
-     * @param   label  The label/name of the new parameter.
-     * @param   value  The value to assign to the new parameter.
-     *
-     * @return  A new string variable parameter.
-     *
-     * @throws  ParserException  If there is a problem creating the new parameter.
-     */
-    public static final ParameterVariable newVariable(String label, String value) throws ParserException {
-        return (ParameterVariable) ParameterFactory.newParameter(label, Parameter.PARAM_VARIABLE, "" + value);
+        return new ParameterUShort(label, Parameter.PARAM_USHORT, value);
     }
 }
