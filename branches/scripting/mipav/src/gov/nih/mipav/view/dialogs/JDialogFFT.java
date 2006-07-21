@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmFFT
  */
-public class JDialogFFT extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -231,26 +233,71 @@ public class JDialogFFT extends JDialogBase implements AlgorithmInterface, Scrip
     public JDialogFFT(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogFFT(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+ /*   image, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
+    kernelDiameter, filterType, freq1, freq2, constructionMethod,
+    butterworthOrder*/
+    
+    
+    
+      
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW)); 
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("transformDir",transformDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("logMagDisplay",logMagDisplay));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("unequalDim",unequalDim));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("image25D",image25D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("imageCrop",imageCrop));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filterType",filterType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1",freq1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2",freq2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("constructionMethod",constructionMethod));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworthOrder",butterworthOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelDiameter",kernelDiameter));
+   }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        transformDir = scriptParameters.getParams().getInt("transformDir");
+        logMagDisplay = scriptParameters.getParams().getBoolean("logMagDisplay");
+        unequalDim = scriptParameters.getParams().getBoolean("unequalDim");
+        image25D = scriptParameters.getParams().getBoolean("image25D");
+        imageCrop = scriptParameters.getParams().getBoolean("imageCrop");
+        filterType = scriptParameters.getParams().getInt("filterType");
+        freq1 = scriptParameters.getParams().getInt("freq1");
+        freq2 = scriptParameters.getParams().getInt("freq2");
+        constructionMethod = scriptParameters.getParams().getInt("constructionMethod");
+        butterworthOrder = scriptParameters.getParams().getInt("butterworthOrder");
+        kernelDiameter = scriptParameters.getParams().getInt("kernelDiameter");
+   }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+  
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -487,7 +534,7 @@ public class JDialogFFT extends JDialogBase implements AlgorithmInterface, Scrip
                 resultImage = null;
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
         }
 
 
@@ -507,106 +554,9 @@ public class JDialogFFT extends JDialogBase implements AlgorithmInterface, Scrip
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
+ 
 
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FFT " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + transformDir + " " + logMagDisplay + " " + unequalDim +
-                                                           " " + image25D + " " + imageCrop + " " + kernelDiameter +
-                                                           " " + filterType + " " + freq1 + " " + freq2 + " " +
-                                                           constructionMethod + " " + butterworthOrder + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + transformDir + " " + logMagDisplay + " " + unequalDim +
-                                                           " " + image25D + " " + imageCrop + " " + kernelDiameter +
-                                                           " " + filterType + " " + freq1 + " " + freq2 + " " +
-                                                           constructionMethod + " " + butterworthOrder + "\n");
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setTransformDir(parser.getNextInteger());
-            setLogMagDisplay(parser.getNextBoolean());
-            setUnequalDim(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setImageCrop(parser.getNextBoolean());
-            setDiameter(parser.getNextInteger());
-            setFilterType(parser.getNextInteger());
-            setFreq1(parser.getNextFloat());
-            setFreq2(parser.getNextFloat());
-            setMethod(parser.getNextInteger());
-            setButterworthOrder(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
+ 
 
     /**
      * Accessor that sets the butterworth order.
