@@ -16,8 +16,13 @@ import java.text.*;
   VOI, and the number of NMR receivers to calculate the signal to noise ratio for the signal VOI(s).
   The contrast to noise ratio is simply the signal to noise ratio for signal VOI 1 minus the signal to 
   noise ratio for signal VOI 2.  This program requires a single MRI magnitude image.  The program 
-  mathematics assumes a Rician probability distribution characteristic of a MRI magnitude image.
-  The program follows the general 3 step approach outlined in the Constantinides reference:
+  mathematics assumes a General Rician or noncentral chi probability distribution characteristic
+  of a MRI magnitude image.  For the case of a single receiver system, the General Rician distribution
+  reduces to the Rician distribution.
+  
+  The program calculates the SNR by 2 different methods.  First, the signal to noise ratio is
+  found using a equation for the first moment of Generalized Rice distribution.
+  The first method follows the general 3 step approach outlined in the Constantinides reference:
   1.) The noise standard deviation equals the 
   square root((sum over i for background VOI of pixel(i) * pixel(i))/
               (2 * number of background pixels * number of NMR receivers))
@@ -38,6 +43,24 @@ import java.text.*;
   of SNR*SNR/2 > 3055, so for SNR*SNR/2 > 3000 the asymptotic limiting formula of the 
   confluent hypergeometric function used in Appendix C of the Sato reference was used.
   
+  The second method uses the maximum likelihood approach outlined in the Sijbers thesis.  
+  This approach finds the signal value which maximizes the value of the log of the maximum
+  likelihood function (Equation 5.38):
+  Let pixelNumber = number of pixels in the signal VOI
+  log(L) equals approximately -pixelNumber*(n - 1)*log(signal) 
+                              -pixelNumber*signal**2/(2*backgroundVariance)
+                              + sum from i = 1 to pixelNumber of
+                              (log(BESSEL_I of order (n - 1) of (pixel[i]*signal/backgroundVariance))
+  Note that this method does not work for large values of signal to noise ratio because the 
+  BESSEL_I function cannot handle large arguments.  For example, the BESSEL_I of order 0 of x
+  can only handle values of x up to about 699.  For x >= 700, the Bessel function overflows.
+  In finding the signal value that minimizes the negative of the maximum likelihood equation,
+  a one dimensional search method called Brent's method that uses inverse parabolic ineterpolation
+  calls the log of the maximum likelihood function.  Brent's method is started with 3 points,
+  0.75 * first moment calculated signal, the first moment calculated signal, and 1.25 *
+  first moment calculated signal.  This assumes that the first moment result differs from
+  the maximum likelihood moment by less than 25%.
+  
   Testing the validity of this program is easy enough.  Each receiver in the phase array has
   2 standard deviations - one associated with the real part of the complex image and one
   associated with the imaginary part of the complex image. 
@@ -47,14 +70,23 @@ import java.text.*;
   the above fashion.
   Running testAlgorithm with 1000 counts of a 100.0 signal and 1000 counts of a 
   varying background for the 1 receiver case gave:
-  background               Calculated SNR                 Ideal SNR
+  background               Calculated SNR                 Ideal SNR from first moment
     0.5                        198.0                         200.0
     1.0                        101.0                         100.0
     2.0                        48.9                           50.0
     5.0                        19.7                           20.0
    20.0                         5.10                           5.00
    50.0                         2.28                           2.00  
-  100.0                         1.09                           1.00                
+  100.0                         1.09                           1.00  
+  
+ A second run of testAlgorithm showed good agreement between the 2 methods of 
+ finding the SNR:
+ background                First moment SNR               Maximum likelihood SNR
+ 100.0                         1.21                              1.16
+  50.0                         2.20                              2.21
+  20.0                         5.09                              5.09
+  10.0                        10.0                              10.0
+   5.0                        20.0                              20.0
                                                             
   For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
   Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
@@ -110,6 +142,9 @@ import java.text.*;
   4.) Tohru Sato, Liviu F. Chibotaru, and Arnout Ceulemans, The Exe dynamic Jahn-Teller problem:
   A new insight from the strong coupling limit, The Journal of Chemical Physics, Vol. 122, 054104, 
   2005, Appendix C.
+  5.) Numerical Recipes in C The Art of Scientific Computing Second Edition, William H. Press,
+  Saul A. Teukolsky, William T. Vetterling, and Brian P. Flannery, Cambridge University Press,
+  1992, pp. 402-405. 
   
   Derivation of Bessel function formula when number of receivers == 1
   E[M**v] = (2*sigma**2)**(v/2) * gamma(1 + v/2) * 1F1(-v/2, 1, -A**2/(2*sigma**2))
@@ -164,6 +199,12 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     private int numReceivers;
     
     private DecimalFormat nf;
+    
+    private float signalBuffer[];
+    
+    private double backgroundVariance;
+    
+    private boolean useMaxLikelihood = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -238,11 +279,14 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     public void runAlgorithm() {
         
         int xDim, yDim, zDim, tDim, sliceSize;
-        int i;
+        int i, j;
         int imageLength;
         float floatBuffer[];
+        double minimumSignal;
+        double centralSignal;
+        double maximumSignal;
+        double maxLikelihoodSignal[] = new double[1];
         short mask[];
-        float backgroundVariance = 0.0f;
         double backgroundStdDev;
         int backgroundCount = 0;
         float mean = 0.0f;
@@ -252,8 +296,12 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         int mean2Count = 0;
         double mean2DivStdDev;
         double snr = 0.0;
+        double snrML = 0.0;
         double snr2;
+        double snrML2 = 0.0;
         double cnr;
+        double cnrML;
+        double tol = 1.0E-3;
         boolean test = false;
         boolean validityTest = false;
         
@@ -285,7 +333,21 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             gam = new Gamma((numReceivers + 0.5), resultBMinusA);
             gam.run();
             gamConstant = resultB[0]/resultBMinusA[0];
-                for (realZ = -10.0; realZ <= 10.0; realZ++) {
+            double imaginaryArg = 0.0;
+            double initialOrder = (double)(numReceivers - 1);
+            int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+            
+            int nz[] = new int[1]; // number of components set to zero due to underflow
+            int errorFlag[] = new int[1]; // zero if no error
+            for (x = 601.0; x <= 800.0; x++) {
+            Bessel bes = new Bessel(Bessel.BESSEL_I, x, imaginaryArg, initialOrder, 
+                    Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+                    nz, errorFlag);
+            bes.run();
+            Preferences.debug("x = " + x + " realResult[0] = " +
+                     realResult[0] + " nz = " + nz[0] + " errorFlag = " + errorFlag[0] +"\n");
+            }
+                /*for (realZ = -10.0; realZ <= 10.0; realZ++) {
                     for (imagZ = -10.0; imagZ <= 10.0; imagZ++) {
                     cf = new ConfluentHypergeometric(-0.5, 1.0, realZ, imagZ, 
                                                                  realResult, imagResult);
@@ -306,7 +368,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
                                           " imagZ = " + imagZ + "\n");
                     }
                     }  
-                }
+                }*/
                 setCompleted(true);
                 return;
         } // if (test)
@@ -358,6 +420,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         }
         mask = srcImage.generateVOIMask(mask, backgroundIndex);
         
+        backgroundVariance = 0.0;
         for (i = 0; i < imageLength; i++) {
 
             if (mask[i] == backgroundIndex) {
@@ -386,19 +449,57 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         meanDivStdDev = mean/backgroundStdDev;
         
         snr = funcC(meanDivStdDev, true);
-        Preferences.debug("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
-        UI.setDataText("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        Preferences.debug("First moment SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        UI.setDataText("First moment SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        
+        signalBuffer = new float[meanCount];
+        for (i = 0, j = 0; i < imageLength; i++) {
+            if (mask[i] == signalIndex) {
+                signalBuffer[j++] = floatBuffer[i];    
+            }
+        }
+        centralSignal = snr * backgroundStdDev;
+        minimumSignal = 0.75 * centralSignal;
+        maximumSignal = 1.25 * centralSignal;
+        brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+        if (useMaxLikelihood) {
+            snrML = maxLikelihoodSignal[0]/backgroundStdDev;
+            Preferences.debug("Maximum likelihood SNR for signal 1 VOI = " + nf.format(snrML) + "\n");
+            UI.setDataText("Maximum likelihood SNR for signal 1 VOI = " + nf.format(snrML) + "\n");
+        }
         
         if (signal2Index >= 0) {
             mean2 = mean2/mean2Count;
             Preferences.debug("Mean for signal 2 VOI = " + nf.format(mean2) + "\n");
             mean2DivStdDev = mean2/backgroundStdDev;
             snr2 = funcC(mean2DivStdDev, false);
-            Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
-            UI.setDataText("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            Preferences.debug("First moment SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            UI.setDataText("First moment SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            if (useMaxLikelihood) {
+                signalBuffer = new float[mean2Count];
+                for (i = 0, j = 0; i < imageLength; i++) {
+                    if (mask[i] == signal2Index) {
+                        signalBuffer[j++] = floatBuffer[i];    
+                    }
+                }
+                centralSignal = snr2 * backgroundStdDev;
+                minimumSignal = 0.75 * centralSignal;
+                maximumSignal = 1.25 * centralSignal;
+                brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+                if (useMaxLikelihood) {
+                    snrML2 = maxLikelihoodSignal[0]/backgroundStdDev;
+                    Preferences.debug("Maximum likelihood SNR for signal 2 VOI = " + nf.format(snrML2) + "\n");
+                    UI.setDataText("Maximum likelihood SNR for signal 2 VOI = " + nf.format(snrML2) + "\n");
+                } // if (useMaxLikelihood)    
+            } // if (useMaxLikelihood)
             cnr = snr - snr2;
-            Preferences.debug("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
-            UI.setDataText("Constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            Preferences.debug("First moment constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            UI.setDataText("First moment constrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            if (useMaxLikelihood) {
+                cnrML = snrML - snrML2;
+                Preferences.debug("Maximum likelihood constrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");
+                UI.setDataText("Maximum likelihood constrast to noise ratio for 1 - 2 = " + nf.format(cnrML) + "\n");    
+            } // if (useMaxLikelihood)
         } // if (signal2Index >= 0)
 
         disposeProgressBar();
@@ -408,11 +509,10 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     
     private void testAlgorithm() {
         double signal = 100.0;
-        double stdDev = 0.5;
+        double stdDev = 2.0;
         int backgroundCount = 1000;
         int signalCount = 1000;
         int numReceivers = 1;
-        double backgroundVariance = 0.0;
         double backgroundStdDev;
         int i;
         int n;
@@ -422,11 +522,17 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         double mean = 0.0;
         double meanDivStdDev;
         double snr;
+        double minimumSignal;
+        double centralSignal;
+        double maximumSignal;
+        double maxLikelihoodSignal[] = new double[1];
+        double tol = 1.0E-3;
         
         nf = new DecimalFormat("0.00E0");
         
         randomGen = new RandomNumberGen();
         
+        backgroundVariance = 0.0;
         for (i = 0; i < backgroundCount; i++) {
             for (n = 0; n < 2*numReceivers; n++) {
                  noise = stdDev * randomGen.genStandardGaussian();
@@ -438,12 +544,14 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         backgroundStdDev = Math.sqrt(backgroundVariance);
         Preferences.debug("Noise standard deviation = " + nf.format(backgroundStdDev) + "\n");
         
+        signalBuffer = new float[signalCount];
         for (i = 0; i < signalCount; i++) {
            pixelSquare = signal * signal;
            for (n = 0; n < 2*numReceivers; n++) {
                noise = stdDev * randomGen.genStandardGaussian();
                pixelSquare += noise * noise;
            }
+           signalBuffer[i] = (float)Math.sqrt(pixelSquare);
            mean += Math.sqrt(pixelSquare);
         }
         
@@ -453,9 +561,257 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         
         snr = funcC(meanDivStdDev, true);
         Preferences.debug("SNR = " + nf.format(snr) + "\n");
+        
+        centralSignal = snr * backgroundStdDev;
+        minimumSignal = 0.75 * centralSignal;
+        maximumSignal = 1.25 * centralSignal;
+        brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
+        snr = maxLikelihoodSignal[0]/backgroundStdDev;
+        Preferences.debug("Maximum likelihood snr for signal 1 VOI = " + nf.format(snr) + "\n");
         return;
     } // testAlgorithm
     
+    /**
+     * Port of routine brent from Numerical Recipes in C, pp. 404-405
+     * One dimesional search algorithm
+     * @param ax Minimum value of search range for parameter
+     * @param bx Value bracketed by ax and cx
+     * @param cx Maximum value of search range of parameter
+     * @param xmin Value of parameter that minimzes the function
+     * @param tol Minimum isolated to a fractional precision of tol
+     * @return function value at xmin
+     */
+    private double brent(double ax, double bx, double cx, double xmin[], double tol) {
+        double ITMAX_BRENT = 100;
+        double CGOLD = 0.3819660;
+        double ZEPS = 1.0E-10;
+
+        // This will be the distance moved on the step before last
+        double e = 0.0;
+        double a;
+        double b;
+        double x;
+        double w;
+        double v;
+        double fw;
+        double fv;
+        double fx;
+        int iterations;
+        double xm;
+        double tol1;
+        double tol2;
+        double r;
+        double q;
+        double p;
+        double etemp;
+        double d = 0.0;
+        double u;
+        double fu;
+
+        // a and b must be in ascending order, but input abscissas need not be.
+        if (ax < cx) {
+            a = ax;
+        } // if (ax < cx)
+        else {
+            a = cx;
+        } // else
+
+        if (ax > cx) {
+            b = ax;
+        } // if (ax > cx)
+        else {
+            b = cx;
+        } // else
+
+        x = w = v = bx;
+
+        fx = -receiverMaximumLikelihood(x);
+        if (!useMaxLikelihood) {
+            // receiverMaximumLikelihood Bessel function call failed
+            return fx;
+        }
+        fw = fv = fx;
+
+        for (iterations = 1; iterations <= ITMAX_BRENT; iterations++) {
+
+            // Main program loop
+            xm = 0.5 * (a + b);
+            tol1 = (tol * Math.abs(x)) + ZEPS;
+            tol2 = 2.0 * tol1;
+
+            // Test for done here
+            if (Math.abs(x - xm) <= (tol2 - (0.5 * (b - a)))) {
+                xmin[0] = x;
+
+                return fx;
+            } // if (Math.abs(x - xm) <= (tol2 - 0.5*(b-a)))
+
+            if (Math.abs(e) > tol1) {
+
+                // Construct a trial parabolic fit
+                r = (x - w) * (fx - fv);
+                q = (x - v) * (fx - fw);
+                p = ((x - v) * q) - ((x - w) * r);
+                q = 2.0 * (q - r);
+
+                if (q > 0.0) {
+                    p = -p;
+                } // if (q > 0.0)
+
+                q = Math.abs(q);
+                etemp = e;
+                e = d;
+
+                if ((Math.abs(p) >= Math.abs(0.5 * q * etemp)) || (p <= (q * (a - x))) || (p >= (q * (b - x)))) {
+
+                    if (x >= xm) {
+                        e = a - x;
+                    } // if (x >= xm)
+                    else {
+                        e = b - x;
+                    } // else
+
+                    d = CGOLD * e;
+                } // if ((Math.abs(p) >= Math.abs(0.5*q*etemp)) || (p <= q*(a - x)) ||
+
+                // The above conditions determine the acceptability of the parabolic
+                // fit.  Here we take the golden section step into the larger of the
+                // two segments.
+                else {
+
+                    // Take the parabolic step
+                    d = p / q;
+                    u = x + d;
+
+                    if (((u - a) < tol2) || ((b - u) < tol2)) {
+
+                        if ((xm - x) >= 0.0) {
+                            d = Math.abs(tol1);
+                        } // if ((xm - x) >= 0.0)
+                        else {
+                            d = -Math.abs(tol1);
+                        } // else
+                    } // if ((u - a) < tol2 || (b - u) < tol2)
+                } // else
+            } // if (Math.abs(e) > tol1)
+            else {
+
+                if (x >= xm) {
+                    e = a - x;
+                } // if (x >= xm)
+                else {
+                    e = b - x;
+                } // else
+
+                d = CGOLD * e;
+            } // else
+
+            if (Math.abs(d) >= tol1) {
+                u = x + d;
+            } // if (Math.abs(d) >= tol1)
+            else if (d >= 0.0) {
+                u = x + Math.abs(tol1);
+            } // else if (d >= 0.0)
+            else {
+                u = x - Math.abs(tol1);
+            } // else
+
+            fu = -receiverMaximumLikelihood(u);
+            if (!useMaxLikelihood) {
+                // receiverMaximumLikelihood Bessel function call failed
+                return fx;
+            }
+
+            if (fu <= fx) {
+
+                if (u >= x) {
+                    a = x;
+                } // if (u >= x)
+                else {
+                    b = x;
+                } // else
+
+                v = w;
+                w = x;
+                x = u;
+                fv = fw;
+                fw = fx;
+                fx = fu;
+            } // if (fu <= fx)
+            else {
+
+                if (u < x) {
+                    a = u;
+                } // if (u < x)
+                else {
+                    b = u;
+                } // else
+
+                if ((fu <= fw) || (w == x)) {
+                    v = w;
+                    w = u;
+                    fv = fw;
+                    fw = fu;
+                } // if (fu <= fw || w == x)
+                else if ((fu <= fv) || (v == x) || (v == w)) {
+                    v = u;
+                    fv = fu;
+                } // else if (fu <= fv || v == x || v == w)
+            } // else
+        } // for (iterations = 1; iterations <= ITMAX_BRENT; iterations++)
+
+        MipavUtil.displayError("Too many iterations in brent");
+        xmin[0] = x;
+
+        return fx;
+    } // brent
+    
+    /**
+     * For an input signal value this routine returns the log of the maximimum
+     * likelihood function
+     * @param signal
+     * @return
+     */
+    private double receiverMaximumLikelihood(double signal) {
+        int n;
+        double likelihood = 0.0;
+        n = signalBuffer.length;
+        Bessel bes;
+        int i;
+        double imaginaryArg = 0.0;
+        double initialOrder = (double)(numReceivers - 1);
+        int sequenceNumber = 1; // Number of sequential Bessel function orders calculated
+        double signalDivVar = signal/backgroundVariance;
+        double realResult[] = new double[1];
+        double imagResult[] = new double[1];
+        int nz[] = new int[1]; // number of components set to zero due to underflow
+        int errorFlag[] = new int[1]; // zero if no error
+        double realArg;
+        for (i = 0; i < n; i++) {
+            realArg = signalBuffer[i]*signalDivVar;
+            bes = new Bessel(Bessel.BESSEL_I, realArg, imaginaryArg, initialOrder, 
+                             Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+                             nz, errorFlag);
+            bes.run();
+            likelihood += Math.log(realResult[0]);
+            if (errorFlag[0] != 0) {
+                Preferences.debug("Bessel_I error for realArg = " + realArg + "\n");
+                useMaxLikelihood = false;
+                return Double.NEGATIVE_INFINITY;
+            }
+        } // for (i = 0; i < n; i++)
+        likelihood -= (n*(numReceivers - 1)*Math.log(signal) + n*signalDivVar*signal/2.0);
+        Preferences.debug("signal = " + signal + " likelihood = " + likelihood + "\n");
+        return likelihood;
+    }
+    
+    /**
+     * This routine iterates to find the solution to the first moment equation for the 
+     * Generalized Rice distribution.
+     * @param meanDivStdDev
+     * @param signal
+     * @return
+     */
     private double funcC(double meanDivStdDev, boolean signal) {
         /** For 1F1(-1/2, 1, x) for the ACM code called the result is only
          *  valid for x >= -3055 and for 1F1(-1/2, 2, x) the result is only
