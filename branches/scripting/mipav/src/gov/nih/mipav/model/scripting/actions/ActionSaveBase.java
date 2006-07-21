@@ -145,15 +145,18 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         // prefer the file name over the file type if it is set
         // TODO: maybe make the file type change the type of the file name?
         if (isSaveAsAction && parameters.containsParameter(SAVE_FILE_NAME)) {
-            String extension = ActionSaveBase.getFileExtension(saveFileName);
-            saveFileName = savePrefix + ActionSaveBase.stripExtension(saveFileName) + saveSuffix + extension;
+            saveFileName = FileUtility.getFileName(parameters.getString(SAVE_FILE_NAME));
+            saveFileDir = FileUtility.getFileDirectory(parameters.getString(SAVE_FILE_NAME));
+            String extension = FileUtility.getExtension(saveFileName);
+            
+            saveFileName = savePrefix + FileUtility.stripExtension(saveFileName) + saveSuffix + extension;
 
             int collisionAvoidanceIndex = 1;
             File testImageFile = new File(saveFileDir, saveFileName);
             while (testImageFile.exists()) {
                 Preferences.debug(testImageFile.getAbsolutePath() + " already exists.\n", Preferences.DEBUG_SCRIPTING);
                 
-                String newSaveFileName = ActionSaveBase.stripExtension(saveFileName) + "_" + collisionAvoidanceIndex + extension;
+                String newSaveFileName = FileUtility.stripExtension(saveFileName) + "_" + collisionAvoidanceIndex + extension;
                 testImageFile = null;
                 testImageFile = new File(saveFileDir, newSaveFileName);
                 
@@ -342,40 +345,6 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                     parameters.put(ParameterFactory.newInt(END_TIME, options.getEndTime()));
                 }
             }
-        }
-    }
-    
-    /**
-     * Helper method to strip the image name of the extension, so when we save we don't have double extensions (like
-     * genormcor.img.tif).
-     *
-     * @param  fileName  Original name.
-     *
-     * @return  Name without extension, or original name if there was no extension.
-     */
-    protected static final String stripExtension(String fileName) {
-        int index = fileName.lastIndexOf(".");
-
-        if (index != -1) {
-            return fileName.substring(0, index);
-        } else {
-            return fileName;
-        }
-    }
-    
-    /**
-     * Returns the extension of a file name.
-     * @param  fileName  A file name.
-     * @return  The file name's extension (or an empty string if no extension).
-     */
-    protected static final String getFileExtension(String fileName) {
-        int index = fileName.lastIndexOf(".");
-        
-        if (index != -1) {
-            return fileName.substring(index);
-        } else {
-            // no extension
-            return "";
         }
     }
 }

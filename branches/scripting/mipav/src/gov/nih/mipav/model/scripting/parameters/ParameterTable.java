@@ -4,6 +4,8 @@ package gov.nih.mipav.model.scripting.parameters;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
+import gov.nih.mipav.view.Preferences;
+
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -28,14 +30,14 @@ public class ParameterTable {
     }
 
     /**
-     * Checks to see if there is an entry in the parameter table for a particular label.
+     * Checks to see if there is an entry in the parameter table for a particular label.  It also checks to see if a value for the parameter has been set in the global VariableTable.
      *
      * @param   paramLabel  The label/name of the variable parameter to check for.
      *
      * @return  <code>True</code> if there is an entry in the table with the given label, <code>false</code> otherwise.
      */
     public boolean containsParameter(String paramLabel) {
-        return paramTable.containsKey(paramLabel);
+        return paramTable.containsKey(paramLabel) || VariableTable.getReference().isVariableSet(paramLabel);
     }
 
     /**
@@ -61,37 +63,6 @@ public class ParameterTable {
     }
 
     /**
-     * Return one of the parameters from the table.
-     *
-     * @param   paramLabel  The label/name of the parameter to retrieve.
-     *
-     * @return  The requested parameter.
-     */
-    public Parameter get(String paramLabel) {
-        try {
-            Parameter param = (Parameter) paramTable.get(paramLabel);
-            
-            if (!(param instanceof ParameterImage) && !(param instanceof ParameterList)) {
-                VariableTable varTable = VariableTable.getReference();
-                if (varTable.isVariableSet(paramLabel)) {
-                    try {
-                        String overrideValue = varTable.interpolate(paramLabel);
-                        param = ParameterFactory.newNonListParameter(paramLabel, param.getType(), overrideValue);
-                    } catch (ParserException pe) {
-                        throw new ParameterException(paramLabel, "Overriding of parameter value failed: " + pe.getLocalizedMessage());
-                    }
-                }
-            }
-            
-            return param;
-        } catch (NullPointerException npe) {
-            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
-        } catch (ClassCastException cce) {
-            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
-        }
-    }
-
-    /**
      * Return the boolean value of one of the parameters from the table.
      *
      * @param   paramLabel  The label/name of the boolean parameter to retrieve.
@@ -100,8 +71,9 @@ public class ParameterTable {
      */
     public boolean getBoolean(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterBoolean) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_BOOLEAN);
+            
+            return ((ParameterBoolean) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -118,8 +90,9 @@ public class ParameterTable {
      */
     public double getDouble(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterDouble) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_DOUBLE);
+            
+            return ((ParameterDouble) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -136,8 +109,9 @@ public class ParameterTable {
      */
     public float getFloat(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterFloat) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_FLOAT);
+            
+            return ((ParameterFloat) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -146,7 +120,7 @@ public class ParameterTable {
     }
 
     /**
-     * Return the model image assigned to one of the image parameters from the table.
+     * Return the model image assigned to one of the image parameters from the table.  No overriding from the VariableTable is allowed.
      *
      * @param   paramLabel  The label/name of the image variable parameter to retrieve.
      *
@@ -154,7 +128,24 @@ public class ParameterTable {
      */
     public ModelImage getImage(String paramLabel) {
         try {
-            return ((ParameterImage) get(paramLabel)).getImage();
+            return getImageParameter(paramLabel).getImage();
+        } catch (NullPointerException npe) {
+            throw new ParameterException(paramLabel, npe.getLocalizedMessage());
+        } catch (ClassCastException cce) {
+            throw new ParameterException(paramLabel, cce.getLocalizedMessage());
+        }
+    }
+    
+    /**
+     * Return one of the image parameters from the table.  No overriding from the VariableTable is allowed.
+     *
+     * @param   paramLabel  The label/name of the image variable parameter to retrieve.
+     *
+     * @return  The requested parameter.
+     */
+    public ParameterImage getImageParameter(String paramLabel) {
+        try {
+            return (ParameterImage) paramTable.get(paramLabel);
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -171,8 +162,9 @@ public class ParameterTable {
      */
     public int getInt(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterInt) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_INT);
+            
+            return ((ParameterInt) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -189,8 +181,9 @@ public class ParameterTable {
      */
     public ParameterList getList(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable?
-            return (ParameterList) get(paramLabel);
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_LIST);
+            
+            return (ParameterList) param;
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -207,8 +200,9 @@ public class ParameterTable {
      */
     public long getLong(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterLong) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_LONG);
+            
+            return ((ParameterLong) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -244,8 +238,9 @@ public class ParameterTable {
      */
     public short getShort(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterShort) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_SHORT);
+            
+            return ((ParameterShort) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -262,8 +257,9 @@ public class ParameterTable {
      */
     public String getString(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterString) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_STRING);
+            
+            return ((ParameterString) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -280,8 +276,9 @@ public class ParameterTable {
      */
     public short getUShort(String paramLabel) {
         try {
-            // TODO: allow overriding the value from the VariableTable
-            return ((ParameterUShort) get(paramLabel)).getValue();
+            Parameter param = getWithOverride(paramLabel, Parameter.PARAM_USHORT);
+            
+            return ((ParameterUShort) param).getValue();
         } catch (NullPointerException npe) {
             throw new ParameterException(paramLabel, npe.getLocalizedMessage());
         } catch (ClassCastException cce) {
@@ -324,5 +321,33 @@ public class ParameterTable {
      */
     public int size() {
         return paramTable.size();
+    }
+    
+    /**
+     * Returns a parameter from the table, possibly overriding it with a value stored in the global VariableTable.
+     * 
+     * @param   paramLabel  The label of the parameter to return.
+     * @param   paramType   The type of the parameter we want returned.
+     * 
+     * @return  The requested parameter from the table.
+     */
+    protected Parameter getWithOverride(String paramLabel, int paramType) {
+        Parameter param = (Parameter) paramTable.get(paramLabel);
+        
+        if (!(param instanceof ParameterImage)) {
+            VariableTable varTable = VariableTable.getReference();
+            if (varTable.isVariableSet(paramLabel)) {
+                try {
+                    String overrideValue = varTable.interpolate(paramLabel);
+                    param = ParameterFactory.newNonListParameter(paramLabel, paramType, overrideValue);
+                } catch (ParserException pe) {
+                    throw new ParameterException(paramLabel, "Overriding of parameter value failed: " + pe.getLocalizedMessage());
+                }
+            }
+        }
+        
+        Preferences.debug("param table:\t Overriding parameter with value:\t" + param.convertToString() + "\n", Preferences.DEBUG_SCRIPTING);
+        
+        return param;
     }
 }

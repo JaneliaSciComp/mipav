@@ -69,13 +69,13 @@ public abstract class Parameter {
      * Parameter data type indicating an image placeholder variable string value.
      * @see ParameterImage
      */
-    public static final int PARAM_IMAGE = 10;
+    public static final int PARAM_IMAGE = 9;
     
     /**
      * Parameter data type indicating an externally-specified (not script produced) image placeholder variable string value.
      * @see ParameterExternalImage
      */
-    public static final int PARAM_EXTERNAL_IMAGE = 11;
+    public static final int PARAM_EXTERNAL_IMAGE = 10;
 
     /** String values for all of the parameter value data types (the strings written out to the script). */
     private static final String[] PARAM_STRINGS_TABLE = {

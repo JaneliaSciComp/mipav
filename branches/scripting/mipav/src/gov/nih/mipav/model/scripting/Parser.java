@@ -156,7 +156,7 @@ public class Parser {
      * @return  The image placeholder variable for the image the VOI will be loaded into. 
      */
     private static final String getVOIParentImage(ParsedActionLine parsedLine) {
-        return parsedLine.getParameterTable().get(AlgorithmParameters.getInputImageLabel(1)).getValueString();
+        return parsedLine.getParameterTable().getImageParameter(AlgorithmParameters.getInputImageLabel(1)).getValueString();
     }
     
     /**
