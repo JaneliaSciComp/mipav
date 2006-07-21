@@ -52,8 +52,12 @@ import java.text.*;
                               + sum from i = 1 to pixelNumber of
                               (log(BESSEL_I of order (n - 1) of (pixel[i]*signal/backgroundVariance))
   Note that this method does not work for large values of signal to noise ratio because the 
-  BESSEL_I function cannot handle large arguments.  For example, the BESSEL_I of order 0 of x
-  can only handle values of x up to about 699.  For x >= 700, the Bessel function overflows.
+  BESSEL_I function cannot handle large arguments.  For example, the UNSCALED BESSEL_I of order 0 of x
+  can only handle values of x up to about 699.  For x >= 700, the Bessel UNSCALED function overflows.
+  Since we require the log of the Bessel function, the range is extended by using the SCALED Bessel 
+  function which returns the BESSEL function * exp(-realArg), so we obtain the log(Bessel) from
+  the log(returned function) + realArg.  For the scaled Bessel function errors only start for
+  x >= 32768.
   In finding the signal value that minimizes the negative of the maximum likelihood equation,
   a one dimensional search method called Brent's method that uses inverse parabolic ineterpolation
   calls the log of the maximum likelihood function.  Brent's method is started with 3 points,
@@ -339,9 +343,9 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             
             int nz[] = new int[1]; // number of components set to zero due to underflow
             int errorFlag[] = new int[1]; // zero if no error
-            for (x = 601.0; x <= 800.0; x++) {
+            for (x = 12000.00; x <= 40000.0; x++) {
             Bessel bes = new Bessel(Bessel.BESSEL_I, x, imaginaryArg, initialOrder, 
-                    Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+                    Bessel.SCALED_FUNCTION, sequenceNumber, realResult, imagResult,
                     nz, errorFlag);
             bes.run();
             Preferences.debug("x = " + x + " realResult[0] = " +
@@ -509,7 +513,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
     
     private void testAlgorithm() {
         double signal = 100.0;
-        double stdDev = 2.0;
+        double stdDev = 1.0;
         int backgroundCount = 1000;
         int signalCount = 1000;
         int numReceivers = 1;
@@ -563,8 +567,8 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         Preferences.debug("SNR = " + nf.format(snr) + "\n");
         
         centralSignal = snr * backgroundStdDev;
-        minimumSignal = 0.75 * centralSignal;
-        maximumSignal = 1.25 * centralSignal;
+        minimumSignal = 0.5 * centralSignal;
+        maximumSignal = 1.5 * centralSignal;
         brent(minimumSignal, centralSignal, maximumSignal, maxLikelihoodSignal, tol);
         snr = maxLikelihoodSignal[0]/backgroundStdDev;
         Preferences.debug("Maximum likelihood snr for signal 1 VOI = " + nf.format(snr) + "\n");
@@ -790,10 +794,10 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         for (i = 0; i < n; i++) {
             realArg = signalBuffer[i]*signalDivVar;
             bes = new Bessel(Bessel.BESSEL_I, realArg, imaginaryArg, initialOrder, 
-                             Bessel.UNSCALED_FUNCTION, sequenceNumber, realResult, imagResult,
+                             Bessel.SCALED_FUNCTION, sequenceNumber, realResult, imagResult,
                              nz, errorFlag);
             bes.run();
-            likelihood += Math.log(realResult[0]);
+            likelihood += (Math.log(realResult[0]) + realArg);
             if (errorFlag[0] != 0) {
                 Preferences.debug("Bessel_I error for realArg = " + realArg + "\n");
                 useMaxLikelihood = false;
