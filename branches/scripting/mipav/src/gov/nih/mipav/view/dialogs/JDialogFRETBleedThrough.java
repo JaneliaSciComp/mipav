@@ -3,10 +3,11 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -20,8 +21,8 @@ import javax.swing.event.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogFRETBleedThrough extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ListSelectionListener {
+public class JDialogFRETBleedThrough extends JDialogScriptableBase
+        implements AlgorithmInterface, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -219,8 +220,6 @@ public class JDialogFRETBleedThrough extends JDialogBase
         String command = event.getActionCommand();
         Object source = event.getSource();
 
-        int i, j;
-
         if (command.equals("Choose")) {
             FRETImage = open();
 
@@ -306,81 +305,37 @@ public class JDialogFRETBleedThrough extends JDialogBase
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFRETBleedThrough) {
-
-
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
             dispose();
         }
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  srcImage is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FRETBleedThrough " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-
-                // check to see if the  srcImage is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(FRETImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(FRETImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(FP2Image.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(FP2Image.getImageName()) +
-                                                       " ");
-
-
-                userInterface.getScriptDialog().append(useRed + " " + useGreen + " " + useBlue + " " + acceptorRun +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeImage(FRETImage, "FRET_image");
+        scriptParameters.storeImage(FP2Image, "FP2_image");
+        
+        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_acceptor_dye_only", acceptorRun));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String FRETImageKey = null;
-        String FP2ImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        srcImage = parser.getImage(srcImageKey);
-
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = srcImage.getUserInterface();
+        parentFrame = srcImage.getParentFrame();
+        
+        FRETImage = scriptParameters.retrieveImage("FRET_image");
+        FP2Image = scriptParameters.retrieveImage("FP2_image");
+        
         if (srcImage.isColorImage()) {
             doColor = true;
             useRed = true;
@@ -392,43 +347,14 @@ public class JDialogFRETBleedThrough extends JDialogBase
             useBlue = false;
             useGreen = false;
         }
-
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-
-        try {
-            FRETImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        FRETImage = parser.getImage(FRETImageKey);
-
-        try {
-            FP2ImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        FP2Image = parser.getImage(FP2ImageKey);
-
-        try {
-
-            boolean red = parser.getNextBoolean();
-            boolean green = parser.getNextBoolean();
-            boolean blue = parser.getNextBoolean();
-            boolean acceptorRun = parser.getNextBoolean();
-            setRed(red);
-            setBlue(blue);
-            setGreen(green);
-            setAcceptorRun(acceptorRun);
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
+        
+        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+        
+        setAcceptorRun(scriptParameters.getParams().getBoolean("is_acceptor_dye_only"));
+        
         if (!checkImage(FRETImage)) {
             return;
         }
@@ -436,8 +362,6 @@ public class JDialogFRETBleedThrough extends JDialogBase
         if (!checkImage(FP2Image)) {
             return;
         }
-
-        callAlgorithm();
     }
 
     /**
@@ -491,15 +415,12 @@ public class JDialogFRETBleedThrough extends JDialogBase
      *
      * @param  evt  Event that caused this method to fire.
      */
-    public void valueChanged(ListSelectionEvent evt) {
-        JList source = (JList) evt.getSource();
-    }
+    public void valueChanged(ListSelectionEvent evt) {  }
 
     /**
      * Once all the necessary variables are set, call AlgorithmFRETBleedThrough.
      */
     protected void callAlgorithm() {
-        int i;
         System.gc();
 
         try {
@@ -629,7 +550,7 @@ public class JDialogFRETBleedThrough extends JDialogBase
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -692,7 +613,7 @@ public class JDialogFRETBleedThrough extends JDialogBase
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -702,7 +623,7 @@ public class JDialogFRETBleedThrough extends JDialogBase
 
         gbc.gridx = 0;
         gbc.gridy = yPos++;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         paramPanel.add(namePanel, gbc);
@@ -808,9 +729,9 @@ public class JDialogFRETBleedThrough extends JDialogBase
 
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = yPos++;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(imagePanel, gbc);
         gbc.gridy = yPos++;
@@ -890,8 +811,6 @@ public class JDialogFRETBleedThrough extends JDialogBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        String tmpStr;
-
         int i;
         int nVOIs;
         float[] hsb;

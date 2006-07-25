@@ -777,7 +777,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         if ( kImage.getNDims() == 3 )
         {
             JDialogFlip flipz =
-                new JDialogFlip( ViewUserInterface.getReference(),
+                new JDialogFlip( m_kOriginalSourceImage.getParentFrame(),
                                  kReturn, AlgorithmFlip.Z_AXIS);
             /* Must not run in separate thread, since we need the results
              * before proceeding to the next step: */
@@ -787,7 +787,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             flipz = null;
         }
         JDialogFlip flipy =
-            new JDialogFlip( ViewUserInterface.getReference(),
+            new JDialogFlip( m_kOriginalSourceImage.getParentFrame(),
                              kReturn, AlgorithmFlip.Y_AXIS);
         /* Must not run in separate thread, since we need the results
          * before proceeding to the next step: */
@@ -796,7 +796,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         flipy.dispose();
         flipy = null;
         JDialogFlip flipx =
-            new JDialogFlip( ViewUserInterface.getReference(),
+            new JDialogFlip( m_kOriginalSourceImage.getParentFrame(),
                              kReturn, AlgorithmFlip.X_AXIS);
         /* Must not run in separate thread, since we need the results
          * before proceeding to the next step: */

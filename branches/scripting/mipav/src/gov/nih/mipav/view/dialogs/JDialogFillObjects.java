@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +19,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogFillObjects extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogFillObjects extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -137,10 +138,6 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  AlgorithmBase reference
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        /** frame that hold the result image */
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -150,7 +147,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -190,7 +187,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -223,8 +220,9 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
             }
         }
 
-        insertScriptLine(algorithm);
-
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
     }
 
     /**
@@ -235,82 +233,38 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
     public ModelImage getResultImage() {
         return ubyteImage;
     }
-
+    
     /**
-     * Records (if scripting) the scripting commands.
-     *
-     * @param  algo  AlgorithmBase the algorithm performed
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FillObjects " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       "\n");
-
-
-            }
-        }
-
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
-
+    
     /**
-     * Runs the algorithm from the script parser.
-     *
-     * @param   parser  AlgorithmScriptParser the parser
-     *
-     * @throws  IllegalArgumentException  DOCUMENT ME!
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) && (image.getType() != ModelImage.USHORT)) {
             MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
             dispose();
 
             return;
         }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
+        
         displayLoc = NEW;
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 
     /**
@@ -547,7 +501,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         // destinationPanel.add(replaceImage, gbc);
@@ -572,7 +526,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         imageVOIPanel.add(wholeImage, gbc);
         gbc.gridy = 1;
         imageVOIPanel.add(VOIRegions, gbc);
@@ -620,9 +574,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
      */
     private boolean setVariables() {
         System.gc();
-
-        String tmpStr;
-
+        
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {

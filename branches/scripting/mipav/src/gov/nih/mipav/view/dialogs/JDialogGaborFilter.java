@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * @version  March 21, 2006
  * @see      AlgorithmFrequencyFilter
  */
-public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogGaborFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -140,20 +142,6 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogGaborFilter(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -188,9 +176,6 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmFrequencyFilter) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
@@ -202,7 +187,7 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
                 try {
 
                     // resultImage.setImageName("Frequency Filtered image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -237,7 +222,9 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
                 resultImage = null;
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         FrequencyFilterAlgo.finalize();
@@ -253,96 +240,50 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("GaborFilter " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + freqU + " " + freqV + " " + sigmaU + " " + sigmaV +
-                                                           " " + theta + " " + createGabor + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + freqU + " " + freqV + " " + sigmaU + " " + sigmaV +
-                                                           " " + theta + " " + createGabor + "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_horiz_freq", freqU));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_vert_freq", freqV));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_horiz_sigma", sigmaU));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_vert_sigma", sigmaV));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_angle", theta));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_gabor_image", createGabor));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try {
-            setFreqU(parser.getNextFloat());
-            setFreqV(parser.getNextFloat());
-            setSigmaU(parser.getNextFloat());
-            setSigmaV(parser.getNextFloat());
-            setTheta(parser.getNextFloat());
-            setCreateGabor(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        setFreqU(scriptParameters.getParams().getFloat("pre_rot_horiz_freq"));
+        setFreqV(scriptParameters.getParams().getFloat("pre_rot_vert_freq"));
+        setSigmaU(scriptParameters.getParams().getFloat("pre_rot_horiz_sigma"));
+        setSigmaV(scriptParameters.getParams().getFloat("pre_rot_vert_sigma"));
+        setTheta(scriptParameters.getParams().getFloat("rotation_angle"));
+        setCreateGabor(scriptParameters.getParams().getBoolean("do_create_gabor_image"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -524,7 +465,7 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
         filterPanel = new JPanel(new GridBagLayout());
@@ -595,7 +536,7 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.weightx = .5;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         filterPanel.add(labelFU, gbc);
         gbc.gridx = 1;
         filterPanel.add(textFU, gbc);
@@ -650,7 +591,7 @@ public class JDialogGaborFilter extends JDialogBase implements AlgorithmInterfac
         mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(filterPanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(destinationPanel, gbc);

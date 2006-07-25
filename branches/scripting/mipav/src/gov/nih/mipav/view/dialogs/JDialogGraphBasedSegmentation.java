@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,8 +24,8 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmGraphBasedSegmentation
  */
-public class JDialogGraphBasedSegmentation extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -41,8 +43,7 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
 
-    /** DOCUMENT ME! */
-    private ModelImage featureImage = null;
+    //private ModelImage featureImage = null;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -81,9 +82,6 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
     private float threshold;
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -110,20 +108,6 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
         setVisible(true);
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogGraphBasedSegmentation(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -133,7 +117,6 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -159,9 +142,6 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmGraphBasedSegmentation) {
             image.clearMask();
 
@@ -173,7 +153,7 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
                 try {
 
                     // resultImage.setImageName("Graph Based Segmentation");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -184,7 +164,7 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
                 image = segAlgo.getImage();
 
                 try {
-                    imageFrame = new ViewJFrameImage(image, null, new Dimension(610, 200));
+                    new ViewJFrameImage(image, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -200,7 +180,9 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         segAlgo.finalize();
         segAlgo = null;
@@ -237,44 +219,46 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "GraphBasedSegmentation " + userInterface.getScriptDialog().getVar(image.getImageName()) +
-                              " ";
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " " +
-                            getParameterString(" ") + "\n";
-                } else {
-                    line += userInterface.getScriptDialog().getVar(image.getImageName()) + " " +
-                            getParameterString(" ") + "\n";
-
-                }
-
-                userInterface.getScriptDialog().append(line);
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("sigma", sigma));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_component_size", minComponentSize));
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        setSigma(scriptParameters.getParams().getFloat("sigma"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setMinComponentSize(scriptParameters.getParams().getInt("min_component_size"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -317,61 +301,7 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
         // System.err.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setSigma(parser.getNextFloat());
-            setThreshold(parser.getNextFloat());
-            setMinComponentSize(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
+    
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
@@ -522,10 +452,9 @@ public class JDialogGraphBasedSegmentation extends JDialogBase
         mainPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

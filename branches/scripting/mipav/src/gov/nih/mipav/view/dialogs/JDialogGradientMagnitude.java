@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -28,8 +30,8 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmGradientMagnitude
  */
-public class JDialogGradientMagnitude extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogGradientMagnitude extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -236,7 +238,9 @@ public class JDialogGradientMagnitude extends JDialogBase
             }
         } // if (algorithm instanceof AlgorithmGradientMagnitudeSep)
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (gradientMagAlgo != null) {
             Preferences.debug("Algorithm took: " + gradientMagAlgo.getElapsedTime());
@@ -288,43 +292,6 @@ public class JDialogGradientMagnitude extends JDialogBase
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if (outputOptionsPanel.isOutputNewImageSet()) {
-                    userInterface.getScriptDialog().append("GradientMagnitude " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                } else {
-                    userInterface.getScriptDialog().append("GradientMagnitude " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                }
-            }
-        }
     }
 
     // *******************************************************************
@@ -379,68 +346,6 @@ public class JDialogGradientMagnitude extends JDialogBase
     public void saveDefaults() {
         String defaultsString = new String(getParameterString(",") + "," + outputOptionsPanel.isOutputNewImageSet());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        // TODO: is there a way to avoid instantiating these panels' GUI elements?
-        sigmaPanel = new JPanelSigmas(image);
-        colorChannelPanel = new JPanelColorChannels(image);
-        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
-
-        outputOptionsPanel.setOutputNewImage(!srcImageKey.equals(destImageKey));
-
-        try {
-            outputOptionsPanel.setProcessWholeImage(parser.getNextBoolean());
-            setSeparable(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            sigmaPanel.setSigmaX(parser.getNextFloat());
-            sigmaPanel.setSigmaY(parser.getNextFloat());
-            sigmaPanel.setSigmaZ(parser.getNextFloat());
-            sigmaPanel.enableResolutionCorrection(parser.getNextBoolean());
-            colorChannelPanel.setRedProcessingRequested(parser.getNextBoolean());
-            colorChannelPanel.setGreenProcessingRequested(parser.getNextBoolean());
-            colorChannelPanel.setBlueProcessingRequested(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -1071,5 +976,48 @@ public class JDialogGradientMagnitude extends JDialogBase
         separable = sepCheckbox.isSelected();
 
         return true;
+    }
+    
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputOptionsPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+        colorChannelPanel = new JPanelColorChannels(image);
+        
+        outputOptionsPanel.setOutputNewImage(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
+        setSeparable(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE));
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmaPanel);
+        scriptParameters.setColorOptionsGUI(colorChannelPanel);
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     * 
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.getParams().put(ParameterFactory.newBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE, separable));
+        scriptParameters.storeSigmas(sigmaPanel);
+        scriptParameters.storeColorOptions(colorChannelPanel);
     }
 }

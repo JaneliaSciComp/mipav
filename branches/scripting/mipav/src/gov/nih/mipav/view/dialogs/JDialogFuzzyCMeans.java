@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +19,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmFuzzyCMeans
  */
-public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogFuzzyCMeans extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -210,20 +212,6 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogFuzzyCMeans(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -305,7 +293,10 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         fcmAlgo.finalize();
         fcmAlgo = null;
         dispose();
@@ -319,111 +310,56 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
     public ModelImage[] getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FuzzyCMeans " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + resultNumber + " ");
-
-                for (int i = 0; i < resultNumber; i++) {
-                    userInterface.getScriptDialog().putVar(resultImage[i].getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage[i].getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(regionFlag + " " + nClasses + " " + q + " " + cropBackground +
-                                                       " " + threshold + " " + endTol + " " + maxIter + " " +
-                                                       segmentation + " ");
-
-                String temp = "";
-
-                for (int i = 0; i < centroids.length; i++) {
-                    temp += centroids[i] + " ";
-                }
-
-                userInterface.getScriptDialog().append(temp + "\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
         }
+        
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_classes", nClasses));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("exponent_q", q));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_background", cropBackground));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        int numImages;
-        String[] results;
-
-        try {
-            numImages = parser.getNextInteger();
-            results = new String[numImages];
-
-            for (int i = 0; i < results.length; i++) {
-                results[i] = parser.getNextString();
-            }
-
-            setRegionFlag(parser.getNextBoolean());
-
-            int length = parser.getNextInteger();
-            float[] centroids = new float[length];
-            setNClasses(length);
-            setQ(parser.getNextFloat());
-            setCrop(parser.getNextBoolean());
-            setThreshold(parser.getNextFloat());
-            setEndTol(parser.getNextFloat());
-            setMaxIter(parser.getNextInteger());
-            setSegmentationType(parser.getNextInteger());
-
-            for (int i = 0; i < length; i++) {
-                centroids[i] = parser.getNextFloat();
-            }
-
-            setCentroids(centroids);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        for (int i = 0; i < results.length; i++) {
-            parser.putVariable(results[i], getResultImage()[i].getImageName());
+        
+        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
+        
+        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
+        setNClasses(scriptParameters.getParams().getInt("number_of_classes"));
+        setQ(scriptParameters.getParams().getFloat("exponent_q"));
+        setCrop(scriptParameters.getParams().getBoolean("do_crop_background"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
+        setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
+        setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
         }
     }
 
@@ -883,58 +819,58 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelNClasses, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textNClasses, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelExpo, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textExpo, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelEndTol, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textEndTol, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelMaxIter, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textMaxIter, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelSignal, gbc);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textSignal, gbc);
         gbc.gridx = 0;
         gbc.gridy = 5;
@@ -965,7 +901,7 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
         imageVOIPanel.add(wholeImage, gbc);
@@ -991,7 +927,7 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         segmentationPanel.add(hardOnly, gbc);
         gbc.gridy = 1;
@@ -1008,9 +944,9 @@ public class JDialogFuzzyCMeans extends JDialogBase implements AlgorithmInterfac
         paramPanel.setBorder(buildTitledBorder("Parameters"));
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         paramPanel.add(upperPanel, gbc);
         gbc.gridy = 1;

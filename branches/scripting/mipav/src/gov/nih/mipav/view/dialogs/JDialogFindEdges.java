@@ -2,9 +2,12 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -17,7 +20,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogFindEdges extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -25,15 +28,6 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
     private static final long serialVersionUID = 8141787725573550699L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
     private int edgingType;
@@ -54,25 +48,10 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
     private JRadioButton innerEdging;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
     private JRadioButton outerEdging;
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag = false;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -82,12 +61,11 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    /**
+     * Contains radio buttons used to indicate whether the whole image/just VOI regions should be processed, and whether a new image should be produced.
+     */
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -173,9 +151,6 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -187,7 +162,7 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
                 try {
 
                     // resultImage.setImageName("Find Edges image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -229,7 +204,7 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
                 try {
 
                     // resultImage.setImageName("Find Edges image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -262,7 +237,9 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (findEdgesAlgo2D != null) {
             findEdgesAlgo2D.finalize();
@@ -285,115 +262,48 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FindEdges " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + edgingType + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + edgingType + "\n");
-
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edging_type", edgingType));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) && (image.getType() != ModelImage.USHORT)) {
             MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
             dispose();
 
             return;
         }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setEdgingType(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        outputPanel.setOutputNewImage(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
+        scriptParameters.setProcessWholeImageGUI(outputPanel);
+        
+        setEdgingType(scriptParameters.getParams().getInt("edging_type"));
     }
-
+    
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
     }
 
     /**
@@ -403,15 +313,6 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
      */
     public void setEdgingType(int n) {
         edgingType = n;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
     }
 
     /**
@@ -426,8 +327,8 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
             int[] destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
-
-            if (displayLoc == NEW) {
+            
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -438,9 +339,9 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
                     // Make algorithm
                     findEdgesAlgo2D = new AlgorithmMorphology2D(resultImage, AlgorithmMorphology2D.CONNECTED4, 0,
                                                                 AlgorithmMorphology2D.FIND_EDGES, 0, 0, 0, edgingType,
-                                                                regionFlag);
+                                                                outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         findEdgesAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -483,9 +384,9 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
                     // Make the algorithm class
                     findEdgesAlgo2D = new AlgorithmMorphology2D(image, AlgorithmMorphology2D.CONNECTED4, 0,
                                                                 AlgorithmMorphology2D.FIND_EDGES, 0, 0, 0, edgingType,
-                                                                regionFlag);
+                                                                outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         findEdgesAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -537,7 +438,7 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -548,9 +449,9 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
                     // Make algorithm
                     findEdgesAlgo3D = new AlgorithmMorphology3D(resultImage, AlgorithmMorphology3D.CONNECTED6, 0,
                                                                 AlgorithmMorphology3D.FIND_EDGES, 0, 0, 0, edgingType,
-                                                                regionFlag);
+                                                                outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         findEdgesAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -592,9 +493,9 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
                     // Make algorithm
                     findEdgesAlgo3D = new AlgorithmMorphology3D(image, AlgorithmMorphology3D.CONNECTED6, 0,
                                                                 AlgorithmMorphology3D.FIND_EDGES, 0, 0, 0, edgingType,
-                                                                regionFlag);
+                                                                outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         findEdgesAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -668,7 +569,7 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.weightx = 1;
         gbc.gridx = 0;
@@ -676,70 +577,24 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
         edgingTypePanel.add(outerEdging, gbc);
         gbc.gridy = 1;
         edgingTypePanel.add(innerEdging, gbc);
-
-        destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Skeletonize"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-
-        // Only if the image is unlocked can it be replaced.
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
         if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
+            outputPanel.setOutputNewImage(true);
         }
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-
+        
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(edgingTypePanel, gbc);
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
-        mainPanel.add(destinationPanel, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
-
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        mainPanel.add(outputPanel, gbc);
+        
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
@@ -759,18 +614,6 @@ public class JDialogFindEdges extends JDialogBase implements AlgorithmInterface,
      */
     private boolean setVariables() {
         System.gc();
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         if (outerEdging.isSelected()) {
             edgingType = AlgorithmMorphology2D.OUTER_EDGING;

@@ -368,7 +368,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /**
      * Accessor that sets whether or not the separable convolution kernel is used.
      *
-     * @param  separable  DOCUMENT ME!
+     * @param  separable  Whether or not the separable convolution kernel is used.
      */
     public void setSeparable(boolean separable) {
         this.separable = separable;
@@ -987,7 +987,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /**
      * Perform any actions required after the running of the algorithm is complete.
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
         if (outputOptionsPanel.isOutputNewImageSet()) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
@@ -996,7 +996,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     /**
      * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
      */
-    public void setGUIFromParams() {
+    protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
@@ -1017,7 +1017,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      * 
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
-    public void storeParamsFromGUI() throws ParserException {
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
 

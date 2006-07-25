@@ -162,11 +162,12 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Sets up the GUI indicating whether the whole image should be processed or just VOI regions, based on the script action's parameters.  This is a helper function used to handle parameters common to many algorithms.
+     * Sets up the algorithm output options panel components (whole image vs. VOI and new image vs. replace), based on the script action's parameters.  This is a helper function used to handle parameters common to many algorithms.
      *
      * @param  outputOptionsPanel  The algorithm output options panel to set the values of.
      */
     public void setProcessWholeImageGUI(JPanelAlgorithmOutputOptions outputOptionsPanel) {
+        outputOptionsPanel.setOutputNewImage(params.getBoolean(DO_OUTPUT_NEW_IMAGE));
         outputOptionsPanel.setProcessWholeImage(params.getBoolean(DO_PROCESS_WHOLE_IMAGE));
     }
 
@@ -220,13 +221,29 @@ public class AlgorithmParameters {
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public String storeInputImage(ModelImage inputImage) throws ParserException {
-        boolean isExternalImage = !isImageStoredInRecorder(inputImage);
-        
-        String var = storeImageInRecorder(inputImage);
-        params.put(ParameterFactory.newImage(getInputImageLabel(currentInputImageLabelNumber), var, isExternalImage));
+        String var = storeImage(inputImage, getInputImageLabel(currentInputImageLabelNumber));
         
         currentInputImageLabelNumber++;
 
+        return var;
+    }
+    
+    /**
+     * Stores an input image in the list of parameters for the algorithm.
+     *
+     * @param   image       The image to store.
+     * @param   paramLabel  The label to give to the new image parameter.
+     *
+     * @return  The image placeholder variable assigned to the image by the variable table.
+     * 
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public String storeImage(ModelImage image, String paramLabel) throws ParserException {
+        boolean isExternalImage = !isImageStoredInRecorder(image);
+        
+        String var = storeImageInRecorder(image);
+        params.put(ParameterFactory.newImage(paramLabel, var, isExternalImage));
+        
         return var;
     }
 
