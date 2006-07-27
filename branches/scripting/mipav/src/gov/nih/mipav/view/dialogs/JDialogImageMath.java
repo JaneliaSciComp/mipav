@@ -44,8 +44,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private ButtonGroup group;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** source image */
+    private ModelImage image;
 
     /** DOCUMENT ME! */
     private JPanel inputPanel;
@@ -71,8 +71,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton radioPromote;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** result image */
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private JTextField textValue;
@@ -103,8 +103,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
     public JDialogImageMath() { }
-
-    // false = apply algorithm only to VOI regions
 
     /**
      * Creates new dialog.

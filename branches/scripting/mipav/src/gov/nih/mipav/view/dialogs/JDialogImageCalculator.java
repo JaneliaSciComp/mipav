@@ -52,8 +52,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private int displayLoc = NEW;
 
-    /** DOCUMENT ME! */
-    private ModelImage imageA; // source image
+    /** source image */
+    private ModelImage imageA;
 
     /** DOCUMENT ME! */
     private ModelImage imageB;
@@ -79,8 +79,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private JRadioButton radioReplace;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** result image */
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private String[] titles;
