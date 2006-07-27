@@ -339,14 +339,13 @@ public class ParameterTable {
             if (varTable.isVariableSet(paramLabel)) {
                 try {
                     String overrideValue = varTable.interpolate(paramLabel);
+                    Preferences.debug("param table:\t Overriding parameter (" + param.convertToString() + ") with value:\t" + overrideValue + "\n", Preferences.DEBUG_SCRIPTING);
                     param = ParameterFactory.newNonListParameter(paramLabel, paramType, overrideValue);
                 } catch (ParserException pe) {
                     throw new ParameterException(paramLabel, "Overriding of parameter value failed: " + pe.getLocalizedMessage());
                 }
             }
         }
-        
-        Preferences.debug("param table:\t Overriding parameter with value:\t" + param.convertToString() + "\n", Preferences.DEBUG_SCRIPTING);
         
         return param;
     }
