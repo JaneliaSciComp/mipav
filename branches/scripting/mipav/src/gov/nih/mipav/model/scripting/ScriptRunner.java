@@ -28,6 +28,9 @@ public class ScriptRunner {
     
     /** The table containing image-placeholder-to-image-name mappings for the script we want to run. */
     protected ImageVariableTable imageTable;
+    
+    /** The table containing VOIs to be used in the script. */
+    protected VOITable voiTable;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -69,10 +72,11 @@ public class ScriptRunner {
      * 
      * @param   file           The path to the script file we want to run.
      * @param   imageNameList  The list of the names of images to use while executing the script.
+     * @param   voiPathList    A list of VOI paths, in the order returned by Parser.getImageVarsUsedInScript(). 
      * 
      * @return  <code>True</code> if execution of the script was successful, <code>false</code> otherwise.
      */
-    public synchronized boolean runScript(String file, Vector imageNameList) {
+    public synchronized boolean runScript(String file, Vector imageNameList, Vector voiPathList) {
         if (isRunning()) {
             MipavUtil.displayError("A script is already being executed.");
             return false;
@@ -87,6 +91,8 @@ public class ScriptRunner {
         
         try {
             fillImageTable(imageNameList);
+            
+            voiTable = new VOITable(scriptFile, voiPathList);
             
             Parser.runScript(scriptFile);
         } catch (ParserException pe) {
@@ -146,6 +152,21 @@ public class ScriptRunner {
         
         MipavUtil.displayError("Scripting error: tried to retrieve the image table while no script is being run.");
         Preferences.debug("script runner:\tRetrieved image table while no script is being run." + "\n", Preferences.DEBUG_SCRIPTING);
+        return null;
+    }
+    
+    /**
+     * Returns a reference to the VOI table being used to run the current script.
+     * 
+     * @return  The VOI table which should be used to run the current script, or <code>null</code> if no script is being run at the moment.
+     */
+    public synchronized VOITable getVOITable() {
+        if (isRunning()) {
+            return voiTable;
+        }
+        
+        MipavUtil.displayError("Scripting error: tried to retrieve the VOI table while no script is being run.");
+        Preferences.debug("script runner:\tRetrieved VOI table while no script is being run." + "\n", Preferences.DEBUG_SCRIPTING);
         return null;
     }
     

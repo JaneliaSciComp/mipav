@@ -12,7 +12,6 @@ import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
 import java.awt.*;
-import java.awt.*;
 import java.awt.image.*;
 
 import java.io.*;
@@ -410,6 +409,10 @@ public class FileImageXML extends FileXML {
                 !(new File(fileDir + File.separator + fileInfo.getFileName())).exists()) {
             imageFileName = fileName.substring(0, fileName.lastIndexOf(".")) + ".raw";
             fileInfo.setFileName(imageFileName);
+        }
+        
+        if (imageFileName == null) {
+            imageFileName = FileUtility.stripExtension(fileName) + ".raw";
         }
 
         // check to see if the file now exists
@@ -2924,8 +2927,10 @@ public class FileImageXML extends FileXML {
 
                 // Note: these don't have to be in this order, should use another method
                 imageFileName = atts.getValue("filename");
-                fileInfo.setFileName(imageFileName);
-                Preferences.debug("FileXML: filename = " + TAB + imageFileName + "\n", Preferences.DEBUG_FILEIO);
+                //if (imageFileName != null) {
+                //    fileInfo.setFileName(imageFileName);
+                //    Preferences.debug("FileXML: filename = " + TAB + imageFileName + "\n", Preferences.DEBUG_FILEIO);
+                //}
 
                 // System.out.println("Image file name: " + imageFileName);
                 nDimensions = Integer.valueOf(atts.getValue("nDimensions")).intValue();

@@ -1955,7 +1955,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
         
         if (scriptFile != null) {
-            ScriptRunner.getReference().runScript(scriptFile, imageNames);
+            ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
         }
     }
 

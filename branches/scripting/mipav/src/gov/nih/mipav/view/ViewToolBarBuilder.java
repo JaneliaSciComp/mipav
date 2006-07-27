@@ -984,12 +984,12 @@ public class ViewToolBarBuilder implements ItemListener {
             String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
             if (imageVars.length == 0) {
-                ScriptRunner.getReference().runScript(scriptFile, new Vector());
+                ScriptRunner.getReference().runScript(scriptFile, new Vector(), new Vector());
             } else if (imageVars.length == 1 && Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0) {
                 Vector imageVector = new Vector();
                 String imageName = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage().getImageName();
                 imageVector.addElement(imageName);
-                ScriptRunner.getReference().runScript(scriptFile, imageVector);
+                ScriptRunner.getReference().runScript(scriptFile, imageVector, new Vector());
             } else {
                 new JDialogRunScriptController(scriptFile);
             }

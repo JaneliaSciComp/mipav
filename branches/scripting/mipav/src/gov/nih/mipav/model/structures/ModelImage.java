@@ -93,10 +93,6 @@ public class ModelImage extends ModelStorageBase {
 
     /** List of VOIs that are displayed with this image. */
     private VOIVector voiVector = null;
-    
-    
-    /** Full path to the imageFile on disk. */
-    private String filePath = "";
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -3412,16 +3408,4 @@ public class ModelImage extends ModelStorageBase {
             resultImage.setFileInfo(fileInfo, i);
         }
     }
-
-    public String getFilePath() {
-        return filePath;
-    }
-
-    public void setFilePath(String filePath) {
-        this.filePath = filePath;
-    }
-
-
-
-
 }

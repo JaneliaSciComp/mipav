@@ -1484,14 +1484,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return  String that indicates location of the file
      */
     public final String getFileDirectory() {
-        if(fileName == null || fileName.length() == 0){
-            return null;
-        }
-        int index = fileName.lastIndexOf(File.separator);
-        if(index >= 0){
-            return fileName.substring(0, index + 1);
-        }
-        return null;
+        return FileUtility.getFileDirectory(fileName);
     }
 
     public final void setFileDirectory(String directory){
