@@ -273,6 +273,13 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
      * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
     protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
         transformDir = scriptParameters.getParams().getInt("transformDir");
         logMagDisplay = scriptParameters.getParams().getBoolean("logMagDisplay");
         unequalDim = scriptParameters.getParams().getBoolean("unequalDim");

@@ -268,7 +268,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
             return;
         }
         
-        scriptParameters.setProcessWholeImageGUI(outputPanel);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
     }
     
     /**

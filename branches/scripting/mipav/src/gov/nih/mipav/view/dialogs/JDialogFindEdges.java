@@ -291,8 +291,7 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
         }
         
         outputPanel = new JPanelAlgorithmOutputOptions(image);
-        outputPanel.setOutputNewImage(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
-        scriptParameters.setProcessWholeImageGUI(outputPanel);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
         
         setEdgingType(scriptParameters.getParams().getInt("edging_type"));
     }

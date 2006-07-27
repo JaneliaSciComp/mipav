@@ -642,7 +642,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
         sigmaPanel = new JPanelSigmas(image);
         colorChannelPanel = new JPanelColorChannels(image);
         
-        outputOptionsPanel.setOutputNewImage(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
+        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
         setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
         scriptParameters.setSigmasGUI(sigmaPanel);
         scriptParameters.setColorOptionsGUI(colorChannelPanel);

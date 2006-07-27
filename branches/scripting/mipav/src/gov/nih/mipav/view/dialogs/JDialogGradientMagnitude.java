@@ -999,7 +999,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         sigmaPanel = new JPanelSigmas(image);
         colorChannelPanel = new JPanelColorChannels(image);
         
-        outputOptionsPanel.setOutputNewImage(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE));
+        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
         setSeparable(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE));
         setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
         scriptParameters.setSigmasGUI(sigmaPanel);

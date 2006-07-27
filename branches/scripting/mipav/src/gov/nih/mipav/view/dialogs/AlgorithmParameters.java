@@ -166,7 +166,7 @@ public class AlgorithmParameters {
      *
      * @param  outputOptionsPanel  The algorithm output options panel to set the values of.
      */
-    public void setProcessWholeImageGUI(JPanelAlgorithmOutputOptions outputOptionsPanel) {
+    public void setOutputOptionsGUI(JPanelAlgorithmOutputOptions outputOptionsPanel) {
         outputOptionsPanel.setOutputNewImage(params.getBoolean(DO_OUTPUT_NEW_IMAGE));
         outputOptionsPanel.setProcessWholeImage(params.getBoolean(DO_PROCESS_WHOLE_IMAGE));
     }
