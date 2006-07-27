@@ -77,6 +77,16 @@ public class JPanelAlgorithmOutputOptions extends JPanel {
         newImageRadio.setSelected(flag);
         replaceImageRadio.setSelected(!flag);
     }
+    
+    /**
+     * Enables/disables the new/replace image output radio buttons.
+     * 
+     * @param  flag  Whether to enable the new/replace image radio buttons.
+     */
+    public void setOutputImageOptionsEnabled(boolean flag) {
+        newImageRadio.setEnabled(flag);
+        replaceImageRadio.setEnabled(flag);
+    }
 
     /**
      * Changes whether a whole image should be processed (as opposed to just VOI regions).
