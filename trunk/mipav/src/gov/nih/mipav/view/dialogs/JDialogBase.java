@@ -429,7 +429,7 @@ public abstract class JDialogBase extends JDialog
      * @param  resultImage  Resultant image.
      * @param  type         Data type to set in file info.
      */
-    public void updateFFTFileInfo(ModelImage image, ModelImage resultImage, int type) {
+    public static final void updateFFTFileInfo(ModelImage image, ModelImage resultImage, int type) {
         FileInfoBase[] fileInfo;
 
         if (resultImage.getNDims() == 2) {
@@ -495,7 +495,7 @@ public abstract class JDialogBase extends JDialog
      * @param  image        Source image.
      * @param  resultImage  Resultant image.
      */
-    public void updateFileInfo(ModelImage image, ModelImage resultImage) {
+    public static final void updateFileInfo(ModelImage image, ModelImage resultImage) {
         FileInfoBase[] fileInfo;
 
         if (resultImage.getNDims() == 2) {
@@ -567,7 +567,7 @@ public abstract class JDialogBase extends JDialog
      * @param  image  Source image.
      * @param  type   Data type to set in file info.
      */
-    public void updateFileTypeInfo(ModelImage image, int type) {
+    public static final void updateFileTypeInfo(ModelImage image, int type) {
         FileInfoBase[] fileInfo;
 
         if (image.getNDims() == 2) {
@@ -603,7 +603,7 @@ public abstract class JDialogBase extends JDialog
      * @param  resultImage  Resultant image.
      * @param  type         Data type to set in file info for the resultImage.
      */
-    public void updateFileTypeInfo(ModelImage image, ModelImage resultImage, int type) {
+    public static final void updateFileTypeInfo(ModelImage image, ModelImage resultImage, int type) {
         FileInfoBase[] fileInfo;
 
         if (resultImage.getNDims() == 2) {

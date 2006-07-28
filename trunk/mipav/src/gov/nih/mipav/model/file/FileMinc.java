@@ -726,92 +726,161 @@ public class FileMinc extends FileBase {
                                    _image.getImageFileName());
 
             image.copyFileTypeInfo(_image);
+            
+            FileInfoBase fileInfo = _image.getFileInfo(0);
+            int nImages = options.getEndSlice() - options.getBeginSlice() + 1;
+            int sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
+            
+            double[] mins = new double[nImages];
+            double[] maxs = new double[nImages];
+            double[] intercepts = new double[nImages];
+            double[] slopes = new double[nImages];
+
+            double vmin, vmax; // volume min and max
+            
+            if (fileInfo.getFileFormat() == FileBase.MINC) {
+                // Valid_range see line  823 in FileInfoMinc!!!!!!!.
+                vmin = ((FileInfoMinc) (fileInfo)).vmin;
+                vmax = ((FileInfoMinc) (fileInfo)).vmax;
+            } else {
+                vmin = _image.getMin();
+                vmax = _image.getMax();
+            }
+            
+            double slopeDivisor = vmax - vmin;
+            if (slopeDivisor == 0) {
+                slopeDivisor = 1;
+            }
+            
+            int jp;
+            float[] sliceData = new float[sliceSize];
+            double smin, smax; // slice min and max
+            for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
+                jp = j - options.getBeginSlice();
+                _image.exportData(j * sliceSize, sliceSize, sliceData);
+                smin = Double.MAX_VALUE;
+                smax = -Double.MAX_VALUE;
+
+                // calculate min max values per slice
+                for (int k = 0; k < sliceData.length; k++) {
+
+                    if (sliceData[k] < smin) {
+                        smin = sliceData[k];
+                    }
+
+                    if (sliceData[k] > smax) {
+                        smax = sliceData[k];
+                    }
+                }
+
+                mins[jp] = smin;
+                maxs[jp] = smax;
+
+                slopes[jp] = (smax - smin) / slopeDivisor;
+                intercepts[jp] = smin - (slopes[jp] * vmin);
+            }
 
             if (!options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileBase.MINC)) {
-                FileInfoMinc fileInfo;
-                fileInfo = (FileInfoMinc) _image.getFileInfo(0);
+                FileInfoMinc fileInfoMinc = (FileInfoMinc) _image.getFileInfo(0);
 
-                int length;
-                writeHeader(fileInfo);
+                writeHeader(fileInfoMinc);
                 progressBar.updateValue(15, options.isRunningInSeparateThread());
 
                 // for each variable, get its corresponding data - possibly after image
-                for (int i = 0; i < fileInfo.getVarArray().length; i++) {
+                for (int i = 0; i < fileInfoMinc.getVarArray().length; i++) {
 
                     // at image tag, construct image
-                    if (fileInfo.getVarElem(i).name.equals("image")) {
+                    if (fileInfoMinc.getVarElem(i).name.equals("image")) {
                         FileRawChunk rawChunkFile;
-                        rawChunkFile = new FileRawChunk(raFile, fileInfo);
+                        rawChunkFile = new FileRawChunk(raFile, fileInfoMinc);
                         progressBar.setMessage("Saving image(s) ...");
-                        length = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
-
-                        float[] data = new float[length];
+                        sliceSize = fileInfoMinc.getExtents()[0] * fileInfoMinc.getExtents()[1];
 
                         if (image.getNDims() == 3) {
 
                             for (int j = 0; j < image.getExtents()[2]; j++) {
-                                _image.exportData(j * length, length, data);
+                                _image.exportData(j * sliceSize, sliceSize, sliceData);
                                 progressBar.updateValue(15 +
-                                                        Math.round((float) j / (fileInfo.getExtents()[2] - 1) * 35),
+                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 35),
                                                         options.isRunningInSeparateThread());
 
-
-                                // Why don't we recalc min and max per image slice.
-                                // What happens if the image changes ?
-                                double slope = _image.getFileInfo(j).getRescaleSlope();
-                                double intercept = _image.getFileInfo(j).getRescaleIntercept();
-
-                                for (int k = 0; k < length; k++) {
-                                    data[k] = (float) ((data[k] - intercept) / slope);
+                                for (int k = 0; k < sliceSize; k++) {
+                                    sliceData[k] = (float) ((sliceData[k] - intercepts[j]) / slopes[j]);
                                 }
 
-                                image.importData(j * length, data, false);
+                                image.importData(j * sliceSize, sliceData, false);
                             }
 
                             for (int j = 0; j < image.getExtents()[2]; j++) {
-                                rawChunkFile.writeImage(image, j * length, (j + 1) * length, j);
+                                rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize, j);
                                 progressBar.updateValue(50 +
-                                                        Math.round((float) j / (fileInfo.getExtents()[2] - 1) * 50),
+                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 50),
                                                         options.isRunningInSeparateThread());
                             }
 
                             progressBar.updateValue(100, options.isRunningInSeparateThread());
                             progressBar.dispose();
                         } else {
-                            rawChunkFile.writeImage(image, 0, image.getExtents()[0] * image.getExtents()[1], 0);
+                            // TODO: is this correct?  don't 2D/4D images need to be rescaled too?
+                            rawChunkFile.writeImage(image, 0, sliceSize, 0);
                         }
 
                         progressBar.updateValue(100, options.isRunningInSeparateThread());
                         progressBar.dispose();
-                        location = fileInfo.getVarElem(i).vsize;
+                        location = fileInfoMinc.getVarElem(i).vsize;
                         writePadding();
-                    } else {
+                    } else if (fileInfoMinc.getVarElem(i).name.equals("image-min")) {
+                        location = fileInfoMinc.getVarElem(i).begin;
+                        raFile.seek(fileInfoMinc.getVarElem(i).begin);
 
-                        // at all other tags both before & after image
-                        location = fileInfo.getVarElem(i).begin;
-                        raFile.seek(fileInfo.getVarElem(i).begin);
-
-                        for (int j = 0; j < fileInfo.getVarElem(i).values.size(); j++) {
-                            writeNextElem(fileInfo.getVarElem(i).values.elementAt(j), fileInfo.getVarElem(i).nc_type,
-                                          fileInfo.getEndianess());
+                        for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
+                            System.out.println("min type " + fileInfoMinc.getVarElem(i).nc_type);
+                            writeNextElem(new Double(mins[j]), fileInfoMinc.getVarElem(i).nc_type,
+                                          fileInfoMinc.getEndianess());
                         }
 
                         writePadding();
 
-                        while (location < (fileInfo.getVarElem(i).begin + fileInfo.getVarElem(i).vsize)) {
+                        while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
+                            location++;
+                            raFile.write((byte) 0);
+                        }
+                    } else if (fileInfoMinc.getVarElem(i).name.equals("image-max")) {
+                        location = fileInfoMinc.getVarElem(i).begin;
+                        raFile.seek(fileInfoMinc.getVarElem(i).begin);
+
+                        for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
+                            System.out.println("min type " + fileInfoMinc.getVarElem(i).nc_type);
+                            writeNextElem(new Double(maxs[j]), fileInfoMinc.getVarElem(i).nc_type,
+                                          fileInfoMinc.getEndianess());
+                        }
+
+                        writePadding();
+
+                        while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
+                            location++;
+                            raFile.write((byte) 0);
+                        }
+                    } else {
+                        // at all other tags both before & after image
+                        location = fileInfoMinc.getVarElem(i).begin;
+                        raFile.seek(fileInfoMinc.getVarElem(i).begin);
+
+                        for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
+                            writeNextElem(fileInfoMinc.getVarElem(i).values.elementAt(j), fileInfoMinc.getVarElem(i).nc_type,
+                                          fileInfoMinc.getEndianess());
+                        }
+
+                        writePadding();
+
+                        while (location < (fileInfoMinc.getVarElem(i).begin + fileInfoMinc.getVarElem(i).vsize)) {
                             location++;
                             raFile.write((byte) 0);
                         }
                     }
                 }
             } else {
-                int nImages = options.getEndSlice() - options.getBeginSlice() + 1;
-                FileInfoBase fileInfo = _image.getFileInfo(0);
                 int[] extents = fileInfo.getExtents();
-
-                // int[] newexts;
-                double[] mins = null;
-                double[] maxs = null;
 
                 writeHeader(fileInfo, options);
 
@@ -829,69 +898,22 @@ public class FileMinc extends FileBase {
                 FileRawChunk rawChunkFile;
                 rawChunkFile = new FileRawChunk(raFile, fileInfo);
 
-                int bufferSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
-
                 progressBar.setMessage("Rescaling data");
                 progressBar.updateValue(10, options.isRunningInSeparateThread());
 
-                float[] data = new float[bufferSize];
-                mins = new double[nImages];
-                maxs = new double[nImages];
-
-                double vmin, vmax; // volume min and max
-                double intercept, slope;
-                double smin, smax; // slice min and max
-
-                if (fileInfo.getFileFormat() == FileBase.MINC) {
-
-                    // Valid_range see line  823 in FileInfoMinc!!!!!!!.
-                    vmin = ((FileInfoMinc) (fileInfo)).vmin;
-                    vmax = ((FileInfoMinc) (fileInfo)).vmax;
-                } else {
-                    vmin = _image.getMin();
-                    vmax = _image.getMax();
-                }
-
                 int count = 1;
-                int jp;
 
                 for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
                     jp = j - options.getBeginSlice();
                     progressBar.updateValue(10 + Math.round((float) count / (nImages - 1) * 40),
                                             options.isRunningInSeparateThread());
-                    _image.exportData(j * bufferSize, bufferSize, data);
-                    smin = Double.MAX_VALUE;
-                    smax = -Double.MAX_VALUE;
+                    _image.exportData(j * sliceSize, sliceSize, sliceData);
 
-                    // calculate min max values per slice
-                    for (int k = 0; k < data.length; k++) {
-
-                        if (data[k] < smin) {
-                            smin = data[k];
-                        }
-
-                        if (data[k] > smax) {
-                            smax = data[k];
-                        }
+                    for (int k = 0; k < sliceData.length; k++) {
+                        sliceData[k] = (float) ((sliceData[k] - intercepts[jp]) / slopes[jp]);
                     }
 
-                    mins[jp] = smin;
-                    maxs[jp] = smax;
-
-                    double divisor = vmax - vmin;
-
-                    if (divisor == 0) {
-                        divisor = 1;
-                    }
-
-                    slope = (smax - smin) / divisor;
-                    intercept = smin - (slope * vmin);
-
-                    for (int k = 0; k < data.length; k++) {
-                        data[k] = (float) ((data[k] - intercept) / slope);
-                    }
-
-                    image.importData(jp * bufferSize, data, false);
+                    image.importData(jp * sliceSize, sliceData, false);
                     count++;
                 }
 
@@ -903,7 +925,7 @@ public class FileMinc extends FileBase {
                     jp = j - options.getBeginSlice();
 
                     // System.out.println(" j = " + j);
-                    rawChunkFile.writeImage(image, jp * bufferSize, (jp + 1) * bufferSize, jp);
+                    rawChunkFile.writeImage(image, jp * sliceSize, (jp + 1) * sliceSize, jp);
                     progressBar.updateValue(50 + Math.round((float) count / (nImages - 1) * 50),
                                             options.isRunningInSeparateThread());
                     count++;
@@ -1836,7 +1858,7 @@ public class FileMinc extends FileBase {
                 break;
 
             default:
-                throw new IOException("Undefined type in FileMinc.writeHeader");
+                throw new IOException(ModelStorageBase.getBufferTypeStr(fileInfo.getDataType()) + " image data is not supported by the MINC file type.");
         }
 
         if (fileInfo.getExtents().length == 3) {
