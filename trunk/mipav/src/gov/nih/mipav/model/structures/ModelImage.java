@@ -657,8 +657,6 @@ public class ModelImage extends ModelStorageBase {
      * @return  image image of boolean type with VOI objects = 1 and background = 0
      */
     public ModelImage generateBinaryImage(boolean XOR, boolean onlyActive) {
-
-        int i;
         ModelImage maskImage = null;
 
         if (voiVector.size() == 0) {
@@ -666,15 +664,16 @@ public class ModelImage extends ModelStorageBase {
         }
 
         try {
-            maskImage = new ModelImage(ModelImage.BOOLEAN, this.getExtents(), "Binary Image", UI);
-            updateMostFileTypeInfo(this, maskImage);
+            maskImage = new ModelImage(ModelImage.BOOLEAN, this.getExtents(), "Binary Image");
+            
+            JDialogBase.updateFileInfo(this, maskImage);
+            
             fixFileTypeInfo(maskImage);
-
         } catch (OutOfMemoryError error) {
             throw error;
         }
 
-        for (i = 0; i < voiVector.size(); i++) {
+        for (int i = 0; i < voiVector.size(); i++) {
             ((VOI) voiVector.elementAt(i)).createBinaryImage(maskImage, XOR, onlyActive);
         }
 
@@ -705,8 +704,6 @@ public class ModelImage extends ModelStorageBase {
      * @return  ModelImage mask image of type short
      */
     public ModelImage generateShortImage(int offset, boolean XOR, boolean onlyActive) {
-
-        int i;
         ModelImage maskImage = null;
 
         if (voiVector.size() == 0) {
@@ -715,13 +712,15 @@ public class ModelImage extends ModelStorageBase {
 
         try {
             maskImage = new ModelImage(ModelImage.SHORT, this.getExtents(), "Short Image", UI);
-            updateMostFileTypeInfo(this, maskImage);
+            
+            JDialogBase.updateFileInfo(this, maskImage);
+            
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
             throw error;
         }
 
-        for (i = 0; i < voiVector.size(); i++) {
+        for (int i = 0; i < voiVector.size(); i++) {
             maskImage.clearMask();
             ((VOI) voiVector.elementAt(i)).createShortImage(maskImage, offset, XOR, onlyActive);
         }
@@ -754,7 +753,6 @@ public class ModelImage extends ModelStorageBase {
      * @return  ModelImage mask image of type unsigned byte
      */
     public ModelImage generateUnsignedByteImage(int offset, boolean XOR, boolean onlyActive) {
-        int i;
         ModelImage maskImage = null;
 
         if (voiVector.size() == 0) {
@@ -763,13 +761,15 @@ public class ModelImage extends ModelStorageBase {
 
         try {
             maskImage = new ModelImage(ModelImage.UBYTE, this.getExtents(), "UBYTE Image", UI);
-            updateMostFileTypeInfo(this, maskImage);
+            
+            JDialogBase.updateFileInfo(this, maskImage);
+            
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
             throw error;
         }
 
-        for (i = 0; i < voiVector.size(); i++) {
+        for (int i = 0; i < voiVector.size(); i++) {
             maskImage.clearMask();
             ((VOI) voiVector.elementAt(i)).createUByteImage(maskImage, offset, XOR, onlyActive);
         }
