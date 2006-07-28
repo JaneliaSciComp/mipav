@@ -87,9 +87,8 @@ public class FileImageXML extends FileXML {
     /** Model Image associated with the file. */
     private ModelImage image;
 
-    /** Name of the RAW file associated with the XML header. */
+    /** Name of the RAW (or IMG) file associated with the XML header. */
     private String imageFileName = null;
-
 
     /** Name of the file linked to this file (separate from fileName). */
     private String linkedFilename;
@@ -401,19 +400,23 @@ public class FileImageXML extends FileXML {
         if (resolutions == null) {
             throw (new IOException("Error parsing XML Header: check debug window."));
         }
-
-
-        // if the filename was not set, or the file's link does not exist, try setting it
-        // to [FILENAME].raw
-        if ((fileInfo.getFileName() == null) || !(new File(fileDir + File.separator + fileInfo.getFileName())).exists()) {
-            imageFileName = FileUtility.stripExtension(fileName) + ".raw";
-            fileInfo.setFileName(imageFileName);
-        }
         
-        if (imageFileName == null) {
+        // this will happen if the filename attribute in the xml header is not set
+        if (imageFileName == null || !(new File(fileDir + File.separator + imageFileName).exists())) {
+            Preferences.debug("Problem with the XML image data file name: " + fileDir + File.separator + imageFileName, Preferences.DEBUG_FILEIO);
+            
             imageFileName = FileUtility.stripExtension(fileName) + ".raw";
+            fileInfo.setImageDataFileName(imageFileName);
         }
 
+        // TODO: I don't know that this should ever happen... -- evan
+        if (fileInfo.getFileName() == null || !(new File(fileDir + File.separator + fileInfo.getFileName()).exists())) {
+            Preferences.debug("Problem with the file name stored in the XML file info: " + fileDir + File.separator + fileInfo.getFileName(), Preferences.DEBUG_FILEIO);
+            
+            fileInfo.setFileName(fileName);
+        }
+
+        // TODO: I don't know that this should ever happen... -- evan
         // check to see if the file now exists
         if (!new File(fileDir + File.separator + imageFileName).exists()) {
             MipavUtil.displayWarning("Raw file not found: " + imageFileName + ".  Aborting XML readImage()!");
@@ -748,7 +751,13 @@ public class FileImageXML extends FileXML {
         bw.write(MIPAV_HEADER);
         bw.newLine();
 
-        openTag(bw, "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" nDimensions=\"" + nDims + "\"", true);
+        if (fileName.equals(headerName + ".raw")) {
+            // the xml image reader assumes that if filename is not specified, it is the same as the header file with the .raw extension
+            openTag(bw, "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" nDimensions=\"" + nDims + "\"", true);
+        } else {
+            // we want to connect the header to a non-default file (e.g., an xml pointing to an analyze .img file)
+            openTag(bw, "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" filename=\"" + fileName + "\" nDimensions=\"" + nDims + "\"", true);
+        }
 
         openTag(bw, imageStr[0], true);
 
@@ -2925,12 +2934,10 @@ public class FileImageXML extends FileXML {
             if (currentKey.equals("image")) {
 
                 // Note: these don't have to be in this order, should use another method
+                
                 imageFileName = atts.getValue("filename");
-                //if (imageFileName != null) {
-                //    fileInfo.setFileName(imageFileName);
-                //    Preferences.debug("FileXML: filename = " + TAB + imageFileName + "\n", Preferences.DEBUG_FILEIO);
-                //}
-
+                fileInfo.setImageDataFileName(imageFileName);
+                
                 // System.out.println("Image file name: " + imageFileName);
                 nDimensions = Integer.valueOf(atts.getValue("nDimensions")).intValue();
                 Preferences.debug("FileXML: nDimensions = " + TAB + nDimensions + "\n", Preferences.DEBUG_FILEIO);
