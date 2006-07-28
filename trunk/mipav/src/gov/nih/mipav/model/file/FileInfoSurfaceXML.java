@@ -34,10 +34,19 @@ public class FileInfoSurfaceXML extends FileInfoXML {
     private Material m_kMaterial = null;
 
     /** Surface triangle mesh:. */
-    private ModelTriangleMesh m_kMesh = null;
+    private ModelTriangleMesh[] m_kMesh = null;
 
     /** Type keyword for the surface:. */
     private String m_kType = null;
+
+    /** surface opacity:. */
+    private float m_kOpacity;
+
+    /** surface level of detail:. */
+    private int m_kLevelDetail;
+
+    /** mesh index. */
+    private int meshIndex = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -95,11 +104,29 @@ public class FileInfoSurfaceXML extends FileInfoXML {
     }
 
     /**
+     * Returns the surface opacity value.
+     *
+     * @return  surface opacity.
+     */
+    public float getOpacity() {
+      return m_kOpacity;
+    }
+
+    /**
+     * Returns the surface level of detail.
+     *
+     * @return  surface level of detail.
+     */
+    public int getLevelDetail() {
+      return m_kLevelDetail;
+    }
+
+    /**
      * Returns the ModelTriangleMesh representing the surface:
      *
      * @return  DOCUMENT ME!
      */
-    public ModelTriangleMesh getMesh() {
+    public ModelTriangleMesh[] getMesh() {
         return m_kMesh;
     }
 
@@ -162,7 +189,7 @@ public class FileInfoSurfaceXML extends FileInfoXML {
      *
      * @param  kMesh  DOCUMENT ME!
      */
-    public void setMesh(ModelTriangleMesh kMesh) {
+    public void setMesh(ModelTriangleMesh[] kMesh) {
         m_kMesh = kMesh;
     }
 
@@ -175,10 +202,23 @@ public class FileInfoSurfaceXML extends FileInfoXML {
      */
     public void setMesh(Point3f[] kVertices, Vector3f[] kNormals, int[] aiConnectivity) {
 
+       int i;
+       if ( m_kMesh == null ) {
+         m_kMesh = new ModelTriangleMesh[1];
+       } else {
+         ModelTriangleMesh[] mesh = new ModelTriangleMesh[m_kMesh.length];
+         for (i = 0; i < m_kMesh.length; i++) {
+           mesh[i] = m_kMesh[i];
+         }
+         m_kMesh = new ModelTriangleMesh[meshIndex + 1];
+         for (i = 0; i < meshIndex; i++) {
+           m_kMesh[i] = mesh[i];
+         }
+       }
         if (kNormals != null) {
-            m_kMesh = new ModelTriangleMesh(kVertices, kNormals, aiConnectivity);
+            m_kMesh[meshIndex++] = new ModelTriangleMesh(kVertices, kNormals, aiConnectivity);
         } else {
-            m_kMesh = new ModelTriangleMesh(kVertices, aiConnectivity);
+            m_kMesh[meshIndex++] = new ModelTriangleMesh(kVertices, aiConnectivity);
         }
     }
 
@@ -189,6 +229,24 @@ public class FileInfoSurfaceXML extends FileInfoXML {
      */
     public void setShininess(float fShininess) {
         m_kMaterial.setShininess(fShininess);
+    }
+
+    /**
+     * set the surface opacity keyword:
+     *
+     * @param  opacity  surface opacity
+     */
+    public void setOpacity(float opacity) {
+      m_kOpacity = opacity;
+    }
+
+    /**
+     * set the surface level of detail keyword:
+     *
+     * @param  level of detail
+     */
+    public void setLevelDetail(int levelDetail) {
+      m_kLevelDetail = levelDetail;
     }
 
     /**
@@ -225,6 +283,8 @@ public class FileInfoSurfaceXML extends FileInfoXML {
         ((FileInfoSurfaceXML) fInfo).setID(this.getID());
         ((FileInfoSurfaceXML) fInfo).setMaterial(this.getMaterial());
         ((FileInfoSurfaceXML) fInfo).setType(this.getType());
+        ((FileInfoSurfaceXML) fInfo).setOpacity(this.getOpacity());
+        ((FileInfoSurfaceXML) fInfo).setLevelDetail(this.getLevelDetail());
         ((FileInfoSurfaceXML) fInfo).setMesh(this.getMesh());
     }
 }
