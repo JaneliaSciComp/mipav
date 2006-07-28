@@ -863,6 +863,10 @@ public class FileIO {
             } // else read
         } else if (suffix.equalsIgnoreCase(".nii")) {
             fileType = FileBase.NIFTI;
+        } else if (suffix.equalsIgnoreCase(".nhdr")) {
+            fileType = FileBase.NRRD;
+        } else if (suffix.equalsIgnoreCase(".nrrd")) {
+            fileType = FileBase.NRRD;
         } else if (suffix.equalsIgnoreCase(".ima")) {
             fileType = FileBase.DICOM;
 
@@ -1049,7 +1053,12 @@ public class FileIO {
                 // uses .nii for 1 file storage
                 suffix = ".img";
                 break;
-
+            case FileBase.NRRD:
+                // uses .nhdr for header and any nhdr designated extension for data
+                // in 2 file storage
+                // uses .nrrd for 1 file storage
+                suffix = ".nrrd";
+                break;
             case FileBase.SPM:
                 suffix = ".spm";
                 break;
@@ -2407,6 +2416,10 @@ public class FileIO {
 
                 case FileBase.NIFTI:
                     image = readNIFTI(fileName, fileDir, one);
+                    break;
+                    
+                case FileBase.NRRD:
+                    image = readNRRD(fileName, fileDir, one);
                     break;
 
                 case FileBase.SPM:
@@ -6423,6 +6436,62 @@ public class FileIO {
 
         return image;
 
+    }
+    
+    /**
+     * Reads a NRRD file by calling the read method of the file. if so, calls that method instead.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+     *                    from 3D dataset.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readNRRD(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        boolean showProgressBar = (!quiet) ? true : false;
+        FileNRRD imageFile;
+
+        if (!UI.isAppFrameVisible()) {
+            showProgressBar = false;
+        }
+
+        try {
+            imageFile = new FileNRRD(UI, fileName, fileDir, showProgressBar);
+            image = imageFile.readImage(one);
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        return image;
     }
 
     /**
