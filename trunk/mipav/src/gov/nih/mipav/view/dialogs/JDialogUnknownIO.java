@@ -33,7 +33,8 @@ public class JDialogUnknownIO extends JDialogBase {
 
                                             // "Medvision (.bin)",
                                             "Micro Cat (.log)", "Micro Cat raw (.ct)", "Minc (.mnc)", "MRC (.mrc)",
-                                            "NIFTI(.img)", "NIFTI (.nii)", "OSM (.wu)", "PCX (.pcx)", "PICT (.pict)",
+                                            "NIFTI(.img)", "NIFTI (.nii)", "NRRD (.nhdr)", "NRRD(.nrrd)",
+                                            "OSM (.wu)", "PCX (.pcx)", "PICT (.pict)",
                                             "PNG (.png)", "PSD (.psd)", "Quicktime (.qt, .mov)", "Raw (.raw)",
                                             "SPM (.spm)", "STK (.stk)", "TGA (.tga)", "TIFF (.tif)", "TIFF (.tiff)",
                                             "VOI (.voi)", "XBM (.xbm)", "XML (.xml)", "XPM (.xpm)"
@@ -46,7 +47,8 @@ public class JDialogUnknownIO extends JDialogBase {
                                                ".map",
 
                                                // ".bin",
-                                               ".log", ".ct", ".mnc", ".mrc", ".img", ".nii", ".wu", ".pcx", ".pict",
+                                               ".log", ".ct", ".mnc", ".mrc", ".img", ".nii",
+                                               ".nhdr", ".nrrd", ".wu", ".pcx", ".pict",
                                                ".png", ".psd", ".qt", ".raw", ".spm", ".stk", ".tga", ".tif", ".tiff",
                                                ".voi", ".xbm", ".xml", ".xpm"
                                            };
@@ -60,7 +62,8 @@ public class JDialogUnknownIO extends JDialogBase {
                                         // FileBase.DICOM,
                                         FileBase.ICS, FileBase.INTERFILE, FileBase.JIMI, FileBase.LSM,
                                         FileBase.MAGNETOM_VISION, FileBase.MAP, FileBase.MICRO_CAT, FileBase.MICRO_CAT,
-                                        FileBase.MINC, FileBase.MRC, FileBase.NIFTI, FileBase.NIFTI, FileBase.OSM,
+                                        FileBase.MINC, FileBase.MRC, FileBase.NIFTI, FileBase.NIFTI, 
+                                        FileBase.NRRD, FileBase.NRRD, FileBase.OSM,
                                         FileBase.JIMI, FileBase.JIMI, FileBase.JIMI, FileBase.JIMI, FileBase.QT,
                                         FileBase.RAW, FileBase.SPM, FileBase.STK, FileBase.JIMI, FileBase.TIFF,
                                         FileBase.TIFF, FileBase.VOI_FILE, FileBase.JIMI, FileBase.XML, FileBase.JIMI
