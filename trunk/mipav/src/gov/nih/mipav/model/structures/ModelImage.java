@@ -3373,42 +3373,4 @@ public class ModelImage extends ModelStorageBase {
         // The clone method will register the image after the name has been set.
         imageName = name;
     }
-
-
-    /**
-     * Deep copy of important file information to resultant image structure.
-     *
-     * @param  image        source image
-     * @param  resultImage  resultant image
-     */
-    private void updateFileTypeInfo(ModelImage image, ModelImage resultImage) {
-        FileInfoBase fileInfo;
-
-        for (int i = 0; i < image.getFileInfo().length; i++) {
-            fileInfo = (FileInfoBase) (image.getFileInfo(i).cloneItself());
-            resultImage.setFileInfo(fileInfo, i);
-        }
-
-        return;
-    }
-    
-    /**
-     * Deep copy of important file information to resultant image structure.
-     * resultImage keeps original data type
-     *
-     * @param  image        source image
-     * @param  resultImage  resultant image
-     */
-    private void updateMostFileTypeInfo(ModelImage image, ModelImage resultImage) {
-        FileInfoBase fileInfo;
-        int dataType = resultImage.getFileInfo()[0].getDataType();
-        for (int i = 0; i < image.getFileInfo().length; i++) {
-            fileInfo = (FileInfoBase) (image.getFileInfo(i).cloneItself());
-            fileInfo.setDataType(dataType);
-            resultImage.setFileInfo(fileInfo, i);
-        }
-
-        return;
-    }
-
 }

@@ -869,7 +869,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
                                         menuBuilder.buildMenuItem("Image math", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Invert", null, 0, null, false),
-                                        menuBuilder.buildMenuItem("Mask", null, 0, null, false),
+                                        menuBuilder.buildMenuItem("Fill image", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
                                         menuBuilder.buildMenuItem("Noise", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
@@ -1131,7 +1131,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
-            menuBuilder.setMenuItemEnabled("Mask", false);
+            menuBuilder.setMenuItemEnabled("Fill image", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
             menuBuilder.setMenuItemEnabled("Noise", false);
