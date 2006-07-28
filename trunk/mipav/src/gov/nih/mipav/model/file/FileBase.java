@@ -151,6 +151,9 @@ public abstract class FileBase{
 
     /** Gatan's Digital Micrograph version 3 file format. */
     public static final int DM3 = 41;
+    
+    /** Nearly raw raster data */
+    public static final int NRRD = 42;
 
     /** Arrary of strings describing the file formats. */
     private static String[] fileFormatStr = {
@@ -158,7 +161,7 @@ public abstract class FileBase{
         "MINC", "Avi", "Analyze multifile", "QT", "Chesire", "Chesire Overlay", "Afni", "FITS", "STK",
         "Magnetom Vision", "GE Genesis", "MRC", "Interfile", "Raw multifile", "Micro CAT", "LSM", "Bio-Rad", "COR",
         "BRUKER", "XML", "XML multifile", "SPM", "Project", "NIFTI", "NIFTI multifile", "ICS", "LSM multifile", "TMG",
-        "OSM", "Surface XML", "DM3"
+        "OSM", "Surface XML", "DM3", "NRRD"
     };
 
     /** Byte order. Rightmost byte is most significant. */
