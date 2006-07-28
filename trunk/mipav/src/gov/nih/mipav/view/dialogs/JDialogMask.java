@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -34,7 +35,10 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    double min, max;
+    double min;
+    
+    /** DOCUMENT ME! */
+    double max;
 
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
@@ -178,19 +182,23 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMask) {
             image.clearMask();
 
             if ((maskAlgo.isCompleted() == true) && (resultImage != null)) {
-                updateFileInfo(image, resultImage);
+                // copy over the file info from the original image, was just copying the data over before.
+                // now the new image is "of the same image type" as the original
+                FileInfoBase fileInfo;
+                for (int i = 0; i < image.getFileInfo().length; i++) {
+                    fileInfo = (FileInfoBase) (image.getFileInfo(i).cloneItself());
+                    resultImage.setFileInfo(fileInfo, i);
+                }
+                
                 resultImage.clearMask();
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -508,7 +516,7 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Mask image");
+        setTitle("Fill image");
 
         JLabel labelValue;
         JLabel labelValueG = null;
@@ -580,15 +588,15 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
         gbc.gridy = yPos++;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 5, 0, 5);
         maskPanel.add(textValue, gbc);
         gbc.gridx = 1;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelValue, gbc);
 
         if (image.isColorImage()) {
@@ -596,23 +604,23 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
             gbc.gridx = 0;
             gbc.gridwidth = 1;
             gbc.weightx = 1;
-            gbc.fill = gbc.HORIZONTAL;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
             maskPanel.add(textValueG, gbc);
             gbc.gridx = 1;
-            gbc.gridwidth = gbc.REMAINDER;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
             gbc.weightx = 0;
-            gbc.fill = gbc.NONE;
+            gbc.fill = GridBagConstraints.NONE;
             maskPanel.add(labelValueG, gbc);
             gbc.gridy = yPos++;
             gbc.gridx = 0;
             gbc.gridwidth = 1;
             gbc.weightx = 1;
-            gbc.fill = gbc.HORIZONTAL;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
             maskPanel.add(textValueB, gbc);
             gbc.gridx = 1;
-            gbc.gridwidth = gbc.REMAINDER;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
             gbc.weightx = 0;
-            gbc.fill = gbc.NONE;
+            gbc.fill = GridBagConstraints.NONE;
             maskPanel.add(labelValueB, gbc);
         }
 
@@ -628,9 +636,9 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
