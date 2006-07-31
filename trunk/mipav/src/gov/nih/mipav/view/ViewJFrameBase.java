@@ -262,11 +262,12 @@ public abstract class ViewJFrameBase extends JFrame
         boolean geSigna = false;
         boolean dicom = false;
 
-        // DICOM images are special--handle seperately
+        // DICOM images are special--handle separately
         boolean analyze = false; // currently displaying analyze differentl;y.  update soon
 
         // does NOT NOT NOT NOT NOT  handle ANALYZE_MULTIFILE files.
         boolean nifti = false;
+        boolean nrrd = false;
         boolean spm = false;
         boolean xml = false; // special handling for XML files
         boolean minc = false;
@@ -285,6 +286,8 @@ public abstract class ViewJFrameBase extends JFrame
                 analyze = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_A)) {
                 nifti = true;
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.NRRD) && (displayMode == IMAGE_A)) {
+                nrrd = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.SPM) && (displayMode == IMAGE_A)) {
                 spm = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.GE_GENESIS) && (displayMode == IMAGE_A)) {
@@ -315,6 +318,10 @@ public abstract class ViewJFrameBase extends JFrame
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_B)) {
                     nifti = true;
+                }
+                
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NRRD) && (displayMode == IMAGE_B)) {
+                    nrrd = true;
                 }
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.SPM) && (displayMode == IMAGE_B)) {
@@ -347,6 +354,13 @@ public abstract class ViewJFrameBase extends JFrame
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
                 }
             } else if (nifti) {
+
+                if (displayMode == IMAGE_A) {
+                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
+                } else {
+                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
+                }
+            } else if (nrrd) {
 
                 if (displayMode == IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
