@@ -325,6 +325,8 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
             setDisplayLocNew();
         } else {
