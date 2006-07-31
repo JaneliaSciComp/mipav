@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.event.*;
  * interpolation method. Creates new volume.
  */
 
-public class JDialogTransformNL extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ChangeListener {
+public class JDialogTransformNL extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -205,7 +207,9 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         // Update frames
         image.notifyImageDisplayListeners(null, true);
 
-        insertScriptLine(algorithm);
+        if(algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (algoTrans != null) {
             algoTrans.disposeLocal();
@@ -325,42 +329,61 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("TransformNL " + UI.getScriptDialog().getVar(image.getImageName()) + " ");
-                UI.getScriptDialog().putVar(resultImage.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " " + targetXDim +
-                                            " " + targetYDim + " " + targetZDim + " " + resultResolutions[0] + " " +
-                                            resultResolutions[1] + " " + resultResolutions[2] + " " + targetUnits[0] +
-                                            " " + targetUnits[1] + " " + targetUnits[2] + " " + fmodel + " " + coords +
-                                            " " + coeffp + " ");
-
-                for (int i = 0; i < coords; i++) {
-
-                    for (int j = 0; j < coeffp; j++) {
-                        UI.getScriptDialog().append(es[i][j] + " ");
-                    }
-                }
-
-                UI.getScriptDialog().append(interp + " " + doClip + " " + transformVOI + "\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("targetXDim", targetXDim));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("targetYDim", targetYDim));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("targetZDim", targetZDim));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("resultResolutions", resultResolutions));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("targetUnits", targetUnits));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fmodel", fmodel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coords", coords));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("interp", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doClip", doClip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("transformVOI", transformVOI));
+      
+        
+        for (int i = 0; i < coords; i++) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("es" + i, es[i]));
         }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        targetXDim = scriptParameters.getParams().getInt("targetXDim");
+        targetYDim = scriptParameters.getParams().getInt("targetYDim");
+        targetZDim = scriptParameters.getParams().getInt("targetZDim");
+        
+        resultResolutions = scriptParameters.getParams().getList("resultResolutions").getAsFloatArray();
+        targetUnits = scriptParameters.getParams().getList("targetUnits").getAsIntArray();
+        
+        fmodel = scriptParameters.getParams().getInt("fmodel");
+        coords = scriptParameters.getParams().getInt("coords");
+        
+        es = new double[fmodel][coords];
+        
+        for (int i = 0; i < coords; i++) {
+            es[i] = scriptParameters.getParams().getList("es" + i).getAsDoubleArray();  
+        }
+        
+        interp = scriptParameters.getParams().getInt("interp");
+        doClip = scriptParameters.getParams().getBoolean("doClip");
+        transformVOI = scriptParameters.getParams().getBoolean("transformVOI");
+    }
+    
+    protected void doPostAlgorithmActions() { 
+        AlgorithmParameters.storeImageInRunner(resultImage);        
     }
 
     /**
@@ -478,79 +501,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         } catch (IOException error) {
             MipavUtil.displayError("Parameters read error");
         }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        resampleImage = im;
-        UI = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setTargetXDim(parser.getNextInteger());
-            setTargetYDim(parser.getNextInteger());
-            setTargetZDim(parser.getNextInteger());
-
-            float[] resultResolutions = new float[3];
-            resultResolutions[0] = parser.getNextFloat();
-            resultResolutions[1] = parser.getNextFloat();
-            resultResolutions[2] = parser.getNextFloat();
-            setResultResolutions(resultResolutions);
-
-            int[] targetUnits = new int[3];
-            targetUnits[0] = parser.getNextInteger();
-            targetUnits[1] = parser.getNextInteger();
-            targetUnits[2] = parser.getNextInteger();
-            setTargetUnits(targetUnits);
-            setFmodel(parser.getNextInteger());
-
-            int coords = parser.getNextInteger();
-            int coeffp = parser.getNextInteger();
-            double[][] es = new double[coords][coeffp];
-
-            for (int i = 0; i < coords; i++) {
-
-                for (int j = 0; j < coeffp; j++) {
-                    es[i][j] = parser.getNextDouble();
-                }
-            }
-
-            setEs(es);
-            setInterp(parser.getNextInteger());
-            setClipFlag(parser.getNextBoolean());
-            setVOIFlag(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 
     /**
