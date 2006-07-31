@@ -111,6 +111,22 @@ public class ParameterList extends Parameter {
     }
     
     /**
+     * Returns the contents of this list as an array of doubles, if the list contains ParameterDoubl elements.
+     * @return  The list converted into an array of doubles.
+     */
+    public double[] getAsDoubleArray() {
+        if (listType != Parameter.PARAM_DOUBLE) {
+            throw new ParameterException(getLabel(), "Tried to cast a " + Parameter.getTypeString(listType) + " list as an double array.");
+        }
+        
+        double[] array = new double[list.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = ((ParameterDouble)elementAt(i)).getValue();
+        }
+        return array;
+    }
+    
+    /**
      * Returns the contents of this list as an array of ints, if the list contains ParameterInt elements.
      * @return  The list converted into an array of ints.
      */
