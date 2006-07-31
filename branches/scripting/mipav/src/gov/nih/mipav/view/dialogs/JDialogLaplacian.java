@@ -4,9 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,8 +30,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmLaplacian
  */
-public class JDialogLaplacian extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogLaplacian extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -38,19 +40,7 @@ public class JDialogLaplacian extends JDialogBase
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    public long start, end;
-
-    /** DOCUMENT ME! */
     private float ampFactor = 1.0f;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** difference between x,y resolutions (in plane) and z resolution (between planes). */
-    private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -62,84 +52,26 @@ public class JDialogLaplacian extends JDialogBase
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
     private JLabel labelAmpFact;
-
-    /** DOCUMENT ME! */
-    private JLabel labelCorrected;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussX;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussY;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussZ;
 
     /** DOCUMENT ME! */
     private AlgorithmLaplacian laplacianAlgo;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private float normFactor = 1; // normalization factor to adjust for resolution
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag; // true = apply algorithm to the whole image
-
-    // false = apply algorithm only to VOI regions
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
-    private JCheckBox resolutionCheckbox;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private JPanel scalePanel;
-
-    /** DOCUMENT ME! */
-    private float scaleX;
-
-    /** DOCUMENT ME! */
-    private float scaleY;
-
-    /** DOCUMENT ME! */
-    private float scaleZ;
-
-    /** DOCUMENT ME! */
     private JTextField textAmpFact;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussX;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussY;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussZ;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
+    
+    private JPanelSigmas sigmasPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -157,24 +89,10 @@ public class JDialogLaplacian extends JDialogBase
     public JDialogLaplacian(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogLaplacian(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -211,11 +129,7 @@ public class JDialogLaplacian extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ModelImage edgeImage;
-        ViewJFrameImage imageFrame = null;
-
-        end = System.currentTimeMillis();
-        Preferences.debug("Laplacian: " + (end - start));
+        Preferences.debug("Laplacian: " + algorithm.getElapsedTime());
 
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
@@ -231,7 +145,7 @@ public class JDialogLaplacian extends JDialogBase
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -264,7 +178,9 @@ public class JDialogLaplacian extends JDialogBase
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (laplacianAlgo != null) {
             laplacianAlgo.finalize();
@@ -275,54 +191,6 @@ public class JDialogLaplacian extends JDialogBase
     }
 
     /**
-     * When the user clicks the mouse out of a text field, resets the necessary variables.
-     *
-     * @param  event  Event that triggers this function.
-     */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
-        JTextField field;
-        String text;
-        float tempNum;
-
-        if (source == textGaussZ) {
-            field = (JTextField) source;
-            text = field.getText();
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        }
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += regionFlag + delim;
-        str += image25D + delim;
-        str += scaleX + delim;
-        str += scaleY + delim;
-        str += textGaussZ.getText() + delim;
-        str += ampFactor;
-
-        return str;
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -330,44 +198,45 @@ public class JDialogLaplacian extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
 
-        if (algo.isCompleted()) {
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeSigmas(sigmasPanel);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("amplification_factor", ampFactor));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
 
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Laplacian " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" "));
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + getParameterString(" "));
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmasPanel = new JPanelSigmas(image);
+        
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmasPanel);
+        setAmpFactor(scriptParameters.getParams().getFloat("amplification_factor"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
-
+    
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -379,29 +248,9 @@ public class JDialogLaplacian extends JDialogBase
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        float tempNum;
 
-        if (source == resolutionCheckbox) {
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        } else if (source == image25DCheckbox) {
-
-            if (image25DCheckbox.isSelected()) {
-                resolutionCheckbox.setEnabled(false); // Image is only 2D or 2.5D, thus this checkbox
-                labelGaussZ.setEnabled(false); // is not relevent
-                textGaussZ.setEnabled(false);
-                labelCorrected.setEnabled(false);
-            } else {
-                resolutionCheckbox.setEnabled(true);
-                labelGaussZ.setEnabled(true);
-                textGaussZ.setEnabled(true);
-                labelCorrected.setEnabled(true);
-            }
+        if (source == image25DCheckbox) {
+            sigmasPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
     }
 
@@ -411,32 +260,22 @@ public class JDialogLaplacian extends JDialogBase
     public void loadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
-        if ((defaultsString != null) && (VOIRegions != null)) {
+        if ((defaultsString != null) && (outputPanel != null)) {
 
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 
-                if (MipavUtil.getBoolean(st)) {
-                    wholeImage.setSelected(true);
-                } else {
-                    VOIRegions.setSelected(true);
-                }
-
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+                
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
 
-                textGaussX.setText(st.nextToken());
-                textGaussY.setText(st.nextToken());
-                textGaussZ.setText(st.nextToken());
+                sigmasPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmasPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmasPanel.setSigmaZ(MipavUtil.getFloat(st));
+                sigmasPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
 
                 textAmpFact.setText(st.nextToken());
-
-                resolutionCheckbox.setSelected(MipavUtil.getBoolean(st));
-
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -452,66 +291,18 @@ public class JDialogLaplacian extends JDialogBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + resolutionCheckbox.isSelected() + "," +
-                                           newImage.isSelected());
+        String delim = ",";
+        
+        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
+        defaultsString += outputPanel.isOutputNewImageSet() + delim;
+        defaultsString += image25D + delim;
+        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[0] + delim;
+        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[1] + delim;
+        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[2] + delim;
+        defaultsString += sigmasPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += ampFactor;
+        
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setScaleX(parser.getNextFloat());
-            setScaleY(parser.getNextFloat());
-            setScaleZ(parser.getNextFloat());
-            setAmpFactor(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -524,21 +315,6 @@ public class JDialogLaplacian extends JDialogBase
     }
 
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
      * Accessor that sets the slicing flag.
      *
      * @param  flag  <code>true</code> indicates slices should be blurred independently.
@@ -548,58 +324,17 @@ public class JDialogLaplacian extends JDialogBase
     }
 
     /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
-     * Accessor that sets the x scale.
-     *
-     * @param  scale  Value to set x scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleX(float scale) {
-        scaleX = scale;
-    }
-
-    /**
-     * Accessor that sets the y scale.
-     *
-     * @param  scale  Value to set y scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleY(float scale) {
-        scaleY = scale;
-    }
-
-    /**
-     * Accessor that sets the z scale.
-     *
-     * @param  scale  Value to set z scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleZ(float scale) {
-        scaleZ = scale;
-    }
-
-    /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_laplacian");
 
-        start = System.currentTimeMillis();
-
         if (image.getNDims() == 2) { // source image is 2D
 
-            float[] sigmas = new float[2];
+            float[] sigmas = sigmasPanel.getNormalizedSigmas();
 
-            sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-            sigmas[1] = scaleY;
-
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -618,7 +353,7 @@ public class JDialogLaplacian extends JDialogBase
                     }
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas, regionFlag, false, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), false, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -657,7 +392,7 @@ public class JDialogLaplacian extends JDialogBase
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, regionFlag, false, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), false, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -703,13 +438,9 @@ public class JDialogLaplacian extends JDialogBase
             }
         } else if (image.getNDims() == 3) {
 
-            float[] sigmas = new float[3];
+            float[] sigmas = sigmasPanel.getNormalizedSigmas();
 
-            sigmas[0] = scaleX;
-            sigmas[1] = scaleY;
-            sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
-
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     // Make result image of float type
@@ -734,7 +465,7 @@ public class JDialogLaplacian extends JDialogBase
                     }
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas, regionFlag, image25D, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(resultImage, image, sigmas, outputPanel.isOutputNewImageSet(), image25D, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -772,7 +503,7 @@ public class JDialogLaplacian extends JDialogBase
                 try {
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, regionFlag, image25D, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isOutputNewImageSet(), image25D, ampFactor);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -829,137 +560,44 @@ public class JDialogLaplacian extends JDialogBase
         getContentPane().setLayout(new BorderLayout());
         setTitle("Laplacian");
 
-        JPanel mainPanel;
-
-        mainPanel = new JPanel();
+        JPanel mainPanel = new JPanel(new GridLayout());
         mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
         mainPanel.setLayout(new GridBagLayout());
-
+        
         GridBagConstraints gbc = new GridBagConstraints();
-
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
-        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        sigmasPanel = new JPanelSigmas(image);
+        mainPanel.add(sigmasPanel, gbc);
 
-        scalePanel = new JPanel(new GridLayout(4, 2));
-        scalePanel.setForeground(Color.black);
-        scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
-        mainPanel.add(scalePanel, gbc);
-
-        labelGaussX = createLabel("X dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussX);
-        textGaussX = createTextField("1.0");
-        scalePanel.add(textGaussX);
-
-        labelGaussY = createLabel("Y dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussY);
-        textGaussY = createTextField("1.0");
-        scalePanel.add(textGaussY);
-
-        labelGaussZ = createLabel("Z dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussZ);
-        textGaussZ = createTextField("1.0");
-        scalePanel.add(textGaussZ);
-
+        PanelManager algoPanel = new PanelManager("Algorithm options");
         labelAmpFact = createLabel("Amplification factor (1.0 - 2.0) ");
-        scalePanel.add(labelAmpFact);
+        algoPanel.add(labelAmpFact);
         textAmpFact = createTextField("1.0");
-        scalePanel.add(textAmpFact);
-
-        JPanel resPanel = new JPanel(new BorderLayout());
-
-        resPanel.setBorder(buildTitledBorder("Resolution options"));
-        resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale");
-        resolutionCheckbox.setFont(serif12);
-        resPanel.add(resolutionCheckbox, BorderLayout.NORTH);
-        resolutionCheckbox.setSelected(true);
+        algoPanel.add(textAmpFact);
 
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
         image25DCheckbox.setFont(serif12);
-        resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
+        algoPanel.addOnNextLine(image25DCheckbox);
         image25DCheckbox.setSelected(false);
         image25DCheckbox.addItemListener(this);
 
-        if (image.getNDims() == 3) { // if the source image is 3D then allow
-            resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
-            resolutionCheckbox.addItemListener(this); // use the correction factor
-            textGaussZ.addFocusListener(this);
-            textGaussZ.setEnabled(true);
-        } else {
-            resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
-            labelGaussZ.setEnabled(false); // is not relevent
-            textGaussZ.setEnabled(false);
+        if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
         }
 
-        if (image.getNDims() == 3) { // Source image is 3D, thus show correction factor
+        gbc.gridy++;
+        mainPanel.add(algoPanel.getPanel(), gbc);
 
-            int index = image.getExtents()[2] / 2;
-            float xRes = image.getFileInfo(index).getResolutions()[0];
-            float zRes = image.getFileInfo(index).getResolutions()[2];
-
-            normFactor = xRes / zRes; // Calculate correction factor
-            labelCorrected = new JLabel("      Corrected scale = " +
-                                        String.valueOf(normFactor * Float.valueOf(textGaussZ.getText()).floatValue()));
-            labelCorrected.setForeground(Color.black);
-            labelCorrected.setFont(serif12);
-            resPanel.add(labelCorrected, BorderLayout.CENTER);
-        }
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        mainPanel.add(resPanel, gbc);
-
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-
-        destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setBounds(10, 16, 120, 25);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        imageVOIPanel = new JPanel();
-        imageVOIPanel.setLayout(new BorderLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Process"));
-        outputOptPanel.add(imageVOIPanel);
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-        imageVOIPanel.add(wholeImage, BorderLayout.NORTH);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-        imageVOIPanel.add(VOIRegions, BorderLayout.CENTER);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(outputOptPanel, gbc);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        gbc.gridy++;
+        mainPanel.add(outputPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -980,52 +618,9 @@ public class JDialogLaplacian extends JDialogBase
 
         System.gc();
 
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
+        image25D = image25DCheckbox.isSelected();
 
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
-
-        if (image25DCheckbox.isSelected()) {
-            image25D = true;
-        }
-
-        tmpStr = textGaussX.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleX = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussX.requestFocus();
-            textGaussX.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussY.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleY = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussY.requestFocus();
-            textGaussY.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussZ.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleZ = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussZ.requestFocus();
-            textGaussZ.selectAll();
-
+        if (!sigmasPanel.testSigmaValues()) {
             return false;
         }
 
@@ -1040,12 +635,6 @@ public class JDialogLaplacian extends JDialogBase
             return false;
         }
 
-        // Apply normalization if requested!
-        if (resolutionCheckbox.isSelected()) {
-            scaleZ = scaleZ * normFactor;
-        }
-
         return true;
     }
-
 }

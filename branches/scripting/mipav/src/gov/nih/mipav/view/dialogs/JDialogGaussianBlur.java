@@ -261,34 +261,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     }
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += outputOptionsPanel.isProcessWholeImageSet() + delim;
-        str += separable + delim;
-        str += image25D + delim;
-        str += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
-        str += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
-        str += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-        str += sigmaPanel.isResolutionCorrectionEnabled() + delim;
-        str += colorChannelPanel.isRedProcessingRequested() + delim;
-        str += colorChannelPanel.isGreenProcessingRequested() + delim;
-        str += colorChannelPanel.isBlueProcessingRequested();
-
-        return str;
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -325,6 +297,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
 
                 sepCheckbox.setSelected(MipavUtil.getBoolean(st));
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
@@ -336,8 +309,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                 colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
                 colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
                 colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
-
-                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -351,8 +322,20 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + sigmaPanel.isResolutionCorrectionEnabled() +
-                                           "," + outputOptionsPanel.isOutputNewImageSet());
+        String delim = ",";
+        
+        String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
+        defaultsString = outputOptionsPanel.isOutputNewImageSet() + delim;
+        defaultsString += separable + delim;
+        defaultsString += image25D + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += colorChannelPanel.isRedProcessingRequested() + delim;
+        defaultsString += colorChannelPanel.isGreenProcessingRequested() + delim;
+        defaultsString += colorChannelPanel.isBlueProcessingRequested();
+
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 

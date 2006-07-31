@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +23,7 @@ import javax.swing.*;
  * @version  1.0 May 24, 2005
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogInvert extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -68,9 +68,6 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private boolean useDefaultRanges = true; // only applies for input ranges
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -89,22 +86,8 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
     public JDialogInvert(Frame theParentFrame, ModelImage _image) {
         super(theParentFrame, false);
         image = _image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogInvert(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -142,9 +125,6 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmChangeType) {
 
             if ((changeTypeAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -152,7 +132,7 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -185,7 +165,9 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -212,134 +194,49 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if (useDefaultRanges == true) {
-                    userInterface.getScriptDialog().append("ConvertType " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                    if (displayLoc == NEW) {
-                        userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                               " " + dataType + " " + endianess + " " +
-                                                               useDefaultRanges + " " + outTempMin + " " + outTempMax +
-                                                               "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                               " " + dataType + " " + endianess + " " +
-                                                               useDefaultRanges + " " + outTempMin + " " + outTempMax +
-                                                               "\n");
-                    }
-                } else { // not using default ranges
-                    userInterface.getScriptDialog().append("ConvertType " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                    if (displayLoc == NEW) {
-                        userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                               " " + dataType + " " + endianess + " " +
-                                                               useDefaultRanges + " " + inTempMin + " " + inTempMax +
-                                                               " " + outTempMin + " " + outTempMax + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                               " " + dataType + " " + endianess + " " +
-                                                               useDefaultRanges + " " + inTempMin + " " + inTempMax +
-                                                               " " + outTempMin + " " + outTempMax + "\n");
-
-                    }
-                } // end if useDefaultRanges
-            }
-        }
-    }
-
+    
     /**
      * Sets the flags for the checkboxes and resets labels.
      *
      * @param  event  Event that triggered this function.
      */
     public synchronized void itemStateChanged(ItemEvent event) { }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+    }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        if (displayLoc == NEW) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try {
-            setDataType(parser.getNextInteger());
-            setEndianess(parser.getNextBoolean());
-
-            if (parser.getNextBoolean()) {
-                setUseDefaultRanges(true);
-                setDefaultRanges();
-            } else {
-                setUseDefaultRanges(false);
-                setInputRangeMin(parser.getNextDouble());
-                setInputRangeMax(parser.getNextDouble());
-
-            }
-
-            setOutputRangeMin(parser.getNextDouble());
-            setOutputRangeMax(parser.getNextDouble());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        setDataType(image.getFileInfo(0).getDataType());
+        setEndianess(image.getFileInfo(0).getEndianess());
+        setDefaultRanges();
+        setOutputRangeMin(image.getMax());
+        setOutputRangeMax(image.getMin());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -418,15 +315,6 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
      */
     public void setOutputRangeMin(double min) {
         outTempMin = min;
-    }
-
-    /**
-     * Accessor that sets the useDefaultRanges to the parameter.
-     *
-     * @param  useDefault  Value for useDefaultRanges variable.
-     */
-    public void setUseDefaultRanges(boolean useDefault) {
-        useDefaultRanges = useDefault;
     }
 
     /**
@@ -686,11 +574,11 @@ public class JDialogInvert extends JDialogBase implements AlgorithmInterface, Sc
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);

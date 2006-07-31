@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,7 +26,7 @@ import javax.swing.*;
  * image of the same dimensions selected from a pop up menu. Must insert black and white with black and white and color
  * with color.
  */
-public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogInsertSlice extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -109,22 +111,8 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
     public JDialogInsertSlice(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogInsertSlice(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -169,9 +157,6 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmInsertSlice) {
 
             if ((insertSliceAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -180,7 +165,7 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
                 try {
 
                     // put the new image into a new frame
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+                    new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -286,7 +271,9 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
 
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -303,112 +290,43 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if ((sliceType == ORIGINAL_SLICE) && (insertedImage != null)) {
-                    /*
-                     * userInterface.getScriptDialog().putVar(insertedImage.getImageName());
-                     * userInterface.getScriptDialog().append("LoadImage " +
-                     * userInterface.getScriptDialog().getVar(insertedImage.  getImageName()) + "\n");
-                     */
-                }
-
-                userInterface.getScriptDialog().append("InsertSlice " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if ((sliceType == ORIGINAL_SLICE) && (insertedImage != null)) {
-
-                    // check to see if the  inserted image is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(insertedImage.getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(insertedImage.getImageName()) ==
-                                null) {
-                            userInterface.getScriptDialog().putActiveVar(insertedImage.getImageName());
-                        }
-                    }
-
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(insertedImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(insertSlice + " " + sliceType + "\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        if (sliceType == ORIGINAL_SLICE && insertedImage != null) {
+            scriptParameters.storeImage(insertedImage, "insert_from_image");
         }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("insert_slice_at_position", insertSlice));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slice_type_to_insert", sliceType));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            image1Key = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(image1Key);
-
-        setModal(false);
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
+        
+        setInsertSliceNumber(scriptParameters.getParams().getInt("insert_slice_at_position"));
+        setSliceType(scriptParameters.getParams().getInt("slice_type_to_insert"));
 
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+        if (sliceType == ORIGINAL_SLICE && scriptParameters.getParams().containsParameter("insert_from_image")) {
+            setInsertedImage(scriptParameters.retrieveImage("insert_from_image"));
         }
-
-        try {
-            setInsertSliceNumber(parser.getNextInteger());
-            sliceType = parser.getNextInteger();
-            setSliceType(sliceType);
-
-            if (sliceType == ORIGINAL_SLICE) {
-                setInsertedImage(parser.getImage(image2Key));
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -582,7 +500,7 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
 
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 0;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -591,7 +509,7 @@ public class JDialogInsertSlice extends JDialogBase implements AlgorithmInterfac
 
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         slicePanel.add(textSlice, gbc);
 
         gbc.gridx = 0;

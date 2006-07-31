@@ -4,9 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -45,8 +48,7 @@ import javax.swing.*;
  * @see  JDialogFrequencyFilter
  * @see  AlgorithmLocalNormalization
  */
-public class JDialogLocalNormalization extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogLocalNormalization extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -80,9 +82,6 @@ public class JDialogLocalNormalization extends JDialogBase
     private AlgorithmLocalNormalization algoLocal;
 
     /** DOCUMENT ME! */
-    private boolean blue = true;
-
-    /** DOCUMENT ME! */
     private int blurringDiameter = 15; // the default
 
     /** DOCUMENT ME! */
@@ -104,18 +103,6 @@ public class JDialogLocalNormalization extends JDialogBase
 
     /** DOCUMENT ME! */
     private JTextField errorComponent;
-
-    /** DOCUMENT ME! */
-    private boolean green = true;
-
-    /** DOCUMENT ME! */
-    private boolean isColorImage = false;
-
-    /** used as interim variables in starting the algorithm op. */
-    private boolean red = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox redChannel, greenChannel, blueChannel;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage;
@@ -143,6 +130,8 @@ public class JDialogLocalNormalization extends JDialogBase
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private JPanelColorChannels colorPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -165,9 +154,8 @@ public class JDialogLocalNormalization extends JDialogBase
     public JDialogLocalNormalization(JFrame owner, ModelImage mi) {
         super(owner, false);
         setTitle("Local Normalization");
-        userInterface = ((ViewJFrameBase) (owner)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         sourceImage = mi;
-        checkColour(mi);
         displayLoc = NEW; // currently replace is not supported
 
         getContentPane().setLayout(new BorderLayout());
@@ -177,24 +165,6 @@ public class JDialogLocalNormalization extends JDialogBase
         pack();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * <p>Replace is currently not supported.</p>
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogLocalNormalization(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        sourceImage = im;
-        checkColour(im);
-        displayLoc = NEW; // currently replace is not supported
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -239,8 +209,6 @@ public class JDialogLocalNormalization extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -255,7 +223,7 @@ public class JDialogLocalNormalization extends JDialogBase
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -290,7 +258,9 @@ public class JDialogLocalNormalization extends JDialogBase
                 System.gc();
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         } // else not a Local Normalization algorithm
         else {
             Preferences.debug("JDialogLocalNormalization caught algorithm performed for: " +
@@ -300,32 +270,6 @@ public class JDialogLocalNormalization extends JDialogBase
         algoLocal.finalize();
         algoLocal = null;
         dispose();
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += unsharp[0] + delim;
-        str += unsharp[1] + delim;
-        str += unsharpWeight + delim;
-        str += blurringFreq + delim;
-        str += blurringDiameter + delim;
-        str += red + delim;
-        str += green + delim;
-        str += blue;
-
-        return str;
     }
 
     // ************************************************************************
@@ -340,42 +284,54 @@ public class JDialogLocalNormalization extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(sourceImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(sourceImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(sourceImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("LocalNormalization " +
-                                                       userInterface.getScriptDialog().getVar(sourceImage.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(sourceImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(sourceImage);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("unsharp_scale", unsharp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("unsharp_weight", unsharpWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blurring_freq", blurringFreq));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blurring_diameter", blurringDiameter));
+        
+        scriptParameters.storeColorOptions(colorPanel);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        sourceImage = scriptParameters.retrieveInputImage();
+        userInterface = sourceImage.getUserInterface();
+        parentFrame = sourceImage.getParentFrame();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+        
+        setUnsharp(scriptParameters.getParams().getList("unsharp_scale").getAsFloatArray());
+        setUnsharpWeight(scriptParameters.getParams().getFloat("unsharp_weight"));
+        setBlurringFreq(scriptParameters.getParams().getFloat("blurring_freq"));
+        setBlurringDiameter(scriptParameters.getParams().getInt("blurring_diameter"));
+        
+        colorPanel = new JPanelColorChannels(sourceImage);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+    
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
@@ -391,9 +347,9 @@ public class JDialogLocalNormalization extends JDialogBase
                 unsharpWeightText.setText("" + MipavUtil.getFloat(st));
                 blurringFreqText.setText("" + MipavUtil.getFloat(st));
                 blurringDiameterText.setText("" + MipavUtil.getInt(st));
-                redChannel.setSelected(MipavUtil.getBoolean(st));
-                greenChannel.setSelected(MipavUtil.getBoolean(st));
-                blueChannel.setSelected(MipavUtil.getBoolean(st));
+                colorPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
+                colorPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
+                colorPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -408,76 +364,18 @@ public class JDialogLocalNormalization extends JDialogBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
+        String delim = ",";
+        
+        String defaultsString = unsharp[0] + delim;
+        defaultsString += unsharp[1] + delim;
+        defaultsString += unsharpWeight + delim;
+        defaultsString += blurringFreq + delim;
+        defaultsString += blurringDiameter + delim;
+        defaultsString += colorPanel.isRedProcessingRequested() + delim;
+        defaultsString += colorPanel.isGreenProcessingRequested() + delim;
+        defaultsString += colorPanel.isBlueProcessingRequested();
+        
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        sourceImage = im;
-        checkColour(im);
-        displayLoc = NEW;
-        userInterface = sourceImage.getUserInterface();
-        parentFrame = sourceImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setUnsharp(parser.getNextFloat(), parser.getNextFloat());
-            setUnsharpWeight(parser.getNextFloat());
-            setBlurringFreq(parser.getNextFloat());
-            setBlurringDiameter(parser.getNextInteger());
-            setRed(parser.getNextBoolean());
-            setGreen(parser.getNextBoolean());
-            setBlue(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the blue component flag.
-     *
-     * @param  blue  Value to set the blue to
-     */
-    public void setBlue(boolean blue) {
-
-        if (isColorImage) {
-            this.blue = blue;
-        } else {
-            this.blue = false;
-        }
     }
 
     /**
@@ -531,54 +429,6 @@ public class JDialogLocalNormalization extends JDialogBase
         // eventually this will set this... for now, only NEW is supported
         // displayLoc = REPLACE;
         displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the green component flag.
-     *
-     * @param  green  Value to set the green to
-     */
-    public void setGreen(boolean green) {
-
-        if (isColorImage) {
-            this.green = green;
-        } else {
-            this.green = false;
-        }
-    }
-
-    /**
-     * Accessor that sets the red component flag.
-     *
-     * @param  red  Value to set the red to
-     */
-    public void setRed(boolean red) {
-
-        if (isColorImage) {
-            this.red = red;
-        } else {
-            this.red = false;
-        }
-    }
-
-    /**
-     * Accessor that sets the r, g, b components flag.
-     *
-     * @param  red    Value to set the red to
-     * @param  green  Value to set the green to
-     * @param  blue   Value to set the blue to
-     */
-    public void setRGB(boolean red, boolean green, boolean blue) {
-
-        if (isColorImage) {
-            this.red = red;
-            this.green = green;
-            this.blue = blue;
-        } else {
-            this.red = false;
-            this.green = false;
-            this.blue = false;
-        }
     }
 
     /**
@@ -668,43 +518,10 @@ public class JDialogLocalNormalization extends JDialogBase
      * @return  the colour panel with adjustable attributes already added
      */
     protected JPanel buildColourPanel() {
-        JPanel colourPanel = new JPanel();
-        GridBagLayout gbl = new GridBagLayout();
-        GridBagConstraints gbc = new GridBagConstraints();
+        colorPanel = new JPanelColorChannels(sourceImage);
+        colorPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
 
-        colourPanel.setLayout(gbl);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        colourPanel.setForeground(Color.black);
-        colourPanel.setBorder(buildTitledBorder("Color channel selection")); // set the border ... "Colour channel
-                                                                             // Selection"
-
-        redChannel = new JCheckBox("Red Channel", true);
-        redChannel.setFont(serif12);
-        gbl.setConstraints(redChannel, gbc);
-        colourPanel.add(redChannel);
-
-        greenChannel = new JCheckBox("Green Channel", true);
-        greenChannel.setFont(serif12);
-        gbl.setConstraints(greenChannel, gbc);
-        colourPanel.add(greenChannel);
-
-        blueChannel = new JCheckBox("Blue Channel", true);
-        blueChannel.setFont(serif12);
-        gbl.setConstraints(blueChannel, gbc);
-        colourPanel.add(blueChannel);
-
-        // if not a colour image, block access to the channel switches
-        // since they don't mean anything
-        if (!isColorImage) {
-            redChannel.setEnabled(false);
-            greenChannel.setEnabled(false);
-            blueChannel.setEnabled(false);
-        }
-
-        colourPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
-
-        return colourPanel;
+        return colorPanel;
     }
 
     /**
@@ -714,6 +531,8 @@ public class JDialogLocalNormalization extends JDialogBase
      * only a Gaussian low-pass, so only a top-end frequency input is created.</p>
      *
      * <p>The panel is returned to the caller.</p>
+     * 
+     * @return  The blurring parameter panel.
      *
      * @see  JDialogUnsharpMask
      */
@@ -728,13 +547,13 @@ public class JDialogLocalNormalization extends JDialogBase
         blurp.setLayout(gbl);
         blurp.setBorder(buildTitledBorder("Blurring Lowpass Filter"));
 
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
         blurp.add(createLabel("Blurring Frequency (f > 0.0):"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
         blurringFreqText = createEntryField("0.2");
         MipavUtil.makeNumericsOnly(blurringFreqText, true);
@@ -743,11 +562,11 @@ public class JDialogLocalNormalization extends JDialogBase
         /* options for Z-dimension are not added to the display because
          * we do not use them.  We may never, but the code is left in just-in-case.
          */
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
         // blurp.add(createLabel("Kernel Diameter:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
         blurringDiameterText = createEntryField("15");
         blurringDiameterText.setEnabled(true);
@@ -777,15 +596,16 @@ public class JDialogLocalNormalization extends JDialogBase
      * <p>A colour image may have any of its three colour channels filtered, so a colour-selection panel is created. A
      * colour panel will be generated even for a monochrome image, the colour panel will be disabled.</p>
      *
-     * @return  DOCUMENT ME!
+     * @return  A panel containing all the other algorithm option panels.
      */
     private JPanel buildOptionsPanel() {
-        JPanel optsp = new JPanel(new BorderLayout());
-        optsp.add(buildUnsharpPanel(), BorderLayout.WEST); // unsharpmask
-        optsp.add(buildBlurringPanel(), BorderLayout.EAST); // blurring
-        optsp.add(buildColourPanel(), BorderLayout.SOUTH); // colour channel
+        PanelManager manager = new PanelManager();
+        
+        manager.addOnNextLine(buildUnsharpPanel());
+        manager.addOnNextLine(buildBlurringPanel());
+        manager.addOnNextLine(buildColourPanel());
 
-        return optsp;
+        return manager.getPanel();
     }
 
     /**
@@ -795,6 +615,8 @@ public class JDialogLocalNormalization extends JDialogBase
      * JDialogUnsharpMask.</p>
      *
      * <p>The panel is returned to the caller.</p>
+     * 
+     * @return  The unsharp mask parameter panel.
      *
      * @see  JDialogUnsharpMask
      */
@@ -809,26 +631,26 @@ public class JDialogLocalNormalization extends JDialogBase
         unshrp.setLayout(gbl);
         unshrp.setBorder(buildTitledBorder("Unsharp masking"));
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         unshrp.add(createLabel("X-Dimension Gaussian scale:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         unsharpXtext = createEntryField("1.0");
         MipavUtil.makeNumericsOnly(unsharpXtext, true);
         unshrp.add(unsharpXtext, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         unshrp.add(createLabel("Y-Dimension Gaussian scale:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         unsharpYtext = createEntryField("1.0");
         MipavUtil.makeNumericsOnly(unsharpYtext, true);
         unshrp.add(unsharpYtext, gbc);
@@ -836,16 +658,16 @@ public class JDialogLocalNormalization extends JDialogBase
         /* options for Z-dimension are not added to the display because
          * we do not use them.  We may never, but the code is left in just-in-case.
          */
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         JLabel zDimlabel = createLabel("Z-Dimension Gaussian scale:");
         // unshrp.add(zDimlabel, gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         unsharpZtext = createEntryField("1.0");
         MipavUtil.makeNumericsOnly(unsharpZtext, true);
         // unshrp.add(unsharpZtext, gbc);
@@ -854,12 +676,12 @@ public class JDialogLocalNormalization extends JDialogBase
 
         // unsharpZtext.setEnabled(false); // slices independntly -- ie, 2.5d
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         unshrp.add(createLabel("Weight of Blur (image - weight*blur):"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
         unsharpWeightText = createEntryField("0.75");
 
@@ -908,7 +730,7 @@ public class JDialogLocalNormalization extends JDialogBase
 
                 // only if the src image is colour will any channel
                 // checkboxes be enabled:
-                algoLocal.setRGBChannelFilter(red, green, blue);
+                algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
 
                 // This is very important. Adding this object as a listener
                 // allows the algorithm to notify this object when it
@@ -994,7 +816,7 @@ public class JDialogLocalNormalization extends JDialogBase
                                                             blurringDiameter, blurringFreq);
 
                 // only if the src image is colour will any channel checkboxes be enabled
-                algoLocal.setRGBChannelFilter(red, green, blue);
+                algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -1104,16 +926,13 @@ public class JDialogLocalNormalization extends JDialogBase
     }
 
     /**
-     * sets the value of the variable isColorImage.
-     *
-     * @param  mi  the model image to be checked to determine if it is color.
-     */
-    private void checkColour(ModelImage mi) {
-        isColorImage = mi.isColorImage();
-    }
-
-    /**
      * verify that the numeric value of the text of the submitted JTextField is between a and b.
+     *
+     * @param   jtf  The text field to check.
+     * @param   a    The minimum allowable value for the text field.
+     * @param   b    The maximum allowable value for the text field.
+     * 
+     * @return  The value contained within the text field.
      *
      * @throws  NullPointerException      if jtf is empty.
      * @throws  IllegalArgumentException  when the String is either not translatable to a float (ie., when <code>
@@ -1246,29 +1065,7 @@ public class JDialogLocalNormalization extends JDialogBase
             return false;
         }
 
-        red = redChannel.isSelected();
-        green = greenChannel.isSelected();
-        blue = blueChannel.isSelected();
-
         // if (bySlice != null) image25D = bySlice.isSelected();
         return true;
     }
-
-    /** has the submitted text field listen to itself and
-     *   selectively filter out unwanted characters.  <p>  Permits only the characters: <ul>  <li>numbers 0-9</li>
-     * <li>delete/bask-space</li>  <li>enter</li>  <li>and ONE period</li>  </ul>  All other characters are ignored.
-     */
-
-    /**
-     * private void makeNumericsOnly(JTextField txt) { txt.addKeyListener(new KeyAdapter() { // make the field public
-     * void keyTyped(KeyEvent evt) { // not accept letters JTextField t = (JTextField) evt.getComponent(); char ch =
-     * evt.getKeyChar(); if (ch == '.') { if (t.getSelectedText() != null) { if (t.getText().length() ==
-     * t.getSelectedText().length()) { t.setText("0"); } else if ( (t.getText().indexOf('.') != -1) // there is a '.',
-     * but no && (t.getSelectedText().indexOf('.') == -1)) { // in the selected text evt.consume(); // ignore } } else
-     * if (t.getText().indexOf('.') != -1) { evt.consume(); } else if (t.getText().length() == 0) { t.setText("0"); } }
-     *
-     * // negative values are not allowed else if ( ( (ch < '0') || (ch > '9')) && ( (ch != KeyEvent.VK_DELETE) && (ch !=
-     * KeyEvent.VK_BACK_SPACE))) { // if is the case that ch is outside the bounds of a number // AND it is the case
-     * that ch is neither a BS or a DE, then // key is not a digit or a deletion char evt.consume(); } } }); }
-     */
 }
