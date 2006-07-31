@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +29,7 @@ import javax.swing.*;
  * @author   not attributable
  * @version  1.0
  */
-public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -43,7 +45,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     int percentIterationsOriginalSize = 100;
 
     /** DOCUMENT ME! */
-    int percentIterationsQuaterSize = 0;
+    int percentIterationsQuarterSize = 0;
 
     /** DOCUMENT ME! */
     AlgorithmXcosmEM xcosmEMAlgo;
@@ -112,7 +114,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     private JTextField textPercentIterationsOriginalSize;
 
     /** DOCUMENT ME! */
-    private JTextField textPercentIterationsQuaterSize;
+    private JTextField textpercentIterationsQuarterSize;
 
     /** DOCUMENT ME! */
     private JTextField textTotalNumberIterations;
@@ -145,6 +147,11 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         init();
     }
 
+    /**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+    public JDialogXcosmEM() { }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -188,87 +195,64 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+
 
             xcosmEMAlgo.finalize();
             xcosmEMAlgo = null;
         }
     } // end algorithmPerformed(...)
 
-
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-            //            if ( userInterface.isScriptRecording() ) {
-            //                //check to see if the match image is already in the ImgTable
-            //                if ( userInterface.getScriptDialog().getImgTableVar( srcImage.getImageName() ) == null ) {
-            //                    if ( userInterface.getScriptDialog().getActiveImgTableVar( srcImage.getImageName() ) == null ) {
-            //                        userInterface.getScriptDialog().putActiveVar( srcImage.getImageName() );
-            //                    }
-            //                }
-
-            //                userInterface.getScriptDialog().append(
-            //                        "CoherenceEnhancingDiffusion "
-            //                                + userInterface.getScriptDialog().getVar( srcImage.getImageName() ) + " " );
-            // if (displayLoc == NEW) {
-            //                userInterface.getScriptDialog().putVar( resultImage.getImageName() );
-            //                userInterface.getScriptDialog().append(
-            //                        userInterface.getScriptDialog().getVar( resultImage.getImageName() ) + " " + numIterations + " "
-            //                        + diffusitivityDenom + " " + derivativeScale + " " + gaussianScale + " " + do25D + " "
-            //                        + entireImage + "\n" );
-            // }
-            /*else {
-             * userInterface.getScriptDialog().append(userInterface. getScriptDialog().getVar(image.getImageName()) + "
-             * " + + numIterations + " " + diffusitivityDenom + " " + derivativeScale + " " + gaussianScale + " " +
-             * do25D + "\n"); }*/
-            //            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(originalImage);
+        scriptParameters.storeImage(psfImage, "psfImage");
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("windowLowerLimit",windowLowerLimit));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("estimateDecay",estimateDecay));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("decayConstant",decayConstant));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("percentIterationsOriginalSize",percentIterationsOriginalSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("percentIterationsHalfSize",percentIterationsHalfSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("percentIterationsQuarterSize",percentIterationsQuarterSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("totalNumberIterations",totalNumberIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("backupNumberIterations",backupNumberIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("penaltyIntensity",penaltyIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("penaltyValue",penaltyValue));
     }
 
-
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try { }
-        catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        //        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            //            parser.putVariable( destImageKey, getResultImage().getImageName() );
-        }
+    protected void setGUIFromParams() {
+        originalImage = scriptParameters.retrieveInputImage();
+        psfImage = scriptParameters.retrieveImage("psfImage");
+        
+        UI = originalImage.getUserInterface();
+        parentFrame = originalImage.getParentFrame();
+        
+        windowLowerLimit = scriptParameters.getParams().getInt("windowLowerLimit");
+        estimateDecay = scriptParameters.getParams().getBoolean("estimateDecay");
+        decayConstant = scriptParameters.getParams().getFloat("decayConstant");
+        percentIterationsOriginalSize = scriptParameters.getParams().getInt("percentIterationsOriginalSize");
+        percentIterationsHalfSize = scriptParameters.getParams().getInt("percentIterationsHalfSize");
+        percentIterationsQuarterSize = scriptParameters.getParams().getInt("percentIterationQuarterSize");
+        totalNumberIterations = scriptParameters.getParams().getInt("totalNumberIterations");
+        backupNumberIterations = scriptParameters.getParams().getInt("backupNumberIterations");
+        penaltyIntensity = scriptParameters.getParams().getBoolean("penaltyIntensity");
+        penaltyValue = scriptParameters.getParams().getFloat("penaltyValue");
+        
     }
-
+   
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
 
     /**
      * Builds a list of images. Returns combobox. List must be all color or all black and white.
@@ -342,7 +326,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
             xcosmEMAlgo = new AlgorithmXcosmEM(resultImage, originalImage, psfImage, windowLowerLimit, estimateDecay,
                                                decayConstant, percentIterationsOriginalSize, percentIterationsHalfSize,
-                                               percentIterationsQuaterSize, totalNumberIterations,
+                                               percentIterationsQuarterSize, totalNumberIterations,
                                                backupNumberIterations, penaltyIntensity, penaltyValue);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -460,15 +444,15 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         textPercentIterationsHalfSize.setFont(serif12);
 
         // Percent Iterations at Quater Size
-        JLabel labelPercentIterationsQuaterSize = new JLabel("Quater Size Iteration Percentage");
-        labelPercentIterationsQuaterSize.setFont(serif12);
+        JLabel labelpercentIterationsQuarterSize = new JLabel("Quater Size Iteration Percentage");
+        labelpercentIterationsQuarterSize.setFont(serif12);
 
-        textPercentIterationsQuaterSize = new JTextField();
-        textPercentIterationsQuaterSize.setColumns(5);
-        textPercentIterationsQuaterSize.setMaximumSize(labelWindowLowerLimit.getPreferredSize());
-        textPercentIterationsQuaterSize.setHorizontalAlignment(JTextField.RIGHT);
-        textPercentIterationsQuaterSize.setText(Integer.toString(percentIterationsQuaterSize));
-        textPercentIterationsQuaterSize.setFont(serif12);
+        textpercentIterationsQuarterSize = new JTextField();
+        textpercentIterationsQuarterSize.setColumns(5);
+        textpercentIterationsQuarterSize.setMaximumSize(labelWindowLowerLimit.getPreferredSize());
+        textpercentIterationsQuarterSize.setHorizontalAlignment(JTextField.RIGHT);
+        textpercentIterationsQuarterSize.setText(Integer.toString(percentIterationsQuarterSize));
+        textpercentIterationsQuarterSize.setFont(serif12);
 
 
         // Number of Iterations
@@ -544,9 +528,9 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
         gbc.gridy++;
         gbc.gridx = 0;
-        parameterPanel.add(labelPercentIterationsQuaterSize, gbc);
+        parameterPanel.add(labelpercentIterationsQuarterSize, gbc);
         gbc.gridx = 1;
-        parameterPanel.add(textPercentIterationsQuaterSize, gbc);
+        parameterPanel.add(textpercentIterationsQuarterSize, gbc);
 
 
         gbc.gridy++;
@@ -673,8 +657,8 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         tmpStr = textPercentIterationsHalfSize.getText();
         percentIterationsHalfSize = Integer.parseInt(tmpStr);
 
-        tmpStr = textPercentIterationsQuaterSize.getText();
-        percentIterationsQuaterSize = Integer.parseInt(tmpStr);
+        tmpStr = textpercentIterationsQuarterSize.getText();
+        percentIterationsQuarterSize = Integer.parseInt(tmpStr);
 
         tmpStr = textTotalNumberIterations.getText();
         totalNumberIterations = Integer.parseInt(tmpStr);
