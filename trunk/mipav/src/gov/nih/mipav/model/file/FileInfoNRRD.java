@@ -29,6 +29,12 @@ public class FileInfoNRRD extends FileInfoBase {
     private TransMatrix matrix = new TransMatrix(4);
     
     private int versionNumber = -1;
+    
+    /** Data compression - raw, gzip */
+    private String encodingString = null;
+    
+    /** Concise textual description of the information in the array */
+    private String contentString = null;
 
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -117,6 +123,14 @@ public class FileInfoNRRD extends FileInfoBase {
         if (versionNumber != -1) {
             dialog.appendSecondaryData("File format version", String.valueOf(versionNumber));
         }
+        
+        if (contentString != null) {
+            dialog.appendSecondaryData("Content", contentString);
+        }
+        
+        if (encodingString != null) {
+            dialog.appendSecondaryData("Encoding", encodingString);
+        }
     }
     
     /**
@@ -125,6 +139,22 @@ public class FileInfoNRRD extends FileInfoBase {
      */
     public void setVersionNumber(int versionNumber) {
         this.versionNumber = versionNumber;
+    }
+    
+    /**
+     * 
+     * @param encodingString
+     */
+    public void setEncoding(String encodingString) {
+        this.encodingString = encodingString;
+    }
+    
+    /**
+     * 
+     * @param contentString
+     */
+    public void setContent(String contentString) {
+        this.contentString = contentString;
     }
   
 }
