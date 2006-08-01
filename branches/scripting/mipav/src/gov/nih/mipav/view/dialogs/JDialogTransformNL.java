@@ -382,6 +382,9 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         transformVOI = scriptParameters.getParams().getBoolean("transformVOI");
     }
     
+    /**
+     * {@inheritDoc}
+     */
     protected void doPostAlgorithmActions() { 
         AlgorithmParameters.storeImageInRunner(resultImage);        
     }
