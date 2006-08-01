@@ -3,10 +3,12 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -25,8 +27,7 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmMorphologicalFilter
  */
-public class JDialogMorphologicalFilter extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogMorphologicalFilter extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -36,31 +37,12 @@ public class JDialogMorphologicalFilter extends JDialogBase
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    public long start, end;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
     private boolean image25D = false;
-
-    /** DOCUMENT ME! */
+    
     private JCheckBox image25DCheckbox;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
 
     /** DOCUMENT ME! */
     private JLabel labelSizeX;
@@ -73,17 +55,6 @@ public class JDialogMorphologicalFilter extends JDialogBase
 
     /** DOCUMENT ME! */
     private AlgorithmMorphologicalFilter mfAlgo;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag; // true = apply algorithm to the whole image
-
-    // false = apply algorithm only to VOI regions
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -115,12 +86,8 @@ public class JDialogMorphologicalFilter extends JDialogBase
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
-
+    private JPanelAlgorithmOutputOptions outputPanel;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -137,24 +104,10 @@ public class JDialogMorphologicalFilter extends JDialogBase
     public JDialogMorphologicalFilter(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMorphologicalFilter(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -177,7 +130,6 @@ public class JDialogMorphologicalFilter extends JDialogBase
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp( "" );
         }
-
     }
 
     // ************************************************************************
@@ -191,9 +143,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        end = System.currentTimeMillis();
-        Preferences.debug("Morphological Filter: " + (end - start));
+        Preferences.debug("Morphological Filter: " + algorithm.getElapsedTime());
 
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
@@ -242,7 +192,9 @@ public class JDialogMorphologicalFilter extends JDialogBase
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (mfAlgo != null) {
             mfAlgo.finalize();
@@ -253,29 +205,6 @@ public class JDialogMorphologicalFilter extends JDialogBase
     }
 
     /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += regionFlag + delim;
-        str += image25D + delim;
-        str += sizeX + delim;
-        str += sizeY + delim;
-        str += sizeZ + delim;
-
-        return str;
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -283,41 +212,44 @@ public class JDialogMorphologicalFilter extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("MorphologicalFilter " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" "));
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + getParameterString(" "));
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_x", sizeX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_y", sizeY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_size_z", sizeZ));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setSizeX(scriptParameters.getParams().getInt("filter_size_x"));
+        setSizeY(scriptParameters.getParams().getInt("filter_size_y"));
+        setSizeZ(scriptParameters.getParams().getInt("filter_size_z"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -332,10 +264,8 @@ public class JDialogMorphologicalFilter extends JDialogBase
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        float tempNum;
 
         if (source == image25DCheckbox) {
-
             if (image25DCheckbox.isSelected()) {
                 labelSizeZ.setEnabled(false); // is not relevant
                 textSizeZ.setEnabled(false);
@@ -352,16 +282,12 @@ public class JDialogMorphologicalFilter extends JDialogBase
     public void loadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
-        if ((defaultsString != null) && (VOIRegions != null)) {
+        if ((defaultsString != null) && (outputPanel != null)) {
 
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 
-                if (MipavUtil.getBoolean(st)) {
-                    wholeImage.setSelected(true);
-                } else {
-                    VOIRegions.setSelected(true);
-                }
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
 
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
 
@@ -369,13 +295,8 @@ public class JDialogMorphologicalFilter extends JDialogBase
                 textSizeY.setText("" + MipavUtil.getInt(st));
                 textSizeZ.setText("" + MipavUtil.getInt(st));
 
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
-
                 // since there was a problem parsing the defaults string, start over with the original defaults
                 Preferences.debug("Resetting defaults for dialog: " + getDialogName());
                 Preferences.removeProperty(getDialogName());
@@ -389,79 +310,16 @@ public class JDialogMorphologicalFilter extends JDialogBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
+        String delim = ",";
+        
+        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
+        defaultsString += image25D + delim;
+        defaultsString += sizeX + delim;
+        defaultsString += sizeY + delim;
+        defaultsString += sizeZ + delim;
+        defaultsString += outputPanel.isOutputNewImageSet();
+        
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setSizeX(parser.getNextInteger());
-            setSizeY(parser.getNextInteger());
-            setSizeZ(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
     }
 
     /**
@@ -471,15 +329,6 @@ public class JDialogMorphologicalFilter extends JDialogBase
      */
     public void setImage25D(boolean flag) {
         image25D = flag;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
     }
 
     /**
@@ -516,8 +365,6 @@ public class JDialogMorphologicalFilter extends JDialogBase
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_morfilter");
 
-        start = System.currentTimeMillis();
-
         if (image.getNDims() == 2) { // source image is 2D
 
             int[] sizes = new int[2];
@@ -525,7 +372,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
             sizes[0] = sizeX;
             sizes[1] = sizeY;
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -542,7 +389,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
                      * "1.2.840.34379.17",         16 ); // bogus Implementation UID made up by Matt ( (FileInfoDicom) (
                      * resultImage.getFileInfo( 0 ) ) ).setValue( "0002,0013", "MIPAV--NIH", 10 ); //}*/
                     // Make algorithm
-                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes, regionFlag, false);
+                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes, outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -581,7 +428,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, regionFlag, false);
+                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -633,7 +480,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
             sizes[1] = sizeY;
             sizes[2] = sizeZ; // normalized  - sizeZ * resolutionX/resolutionZ; !!!!!!!
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     // Make result image of float type
@@ -652,7 +499,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
                      * // bogus Implementation UID made up by Matt      ( (FileInfoDicom) ( resultImage.getFileInfo( i )
                      * ) ).setValue( "0002,0013", "MIPAV--NIH", 10 ); //  } }*/
                     // Make algorithm
-                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes, regionFlag, image25D);
+                    mfAlgo = new AlgorithmMorphologicalFilter(resultImage, image, sizes, outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -690,7 +537,7 @@ public class JDialogMorphologicalFilter extends JDialogBase
                 try {
 
                     // Make algorithm
-                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, regionFlag, image25D);
+                    mfAlgo = new AlgorithmMorphologicalFilter(image, sizes, outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -754,10 +601,9 @@ public class JDialogMorphologicalFilter extends JDialogBase
         mainPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -822,51 +668,10 @@ public class JDialogMorphologicalFilter extends JDialogBase
         gbc.gridy = 1;
         mainPanel.add(optPanel, gbc);
 
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-
-        destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setBounds(10, 16, 120, 25);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        imageVOIPanel = new JPanel();
-        imageVOIPanel.setLayout(new BorderLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Process"));
-        outputOptPanel.add(imageVOIPanel);
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-        imageVOIPanel.add(wholeImage, BorderLayout.NORTH);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-        imageVOIPanel.add(VOIRegions, BorderLayout.CENTER);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        mainPanel.add(outputOptPanel, gbc);
+        mainPanel.add(outputPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -886,18 +691,6 @@ public class JDialogMorphologicalFilter extends JDialogBase
         String tmpStr;
 
         System.gc();
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         if (image25DCheckbox.isSelected()) {
             image25D = true;
@@ -965,6 +758,4 @@ public class JDialogMorphologicalFilter extends JDialogBase
 
         return true;
     }
-
-
 }

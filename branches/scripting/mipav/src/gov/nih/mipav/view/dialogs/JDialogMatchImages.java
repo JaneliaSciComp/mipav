@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  * @version  0.1 July 14, 2003
  * @author   Zohara A Cohen, Ph.D.
  */
-public class JDialogMatchImages extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogMatchImages extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -86,29 +88,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI      The user interface, needed to create the image frame.
-     * @param  imA     Source image.
-     * @param  imB     DOCUMENT ME!
-     * @param  doOr    DOCUMENT ME!
-     * @param  doRe    DOCUMENT ME!
-     * @param  doOrig  DOCUMENT ME!
-     * @param  doDim   DOCUMENT ME!
-     */
-    public JDialogMatchImages(ViewUserInterface UI, ModelImage imA, ModelImage imB, boolean doOr, boolean doRe,
-                              boolean doOrig, boolean doDim) {
-        super(false);
-        imageA = imA;
-        imageB = imB;
-        userInterface = UI;
-        doOrigins = doOrig;
-        doDimensions = doDim;
-        parentFrame = imA.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -118,7 +97,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -143,10 +121,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrameA, imageFrameB;
-        imageFrameA = null;
-        imageFrameB = null;
-
         if (algorithm instanceof AlgorithmMatchImages) {
             boolean isNewA = matchAlgo.isNewA();
             boolean isNewB = matchAlgo.isNewB();
@@ -167,12 +141,12 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
 
                     if (isNewA) {
                         resultImageA.calcMinMax();
-                        imageFrameA = new ViewJFrameImage(resultImageA, null, new Dimension(25, 55));
+                        new ViewJFrameImage(resultImageA, null, new Dimension(25, 55));
                     }
 
                     if (isNewB) {
                         resultImageB.calcMinMax();
-                        imageFrameB = new ViewJFrameImage(resultImageB, null, new Dimension(35, 65));
+                        new ViewJFrameImage(resultImageB, null, new Dimension(35, 65));
                     }
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -195,7 +169,9 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
         imageB.notifyImageDisplayListeners(null, true);
 
         // Write to script.
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         matchAlgo.finalize();
         matchAlgo = null;
@@ -221,94 +197,41 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
     public ModelImage getResultImageB() {
         return resultImageB;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  imageA is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                // check to see if the  imageB is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageB.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageB.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageB.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("MatchImages " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(imageB.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageA.getImageName());
-                userInterface.getScriptDialog().putVar(resultImageB.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageA.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(resultImageB.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(doOrigins + " " + doDimensions + "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeInputImage(imageB);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_dimensions", doDimensions));
+        
+        AlgorithmParameters.storeImageInRecorder(getResultImageA());
+        AlgorithmParameters.storeImageInRecorder(getResultImageB());
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String imageAKey = null;
-        String imageBKey = null;
-        String destImageAKey = null;
-        String destImageBKey = null;
-
-        try {
-            imageAKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        imageA = parser.getImage(imageAKey);
-        imageB = parser.getImage(imageBKey);
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        imageA = scriptParameters.retrieveInputImage(2);
+        
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            destImageAKey = parser.getNextString();
-            destImageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            doOrigins = parser.getNextBoolean();
-            doDimensions = parser.getNextBoolean();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageAKey, getResultImageA().getImageName());
-        parser.putVariable(destImageBKey, getResultImageB().getImageName());
+        
+        doOrigins = scriptParameters.getParams().getBoolean("do_match_origins");
+        doDimensions = scriptParameters.getParams().getBoolean("do_match_dimensions");
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImageA());
+        AlgorithmParameters.storeImageInRunner(getResultImageB());
     }
 
     /**
@@ -414,7 +337,7 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
         inputPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
 

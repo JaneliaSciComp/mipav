@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -16,8 +17,7 @@ import java.awt.event.*;
  * @version  0.1 Dec 30, 2004
  * @author   Evan McCreedy
  */
-public class JDialogMidsagittal extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogMidsagittal extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -25,9 +25,6 @@ public class JDialogMidsagittal extends JDialogBase
     private static final long serialVersionUID = -2594860465921132823L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    long start, end;
 
     /** DOCUMENT ME! */
     private AlgorithmMidsagittal alignAlgo;
@@ -64,20 +61,6 @@ public class JDialogMidsagittal extends JDialogBase
         callAlgorithm();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMidsagittal(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -111,16 +94,12 @@ public class JDialogMidsagittal extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
 
         if (algorithm instanceof AlgorithmMidsagittal) {
-            end = System.currentTimeMillis();
-            Preferences.debug("Midsagittal elapsed: " + (end - start));
+            Preferences.debug("Midsagittal elapsed: " + algorithm.getElapsedTime());
 
             if (alignAlgo.isCompleted() == true) {
                 resultImage = alignAlgo.getResultImage();
@@ -133,14 +112,16 @@ public class JDialogMidsagittal extends JDialogBase
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, userInterface.getNewFrameLocation());
+                    new ViewJFrameImage(resultImage, null, userInterface.getNewFrameLocation());
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         if (alignAlgo != null) {
@@ -150,25 +131,7 @@ public class JDialogMidsagittal extends JDialogBase
 
         dispose();
     }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-
-        return str;
-    }
-
+    
     /**
      * Accessor that returns the image.
      *
@@ -177,34 +140,13 @@ public class JDialogMidsagittal extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "Midsagittal " + userInterface.getScriptDialog().getVar(image.getImageName()) + " ";
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " " +
-                        getParameterString(" ") + "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
     }
 
     /**
@@ -212,58 +154,37 @@ public class JDialogMidsagittal extends JDialogBase
      */
     public void loadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
+        
+        if (defaultsString != null) {
+            try {
+                // no params
+            } catch (Exception ex) {
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
     }
 
     /**
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
+        Preferences.saveDialogDefaults(getDialogName(), new String());
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try { }
-        catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -271,8 +192,6 @@ public class JDialogMidsagittal extends JDialogBase
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        start = System.currentTimeMillis();
-
         try {
 
             // Make algorithm

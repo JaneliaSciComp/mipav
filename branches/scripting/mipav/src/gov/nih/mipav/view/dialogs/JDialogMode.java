@@ -4,9 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -22,7 +25,7 @@ import javax.swing.*;
  * should be noted that the algorithms are executed in their own thread.
  */
 
-public class JDialogMode extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogMode extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -30,9 +33,6 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
     private static final long serialVersionUID = 4183545541629455949L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    public long start, end;
 
     /** DOCUMENT ME! */
     private JRadioButton bySlice; // allows selection of processing each slice of a 3D image-set individually
@@ -44,25 +44,10 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
     private JComboBox comboBoxKernelSize;
 
     /** DOCUMENT ME! */
-    private int countThresh;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // true = a new image is generated
-
-    /** DOCUMENT ME! */
-    private boolean entireImageFlag; // true = apply algorithm to the whole image
-
-    /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
     private boolean image25D = false; // flag indicating if slices should be processed independently
-
-    /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
 
     /** DOCUMENT ME! */
     private int kernelShape;
@@ -74,16 +59,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
     private AlgorithmMode modeAlgo = null;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private JTextField textCountThreshold;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -92,13 +68,9 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
-
-    /** DOCUMENT ME! */
     private JRadioButton wholeVolume;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -128,30 +100,6 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
         image = im;
         userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMode(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-
-        if ((im.getType() != ModelImage.BYTE) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.SHORT) && (im.getType() != ModelImage.USHORT) &&
-                (im.getType() != ModelImage.INTEGER) && (im.getType() != ModelImage.UINTEGER)) {
-            MipavUtil.displayError("Source Image must be an BYTE, SHORT, or INTEGER");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -215,12 +163,8 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMode) {
-            end = System.currentTimeMillis();
-            System.err.println("Mode Elapsed: " + (end - start));
+            System.err.println("Mode Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
 
             if ((modeAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -231,7 +175,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
 
                 try {
                     //             resultImage.setImageName("Mode: "+image.getImageName());
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -266,7 +210,9 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         modeAlgo.finalize();
         modeAlgo = null;
@@ -281,128 +227,52 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Mode " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + entireImageFlag + " " + image25D + " " + kernelSize +
-                                                           " " + kernelShape + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + entireImageFlag + " " + image25D + " " + kernelSize +
-                                                           " " + kernelShape + "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BYTE) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.SHORT) && (im.getType() != ModelImage.USHORT) &&
-                (im.getType() != ModelImage.INTEGER) && (im.getType() != ModelImage.UINTEGER)) {
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if ((image.getType() != ModelImage.BYTE) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.SHORT) && (image.getType() != ModelImage.USHORT) &&
+                (image.getType() != ModelImage.INTEGER) && (image.getType() != ModelImage.UINTEGER)) {
             MipavUtil.displayError("Source Image must be an BYTE, SHORT, or INTEGER");
             dispose();
 
             return;
         }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            entireImageFlag = parser.getNextBoolean();
-            image25D = parser.getNextBoolean();
-            kernelSize = parser.getNextInteger();
-            kernelShape = parser.getNextInteger();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
+        setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
     }
-
+    
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is processed, <code>false</code> indicates a region.
-     */
-    public void setEntireImageFlag(boolean flag) {
-        entireImageFlag = flag;
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
     }
 
     /**
@@ -479,14 +349,12 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
      * whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        start = System.currentTimeMillis();
-
         String name = makeImageName(image.getImageName(), "_mode");
 
         // stuff to do when working on 2-D images.
         if (image.getNDims() == 2) { // source image is 2D
 
-            if (displayLoc == NEW) { // (2D)
+            if (outputPanel.isOutputNewImageSet()) { // (2D)
 
                 try {
 
@@ -505,7 +373,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
                     }
 
                     // Make algorithm
-                    modeAlgo = new AlgorithmMode(resultImage, image, kernelSize, kernelShape, entireImageFlag);
+                    modeAlgo = new AlgorithmMode(resultImage, image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -542,7 +410,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    modeAlgo = new AlgorithmMode(image, kernelSize, kernelShape, entireImageFlag);
+                    modeAlgo = new AlgorithmMode(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -587,7 +455,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
             }
         } else if (image.getNDims() == 3) {
 
-            if (displayLoc == NEW) { // (3D)
+            if (outputPanel.isOutputNewImageSet()) { // (3D)
 
                 try {
 
@@ -612,7 +480,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
 
                     // Make algorithm
                     modeAlgo = new AlgorithmMode(resultImage, image, kernelSize, kernelShape, image25D,
-                                                 entireImageFlag);
+                                                 outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -648,7 +516,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
                 try {
 
                     // Make algorithm
-                    modeAlgo = new AlgorithmMode(image, kernelSize, kernelShape, image25D, entireImageFlag);
+                    modeAlgo = new AlgorithmMode(image, kernelSize, kernelShape, image25D, outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -783,50 +651,8 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
 
         setupBox.add(maskPanel); // the parameters-panel is at the top of the box
 
-        Box lowerBox = new Box(BoxLayout.X_AXIS);
-
-        // destination goes in the left of the lower box
-        JPanel destinationPanel = new JPanel();
-        Box destinationBox = new Box(BoxLayout.Y_AXIS);
-
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage); // add the button to the grouping
-        destinationBox.add(newImage); // add the button to the component
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage); // add the button to the grouping
-        destinationBox.add(replaceImage); // add the button to the component
-        destinationPanel.add(destinationBox);
-
-        lowerBox.add(destinationPanel);
-
-        // filter goes in the right of the lower box
-        JPanel imageVOIPanel = new JPanel();
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Filter"));
-
-        Box imageVOIBox = new Box(BoxLayout.Y_AXIS);
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage); // add the button to the grouping
-        imageVOIBox.add(wholeImage); // add the button to the component
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions); // add the button to the grouping
-        imageVOIBox.add(VOIRegions); // add the button to the component
-
-        imageVOIPanel.add(imageVOIBox); // place the box onto a border
-        lowerBox.add(imageVOIPanel); // place the bordered stuff into the lower box
-
-        setupBox.add(lowerBox); // place lowerBox into the setupBox
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        setupBox.add(outputPanel);
 
         if (image.getNDims() > 2) { // only perform if the image has more than 1 slice
 
@@ -856,13 +682,6 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
 
         getContentPane().add(setupBox, BorderLayout.CENTER); // put the setupBox into the dialog
 
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setVisible(true);
@@ -877,23 +696,7 @@ public class JDialogMode extends JDialogBase implements AlgorithmInterface, Scri
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        String tmpStr;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-
-        }
-
-        if (wholeImage.isSelected()) {
-            entireImageFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            entireImageFlag = false;
-
-            // associate kernel size with selectBox choice.
-        }
-
+        // associate kernel size with selectBox choice.
         this.determineKernelSize();
 
         // get the index of the combo-box for kernelShape

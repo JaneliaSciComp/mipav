@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,7 +26,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMask
  */
-public class JDialogMask extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogMask extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -34,7 +36,10 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    double min, max;
+    double min;
+    
+    /** DOCUMENT ME! */
+    double max;
 
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
@@ -103,38 +108,22 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
     public JDialogMask(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         setMinMax();
         init();
     }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMask(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        setMinMax();
-        parentFrame = im.getParentFrame();
-    }
-
+    
     /**
      * Creates a new JDialogMask object.
      *
-     * @param  UI           DOCUMENT ME!
-     * @param  im           DOCUMENT ME!
-     * @param  interactive  DOCUMENT ME!
-     * @param  pol          DOCUMENT ME!
+     * @param  im           The image to process.
+     * @param  interactive  Whether the algorithm should be started immediately (usually false if calling this constructor).
+     * @param  pol          Whether to mask inside the VOIs (false == mask outside VOIs).
      */
-    public JDialogMask(ViewUserInterface UI, ModelImage im, boolean interactive, boolean pol) {
+    public JDialogMask(ModelImage im, boolean interactive, boolean pol) {
         super(false);
 
-        userInterface = UI;
+        userInterface = ViewUserInterface.getReference();
         image = im;
         setMinMax();
         parentFrame = im.getParentFrame();
@@ -178,9 +167,6 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMask) {
             image.clearMask();
 
@@ -190,7 +176,7 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -223,7 +209,9 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         maskAlgo.finalize();
         maskAlgo = null;
@@ -251,96 +239,48 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Mask " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + polarity + " " + value + " " + valueG + " " + valueB +
-                                                           "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + polarity + " " + value + " " + valueG + " " + valueB +
-                                                           "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_fill_interior", polarity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_or_red_if_color", value));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_green", valueG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_blue", valueB));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        setMinMax();
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        setMinMax();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try {
-            setPolarity(parser.getNextBoolean());
-            setValue(parser.getNextFloat());
-            setValueG(parser.getNextFloat());
-            setValueB(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        setPolarity(scriptParameters.getParams().getBoolean("do_fill_interior"));
+        setValue(scriptParameters.getParams().getFloat("fill_value_or_red_if_color"));
+        setValueG(scriptParameters.getParams().getFloat("fill_value_green"));
+        setValueB(scriptParameters.getParams().getFloat("fill_value_blue"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -580,15 +520,15 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
         gbc.gridy = yPos++;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 5, 0, 5);
         maskPanel.add(textValue, gbc);
         gbc.gridx = 1;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelValue, gbc);
 
         if (image.isColorImage()) {
@@ -596,23 +536,23 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
             gbc.gridx = 0;
             gbc.gridwidth = 1;
             gbc.weightx = 1;
-            gbc.fill = gbc.HORIZONTAL;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
             maskPanel.add(textValueG, gbc);
             gbc.gridx = 1;
-            gbc.gridwidth = gbc.REMAINDER;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
             gbc.weightx = 0;
-            gbc.fill = gbc.NONE;
+            gbc.fill = GridBagConstraints.NONE;
             maskPanel.add(labelValueG, gbc);
             gbc.gridy = yPos++;
             gbc.gridx = 0;
             gbc.gridwidth = 1;
             gbc.weightx = 1;
-            gbc.fill = gbc.HORIZONTAL;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
             maskPanel.add(textValueB, gbc);
             gbc.gridx = 1;
-            gbc.gridwidth = gbc.REMAINDER;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
             gbc.weightx = 0;
-            gbc.fill = gbc.NONE;
+            gbc.fill = GridBagConstraints.NONE;
             maskPanel.add(labelValueB, gbc);
         }
 
@@ -628,9 +568,9 @@ public class JDialogMask extends JDialogBase implements AlgorithmInterface, Scri
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
