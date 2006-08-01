@@ -48,19 +48,12 @@ public class FileNRRD extends FileBase {
     /** DOCUMENT ME! */
     private TransMatrix matrix = new TransMatrix(4);
 
-    
-    /** DOCUMENT ME! */
-    private boolean oneFile;
 
     /** DOCUMENT ME! */
     private boolean oneFileStorage;
 
     /** DOCUMENT ME! */
     private float[] origin;
-    
-    
-    /** DOCUMENT ME! */
-    private float[] resolutions;
 
    
     /** DOCUMENT ME! */
@@ -70,8 +63,6 @@ public class FileNRRD extends FileBase {
     private boolean foundEOF = false;
     
     private boolean foundEOHeader = false;
-    
-    private long eohLocation = 0L;
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -91,6 +82,10 @@ public class FileNRRD extends FileBase {
     private int startBlank[];
     
     private int finishBlank[];
+    
+    private int startQuote[];
+    
+    private int finishQuote[];
     
     private int mipavDataType;
     
@@ -118,9 +113,27 @@ public class FileNRRD extends FileBase {
     
     private double axisMaxs[];
     
-    private int nrrdUnits[] = null;
+    private String nrrdUnits[] = null;
     
     private int mipavUnits[];
+    
+    private String nrrdLabels[] = null;
+    
+    private String mipavLabels[] = null;
+    
+    private String kindsString[] = null;
+    
+    private int numSpaceKinds = 0;
+    
+    private String spaceUnitsString = null;
+    
+    private String nrrdSpaceUnits[] = null;
+    
+    private double thicknesses[] = null;
+    
+    private int numThicknesses = 0;
+    
+    private float sliceThickness;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -178,6 +191,8 @@ public class FileNRRD extends FileBase {
         String fieldDescriptorString;
         boolean haveBlank;
         int lastSlashIndex;
+        String keyString;
+        String valueString;
 
         // index         = fileName.toLowerCase().indexOf(".img");
         index = fileName.lastIndexOf(".");
@@ -229,6 +244,23 @@ public class FileNRRD extends FileBase {
                  colonIndex = lineString.lastIndexOf(":");
                  if ((equalIndex >= 2) && (colonIndex == (equalIndex - 1))) {
                      // Key-value pair present
+                     keyString = lineString.substring(0,colonIndex);
+                     valueString = lineString.substring(equalIndex+1).trim();
+                     if (keyString.equalsIgnoreCase("MODALITY")) {
+                         if (valueString.equalsIgnoreCase("DWMRI")) {
+                             Preferences.debug("Modality = Diffusion weighted MRI\n");
+                             fileInfo.setModality("Diffusion weighted MRI");
+                         }
+                         else {
+                             Preferences.debug("Modality = " + valueString + "\n");
+                             fileInfo.setModality(valueString);
+                         }
+                     } // if (keyString.equalsIgnoreCase("MODALITY"))
+                     else if (keyString.equalsIgnoreCase("DWMRI_B-VALUE")) {
+                         Preferences.debug("Scalar diffusion weighting b-value = " + valueString +
+                                           " sec/mm^2\n");
+                         fileInfo.setDWMRI_B_VALUE(valueString);
+                     } // else if (keyString.equalsIgnoreCase("DWMRI_B-VALUE"))
                  } // if ((equalIndex >= 2) && (colonIndex == (equalIndex - 1)))
                  else if (colonIndex >= 1) {
                      // field identifier: field descriptor present
@@ -322,6 +354,8 @@ public class FileNRRD extends FileBase {
                          Preferences.debug("NRRD dimensions = " + nrrdDimensions + "\n");
                          startBlank = new int[nrrdDimensions-1];
                          finishBlank = new int[nrrdDimensions-1];
+                         startQuote = new int[nrrdDimensions];
+                         finishQuote = new int[nrrdDimensions];
                      } // else if (fieldIDString.equalsIgnoreCase("DIMENSION"))
                      else if (fieldIDString.equalsIgnoreCase("SIZES")) {
                          nrrdSizes = new int[nrrdDimensions];
@@ -463,7 +497,7 @@ public class FileNRRD extends FileBase {
                                   Preferences.debug("NRRD spacings[" + i + "] = " + spacings[i] + "\n");
                               }
                               else {
-                                  if (fieldDescriptorString.substring(0,startBlank[0]).equalsIgnoreCase("NAN")) {
+                                  if (fieldDescriptorString.substring(finishBlank[i-1]+1, startBlank[i]).equalsIgnoreCase("NAN")) {
                                       spacings[i] = Double.NaN;
                                   }
                                   else {
@@ -475,7 +509,7 @@ public class FileNRRD extends FileBase {
                               i++;
                           }
                          } // for (i = 0; j = 0; i < nrrdDimensions-1;)
-                         if (fieldDescriptorString.substring(0,startBlank[0]).equalsIgnoreCase("NAN")) {
+                         if (fieldDescriptorString.substring(finishBlank[nrrdDimensions-2]+1).equalsIgnoreCase("NAN")) {
                              spacings[nrrdDimensions-1] = Double.NaN;
                          }
                          else {
@@ -577,8 +611,130 @@ public class FileNRRD extends FileBase {
                         Preferences.debug("NRRD axis maximum[" + i + "] = " + axisMaxs[i] + "\n");    
                      } // else if (fieldIDString.equalsIgnoreCase("AXIS MAXS")) ||
                      else if (fieldIDString.equalsIgnoreCase("UNITS")) {
-                         
+                         nrrdUnits = new String[nrrdDimensions];  
+                         for (i = 0, j = 0; i < nrrdDimensions;) {
+                             if (!fieldDescriptorString.substring(j,j+1).equals("\"")) {
+                                 j++;
+                             } 
+                             else {
+                                 startQuote[i] = j++;
+                                 while (!fieldDescriptorString.substring(j,j+1).equals("\"")) {
+                                     j++;
+                                 } 
+                                 finishQuote[i++] = j++;
+                             }
+                         } // for (i = 0, j = 0; i < nrrdDimensions;)
+                         for (i = 0; i < nrrdDimensions; i++) {
+                             nrrdUnits[i] = fieldDescriptorString.substring(startQuote[i]+1,finishQuote[i]);
+                             Preferences.debug("NRRD units[ " + i + "] = " + nrrdUnits[i] + "\n");
+                         }
                      } // else if (fieldIDString.equalsIgnoreCase("UNITS))
+                     else if (fieldIDString.equalsIgnoreCase("LABELS")) {
+                         nrrdLabels = new String[nrrdDimensions];  
+                         for (i = 0, j = 0; i < nrrdDimensions;) {
+                             if (!fieldDescriptorString.substring(j,j+1).equals("\"")) {
+                                 j++;
+                             } 
+                             else {
+                                 startQuote[i] = j++;
+                                 while (!fieldDescriptorString.substring(j,j+1).equals("\"")) {
+                                     j++;
+                                 } 
+                                 finishQuote[i++] = j++;
+                             }
+                         } // for (i = 0, j = 0; i < nrrdDimensions;)
+                         for (i = 0; i < nrrdDimensions; i++) {
+                             nrrdLabels[i] = fieldDescriptorString.substring(startQuote[i]+1,finishQuote[i]);
+                             Preferences.debug("NRRD labels[ " + i + "] = " + nrrdLabels[i] + "\n");
+                         }
+                     } // else if (fieldIDString.equalsIgnoreCase("LABELS))
+                     else if (fieldIDString.equalsIgnoreCase("KINDS")) {
+                         kindsString = new String[nrrdDimensions]; 
+                         for (i = 0, j = 0; i < nrrdDimensions-1;) {
+                             if (!fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                 j++;
+                             }
+                             else {
+                                 startBlank[i] = j;
+                                 finishBlank[i] = j++;
+                                 while (fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                     finishBlank[i] = j++;
+                                 }
+                                 if (i == 0) {
+                                     kindsString[i] = fieldDescriptorString.substring(0,startBlank[0]);
+                                     Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n");
+                                 }
+                                 else {
+                                     kindsString[i] = fieldDescriptorString.substring(finishBlank[i-1]+1, startBlank[i]);
+                                     Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n");
+                                 }
+                                 i++;
+                             }
+                         } // for (i = 0; j = 0; i < nrrdDimensions-1;)
+                         kindsString[nrrdDimensions-1] = fieldDescriptorString.substring(finishBlank[nrrdDimensions-2]+1);
+                         Preferences.debug("NRRD kind[" + i + "] = " + kindsString[i] + "\n");
+                         for (i = 0; i < nrrdDimensions; i++) {
+                             if (kindsString[i] != null) {
+                                 if (kindsString[i].equalsIgnoreCase("SPACE")) {
+                                     numSpaceKinds++;
+                                 }
+                             }
+                         }
+                     } // else if (fieldIDString.equalsIgnoreCase("KINDS"))
+                     else if (fieldIDString.equalsIgnoreCase("SPACE UNITS")) {
+                         spaceUnitsString = fieldDescriptorString;
+                     } // else if (fieldIDString.equalsIgnoreCase("SPACE UNITS"))
+                     else if (fieldIDString.equalsIgnoreCase("THICKNESSES")) {
+                         thicknesses = new double[nrrdDimensions];
+                         for (i = 0, j = 0; i < nrrdDimensions-1;) {
+                             if (!fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                 j++;
+                             }
+                             else {
+                                 startBlank[i] = j;
+                                 finishBlank[i] = j++;
+                                 while (fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                     finishBlank[i] = j++;
+                                 }
+                                 if (i == 0) {
+                                     if (fieldDescriptorString.substring(0,startBlank[0]).equalsIgnoreCase("NAN")) {
+                                         thicknesses[i] = Double.NaN;
+                                     }
+                                     else {
+                                         thicknesses[i] = Double.valueOf
+                                         (fieldDescriptorString.substring(0,startBlank[0])).doubleValue();
+                                         numThicknesses++;
+                                         sliceThickness = (float)thicknesses[i];
+                                     }
+                                     Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");
+                                 }
+                                 else {
+                                     if (fieldDescriptorString.substring(finishBlank[i-1]+1, startBlank[i])
+                                             .equalsIgnoreCase("NAN")) {
+                                         thicknesses[i] = Double.NaN;
+                                     }
+                                     else {
+                                         thicknesses[i] = Double.valueOf(fieldDescriptorString.substring
+                                                        (finishBlank[i-1]+1, startBlank[i])).doubleValue();
+                                         numThicknesses++;
+                                         sliceThickness = (float)thicknesses[i];
+                                     }
+                                     Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");
+                                 }
+                                 i++;
+                             }
+                         } // for (i = 0; j = 0; i < nrrdDimensions-1;)  
+                         if (fieldDescriptorString.substring(finishBlank[nrrdDimensions-2]+1).equalsIgnoreCase("NAN")) {
+                             thicknesses[nrrdDimensions-1] = Double.NaN;
+                         }
+                         else {
+                             thicknesses[nrrdDimensions-1] = Double.valueOf
+                             (fieldDescriptorString.substring(finishBlank[nrrdDimensions-2]+1)).doubleValue();
+                             numThicknesses++;
+                             sliceThickness = (float)thicknesses[i];
+                         }
+                         Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");    
+                     } // else if (fieldIDString.equalsIgnoreCase("THICKNESSES"))
                  } // else if (colonIndex >= 1)
             } // if (lineString != null)
         } // while (lineString != null)
@@ -586,6 +742,34 @@ public class FileNRRD extends FileBase {
         if (!oneFileStorage) {
             raFile.close();
         }
+        
+        if (spaceUnitsString != null) {
+            nrrdSpaceUnits = new String[numSpaceKinds];  
+            for (i = 0, j = 0; i < numSpaceKinds;) {
+                if (!spaceUnitsString.substring(j,j+1).equals("\"")) {
+                    j++;
+                } 
+                else {
+                    startQuote[i] = j++;
+                    while (!spaceUnitsString.substring(j,j+1).equals("\"")) {
+                        j++;
+                    } 
+                    finishQuote[i++] = j++;
+                }
+            } // for (i = 0, j = 0; i < numSpaceKinds;)
+            for (i = 0; i < numSpaceKinds; i++) {
+                nrrdSpaceUnits[i] = spaceUnitsString.substring(startQuote[i]+1,finishQuote[i]);
+                Preferences.debug("NRRD space units[ " + i + "] = " + nrrdSpaceUnits[i] + "\n");
+            }
+            if (nrrdUnits == null) {
+                nrrdUnits = new String[nrrdDimensions];
+            }
+            for (i = 0, j = 0; i < nrrdDimensions; i++) {
+                if ((kindsString[i] != null) && (kindsString[i].equalsIgnoreCase("SPACE"))) {
+                    nrrdUnits[i] = nrrdSpaceUnits[j++];   
+                }
+            }
+        } // if (spaceUnitsString != null)
         
         if (((nrrdSizes[0] == 2) || (nrrdSizes[0] == 3)) && (nrrdDimensions >= 3) &&
              ((nrrdDataType == ModelStorageBase.UBYTE) || (nrrdDataType == ModelStorageBase.USHORT) ||
@@ -602,6 +786,10 @@ public class FileNRRD extends FileBase {
             mipavDimensions = nrrdDimensions - 1;
             imgExtents = new int[mipavDimensions];
             resols = new float[mipavDimensions];
+            mipavUnits = new int[mipavDimensions];
+            if (nrrdLabels != null) {
+                mipavLabels = new String[mipavDimensions];
+            }
             for (i = 0; i < mipavDimensions; i++) {
                 imgExtents[i] = nrrdSizes[i+1];
                 if (spacings != null) {
@@ -615,13 +803,104 @@ public class FileNRRD extends FileBase {
                 else { // spacings == null
                     resols[i] = 1.0f;
                 } // else spacings == null
-            }
+                if (nrrdUnits != null) {
+                   if ((nrrdUnits[i+1] == null) || (nrrdUnits[i+1].length() == 0) ||
+                       (nrrdUnits[i+1].trim().length() == 0)) {
+                       mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("MM")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("MILLIMETERS"))) {
+                       mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("IN")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("INCHES"))) {
+                       mipavUnits[i] = FileInfoBase.INCHES;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("CM")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("CENTIMETERS"))) {
+                       mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("A")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("ANGSTROMS"))) {
+                       mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("NM")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("NANOMETERS"))) {
+                       mipavUnits[i] = FileInfoBase.NANOMETERS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("UM")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("MICROMETERS"))) {
+                       mipavUnits[i] = FileInfoBase.MICROMETERS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("M")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("METERS"))) {
+                       mipavUnits[i] = FileInfoBase.METERS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("KM")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("KILOMETERS"))) {
+                       mipavUnits[i] = FileInfoBase.KILOMETERS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("MI")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("MILES"))) {
+                       mipavUnits[i] = FileInfoBase.MILES;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("NSEC")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("NANOSECONDS"))) {
+                       mipavUnits[i] = FileInfoBase.NANOSEC;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("USEC")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("MICROSECONDS"))) {
+                       mipavUnits[i] = FileInfoBase.MICROSEC;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("MSEC")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("MILLISECONDS"))) {
+                       mipavUnits[i] = FileInfoBase.MILLISEC;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("SEC")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("SECONDS"))) {
+                       mipavUnits[i] = FileInfoBase.SECONDS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("MIN")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("MINUTES"))) {
+                       mipavUnits[i] = FileInfoBase.MINUTES;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("HR")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("HOURS"))) {
+                       mipavUnits[i] = FileInfoBase.HOURS;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("HZ")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("HERTZ"))) {
+                       mipavUnits[i] = FileInfoBase.HZ;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("PPM")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("PARTS PER MILLION"))) {
+                       mipavUnits[i] = FileInfoBase.PPM;
+                   }
+                   else if ((nrrdUnits[i+1].equalsIgnoreCase("RADS")) ||
+                            (nrrdUnits[i+1].equalsIgnoreCase("RADIANS PER SECOND"))) {
+                       mipavUnits[i] = FileInfoBase.RADS;
+                   }
+                   else {
+                       mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                   }
+                } // if (nrrdUnits != null)
+                else { // nrrdUnits == null
+                    mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;    
+                } // nrrdUnits == null
+                if (nrrdLabels != null) {
+                    mipavLabels[i] = nrrdLabels[i+1];
+                }
+            } // for (i = 0; i < mipavDimensions; i++)
         } // if (((nrrdSizes[0] == 2) || (nrrdSizes[0] == 3)) && (nrrdDimensions >= 3))
         else {
             mipavDataType = nrrdDataType;
             mipavDimensions = nrrdDimensions;
             imgExtents = new int[mipavDimensions];
             resols = new float[mipavDimensions];
+            mipavUnits = new int[mipavDimensions];
+            if (nrrdLabels != null) {
+                mipavLabels = new String[mipavDimensions];
+            }
             for (i = 0; i < mipavDimensions; i++) {
                 imgExtents[i] = nrrdSizes[i];
                 if (spacings != null) {
@@ -635,12 +914,104 @@ public class FileNRRD extends FileBase {
                 else { // spacings == null
                     resols[i] = 1.0f;
                 } // else spacings == null
-            }
+                if (nrrdUnits != null) {
+                    if ((nrrdUnits[i] == null) || (nrrdUnits[i].length() == 0) ||
+                        (nrrdUnits[i].trim().length() == 0)) {
+                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("MM")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("MILLIMETERS"))) {
+                        mipavUnits[i] = FileInfoBase.MILLIMETERS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("IN")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("INCHES"))) {
+                        mipavUnits[i] = FileInfoBase.INCHES;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("CM")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("CENTIMETERS"))) {
+                        mipavUnits[i] = FileInfoBase.CENTIMETERS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("A")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("ANGSTROMS"))) {
+                        mipavUnits[i] = FileInfoBase.ANGSTROMS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("NM")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("NANOMETERS"))) {
+                        mipavUnits[i] = FileInfoBase.NANOMETERS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("UM")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("MICROMETERS"))) {
+                        mipavUnits[i] = FileInfoBase.MICROMETERS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("M")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("METERS"))) {
+                        mipavUnits[i] = FileInfoBase.METERS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("KM")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("KILOMETERS"))) {
+                        mipavUnits[i] = FileInfoBase.KILOMETERS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("MI")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("MILES"))) {
+                        mipavUnits[i] = FileInfoBase.MILES;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("NSEC")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("NANOSECONDS"))) {
+                        mipavUnits[i] = FileInfoBase.NANOSEC;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("USEC")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("MICROSECONDS"))) {
+                        mipavUnits[i] = FileInfoBase.MICROSEC;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("MSEC")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("MILLISECONDS"))) {
+                        mipavUnits[i] = FileInfoBase.MILLISEC;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("SEC")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("SECONDS"))) {
+                        mipavUnits[i] = FileInfoBase.SECONDS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("MIN")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("MINUTES"))) {
+                        mipavUnits[i] = FileInfoBase.MINUTES;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("HR")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("HOURS"))) {
+                        mipavUnits[i] = FileInfoBase.HOURS;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("HZ")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("HERTZ"))) {
+                        mipavUnits[i] = FileInfoBase.HZ;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("PPM")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("PARTS PER MILLION"))) {
+                        mipavUnits[i] = FileInfoBase.PPM;
+                    }
+                    else if ((nrrdUnits[i].equalsIgnoreCase("RADS")) ||
+                             (nrrdUnits[i].equalsIgnoreCase("RADIANS PER SECOND"))) {
+                        mipavUnits[i] = FileInfoBase.RADS;
+                    }
+                    else {
+                        mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;
+                    }
+                 } // if (nrrdUnits != null)
+                 else { // nrrdUnits == null
+                     mipavUnits[i] = FileInfoBase.UNKNOWN_MEASURE;    
+                 } // else nrrdUnits == null
+                if (nrrdLabels != null) {
+                    mipavLabels[i] = nrrdLabels[i];
+                }
+            } // for (i = 0; i < mipavDimensions; i++)
         }
         
         fileInfo.setDataType(mipavDataType);
         fileInfo.setExtents(imgExtents);
         fileInfo.setResolutions(resols);
+        fileInfo.setUnitsOfMeasure(mipavUnits);
+        fileInfo.setLabels(mipavLabels);
+        if (numThicknesses == 1) {
+            fileInfo.setSliceThickness(sliceThickness);
+        }
         
         return true; // If it got this far, it has successfully read in the header
     }
@@ -674,9 +1045,6 @@ public class FileNRRD extends FileBase {
             }
             else if (tempString.length() == 0) {
                 foundEOHeader = true;
-            }
-            if (foundEOHeader) {
-                eohLocation = raFile.getFilePointer();
             }
 
             if (tempString != null) {
@@ -843,7 +1211,7 @@ public class FileNRRD extends FileBase {
             throw (error);
         }
 
-        updateUnitsOfMeasure(fileInfo, image);
+        setFileInfo(fileInfo, image);
         updateorigins(image.getFileInfo());
         image.setMatrix(matrix);
         
@@ -888,18 +1256,14 @@ public class FileNRRD extends FileBase {
      * @param  fileInfo  -- a NRRD file Info that has already been read
      * @param  image     -- a ModelImage that the fileInfo needs to be attached to
      */
-    private void updateUnitsOfMeasure(FileInfoNRRD fileInfo, ModelImage image) {
+    private void setFileInfo(FileInfoNRRD fileInfo, ModelImage image) {
 
         int[] extents = fileInfo.getExtents();
 
         if (image.getNDims() == 2) {
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
+            
             image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
         } else if (image.getNDims() == 3) { // If there is more than one image
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
 
             for (int i = 0; i < extents[2]; i++) {
                 FileInfoNRRD newFileInfo = (FileInfoNRRD) fileInfo.clone();
@@ -907,10 +1271,6 @@ public class FileNRRD extends FileBase {
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 0);
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 1);
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLIMETERS, 2);
-            //fileInfo.setUnitsOfMeasure(FileInfoBase.MILLISEC, 3);
 
             for (int i = 0; i < (extents[2] * extents[3]); i++) {
                 FileInfoNRRD newFileInfo = (FileInfoNRRD) fileInfo.clone();
@@ -919,7 +1279,7 @@ public class FileNRRD extends FileBase {
             }
         }
 
-    } // updateUnitsOfMeasure()
+    } // setFileInfo
     
     /**
      * Updates the start locations. Each image has a fileinfo where the start locations are stored. Note that the start
