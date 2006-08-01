@@ -35,6 +35,14 @@ public class FileInfoNRRD extends FileInfoBase {
     
     /** Concise textual description of the information in the array */
     private String contentString = null;
+    
+    private String labelString[] = null;
+    
+    private float sliceThickness = -1.0f;
+    
+    private String modalityString = null;
+    
+    private String DWMRI_B_VALUE = null;
 
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -131,6 +139,29 @@ public class FileInfoNRRD extends FileInfoBase {
         if (encodingString != null) {
             dialog.appendSecondaryData("Encoding", encodingString);
         }
+        
+        if (labelString != null) {
+            for (i = 0; i < extents.length; i++) {
+              if (labelString[i] != null) {
+                  dialog.appendSecondaryData("Label " + i, labelString[i]);
+              }
+              else {
+                  dialog.appendSecondaryData("Label " + i, "  ");
+              }
+            }
+        } // if (labelString != null)
+        
+        if (sliceThickness > 0.0f) {
+            dialog.appendSecondaryData("Slice thickness", String.valueOf(sliceThickness));
+        }
+        
+        if (modalityString != null) {
+            dialog.appendSecondaryData("Modality", modalityString);
+        }
+        
+        if (DWMRI_B_VALUE != null) {
+            dialog.appendSecondaryData("Scalar diffusion weighting b-value", DWMRI_B_VALUE + " sec/mm^2");
+        }
     }
     
     /**
@@ -155,6 +186,38 @@ public class FileInfoNRRD extends FileInfoBase {
      */
     public void setContent(String contentString) {
         this.contentString = contentString;
+    }
+    
+    /**
+     * 
+     * @param labelString
+     */
+    public void setLabels(String labelString[]) {
+        this.labelString = labelString;
+    }
+    
+    /**
+     * 
+     * @param sliceThickness
+     */
+    public void setSliceThickness(float sliceThickness) {
+        this.sliceThickness = sliceThickness;
+    }
+    
+    /**
+     * 
+     * @param modalityString
+     */
+    public void setModality(String modalityString) {
+        this.modalityString = modalityString;
+    }
+    
+    /**
+     * 
+     * @param DWMRI_B_VALUE
+     */
+    public void setDWMRI_B_VALUE(String DWMRI_B_VALUE) {
+        this.DWMRI_B_VALUE = DWMRI_B_VALUE;
     }
   
 }
