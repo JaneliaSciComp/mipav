@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +29,7 @@ import javax.swing.*;
  * @author   linkb
  * @version  1.0
  */
-public class JDialogThresholdRGB extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogThresholdRGB extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -243,8 +245,10 @@ public class JDialogThresholdRGB extends JDialogBase implements AlgorithmInterfa
             }
         }
 
-        insertScriptLine(algorithm);
-
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         thresholdAlgoRGB.finalize();
         thresholdAlgoRGB = null;
         dispose();
@@ -303,64 +307,76 @@ public class JDialogThresholdRGB extends JDialogBase implements AlgorithmInterfa
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+        
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, regionFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useChannel", useChannel));
+        
+        if (useChannel[0]) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdR",thresholdR));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[0]", fillValues[0]));
+        }
 
-        if (algo.isCompleted()) {
+        if (useChannel[1]) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdG",thresholdG));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[1]", fillValues[1]));
+        }
+        
+        if (useChannel[1]) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdB",thresholdB));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[2]", fillValues[2]));
+        }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
+    }
 
-            if (userInterface.isScriptRecording()) {
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+        
+        regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
+        useChannel = scriptParameters.getParams().getList("useChannel").getAsBooleanArray();
+        
+        fillValues = new float[3];
+        if (useChannel[0]) {
+            thresholdR = scriptParameters.getParams().getList("thresholdR").getAsFloatArray();
+            fillValues[0] = scriptParameters.getParams().getFloat("fillValues[0]");
+        }
 
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ThresholdRGB " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                }
-
-                userInterface.getScriptDialog().append(regionFlag + " ");
-
-                userInterface.getScriptDialog().append(Boolean.toString(useChannel[0]) + " " +
-                                                       Boolean.toString(useChannel[1]) + " " +
-                                                       Boolean.toString(useChannel[2]) + " ");
-
-
-                if (useChannel[0]) {
-                    userInterface.getScriptDialog().append(thresholdR[0] + " " + thresholdR[1] + " " + fillValues[0] +
-                                                           " ");
-                }
-
-                if (useChannel[1]) {
-                    userInterface.getScriptDialog().append(thresholdG[0] + " " + thresholdG[1] + " " + fillValues[1] +
-                                                           " ");
-                }
-
-                if (useChannel[2]) {
-                    userInterface.getScriptDialog().append(thresholdB[0] + " " + thresholdB[1] + " " + fillValues[2] +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(Boolean.toString(isInverse) + "\n");
-
-            }
+        if (useChannel[1]) {
+            thresholdG = scriptParameters.getParams().getList("thresholdG").getAsFloatArray();
+            fillValues[1] = scriptParameters.getParams().getFloat("fillValues[1]");
+        }
+        
+        if (useChannel[1]) {
+            thresholdB = scriptParameters.getParams().getList("thresholdB").getAsFloatArray();
+            fillValues[2] = scriptParameters.getParams().getFloat("fillValues[2]");
+        }
+        
+        isInverse = scriptParameters.getParams().getBoolean("isInverse");
+    }
+   
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
         }
     }
 
@@ -478,82 +494,6 @@ public class JDialogThresholdRGB extends JDialogBase implements AlgorithmInterfa
         setDisplayLocNew();
         setSeparateThread(true);
         callAlgorithm();
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-
-            useChannel[0] = parser.getNextBoolean();
-            useChannel[1] = parser.getNextBoolean();
-            useChannel[2] = parser.getNextBoolean();
-
-            fillValues = new float[3];
-
-            if (useChannel[0]) {
-                setThresholdR(new float[] { parser.getNextFloat(), parser.getNextFloat() });
-                fillValues[0] = parser.getNextFloat();
-            }
-
-            if (useChannel[1]) {
-                setThresholdG(new float[] { parser.getNextFloat(), parser.getNextFloat() });
-                fillValues[1] = parser.getNextFloat();
-            }
-
-            if (useChannel[2]) {
-                setThresholdB(new float[] { parser.getNextFloat(), parser.getNextFloat() });
-                fillValues[2] = parser.getNextFloat();
-            }
-
-            isInverse = parser.getNextBoolean();
-
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**

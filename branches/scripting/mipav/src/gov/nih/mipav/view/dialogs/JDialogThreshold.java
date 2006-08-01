@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * @version  1.0 Nov 9, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogThreshold extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogThreshold extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -249,8 +251,9 @@ public class JDialogThreshold extends JDialogBase implements AlgorithmInterface,
                 resultImage = null;
             }
         }
-
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -295,52 +298,58 @@ public class JDialogThreshold extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, regionFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdType", thresholdType));
+   
+        if (thresholdType == DEFAULT) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thres1", thres1));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thres2", thres2));
+        } 
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("binaryFlag",binaryFlag));    
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fillValue", fillValue));  
+        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
+    }
 
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Threshold " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + thresholdType + " ");
-
-
-                    if (thresholdType == DEFAULT) {
-                        userInterface.getScriptDialog().append(thres1 + " " + thres2 + " " + fillValue + " " +
-                                                               binaryFlag + " " + isInverse + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(fillValue + " " + binaryFlag + " " + isInverse + "\n");
-                    }
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + thresholdType + " ");
-
-                    if (thresholdType == DEFAULT) {
-                        userInterface.getScriptDialog().append(thres1 + " " + thres2 + " " + fillValue + " " +
-                                                               binaryFlag + " " + isInverse + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(fillValue + " " + binaryFlag + " " + isInverse + "\n");
-                    }
-                }
-            }
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+        
+        regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
+        thresholdType = scriptParameters.getParams().getInt("thresholdType");
+        
+        if (thresholdType == DEFAULT) {
+            thres1 = scriptParameters.getParams().getFloat("thres1");
+            thres2 = scriptParameters.getParams().getFloat("thres2");
+        }
+        
+        binaryFlag = scriptParameters.getParams().getBoolean("binaryFlag");
+        fillValue = scriptParameters.getParams().getFloat("fillValue");
+        isInverse = scriptParameters.getParams().getBoolean("isInverse");
+    }
+   
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
         }
     }
 
