@@ -134,6 +134,30 @@ public class FileNRRD extends FileBase {
     private int numThicknesses = 0;
     
     private float sliceThickness;
+    
+    private String dwmriGradient[][] = null;
+    
+    private String dwmriNex[][] = null;
+    
+    private boolean autoSequence = false;
+    
+    private int paddingNumber = 0;
+    
+    private String baseBeforeNumber = null;
+    
+    private String baseAfterNumber = null;
+    
+    private boolean baseNumber = false;
+    
+    private String ext = null;
+    
+    private int sequenceStart;
+    
+    private int sequenceFinish;
+    
+    private int sequenceStep;
+    
+    private int subdim = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -184,15 +208,23 @@ public class FileNRRD extends FileBase {
         String fileHeaderName;
         int[] nrrdExtents = new int[5];
         int numDims = 0;
-        String lineString;
+        String lineString = null;
         int colonIndex;
         int equalIndex;
         String fieldIDString;
         String fieldDescriptorString;
-        boolean haveBlank;
+        int numBlanks;
         int lastSlashIndex;
         String keyString;
         String valueString;
+        int gradientIndex;
+        int startIndex;
+        int finishIndex;
+        String keyNumberString;
+        String formatString;
+        int percentIndex;
+        int dIndex;
+        int periodIndex;
 
         // index         = fileName.toLowerCase().indexOf(".img");
         index = fileName.lastIndexOf(".");
@@ -261,6 +293,26 @@ public class FileNRRD extends FileBase {
                                            " sec/mm^2\n");
                          fileInfo.setDWMRI_B_VALUE(valueString);
                      } // else if (keyString.equalsIgnoreCase("DWMRI_B-VALUE"))
+                     else if ((keyString.length() >= 19) &&
+                              (keyString.substring(0,14).equalsIgnoreCase("DWMRI_GRADIENT"))) {
+                         Preferences.debug(keyString + " = " +  valueString + "\n");
+                         if (dwmriGradient == null) {
+                             dwmriGradient = new String[100][2];
+                         }
+                         gradientIndex = Integer.valueOf(keyString.substring(15)).intValue();
+                         dwmriGradient[gradientIndex][0] = keyString;
+                         dwmriGradient[gradientIndex][1] = valueString;
+                     }
+                     else if ((keyString.length() >= 14) &&
+                              (keyString.substring(0,9).equalsIgnoreCase("DWMRI_NEX"))) {
+                         Preferences.debug(keyString + " = " +  valueString + "\n");
+                         if (dwmriNex == null) {
+                             dwmriNex = new String[100][2];
+                         }
+                         gradientIndex = Integer.valueOf(keyString.substring(10)).intValue();
+                         dwmriNex[gradientIndex][0] = keyString;
+                         dwmriNex[gradientIndex][1] = valueString;
+                     }
                  } // if ((equalIndex >= 2) && (colonIndex == (equalIndex - 1)))
                  else if (colonIndex >= 1) {
                      // field identifier: field descriptor present
@@ -352,8 +404,8 @@ public class FileNRRD extends FileBase {
                      else if (fieldIDString.equalsIgnoreCase("DIMENSION")) {
                          nrrdDimensions = Integer.valueOf(fieldDescriptorString).intValue();
                          Preferences.debug("NRRD dimensions = " + nrrdDimensions + "\n");
-                         startBlank = new int[nrrdDimensions-1];
-                         finishBlank = new int[nrrdDimensions-1];
+                         startBlank = new int[Math.max(nrrdDimensions-1,4)];
+                         finishBlank = new int[Math.max(nrrdDimensions-1,4)];
                          startQuote = new int[nrrdDimensions];
                          finishQuote = new int[nrrdDimensions];
                      } // else if (fieldIDString.equalsIgnoreCase("DIMENSION"))
@@ -415,13 +467,22 @@ public class FileNRRD extends FileBase {
                      } // else if ((fieldIDString.equalsIgnoreCase("BYTE SKIP")) ||
                      else if ((fieldIDString.equalsIgnoreCase("DATA FILE")) ||
                               (fieldIDString.equalsIgnoreCase("DATAFILE"))) {
-                         haveBlank = false;
-                         for (i = 0; i < fieldDescriptorString.length() && !haveBlank; i++) {
-                              if (fieldDescriptorString.substring(i,i+1).equals(" ")) {
-                                  haveBlank = true;
-                              }
+                         numBlanks = 0;
+                         for (i = 0, j = 0; j < fieldDescriptorString.length();) {
+                             if (!fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                 j++;
+                             }
+                             else {
+                                 numBlanks++;
+                                 startBlank[i] = j;
+                                 finishBlank[i] = j++;
+                                 while (fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                     finishBlank[i] = j++;
+                                 }
+                                 i++;
+                             }
                          }
-                         if ((!haveBlank) && (!fieldDescriptorString.equalsIgnoreCase("LIST"))) {
+                         if ((numBlanks == 0) && (!fieldDescriptorString.equalsIgnoreCase("LIST"))) {
                              // There is a single detached data file and its file directory
                              // and fileName are given by fieldDescriptorString
                              if ((fieldDescriptorString.substring(0,1).equals("."))  &&
@@ -456,7 +517,65 @@ public class FileNRRD extends FileBase {
                                  Preferences.debug("Data file name = " + fileName + "\n");
                                  fileInfo.setFileName(fileName);
                              }
-                         }
+                         } // if ((numBlanks == 0) && (!fieldDescriptorString.equalsIgnoreCase("LIST")))
+                         else if (numBlanks >= 3) {
+                             autoSequence = true;
+                             formatString = fieldDescriptorString.substring(0,startBlank[0]); 
+                             percentIndex = formatString.lastIndexOf("%");
+                             dIndex = 0;
+                             for (i = percentIndex + 1; dIndex == 0; i++) {
+                                 if (formatString.substring(i,i+1).equalsIgnoreCase("D")) {
+                                     dIndex = i;
+                                 }
+                             }
+                             if (dIndex == (percentIndex+1)) {
+                                 paddingNumber = 0;
+                             }
+                             else {
+                                 paddingNumber = Integer.valueOf(formatString.substring
+                                                     (percentIndex+1,dIndex)).intValue();
+                             }
+                             periodIndex = formatString.lastIndexOf(".");
+                             if (periodIndex > dIndex) {
+                                 // Increment in file base
+                                 baseNumber = true;
+                                 ext = formatString.substring(periodIndex+1);
+                             }
+                             else {
+                                 // Increment in file extension
+                                 baseNumber = false;
+                                 ext = null;
+                             }
+                             if (percentIndex == 0) {
+                                 baseBeforeNumber = null;
+                             }
+                             else if (percentIndex < periodIndex) {
+                                 baseBeforeNumber = formatString.substring(0,percentIndex);
+                             }
+                             else { // percentIndex > periodIndex
+                                 baseBeforeNumber = formatString.substring(0,periodIndex);
+                             }
+                             if (periodIndex > (dIndex+1)) {
+                                 baseAfterNumber = formatString.substring(dIndex+1,periodIndex);
+                             }
+                             else {
+                                 baseAfterNumber = null;
+                             }
+                             sequenceStart = Integer.valueOf(fieldDescriptorString.
+                                     substring(finishBlank[0]+1,startBlank[1])).intValue();
+                             sequenceFinish = Integer.valueOf(fieldDescriptorString.
+                                     substring(finishBlank[1]+1,startBlank[2])).intValue();
+                             if (numBlanks == 3) {
+                                 sequenceStep = Integer.valueOf(fieldDescriptorString.
+                                     substring(finishBlank[2]+1)).intValue();
+                             } // if (numBlanks == 3)
+                             else {
+                                 sequenceStep = Integer.valueOf(fieldDescriptorString.
+                                         substring(finishBlank[2]+1,startBlank[3])).intValue();
+                                 subdim = Integer.valueOf(fieldDescriptorString.
+                                         substring(finishBlank[3]+1)).intValue();
+                             }
+                         } // else if (numBlanks >= 3)
                      } // else if ((fieldIDString.equalsIgnoreCase("DATA FILE"))
                      else if (fieldIDString.equalsIgnoreCase("ENCODING")) {
                          if (fieldDescriptorString.equalsIgnoreCase("RAW")) {
@@ -1004,6 +1123,13 @@ public class FileNRRD extends FileBase {
             } // for (i = 0; i < mipavDimensions; i++)
         }
         
+        if (subdim == 0) {
+            subdim = mipavDimensions - 1;
+        }
+        else if (nrrdDimensions > mipavDimensions) {
+            subdim--;
+        }
+        
         fileInfo.setDataType(mipavDataType);
         fileInfo.setExtents(imgExtents);
         fileInfo.setResolutions(resols);
@@ -1011,6 +1137,25 @@ public class FileNRRD extends FileBase {
         fileInfo.setLabels(mipavLabels);
         if (numThicknesses == 1) {
             fileInfo.setSliceThickness(sliceThickness);
+        }
+        if (dwmriNex != null) {
+            for (i = 0; i < dwmriNex.length; i++) {
+                if (dwmriNex[i] != null) {
+                    startIndex = Integer.valueOf(dwmriNex[i][0].substring(10)).intValue();
+                    finishIndex = startIndex + Integer.valueOf(dwmriNex[i][1]).intValue() - 1;
+                    for (j = startIndex+1; j <= finishIndex; j++) {
+                        keyNumberString = String.valueOf(j);
+                        while (keyNumberString.length() < 4) {
+                            keyNumberString = "0".concat(keyNumberString);
+                        }
+                        dwmriGradient[j][0] = "DWMRI_gradient_".concat(keyNumberString);
+                        dwmriGradient[j][1] = dwmriGradient[startIndex][1];
+                    }
+                }
+            }
+        }
+        if (dwmriGradient != null) {
+            fileInfo.setDwmriGradient(dwmriGradient);
         }
         
         return true; // If it got this far, it has successfully read in the header
@@ -1089,6 +1234,12 @@ public class FileNRRD extends FileBase {
         long dataSize;
         FileInputStream fis;
         int s;
+        String sequenceNumber;
+        int numSlabs;
+        int subExtents[];
+        ModelImage subImage;
+        byte dataBuffer[];
+        int pointer = 0;
         
         progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
                 ViewUserInterface.getReference().getProgressBarPrefix() + "NRRD image(s) ...",
@@ -1099,6 +1250,187 @@ public class FileNRRD extends FileBase {
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NRRD header file error"));
         }
+        
+        if (autoSequence) {
+            try {
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+            } catch (OutOfMemoryError error) {
+                throw (error);
+            }
+
+            setFileInfo(fileInfo, image);
+            updateorigins(image.getFileInfo());
+            image.setMatrix(matrix);
+            
+            if (subdim == mipavDimensions) {
+                numSlabs = 1 + (sequenceFinish - sequenceStart)/sequenceStep;
+                dataSize = 1;
+                for (i = 0; i < mipavDimensions; i++) {
+                    dataSize *= imgExtents[i];
+                }
+                dataSize = dataSize/numSlabs;
+                subExtents = new int[mipavDimensions];
+                for (i = 0; i < mipavDimensions-1; i++) {
+                    subExtents[i] = imgExtents[i];
+                }
+                subExtents[mipavDimensions-1] = imgExtents[mipavDimensions-1]/numSlabs;
+            }
+            else { // subdim < mipavDimensions
+                dataSize = 1;
+                for (i = 0; i < subdim; i++) {
+                    dataSize *= imgExtents[i];
+                }
+                subExtents = new int[subdim];
+                for (i = 0; i < mipavDimensions; i++) {
+                    subExtents[i] = imgExtents[i];
+                }
+            } // else subdim < mipavDimensions
+            switch (nrrdDataType) {
+
+                case ModelStorageBase.BYTE:
+                case ModelStorageBase.UBYTE:
+                    break;
+    
+                case ModelStorageBase.SHORT:
+                case ModelStorageBase.USHORT:
+                    dataSize *= 2;
+                    break;
+    
+                case ModelStorageBase.INTEGER:
+                case ModelStorageBase.UINTEGER:
+                case ModelStorageBase.FLOAT:
+                    dataSize *= 4;
+                    break;
+    
+                case ModelStorageBase.LONG:
+                case ModelStorageBase.DOUBLE:
+                    dataSize *= 8;
+                    break;
+
+            } // switch (nrrdDataType)
+            
+            dataBuffer = new byte[(int)dataSize];
+            
+            try {
+                subImage = new ModelImage(fileInfo.getDataType(), subExtents, "subImage", UI);
+            } catch (OutOfMemoryError error) {
+                throw (error);
+            }
+            
+            for (i = sequenceStart; i <= sequenceFinish; i += sequenceStep) {
+                progressBar.updateValue((i - sequenceStart)*100/sequenceStep,true);
+                // Create fileName with initial sequence number
+                fileName = null;
+                sequenceNumber = String.valueOf(i);
+                while (sequenceNumber.length() < paddingNumber) {
+                    sequenceNumber = "0".concat(sequenceNumber);
+                }
+                if (baseBeforeNumber != null) {
+                    fileName = baseBeforeNumber;
+                }
+                if (baseNumber) {
+                    if (fileName == null) {
+                        fileName = sequenceNumber;
+                    }
+                    else {
+                        fileName = fileName.concat(sequenceNumber);
+                    }
+                } // if (baseNumber)
+                if (baseAfterNumber != null) {
+                    fileName = fileName.concat(baseAfterNumber);
+                }
+                fileName = fileName.concat(".");
+                if (baseNumber) {
+                    fileName = fileName.concat(ext);
+                }
+                else {
+                    fileName = fileName.concat(sequenceNumber);
+                }
+                Preferences.debug("Autosequencing on " + fileDir + fileName + "\n"); 
+                
+                // Do line skipping before byte skipping
+                // Do line skipping before decompression
+                file = new File(fileDir + fileName);
+                raFile = new RandomAccessFile(file, "r");
+                fileLength = raFile.length();
+                
+                if (skippedLines > 0) {
+                    linesFound = 0;
+                    for (i = 0; linesFound < skippedLines; i++) {
+                        raFile.read(buf);
+                        if (buf[0] == 10 /* new line */) {
+                            linesFound++;
+                        }
+                    }
+                } // if(skippedLines > 0)
+                offset1 = raFile.getFilePointer();
+                raFile.close();
+                
+                if (gunzip) {
+                    int totalBytesRead = 0;
+                    progressBar.setVisible(isProgressBarVisible());
+                    progressBar.setMessage("Uncompressing GZIP file ...");
+                    fis = new FileInputStream(file);
+                    fis.skip(offset1);
+
+                    GZIPInputStream gzin = new GZIPInputStream(new BufferedInputStream(fis));
+                    s = fileName.lastIndexOf(".");
+                    String uncompressedName = fileDir + fileName.substring(0, s);
+                    FileOutputStream out = new FileOutputStream(uncompressedName);
+                    byte[] buffer = new byte[256];
+
+                    while (true) {
+                        int bytesRead = gzin.read(buffer);
+
+                        if (bytesRead == -1) {
+                            break;
+                        }
+
+                        totalBytesRead += bytesRead;
+                        out.write(buffer, 0, bytesRead);
+                    }
+
+                    out.close();
+                    file = new File(uncompressedName);
+                    fileInfo.setFileName(fileName.substring(0,s));
+                    offset1 = 0;
+                    raFile = new RandomAccessFile(file, "r");
+                    fileLength = raFile.length();
+                    raFile.close();
+                } // if (gunzip)
+                
+                // Do byte skipping after decompression
+                if (skippedBytes >= 0) {
+                    offset = (int)(offset1 + skippedBytes);
+                }
+                else { // skippedBytes < 0
+                    offset = (int)(fileLength - dataSize);
+                } // else skippedBytes < 0
+                
+                try { // Construct a FileRaw to actually read the image.
+
+                    FileRaw rawFile;
+                    rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, false,
+                                          FileBase.READ);
+                   
+                    rawFile.readImage(subImage, offset);
+                    
+                    subImage.exportData(0, (int)dataSize, dataBuffer);
+                    
+                    image.importData(pointer, dataBuffer, false);
+                    pointer = pointer + (int)dataSize;
+                } catch (IOException error) {
+                    throw new IOException("FileNRRD: " + error);
+                } catch (OutOfMemoryError e) {
+                    throw (e);
+                }
+            } // for (i = sequenceStart; i <= sequenceFinish; i += sequenceStep)
+            image.calcMinMax();
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
+            return image;
+        } // if (autoSequence)
         
         if (!oneFileStorage) {
             file = new File(fileDir + fileName);
