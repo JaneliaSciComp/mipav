@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 Jan 9, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogNoise extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -53,7 +55,7 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private JLabel imageRange;
+    private JLabel imageRangeLabel;
 
     /** DOCUMENT ME! */
     private double min, max;
@@ -104,8 +106,6 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
      */
     public JDialogNoise() { }
 
-    // or if the source image is to be replaced
-
     /**
      * Constructor.
      *
@@ -115,22 +115,8 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
     public JDialogNoise(Frame theParentFrame, ModelImage _image) {
         super(theParentFrame, false);
         image = _image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogNoise(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -168,9 +154,6 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmNoise) {
             image.clearMask();
 
@@ -182,7 +165,7 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
                 try {
 
                     // resultImage.setImageName("Noise image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -217,7 +200,9 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         randomAlgo.finalize();
         randomAlgo = null;
@@ -233,90 +218,42 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Noise " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + noiseType + " " + min + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + noiseType + " " + min + "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("starting_range", min));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try {
-            setNoiseType(parser.getNextInteger());
-            setNoiseLevel(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        setNoiseType(scriptParameters.getParams().getInt("noise_type"));
+        setNoiseLevel(scriptParameters.getParams().getFloat("starting_range"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -613,12 +550,12 @@ public class JDialogNoise extends JDialogBase implements AlgorithmInterface, Scr
         textStart.addFocusListener(this);
         optPanel.add(textStart);
 
-        imageRange = new JLabel("Image: ( min = " + image.getMin() + "  max = " + image.getMax() + " )");
-        imageRange.setFont(serif12);
-        imageRange.setForeground(Color.black);
+        imageRangeLabel = new JLabel("Image: ( min = " + image.getMin() + "  max = " + image.getMax() + " )");
+        imageRangeLabel.setFont(serif12);
+        imageRangeLabel.setForeground(Color.black);
 
         panelRange.add(optPanel, BorderLayout.CENTER);
-        panelRange.add(imageRange, BorderLayout.SOUTH);
+        panelRange.add(imageRangeLabel, BorderLayout.SOUTH);
 
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
         panelImageType = new JPanel(new BorderLayout());

@@ -3,6 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +26,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmNLNoiseReduction
  */
-public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogNLNoiseReduction extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -129,25 +132,10 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
      */
     public JDialogNLNoiseReduction(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         image = im;
         setDefaults();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogNLNoiseReduction(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-        setDefaults();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -183,8 +171,6 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmNLNoiseReduction) {
             image.clearMask();
 
@@ -195,7 +181,7 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -228,19 +214,14 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         nlnrAlgo.finalize();
         nlnrAlgo = null;
         dispose();
     }
-
-    /**
-     * focusLost - when the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
-     */
-    public void focusLost(FocusEvent event) { }
 
     /**
      * Accessor that returns the image.
@@ -250,106 +231,48 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("NLNoiseReduction " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + bt + " " + maskSD + " " + useMedian + " " + image25D +
-                                                           "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + bt + " " + maskSD + " " + useMedian + " " + image25D +
-                                                           "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("brightness_threshold", bt));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("mask_gaussian_std_dev", maskSD));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_median", useMedian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, image25D));
     }
-
-    // *******************************************************************
-    // ************************* Item Events ****************************
-    // *******************************************************************
-
+    
     /**
-     * itemStateChanged - method to handle item events.
-     *
-     * @param  event  event that cause the method to fire
+     * {@inheritDoc}
      */
-    public void itemStateChanged(ItemEvent event) { }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
+        
         setDefaults();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
 
-        try {
-            setBt(parser.getNextDouble());
-            setMaskSD(parser.getNextFloat());
-            setUseMedian(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        setBt(scriptParameters.getParams().getDouble("brightness_threshold"));
+        setMaskSD(scriptParameters.getParams().getFloat("mask_gaussian_std_dev"));
+        setUseMedian(scriptParameters.getParams().getBoolean("do_use_median"));
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -703,7 +626,7 @@ public class JDialogNLNoiseReduction extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 1;
         labelMaskSD = createLabel("Mask Gaussian SD (0 for flat response) " +
-                                  image.getFileInfo()[0].sUnits[image.getFileInfo()[0].getUnitsOfMeasure()[0]] + " ");
+                                  FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure()[0]] + " ");
         optionsPanel.add(labelMaskSD, gbc);
 
         gbc.gridx = 1;

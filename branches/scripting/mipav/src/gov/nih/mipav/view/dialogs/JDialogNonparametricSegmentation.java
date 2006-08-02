@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,8 +23,7 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmNonparametricSegmentation
  */
-public class JDialogNonparametricSegmentation extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogNonparametricSegmentation extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -40,9 +40,6 @@ public class JDialogNonparametricSegmentation extends JDialogBase
 
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
-    private ModelImage featureImage = null;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -86,24 +83,10 @@ public class JDialogNonparametricSegmentation extends JDialogBase
     public JDialogNonparametricSegmentation(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogNonparametricSegmentation(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -115,7 +98,6 @@ public class JDialogNonparametricSegmentation extends JDialogBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -141,9 +123,6 @@ public class JDialogNonparametricSegmentation extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmNonparametricSegmentation) {
             image.clearMask();
 
@@ -155,7 +134,7 @@ public class JDialogNonparametricSegmentation extends JDialogBase
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -193,29 +172,13 @@ public class JDialogNonparametricSegmentation extends JDialogBase
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         segAlgo.finalize();
         segAlgo = null;
         dispose();
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-
-        return str;
     }
 
     /**
@@ -226,43 +189,14 @@ public class JDialogNonparametricSegmentation extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("NonparametricSegmentation " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           "\n");
-
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
     }
-
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -296,60 +230,33 @@ public class JDialogNonparametricSegmentation extends JDialogBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
+        String defaultsString = "" + newImage.isSelected();
 
         // System.err.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try { }
-        catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -499,10 +406,9 @@ public class JDialogNonparametricSegmentation extends JDialogBase
         mainPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-
         gbc.gridwidth = 6;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -569,8 +475,6 @@ public class JDialogNonparametricSegmentation extends JDialogBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        String tmpStr;
-
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {

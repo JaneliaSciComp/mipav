@@ -4,9 +4,11 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -26,26 +28,14 @@ import javax.swing.*;
  * @author  Matthew J. McAuliffe, Ph.D.
  * @see     AlgorithmNMSuppression
  */
-public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogNMSuppression extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 3261350233947714913L;
 
-    /** DOCUMENT ME! */
-    private static final String DELIMITER = ",";
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** difference between x,y resolutions (in plane) and z resolution (between planes). */
-    private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -57,78 +47,20 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
-    private JLabel labelCorrected;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussX;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussY;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussZ;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
     private AlgorithmNMSuppression nmSuppressionAlgo;
 
     /** DOCUMENT ME! */
-    private float normFactor = 1; // normalization factor to adjust for resolution
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag; // true = apply algorithm to the whole image
-
-    // false = apply algorithm only to VOI regions
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
-    private JCheckBox resolutionCheckbox;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private JPanel scalePanel;
-
-    /** DOCUMENT ME! */
-    private float scaleX;
-
-    /** DOCUMENT ME! */
-    private float scaleY;
-
-    /** DOCUMENT ME! */
-    private float scaleZ;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussX;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussY;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussZ;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
+    
+    private JPanelSigmas sigmaPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -145,24 +77,10 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
      */
     public JDialogNMSuppression(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         image = im;
         init();
         loadDefaults();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogNMSuppression(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -198,7 +116,6 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
         int i;
 
         if (algorithm instanceof AlgorithmNMSuppression) {
@@ -211,7 +128,7 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -244,51 +161,15 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         saveDefaults();
 
         nmSuppressionAlgo.finalize();
         nmSuppressionAlgo = null;
         dispose();
-    }
-
-    /**
-     * focusLost - when the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
-     */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
-        JTextField field;
-        String text;
-        float tempNum;
-
-        if (source == textGaussZ) {
-            field = (JTextField) source;
-            text = field.getText();
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        }
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString() {
-        String str = new String();
-        str += scaleX + DELIMITER;
-        str += scaleY + DELIMITER;
-        str += textGaussZ.getText() + DELIMITER;
-
-        return str;
     }
 
     /**
@@ -301,42 +182,16 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     * 
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
 
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("NMSuppression " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + image25D + " " + scaleX + " " +
-                                                           scaleY + " " + scaleZ);
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + image25D + " " + scaleX + " " +
-                                                           scaleY + " " + scaleZ);
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeSigmas(sigmaPanel);
     }
 
     // *******************************************************************
@@ -350,29 +205,9 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        float tempNum;
 
-        if (source == resolutionCheckbox) {
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        } else if (source == image25DCheckbox) {
-
-            if (image25DCheckbox.isSelected()) {
-                resolutionCheckbox.setEnabled(false); // Image is only 2D or 2.5D, thus this checkbox
-                labelGaussZ.setEnabled(false); // is not relevent
-                textGaussZ.setEnabled(false);
-                labelCorrected.setEnabled(false);
-            } else {
-                resolutionCheckbox.setEnabled(true);
-                labelGaussZ.setEnabled(true);
-                textGaussZ.setEnabled(true);
-                labelCorrected.setEnabled(true);
-            }
+        if (source == image25DCheckbox) {
+            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
     }
 
@@ -385,25 +220,17 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
         if (defaultsString != null) {
 
             try {
-                StringTokenizer st = new StringTokenizer(defaultsString, DELIMITER);
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
 
-                textGaussX.setText(st.nextToken());
-                textGaussY.setText(st.nextToken());
-                textGaussZ.setText(st.nextToken());
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+                
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
 
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
 
-                if (MipavUtil.getBoolean(st)) {
-                    wholeImage.setSelected(true);
-                } else {
-                    VOIRegions.setSelected(true);
-                }
-
-                resolutionCheckbox.setSelected(MipavUtil.getBoolean(st));
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
             } catch (NoSuchElementException nsee) {
                 return;
@@ -421,80 +248,42 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString() + newImage.isSelected() + DELIMITER +
-                                           wholeImage.isSelected() + DELIMITER + resolutionCheckbox.isSelected() +
-                                           DELIMITER + image25DCheckbox.isSelected());
+        String delim = ",";
+        
+        String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
+        defaultsString += outputPanel.isOutputNewImageSet() + delim;
+        defaultsString += outputPanel.isProcessWholeImageSet() + delim;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += image25DCheckbox.isSelected();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
+    
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setScaleX(parser.getNextFloat());
-            setScaleY(parser.getNextFloat());
-            setScaleZ(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+        
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmaPanel);
     }
 
     /**
@@ -504,42 +293,6 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
      */
     public void setImage25D(boolean flag) {
         image25D = flag;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
-     * Accessor that sets the x scale.
-     *
-     * @param  scale  Value to set x scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleX(float scale) {
-        scaleX = scale;
-    }
-
-    /**
-     * Accessor that sets the y scale.
-     *
-     * @param  scale  Value to set y scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleY(float scale) {
-        scaleY = scale;
-    }
-
-    /**
-     * Accessor that sets the z scale.
-     *
-     * @param  scale  Value to set z scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleZ(float scale) {
-        scaleZ = scale;
     }
 
     /**
@@ -555,11 +308,9 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            float[] sigmas = new float[2];
-            sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-            sigmas[1] = scaleY;
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -579,7 +330,7 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
                     }
 
                     // Make algorithm
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas, regionFlag, false);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -619,7 +370,7 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, regionFlag, false);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -669,12 +420,9 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            float[] sigmas = new float[3];
-            sigmas[0] = scaleX;
-            sigmas[1] = scaleY;
-            sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -699,7 +447,7 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
                     }
 
                     // Make algorithm
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas, regionFlag, image25D);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -738,7 +486,7 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
                 try {
 
                     // Make algorithm
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, regionFlag, image25D);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -810,129 +558,30 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+        
+        sigmaPanel = new JPanelSigmas(image);
+        mainPanel.add(sigmaPanel, gbc);
 
-        scalePanel = new JPanel(new GridLayout(3, 2));
-        scalePanel.setForeground(Color.black);
-        scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
-        mainPanel.add(scalePanel, gbc);
-
-        labelGaussX = new JLabel("X dimension (0.0 - 10.0) ");
-        labelGaussX.setForeground(Color.black);
-        labelGaussX.setFont(serif12);
-        scalePanel.add(labelGaussX);
-
-        textGaussX = new JTextField();
-        textGaussX.setText("1.0");
-        textGaussX.setFont(serif12);
-        scalePanel.add(textGaussX);
-
-        labelGaussY = new JLabel("Y dimension (0.0 - 10.0) ");
-        labelGaussY.setForeground(Color.black);
-        labelGaussY.setFont(serif12);
-        scalePanel.add(labelGaussY);
-
-        textGaussY = new JTextField();
-        textGaussY.setText("1.0");
-        textGaussY.setFont(serif12);
-        scalePanel.add(textGaussY);
-
-        labelGaussZ = new JLabel("Z dimension (0.0 - 10.0) ");
-        labelGaussZ.setForeground(Color.black);
-        labelGaussZ.setFont(serif12);
-        scalePanel.add(labelGaussZ);
-
-        textGaussZ = new JTextField();
-        textGaussZ.setText("1.0");
-        textGaussZ.setFont(serif12);
-        scalePanel.add(textGaussZ);
-
-        JPanel resPanel = new JPanel(new BorderLayout());
-        resPanel.setBorder(buildTitledBorder("Resolution options"));
-        resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale");
-        resolutionCheckbox.setFont(serif12);
-        resPanel.add(resolutionCheckbox, BorderLayout.NORTH);
-        resolutionCheckbox.setSelected(true);
-
+        JPanel optionPanel = new JPanel(new BorderLayout());
+        optionPanel.setBorder(buildTitledBorder("Options"));
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
         image25DCheckbox.setFont(serif12);
-        resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
+        optionPanel.add(image25DCheckbox, BorderLayout.SOUTH);
         image25DCheckbox.setSelected(false);
         image25DCheckbox.addItemListener(this);
 
-        if (image.getNDims() == 3) { // if the source image is 3D then allow
-            resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
-            resolutionCheckbox.addItemListener(this); // use the correction factor
-            textGaussZ.addFocusListener(this);
-            textGaussZ.setEnabled(true);
-        } else {
-            resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
-            labelGaussZ.setEnabled(false); // is not relevent
-            textGaussZ.setEnabled(false);
+        if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
         }
-
-        if (image.getNDims() == 3) { // Source image is 3D, thus show correction factor
-
-            int index = image.getExtents()[2] / 2;
-            float xRes = image.getFileInfo(index).getResolutions()[0];
-            float zRes = image.getFileInfo(index).getResolutions()[2];
-            normFactor = xRes / zRes; // Calculate correction factor
-            labelCorrected = new JLabel("      Corrected scale = " +
-                                        String.valueOf(normFactor * Float.valueOf(textGaussZ.getText()).floatValue()));
-            labelCorrected.setForeground(Color.black);
-            labelCorrected.setBounds(10, 145, 176, 25);
-            labelCorrected.setFont(serif12);
-            resPanel.add(labelCorrected, BorderLayout.CENTER);
-        }
-
+        
         gbc.gridx = 0;
         gbc.gridy = 1;
-        mainPanel.add(resPanel, gbc);
-
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-        destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setBounds(10, 16, 120, 25);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        imageVOIPanel = new JPanel();
-        imageVOIPanel.setLayout(new BorderLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Process"));
-        outputOptPanel.add(imageVOIPanel);
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-        imageVOIPanel.add(wholeImage, BorderLayout.NORTH);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-        imageVOIPanel.add(VOIRegions, BorderLayout.CENTER);
+        mainPanel.add(optionPanel, gbc);
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        mainPanel.add(outputOptPanel, gbc);
+        mainPanel.add(outputPanel, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -949,61 +598,14 @@ public class JDialogNMSuppression extends JDialogBase implements AlgorithmInterf
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        String tmpStr;
         System.gc();
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         if (image25DCheckbox.isSelected()) {
             image25D = true;
         }
 
-        tmpStr = textGaussX.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleX = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussX.requestFocus();
-            textGaussX.selectAll();
-
+        if (!sigmaPanel.testSigmaValues()) {
             return false;
-        }
-
-        tmpStr = textGaussY.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleY = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussY.requestFocus();
-            textGaussY.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussZ.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleZ = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussZ.requestFocus();
-            textGaussZ.selectAll();
-
-            return false;
-        }
-
-        // Apply normalization if requested!
-        if (resolutionCheckbox.isSelected()) {
-            scaleZ = scaleZ * normFactor;
         }
 
         return true;
