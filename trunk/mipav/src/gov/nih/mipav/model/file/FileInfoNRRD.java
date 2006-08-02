@@ -43,6 +43,8 @@ public class FileInfoNRRD extends FileInfoBase {
     private String modalityString = null;
     
     private String DWMRI_B_VALUE = null;
+    
+    private String dwmriGradient[][] = null;
 
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -162,6 +164,14 @@ public class FileInfoNRRD extends FileInfoBase {
         if (DWMRI_B_VALUE != null) {
             dialog.appendSecondaryData("Scalar diffusion weighting b-value", DWMRI_B_VALUE + " sec/mm^2");
         }
+        
+        if (dwmriGradient != null) {
+            for (i = 0; i < dwmriGradient.length; i++) {
+                if (dwmriGradient[i] != null) {
+                    dialog.appendSecondaryData(dwmriGradient[i][0], dwmriGradient[i][1]);
+                }
+            }
+        } // if (dwmriGradient != null)
     }
     
     /**
@@ -218,6 +228,14 @@ public class FileInfoNRRD extends FileInfoBase {
      */
     public void setDWMRI_B_VALUE(String DWMRI_B_VALUE) {
         this.DWMRI_B_VALUE = DWMRI_B_VALUE;
+    }
+    
+    /**
+     * 
+     * @param dwmriGradient
+     */
+    public void setDwmriGradient(String dwmriGradient[][]) {
+        this.dwmriGradient = dwmriGradient;
     }
   
 }
