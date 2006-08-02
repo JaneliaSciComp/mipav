@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.*;
  * @see      ModelTriangleMesh
  * @see      ModelQuadMesh
  */
-public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogPlotSurface extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -30,9 +32,6 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
     private static final long serialVersionUID = 1362109646657351750L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private String directory = null;
 
     /** DOCUMENT ME! */
     private AlgorithmHeightFunction extractSurAlgo;
@@ -75,20 +74,6 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
     public JDialogPlotSurface() { }
 
     /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogPlotSurface(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        this.slice = slice;
-    }
-
-    /**
      * Creates a new JDialogPlotSurface object.
      *
      * @param  theParentFrame  Parent frame.
@@ -98,7 +83,7 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
     public JDialogPlotSurface(JFrame theParentFrame, ModelImage im, int slice) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         this.slice = slice;
         init();
     }
@@ -138,7 +123,6 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
-                    directory = chooser.getCurrentDirectory().getName() + File.separatorChar;
                     fileTF.setText(fileName);
                     userInterface.setDefaultDirectory("" + chooser.getCurrentDirectory() + File.separatorChar);
                 }
@@ -187,70 +171,36 @@ public class JDialogPlotSurface extends JDialogBase implements AlgorithmInterfac
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
         dispose();
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("PlotSurface " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + fileName + " " + slice + " " + mesh + " " + subSample +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("surface_output_file", fileName));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slice_num", slice));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("mesh_type", mesh));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", subSample));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        try {
-            setFileName(parser.getNextString());
-            setSlice(parser.getNextInteger());
-            setMeshType(parser.getNextInteger());
-            setSubSample(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
+        
+        setFileName(scriptParameters.getParams().getString("surface_output_file"));
+        setSlice(scriptParameters.getParams().getInt("slice_num"));
+        setMeshType(scriptParameters.getParams().getInt("mesh_type"));
+        setSubSample(scriptParameters.getParams().getInt("subsample_factor"));
     }
 
     /**

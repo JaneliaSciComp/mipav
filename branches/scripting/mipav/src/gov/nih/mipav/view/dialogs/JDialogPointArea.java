@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.text.*;
  * @author   ben link
  * @version  1.0
  */
-public class JDialogPointArea extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogPointArea extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -104,20 +106,6 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
     public JDialogPointArea() { }
-
-
-    /**
-     * Constructor called from the user interface.
-     *
-     * @param  UI     ViewUserInterface
-     * @param  image  ModelImage
-     */
-    public JDialogPointArea(ViewUserInterface UI, ModelImage image) {
-        super(false);
-        userInterface = UI;
-        srcImage = image;
-        parentFrame = image.getParentFrame();
-    }
 
     /**
      * Constructor called from a ViewJFrameImage.
@@ -222,7 +210,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
                 averageIntensities = pointAlgo.getAverageIntensities();
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             pointAlgo.disposeLocal();
             pointAlgo = null;
@@ -234,90 +222,42 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
             dispose();
         }
 
-    } // end algorithmPerformed()
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("PAverageIntensities " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " " + xLoc + " " + yLoc + " " + xSpacing + " " + ySpacing + " " +
-                                                       leftPad + " " + topPad + " " + useThreshold + " " + threshold +
-                                                       " " + showGraph);
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
     }
-
+    
     /**
-     * Accessor that returns the whether or not the algorithm completed successfully.
-     *
-     * @return  DOCUMENT ME!
+     * {@inheritDoc}
      */
-    public boolean isSuccessful() {
-
-        if (pointAlgo.isCompleted()) {
-            return true;
-        } else {
-            return false;
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("x_location", xLoc));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("y_location", yLoc));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("x_spacing", xSpacing));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("y_spacing", ySpacing));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_add_left_padding", leftPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_add_top_padding", topPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_threshold", useThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_graph", showGraph));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        srcImage = im;
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
         userInterface = srcImage.getUserInterface();
         parentFrame = srcImage.getParentFrame();
-
-        try {
-            setXLoc(parser.getNextInteger());
-            setYLoc(parser.getNextInteger());
-            setXSpacing(parser.getNextInteger());
-            setYSpacing(parser.getNextInteger());
-            setLeftPad(parser.getNextBoolean());
-            setTopPad(parser.getNextBoolean());
-            setUseThreshold(parser.getNextBoolean());
-            setThreshold(parser.getNextFloat());
-            setShowGraph(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
+        
+        setXLoc(scriptParameters.getParams().getInt("x_location"));
+        setYLoc(scriptParameters.getParams().getInt("y_location"));
+        setXSpacing(scriptParameters.getParams().getInt("x_spacing"));
+        setYSpacing(scriptParameters.getParams().getInt("y_spacing"));
+        setLeftPad(scriptParameters.getParams().getBoolean("do_add_left_padding"));
+        setTopPad(scriptParameters.getParams().getBoolean("do_add_top_padding"));
+        setUseThreshold(scriptParameters.getParams().getBoolean("do_use_threshold"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setShowGraph(scriptParameters.getParams().getBoolean("do_show_graph"));
     }
 
     /**
@@ -446,7 +386,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
         JLabel locationLabel = new JLabel("Point location (x,y)");
         locationLabel.setFont(MipavUtil.font12B);
         gbc.insets = new Insets(0, 5, 0, 0);
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -492,7 +432,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
 
         JLabel crossLabel = new JLabel("x");
         crossLabel.setFont(MipavUtil.font12B);
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 3;
         optionsPanel.add(crossLabel, gbc);
 
@@ -500,7 +440,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
 
         JTextFieldFilter filter2 = new JTextFieldFilter(JTextFieldFilter.NUMERIC);
         ySpaceField.setDocument(filter2);
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 4;
         optionsPanel.add(ySpaceField, gbc);
 
@@ -509,7 +449,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
         constrainBox.setFont(MipavUtil.font12B);
         constrainBox.addActionListener(this);
         constrainBox.setActionCommand("Constrain");
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -652,17 +592,10 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
-     * <p>Title: JTextFieldFilter</p>
-     *
-     * <p>Description: Filter that allows only integers or floating point numbers into a textfield while monitoring the
-     * numbers themselves in order to activate/deactivate related JCheckboxes</p>
-     *
-     * <p>Copyright: Copyright (c) 2003</p>
-     *
-     * <p>Company:</p>
-     *
+     * Filter that allows only integers or floating point numbers into a textfield while monitoring the
+     * numbers themselves in order to activate/deactivate related JCheckboxes.
+     * 
      * @author   ben link
-     * @version  1.0
      */
     public class JTextFieldFilter extends PlainDocument {
 
@@ -710,7 +643,7 @@ public class JDialogPointArea extends JDialogBase implements AlgorithmInterface,
 
             for (int i = 0; i < str.length(); i++) {
 
-                if (acceptedChars.indexOf(str.valueOf(str.charAt(i))) == -1) {
+                if (acceptedChars.indexOf(String.valueOf(str.charAt(i))) == -1) {
                     return;
                 }
             }

@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +19,7 @@ import javax.swing.*;
  * an averaged image slice by simple averaging of the reconstructed image. The source image must be a 3D black and white
  * image or a 2D or 3D color image
  */
-public class JDialogPrincipalComponents extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogPrincipalComponents extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -96,24 +98,10 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
     public JDialogPrincipalComponents(Frame theParentFrame, ModelImage image) {
         super(theParentFrame, true);
         srcImage = image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI     The user interface, needed to create the image frame.
-     * @param  image  Source image.
-     */
-    public JDialogPrincipalComponents(ViewUserInterface UI, ModelImage image) {
-        super(false);
-        userInterface = UI;
-        srcImage = image;
-        parentFrame = image.getParentFrame();
-    }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -199,13 +187,14 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
             ((ViewJFrameBase) parentFrame).updateImages(true);
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         pComponentAlgo.finalize();
         pComponentAlgo = null;
         dispose();
-
-    } // end algorithmPerformed()
+    }
 
     /**
      * run.
@@ -349,120 +338,43 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
     public ModelImage[] getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("PrincipalComponents " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().append(doFilter + " " + doAveraging + " ");
-
-                for (int i = 0; i < resultImage.length; i++) {
-                    userInterface.getScriptDialog().putVar(resultImage[i].getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage[i].getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(displayAndAsk + " " + pNumber);
-                userInterface.getScriptDialog().append("\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        
+        for (int i = 0; i < getResultImage().length; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
         }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_filter", doFilter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_averaging", doAveraging));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_and_ask", displayAndAsk));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_components", pNumber));
     }
-
+    
     /**
-     * Accessor that returns the whether or not the algorithm completed successfully.
-     *
-     * @return  DOCUMENT ME!
+     * {@inheritDoc}
      */
-    public boolean isSuccessful() {
-
-        if (pComponentAlgo.isCompleted() && (resultImage != null)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        srcImage = im;
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
         userInterface = srcImage.getUserInterface();
         parentFrame = srcImage.getParentFrame();
-
-        int resultNumber = 0;
-        String[] results = null;
-
-        try {
-            resultNumber = 0;
-
-            boolean doFilter = parser.getNextBoolean();
-            setDoFilter(doFilter);
-
-            if (doFilter) {
-                resultNumber++;
-            }
-
-            boolean doAveraging = parser.getNextBoolean();
-            setDoAveraging(doAveraging);
-
-            if (doAveraging) {
-                resultNumber++;
-            }
-
-            results = new String[resultNumber];
-
-            for (int i = 0; i < resultNumber; i++) {
-                results[i] = parser.getNextString();
-            }
-
-            setDisplayAndAsk(parser.getNextBoolean());
-
-            setPNumber(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        for (int i = 0; i < resultNumber; i++) {
-            parser.putVariable(results[0], getResultImage()[i].getImageName());
+        
+        setDoFilter(scriptParameters.getParams().getBoolean("do_filter"));
+        setDoAveraging(scriptParameters.getParams().getBoolean("do_averaging"));
+        setDisplayAndAsk(scriptParameters.getParams().getBoolean("do_display_and_ask"));
+        setPNumber(scriptParameters.getParams().getInt("num_components"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        for (int i = 0; i < getResultImage().length; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
         }
     }
 
@@ -518,7 +430,7 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
 
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -545,15 +457,6 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
         displayPCheckbox.addActionListener(this);
         optionsPanel.add(displayPCheckbox, gbc);
 
-        gbc.gridx = 1;
-        gbc.gridy = 3;
-        textNumber = new JTextField(5);
-        textNumber.setText("1");
-        textNumber.setFont(serif12);
-        textNumber.setEnabled(false);
-        textNumber.addFocusListener(this);
-        optionsPanel.add(textNumber, gbc);
-
         if (srcImage.isColorImage()) {
 
             if (srcImage.getNDims() == 2) {
@@ -572,6 +475,15 @@ public class JDialogPrincipalComponents extends JDialogBase implements Algorithm
         labelNumber.setFont(serif12);
         labelNumber.setEnabled(false);
         optionsPanel.add(labelNumber, gbc);
+        
+        gbc.gridx = 1;
+        gbc.gridy = 3;
+        textNumber = new JTextField(5);
+        textNumber.setText("1");
+        textNumber.setFont(serif12);
+        textNumber.setEnabled(false);
+        textNumber.addFocusListener(this);
+        optionsPanel.add(textNumber, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();

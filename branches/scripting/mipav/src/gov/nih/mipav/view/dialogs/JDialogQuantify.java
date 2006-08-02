@@ -3,12 +3,15 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+
+import java.io.*;
 
 import javax.swing.*;
 
@@ -19,9 +22,9 @@ import javax.swing.*;
  *
  * @version  0.1 Jan 17, 2001
  * @author   Matthew J. McAuliffe, Ph.D.
- * @see      AlgorithmGaussianBlur
+ * @see      JDialogGaussianBlur
  */
-public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -67,22 +70,8 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
     public JDialogQuantify(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogQuantify(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -112,7 +101,7 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
 
                 if (returnVal == JFileChooser.APPROVE_OPTION) {
                     fileName = chooser.getSelectedFile().getName();
-                    directory = chooser.getCurrentDirectory().getPath().concat("\\");
+                    directory = chooser.getCurrentDirectory().getPath().concat(File.separator);
                     textFile.setText(fileName);
                 }
             } catch (OutOfMemoryError e) {
@@ -141,7 +130,9 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
 
         if (algorithm instanceof AlgorithmQuantify) {
             image.clearMask();
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         System.gc();
@@ -151,61 +142,22 @@ public class JDialogQuantify extends JDialogBase implements AlgorithmInterface, 
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Quantify " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(maskImage.getImageName()) +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeImage(maskImage, "mask_image");
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String maskImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-            maskImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
-        setMaskImage(parser.getImage(maskImageKey));
-
-        setSeparateThread(false);
-        callAlgorithm();
+        setMaskImage(scriptParameters.retrieveImage("mask_image"));
     }
 
     /**
