@@ -22,7 +22,7 @@ import javax.swing.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface/*, ScriptableInterface*/ {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -175,7 +175,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
 
                 imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(pt.x, pt.y));
 
-                insertScriptLine(algorithm);
+                //insertScriptLine(algorithm);
 
                 if (doClose && (parentFrame != null)) {
                     ((ViewJFrameBase) parentFrame).close();
@@ -183,12 +183,10 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
 
                 // Not so sure about this.
                 if (image.getLightBoxFrame() != null) {
-                    ViewJFrameLightBox lightBoxFrame;
-
                     try {
                         pt = image.getLightBoxFrame().getLocation();
                         image.getLightBoxFrame().close();
-                        lightBoxFrame = new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
+                        new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
                                                                imageFrame.getComponentImage().getLUTa(),
                                                                imageFrame.getComponentImage().getImageB(),
                                                                imageFrame.getComponentImage().getLUTb(),
@@ -349,38 +347,38 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         orientPanel.add(labelOrientX, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         orientPanel.add(comboBoxOrientX, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         orientPanel.add(labelOrientY, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         orientPanel.add(comboBoxOrientY, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         orientPanel.add(labelOrientZ, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         orientPanel.add(comboBoxOrientZ, gbc);
 
         JPanel buttonPanel = new JPanel();
@@ -408,7 +406,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
      * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
      *
      * @param  algo  the algorithm to make an entry for
-     */
+     *
     public void insertScriptLine(AlgorithmBase algo) {
 
         if (algo.isCompleted()) {
@@ -431,7 +429,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
                                                        " " + orient[0] + " " + orient[1] + " " + orient[2] + "\n");
             }
         }
-    }
+    }*/
 
     /**
      * Run this algorithm from a script.
@@ -439,7 +437,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
      * @param   parser  the script parser we get the state from
      *
      * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
+     *
     public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
         String srcImageKey = null;
         String destImageKey = null;
@@ -481,7 +479,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
         if (!srcImageKey.equals(destImageKey)) {
             parser.putVariable(destImageKey, getResultImage().getImageName());
         }
-    }
+    }*/
 
     /**
      * Sets up the axis orientations based on what the user entered in the combo boxes.

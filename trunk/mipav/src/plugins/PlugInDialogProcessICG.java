@@ -1,5 +1,7 @@
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -10,9 +12,7 @@ import java.util.Vector;
 import javax.swing.*;
 
 
-public class PlugInDialogProcessICG extends JDialogBase implements
-        AlgorithmInterface,
-        ScriptableInterface {
+public class PlugInDialogProcessICG extends JDialogScriptableBase implements AlgorithmInterface {
 
     private PlugInAlgorithmProcessICG icgAlgo;
     private ModelImage image = null; // source image
@@ -32,9 +32,9 @@ public class PlugInDialogProcessICG extends JDialogBase implements
 
 
     /**
-     *  Sets variables needed to call algorithm.
-     *  @param theParentFrame    Parent frame
-     *  @param im                Source image
+     * Sets variables needed to call algorithm.
+     * @param  theParentFrame  Parent frame
+     * @param  imA             Source image
      */
     public PlugInDialogProcessICG(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
@@ -50,87 +50,32 @@ public class PlugInDialogProcessICG extends JDialogBase implements
     }
 
     /**
-     *	Used primarily for the script to store variables and run the algorithm.  No
-     *	actual dialog will appear but the set up info and result image will be stored here.
-     *	@param UI   The user interface, needed to create the image frame.
-     *	@param imA	Source image.
+     * Constructor used for dynamic instantiation of this class during script execution.
      */
-    public PlugInDialogProcessICG(ViewUserInterface UI, ModelImage imA) {
-        super();
-
-        userInterface = UI;
-        image = imA;
-        init();
-        setVisible(true);
-    }
-
     public PlugInDialogProcessICG() {}
 
     /**
-     * Run this algorithm from a script.
-     * @param parser the script parser we get the state from
-     * @throws IllegalArgumentException if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws
-            IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        //setActiveImage(parser.isActiveImage());
-        setSeparateThread(false);
-        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     * @param algo the algorithm to make an entry for
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-        if (algo.isCompleted()) {
-            if (userInterface.isScriptRecording()) {
-                //check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.
-                        getImageName()) == null) {
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(
-                            image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.
-                                getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append(
-                        "PlugInDialogProcessICG " +
-                        userInterface.getScriptDialog().
-                        getVar(image.getImageName()) +
-                        " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.
-                        getScriptDialog().getVar(resultImage.getImageName()) +
-                        "\n");
-            }
-        }
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     public void itemStateChanged(ItemEvent e) {
