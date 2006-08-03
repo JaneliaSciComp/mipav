@@ -168,11 +168,12 @@ public class FileInfoNRRD extends FileInfoBase {
         if (dwmriGradient != null) {
             for (i = 0; i < dwmriGradient.length; i++) {
                 if (dwmriGradient[i] != null) {
-                    dialog.appendSecondaryData(dwmriGradient[i][0], dwmriGradient[i][1]);
+                    if ((dwmriGradient[i][0] != null) && (dwmriGradient[i][1] != null))
+                        dialog.appendSecondaryData(dwmriGradient[i][0], dwmriGradient[i][1]);
+                    }
                 }
             }
         } // if (dwmriGradient != null)
-    }
     
     /**
      * 
