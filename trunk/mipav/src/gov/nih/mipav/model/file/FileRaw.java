@@ -52,6 +52,11 @@ public class FileRaw extends FileBase {
 
     /** DOCUMENT ME! */
     private long startPosition = 0;
+    
+    private int numColors = 3;
+    
+    /** Allow reading from 4 color files with RGBA order */
+    private boolean RGBAOrder = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -368,30 +373,104 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.ARGB:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB, (k * bufferSize * 3) + offset, bufferSize * 3);
+                        fileRW.readImage(ModelStorageBase.ARGB, (k * bufferSize * numColors) + offset,
+                                                                 bufferSize * numColors);
 
-                        if (planarConfig == 0) { // RGB
-
-                            byte[] tmpBuffer = fileRW.getByteBuffer();
-
-                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
-                                buffer[ii] = 1;
-                                buffer[ii + 1] = tmpBuffer[i];
-                                buffer[ii + 2] = tmpBuffer[i + 1];
-                                buffer[ii + 3] = tmpBuffer[i + 2];
+                        if (numColors == 2) {
+                            if (planarConfig == 0) { // RG
+                                
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+    
+                                for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                    buffer[ii] = 1;
+                                    buffer[ii + 1] = tmpBuffer[i];
+                                    buffer[ii + 2] = tmpBuffer[i + 1];
+                                    buffer[ii + 3] = 0;
+                                }
+                            } else { // RRRRR GGGGG
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+                                int bufferOffset = tmpBuffer.length / 2;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    buffer[ii] = 1;
+                                    buffer[ii + 1] = tmpBuffer[i];
+                                    buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                    buffer[ii + 3] = 0;
+                                }
+                            }    
+                        } // if (numColors == 2)
+                        else if (numColors == 3) {
+                            if (planarConfig == 0) { // RGB
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+    
+                                for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                    buffer[ii] = 1;
+                                    buffer[ii + 1] = tmpBuffer[i];
+                                    buffer[ii + 2] = tmpBuffer[i + 1];
+                                    buffer[ii + 3] = tmpBuffer[i + 2];
+                                }
+                            } else { // RRRRR GGGGG BBBBB
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+                                int bufferOffset = tmpBuffer.length / 3;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    buffer[ii] = 1;
+                                    buffer[ii + 1] = tmpBuffer[i];
+                                    buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                    buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                                }
                             }
-                        } else { // RRRRR GGGGG BBBBB
-
-                            byte[] tmpBuffer = fileRW.getByteBuffer();
-                            int bufferOffset = tmpBuffer.length / 3;
-
-                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
-                                buffer[ii] = 1;
-                                buffer[ii + 1] = tmpBuffer[i];
-                                buffer[ii + 2] = tmpBuffer[i + bufferOffset];
-                                buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                        } // else if (numColors == 3)
+                        else { // numColors == 4
+                            if (!RGBAOrder) { // ARGB order
+                                if (planarConfig == 0) { // ARGB
+                                    
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+        
+                                    for (i = 0; i < tmpBuffer.length; i ++) {
+                                        buffer[i] = tmpBuffer[i];
+                                    }
+                                } else { // AAAA RRRRR GGGGG BBBBB
+        
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+                                    int bufferOffset = tmpBuffer.length / 4;
+        
+                                    for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                        buffer[ii] = tmpBuffer[i];
+                                        buffer[ii + 1] = tmpBuffer[i + bufferOffset];
+                                        buffer[ii + 2] = tmpBuffer[i + (2 * bufferOffset)];
+                                        buffer[ii + 3] = tmpBuffer[i + (3 * bufferOffset)];
+                                    }
+                                }    
                             }
-                        }
+                            else { // RGBAOrder
+                                if (planarConfig == 0) { // RGBA
+                                    
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+        
+                                    for (i = 0; i < tmpBuffer.length; i += 4) {
+                                        buffer[i] = tmpBuffer[i+3];
+                                        buffer[i + 1] = tmpBuffer[i];
+                                        buffer[i + 2] = tmpBuffer[i + 1];
+                                        buffer[i + 3] = tmpBuffer[i + 2];
+                                    }
+                                } else { // RRRRR GGGGG BBBBB AAAA
+        
+                                    byte[] tmpBuffer = fileRW.getByteBuffer();
+                                    int bufferOffset = tmpBuffer.length / 4;
+        
+                                    for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                        buffer[ii] = tmpBuffer[i + (3* bufferOffset)];
+                                        buffer[ii + 1] = tmpBuffer[i];
+                                        buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                        buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                                    }
+                                }   
+                            } // else RGBAOrder
+                        } // numColors == 4
 
                         image.importData(k * buffer.length, buffer, false);
                     } catch (IOException error) {
@@ -402,32 +481,106 @@ public class FileRaw extends FileBase {
 
                 case ModelStorageBase.ARGB_USHORT:
                     try {
-                        fileRW.readImage(ModelStorageBase.ARGB_USHORT, (k * bufferSize * 6) + offset, bufferSize * 3);
+                        fileRW.readImage(ModelStorageBase.ARGB_USHORT, (k * bufferSize * 2 * numColors) + offset,
+                                                                        bufferSize * numColors);
 
                         short[] shortBuffer = new short[4 * extents[0] * extents[1]];
-
-                        if (planarConfig == 0) { // RGB
-
-                            short[] tmpBuffer = fileRW.getShortBuffer();
-
-                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
-                                shortBuffer[ii] = (short) 65535;
-                                shortBuffer[ii + 1] = tmpBuffer[i];
-                                shortBuffer[ii + 2] = tmpBuffer[i + 1];
-                                shortBuffer[ii + 3] = tmpBuffer[i + 2];
+                        
+                        if (numColors == 2) {
+                            if (planarConfig == 0) { // RG
+                                
+                                short[] tmpBuffer = fileRW.getShortBuffer();
+    
+                                for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                    shortBuffer[ii] = (short) 65535;
+                                    shortBuffer[ii + 1] = tmpBuffer[i];
+                                    shortBuffer[ii + 2] = tmpBuffer[i + 1];
+                                    shortBuffer[ii + 3] = 0;
+                                }
+                            } else { // RRRRR GGGGG
+    
+                                short[] tmpBuffer = fileRW.getShortBuffer();
+                                int bufferOffset = tmpBuffer.length / 2;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    shortBuffer[ii] = (short) 65535;
+                                    shortBuffer[ii + 1] = tmpBuffer[i];
+                                    shortBuffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                    shortBuffer[ii + 3] = 0;
+                                }
+                            }    
+                        } // if (numColors == 2)
+                        else if (numColors == 3) {
+                            if (planarConfig == 0) { // RGB
+    
+                                short[] tmpBuffer = fileRW.getShortBuffer();
+    
+                                for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                    shortBuffer[ii] = (short) 65535;
+                                    shortBuffer[ii + 1] = tmpBuffer[i];
+                                    shortBuffer[ii + 2] = tmpBuffer[i + 1];
+                                    shortBuffer[ii + 3] = tmpBuffer[i + 2];
+                                }
+                            } else { // RRRRR GGGGG BBBBB
+    
+                                short[] tmpBuffer = fileRW.getShortBuffer();
+                                int bufferOffset = tmpBuffer.length / 3;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    shortBuffer[ii] = (short) 65535;
+                                    shortBuffer[ii + 1] = tmpBuffer[i];
+                                    shortBuffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                    shortBuffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                                }
                             }
-                        } else { // RRRRR GGGGG BBBBB
-
-                            short[] tmpBuffer = fileRW.getShortBuffer();
-                            int bufferOffset = tmpBuffer.length / 3;
-
-                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
-                                shortBuffer[ii] = (short) 65535;
-                                shortBuffer[ii + 1] = tmpBuffer[i];
-                                shortBuffer[ii + 2] = tmpBuffer[i + bufferOffset];
-                                shortBuffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
-                            }
-                        }
+                        } // else if (numColors == 3)
+                        else { // numColors == 4
+                          if (!RGBAOrder) { // ARGB order
+                              if (planarConfig == 0) { // ARGB
+                                  
+                                  short[] tmpBuffer = fileRW.getShortBuffer();
+      
+                                  for (i = 0; i < tmpBuffer.length; i++) {
+                                      shortBuffer[i] = tmpBuffer[i];
+                                  }
+                              } else { // AAAA RRRRR GGGGG BBBBB
+      
+                                  short[] tmpBuffer = fileRW.getShortBuffer();
+                                  int bufferOffset = tmpBuffer.length / 4;
+      
+                                  for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                      shortBuffer[ii] = tmpBuffer[i];
+                                      shortBuffer[ii + 1] = tmpBuffer[i + bufferOffset];
+                                      shortBuffer[ii + 2] = tmpBuffer[i + (2 * bufferOffset)];
+                                      shortBuffer[ii + 3] = tmpBuffer[i + (3 * bufferOffset)];
+                                  }
+                              }    
+                          } // if (!RGBAOrder)
+                          else { // RGBAOrder 
+                              if (planarConfig == 0) { // RGBA
+                                  
+                                  short[] tmpBuffer = fileRW.getShortBuffer();
+      
+                                  for (i = 0; i < tmpBuffer.length; i += 4) {
+                                      shortBuffer[i] = tmpBuffer[i + 3];
+                                      shortBuffer[i + 1] = tmpBuffer[i];
+                                      shortBuffer[i + 2] = tmpBuffer[i + 1];
+                                      shortBuffer[i + 3] = tmpBuffer[i + 2];
+                                  }
+                              } else { // RRRRR GGGGG BBBBB AAAAA
+      
+                                  short[] tmpBuffer = fileRW.getShortBuffer();
+                                  int bufferOffset = tmpBuffer.length / 4;
+      
+                                  for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                      shortBuffer[ii] = tmpBuffer[i + (3 * bufferOffset)];
+                                      shortBuffer[ii + 1] = tmpBuffer[i];
+                                      shortBuffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                      shortBuffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                                  }
+                              }    
+                          } // else RGBAOrder
+                        } // else numColors == 4
 
                         image.importUData(k * shortBuffer.length, shortBuffer, false);
                     } catch (IOException error) {
@@ -646,32 +799,104 @@ public class FileRaw extends FileBase {
                 ii = 0;
                 i = 0;
 
-                // This assume that the image on file is just RGB and not ARGB.
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * 3);
+                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numColors);
+                    if (numColors == 2) {
+                        if (planarConfig == 0) { // RG
+                            
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
 
-                    if (planarConfig == 0) { // RGB
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + 1];
+                                buffer[ii + 3] = 0;
+                            }
+                        } else { // RRRRR GGGGG
 
-                        byte[] tmpBuffer = fileRW.getByteBuffer();
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
+                            int bufferOffset = tmpBuffer.length / 2;
 
-                        for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
-                            buffer[ii] = 1;
-                            buffer[ii + 1] = tmpBuffer[i];
-                            buffer[ii + 2] = tmpBuffer[i + 1];
-                            buffer[ii + 3] = tmpBuffer[i + 2];
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                buffer[ii + 3] = 0;
+                            }
+                        }    
+                    } // if (numColors == 2)
+                    else if (numColors == 3) {
+                        if (planarConfig == 0) { // RGB
+
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
+
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + 1];
+                                buffer[ii + 3] = tmpBuffer[i + 2];
+                            }
+                        } else { // RRRRR GGGGG BBBBB
+
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
+                            int bufferOffset = tmpBuffer.length / 3;
+
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                            }
                         }
-                    } else { // RRRRR GGGGG BBBBB
-
-                        byte[] tmpBuffer = fileRW.getByteBuffer();
-                        int bufferOffset = tmpBuffer.length / 3;
-
-                        for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
-                            buffer[ii] = 1;
-                            buffer[ii + 1] = tmpBuffer[i];
-                            buffer[ii + 2] = tmpBuffer[i + bufferOffset];
-                            buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                        if (!RGBAOrder) { // ARGB order
+                            if (planarConfig == 0) { // ARGB
+                                
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+    
+                                for (i = 0; i < tmpBuffer.length; i ++) {
+                                    buffer[i] = tmpBuffer[i];
+                                }
+                            } else { // AAAA RRRRR GGGGG BBBBB
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+                                int bufferOffset = tmpBuffer.length / 4;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    buffer[ii] = tmpBuffer[i];
+                                    buffer[ii + 1] = tmpBuffer[i + bufferOffset];
+                                    buffer[ii + 2] = tmpBuffer[i + (2 * bufferOffset)];
+                                    buffer[ii + 3] = tmpBuffer[i + (3 * bufferOffset)];
+                                }
+                            }    
                         }
-                    }
+                        else { // RGBAOrder
+                            if (planarConfig == 0) { // RGBA
+                                
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+    
+                                for (i = 0; i < tmpBuffer.length; i += 4) {
+                                    buffer[i] = tmpBuffer[i+3];
+                                    buffer[i + 1] = tmpBuffer[i];
+                                    buffer[i + 2] = tmpBuffer[i + 1];
+                                    buffer[i + 3] = tmpBuffer[i + 2];
+                                }
+                            } else { // RRRRR GGGGG BBBBB AAAA
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+                                int bufferOffset = tmpBuffer.length / 4;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    buffer[ii] = tmpBuffer[i + (3* bufferOffset)];
+                                    buffer[ii + 1] = tmpBuffer[i];
+                                    buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                    buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                                }
+                            }   
+                        } // else RGBAOrder
+                    } // numColors == 4
+                    
                 } catch (IOException error) {
                     throw error;
                 }
@@ -682,32 +907,105 @@ public class FileRaw extends FileBase {
                 ii = 0;
                 i = 0;
 
-                // This assume that the image on file is just RGB and not ARGB.
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * 3);
+                    fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * numColors);
+                    
+                    if (numColors == 2) {
+                        if (planarConfig == 0) { // RG
+                            
+                            short[] tmpBuffer = fileRW.getShortBuffer();
 
-                    if (planarConfig == 0) { // RGB
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                buffer[ii] = 65535.0f;
+                                buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
+                                buffer[ii + 3] = 0.0f;
+                            }
+                        } else { // RRRRR GGGGG
 
-                        short[] tmpBuffer = fileRW.getShortBuffer();
+                            short[] tmpBuffer = fileRW.getShortBuffer();
+                            int bufferOffset = tmpBuffer.length / 2;
 
-                        for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
-                            buffer[ii] = 65535.0f;
-                            buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
-                            buffer[ii + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
-                            buffer[ii + 3] = (float) (tmpBuffer[i + 2] & 0xffff);
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 65535.0f;
+                                buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                buffer[ii + 3] = 0.0f;
+                            }
+                        }    
+                    } // if (numColors == 2)
+                    else if (numColors == 3) {
+                        if (planarConfig == 0) { // RGB
+
+                            short[] tmpBuffer = fileRW.getShortBuffer();
+
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                buffer[ii] = 65535.0f;
+                                buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
+                                buffer[ii + 3] = (float) (tmpBuffer[i + 2] & 0xffff);
+                            }
+                        } else { // RRRRR GGGGG BBBBB
+
+                            short[] tmpBuffer = fileRW.getShortBuffer();
+                            int bufferOffset = tmpBuffer.length / 3;
+
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 65535.0f;
+                                buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                buffer[ii + 3] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
+                            }
                         }
-                    } else { // RRRRR GGGGG BBBBB
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                      if (!RGBAOrder) { // ARGB order
+                          if (planarConfig == 0) { // ARGB
+                              
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+  
+                              for (i = 0; i < tmpBuffer.length; i++) {
+                                  buffer[i] = (float) (tmpBuffer[i] & 0xffff);
+                              }
+                          } else { // AAAA RRRRR GGGGG BBBBB
+  
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+                              int bufferOffset = tmpBuffer.length / 4;
+  
+                              for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                  buffer[ii] = (float) (tmpBuffer[i] & 0xffff);
+                                  buffer[ii + 1] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                  buffer[ii + 2] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
+                                  buffer[ii + 3] = (float) (tmpBuffer[i + (3 * bufferOffset)] & 0xffff);
+                              }
+                          }    
+                      } // if (!RGBAOrder)
+                      else { // RGBAOrder 
+                          if (planarConfig == 0) { // RGBA
+                              
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+  
+                              for (i = 0; i < tmpBuffer.length; i += 4) {
+                                  buffer[i] = (float) (tmpBuffer[i + 3] & 0xffff);
+                                  buffer[i + 1] = (float) (tmpBuffer[i] & 0xffff);
+                                  buffer[i + 2] = (float) (tmpBuffer[i + 1] & 0xffff);
+                                  buffer[i + 3] = (float) (tmpBuffer[i + 2] & 0xffff);
+                              }
+                          } else { // RRRRR GGGGG BBBBB AAAAA
+  
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+                              int bufferOffset = tmpBuffer.length / 4;
+  
+                              for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                  buffer[ii] = (float) (tmpBuffer[i + (3 * bufferOffset)] & 0xffff);
+                                  buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
+                                  buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                  buffer[ii + 3] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
+                              }
+                          }    
+                      } // else RGBAOrder
+                    } // else numColors == 4
 
-                        short[] tmpBuffer = fileRW.getShortBuffer();
-                        int bufferOffset = tmpBuffer.length / 3;
-
-                        for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
-                            buffer[ii] = 65535.0f;
-                            buffer[ii + 1] = (float) (tmpBuffer[i] & 0xffff);
-                            buffer[ii + 2] = (float) (tmpBuffer[i + bufferOffset] & 0xffff);
-                            buffer[ii + 3] = (float) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
-                        }
-                    }
                 } catch (IOException error) {
                     throw error;
                 }
@@ -823,32 +1121,104 @@ public class FileRaw extends FileBase {
                 ii = 0;
                 i = 0;
 
-                // This assume that the image on file is just RGB and not ARGB.
                 try {
-                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * 3);
+                    fileRW.readImage(ModelStorageBase.ARGB, offset, bufferSize / 4 * numColors);
+                    if (numColors == 2) {
+                        if (planarConfig == 0) { // RG
+                            
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
 
-                    if (planarConfig == 0) { // RGB
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + 1];
+                                buffer[ii + 3] = 0;
+                            }
+                        } else { // RRRRR GGGGG
 
-                        byte[] tmpBuffer = fileRW.getByteBuffer();
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
+                            int bufferOffset = tmpBuffer.length / 2;
 
-                        for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
-                            buffer[ii] = 1;
-                            buffer[ii + 1] = tmpBuffer[i];
-                            buffer[ii + 2] = tmpBuffer[i + 1];
-                            buffer[ii + 3] = tmpBuffer[i + 2];
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                buffer[ii + 3] = 0;
+                            }
+                        }    
+                    } // if (numColors == 2)
+                    else if (numColors == 3) {
+                        if (planarConfig == 0) { // RGB
+
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
+
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + 1];
+                                buffer[ii + 3] = tmpBuffer[i + 2];
+                            }
+                        } else { // RRRRR GGGGG BBBBB
+
+                            byte[] tmpBuffer = fileRW.getByteBuffer();
+                            int bufferOffset = tmpBuffer.length / 3;
+
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 1;
+                                buffer[ii + 1] = tmpBuffer[i];
+                                buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                            }
                         }
-                    } else { // RRRRR GGGGG BBBBB
-
-                        byte[] tmpBuffer = fileRW.getByteBuffer();
-                        int bufferOffset = tmpBuffer.length / 3;
-
-                        for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
-                            buffer[ii] = 1;
-                            buffer[ii + 1] = tmpBuffer[i];
-                            buffer[ii + 2] = tmpBuffer[i + bufferOffset];
-                            buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                        if (!RGBAOrder) { // ARGB order
+                            if (planarConfig == 0) { // ARGB
+                                
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+    
+                                for (i = 0; i < tmpBuffer.length; i ++) {
+                                    buffer[i] = tmpBuffer[i];
+                                }
+                            } else { // AAAA RRRRR GGGGG BBBBB
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+                                int bufferOffset = tmpBuffer.length / 4;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    buffer[ii] = tmpBuffer[i];
+                                    buffer[ii + 1] = tmpBuffer[i + bufferOffset];
+                                    buffer[ii + 2] = tmpBuffer[i + (2 * bufferOffset)];
+                                    buffer[ii + 3] = tmpBuffer[i + (3 * bufferOffset)];
+                                }
+                            }    
                         }
-                    }
+                        else { // RGBAOrder
+                            if (planarConfig == 0) { // RGBA
+                                
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+    
+                                for (i = 0; i < tmpBuffer.length; i += 4) {
+                                    buffer[i] = tmpBuffer[i+3];
+                                    buffer[i + 1] = tmpBuffer[i];
+                                    buffer[i + 2] = tmpBuffer[i + 1];
+                                    buffer[i + 3] = tmpBuffer[i + 2];
+                                }
+                            } else { // RRRRR GGGGG BBBBB AAAA
+    
+                                byte[] tmpBuffer = fileRW.getByteBuffer();
+                                int bufferOffset = tmpBuffer.length / 4;
+    
+                                for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                    buffer[ii] = tmpBuffer[i + (3* bufferOffset)];
+                                    buffer[ii + 1] = tmpBuffer[i];
+                                    buffer[ii + 2] = tmpBuffer[i + bufferOffset];
+                                    buffer[ii + 3] = tmpBuffer[i + (2 * bufferOffset)];
+                                }
+                            }   
+                        } // else RGBAOrder
+                    } // numColors == 4
+                    
                 } catch (IOException error) {
                     throw error;
                 }
@@ -859,32 +1229,105 @@ public class FileRaw extends FileBase {
                 ii = 0;
                 i = 0;
 
-                // This assume that the image on file is just RGB and not ARGB.
+          
                 try {
                     fileRW.readImage(ModelStorageBase.ARGB_USHORT, offset, bufferSize / 4 * 3);
+                    if (numColors == 2) {
+                        if (planarConfig == 0) { // RG
+                            
+                            short[] tmpBuffer = fileRW.getShortBuffer();
 
-                    if (planarConfig == 0) { // RGB
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 2, ii += 4) {
+                                buffer[ii] = 32767;
+                                buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (short) (tmpBuffer[i + 1] & 0xffff);
+                                buffer[ii + 3] = 0;
+                            }
+                        } else { // RRRRR GGGGG
 
-                        short[] tmpBuffer = fileRW.getShortBuffer();
+                            short[] tmpBuffer = fileRW.getShortBuffer();
+                            int bufferOffset = tmpBuffer.length / 2;
 
-                        for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
-                            buffer[ii] = 32767;
-                            buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
-                            buffer[ii + 2] = (short) (tmpBuffer[i + 1] & 0xffff);
-                            buffer[ii + 3] = (short) (tmpBuffer[i + 2] & 0xffff);
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 32767;
+                                buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (short) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                buffer[ii + 3] = 0;
+                            }
+                        }    
+                    } // if (numColors == 2)
+                    else if (numColors == 3) {
+                        if (planarConfig == 0) { // RGB
+
+                            short[] tmpBuffer = fileRW.getShortBuffer();
+
+                            for (i = 0, ii = 0; i < tmpBuffer.length; i += 3, ii += 4) {
+                                buffer[ii] = 32767;
+                                buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (short) (tmpBuffer[i + 1] & 0xffff);
+                                buffer[ii + 3] = (short) (tmpBuffer[i + 2] & 0xffff);
+                            }
+                        } else { // RRRRR GGGGG BBBBB
+
+                            short[] tmpBuffer = fileRW.getShortBuffer();
+                            int bufferOffset = tmpBuffer.length / 3;
+
+                            for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                buffer[ii] = 32767;
+                                buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
+                                buffer[ii + 2] = (short) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                buffer[ii + 3] = (short) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
+                            }
                         }
-                    } else { // RRRRR GGGGG BBBBB
-
-                        short[] tmpBuffer = fileRW.getShortBuffer();
-                        int bufferOffset = tmpBuffer.length / 3;
-
-                        for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
-                            buffer[ii] = 32767;
-                            buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
-                            buffer[ii + 2] = (short) (tmpBuffer[i + bufferOffset] & 0xffff);
-                            buffer[ii + 3] = (short) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
-                        }
-                    }
+                    } // else if (numColors == 3)
+                    else { // numColors == 4
+                      if (!RGBAOrder) { // ARGB order
+                          if (planarConfig == 0) { // ARGB
+                              
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+  
+                              for (i = 0; i < tmpBuffer.length; i++) {
+                                  buffer[i] = (short) (tmpBuffer[i] & 0xffff);
+                              }
+                          } else { // AAAA RRRRR GGGGG BBBBB
+  
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+                              int bufferOffset = tmpBuffer.length / 4;
+  
+                              for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                  buffer[ii] = (short) (tmpBuffer[i] & 0xffff);
+                                  buffer[ii + 1] = (short) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                  buffer[ii + 2] = (short) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
+                                  buffer[ii + 3] = (short) (tmpBuffer[i + (3 * bufferOffset)] & 0xffff);
+                              }
+                          }    
+                      } // if (!RGBAOrder)
+                      else { // RGBAOrder 
+                          if (planarConfig == 0) { // RGBA
+                              
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+  
+                              for (i = 0; i < tmpBuffer.length; i += 4) {
+                                  buffer[i] = (short) (tmpBuffer[i + 3] & 0xffff);
+                                  buffer[i + 1] = (short) (tmpBuffer[i] & 0xffff);
+                                  buffer[i + 2] = (short) (tmpBuffer[i + 1] & 0xffff);
+                                  buffer[i + 3] = (short) (tmpBuffer[i + 2] & 0xffff);
+                              }
+                          } else { // RRRRR GGGGG BBBBB AAAAA
+  
+                              short[] tmpBuffer = fileRW.getShortBuffer();
+                              int bufferOffset = tmpBuffer.length / 4;
+  
+                              for (i = 0, ii = 0; i < bufferOffset; i++, ii += 4) {
+                                  buffer[ii] = (short) (tmpBuffer[i + (3 * bufferOffset)] & 0xffff);
+                                  buffer[ii + 1] = (short) (tmpBuffer[i] & 0xffff);
+                                  buffer[ii + 2] = (short) (tmpBuffer[i + bufferOffset] & 0xffff);
+                                  buffer[ii + 3] = (short) (tmpBuffer[i + (2 * bufferOffset)] & 0xffff);
+                              }
+                          }    
+                      } // else RGBAOrder
+                    } // else numColors == 4
+                    
                 } catch (IOException error) {
                     throw error;
                 }
@@ -942,6 +1385,20 @@ public class FileRaw extends FileBase {
     public void setPlanarConfig(int _planarConfig) {
         planarConfig = _planarConfig;
         fileRW.setPlanarConfig(_planarConfig);
+    }
+    
+    /**
+     * Sets the number of colors used in RGB files
+     * @param numColors
+     */
+    public void setNumColors(int numColors) {
+        this.numColors = numColors;
+        fileRW.setNumColors(numColors);
+    }
+    
+    public void setRGBAOrder(boolean RGBAOrder) {
+        this.RGBAOrder = RGBAOrder;
+        fileRW.setRGBAOrder(RGBAOrder);
     }
 
     /**
