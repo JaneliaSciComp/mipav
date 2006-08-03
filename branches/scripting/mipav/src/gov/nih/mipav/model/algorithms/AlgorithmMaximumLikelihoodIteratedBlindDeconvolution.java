@@ -185,7 +185,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * AlgorithmRGBtoGray. The deconvolution is done on the grayscale image,
      * however after deconvolution, the original color values are
      * reconstructed from the psf and grayscale estimate.
-     * @param kImage, the color image to conver to grayscale:
+     * @param kImage the color image to conver to grayscale:
      * @return the converted grayscale image
      */
     private ModelImage convertToGray( ModelImage kImage )
@@ -230,8 +230,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         kRGBAlgoMulti.finalize();
         kRGBAlgoMulti = null;
 
-        JDialogRGBtoGrays kDialogTemp =
-            new JDialogRGBtoGrays( ViewUserInterface.getReference(), kImage );
+        JDialogRGBtoGrays kDialogTemp = new JDialogRGBtoGrays(kImage.getParentFrame(), kImage);
         kDialogTemp.updateFileInfo(kImage, m_kSourceRed);
         kDialogTemp.updateFileInfo(kImage, m_kSourceGreen);
         kDialogTemp.updateFileInfo(kImage, m_kSourceBlue);

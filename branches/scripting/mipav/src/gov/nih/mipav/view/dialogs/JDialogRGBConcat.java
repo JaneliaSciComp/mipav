@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  * @version  0.1 June 5, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRGBConcat extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -65,9 +67,6 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
                             // or if the source image is to be replaced
 
     /** DOCUMENT ME! */
-    private String error = null;
-
-    /** DOCUMENT ME! */
     private ModelImage imageB;
 
     /** DOCUMENT ME! */
@@ -92,9 +91,6 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -115,22 +111,8 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
         super(theParentFrame, false);
 
         imageR = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogRGBConcat(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        imageR = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -167,8 +149,6 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmRGBConcat) {
 
             if ((mathAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -177,7 +157,7 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
                 updateFileInfo(imageR, resultImage);
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -186,7 +166,7 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
                 imageR = mathAlgo.getImageR();
 
                 try {
-                    imageFrame = new ViewJFrameImage(imageR, null, new Dimension(610, 200));
+                    new ViewJFrameImage(imageR, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -207,22 +187,15 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
             blank = null;
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         mathAlgo.finalize();
         mathAlgo = null;
         dispose();
     }
-
-    /**
-     * Accessor that returns error String if an error has occured.
-     *
-     * @return  String describing error
-     */
-    public String getError() {
-        return error;
-    }
-
+    
     /**
      * Accessor that returns the image.
      *
@@ -231,116 +204,45 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the imageR is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageR.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageR.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageR.getImageName());
-                    }
-                }
-
-                // check to see if the imageG is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageG.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageG.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageG.getImageName());
-                    }
-                }
-
-                // check to see if the imageB is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageB.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageB.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageB.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RGBConcat " +
-                                                       userInterface.getScriptDialog().getVar(imageR.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(imageG.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(imageB.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + remapMode + "\n");
-                } // if (displayLoc == NEW)
-                else { // displayLoc == REPLACE
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(imageR.getImageName()) +
-                                                           " " + remapMode + "\n");
-
-                } // else displayLoc == REPLACE
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeImage(imageR, "red_image");
+        scriptParameters.storeImage(imageG, "green_image");
+        scriptParameters.storeImage(imageB, "blue_image");
+        
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_remap_values", remapMode));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String imageRKey = null;
-        String imageGKey = null;
-        String imageBKey = null;
-        String destImageKey = null;
-
-        try {
-            imageRKey = parser.getNextString();
-            imageGKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setModal(false);
-        imageR = parser.getImage(imageRKey);
+    protected void setGUIFromParams() {
+        imageR = scriptParameters.retrieveImage("red_image");
         userInterface = imageR.getUserInterface();
         parentFrame = imageR.getParentFrame();
-        setGreenImage(parser.getImage(imageGKey));
-        setBlueImage(parser.getImage(imageBKey));
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (imageRKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        setGreenImage(scriptParameters.retrieveImage("green_image"));
+        setBlueImage(scriptParameters.retrieveImage("blue_image"));
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try {
-            setRemapMode(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!imageRKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        setRemapMode(scriptParameters.getParams().getBoolean("do_remap_values"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -470,7 +372,7 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
         } // end while
 
         if (comboBox.getItemCount() == 0) {
-            error = new String("No other images to operate upon!");
+            MipavUtil.displayError("No other images to operate upon!");
         }
 
     } // end buildComboBoxImage()
@@ -595,7 +497,7 @@ public class JDialogRGBConcat extends JDialogBase implements AlgorithmInterface,
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

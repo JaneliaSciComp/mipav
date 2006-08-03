@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +21,7 @@ import java.awt.event.*;
  * @version  0.1 Nov 17, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRGBtoGrays extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -63,21 +64,7 @@ public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface
     public JDialogRGBtoGrays(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI   The user interface, needed to create the image frame.
-     * @param  imA  Source image.
-     */
-    public JDialogRGBtoGrays(ViewUserInterface UI, ModelImage imA) {
-        super();
-        userInterface = UI;
-        imageA = imA;
-        parentFrame = imageA.getParentFrame();
+        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -87,9 +74,7 @@ public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface
      *
      * @param  event  Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -102,10 +87,6 @@ public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrameR = null;
-        ViewJFrameImage imageFrameG = null;
-        ViewJFrameImage imageFrameB = null;
-
         if (algorithm instanceof AlgorithmRGBtoGrays) {
 
             if ((RGBAlgo.isCompleted() == true) && (resultImageB != null)) {
@@ -116,9 +97,9 @@ public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface
                 updateFileInfo(imageA, resultImageB);
 
                 try {
-                    imageFrameR = new ViewJFrameImage(resultImageR, null, new Dimension(610, 200));
-                    imageFrameG = new ViewJFrameImage(resultImageG, null, new Dimension(650, 250));
-                    imageFrameB = new ViewJFrameImage(resultImageB, null, new Dimension(690, 300));
+                    new ViewJFrameImage(resultImageR, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImageG, null, new Dimension(650, 250));
+                    new ViewJFrameImage(resultImageB, null, new Dimension(690, 300));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -148,7 +129,9 @@ public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface
             ((ViewJFrameBase) parentFrame).updateImages(true);
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         RGBAlgo.finalize();
         RGBAlgo = null;
@@ -249,80 +232,33 @@ public class JDialogRGBtoGrays extends JDialogBase implements AlgorithmInterface
     public ModelImage getResultImageR() {
         return resultImageR;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RGBtoGrays " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageR.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageR.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageG.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageG.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageB.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageB.getImageName()) +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        
+        AlgorithmParameters.storeImageInRecorder(getResultImageR());
+        AlgorithmParameters.storeImageInRecorder(getResultImageG());
+        AlgorithmParameters.storeImageInRecorder(getResultImageB());
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String imageRKey = null;
-        String imageGKey = null;
-        String imageBKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        imageA = im;
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage();
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            imageRKey = parser.getNextString();
-            imageGKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(imageRKey, getResultImageR().getImageName());
-        parser.putVariable(imageGKey, getResultImageG().getImageName());
-        parser.putVariable(imageBKey, getResultImageB().getImageName());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImageR());
+        AlgorithmParameters.storeImageInRunner(getResultImageG());
+        AlgorithmParameters.storeImageInRunner(getResultImageB());
     }
 }

@@ -3,14 +3,14 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import java.text.*;
 
 import javax.swing.*;
 
@@ -19,8 +19,7 @@ import javax.swing.*;
  * Dialog to get user input, then call a specified diffusion algorithm. It should be noted that the algorithms are
  * executed in their own thread.
  */
-public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -37,9 +36,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
 
     /** DOCUMENT ME! */
     private boolean do25D = true;
-
-    /** DOCUMENT ME! */
-    private DecimalFormat fltFmt;
 
     /** DOCUMENT ME! */
     private int numIterations = 1;
@@ -80,25 +76,9 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
         super(frame, false);
 
         srcImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-        fltFmt = new DecimalFormat("0.00");
+        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogDiffusion(...)
-
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogRegularizedIsotropicDiffusion(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        srcImage = im;
-        parentFrame = im.getParentFrame();
-    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -122,15 +102,12 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
         } // end if()-else
     } // end actionPerformed(...)
 
-
     /**
      * DOCUMENT ME!
      *
      * @param  algorithm  DOCUMENT ME!
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (((algorithm instanceof AlgorithmRegularizedIsotropicDiffusion) &&
                  (regIsoDiffusionAlgo.isCompleted() == true)) && (resultImage != null)) {
 
@@ -138,13 +115,13 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
             resultImage.clearMask();
 
             try {
-                imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             regIsoDiffusionAlgo.finalize();
             regIsoDiffusionAlgo = null;
@@ -159,89 +136,40 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RegularizedIsotropicDiffusion " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-
-                // if (displayLoc == NEW) {
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + numIterations + " " + stdDev + " " + contrast + " " +
-                                                       do25D + "\n");
-                // }
-                /*else {
-                 * userInterface.getScriptDialog().append(userInterface.
-                 * getScriptDialog().getVar(image.getImageName()) + " " +   + numIterations + " " + stdDev + " " +
-                 * contrast +   " " + do25D + "\n");      }*/
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, do25D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iterations", numIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, stdDev));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusion_contrast", contrast));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        srcImage = im;
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
         userInterface = srcImage.getUserInterface();
         parentFrame = srcImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setNumIterations(parser.getNextInteger());
-            setStdDev(parser.getNextFloat());
-            setContrast(parser.getNextFloat());
-            setDo25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+        
+        setDo25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setNumIterations(scriptParameters.getParams().getInt("num_iterations"));
+        setStdDev(scriptParameters.getParams().getFloat(AlgorithmParameters.SIGMAS));
+        setContrast(scriptParameters.getParams().getFloat("diffusion_contrast"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -324,7 +252,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
         }
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(6, 6, 6, 6);
@@ -363,7 +291,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
      * or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        float[] sigmas = null;
         String name;
 
         name = makeImageName(srcImage.getImageName(), "_rid");
@@ -424,7 +351,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogBase
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridy = 0;

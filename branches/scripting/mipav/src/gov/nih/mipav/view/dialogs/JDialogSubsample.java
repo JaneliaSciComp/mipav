@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +22,7 @@ import javax.swing.*;
  * @author   Sir Benjamin Link
  * @version  1.0
  */
-public class JDialogSubsample extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogSubsample extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -102,60 +104,8 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
     public JDialogSubsample(Frame theParentFrame, ModelImage sourceImage) {
         super(theParentFrame, false);
         this.image = sourceImage;
-        this.userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        this.userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Constructor for running the subsampling algorithm via Scripts.
-     *
-     * @param  ui             User Interface
-     * @param  sourceImage    the source image
-     * @param  subsampleSize  how much to subsample the image by
-     */
-    public JDialogSubsample(ViewUserInterface ui, ModelImage sourceImage, int subsampleSize) {
-        super(false);
-        this.image = sourceImage;
-        this.userInterface = ui;
-        parentFrame = image.getParentFrame();
-
-        this.denom = subsampleSize;
-
-        if (image.getNDims() == 2) {
-            newExtents = new int[2];
-            newExtents[0] = image.getExtents()[0] / denom;
-            newExtents[1] = image.getExtents()[1] / denom;
-
-            sigmas = new float[2];
-            sigmas[0] = 1.0f;
-            sigmas[1] = 1.0f;
-        } else if (image.getNDims() == 3) {
-            newExtents = new int[3];
-            newExtents[0] = image.getExtents()[0] / denom;
-            newExtents[1] = image.getExtents()[1] / denom;
-
-            if (lockZ) {
-                newExtents[2] = image.getExtents()[2];
-            } else {
-                newExtents[2] = image.getExtents()[2] / denom;
-            }
-
-            sigmas = new float[3];
-            sigmas[0] = 1.0f;
-            sigmas[1] = 1.0f;
-            sigmas[2] = 1.0f * (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
-        } else if (image.getNDims() == 4) {
-            newExtents = new int[4];
-            newExtents[0] = image.getExtents()[0] / denom;
-            newExtents[1] = image.getExtents()[1] / denom;
-            newExtents[2] = image.getExtents()[2] / denom;
-            newExtents[3] = image.getExtents()[3];
-
-            sigmas = new float[3];
-            sigmas[0] = 1.0f;
-            sigmas[1] = 1.0f;
-            sigmas[2] = 1.0f * (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -197,7 +147,7 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
                     MipavUtil.displayError("Subsample reports: out of memory; " + "unable to open a new frame");
                 }
 
-                insertScriptLine(algo);
+                insertScriptLine();
             }
 
             algoSub.finalize();
@@ -213,36 +163,18 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Subsample " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + denom + " " + doVOI + " " + processIndep + " " + lockZ +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, processIndep));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", denom));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_vois", doVOI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_not_change_zdim", lockZ));
     }
 
     /**
@@ -270,119 +202,91 @@ public class JDialogSubsample extends JDialogBase implements AlgorithmInterface,
             }
         }
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
+        
+        setProcessIndep(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        denom = scriptParameters.getParams().getInt("subsample_factor");
+        setDoVOI(scriptParameters.getParams().getBoolean("do_transform_vois"));
+        lockZ = scriptParameters.getParams().getBoolean("do_not_change_zdim");
 
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
+        if (image.getNDims() == 2) {
+            newExtents = new int[2];
+            newExtents[0] = image.getExtents()[0] / denom;
+            newExtents[1] = image.getExtents()[1] / denom;
 
-        try {
-            denom = parser.getNextInteger();
-            setDoVOI(parser.getNextBoolean());
-            setProcessIndep(parser.getNextBoolean());
-            lockZ = parser.getNextBoolean();
+            sigmas = new float[2];
+            sigmas[0] = 1.0f;
+            sigmas[1] = 1.0f;
+        } else if (image.getNDims() == 3) {
+            newExtents = new int[3];
+            newExtents[0] = image.getExtents()[0] / denom;
+            newExtents[1] = image.getExtents()[1] / denom;
 
-            if (image.getNDims() == 2) {
-                newExtents = new int[2];
-                newExtents[0] = image.getExtents()[0] / denom;
-                newExtents[1] = image.getExtents()[1] / denom;
-
-                sigmas = new float[2];
-                sigmas[0] = 1.0f;
-                sigmas[1] = 1.0f;
-            } else if (image.getNDims() == 3) {
-                newExtents = new int[3];
-                newExtents[0] = image.getExtents()[0] / denom;
-                newExtents[1] = image.getExtents()[1] / denom;
-
-                if (lockZ) {
-                    newExtents[2] = image.getExtents()[2];
-                } else {
-                    newExtents[2] = image.getExtents()[2] / denom;
-                }
-
-                sigmas = new float[3];
-                sigmas[0] = 1.0f;
-                sigmas[1] = 1.0f;
-                sigmas[2] = 1.0f *
-                                (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
-            } else if (image.getNDims() == 4) {
-                newExtents = new int[4];
-                newExtents[0] = image.getExtents()[0] / denom;
-                newExtents[1] = image.getExtents()[1] / denom;
+            if (lockZ) {
+                newExtents[2] = image.getExtents()[2];
+            } else {
                 newExtents[2] = image.getExtents()[2] / denom;
-                newExtents[3] = image.getExtents()[3];
-
-                sigmas = new float[3];
-                sigmas[0] = 1.0f;
-                sigmas[1] = 1.0f;
-                sigmas[2] = 1.0f *
-                                (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
             }
 
-            if (doVOI) {
-                oXres = image.getFileInfo(0).getResolutions()[0] * denom;
-                oYres = image.getFileInfo(0).getResolutions()[1] * denom;
-                Sx = ((float) (newExtents[0]) * oXres) /
-                         ((float) (image.getExtents()[0]) * image.getFileInfo(0).getResolutions()[0]);
-                Sy = ((float) (newExtents[1]) * oYres) /
-                         ((float) (image.getExtents()[1]) * image.getFileInfo(0).getResolutions()[1]);
+            sigmas = new float[3];
+            sigmas[0] = 1.0f;
+            sigmas[1] = 1.0f;
+            sigmas[2] = 1.0f * (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
+        } else if (image.getNDims() == 4) {
+            newExtents = new int[4];
+            newExtents[0] = image.getExtents()[0] / denom;
+            newExtents[1] = image.getExtents()[1] / denom;
+            newExtents[2] = image.getExtents()[2] / denom;
+            newExtents[3] = image.getExtents()[3];
 
-                if (processIndep || (image.getNDims() == 2)) {
-                    xfrm = new TransMatrix(3);
-                    xfrm.identity();
-                    xfrm.setZoom(Sx, Sy);
+            sigmas = new float[3];
+            sigmas[0] = 1.0f;
+            sigmas[1] = 1.0f;
+            sigmas[2] = 1.0f * (image.getFileInfo(0).getResolutions()[0] / image.getFileInfo(0).getResolutions()[2]);
+        }
+
+        if (doVOI) {
+            oXres = image.getFileInfo(0).getResolutions()[0] * denom;
+            oYres = image.getFileInfo(0).getResolutions()[1] * denom;
+            Sx = ((float) (newExtents[0]) * oXres) /
+                     ((float) (image.getExtents()[0]) * image.getFileInfo(0).getResolutions()[0]);
+            Sy = ((float) (newExtents[1]) * oYres) /
+                     ((float) (image.getExtents()[1]) * image.getFileInfo(0).getResolutions()[1]);
+
+            if (processIndep || (image.getNDims() == 2)) {
+                xfrm = new TransMatrix(3);
+                xfrm.identity();
+                xfrm.setZoom(Sx, Sy);
+            } else {
+
+                if (lockZ) {
+                    oZres = image.getFileInfo(0).getResolutions()[2];
+                    Sz = 1.0f;
                 } else {
-
-                    if (lockZ) {
-                        oZres = image.getFileInfo(0).getResolutions()[2];
-                        Sz = 1.0f;
-                    } else {
-                        oZres = image.getFileInfo(0).getResolutions()[2] * denom;
-                        Sz = ((float) (newExtents[2]) * oZres) /
-                                 ((float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
-                    }
-
-                    xfrm = new TransMatrix(4);
-                    xfrm.identity();
-                    xfrm.setZoom(Sx, Sy, Sz);
+                    oZres = image.getFileInfo(0).getResolutions()[2] * denom;
+                    Sz = ((float) (newExtents[2]) * oZres) /
+                             ((float) (image.getExtents()[2]) * image.getFileInfo(0).getResolutions()[2]);
                 }
-            } // if (doVOI)
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
 
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+                xfrm = new TransMatrix(4);
+                xfrm.identity();
+                xfrm.setZoom(Sx, Sy, Sz);
+            }
+        } // if (doVOI)
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**

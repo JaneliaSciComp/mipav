@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +22,7 @@ import javax.swing.*;
  * @version  0.1 Nov 17, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRGBtoGray extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -94,9 +96,6 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
     private JCheckBox thresholdCheckBox;
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private JRadioButton userButton;
 
     /** DOCUMENT ME! */
@@ -118,24 +117,10 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
     public JDialogRGBtoGray(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, false);
         imageA = imA;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI   The user interface, needed to create the image frame.
-     * @param  imA  Source image.
-     */
-    public JDialogRGBtoGray(ViewUserInterface UI, ModelImage imA) {
-        super(false);
-        userInterface = UI;
-        imageA = imA;
-        parentFrame = imageA.getParentFrame();
-    }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -217,15 +202,13 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmRGBtoGray) {
 
             if ((RGBAlgo.isCompleted() == true) && (resultImage != null)) {
                 // The algorithm has completed and produced a new image to be displayed.
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -235,7 +218,7 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
                 imageA = RGBAlgo.getSrcImage();
 
                 try {
-                    imageFrame = new ViewJFrameImage(imageA, null, new Dimension(610, 200));
+                    new ViewJFrameImage(imageA, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -255,10 +238,12 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
                 ((ViewJFrameBase) parentFrame).updateImages(true);
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+            
             RGBAlgo.finalize();
             RGBAlgo = null;
-
         }
     }
 
@@ -390,104 +375,45 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the imageA is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RGBtoGray " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + redValue + " " + greenValue + " " + blueValue + " " +
-                                                           thresholdAverage + " " + threshold + " " + intensityAverage +
-                                                           "\n");
-                } // if (displayLoc == NEW)
-                else { // displayLoc == REPLACE
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                           " " + redValue + " " + greenValue + " " + blueValue + " " +
-                                                           thresholdAverage + " " + threshold + " " + intensityAverage +
-                                                           "\n");
-
-                } // else displayLoc == REPLACE
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_values", new float[] {redValue, greenValue, blueValue}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold_average", thresholdAverage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_intensity_average", intensityAverage));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        imageA = im;
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage();
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
         } else {
-            this.setDisplayLocNew();
+            setDisplayLocReplace();
         }
-
-        try {
-
-            try {
-                setRGBValues(parser.getNextFloat(), parser.getNextFloat(), parser.getNextFloat());
-            } catch (Exception e) {
-                // Do nothing; it is possible to that a RGBtoGray might not have these values
-                // but should still work for legecy scripts.
-            }
-
-            setThresholdAverage(parser.getNextBoolean());
-            setThreshold(parser.getNextFloat());
-            setIntensityAverage(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        float[] rgb = scriptParameters.getParams().getList("rgb_values").getAsFloatArray();
+        setRGBValues(rgb[0], rgb[1], rgb[2]);
+        setThresholdAverage(scriptParameters.getParams().getBoolean("do_theshold_average"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setIntensityAverage(scriptParameters.getParams().getBoolean("do_intensity_average"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -591,7 +517,7 @@ public class JDialogRGBtoGray extends JDialogBase implements AlgorithmInterface,
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

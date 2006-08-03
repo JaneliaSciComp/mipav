@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import java.util.*;
  * @version  1.0 July 26, 2000
  * @author   Harman J. Singh
  */
-public class JDialogRotate extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -68,30 +70,9 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
     public JDialogRotate(Frame theParentFrame, ModelImage im, int rotateAxis) {
         super(theParentFrame, true);
 
-        setForeground(Color.black);
         this.rotateAxis = rotateAxis;
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui          User interface.
-     * @param  im          Source image.
-     * @param  rotateAxis  Axis which image is to be rotated.
-     */
-    public JDialogRotate(ViewUserInterface ui, ModelImage im, int rotateAxis) {
-        super();
-
-        setForeground(Color.black);
-        parentFrame = im.getParentFrame();
-        this.rotateAxis = rotateAxis;
-        image = im;
-        this.userInterface = ui;
-        doClose = false;
-        userInterface.regFrame(image.getParentFrame());
+        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -101,9 +82,7 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
      *
      * @param  event  Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -151,24 +130,20 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
 
                 // Not so sure about this.
                 if (image.getLightBoxFrame() != null) {
-                    ViewJFrameLightBox lightBoxFrame;
-
                     try {
                         pt = image.getLightBoxFrame().getLocation();
                         image.getLightBoxFrame().close();
-                        lightBoxFrame = new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
-                                                               imageFrame.getComponentImage().getLUTa(),
-                                                               imageFrame.getComponentImage().getImageB(),
-                                                               imageFrame.getComponentImage().getLUTb(),
-                                                               imageFrame.getComponentImage().getResolutionX(),
-                                                               imageFrame.getComponentImage().getResolutionY(),
-                                                               new Dimension(pt.x, pt.y), imageFrame.getControls());
+                        new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
+                                               imageFrame.getComponentImage().getLUTa(),
+                                               imageFrame.getComponentImage().getImageB(),
+                                               imageFrame.getComponentImage().getLUTb(),
+                                               imageFrame.getComponentImage().getResolutionX(),
+                                               imageFrame.getComponentImage().getResolutionY(),
+                                               new Dimension(pt.x, pt.y), imageFrame.getControls());
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
                 }
-
-
             } else {
 
                 // These next lines set the titles in all frames where the source image is displayed to
@@ -193,12 +168,12 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
             }
 
             if (rotateAlgo.isCompleted() == true) {
-                insertScriptLine(algorithm);
+                insertScriptLine();
 
-                if (doClose && !userInterface.isScriptRecording()) {
+                if (doClose && !(ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING)) {
 
                     if (parentFrame != null) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
+                        userInterface.unregisterFrame(parentFrame);
                         ((ViewJFrameBase) parentFrame).close();
                     } else {
                         ((ViewJFrameImage) image.getParentFrame()).close();
@@ -274,150 +249,102 @@ public class JDialogRotate extends JDialogBase implements AlgorithmInterface, Sc
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        String axis;
+        switch (rotateAxis) {
 
-        if (algo.isCompleted()) {
+            case AlgorithmRotate.X_AXIS_180:
+                axis = "X180";
+                break;
+        
+            case AlgorithmRotate.X_AXIS_PLUS:
+                axis = "X+";
+                break;
 
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Rotate " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-
-                String axis;
-
-                switch (rotateAxis) {
-
-                    case AlgorithmRotate.X_AXIS_180:
-                        axis = "X180";
-                        break;
+            case AlgorithmRotate.X_AXIS_MINUS:
+                axis = "X-";
+                break;
                 
-                    case AlgorithmRotate.X_AXIS_PLUS:
-                        axis = "X+";
-                        break;
+            case AlgorithmRotate.Y_AXIS_180:
+                axis = "Y180";
+                break;
 
-                    case AlgorithmRotate.X_AXIS_MINUS:
-                        axis = "X-";
-                        break;
-                        
-                    case AlgorithmRotate.Y_AXIS_180:
-                        axis = "Y180";
-                        break;
+            case AlgorithmRotate.Y_AXIS_PLUS:
+                axis = "Y+";
+                break;
 
-                    case AlgorithmRotate.Y_AXIS_PLUS:
-                        axis = "Y+";
-                        break;
+            case AlgorithmRotate.Y_AXIS_MINUS:
+                axis = "Y-";
+                break;
+                
+            case AlgorithmRotate.Z_AXIS_180:
+                axis = "Z180";
+                break;
 
-                    case AlgorithmRotate.Y_AXIS_MINUS:
-                        axis = "Y-";
-                        break;
-                        
-                    case AlgorithmRotate.Z_AXIS_180:
-                        axis = "Z180";
-                        break;
+            case AlgorithmRotate.Z_AXIS_MINUS:
+                axis = "Z-";
+                break;
 
-                    case AlgorithmRotate.Z_AXIS_MINUS:
-                        axis = "Z-";
-                        break;
-
-                    case AlgorithmRotate.Z_AXIS_PLUS:
-                    default:
-                        axis = "Z+";
-                        break;
-                }
-
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + axis + "\n");
-            }
+            case AlgorithmRotate.Z_AXIS_PLUS:
+            default:
+                axis = "Z+";
+                break;
         }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_axis", axis));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setForeground(Color.black);
+    protected void setGUIFromParams() {
         doClose = false;
-        image = im;
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
+        // TODO: why do we reg the parent frame?  shouldn't it already be registered?
         userInterface.regFrame(image.getParentFrame());
+        
+        String axisn = scriptParameters.getParams().getString("rotation_axis");
+        int axis;
 
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+        if (axisn.equals("X180")) {
+            axis = AlgorithmRotate.X_AXIS_180;
+        } else if (axisn.equals("X+")) {
+            axis = AlgorithmRotate.X_AXIS_PLUS;
+        } else if (axisn.equals("X-")) {
+            axis = AlgorithmRotate.X_AXIS_MINUS;
+        } else if (axisn.equals("Y180")) {
+            axis = AlgorithmRotate.Y_AXIS_180;
+        } else if (axisn.equals("Y+")) {
+            axis = AlgorithmRotate.Y_AXIS_PLUS;
+        } else if (axisn.equals("Y-")) {
+            axis = AlgorithmRotate.Y_AXIS_MINUS;
+        } else if (axisn.equals("Z180")) {
+            axis = AlgorithmRotate.Z_AXIS_180;
+        } else if (axisn.equals("Z+")) {
+            axis = AlgorithmRotate.Z_AXIS_PLUS;
+        } else if (axisn.equals("Z-")) {
+            axis = AlgorithmRotate.Z_AXIS_MINUS;
+        } else {
+            throw new ParameterException("rotation_axis", "Illegal axis parameter: " + axisn);
         }
 
-        try {
-            String axisn = parser.getNextString();
-            int axis;
-
-            if (axisn.equals("X180")) {
-                axis = AlgorithmRotate.X_AXIS_180;
-            } else if (axisn.equals("X+")) {
-                axis = AlgorithmRotate.X_AXIS_PLUS;
-            } else if (axisn.equals("X-")) {
-                axis = AlgorithmRotate.X_AXIS_MINUS;
-            } else if (axisn.equals("Y180")) {
-                axis = AlgorithmRotate.Y_AXIS_180;
-            } else if (axisn.equals("Y+")) {
-                axis = AlgorithmRotate.Y_AXIS_PLUS;
-            } else if (axisn.equals("Y-")) {
-                axis = AlgorithmRotate.Y_AXIS_MINUS;
-            } else if (axisn.equals("Z180")) {
-                axis = AlgorithmRotate.Z_AXIS_180;
-            } else if (axisn.equals("Z+")) {
-                axis = AlgorithmRotate.Z_AXIS_PLUS;
-            } else if (axisn.equals("Z-")) {
-                axis = AlgorithmRotate.Z_AXIS_MINUS;
-            } else {
-                throw new Exception("Illegal axis parameter: " + axisn);
-            }
-
-            rotateAxis = axis;
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+        rotateAxis = axis;
     }
-
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
 }

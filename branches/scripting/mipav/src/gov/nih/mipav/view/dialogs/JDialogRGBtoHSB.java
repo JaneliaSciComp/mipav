@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -14,7 +15,7 @@ import java.awt.event.*;
 /**
  * Dialog to separate RGB channels into grayscale Hue, Saturation, and Brightness channels.
  */
-public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -57,21 +58,7 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
     public JDialogRGBtoHSB(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI   The user interface, needed to create the image frame.
-     * @param  imA  Source image.
-     */
-    public JDialogRGBtoHSB(ViewUserInterface UI, ModelImage imA) {
-        super();
-        userInterface = UI;
-        imageA = imA;
-        parentFrame = imageA.getParentFrame();
+        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -81,9 +68,7 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
      *
      * @param  event  Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -96,10 +81,6 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrameH = null;
-        ViewJFrameImage imageFrameS = null;
-        ViewJFrameImage imageFrameB = null;
-
         if (algorithm instanceof AlgorithmRGBtoHSB) {
 
             if ((HSBAlgo.isCompleted() == true) && (resultImageB != null)) {
@@ -110,9 +91,9 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
                 updateFileInfo(imageA, resultImageB);
 
                 try {
-                    imageFrameH = new ViewJFrameImage(resultImageH, null, new Dimension(610, 200));
-                    imageFrameS = new ViewJFrameImage(resultImageS, null, new Dimension(650, 250));
-                    imageFrameB = new ViewJFrameImage(resultImageB, null, new Dimension(690, 300));
+                    new ViewJFrameImage(resultImageH, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImageS, null, new Dimension(650, 250));
+                    new ViewJFrameImage(resultImageB, null, new Dimension(690, 300));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -142,7 +123,9 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
             ((ViewJFrameBase) parentFrame).updateImages(true);
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         HSBAlgo.finalize();
         HSBAlgo = null;
@@ -243,80 +226,33 @@ public class JDialogRGBtoHSB extends JDialogBase implements AlgorithmInterface, 
     public ModelImage getResultImageS() {
         return resultImageS;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RGBtoHSB " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageH.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageH.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageS.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageS.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageB.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageB.getImageName()) +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        
+        AlgorithmParameters.storeImageInRecorder(getResultImageH());
+        AlgorithmParameters.storeImageInRecorder(getResultImageS());
+        AlgorithmParameters.storeImageInRecorder(getResultImageB());
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String imageHKey = null;
-        String imageSKey = null;
-        String imageBKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        imageA = im;
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage();
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            imageHKey = parser.getNextString();
-            imageSKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(imageHKey, getResultImageH().getImageName());
-        parser.putVariable(imageSKey, getResultImageS().getImageName());
-        parser.putVariable(imageBKey, getResultImageB().getImageName());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImageH());
+        AlgorithmParameters.storeImageInRunner(getResultImageS());
+        AlgorithmParameters.storeImageInRunner(getResultImageB());
     }
 }

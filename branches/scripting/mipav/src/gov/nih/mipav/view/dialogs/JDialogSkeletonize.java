@@ -2,9 +2,12 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -17,7 +20,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogSkeletonize extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -27,15 +30,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
     private boolean do25D = false; // do a 2.5D skeletonize on a 3D image
 
     /** DOCUMENT ME! */
@@ -43,15 +37,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
 
     /** DOCUMENT ME! */
     private JCheckBox image25D;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
 
     /** DOCUMENT ME! */
     private boolean pruning = false;
@@ -71,12 +56,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
     /** DOCUMENT ME! */
     private int pruningPixels;
 
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag = false;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
@@ -94,12 +73,8 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -126,31 +101,8 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogSkeletonize(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -187,8 +139,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
         String name = makeImageName(image.getImageName(), "_skel");
 
         if (algorithm instanceof AlgorithmMorphology2D) {
@@ -201,7 +151,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     resultImage.setImageName(name);
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -243,7 +193,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                 try {
 
                     // resultImage.setImageName("Skeletonized image");
-                    imageFrame = new ViewJFrameImage(resultImage);
+                    new ViewJFrameImage(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -285,7 +235,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     resultImage.setImageName(name);
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -318,7 +268,9 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (skeletonizeAlgo2D != null) {
             skeletonizeAlgo2D.finalize();
@@ -348,117 +300,49 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Skeletonize " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + pruning + " " + pruningPixels +
-                                                           " " + do25D + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + pruning + " " + pruningPixels +
-                                                           " " + do25D + "\n");
-
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), do25D);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_pruning", pruning));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_pruning_pixels", pruningPixels));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
             MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
             dispose();
 
             return;
         }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setPruningEnabled(parser.getNextBoolean());
-            setNumPruningPixels(parser.getNextInteger());
-            setImage25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setPruningEnabled(scriptParameters.getParams().getBoolean("do_pruning"));
+        setNumPruningPixels(scriptParameters.getParams().getInt("num_pruning_pixels"));
     }
-
+    
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
     }
 
     /**
@@ -488,16 +372,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
     public void setPruningEnabled(boolean flag) {
         pruning = flag;
     }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
+    
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
@@ -511,7 +386,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -522,14 +397,14 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     if (pruning) {
                         skeletonizeAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, 0,
                                                                       AlgorithmMorphology2D.SKELETONIZE, 0, 0,
-                                                                      pruningPixels, 0, regionFlag);
+                                                                      pruningPixels, 0, outputPanel.isProcessWholeImageSet());
                     } else {
                         skeletonizeAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, 0,
                                                                       AlgorithmMorphology2D.SKELETONIZE, 0, 0, 0, 0,
-                                                                      regionFlag);
+                                                                      outputPanel.isProcessWholeImageSet());
                     }
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         skeletonizeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -573,14 +448,14 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     if (pruning) {
                         skeletonizeAlgo2D = new AlgorithmMorphology2D(image, kernel, 0,
                                                                       AlgorithmMorphology2D.SKELETONIZE, 0, 0,
-                                                                      pruningPixels, 0, regionFlag);
+                                                                      pruningPixels, 0, outputPanel.isProcessWholeImageSet());
                     } else {
                         skeletonizeAlgo2D = new AlgorithmMorphology2D(image, kernel, 0,
                                                                       AlgorithmMorphology2D.SKELETONIZE, 0, 0, 0, 0,
-                                                                      regionFlag);
+                                                                      outputPanel.isProcessWholeImageSet());
                     }
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         skeletonizeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -631,7 +506,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -642,14 +517,14 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     if (pruning) {
                         skeletonizeAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, 0,
                                                                       AlgorithmMorphology3D.SKELETONIZE, 0, 0,
-                                                                      pruningPixels, 0, regionFlag);
+                                                                      pruningPixels, 0, outputPanel.isProcessWholeImageSet());
                     } else {
                         skeletonizeAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, 0,
                                                                       AlgorithmMorphology3D.SKELETONIZE, 0, 0, 0, 0,
-                                                                      regionFlag);
+                                                                      outputPanel.isProcessWholeImageSet());
                     }
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         skeletonizeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -692,14 +567,14 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     if (pruning) {
                         skeletonizeAlgo3D = new AlgorithmMorphology3D(image, kernel, 0,
                                                                       AlgorithmMorphology3D.SKELETONIZE, 0, 0,
-                                                                      pruningPixels, 0, regionFlag);
+                                                                      pruningPixels, 0, outputPanel.isProcessWholeImageSet());
                     } else {
                         skeletonizeAlgo3D = new AlgorithmMorphology3D(image, kernel, 0,
                                                                       AlgorithmMorphology3D.SKELETONIZE, 0, 0, 0, 0,
-                                                                      regionFlag);
+                                                                      outputPanel.isProcessWholeImageSet());
                     }
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         skeletonizeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -747,7 +622,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
         } // else if (image.getNDims() == 3  && !do25D)
         else if (do25D) {
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -756,14 +631,14 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     if (pruning) {
                         skeletonizeAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, 0,
                                                                         AlgorithmMorphology25D.SKELETONIZE, 0, 0,
-                                                                        pruningPixels, 0, regionFlag);
+                                                                        pruningPixels, 0, outputPanel.isProcessWholeImageSet());
                     } else {
                         skeletonizeAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, 0,
                                                                         AlgorithmMorphology25D.SKELETONIZE, 0, 0, 0, 0,
-                                                                        regionFlag);
+                                                                        outputPanel.isProcessWholeImageSet());
                     }
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         skeletonizeAlgo25D.setMask(image.generateVOIMask());
                     }
 
@@ -807,14 +682,14 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
                     if (pruning) {
                         skeletonizeAlgo25D = new AlgorithmMorphology25D(image, kernel, 0,
                                                                         AlgorithmMorphology25D.SKELETONIZE, 0, 0,
-                                                                        pruningPixels, 0, regionFlag);
+                                                                        pruningPixels, 0, outputPanel.isProcessWholeImageSet());
                     } else {
                         skeletonizeAlgo25D = new AlgorithmMorphology25D(image, kernel, 0,
                                                                         AlgorithmMorphology25D.SKELETONIZE, 0, 0, 0, 0,
-                                                                        regionFlag);
+                                                                        outputPanel.isProcessWholeImageSet());
                     }
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         skeletonizeAlgo25D.setMask(image.generateVOIMask());
                     }
 
@@ -890,7 +765,7 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.weightx = 1;
 
@@ -899,45 +774,13 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
         pruningPanel.add(pruningCheckbox, gbc);
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         pruningPanel.add(pruningLabel, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         pruningPanel.add(pruningField, gbc);
 
-        destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Skeletonize"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
 
         if (image.getNDims() == 3) {
             image25D = new JCheckBox("Process image in 2.5D", true);
@@ -947,42 +790,27 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
 
         image25D.setFont(serif12);
 
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
         if (image.getNDims() == 3) {
             image25D.setEnabled(false);
         } else {
             image25D.setEnabled(false);
         }
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-        gbc.gridy = 2;
-        imageVOIPanel.add(image25D, gbc);
+        
+        PanelManager optionsManager = new PanelManager("Options");
+        optionsManager.add(image25D);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(pruningPanel, gbc);
         gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
-        mainPanel.add(destinationPanel, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        mainPanel.add(outputPanel, gbc);
+        gbc.gridy = 2;
+        mainPanel.add(optionsManager.getPanel(), gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -996,7 +824,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
         setVisible(true);
     }
 
-
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
      *
@@ -1006,18 +833,6 @@ public class JDialogSkeletonize extends JDialogBase implements AlgorithmInterfac
         System.gc();
 
         pruningPixels = Integer.parseInt(pruningField.getText());
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         do25D = image25D.isSelected();
 

@@ -3196,7 +3196,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
                 // build array of Strings for algorithm
                 // create dialog (which is not visible) to run the algorithm
-                JDialogRemoveSlices dialogRS = new JDialogRemoveSlices(getUserInterface(), srcImage);
+                JDialogRemoveSlices dialogRS = new JDialogRemoveSlices(this, srcImage);
 
                 dialogRS.setCheckListRemove(selectedImages);
                 dialogRS.setDisplayLocNew(); // temporary while testing

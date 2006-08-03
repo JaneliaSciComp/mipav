@@ -3,8 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +28,7 @@ import javax.swing.*;
  * @author   David Parsons (parsonsd@cbel.cit.nih.gov) (with vast help from M.McAuliffe)
  * @version  v0.12 1 Nov 1999 (processes most images)
  */
-public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRemoveSlices extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -161,23 +162,9 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
      */
     public JDialogRemoveSlices(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-        init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogRemoveSlices(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
         image = im;
-        parentFrame = image.getParentFrame();
+        userInterface = ViewUserInterface.getReference();
+        init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -438,9 +425,9 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
         }
 
         if (!doReplace && algorithm.isCompleted() && (algorithm instanceof AlgorithmRemoveSlices)) {
-            insertScriptLine(algorithm);
+            insertScriptLine();
         } else if (doReplace && algorithm.isCompleted() && (algorithm instanceof AlgorithmReplaceRemovedSlices)) {
-            insertScriptLine(algorithm);
+            insertScriptLine();
         }
 
         algorithm.finalize();
@@ -456,58 +443,86 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RemoveSlices " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(Boolean.toString(doReplace) + " ");
-
-                if (pressedCheckEven && isEvenSelected()) {
-                    userInterface.getScriptDialog().append(CHECKED_EVEN + "\n");
-                } else if (pressedCheckOdd && isOddSelected()) {
-                    userInterface.getScriptDialog().append(CHECKED_ODD + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(Integer.toString(USER_DEFINED));
-
-                    for (int i = 0; i < nSlices; i++) {
-
-                        if (checkListRemove[i]) {
-                            userInterface.getScriptDialog().append(" " + i);
-                        }
-                    }
-
-                    userInterface.getScriptDialog().append("\n");
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_replace_with_averages", doReplace));
+        
+        if (pressedCheckEven && isEvenSelected()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("selection_type", CHECKED_EVEN));
+        } else if (pressedCheckOdd && isOddSelected()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("selection_type", CHECKED_ODD));
+        } else {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("selection_type", USER_DEFINED));
+            
+            int numSelectedSlices = 0;
+            for (int i = 0; i < nSlices; i++) {
+                if (checkListRemove[i]) {
+                    numSelectedSlices++;
                 }
             }
+            
+            int[] selectedSlices = new int[numSelectedSlices];
+            for (int i = 0, j = 0; i < nSlices; i++) {
+                if (checkListRemove[i]) {
+                    selectedSlices[j++] = i;
+                }
+            }
+            
+            scriptParameters.getParams().put(ParameterFactory.newParameter("user_selected_slices", selectedSlices));
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        doReplace = scriptParameters.getParams().getBoolean("do_replace_with_averages");
+
+        int removeMode = scriptParameters.getParams().getInt("selection_type");
+
+        if (removeMode == JDialogRemoveSlices.CHECKED_EVEN) {
+            setCheckListRemoveEven();
+        } else if (removeMode == JDialogRemoveSlices.CHECKED_ODD) {
+            setCheckListRemoveOdd();
+        } else if (removeMode == JDialogRemoveSlices.USER_DEFINED) {
+            int numSlices = image.getExtents()[2];
+            
+            boolean[] checkListRemoved = new boolean[numSlices];
+            for (int i = 0; i < numSlices; i++) {
+                checkListRemoved[i] = false;
+            }
+            
+            int[] selectedSlices = scriptParameters.getParams().getList("user_selected_slices").getAsIntArray();
+            for (int i = 0; i < selectedSlices.length; i++) {
+                checkListRemoved[selectedSlices[i]] = true;
+            }
+            
+            setCheckListRemove(checkListRemoved);
+        }
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -588,88 +603,6 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
                     checkboxList[i].setEnabled(true);
                 }
             }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            doReplace = parser.getNextBoolean();
-
-            int removeMode = parser.getNextInteger();
-
-            if (removeMode == JDialogRemoveSlices.CHECKED_EVEN) {
-                setCheckListRemoveEven();
-            } else if (removeMode == JDialogRemoveSlices.CHECKED_ODD) {
-                setCheckListRemoveOdd();
-            } else if (removeMode == JDialogRemoveSlices.USER_DEFINED) {
-                int nSlices = image.getExtents()[2];
-                int index;
-                boolean[] checkListRemoved = new boolean[nSlices];
-
-                for (int i = 0; i < nSlices; i++) {
-                    checkListRemoved[i] = false;
-                }
-
-                for (;;) {
-
-                    try {
-                        index = parser.getNextInteger();
-                    } catch (NoSuchElementException e) {
-                        break;
-                    }
-
-                    checkListRemoved[index] = true;
-                }
-
-                setCheckListRemove(checkListRemoved);
-            } else {
-                throw new IllegalArgumentException();
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
         }
     }
 
@@ -1041,9 +974,9 @@ public class JDialogRemoveSlices extends JDialogBase implements AlgorithmInterfa
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridwidth = 2;
         checkPanel.add(rangePanel, gbc);
 

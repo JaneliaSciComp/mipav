@@ -1591,13 +1591,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ColorEdge")) {
         //    JDialogColorEdge cEdge = new JDialogColorEdge(this, getActiveImage());
         } else if (command.equals("Grays -> RGB")) {
-            JDialogRGBConcat graysToRGB = new JDialogRGBConcat(this, getActiveImage());
-
-            if (graysToRGB.getError() == null) {
-                graysToRGB.setVisible(true);
-            } else {
-                MipavUtil.displayError("" + graysToRGB.getError());
-            }
+            new JDialogRGBConcat(this, getActiveImage());
         } else if (command.equals("HistoSummary")) {
             new JDialogHistogramSummary(this, getActiveImage());
         } else if (command.equals("Convert type")) {

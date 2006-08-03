@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.*;
  * does not yet rename removed slice image when saving)**(as of 1 November, does not yet process the more complicated
  * DICOM images completely.
  */
-public class JDialogRemoveTSlices extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRemoveTSlices extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -82,24 +84,9 @@ public class JDialogRemoveTSlices extends JDialogBase implements AlgorithmInterf
      */
     public JDialogRemoveTSlices(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-        init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogRemoveTSlices(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
         image = im;
-        parentFrame = image.getParentFrame();
-        nSlices = image.getExtents()[3];
+        userInterface = ViewUserInterface.getReference();
+        init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -111,9 +98,7 @@ public class JDialogRemoveTSlices extends JDialogBase implements AlgorithmInterf
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource(); // whatever the user clicked on
-        String command = event.getActionCommand();
         int i; // counting variable
-        int[] destExtents = null; // length along an axis of the destination image
 
 
         if (source == OKButton) { // if user pressed "remove" ...
@@ -235,7 +220,9 @@ public class JDialogRemoveTSlices extends JDialogBase implements AlgorithmInterf
 
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         removeTSlicesAlgo.finalize();
         removeTSlicesAlgo = null;
@@ -250,115 +237,67 @@ public class JDialogRemoveTSlices extends JDialogBase implements AlgorithmInterf
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("RemoveTSlices " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append((String) userInterface.getScriptDialog().getVar(resultImage.getImageName()));
-
-                for (int i = 0; i < nSlices; i++) {
-
-                    if (checkListRemove[i]) {
-                        userInterface.getScriptDialog().append(" " + i);
-                    }
-                }
-
-                userInterface.getScriptDialog().append("\n");
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        int numSelectedSlices = 0;
+        for (int i = 0; i < nSlices; i++) {
+            if (checkListRemove[i]) {
+                numSelectedSlices++;
             }
         }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+        
+        int[] selectedSlices = new int[numSelectedSlices];
+        for (int i = 0, j = 0; i < nSlices; i++) {
+            if (checkListRemove[i]) {
+                selectedSlices[j++] = i;
+            }
         }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("user_selected_slices", selectedSlices));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+        int tSlices = image.getExtents()[3];
+        
+        boolean[] checkListRemoved = new boolean[tSlices];
+        for (int i = 0; i < tSlices; i++) {
+            checkListRemoved[i] = false;
         }
-
-        try {
-            int tSlices = image.getExtents()[3];
-            int index;
-            boolean[] checkListRemoved = new boolean[tSlices];
-
-            for (int i = 0; i < tSlices; i++) {
-                checkListRemoved[i] = false;
-            }
-
-            for (;;) {
-
-                try {
-                    index = parser.getNextInteger();
-                } catch (NoSuchElementException e) {
-                    break;
-                }
-
-                checkListRemoved[index] = true;
-            }
-
-            setCheckListRemove(checkListRemoved);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+        
+        int[] selectedSlices = scriptParameters.getParams().getList("user_selected_slices").getAsIntArray();
+        for (int i = 0; i < selectedSlices.length; i++) {
+            checkListRemoved[selectedSlices[i]] = true;
         }
-
-        setSeparateThread(false);
+        
+        setCheckListRemove(checkListRemoved);
+        
         nChecked = 0;
-
         for (int i = 0; i < nSlices; i++) {
 
             if (checkListRemove[i]) {
                 nChecked++;
             }
         }
-
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**

@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +23,7 @@ import java.util.*;
  * @version  1.0 June 5, 2006
  * @author   William Gandler
  */
-public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -63,23 +64,7 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implement
 
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui        User interface.
-     * @param  im        Source image.
-     */
-    public JDialogReplaceBlankSlicesWithAverages(ViewUserInterface ui, ModelImage im) {
-        super();
-
-        setForeground(Color.black);
-        parentFrame = im.getParentFrame();
-        image = im;
-        this.userInterface = ui;
+        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -90,9 +75,7 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implement
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -128,7 +111,9 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implement
 
             image.notifyImageDisplayListeners(null, true);
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         rAlgo.finalize();
@@ -189,60 +174,20 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogBase implement
             return;
         }
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ReplaceBlankSlicesWithAverages " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       "\n");
-
-                
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setForeground(Color.black);
-        image = im;
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
     }
-
 }
