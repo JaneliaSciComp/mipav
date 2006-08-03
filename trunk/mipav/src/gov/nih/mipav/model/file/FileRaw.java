@@ -608,6 +608,26 @@ public class FileRaw extends FileBase {
                     }
 
                     break;
+                    
+                case ModelStorageBase.DCOMPLEX:
+                    try {
+                        fileRW.readImage(ModelStorageBase.DCOMPLEX, (k * bufferSize * 16) + offset, bufferSize * 2);
+
+                        double[] realBuffer = new double[bufferSize];
+                        double[] imagBuffer = new double[bufferSize];
+                        double[] tmpBuffer = fileRW.getDoubleBuffer();
+
+                        for (i = 0, ii = 0; i < bufferSize; i++, ii += 2) {
+                            realBuffer[i] = tmpBuffer[ii];
+                            imagBuffer[i] = tmpBuffer[ii + 1];
+                        }
+
+                        image.importDComplexData(2 * k * bufferSize, realBuffer, imagBuffer, false, true);
+                    } catch (IOException error) {
+                        throw error;
+                    }
+
+                    break;
 
                 default:
                     throw new IOException();
