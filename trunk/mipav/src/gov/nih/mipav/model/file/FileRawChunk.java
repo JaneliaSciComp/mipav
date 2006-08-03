@@ -71,6 +71,10 @@ public class FileRawChunk extends FileBase {
 
     /** DOCUMENT ME! */
     private int planarConfig = 0; // 0 = rgb,rgb, 1 = rrr, ggg, bbb
+    
+    private int numColors = 3;
+    
+    private boolean RGBAOrder = false;
 
     /** DOCUMENT ME! */
     private int type = 0;
@@ -346,6 +350,11 @@ public class FileRawChunk extends FileBase {
                     case ModelStorageBase.COMPLEX:
                         bufferFloat = new float[bufferSize];
                         bufferByte = new byte[4 * bufferSize];
+                        break;
+                        
+                    case ModelStorageBase.DCOMPLEX:
+                        bufferDouble = new double[bufferSize];
+                        bufferByte = new byte[8 * bufferSize];
                         break;
 
                     default:
@@ -771,6 +780,7 @@ public class FileRawChunk extends FileBase {
                 break;
 
             case ModelStorageBase.DOUBLE:
+            case ModelStorageBase.DCOMPLEX:
                 try {
 
                     if (compressionType == FileInfoBase.COMPRESSION_NONE) {
@@ -953,6 +963,18 @@ public class FileRawChunk extends FileBase {
      */
     public void setPlanarConfig(int _planarConfig) {
         planarConfig = _planarConfig;
+    }
+    
+    /**
+     * Sets the number of colors used in RGB files.
+     * @param numColors
+     */
+    public void setNumColors(int numColors) {
+        this.numColors = numColors;
+    }
+    
+    public void setRGBAOrder(boolean RGBAOrder) {
+        this.RGBAOrder = RGBAOrder;
     }
 
     /**
@@ -1536,6 +1558,11 @@ public class FileRawChunk extends FileBase {
                         bufferFloat = new float[2 * bufferSize];
                         bufferByte = new byte[8 * bufferSize];
                         break;
+                        
+                    case ModelStorageBase.DCOMPLEX:
+                        bufferDouble = new double[2 * bufferSize];
+                        bufferByte = new byte[16* bufferSize];
+                        break;
 
                     default:
                         throw new IOException();
@@ -2024,6 +2051,69 @@ public class FileRawChunk extends FileBase {
                             bufferByte[index++] = (byte) (tmpInt >>> 8);
                             bufferByte[index++] = (byte) (tmpInt >>> 16);
                             bufferByte[index++] = (byte) (tmpInt >>> 24);
+                        }
+                    }
+
+                    if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                        raFile.write(bufferByte);
+                    } else {
+                        deflaterStream.write(bufferByte);
+                    }
+                } catch (IOException error) {
+                    throw error;
+                }
+
+                break;
+                
+            case ModelStorageBase.DCOMPLEX:
+                try {
+                    image.exportData(2 * start, 2 * bufferSize, bufferDouble);
+
+                    long tmpLong;
+
+                    if (endianess == BIG_ENDIAN) {
+
+                        for (i = 0, index = 0; i < (2 * bufferSize); i += 2) {
+                            tmpLong = Double.doubleToLongBits(bufferDouble[i]);
+                            bufferByte[index++] = (byte) (tmpLong >>> 56);
+                            bufferByte[index++] = (byte) (tmpLong >>> 48);
+                            bufferByte[index++] = (byte) (tmpLong >>> 40);
+                            bufferByte[index++] = (byte) (tmpLong >>> 32);
+                            bufferByte[index++] = (byte) (tmpLong >>> 24);
+                            bufferByte[index++] = (byte) (tmpLong >>> 16);
+                            bufferByte[index++] = (byte) (tmpLong >>> 8);
+                            bufferByte[index++] = (byte) (tmpLong & 0xff);
+                            tmpLong = Double.doubleToLongBits(bufferDouble[i+1]);
+                            bufferByte[index++] = (byte) (tmpLong >>> 56);
+                            bufferByte[index++] = (byte) (tmpLong >>> 48);
+                            bufferByte[index++] = (byte) (tmpLong >>> 40);
+                            bufferByte[index++] = (byte) (tmpLong >>> 32);
+                            bufferByte[index++] = (byte) (tmpLong >>> 24);
+                            bufferByte[index++] = (byte) (tmpLong >>> 16);
+                            bufferByte[index++] = (byte) (tmpLong >>> 8);
+                            bufferByte[index++] = (byte) (tmpLong & 0xff);
+                        }
+                    } else {
+
+                        for (i = 0, index = 0; i < (2 * bufferSize); i += 2) {
+                            tmpLong = Double.doubleToLongBits(bufferDouble[i]);
+                            bufferByte[index++] = (byte) (tmpLong & 0xff);
+                            bufferByte[index++] = (byte) (tmpLong >>> 8);
+                            bufferByte[index++] = (byte) (tmpLong >>> 16);
+                            bufferByte[index++] = (byte) (tmpLong >>> 24);
+                            bufferByte[index++] = (byte) (tmpLong >>> 32);
+                            bufferByte[index++] = (byte) (tmpLong >>> 40);
+                            bufferByte[index++] = (byte) (tmpLong >>> 48);
+                            bufferByte[index++] = (byte) (tmpLong >>> 56);
+                            tmpLong = Double.doubleToLongBits(bufferDouble[i+1]);
+                            bufferByte[index++] = (byte) (tmpLong & 0xff);
+                            bufferByte[index++] = (byte) (tmpLong >>> 8);
+                            bufferByte[index++] = (byte) (tmpLong >>> 16);
+                            bufferByte[index++] = (byte) (tmpLong >>> 24);
+                            bufferByte[index++] = (byte) (tmpLong >>> 32);
+                            bufferByte[index++] = (byte) (tmpLong >>> 40);
+                            bufferByte[index++] = (byte) (tmpLong >>> 48);
+                            bufferByte[index++] = (byte) (tmpLong >>> 56);
                         }
                     }
 
