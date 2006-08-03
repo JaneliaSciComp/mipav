@@ -1,6 +1,4 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -13,10 +11,19 @@ import javax.swing.*;
 
 
 /**
+ * JDialogBase class.
+ *
+ * <p>Note:</p>
+ *
+ * @version  March 29, 2004
+ * @author   DOCUMENT ME!
  * @see      JDialogBase
  * @see      AlgorithmInterface
+ *
+ *           <p>$Logfile: /mipav/src/plugins/PlugInDialogRegionDistance.java $ $Revision: 21 $ $Date: 1/25/06 4:59p $
+ *           </p>
  */
-public class PlugInDialogRegionDistance extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogRegionDistance extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -101,6 +108,9 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -125,7 +135,29 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
         }
 
         image = im;
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
+    }
+
+    /**
+     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
+     * up info and result image will be stored here.
+     *
+     * @param  UI  The user interface, needed to create the image frame.
+     * @param  im  Source image.
+     */
+    public PlugInDialogRegionDistance(ViewUserInterface UI, ModelImage im) {
+        super();
+        userInterface = UI;
+
+        if (!im.isColorImage()) {
+            MipavUtil.displayError("Source Image must be Color");
+            dispose();
+
+            return;
+        }
+
+        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -169,9 +201,7 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
         if (algorithm instanceof PlugInAlgorithmRegionDistance) {
             image.clearMask();
 
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
+            insertScriptLine(algorithm);
 
             if (algorithm != null) {
                 algorithm.finalize();
@@ -184,6 +214,32 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
     } // end AlgorithmPerformed()
 
     /**
+     * Construct a delimited string that contains the parameters to this algorithm.
+     *
+     * @param   delim  the parameter delimiter (defaults to " " if empty)
+     *
+     * @return  the parameter string
+     */
+    public String getParameterString(String delim) {
+
+        if (delim.equals("")) {
+            delim = " ";
+        }
+
+        String str = new String();
+        str += redMin + delim;
+        str += redFraction + delim;
+        str += redNumber + delim;
+        str += greenMin + delim;
+        str += greenFraction + delim;
+        str += greenNumber + delim;
+        str += blueMin + delim;
+        str += iters;
+
+        return str;
+    }
+
+    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
@@ -191,24 +247,54 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
+
     /**
-     * {@inheritDoc}
+     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
+     *
+     * @param  algo  the algorithm to make an entry for
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_minimum_num_pixels", new int[] {redMin, greenMin, blueMin}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rg_fractions", new float[] {redFraction, greenFraction}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rg_number_vois", new int[] {redNumber, greenNumber}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iterations", iters));
+    public void insertScriptLine(AlgorithmBase algo) {
+
+        if (algo.isCompleted()) {
+
+            if (userInterface.isScriptRecording()) {
+
+                // check to see if the match image is already in the ImgTable
+                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
+
+                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
+                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
+                    }
+                }
+
+                userInterface.getScriptDialog().append("PlugInDialogRegionDistance " +
+                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
+                                                       " " + getParameterString(" ") + "\n");
+            }
+        }
     }
-    
+
     /**
-     * {@inheritDoc}
+     * Run this algorithm from a script.
+     *
+     * @param   parser  the script parser we get the state from
+     *
+     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
      */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
+    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
+        String srcImageKey = null;
+
+        try {
+            srcImageKey = parser.getNextString();
+        } catch (Exception e) {
+            throw new IllegalArgumentException();
+        }
+
+        ModelImage im = parser.getImage(srcImageKey);
+
+        setForeground(Color.black);
+        image = im;
+        userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
         if (!image.isColorImage()) {
@@ -217,19 +303,22 @@ public class PlugInDialogRegionDistance extends JDialogScriptableBase implements
 
             return;
         }
-        
-        int[] mins = scriptParameters.getParams().getList("rgb_minimum_num_pixels").getAsIntArray();
-        float[] fractions = scriptParameters.getParams().getList("rg_fractions").getAsFloatArray();
-        int[] numVOIs = scriptParameters.getParams().getList("rg_number_vois").getAsIntArray();
-        
-        setRedMin(mins[0]);
-        setRedFraction(fractions[0]);
-        setRedNumber(numVOIs[0]);
-        setGreenMin(mins[1]);
-        setGreenFraction(fractions[1]);
-        setGreenNumber(numVOIs[1]);
-        setBlueMin(mins[2]);
-        setIters(scriptParameters.getParams().getInt("num_iterations"));
+
+        try {
+            setRedMin(parser.getNextInteger());
+            setRedFraction(parser.getNextFloat());
+            setRedNumber(parser.getNextInteger());
+            setGreenMin(parser.getNextInteger());
+            setGreenFraction(parser.getNextFloat());
+            setGreenNumber(parser.getNextInteger());
+            setBlueMin(parser.getNextInteger());
+            setIters(parser.getNextInteger());
+        } catch (Exception e) {
+            throw new IllegalArgumentException(e.getMessage());
+        }
+
+        setSeparateThread(false);
+        callAlgorithm();
     }
 
     /**
