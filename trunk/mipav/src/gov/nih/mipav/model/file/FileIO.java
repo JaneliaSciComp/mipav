@@ -6877,10 +6877,6 @@ public class FileIO {
             fileInfo.setOffset(rawIODialog.getOffset());
         }
 
-
-
-
-
         i = 0;
 
         try {
@@ -6908,9 +6904,7 @@ public class FileIO {
                                            UI.getProgressBarPrefix() + "Raw image(s) ...", 0, 100, false, null, null);
 
         progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-        progressBar.updateValue(0, true);
-
+        progressBar.updateValue(0, false);
 
         nFileInfos = new FileInfoImageXML[nImages];
 
@@ -6923,10 +6917,9 @@ public class FileIO {
             fileInfo.setExtents(extents);
 
             float[] resols = new float[3];
-
             resols[0] = fileInfo.getResolutions()[0];
             resols[1] = fileInfo.getResolutions()[1];
-            resols[2] = fileInfo.getResolutions()[0]; // Don't really know resolution for 3rd dimension
+            resols[2] = fileInfo.getResolutions()[2]; 
             fileInfo.setResolutions(resols);
         }
 
@@ -6967,10 +6960,10 @@ public class FileIO {
         }
 
         for (int m = 0; m < nImages; m++) {
-
+            
             try {
                 imageFile = new FileRaw(fileList[m], fileDir, fileInfo, true, FileBase.READ);
-                progressBar.updateValue((int) (((float) m / (float) nImages) * 100.0f), true);
+                progressBar.updateValue((int) (((float) m / (float) nImages) * 100.0f), false);
                 imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
             } catch (IOException error) {
