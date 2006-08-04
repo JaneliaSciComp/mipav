@@ -45,6 +45,8 @@ public class FileInfoNRRD extends FileInfoBase {
     private String DWMRI_B_VALUE = null;
     
     private String dwmriGradient[][] = null;
+    
+    private String spaceString = null;
 
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -168,12 +170,17 @@ public class FileInfoNRRD extends FileInfoBase {
         if (dwmriGradient != null) {
             for (i = 0; i < dwmriGradient.length; i++) {
                 if (dwmriGradient[i] != null) {
-                    if ((dwmriGradient[i][0] != null) && (dwmriGradient[i][1] != null))
+                    if ((dwmriGradient[i][0] != null) && (dwmriGradient[i][1] != null)) {
                         dialog.appendSecondaryData(dwmriGradient[i][0], dwmriGradient[i][1]);
                     }
                 }
             }
         } // if (dwmriGradient != null)
+    
+        if (spaceString != null) {
+            dialog.appendSecondaryData("Space", spaceString);
+        }
+    }
     
     /**
      * 
@@ -237,6 +244,14 @@ public class FileInfoNRRD extends FileInfoBase {
      */
     public void setDwmriGradient(String dwmriGradient[][]) {
         this.dwmriGradient = dwmriGradient;
+    }
+    
+    /**
+     * 
+     * @param spaceString
+     */
+    public void setSpace(String spaceString) {
+        this.spaceString = spaceString;
     }
   
 }
