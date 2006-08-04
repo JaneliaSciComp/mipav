@@ -297,7 +297,7 @@ public class MipavCoordinateSystems
                 aiAxisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
                 aiAxisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
             }
-            else
+            else if ( imageOrientation == FileInfoBase.SAGITTAL )
             {
                 aiAxisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
                 aiAxisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
