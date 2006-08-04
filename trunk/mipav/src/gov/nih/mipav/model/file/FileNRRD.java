@@ -21,7 +21,38 @@ import java.util.zip.GZIPInputStream;
  */
 
 public class FileNRRD extends FileBase {
-
+   
+    private static final int UNKNOWN = 0;
+    
+    private static final int RAS = 1;
+    
+    private static final int LAS = 2;
+    
+    private static final int LPS = 3;
+    
+    private static final int RAST = 4;
+    
+    private static final int LAST = 5;
+    
+    private static final int LPST = 6;
+    
+    private static final int SCANNER_XYZ = 7;
+    
+    private static final int SCANNER_XYZ_TIME = 8;
+    
+    private static final int THREED_RIGHT_HANDED = 9;
+    
+    private static final int THREED_LEFT_HANDED = 10;
+    
+    private static final int THREED_RIGHT_HANDED_TIME = 11;
+    
+    private static final int THREED_LEFT_HANDED_TIME = 12;
+    
+    private static final int NONE = 0;
+    
+    private static final int CELL = 1;
+    
+    private static final int NODE = 2;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -176,6 +207,34 @@ public class FileNRRD extends FileBase {
     
     private boolean RGBAOrder = false;
     
+    /** The orientation information in some NRRD files cannot be applied to MIPAV.
+        This applies to 2 of my 15 example NRRD files.  In Dwi-D.nhdr 4 dimensions
+        are specified with the dimensions from 0 to 3 having sizes of 13, 29, 30, and 31.
+        Right-anterior-superior space is specified, but the first axis contains diffusion
+        values and the last 3 axes are the x, y, and z coordinates, so the right-anterior-space
+        applies to the last 3 dimensions, whereas MIPAV would expect the first 3 dimensions
+        to be involved.  In gk2-rcc-mask2.nhdr 4 dimensions are specified with the dimensions
+        from 0 to 3 having sizes of 7, 148, 190, and 160.  Left-posterior-space is specified,
+        but the first axis contains diffusion values and the last 3 axes are x, y, and z
+        coordinates, so again the space applies to the last 3 dimensions rather than MIPAV’s first
+        3 dimensions.  There are only 2 possbile workarounds:
+        1.)  A massive rewrite of MIPAV to have the orientation information apply to
+        selected axes rather than the first 3.
+        2.)  Reorder the data files so that the diffusion dimension goes from being
+        the first dimension to being the last dimension.
+    */
+    private boolean applyOrientation = true;
+    
+    private int space = UNKNOWN;
+    
+    private double spaceDirections[][] = null;
+    
+    private double spaceOrigin[] = null;
+    
+    private double measurementFrame[][] = null;
+    
+    private int centers[] = null;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -242,6 +301,7 @@ public class FileNRRD extends FileBase {
         int percentIndex;
         int dIndex;
         int periodIndex;
+        int startNum;
 
         // index         = fileName.toLowerCase().indexOf(".img");
         index = fileName.lastIndexOf(".");
@@ -890,6 +950,241 @@ public class FileNRRD extends FileBase {
                          }
                          Preferences.debug("NRRD axis thickness[" + i + "] = " + thicknesses[i] + "\n");    
                      } // else if (fieldIDString.equalsIgnoreCase("THICKNESSES"))
+                     else if (fieldIDString.equalsIgnoreCase("SPACE")) {
+                         if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
+                             (fieldDescriptorString.equalsIgnoreCase("RAS"))) {
+                             Preferences.debug("Space = right-anterior-superior\n");
+                             fileInfo.setSpace("right-anterior-superior");
+                             space = RAS;
+                         } // if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
+                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
+                                  (fieldDescriptorString.equalsIgnoreCase("LAS"))) {
+                             Preferences.debug("Space = left-anterior-superior\n");
+                             fileInfo.setSpace("left-anterior-superior");
+                             space = LAS;
+                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
+                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
+                                 (fieldDescriptorString.equalsIgnoreCase("LPS"))) {
+                             Preferences.debug("Space = left-posterior-superior\n");
+                             fileInfo.setSpace("left-posterior-superior");
+                             space = LPS;
+                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
+                         else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
+                             (fieldDescriptorString.equalsIgnoreCase("RAST"))) {
+                             Preferences.debug("SPACE = right-anterior-superior-time\n");
+                             fileInfo.setSpace("right-anterior-superior-time");
+                             space = RAST;
+                         } // else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
+                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
+                                 (fieldDescriptorString.equalsIgnoreCase("LAST"))) {
+                             Preferences.debug("Space = left-anterior-superior-time\n");
+                             fileInfo.setSpace("left-anterior-superior-time");
+                             space = LAST;
+                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
+                         else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
+                                 (fieldDescriptorString.equalsIgnoreCase("LPST"))) {
+                             Preferences.debug("Space = left-posterior-superior-time\n");
+                             fileInfo.setSpace("left-posterior-superior-time");
+                             space = LPST;
+                         } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
+                         else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ")) {
+                             Preferences.debug("Space = scanner-xyz\n");
+                             fileInfo.setSpace("scanner-xyz");
+                             space = SCANNER_XYZ;
+                         } // else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ"))
+                         else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ-TIME")) {
+                             Preferences.debug("Space = scanner-xyz-time\n");
+                             fileInfo.setSpace("scanner-xyz-time");
+                             space = SCANNER_XYZ_TIME;
+                         } // else if (fieldDescriptorString.equalsIgnoreCase("SCANNER-XYZ-TIME"))
+                         else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED")) {
+                             Preferences.debug("Space = 3d-right-handed\n");
+                             fileInfo.setSpace("3d-right-handed");
+                             space = THREED_RIGHT_HANDED;
+                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED"))
+                         else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED")) {
+                             Preferences.debug("Space = 3d-left-handed\n");
+                             fileInfo.setSpace("3d-left-handed");
+                             space = THREED_LEFT_HANDED;
+                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED"))
+                         else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED-TIME")) {
+                             Preferences.debug("Space = 3d-right-handed-time\n");
+                             fileInfo.setSpace("3d-right-handed-time");
+                             space = THREED_RIGHT_HANDED_TIME;
+                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-RIGHT-HANDED-TIME"))
+                         else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED-TIME")) {
+                             Preferences.debug("Space = 3d-left-handed-time\n");
+                             fileInfo.setSpace("3d-left-handed-time");
+                             space = THREED_LEFT_HANDED_TIME;
+                         } // else if (fieldDescriptorString.equalsIgnoreCase("3D-LEFT-HANDED-TIME"))
+                     } // else if (fieldIDString.equalsIgnoreCase("SPACE"))
+                     else if (fieldIDString.equalsIgnoreCase("SPACE DIRECTIONS")) {
+                         spaceDirections = new double[nrrdDimensions][3];
+                         for (i = 0, j = 0; i < nrrdDimensions;) {
+                             while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                 j++;
+                             }
+                             if (fieldDescriptorString.substring(j,j+4).equalsIgnoreCase("NONE")) {
+                                 spaceDirections[i][0] = Double.NaN;
+                                 spaceDirections[i][1] = Double.NaN;
+                                 spaceDirections[i][2] = Double.NaN;
+                                 Preferences.debug("space directions[" + i + " ] = none\n");
+                                 i++;
+                                 j += 4;
+                             }
+                             else if (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase("(")) {
+                                 j++;
+                                 while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                     j++;
+                                 }
+                                 startNum = j;
+                                 while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(",")) {
+                                     j++;
+                                 }
+                                 spaceDirections[i][0] = 
+                                 Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                     j++;
+                                 }
+                                 startNum = j;
+                                 while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(",")) {
+                                     j++;
+                                 }
+                                 spaceDirections[i][1] = 
+                                 Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                     j++;
+                                 }
+                                 startNum = j;
+                                 while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(")")) {
+                                     j++;
+                                 }
+                                 spaceDirections[i][2] = 
+                                     Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
+                                         spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n");
+                                 i++;
+                             }
+                         }
+                     } // else if (fieldIDString.equalsIgnoreCase("SPACE DIRECTIONS"))
+                     else if (fieldIDString.equalsIgnoreCase("SPACE ORIGIN")) {
+                         // This always refers to the center of the first sample in the array regardless of 
+                         // cell or node centering of the data is specified
+                         spaceOrigin = new double[3];
+                         j = 0;
+                         while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                             j++;
+                         }
+                         if (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase("(")) {
+                             j++;
+                             while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                 j++;
+                             }
+                             startNum = j;
+                             while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(",")) {
+                                 j++;
+                             }
+                             spaceOrigin[0] = 
+                             Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                             while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                 j++;
+                             }
+                             startNum = j;
+                             while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(",")) {
+                                 j++;
+                             }
+                             spaceOrigin[1] = 
+                             Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                             while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                 j++;
+                             }
+                             startNum = j;
+                             while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(")")) {
+                                 j++;
+                             }
+                             spaceOrigin[2] = 
+                                 Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                             Preferences.debug("space origin = (" + spaceOrigin[0] + "," +
+                                     spaceOrigin[1] + "," + spaceOrigin[2] + ")\n");
+                         }
+                     } // else if (fieldIDString.equalsIgnoreCase("SPACE ORIGIN"))
+                     else if (fieldIDString.equalsIgnoreCase("MEASUREMENT FRAME")) {
+                         measurementFrame = new double[3][3];
+                         for (i = 0, j = 0; i < 3;) {
+                             while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                 j++;
+                             }
+                             if (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase("(")) {
+                                 j++;
+                                 while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                     j++;
+                                 }
+                                 startNum = j;
+                                 while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(",")) {
+                                     j++;
+                                 }
+                                 measurementFrame[i][0] = 
+                                 Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                     j++;
+                                 }
+                                 startNum = j;
+                                 while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(",")) {
+                                     j++;
+                                 }
+                                 measurementFrame[i][1] = 
+                                 Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
+                                     j++;
+                                 }
+                                 startNum = j;
+                                 while (!fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(")")) {
+                                     j++;
+                                 }
+                                 measurementFrame[i][2] = 
+                                     Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 Preferences.debug("measurement frame[" + i + " ] = (" + measurementFrame[i][0] + "," +
+                                         measurementFrame[i][1] + "," + measurementFrame[i][2] + ")\n");
+                                 i++;
+                             }
+                         }
+                     } // else if (fieldIDString.equalsIgnoreCase("MEASUREMENT FRAME"))
+                     else if ((fieldIDString.equalsIgnoreCase("CENTERS")) ||
+                              (fieldIDString.equalsIgnoreCase("CENTERINGS"))) {
+                         centers = new int[nrrdDimensions]; 
+                         for (i = 0, j = 0; i < nrrdDimensions;) {
+                             while (fieldDescriptorString.substring(j,j+1).equals(" ")) {
+                                 j++;
+                             }
+                             if ((fieldDescriptorString.substring(j).length() >= 4) &&
+                                (fieldDescriptorString.substring(j,j+4).equalsIgnoreCase("CELL"))) {
+                                 centers[i] = CELL;
+                                 Preferences.debug("centers[ " + i + "] = cell\n");
+                                 i++;
+                                 j += 4;
+                             }
+                             else if ((fieldDescriptorString.substring(j).length() >= 4) &&
+                                      (fieldDescriptorString.substring(j,j+4).equalsIgnoreCase("NODE"))) {
+                                 centers[i] = NODE;
+                                 Preferences.debug("centers[ " + i + "] = node\n");
+                                 i++;
+                                 j += 4;
+                             }
+                             else if ((fieldDescriptorString.substring(j).length() >= 4) &&
+                                     (fieldDescriptorString.substring(j,j+4).equalsIgnoreCase("NONE"))) {
+                                centers[i] = NONE;
+                                Preferences.debug("centers[ " + i + "] = none\n");
+                                i++;
+                                j += 4;
+                            }
+                             else if (fieldDescriptorString.substring(j,j+3).equalsIgnoreCase("???")) {
+                                 centers[i] = NONE;
+                                 Preferences.debug("centers[ " + i + "] = none\n");
+                                 i++;
+                                 j += 3;
+                             }
+                         }
+                     } // else if ((fieldIDString.equalsIgnoreCase("CENTERS")) ||
                  } // else if (colonIndex >= 1)
             } // if (lineString != null)
         } // while (lineString != null)
@@ -1514,6 +1809,14 @@ public class FileNRRD extends FileBase {
                     mipavLabels[i] = nrrdLabels[i];
                 }
             } // for (i = 0; i < mipavDimensions; i++)
+        }
+        
+        if ((mipavDataType != ModelStorageBase.ARGB) && (mipavDataType != ModelStorageBase.ARGB_USHORT) &&
+            (mipavDataType != ModelStorageBase.ARGB_FLOAT) && (mipavDataType != ModelStorageBase.COMPLEX) &&
+            (mipavDataType != ModelStorageBase.DCOMPLEX) && (kindsString != null) &&
+            (kindsString[0] != null) && (!kindsString[0].equalsIgnoreCase("SPACE"))) {
+            applyOrientation = false;
+            Preferences.debug("Cannot apply orientation information because first mipav dimension is not spatial\n");
         }
         
         if (subdim == 0) {
