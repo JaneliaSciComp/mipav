@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -31,7 +33,7 @@ import javax.swing.*;
  * @see     AlgorithmCostFunctions
  * @see     AlgorithmConstrainedOAR3D
  */
-public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -287,29 +289,8 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
             doColor = false;
         }
 
-        UI = ((ViewJFrameBase) parentFrame).getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogConstrainedOAR3D(ViewUserInterface _UI, ModelImage im) {
-        super();
-        UI = _UI;
-        matchImage = im;
-
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -524,8 +505,6 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         AlgorithmTransform transform = null;
-        ModelImage inputTempWeightImage = null;
-        ModelImage refTempWeightImage = null;
 
         if (algorithm instanceof AlgorithmConstrainedOAR3D) {
 
@@ -591,7 +570,7 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
                 reg3.getTransform().saveMatrix(UI.getDefaultDirectory() + matchImage.getImageName() + "_To_" +
                                                refImage.getImageName() + ".mtx", message);
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
             }
 
             if (reg3 != null) {
@@ -625,67 +604,100 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(matchImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(matchImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(matchImage.getImageName());
-                    }
-                }
-
-                // do the same for the reference image
-                if (UI.getScriptDialog().getImgTableVar(refImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(refImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(refImage.getImageName());
-                    }
-                }
-
-                if (weighted) {
-
-                    if (UI.getScriptDialog().getActiveImageFlag()) {
-                        UI.getScriptDialog().putActiveVar(inputWeightImage.getImageName());
-                        UI.getScriptDialog().putActiveVar(refWeightImage.getImageName());
-                    } else {
-                        UI.getScriptDialog().putVar(inputWeightImage.getImageName());
-                        UI.getScriptDialog().putVar(refWeightImage.getImageName());
-                    }
-                }
-
-                // now both the match image and ref image vars are in the script dialog
-                // finally put in the result image's name
-                UI.getScriptDialog().putVar(resultImage.getImageName());
-                UI.getScriptDialog().append("RegistrationOAR3D ");
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(matchImage.getImageName()) + " ");
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(refImage.getImageName()) + " ");
-                UI.getScriptDialog().append(weighted + " ");
-
-                if (weighted) {
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(inputWeightImage.getImageName()) + " ");
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(refWeightImage.getImageName()) + " ");
-                }
-
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " ");
-                UI.getScriptDialog().append(DOF + " " + interp + " " + cost + " " + rotateBeginX + " " + rotateEndX +
-                                            " " + numCoarseX + " " + rotateBeginY + " " + rotateEndY + " " +
-                                            numCoarseY + " " + rotateBeginZ + " " + rotateEndZ + " " + numCoarseZ +
-                                            " " + displayTransform + " " + interp2 + " " + maxOfMinResol + " " +
-                                            doSubsample + " " + fastMode + " " + calcCOG + " " + bracketBound + " " +
-                                            maxIterations + " " + numMinima + "\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+        scriptParameters.storeImage(refImage, "reference_image");
+        
+        if (weighted) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
+            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
+            scriptParameters.storeImage(refWeightImage, "reference_weight_image");
         }
+        
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", new float[] {rotateEndX, rotateEndY, rotateEndZ}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", new int[] {numCoarseX, numCoarseY, numCoarseZ}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_max_of_min_resolutions", maxOfMinResol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        UI = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+
+        if (matchImage.isColorImage()) {
+            doColor = true;
+        } else {
+            doColor = false;
+        }
+
+        setReferenceImage(scriptParameters.retrieveImage("reference_image"));
+        
+        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
+
+        if (weighted) {
+            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
+            setReferenceWeightImage(scriptParameters.retrieveImage("reference_weight_image"));
+        }
+
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        
+        float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
+        float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
+        int[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsIntArray();
+
+        setCoarseBeginX(rotBegin[0]);
+        setCoarseEndX(rotEnd[0]);
+        setNumCoarseX(coarseRates[0]);
+
+        setCoarseBeginY(rotBegin[1]);
+        setCoarseEndY(rotEnd[1]);
+        setNumCoarseY(coarseRates[1]);
+
+        setCoarseBeginZ(rotBegin[2]);
+        setCoarseEndZ(rotEnd[2]);
+        setNumCoarseZ(coarseRates[2]);
+
+        setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
+
+        setMaxOfMinResol(scriptParameters.getParams().getBoolean("do_use_max_of_min_resolutions"));
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
+        setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
+
+        setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
+                scriptParameters.getParams().getInt("max_iterations"),
+                scriptParameters.getParams().getInt("num_minima"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -761,17 +773,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 rotatePanel.add(rotateRangePanelX, gbc);
 
                 gbc.gridx = 0;
                 gbc.gridy = 3;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 rotatePanel.add(coarsePanelX, gbc);
 
                 // gbc.gridx = 0;
                 // gbc.gridy = 4;
-                // gbc.gridwidth = gbc.REMAINDER;
+                // gbc.gridwidth = GridBagConstraints.REMAINDER;
                 // rotatePanel.add(finePanelX, gbc);
             } else {
                 xRRadio.setEnabled(true);
@@ -803,17 +815,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 rotatePanel.add(rotateRangePanelX, gbc);
 
                 gbc.gridx = 0;
                 gbc.gridy = 3;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 rotatePanel.add(coarsePanelX, gbc);
 
                 // gbc.gridx = 0;
                 // gbc.gridy = 4;
-                // gbc.gridwidth = gbc.REMAINDER;
+                // gbc.gridwidth = GridBagConstraints.REMAINDER;
                 // rotatePanel.add(finePanelX, gbc);
             } // if (xRRadio.isSelected)
             else if (yRRadio.isSelected()) {
@@ -839,17 +851,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 rotatePanel.add(rotateRangePanelY, gbc);
 
                 gbc.gridx = 0;
                 gbc.gridy = 3;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 rotatePanel.add(coarsePanelY, gbc);
 
                 // gbc.gridx = 0;
                 // gbc.gridy = 4;
-                // gbc.gridwidth = gbc.REMAINDER;
+                // gbc.gridwidth = GridBagConstraints.REMAINDER;
                 // rotatePanel.add(finePanelY, gbc);
             } // else if (yRadio.isSelected())
             else if (zRRadio.isSelected()) {
@@ -876,17 +888,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
                 gbc.gridx = 0;
                 gbc.gridy = 2;
                 gbc.gridwidth = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 rotatePanel.add(rotateRangePanelZ, gbc);
 
                 gbc.gridx = 0;
                 gbc.gridy = 3;
-                gbc.gridwidth = gbc.REMAINDER;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
                 rotatePanel.add(coarsePanelZ, gbc);
 
                 // gbc.gridx = 0;
                 // gbc.gridy = 4;
-                // gbc.gridwidth = gbc.REMAINDER;
+                // gbc.gridwidth = GridBagConstraints.REMAINDER;
                 // rotatePanel.add(finePanelZ, gbc);
             } // else if (zRadio.isSelected())
 
@@ -920,86 +932,6 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
                 oneTransLimit = false;
                 enableTranslationsYZ(true);
             }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        matchImage = im;
-        UI = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
-
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        setReferenceImage(parser.getImage(image2Key));
-
-        try {
-            boolean weighted = parser.getNextBoolean();
-            setWeighted(weighted);
-
-            if (weighted) {
-                setInputWeightImage(parser.getImage(parser.getNextString()));
-                setReferenceWeightImage(parser.getImage(parser.getNextString()));
-            }
-
-            destImageKey = parser.getNextString();
-            setDOF(parser.getNextInteger());
-            setInterp(parser.getNextInteger());
-            setCostChoice(parser.getNextInteger());
-
-            setCoarseBeginX(parser.getNextFloat());
-            setCoarseEndX(parser.getNextFloat());
-            setNumCoarseX(parser.getNextInteger());
-
-            setCoarseBeginY(parser.getNextFloat());
-            setCoarseEndY(parser.getNextFloat());
-            setNumCoarseY(parser.getNextInteger());
-
-            setCoarseBeginZ(parser.getNextFloat());
-            setCoarseEndZ(parser.getNextFloat());
-            setNumCoarseZ(parser.getNextInteger());
-
-            setDisplayTransform(parser.getNextBoolean());
-            setInterp2(parser.getNextInteger());
-
-            setMaxOfMinResol(parser.getNextBoolean());
-            setSubsample(parser.getNextBoolean());
-            setFastMode(parser.getNextBoolean());
-            setCalcCOG(parser.getNextBoolean());
-
-            setAdvancedSettings(parser.getNextInteger(), parser.getNextInteger(), parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
         }
     }
 
@@ -1432,11 +1364,11 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
 
         // Okay-Cancel Panel
         JPanel okayCancelPanel = new JPanel(new FlowLayout());
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.setActionCommand("AdvancedCancel");
-        cancelButton.addActionListener(this);
-        cancelButton.setPreferredSize(new Dimension(120, 30));
-        cancelButton.setFont(serif12B);
+        JButton advCancelButton = new JButton("Cancel");
+        advCancelButton.setActionCommand("AdvancedCancel");
+        advCancelButton.addActionListener(this);
+        advCancelButton.setPreferredSize(new Dimension(120, 30));
+        advCancelButton.setFont(serif12B);
 
         JButton okayButton = new JButton("OK");
         okayButton.setActionCommand("AdvancedOkay");
@@ -1444,7 +1376,7 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         okayButton.setPreferredSize(new Dimension(120, 30));
         okayButton.setFont(serif12B);
         okayCancelPanel.add(okayButton);
-        okayCancelPanel.add(cancelButton);
+        okayCancelPanel.add(advCancelButton);
 
         advancedDialog.getContentPane().add(okayCancelPanel, BorderLayout.SOUTH);
 
@@ -1468,13 +1400,9 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
      * @return  Newly created combo box.
      */
     private JComboBox buildImgComboBox(ModelImage image) {
-        ViewUserInterface UI;
-
         JComboBox comboBox = new JComboBox();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
-
-        UI = image.getUserInterface();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -1763,51 +1691,51 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         gbc.gridheight = 1;
         gbc.insets = insets;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         optPanel.add(labelImage, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxImage, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         optPanel.add(labelDOF, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxDOF, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         optPanel.add(labelInterp, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxInterp, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         optPanel.add(labelCost, gbc);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxCostFunct, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 7;
         optPanel.add(minMaxCheckbox, gbc);
 
@@ -2054,38 +1982,38 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridwidth = 2;
         weightPanel.add(noneRadio, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         weightPanel.add(voiRadio, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         weightPanel.add(weightRadio, gbc);
         gbc.gridy = 3;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         weightPanel.add(buttonWeightRef, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         weightPanel.add(textRef, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         weightPanel.add(buttonWeightInput, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         weightPanel.add(textInput, gbc);
 
         JPanel outPanel = new JPanel();
@@ -2120,17 +2048,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(transformCheckbox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         outPanel.add(labelInterp2, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(comboBoxInterp2, gbc);
 
         JPanel buttonPanel = new JPanel();
@@ -2659,17 +2587,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         rotatePanel.add(rotateRangePanelX, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         rotatePanel.add(coarsePanelX, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         // rotatePanel.add(finePanelX, gbc);
         xRRadio.setEnabled(false);
@@ -2709,17 +2637,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         rotatePanel.add(rotateRangePanelY, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         rotatePanel.add(coarsePanelY, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         // rotatePanel.add(finePanelY, gbc);
         xRRadio.setEnabled(false);
@@ -2760,17 +2688,17 @@ public class JDialogConstrainedOAR3D extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         rotatePanel.add(rotateRangePanelZ, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         rotatePanel.add(coarsePanelZ, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         // rotatePanel.add(finePanelZ, gbc);
         xRRadio.setEnabled(false);

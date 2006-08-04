@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -31,7 +33,7 @@ import javax.swing.*;
  * @see     AlgorithmCostFunctions
  * @see     AlgorithmRegOAR35D
  */
-public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -142,9 +144,6 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
                             // 3 for reference
 
     /** DOCUMENT ME! */
-    private ModelImage resultImage = null;
-
-    /** DOCUMENT ME! */
     private float rotateBegin, rotateEnd, coarseRate, fineRate;
 
     /** DOCUMENT ME! */
@@ -200,29 +199,8 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
             doColor = false;
         }
 
-        UI = ((ViewJFrameBase) parentFrame).getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogRegistrationOAR35D(ViewUserInterface _UI, ModelImage im) {
-        super();
-        UI = _UI;
-        matchImage = im;
-
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -342,7 +320,6 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         int i;
-        ViewJFrameImage imageFrame = null;
         float[][] rot = null;
         float[][] posR = null;
         float[][] trans = null;
@@ -397,7 +374,7 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
                     transGraph.setVisible(true);
                 } // if (doGraph)
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
             } // isCompleted
 
             if (reg35 != null) {
@@ -447,80 +424,84 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
             System.gc();
         }
     }
-
+    
     /**
-     * Accessor to get the result image.
-     *
-     * @return  Result image.
+     * {@inheritDoc}
      */
-    public ModelImage getResultImage() {
-        return resultImage;
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+        
+        if (weighted) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
+            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
+        }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("registration_reference_type", registerTo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        UI = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
 
-        if (algo.isCompleted()) {
+        if (matchImage.isColorImage()) {
+            doColor = true;
+        } else {
+            doColor = false;
+        }
 
-            if (UI.isScriptRecording()) {
+        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
 
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(matchImage.getImageName()) == null) {
+        if (weighted) {
+            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
+        }
 
-                    if (UI.getScriptDialog().getActiveImgTableVar(matchImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(matchImage.getImageName());
-                    }
-                }
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        
+        setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
+        setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
+        setCoarseRate(scriptParameters.getParams().getFloat("coarse_rate"));
+        setFineRate(scriptParameters.getParams().getFloat("fine_rate"));
 
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(matchImage.getImageName()) == null) {
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
 
-                    if (UI.getScriptDialog().getActiveImgTableVar(matchImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(matchImage.getImageName());
-                    }
-                }
-
-                if (weighted) {
-                    /*
-                     *              UI.getScriptDialog().putVar(inputWeightImage.getImageName());
-                     * UI.getScriptDialog().append("LoadImage " +
-                     * UI.getScriptDialog().getVar(inputWeightImage.getImageName()) + "\n");
-                     */
-
-                    // check to see if the match image is already in the ImgTable
-                    if (UI.getScriptDialog().getImgTableVar(inputWeightImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(inputWeightImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(inputWeightImage.getImageName());
-                        }
-                    }
-
-                    UI.getScriptDialog().append("RegistrationOAR35D " +
-                                                UI.getScriptDialog().getVar(matchImage.getImageName()) + " " +
-                                                weighted + " " +
-                                                UI.getScriptDialog().getVar(inputWeightImage.getImageName()) + " " +
-                                                cost + " " + DOF + " " + interp + " " + interp2 + " " + registerTo +
-                                                " " + refImageNum + " " + rotateBegin + " " + rotateEnd + " " +
-                                                coarseRate + " " + fineRate + " " + doGraph + " " + doSubsample + " " +
-                                                fastMode + " " + bracketBound + " " + maxIterations + " " + numMinima +
-                                                "\n");
-                } else {
-                    UI.getScriptDialog().append("RegistrationOAR35D " +
-                                                UI.getScriptDialog().getVar(matchImage.getImageName()) + " " +
-                                                weighted + " " + cost + " " + DOF + " " + interp + " " + interp2 + " " +
-                                                registerTo + " " + refImageNum + " " + rotateBegin + " " + rotateEnd +
-                                                " " + coarseRate + " " + fineRate + " " + doGraph + " " + doSubsample +
-                                                " " + fastMode + " " + bracketBound + " " + maxIterations + " " +
-                                                numMinima + "\n");
-                }
-            }
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
+        
+        setBracketBound(scriptParameters.getParams().getInt("bracket_bound"));
+        setMaxIterations(scriptParameters.getParams().getInt("max_iterations"));
+        setNumMinima(scriptParameters.getParams().getInt("num_minima"));
+        
+        setRegisterTo(scriptParameters.getParams().getInt("registration_reference_type"));
+        setRefImageNum(scriptParameters.getParams().getInt("reference_volume_num"));
+        setGraphCheckBox(scriptParameters.getParams().getBoolean("do_graph_transform"));
+        
+        if (refImageNum == 0) {
+            setRefImageNum((int) (matchImage.getExtents()[3] / 2) + 1);
         }
     }
-
+    
     /**
      * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
      *
@@ -570,73 +551,6 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
             fineRateText.setEnabled(!fastModeCheckbox.isSelected());
             ;
         }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        matchImage = im;
-        UI = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
-
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        try {
-            boolean weighted = parser.getNextBoolean();
-            setWeighted(weighted);
-
-            if (weighted) {
-                setInputWeightImage(parser.getImage(parser.getNextString()));
-            }
-
-            setCostChoice(parser.getNextInteger());
-            setDOF(parser.getNextInteger());
-            setInterp(parser.getNextInteger());
-            setInterp2(parser.getNextInteger());
-            setRegisterTo(parser.getNextInteger());
-            setRefImageNum(parser.getNextInteger());
-            setCoarseBegin(parser.getNextFloat());
-            setCoarseEnd(parser.getNextFloat());
-            setCoarseRate(parser.getNextFloat());
-            setFineRate(parser.getNextFloat());
-            setGraphCheckBox(parser.getNextBoolean());
-            setSubsample(parser.getNextBoolean());
-            setFastMode(parser.getNextBoolean());
-            setBracketBound(parser.getNextInteger());
-            setMaxIterations(parser.getNextInteger());
-            setNumMinima(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
-        // only set ref image number if it has not been set already (so user can designate which slice)
-        if (refImageNum == 0) {
-            setRefImageNum((int) (matchImage.getExtents()[3] / 2) + 1);
-        }
-
-        setIsScript(true);
-        callAlgorithm();
     }
 
     /**
@@ -901,11 +815,11 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
 
         // Okay-Cancel Panel
         JPanel okayCancelPanel = new JPanel(new FlowLayout());
-        JButton cancelButton = new JButton("Cancel");
-        cancelButton.setActionCommand("AdvancedCancel");
-        cancelButton.addActionListener(this);
-        cancelButton.setPreferredSize(new Dimension(120, 30));
-        cancelButton.setFont(serif12B);
+        JButton advCancelButton = new JButton("Cancel");
+        advCancelButton.setActionCommand("AdvancedCancel");
+        advCancelButton.addActionListener(this);
+        advCancelButton.setPreferredSize(new Dimension(120, 30));
+        advCancelButton.setFont(serif12B);
 
         // okayCancelPanel.add(cancelButton);
         JButton okayButton = new JButton("OK");
@@ -914,7 +828,7 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
         okayButton.setPreferredSize(new Dimension(120, 30));
         okayButton.setFont(serif12B);
         okayCancelPanel.add(okayButton);
-        okayCancelPanel.add(cancelButton);
+        okayCancelPanel.add(advCancelButton);
 
         advancedDialog.getContentPane().add(okayCancelPanel, BorderLayout.SOUTH);
 
@@ -1310,29 +1224,29 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridwidth = 2;
         weightPanel.add(noneRadio, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         weightPanel.add(voiRadio, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
         weightPanel.add(weightRadio, gbc);
         gbc.gridy = 3;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         weightPanel.add(buttonWeightInput, gbc);
         gbc.gridx = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         weightPanel.add(textInput, gbc);
 
         JPanel outPanel = new JPanel();
@@ -1367,17 +1281,17 @@ public class JDialogRegistrationOAR35D extends JDialogBase implements AlgorithmI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         outPanel.add(labelInterp2, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(comboBoxInterp2, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(graphCheckBox, gbc);
 
         JPanel buttonPanel = new JPanel();
