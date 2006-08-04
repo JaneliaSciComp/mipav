@@ -3200,7 +3200,7 @@ public class ModelImage extends ModelStorageBase {
 
         int direction = 1;
         float startPos = imgOrigin[2];
-        int[] axisOrient = new int[3];
+        int[] axisOrient = null;
 
         axisOrient = (int[]) fileInfo[0].getAxisOrientation();
 
