@@ -86,7 +86,7 @@ public class FileNRRD extends FileBase {
     private boolean oneFileStorage;
 
     /** DOCUMENT ME! */
-    private float[] origin;
+    private float[] origin = null;
 
    
     /** DOCUMENT ME! */
@@ -140,11 +140,11 @@ public class FileNRRD extends FileBase {
     
     private double spacings[] = null;
     
-    private float resols[];
+    private float resols[] = null;
     
-    private double axisMins[];
+    private double axisMins[] = null;
     
-    private double axisMaxs[];
+    private double axisMaxs[] = null;
     
     private String nrrdUnits[] = null;
     
@@ -207,7 +207,8 @@ public class FileNRRD extends FileBase {
     
     private boolean RGBAOrder = false;
     
-    /** The orientation information in some NRRD files cannot be applied to MIPAV.
+    /** The orientation information in some NRRD files cannot be applied to MIPAV
+        without dimension reordering.
         This applies to 2 of my 15 example NRRD files.  In Dwi-D.nhdr 4 dimensions
         are specified with the dimensions from 0 to 3 having sizes of 13, 29, 30, and 31.
         Right-anterior-superior space is specified, but the first axis contains diffusion
@@ -217,13 +218,10 @@ public class FileNRRD extends FileBase {
         from 0 to 3 having sizes of 7, 148, 190, and 160.  Left-posterior-space is specified,
         but the first axis contains diffusion values and the last 3 axes are x, y, and z
         coordinates, so again the space applies to the last 3 dimensions rather than MIPAV’s first
-        3 dimensions.  There are only 2 possbile workarounds:
-        1.)  A massive rewrite of MIPAV to have the orientation information apply to
-        selected axes rather than the first 3.
-        2.)  Reorder the data files so that the diffusion dimension goes from being
-        the first dimension to being the last dimension.
+        3 dimensions.  In these cases reorder the data so that the first axis becomes the
+        last axis.
     */
-    private boolean applyOrientation = true;
+    private boolean reorder = false;
     
     private int space = UNKNOWN;
     
@@ -280,10 +278,9 @@ public class FileNRRD extends FileBase {
      * @see        FileInfoNRRD
      */
     public boolean readHeader(String imageFileName, String fileDir) throws IOException {
-        int i, j;
+        int i, j, m;
         int index;
         String fileHeaderName;
-        int numDims = 0;
         String lineString = null;
         int colonIndex;
         int equalIndex;
@@ -1020,7 +1017,7 @@ public class FileNRRD extends FileBase {
                      } // else if (fieldIDString.equalsIgnoreCase("SPACE"))
                      else if (fieldIDString.equalsIgnoreCase("SPACE DIRECTIONS")) {
                          spaceDirections = new double[nrrdDimensions][3];
-                         for (i = 0, j = 0; i < nrrdDimensions;) {
+                         for (i = 0, j = 0, m = 0; i < nrrdDimensions;) {
                              while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
                                  j++;
                              }
@@ -1043,6 +1040,7 @@ public class FileNRRD extends FileBase {
                                  }
                                  spaceDirections[i][0] = 
                                  Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 matrix.set(m, 0, spaceDirections[i][0]);
                                  while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
                                      j++;
                                  }
@@ -1052,6 +1050,7 @@ public class FileNRRD extends FileBase {
                                  }
                                  spaceDirections[i][1] = 
                                  Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 matrix.set(m, 1, spaceDirections[i][1]);
                                  while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
                                      j++;
                                  }
@@ -1061,15 +1060,20 @@ public class FileNRRD extends FileBase {
                                  }
                                  spaceDirections[i][2] = 
                                      Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
+                                 matrix.set(m, 2, spaceDirections[i][2]);
                                  Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
                                          spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n");
                                  i++;
+                                 m++;
                              }
                          }
                      } // else if (fieldIDString.equalsIgnoreCase("SPACE DIRECTIONS"))
                      else if (fieldIDString.equalsIgnoreCase("SPACE ORIGIN")) {
                          // This always refers to the center of the first sample in the array regardless of 
-                         // cell or node centering of the data is specified
+                         // cell or node centering of the data is specified.  This field coveys the same
+                         // information as the "Image Position" (0020,0032) field of a DICOM file, except
+                         // that the space in which the vector coordinates are given need not be the
+                         // DICOM-specific LPS space.
                          spaceOrigin = new double[3];
                          j = 0;
                          while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
@@ -1106,6 +1110,14 @@ public class FileNRRD extends FileBase {
                                  Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
                              Preferences.debug("space origin = (" + spaceOrigin[0] + "," +
                                      spaceOrigin[1] + "," + spaceOrigin[2] + ")\n");
+                             origin = new float[3];
+                             origin[0] = (float)spaceOrigin[0];
+                             origin[1] = (float)spaceOrigin[1];
+                             origin[2] = (float)spaceOrigin[2];
+                             fileInfo.setOrigin(origin);
+                             matrix.set(0, 3, spaceOrigin[0]);
+                             matrix.set(1, 3, spaceOrigin[1]);
+                             matrix.set(2, 3, spaceOrigin[2]);
                          }
                      } // else if (fieldIDString.equalsIgnoreCase("SPACE ORIGIN"))
                      else if (fieldIDString.equalsIgnoreCase("MEASUREMENT FRAME")) {
@@ -1813,10 +1825,15 @@ public class FileNRRD extends FileBase {
         
         if ((mipavDataType != ModelStorageBase.ARGB) && (mipavDataType != ModelStorageBase.ARGB_USHORT) &&
             (mipavDataType != ModelStorageBase.ARGB_FLOAT) && (mipavDataType != ModelStorageBase.COMPLEX) &&
-            (mipavDataType != ModelStorageBase.DCOMPLEX) && (kindsString != null) &&
-            (kindsString[0] != null) && (!kindsString[0].equalsIgnoreCase("SPACE"))) {
-            applyOrientation = false;
-            Preferences.debug("Cannot apply orientation information because first mipav dimension is not spatial\n");
+            (mipavDataType != ModelStorageBase.DCOMPLEX) && ((kindsString == null) ||
+            ((kindsString[0] != null) && (!kindsString[0].equalsIgnoreCase("DOMAIN")) &&
+            (!kindsString[0].equalsIgnoreCase("SPACE")) && (!kindsString[0].equalsIgnoreCase("TIME")) &&
+            (nrrdDimensions >= 3) && (kindsString[1] != null) && ((kindsString[1].equalsIgnoreCase("DOMAIN")) ||
+            (kindsString[1].equalsIgnoreCase("SPACE")) || (kindsString[1].equalsIgnoreCase("TIME"))) &&
+            (kindsString[2] != null) && ((kindsString[2].equalsIgnoreCase("DOMAIN")) ||
+            (kindsString[2].equalsIgnoreCase("SPACE")) || (kindsString[2].equalsIgnoreCase("TIME")))))) {
+            reorder = true;
+            Preferences.debug("Will reorder data to make first dimension space or time\n");
         }
         
         if (subdim == 0) {
@@ -1824,6 +1841,26 @@ public class FileNRRD extends FileBase {
         }
         else if (nrrdDimensions > mipavDimensions) {
             subdim--;
+        }
+        
+        if ((origin == null) && (axisMins != null)) {
+            origin = new float[3];
+            for (i = 0, j = 0; i < axisMins.length; i++) {
+                if (!Double.isNaN(axisMins[i])) {
+                    origin[j] = (float)(axisMins[i]);
+                    matrix.set(j, 3, axisMins[i]);
+                    j++;
+                }
+            }
+            fileInfo.setOrigin(origin);
+        }
+        
+        if ((spacings == null) && (axisMins != null) && (axisMaxs!= null)) {
+            for (i = 0; i < axisMins.length; i++) {
+                if ((!Double.isNaN(axisMins[i])) && (!Double.isNaN(axisMaxs[i]))) {
+                    resols[i] = (float)Math.abs((axisMaxs[i] - axisMins[i])/(nrrdSizes[i]-1));
+                }
+            }
         }
         
         fileInfo.setDataType(mipavDataType);
@@ -1834,6 +1871,7 @@ public class FileNRRD extends FileBase {
         if (numThicknesses == 1) {
             fileInfo.setSliceThickness(sliceThickness);
         }
+        
         if (dwmriNex != null) {
             for (i = 0; i < dwmriNex.length; i++) {
                 if (dwmriNex[i] != null) {
@@ -1935,8 +1973,20 @@ public class FileNRRD extends FileBase {
         int subExtents[];
         ModelImage subImage;
         float dataBuffer[];
+        float dataBuffer2[];
         int pointer = 0;
         int dataNumber;
+        int imageSize;
+        int sliceSize;
+        int extents[] = null;
+        int newExtents[];
+        int newSliceSize;
+        int volSize;
+        int newVolSize;
+        int x, y, z, t;
+        float newResols[];
+        int newUnits[];
+        String newLabels[] = null;
         
         progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
                 ViewUserInterface.getReference().getProgressBarPrefix() + "NRRD image(s) ...",
@@ -2169,12 +2219,9 @@ public class FileNRRD extends FileBase {
                 }
             } // for (i = sequenceStart; i <= sequenceFinish; i += sequenceStep)
             image.calcMinMax();
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-            return image;
         } // if (autoSequence || fileNameSequence)
         
+        else { // !autoSequence && ! fileNameSequence
         if (!oneFileStorage) {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
@@ -2278,8 +2325,6 @@ public class FileNRRD extends FileBase {
             offset = (int)(fileLength - dataSize);
         } // else skippedBytes < 0
 
-        int[] extents = null;
-
         try {
 
             if (one) {
@@ -2334,7 +2379,102 @@ public class FileNRRD extends FileBase {
             throw (e);
         }
 
-
+        } // else !autoSequence && ! fileNameSequence
+        
+        if (reorder) {
+            extents = image.getExtents();
+            imageSize = extents[0];
+            for (i = 1; i < image.getNDims(); i++) {
+                imageSize *= extents[i];
+            }
+            dataBuffer = new float[imageSize];
+            try {
+                image.exportData(0, imageSize, dataBuffer);
+            }
+            catch(IOException error) {
+                throw new IOException("FileNRRD: " + error);
+            }
+            dataBuffer2 = new float[imageSize];
+            sliceSize = extents[0] * extents[1];
+            newSliceSize = extents[1] * extents[2];
+            if (image.getNDims() == 3) {
+                newExtents = new int[3];
+                newExtents[0] = extents[1];
+                newExtents[1] = extents[2];
+                newExtents[2] = extents[0];
+                newResols = new float[3];
+                newResols[0] = resols[1];
+                newResols[1] = resols[2];
+                newResols[2] = resols[0];
+                newUnits = new int[3];
+                newUnits[0] = mipavUnits[1];
+                newUnits[1] = mipavUnits[2];
+                newUnits[2] = mipavUnits[0];
+                if (mipavLabels != null) {
+                    newLabels = new String[3];
+                    newLabels[0] = mipavLabels[1];
+                    newLabels[1] = mipavLabels[2];
+                    newLabels[2] = mipavLabels[0];
+                }
+                for (i = 0; i < imageSize; i++) {
+                    z = i/sliceSize;
+                    y = (i - z*sliceSize)/extents[0];
+                    x = i - z*sliceSize - y*extents[0];
+                    dataBuffer2[y + z*newExtents[0] + x*newSliceSize] = dataBuffer[i];
+                }
+            }
+            else { // image.getNDims() == 4
+                newExtents = new int[4];
+                newExtents[0] = extents[1];
+                newExtents[1] = extents[2];
+                newExtents[2] = extents[3];
+                newExtents[3] = extents[0];
+                newResols = new float[4];
+                newResols[0] = resols[1];
+                newResols[1] = resols[2];
+                newResols[2] = resols[3];
+                newResols[3] = resols[0];
+                newUnits = new int[4];
+                newUnits[0] = mipavUnits[1];
+                newUnits[1] = mipavUnits[2];
+                newUnits[2] = mipavUnits[3];
+                newUnits[3] = mipavUnits[0];
+                if (mipavLabels != null) {
+                    newLabels = new String[4];
+                    newLabels[0] = mipavLabels[1];
+                    newLabels[1] = mipavLabels[2];
+                    newLabels[2] = mipavLabels[3];
+                    newLabels[3] = mipavLabels[0];
+                }
+                volSize = sliceSize * extents[2];
+                newVolSize = newSliceSize * newExtents[2];
+                for (i = 0; i < imageSize; i++) {
+                    t = i/volSize;
+                    z = (i - t*volSize)/sliceSize;
+                    y = (i - t*volSize - z*sliceSize)/extents[0];
+                    x = i - t*volSize - z*sliceSize - y*extents[0];
+                    dataBuffer2[y + z*newExtents[0] + t*newSliceSize + x*newVolSize] = dataBuffer[i];
+                }
+            } // else image.getNDims() == 4
+            image.changeExtents(newExtents);
+            fileInfo.setExtents(newExtents);
+            fileInfo.setResolutions(newResols);
+            fileInfo.setUnitsOfMeasure(newUnits);
+            if (mipavLabels != null) {
+                fileInfo.setLabels(newLabels);
+            }
+            if (origin != null) {
+                fileInfo.setOrigin(origin);
+            }
+            setFileInfo(fileInfo, image);
+            updateorigins(image.getFileInfo());
+            try {
+                image.importData(0, dataBuffer2, true);
+            }
+            catch (IOException error) {
+                throw new IOException("FileNRRD: " + error);
+            }
+        } // if (reorder)
         
         if (progressBar != null) {
             progressBar.dispose();
