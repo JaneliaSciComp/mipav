@@ -53,6 +53,7 @@ public class FileNRRD extends FileBase {
     private static final int CELL = 1;
     
     private static final int NODE = 2;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -232,6 +233,10 @@ public class FileNRRD extends FileBase {
     private double measurementFrame[][] = null;
     
     private int centers[] = null;
+    
+    private boolean rlInvert = false;
+    
+    private boolean apInvert = false;
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -953,12 +958,15 @@ public class FileNRRD extends FileBase {
                              Preferences.debug("Space = right-anterior-superior\n");
                              fileInfo.setSpace("right-anterior-superior");
                              space = RAS;
+                             rlInvert = true;
+                             apInvert = true;
                          } // if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR")) ||
                          else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                                   (fieldDescriptorString.equalsIgnoreCase("LAS"))) {
                              Preferences.debug("Space = left-anterior-superior\n");
                              fileInfo.setSpace("left-anterior-superior");
                              space = LAS;
+                             apInvert = true;
                          } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR")) ||
                          else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR")) ||
                                  (fieldDescriptorString.equalsIgnoreCase("LPS"))) {
@@ -971,12 +979,15 @@ public class FileNRRD extends FileBase {
                              Preferences.debug("SPACE = right-anterior-superior-time\n");
                              fileInfo.setSpace("right-anterior-superior-time");
                              space = RAST;
+                             rlInvert = true;
+                             apInvert = true;
                          } // else if ((fieldDescriptorString.equalsIgnoreCase("RIGHT-ANTERIOR-SUPERIOR-TIME")) ||
                          else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                                  (fieldDescriptorString.equalsIgnoreCase("LAST"))) {
                              Preferences.debug("Space = left-anterior-superior-time\n");
                              fileInfo.setSpace("left-anterior-superior-time");
                              space = LAST;
+                             apInvert = true;
                          } // else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-ANTERIOR-SUPERIOR-TIME")) ||
                          else if ((fieldDescriptorString.equalsIgnoreCase("LEFT-POSTERIOR-SUPERIOR-TIME")) ||
                                  (fieldDescriptorString.equalsIgnoreCase("LPST"))) {
@@ -1861,6 +1872,24 @@ public class FileNRRD extends FileBase {
                     resols[i] = (float)Math.abs((axisMaxs[i] - axisMins[i])/(nrrdSizes[i]-1));
                 }
             }
+        }
+        
+        if (rlInvert) {
+            origin[0] = -origin[0];
+            fileInfo.setOrigin(origin[0], 0);
+            matrix.set(0, 0, -matrix.get(0,0));
+            matrix.set(0, 1, -matrix.get(0,1));
+            matrix.set(0, 2, -matrix.get(0,2));
+            matrix.set(0, 3, -matrix.get(0,3));
+        }
+        
+        if (apInvert) {
+            origin[1] = -origin[1];
+            fileInfo.setOrigin(origin[1], 1);
+            matrix.set(1, 0, -matrix.get(1,0));
+            matrix.set(1, 1, -matrix.get(1,1));
+            matrix.set(1, 2, -matrix.get(1,2));
+            matrix.set(1, 3, -matrix.get(1,3));
         }
         
         fileInfo.setDataType(mipavDataType);
