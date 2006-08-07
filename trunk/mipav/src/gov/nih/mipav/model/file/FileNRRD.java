@@ -1854,24 +1854,39 @@ public class FileNRRD extends FileBase {
             subdim--;
         }
         
+        if ((spacings == null) && (axisMins != null) && (axisMaxs!= null)) {
+            for (i = 0; i < axisMins.length; i++) {
+                if ((!Double.isNaN(axisMins[i])) && (!Double.isNaN(axisMaxs[i]))) {
+                    if ((centers == null) || (centers[i] == NONE) ||
+                        (centers[i] == CELL)) {
+                        resols[i] = (float)Math.abs((axisMaxs[i] - axisMins[i])/nrrdSizes[i]);
+                    }
+                    else { // centers[i] == NODE
+                        resols[i] = (float)Math.abs((axisMaxs[i] - axisMins[i])/(nrrdSizes[i]-1));
+                    }
+                }
+                
+            }
+        }
+        
         if ((origin == null) && (axisMins != null)) {
             origin = new float[3];
             for (i = 0, j = 0; i < axisMins.length; i++) {
                 if (!Double.isNaN(axisMins[i])) {
-                    origin[j] = (float)(axisMins[i]);
-                    matrix.set(j, 3, axisMins[i]);
+                    // Make into cell centering
+                    if ((axisMaxs != null) && (!Double.isNaN(axisMaxs[i])) &&
+                        (axisMaxs[i] < axisMins[i])) {
+                        origin[j] = (float)(axisMins[i] - 0.5*resols[i]);
+                        matrix.set(j, 3, axisMins[i] - 0.5*resols[i]);   
+                    }
+                    else {
+                        origin[j] = (float)(axisMins[i] + 0.5*resols[i]);
+                        matrix.set(j, 3, axisMins[i] + 0.5*resols[i]);
+                    }
                     j++;
                 }
             }
             fileInfo.setOrigin(origin);
-        }
-        
-        if ((spacings == null) && (axisMins != null) && (axisMaxs!= null)) {
-            for (i = 0; i < axisMins.length; i++) {
-                if ((!Double.isNaN(axisMins[i])) && (!Double.isNaN(axisMaxs[i]))) {
-                    resols[i] = (float)Math.abs((axisMaxs[i] - axisMins[i])/(nrrdSizes[i]-1));
-                }
-            }
         }
         
         if (rlInvert) {
