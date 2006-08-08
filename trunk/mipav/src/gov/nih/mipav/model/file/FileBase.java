@@ -154,6 +154,9 @@ public abstract class FileBase{
     
     /** Nearly raw raster data */
     public static final int NRRD = 42;
+    
+    /** GE Signa 4.x */
+    public static final int GE_SIGNA4X = 43;
 
     /** Arrary of strings describing the file formats. */
     private static String[] fileFormatStr = {
@@ -161,7 +164,7 @@ public abstract class FileBase{
         "MINC", "Avi", "Analyze multifile", "QT", "Chesire", "Chesire Overlay", "Afni", "FITS", "STK",
         "Magnetom Vision", "GE Genesis", "MRC", "Interfile", "Raw multifile", "Micro CAT", "LSM", "Bio-Rad", "COR",
         "BRUKER", "XML", "XML multifile", "SPM", "Project", "NIFTI", "NIFTI multifile", "ICS", "LSM multifile", "TMG",
-        "OSM", "Surface XML", "DM3", "NRRD"
+        "OSM", "Surface XML", "DM3", "NRRD", "GE Signa4x"
     };
 
     /** Byte order. Rightmost byte is most significant. */
