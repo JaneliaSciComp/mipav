@@ -373,7 +373,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
  
    		//  PFH   		ShowImage(hardSegImg, "Hard Segmentation");
 
-   		ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
+ 		ModelImage bMarrow = threshold2(hardSegImg, FAT_2_A, FAT_2_B);
+ //  		ModelImage bMarrow = threshold2(hardSegImg, 255, 255);
    		// bMarrow contains all voxels labeled FAT_2_A or FAT_2_B in the C-Means segmented image (HardSeg)
    		// bMarrow is a binary image and remains binary through this method
    		//  PFH   		ShowImage(bMarrow, "BMarrow");
@@ -1005,8 +1006,16 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             	//ViewJFrameImage dif = new ViewJFrameImage(destImage2);
             }
            	progressBar.updateValue((50 * (aa - 1)) + 30, runningInSeparateThread);
-                       
 
+           	
+           	// mask out the muscle bundle
+//         	AlgorithmImageCalculator algorMultiply =
+//       		new AlgorithmImageCalculator(processedImage, voiMask, 8, 0, true, "");
+//         	algorMultiply.runAlgorithm();
+// PFH         	ShowImage(processedImage, "Muscle Bundle");
+
+           	
+           	
             //STEP 3: FUZZY SEGMENT ENTIRE IMAGE
            	// Fuzzy C-Means for the right/left thigh image
             ModelImage HardSeg1 = HardFuzzy(processedImage, 4);

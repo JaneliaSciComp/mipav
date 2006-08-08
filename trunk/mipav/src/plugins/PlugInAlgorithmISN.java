@@ -98,7 +98,7 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
      */
     public void runOrderMatchThenRemap() {
 
-        int i, j;
+        int i;
         int z = 1;
 
         imgBuffer = new float[srcImage.getExtents()[0] * srcImage.getExtents()[1]];
@@ -127,6 +127,7 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
         boolean processIndep = false;
 
         /* 1. calculate distribution of slice averages */
+        // compute all slice intensity averages, minimums, and maximums
         for (i = 0; i < z; i++) {
 
             try {
@@ -143,7 +144,7 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                     } else if (imgBuffer[y] > max) {
                         max = imgBuffer[y];
                     }
-                }
+                } // end for(y = 0; ...)
 
                 avg /= imgBuffer.length;
                 sliceAverage[i] = avg;
@@ -153,8 +154,9 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
             } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmISN");
             }
-        }
+        } // end for (i = 0; ...)
 
+ 
         /* 2. calculate mean of the slice average distribution */
         for (i = 0; i < z; i++) {
             averageAVG += sliceAverage[i];
@@ -162,6 +164,7 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
 
         averageAVG /= z;
 
+ 
         /* 3. calculate stddev of the slice average distribution */
         for (i = 0; i < z; i++) {
             a += (sliceAverage[i] - averageAVG) * (sliceAverage[i] - averageAVG);
