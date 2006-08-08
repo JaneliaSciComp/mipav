@@ -57,7 +57,7 @@ public class FileNRRD extends FileBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private int[] axisOrientation;
+    private int[] axisOrientation = null;
 
     
 
@@ -1051,7 +1051,7 @@ public class FileNRRD extends FileBase {
                                  }
                                  spaceDirections[i][0] = 
                                  Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
-                                 matrix.set(m, 0, spaceDirections[i][0]);
+                                 matrix.set(0, m, spaceDirections[i][0]);
                                  while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
                                      j++;
                                  }
@@ -1061,7 +1061,7 @@ public class FileNRRD extends FileBase {
                                  }
                                  spaceDirections[i][1] = 
                                  Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
-                                 matrix.set(m, 1, spaceDirections[i][1]);
+                                 matrix.set(1, m, spaceDirections[i][1]);
                                  while (fieldDescriptorString.substring(j,j+1).equalsIgnoreCase(" ")) {
                                      j++;
                                  }
@@ -1071,7 +1071,7 @@ public class FileNRRD extends FileBase {
                                  }
                                  spaceDirections[i][2] = 
                                      Double.valueOf(fieldDescriptorString.substring(startNum,j++)).doubleValue();
-                                 matrix.set(m, 2, spaceDirections[i][2]);
+                                 matrix.set(2, m, spaceDirections[i][2]);
                                  Preferences.debug("space directions[" + i + " ] = (" + spaceDirections[i][0] + "," +
                                          spaceDirections[i][1] + "," + spaceDirections[i][2] + ")\n");
                                  i++;
@@ -1836,10 +1836,11 @@ public class FileNRRD extends FileBase {
         
         if ((mipavDataType != ModelStorageBase.ARGB) && (mipavDataType != ModelStorageBase.ARGB_USHORT) &&
             (mipavDataType != ModelStorageBase.ARGB_FLOAT) && (mipavDataType != ModelStorageBase.COMPLEX) &&
-            (mipavDataType != ModelStorageBase.DCOMPLEX) && ((kindsString == null) ||
-            ((kindsString[0] != null) && (!kindsString[0].equalsIgnoreCase("DOMAIN")) &&
+            (mipavDataType != ModelStorageBase.DCOMPLEX) && (nrrdDimensions >= 3) && 
+            (((kindsString == null)  && (nrrdSizes[0] < 15)) ||((kindsString != null) &&
+            (kindsString[0] != null) && (!kindsString[0].equalsIgnoreCase("DOMAIN")) &&
             (!kindsString[0].equalsIgnoreCase("SPACE")) && (!kindsString[0].equalsIgnoreCase("TIME")) &&
-            (nrrdDimensions >= 3) && (kindsString[1] != null) && ((kindsString[1].equalsIgnoreCase("DOMAIN")) ||
+            (kindsString[1] != null) && ((kindsString[1].equalsIgnoreCase("DOMAIN")) ||
             (kindsString[1].equalsIgnoreCase("SPACE")) || (kindsString[1].equalsIgnoreCase("TIME"))) &&
             (kindsString[2] != null) && ((kindsString[2].equalsIgnoreCase("DOMAIN")) ||
             (kindsString[2].equalsIgnoreCase("SPACE")) || (kindsString[2].equalsIgnoreCase("TIME")))))) {
@@ -1869,43 +1870,61 @@ public class FileNRRD extends FileBase {
             }
         }
         
-        if ((origin == null) && (axisMins != null)) {
-            origin = new float[3];
-            for (i = 0, j = 0; i < axisMins.length; i++) {
-                if (!Double.isNaN(axisMins[i])) {
-                    // Make into cell centering
-                    if ((axisMaxs != null) && (!Double.isNaN(axisMaxs[i])) &&
-                        (axisMaxs[i] < axisMins[i])) {
-                        origin[j] = (float)(axisMins[i] - 0.5*resols[i]);
-                        matrix.set(j, 3, axisMins[i] - 0.5*resols[i]);   
+        if (mipavDimensions >= 3) {
+            if ((origin == null) && (axisMins != null)) {
+                origin = new float[3];
+                for (i = 0, j = 0; i < axisMins.length; i++) {
+                    if (!Double.isNaN(axisMins[i])) {
+                        // Make into cell centering
+                        if ((axisMaxs != null) && (!Double.isNaN(axisMaxs[i])) &&
+                            (axisMaxs[i] < axisMins[i])) {
+                            origin[j] = (float)(axisMins[i] - 0.5*resols[i]);
+                            matrix.set(j, 3, axisMins[i] - 0.5*resols[i]);   
+                        }
+                        else {
+                            origin[j] = (float)(axisMins[i] + 0.5*resols[i]);
+                            matrix.set(j, 3, axisMins[i] + 0.5*resols[i]);
+                        }
+                        j++;
                     }
-                    else {
-                        origin[j] = (float)(axisMins[i] + 0.5*resols[i]);
-                        matrix.set(j, 3, axisMins[i] + 0.5*resols[i]);
-                    }
-                    j++;
                 }
+                fileInfo.setOrigin(origin);
             }
-            fileInfo.setOrigin(origin);
-        }
-        
-        if (rlInvert) {
-            origin[0] = -origin[0];
-            fileInfo.setOrigin(origin[0], 0);
-            matrix.set(0, 0, -matrix.get(0,0));
-            matrix.set(0, 1, -matrix.get(0,1));
-            matrix.set(0, 2, -matrix.get(0,2));
-            matrix.set(0, 3, -matrix.get(0,3));
-        }
-        
-        if (apInvert) {
-            origin[1] = -origin[1];
-            fileInfo.setOrigin(origin[1], 1);
-            matrix.set(1, 0, -matrix.get(1,0));
-            matrix.set(1, 1, -matrix.get(1,1));
-            matrix.set(1, 2, -matrix.get(1,2));
-            matrix.set(1, 3, -matrix.get(1,3));
-        }
+            
+            if (rlInvert) {
+                if (origin != null) {
+                    origin[0] = -origin[0];
+                    fileInfo.setOrigin(origin[0], 0);
+                }
+                matrix.set(0, 0, -matrix.get(0,0));
+                matrix.set(0, 1, -matrix.get(0,1));
+                matrix.set(0, 2, -matrix.get(0,2));
+                matrix.set(0, 3, -matrix.get(0,3));
+            }
+            
+            if (apInvert) {
+                if (origin != null) {
+                    origin[1] = -origin[1];
+                    fileInfo.setOrigin(origin[1], 1);
+                }
+                matrix.set(1, 0, -matrix.get(1,0));
+                matrix.set(1, 1, -matrix.get(1,1));
+                matrix.set(1, 2, -matrix.get(1,2));
+                matrix.set(1, 3, -matrix.get(1,3));
+            }
+            
+            axisOrientation = getAxisOrientation(matrix);
+            fileInfo.setAxisOrientation(axisOrientation);
+            if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
+                    (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
+                fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+            } else if ((axisOrientation[2] == FileInfoBase.ORI_A2P_TYPE) ||
+                           (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+            } else {
+                fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+            }
+        } // if (mipavDimensions >= 3)
         
         fileInfo.setDataType(mipavDataType);
         fileInfo.setExtents(imgExtents);
@@ -2510,6 +2529,18 @@ public class FileNRRD extends FileBase {
             if (origin != null) {
                 fileInfo.setOrigin(origin);
             }
+            if (axisOrientation != null) {
+                fileInfo.setAxisOrientation(axisOrientation);
+                if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
+                        (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
+                    fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+                } else if ((axisOrientation[2] == FileInfoBase.ORI_A2P_TYPE) ||
+                               (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
+                    fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+                } else {
+                    fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+                }
+            }
             setFileInfo(fileInfo, image);
             updateorigins(image.getFileInfo());
             try {
@@ -2644,6 +2675,435 @@ public class FileNRRD extends FileBase {
         }
 
         return offset;
+    }
+    
+    /**
+     * Return the 3 axis orientation codes that correspond to the closest standard anatomical orientation of the (i,j,k)
+     * axes.
+     *
+     * @param   mat  4x4 matrix that transforms (i,j,k) indexes to x,y,z coordinates where +x =Left, +y = Posterior, +z
+     *               = Superior Only the upper-left 3x3 corner of the matrix is used This routine finds the permutation
+     *               of (x,y,z) which has the smallest angle to the (i,j,k) axes directions, which are columns of the
+     *               input matrix Errors: The codes returned will be zero.
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int[] getAxisOrientation(TransMatrix mat) {
+        int[] axisOrientation = new int[3];
+        double[][] array;
+        double xi, xj, xk, yi, yj, yk, zi, zj, zk, val;
+        Matrix Q;
+        double detQ;
+        double vbest;
+        int ibest, jbest, kbest, pbest, qbest, rbest;
+        int i, j, k, p, q, r;
+        Matrix P;
+        double detP;
+        Matrix M;
+
+        array = mat.getMatrix(0, 2, 0, 2).getArray();
+        xi = array[0][0];
+        xj = array[0][1];
+        xk = array[0][2];
+        yi = array[1][0];
+        yj = array[1][1];
+        yk = array[1][2];
+        zi = array[2][0];
+        zj = array[2][1];
+        zk = array[2][2];
+
+        int izero = 0;
+        int jzero = 0;
+        int kzero = 0;
+        int xzero = 0;
+        int yzero = 0;
+        int zzero = 0;
+
+        if (xi == 0.0) {
+            izero++;
+            xzero++;
+        }
+
+        if (yi == 0.0) {
+            izero++;
+            yzero++;
+        }
+
+        if (zi == 0.0) {
+            izero++;
+            zzero++;
+        }
+
+        if (xj == 0.0) {
+            jzero++;
+            xzero++;
+        }
+
+        if (yj == 0.0) {
+            jzero++;
+            yzero++;
+        }
+
+        if (zj == 0.0) {
+            jzero++;
+            zzero++;
+        }
+
+        if (xk == 0.0) {
+            kzero++;
+            xzero++;
+        }
+
+        if (yk == 0.0) {
+            kzero++;
+            yzero++;
+        }
+
+        if (zk == 0.0) {
+            kzero++;
+            zzero++;
+        }
+
+        if ((izero == 2) && (jzero == 2) && (kzero == 2) && (xzero == 2) && (yzero == 2) && (zzero == 2)) {
+
+            if (xi > 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+            } else if (xi < 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+            } else if (yi > 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yi < 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (zi > 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+            } else if (zi < 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
+            }
+
+            if (xj > 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+            } else if (xj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+            } else if (yj > 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (zj > 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+            } else if (zj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+            }
+
+            if (xk > 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+            } else if (xk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+            } else if (yk > 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (zk > 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+            } else if (zk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+            }
+
+            return axisOrientation;
+        } // if ((izero == 2) && (jzero == 2) && (kzero == 2) && (xzero == 2) && (yzero == 2) && (zzero == 2))
+
+        // Normalize column vectors to get unit vectors along each ijk-axis
+
+        // Normalize i axis
+        val = Math.sqrt((xi * xi) + (yi * yi) + (zi * zi));
+
+        if (val == 0.0) {
+            MipavUtil.displayError("xi = yi = zi = 0 in getAxisOrientation");
+
+            return null;
+        }
+
+        xi /= val;
+        yi /= val;
+        zi /= val;
+
+        // Normalize j axis
+        val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj));
+
+        if (val == 0.0) {
+            MipavUtil.displayError("xj = yj = zj = 0 in getAxisOrientation");
+
+            return null;
+        }
+
+        xj /= val;
+        yj /= val;
+        zj /= val;
+
+        // Orthogonalize j axis to i axis, if needed
+        val = (xi * xj) + (yi * yj) + (zi * zj); // dot product between i and j
+
+        if (Math.abs(val) > 1.0e-4) {
+            xj -= val * xi;
+            yj -= val * yi;
+            zj -= val * zi;
+            val = Math.sqrt((xj * xj) + (yj * yj) + (zj * zj)); // Must renormalize
+
+            if (val == 0.0) {
+                MipavUtil.displayError("j was parallel to i in getAxisOrientation");
+
+                return null;
+            }
+
+            xj /= val;
+            yj /= val;
+            zj /= val;
+        }
+
+        // Normalize k axis; if it is zero, make it the cross product i x j
+        val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+
+        if (val == 0.0) {
+            xk = (yi * zj) - (zi * yj);
+            yk = (zi * xj) - (zj * xi);
+            zk = (xi * yj) - (yi * xj);
+        } else {
+            xk /= val;
+            yk /= val;
+            zk /= val;
+        }
+
+        // Orthogonalize k to i
+        val = (xi * xk) + (yi * yk) + (zi * zk); // dot product between i and k
+
+        if (Math.abs(val) > 1.0e-4) {
+            xk -= val * xi;
+            yk -= val * yi;
+            zk -= val * zi;
+            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+
+            if (val == 0.0) {
+                MipavUtil.displayError("val == 0 when orthogonalizing k to i");
+
+                return null;
+            }
+
+            xk /= val;
+            yk /= val;
+            zk /= val;
+        }
+
+        // Orthogonalize k to j
+        val = (xj * xk) + (yj * yk) + (zj * zk); // dot product between j and k
+
+        if (Math.abs(val) > 1.0e-4) {
+            xk -= val * xj;
+            yk -= val * yj;
+            zk -= val * zj;
+            val = Math.sqrt((xk * xk) + (yk * yk) + (zk * zk));
+
+            if (val == 0.0) {
+                MipavUtil.displayError("val == 0 when orthogonalizing k to j");
+
+                return null;
+            }
+
+            xk /= val;
+            yk /= val;
+            zk /= val;
+        }
+
+        array[0][0] = xi;
+        array[0][1] = xj;
+        array[0][2] = xk;
+        array[1][0] = yi;
+        array[1][1] = yj;
+        array[1][2] = yk;
+        array[2][0] = zi;
+        array[2][1] = zj;
+        array[2][2] = zk;
+
+        // At this point, Q is the rotation matrix from the (i,j,k) to the (x,y,z) axes
+        Q = new Matrix(array);
+        detQ = Q.det();
+
+        if (detQ == 0.0) {
+            MipavUtil.displayError("detQ == 0.0 in getAxisOrientation");
+
+            return null;
+        }
+
+        // Build and test all possible +1/-1 coordinate permutation matrices P;
+        // then find the P such that the rotation matrix M=PQ is closest to the
+        // identity, in the sense of M having the smallest total rotation angle
+
+        // Despite the formidable looking 6 nested loops, there are
+        // only 3*3*3*2*2*2 = 216 passes, which will run very quickly
+        vbest = -Double.MAX_VALUE;
+        pbest = 1;
+        qbest = 1;
+        rbest = 1;
+        ibest = 1;
+        jbest = 2;
+        kbest = 3;
+
+        for (i = 1; i <= 3; i++) { // i = column number to use for row #1
+
+            for (j = 1; j <= 3; j++) { // j = column number to use for row #2
+
+                if (i == j) {
+                    continue;
+                }
+
+                for (k = 1; k <= 3; k++) { // k = column number to use for row #3
+
+                    if ((i == k) || (j == k)) {
+                        continue;
+                    }
+
+                    array[0][0] = 0.0;
+                    array[0][1] = 0.0;
+                    array[0][2] = 0.0;
+                    array[1][0] = 0.0;
+                    array[1][1] = 0.0;
+                    array[1][2] = 0.0;
+                    array[2][0] = 0.0;
+                    array[2][1] = 0.0;
+                    array[2][2] = 0.0;
+                    P = new Matrix(array);
+
+                    for (p = -1; p <= 1; p += 2) { // p,q,r are -1 or +1 and go into rows #1,2,3
+
+                        for (q = -1; q <= 1; q += 2) {
+
+                            for (r = -1; r <= 1; r += 2) {
+                                P.set(0, i - 1, p);
+                                P.set(1, j - 1, q);
+                                P.set(2, k - 1, r);
+                                detP = P.det();
+
+                                // sign of permutation doesn't match sign of Q
+                                if ((detP * detQ) <= 0.0) {
+                                    continue;
+                                }
+
+                                M = P.times(Q);
+
+                                // angle of M rotation = 2.0*acos(0.5*sqrt(1.0+trace(M)))
+                                // we want largest trace(M) == smallest angle == M nearest to I
+                                val = M.get(0, 0) + M.get(1, 1) + M.get(2, 2); // trace
+
+                                if (val > vbest) {
+                                    vbest = val;
+                                    ibest = i;
+                                    jbest = j;
+                                    kbest = k;
+                                    pbest = p;
+                                    qbest = q;
+                                    rbest = r;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // At this point ibest is 1 or 2 or 3; pbest is -1 or +1; etc.
+
+        // The matrix P that corresponds is the best permutation approximation
+        // to Q-inverse; that is, P (approximately) takes (x,y,z) coordinates
+        // to the (i,j,k) axes
+
+        // For example, the first row of P (which contains pbest in column ibest)
+        // determines the way the i axis points relative to the anatomical
+        // (x,y,z) axes.  If ibest is 2, then the i axis is along the yaxis,
+        // which is direction P2A (if pbest < 0) or A2P (if pbest > 0).
+
+        // So, using ibest and pbest, we can assign the output code for
+        // the i axis.  The same also applies for the j and k axes.
+
+        switch (ibest * pbest) {
+
+            case -1:
+                axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
+            case 1:
+                axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+                break;
+
+            case -2:
+                axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+                break;
+
+            case 2:
+                axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+                break;
+
+            case -3:
+                axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
+                break;
+
+            case 3:
+                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+                break;
+        }
+
+        switch (jbest * qbest) {
+
+            case -1:
+                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
+            case 1:
+                axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+                break;
+
+            case -2:
+                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+                break;
+
+            case 2:
+                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+                break;
+
+            case -3:
+                axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+                break;
+
+            case 3:
+                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+                break;
+        }
+
+        switch (kbest * rbest) {
+
+            case -1:
+                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+                break;
+
+            case 1:
+                axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+                break;
+
+            case -2:
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+                break;
+
+            case 2:
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+                break;
+
+            case -3:
+                axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+                break;
+
+            case 3:
+                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+                break;
+        }
+
+        return axisOrientation;
     }
 
     /**
