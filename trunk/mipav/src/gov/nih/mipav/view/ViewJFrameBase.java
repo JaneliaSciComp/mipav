@@ -260,6 +260,7 @@ public abstract class ViewJFrameBase extends JFrame
      */
     public void about(int zSlice, int tSlice) {
         boolean geSigna = false;
+        boolean geSigna4x = false;
         boolean dicom = false;
 
         // DICOM images are special--handle separately
@@ -292,6 +293,8 @@ public abstract class ViewJFrameBase extends JFrame
                 spm = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.GE_GENESIS) && (displayMode == IMAGE_A)) {
                 geSigna = true;
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.GE_SIGNA4X) && (displayMode == IMAGE_A)) {
+                geSigna4x = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.MINC) && (displayMode == IMAGE_A)) {
                 minc = true;
             } else if ((imageB != null) && (imageB.getFileInfo()[0] != null)) {
@@ -330,6 +333,10 @@ public abstract class ViewJFrameBase extends JFrame
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.GE_GENESIS) && (displayMode == IMAGE_B)) {
                     geSigna = true;
+                }
+                
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.GE_SIGNA4X) && (displayMode == IMAGE_B)) {
+                    geSigna4x = true;
                 }
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.MINC) && (displayMode == IMAGE_B)) {
@@ -380,6 +387,13 @@ public abstract class ViewJFrameBase extends JFrame
                     aboutDialog = new JDialogTextGE(this, "Image Information", imageA, zSlice);
                 } else {
                     aboutDialog = new JDialogTextGE(this, "Image Information", imageB, zSlice);
+                }
+            } else if (geSigna4x) {
+
+                if (displayMode == IMAGE_A) {
+                    aboutDialog = new JDialogTextGE4X(this, "Image Information", imageA, zSlice);
+                } else {
+                    aboutDialog = new JDialogTextGE4X(this, "Image Information", imageB, zSlice);
                 }
             } else if (minc) {
                 aboutDialog = new JDialogFileInfoMinc(this, "Image Information");
