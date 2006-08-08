@@ -20,6 +20,52 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    private String studyNumber = null;
+    
+    private String studyDate = null;
+    
+    private String studyTime = null;
+    
+    private String patientName = null;
+    
+    private String patientID = null;
+    
+    private String patientAge = null;
+    
+    private String patientSex = null;
+    
+    private String seriesNumber = null;
+    
+    private String seriesDescription = null;
+    
+    private String seriesType = null;
+    
+    private String coilType = null;
+    
+    private String coilName = null;
+    
+    private short contrastDescription = -1;
+    
+    private String imageMode;
+    
+    private short fieldStrength = -1; // gauss
+    
+    private String pulseSequence = null;
+    
+    private String pulseSequenceSubtype = null;
+    
+    private float fieldOfView = -1.0f;
+    
+    private float rlCenter = -1.0f;
+    
+    private float apCenter = -1.0f;
+    
+    private float siCenter = -1.0f;
+    
+    private String orientation = null;
+    
+    private String position = null;
+    
     /** 18. */
     public int actualDateTime;
 
@@ -47,11 +93,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     /** 54 - 16 bit end around carry sum of pixels **** (read as unsigned short). */
     public int checkSum;
 
-    /** 362 17 characters. */
-    public String coilName;
-
-    /** 360. */
-    public short coilType;
+    
 
     /** 120 image compression type for allocation. */
     public short compress;
@@ -645,17 +687,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     /** 124 Patient Age notation. */
     public short patian;
 
-    /** 122. */
-    public short patientAge;
-
-    /** 84 - 13 bytes. */
-    public String patientID;
-
-    /** 97 - 25 bytes. */
-    public String patientName;
-
-    /** 126. */
-    public short patientSex;
+    
 
     /** 128 Patient Weight. */
     public int patWeight;
@@ -677,9 +709,6 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
     /** 114. */
     public short planeType;
-
-    /** 76 - Patient Poisition. */
-    public int position;
 
     /** 644 Prepartory pulse option. */
     public short prepPulse;
@@ -1732,6 +1761,100 @@ public class FileInfoGESigna4X extends FileInfoBase {
         dialog.append("Image background value      = " + valueBg + "\n");
         dialog.append("Image value to add to image = " + addValue + "\n");
 
+        dialog.append("Study header\n");
+        if (studyNumber != null) {
+            dialog.append("Study number = " + studyNumber.trim() + "\n");
+        }
+        
+        if (studyDate != null) {
+            dialog.append("Study date = " + studyDate.trim() + "\n");
+        }
+        
+        if (studyTime != null) {
+            dialog.append("Study time = " + studyTime.trim() + "\n");
+        }
+        
+        if (patientName != null) {
+            dialog.append("Patient name = " + patientName.trim() + "\n");
+        }
+        
+        if (patientID != null) {
+            dialog.append("Patient ID = " + patientID.trim() + "\n");
+        }
+        
+        if (patientAge != null) {
+            dialog.append("Patient age = " + patientAge.trim() + "\n");
+        }
+        
+        if (patientSex != null) {
+            dialog.append("Patient sex = " + patientSex.trim() + "\n");
+        }
+        
+        dialog.append("\nSeries header\n");
+        if (seriesNumber != null) {
+            dialog.append("Series number = " + seriesNumber.trim() + "\n");
+        }
+        
+        if (seriesDescription != null) {
+            dialog.append("Series description = " + seriesDescription.trim() + "\n");
+        }
+        
+        if (seriesType != null) {
+            dialog.append("Series type = " + seriesType.trim() + "\n");
+        }
+        
+        if (coilType != null) {
+            dialog.append("Coil type = " + coilType.trim() + "\n");
+        }
+        
+        if (coilName != null) {
+            dialog.append("Coil name = " + coilName.trim() + "\n");
+        }
+        
+        if (contrastDescription != -1) {
+            dialog.append("Contrast description = " + contrastDescription + "\n");
+        }
+        
+        if (imageMode != null) {
+            dialog.append("Image mode = " + imageMode.trim() + "\n");
+        }
+        
+        if (fieldStrength != -1) {
+            dialog.append("Field strength = " + fieldStrength + " gauss\n");
+        }
+        
+        if (pulseSequence != null) {
+            dialog.append("Pulse sequence = " + pulseSequence.trim() + "\n");
+        }
+        
+        if (pulseSequenceSubtype  != null) {
+            dialog.append("Pulse sequence subtype = " + 
+                    pulseSequenceSubtype.trim() + "\n");
+        }
+        
+        if (fieldOfView != -1.0f) {
+            dialog.append("Field of view = " + fieldOfView + " mm\n");
+        }
+        
+        if (rlCenter != -1.0f) {
+            dialog.append("R+L- center = " + rlCenter + "\n");
+        }
+        
+        if (apCenter != -1.0f) {
+            dialog.append("A+P- center = " + apCenter + "\n");
+        }
+        
+        if (siCenter != -1.0f) {
+            dialog.append("S+I- center = " + siCenter + "\n");
+        }
+        
+        if (orientation != null) {
+            dialog.append("Orientation = " + orientation.trim() + "\n");
+        }
+        
+        if (position != null) {
+            dialog.append("Position = " + position.trim() + "\n");
+        }
         /***********************************************************************************************/
         dialog.append("\nExam informaton \n");
 
@@ -1770,7 +1893,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
         dialog.append("Patient age = " + patientAge + "\n");
         dialog.append("Patient age notation = " + patian + "\n");
-        dialog.append("Patient sex = " + patientSex + "\n");
+        
         dialog.append("Patient weight = " + patWeight + "\n");
         dialog.append("Trauma flag = " + trauma + "\n");
 
@@ -2434,6 +2557,186 @@ public class FileInfoGESigna4X extends FileInfoBase {
         seconds = (int) (longSeconds - (minute * secondsPerMinute));
 
         return;
+    }
+    
+    /**
+     * 
+     * @param studyNumber
+     */
+    public void setStudyNumber (String studyNumber){
+        this.studyNumber = studyNumber;
+    }
+    
+    /**
+     * 
+     * @param studyDate
+     */
+    public void setStudyDate (String studyDate){
+        this.studyDate = studyDate;
+    }
+    
+    /**
+     * 
+     * @param studyTime
+     */
+    public void setStudyTime (String studyTime){
+        this.studyTime = studyTime;
+    }
+    
+    /**
+     * 
+     * @param patientName
+     */
+    public void setPatientName(String patientName) {
+        this.patientName = patientName;
+    }
+    
+    /**
+     * 
+     * @param patientID
+     */
+    public void setPatientID(String patientID) {
+        this.patientID = patientID;
+    }
+    
+    /**
+     * 
+     * @param patientAge
+     */
+    public void setPatientAge(String patientAge) {
+        this.patientAge = patientAge;
+    }
+    
+    /**
+     * 
+     * @param patientSex
+     */
+    public void setPatientSex(String patientSex) {
+        this.patientSex = patientSex;
+    }
+    
+    /**
+     * 
+     * @param seriesNumber
+     */
+    public void setSeriesNumber(String seriesNumber) {
+        this.seriesNumber = seriesNumber;
+    }
+    
+    /**
+     * 
+     * @param seriesDescription
+     */
+    public void setSeriesDescription(String seriesDescription) {
+        this.seriesDescription = seriesDescription;
+    }
+    
+    /**
+     * 
+     * @param seriesType
+     */
+    public void setSeriesType(String seriesType) {
+        this.seriesType = seriesType;
+    }
+    
+    /**
+     * 
+     * @param coilType
+     */
+    public void setCoilType(String coilType) {
+        this.coilType = coilType;
+    }
+    
+    /**
+     * 
+     * @param coilName
+     */
+    public void setCoilName(String coilName) {
+        this.coilName = coilName;
+    }
+    
+    /**
+     * 
+     * @param contrastDescription
+     */
+    public void setContrastDescription(short contrastDescription) {
+        this.contrastDescription = contrastDescription;
+    }
+    
+    /**
+     * 
+     * @param imageMode
+     */
+    public void setImageMode(String imageMode) {
+        this.imageMode = imageMode;
+    }
+    
+    /**
+     * 
+     * @param fieldStrength
+     */
+    public void setFieldStrength(short fieldStrength) {
+        this.fieldStrength = fieldStrength;
+    }
+    
+    /**
+     * 
+     * @param pulseSequence
+     */
+    public void setPulseSequence(String pulseSequence) {
+        this.pulseSequence = pulseSequence;
+    }
+    
+    /**
+     * 
+     * @param pulseSequenceSubtype
+     */
+    public void setPulseSequenceSubtype(String pulseSequenceSubtype) {
+        this.pulseSequenceSubtype = pulseSequenceSubtype;
+    }
+    
+    public void setFieldOfView(float fieldOfView) {
+        this.fieldOfView = fieldOfView;
+    }
+    
+    /**
+     * 
+     * @param rlCenter
+     */
+    public void setRLCenter(float rlCenter) {
+        this.rlCenter = rlCenter;
+    }
+    
+    /**
+     * 
+     * @param apCenter
+     */
+    public void setAPCenter(float apCenter) {
+        this.apCenter = apCenter;
+    }
+    
+    /**
+     * 
+     * @param siCenter
+     */
+    public void setSICenter(float siCenter) {
+        this.siCenter = siCenter;
+    }
+    
+    /**
+     * 
+     * @param orientation
+     */
+    public void setOrientation(String orientation) {
+        this.orientation = orientation;
+    }
+    
+    /**
+     * 
+     * @param position
+     */
+    public void setPosition(String position) {
+        this.position = position;
     }
 
 }
