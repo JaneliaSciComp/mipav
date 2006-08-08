@@ -289,7 +289,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
      */
 	public ModelImage boundaryCorrect(ModelImage SegmentedImg){
     	ModelImage Mask = new ModelImage(SegmentedImg.getType(), SegmentedImg.getExtents(), "Mask", SegmentedImg.getUserInterface());
-        int j, i, x, y, xx, yy, BACKGROUNDFound;
+       int j, i, iPrime, x, y, xx, yy, BACKGROUNDFound;
         for (j = 0; j < zDim; j++) {
             try {
                 progressBar.updateValue(Math.round(10 + (30 * j / zDim)), runningInSeparateThread);
@@ -341,60 +341,68 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
                         for (x = 0; x < xDim; x++) {
                             i = x + (y * xDim);
                             if (imgBuffer1[i] == 0) {
-                                // checks left nearest neighbor
-                                if ((x != 0) && (imgBuffer[i - 1] == BACKGROUND) && (imgBuffer1[i - 1] == 1)) {
+                                // checks left nearest neighbor  
+                            	// segmentedImg left pixel is background and left pixel has not been relabeled from thigh
+                            	iPrime = i - 1;
+                                if ((x != 0) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i - 1] = 0;
                                     imgBuffer2[i - 1] = 0;
                                     BACKGROUNDFound++;
                                 }
                                 // right nearest neighbor
-                                if ((x != (xDim - 1)) && (imgBuffer[i + 1] == BACKGROUND) && (imgBuffer1[i + 1] == 1)) {
+                                iPrime = i + 1;
+                                if ((x != (xDim - 1)) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i + 1] = 0;
                                     imgBuffer2[i + 1] = 0;
                                     BACKGROUNDFound++;
                                 }
-                                // top
-                                if ((y != 0) && (imgBuffer[i - xDim] == BACKGROUND) && (imgBuffer1[i - xDim] == 1)) {
+                                // below
+                                iPrime = i - xDim;
+                                if ((y != 0) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i - xDim] = 0;
                                     imgBuffer2[i - xDim] = 0;
                                     BACKGROUNDFound++;
                                 }
-                                // bottom
-                                if ((y != (yDim - 1)) && (imgBuffer[i + xDim] == BACKGROUND) &&
-                                        (imgBuffer1[i + xDim] == 1)) {
+                                // above
+                                iPrime = i + xDim;
+                                if ((y != (yDim - 1)) && (imgBuffer[iPrime] == BACKGROUND) && (imgBuffer1[iPrime] == 1)) {
                                     imgBuffer1[i + xDim] = 0;
                                     imgBuffer2[i + xDim] = 0;
                                     BACKGROUNDFound++;
                                 }
-                            }
-                        }
-                    }
+                            } // end if (imgBuffer1[i] == 0)
+                        } // end for (x = 0; ...)
+                    } // end for (y = 0; ...)
                 } while (BACKGROUNDFound > 0);
+                
+                // at this point all non-background pixels in imgBuffer (segmentedImg) should be labeled one
+                // in imgBuffer1 and imgBuffer2
 
                 // convert gray imgBuffer with outer BACKGROUND imgBuffer in its 5x5 neighborhood, into BACKGROUND
+                // relabels all pixels in the segmentedImg (imgBuffer) to background (0) if any pixels in its
+                // 5x5 neighbor are labeled as non-thigh
                 for (y = 2; y < (yDim - 2); y++) {
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
                         if (imgBuffer[i] == MUSCLE) {
                             // check 5x5 neighborhood
-                            if ((x != 0) && (y != 0) && (x != (xDim - 1)) && (y != (yDim - 1))) {
-                                for (yy = -2; yy <= 2; yy++) {
-                                    for (xx = -2; xx <= 2; xx++) {
-                                        if (imgBuffer1[i + xx + (yy * xDim)] == 0) {
-                                            imgBuffer[i] = BACKGROUND;
-                                            imgBuffer2[i] = 0;
-                                        }
+                            for (yy = -2; yy <= 2; yy++) {
+                                for (xx = -2; xx <= 2; xx++) {
+                                    if (imgBuffer1[i + xx + (yy * xDim)] == 0) {
+                                        imgBuffer[i] = BACKGROUND;
+                                        imgBuffer2[i] = 0;
                                     }
                                 }
                             }
                         }
                     }
-                }
+                } // end for (y = 2; ...)
+
                 Mask.importData((j * imgBuffer.length), imgBuffer2, false);
             } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline");
             }
-        }
+        } // end for (j = 0; ...)
 
         SegmentedImg.disposeLocal();
         SegmentedImg = null;
@@ -484,7 +492,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
             zDim = srcImage.getExtents()[2];
         }
 
-// PFH        ShowImage(srcImage, "Source Image");
+// 		PFH        ShowImage(srcImage, "Source Image");
         
        // --------------- STEP 1: Obtaining Background Mask --------------------
         // A) FUZZY C Means SEGMENTATION with 3 classes
@@ -492,13 +500,13 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         progressBar.setMessage("Fuzzy C-Means");
         nClasses = 3;
         HardSeg = HardFuzzy(srcImage, nClasses);
-//      PFH     ShowImage(HardSeg, "3 class seg");
+//      PFH        ShowImage(HardSeg, "3 class seg");
          
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
         progressBar.updateValue(15, runningInSeparateThread);
         progressBar.setMessage("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
-//      PFH		ShowImage(obMask, "outer boundary mask");
+//      PFH        ShowImage(obMask, "outer boundary mask");
 
         // To eliminate MR artifacts that appear away from the thighs, apply a connected
         // components anaylsis here and keep only the voxels in the two largest components
@@ -506,7 +514,8 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         // box of the voxels in each thigh
  
         IDObjects(obMask, zDim*2000, xDim*yDim*zDim);
-        
+//      PFH        ShowImage(obMask, "outer boundary mask no MR artifacts");
+
         // make all components a label value of one
         for (i = 0; i < xDim*yDim*zDim; i++) {
         	if(obMask.getShort(i) >= 1) obMask.setShort(i, (short)1);
@@ -550,7 +559,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
                 for (y = 5; y < (yDim - 5); y++) {
                     for (x = 2; x < (xDim - 2); x++) {
                         i = x + (y * xDim);
-                        // both legs, top y
+                        // both legs, top y (minimum y)
                         if ((imgBuffer[i - (2 * xDim)] == 0) && // pixel in previous row
                         	(imgBuffer[i - xDim] == 0) && 		// pixel in previous row
                         	(imgBuffer[i] == 1) &&
@@ -561,76 +570,105 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
                                 ybound[0] = y;
                             }
                         }
-                        // both legs, bottom y
-                        if ((imgBuffer[i + (2 * xDim)] == 0) && (imgBuffer[i + xDim] == 0) && (imgBuffer[i] == 1) &&
-                                (imgBuffer[i - xDim] == 1) && (imgBuffer[i - (2 * xDim)] == 1) &&
-                                (imgBuffer[i - (5 * xDim)] == 1)) {
+                        // both legs, bottom y (maximum y)
+                        if ((imgBuffer[i + (2 * xDim)] == 0) &&
+                        	(imgBuffer[i + xDim] == 0) &&
+                        	(imgBuffer[i] == 1) &&
+                            (imgBuffer[i - xDim] == 1) &&
+                            (imgBuffer[i - (2 * xDim)] == 1) &&
+                            (imgBuffer[i - (5 * xDim)] == 1)) {
                             if (y > ybound[1]) {
                                 ybound[1] = y;
                             }
                         }
-                    }
-                }
+                    } // end for (x = 2; ...)
+                } // end for (y = 5; ...)
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
-                    // left leg, left x
+                    // left leg, left x (left leg minumum x)
                     for (x = 5; x < x0; x++) {
                         i = x + (y * xDim);
-                        if ((imgBuffer[i - 2] == 0) && (imgBuffer[i - 1] == 0) && (imgBuffer[i] == 1) &&
-                                (imgBuffer[i + 1] == 1) && (imgBuffer[i + 2] == 1) && (imgBuffer[i + 5] == 1)) {
+                        if ((imgBuffer[i - 2] == 0) &&
+                        	(imgBuffer[i - 1] == 0) &&
+                        	(imgBuffer[i] == 1) &&
+                            (imgBuffer[i + 1] == 1) &&
+                            (imgBuffer[i + 2] == 1) &&
+                            (imgBuffer[i + 5] == 1)) {
                             if (x < xbound[0]) {
                                 xbound[0] = x;
                             }
                         }
-                    }
-                }
+                    } // end for (x = 5; ...)
+                } // end for (y = ybound[0]; ...)
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
                     for (x = x11; x < (xDim - 5); x++) {
                         i = x + (y * xDim);
-                        // right leg, right x
-                        if ((imgBuffer[i + 3] == 0) && (imgBuffer[i + 4] == 0) && (imgBuffer[i + 5] == 0) &&
-                                (imgBuffer[i + 2] == 0) && (imgBuffer[i + 1] == 0) && (imgBuffer[i] == 1) &&
-                                (imgBuffer[i - 1] == 1) && (imgBuffer[i - 2] == 1) && (imgBuffer[i - 5] == 1)) {
+                        // right leg, right x (right leg maximum x)
+                        if ((imgBuffer[i + 3] == 0) &&
+                        	(imgBuffer[i + 4] == 0) &&
+                        	(imgBuffer[i + 5] == 0) &&
+                            (imgBuffer[i + 2] == 0) &&
+                            (imgBuffer[i + 1] == 0) &&
+                            (imgBuffer[i] == 1) &&
+                            (imgBuffer[i - 1] == 1) &&
+                            (imgBuffer[i - 2] == 1) &&
+                            (imgBuffer[i - 5] == 1)) {
                             if (x > xbound1[1]) {
                                 xbound1[1] = x;
                             }
                         }
-                    }
-                }
+                    } // end for (x = x11; ...)
+                } // end for (y = ybound[0]; ...)
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
                     for (x = xbound[0]; x < (xDim / 2); x++) {
                         i = x + (y * xDim);
-                        // left leg, right x
-                        if ((imgBuffer[i - 5] == 1) && (imgBuffer[i - 2] == 1) && (imgBuffer[i - 1] == 1) &&
-                                (imgBuffer[i] == 0) && (imgBuffer[i + 1] == 0) && (imgBuffer[i + 2] == 0) &&
-                                (imgBuffer[i + 3] == 0) && (imgBuffer[i + 4] == 0) && (imgBuffer[i + 5] == 0)) {
+                        // left leg, right x (left leg maximum x)
+                        if ((imgBuffer[i - 5] == 1) &&
+                        	(imgBuffer[i - 2] == 1) &&
+                        	(imgBuffer[i - 1] == 1) &&
+                            (imgBuffer[i] == 0) &&
+                            (imgBuffer[i + 1] == 0) &&
+                            (imgBuffer[i + 2] == 0) &&
+                            (imgBuffer[i + 3] == 0) &&
+                            (imgBuffer[i + 4] == 0) &&
+                            (imgBuffer[i + 5] == 0)) {
                             if (x > xbound[1]) {
                                 xbound[1] = x;
                             }
                         }
-                    }
-                }
+                    } // end for (x = xbound[0]; ...)
+                } // end for (y = ybound[0]; ...)
 
                 for (y = ybound[0]; y < ybound[1]; y++) {
                     for (x = xbound[1]; x < xbound1[1]; x++) {
                         i = x + (y * xDim);
-                        // right leg, left x
-                        if ((imgBuffer[i - 2] == 0) && (imgBuffer[i - 1] == 0) && (imgBuffer[i] == 1) &&
-                                (imgBuffer[i + 1] == 1) && (imgBuffer[i + 2] == 1) && (imgBuffer[i + 5] == 1)) {
+                        // right leg, left x (right leg minimum x)
+                        if ((imgBuffer[i - 2] == 0) &&
+                        	(imgBuffer[i - 1] == 0) &&
+                        	(imgBuffer[i] == 1) &&
+                            (imgBuffer[i + 1] == 1) &&
+                            (imgBuffer[i + 2] == 1) &&
+                            (imgBuffer[i + 5] == 1)) {
                             if (x < xbound1[0]) {
                                 xbound1[0] = x;
                             }
                         }
-                    }
-                }
+                    } // end for (x = xbound[0]; ...)
+                } // end for (y = ybound[0]; ...)
 
                 obMask.importData((j * imgBuffer.length), imgBuffer, false);
             } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmPipeline2");
             }
-        }
+        } // end for (j = 0; ...)
+
+// 		PFH
+//        System.out.println("yMin ybound[0]: " + ybound[0] + "  yMax ybound[1]: " + ybound[1]);
+//        System.out.println("xMin xbound[0]: " + xbound[0] + "  xMax xbound[1]: " + xbound[1]);
+//        System.out.println("xMin xbound1[0]: " + xbound1[0] + "  xMax xbound1[1]: " + xbound1[1]);
+        
         
         // This just smooths out the boundaries of the mask image
         Close(obMask, 24);  /*section added to eliminate results of shading artifact on obMask*/
