@@ -28,6 +28,7 @@ public class JDialogUnknownIO extends JDialogBase {
                                             "AFNI (.brik, .head)", "Analyze (.img)", "AVI (.avi)", "Biorad (.pic)",
                                             "BMP (.bmp)", "Bruker (.brk)", "Cheshire (.imc)", "COR (.info)",
                                             "DICOM (.dcm, .ima)", "DM3 (.dm3)", "FITS (.fits)", "GE Genesis (.sig)",
+                                            "GE Signa4x (.gedno)",
                                             "GIF (.gif)", "ICS (.ics, .ids)", "Interfile (.hdr)", "JPEG (.jpg, .jpeg)",
                                             "LSM (.lsm)", "Magnetom Vision (.ima)", "Map (.map)",
 
@@ -43,8 +44,8 @@ public class JDialogUnknownIO extends JDialogBase {
     /** DOCUMENT ME! */
     private static String[] typeSuffices = new String[] {
                                                ".brik", ".img", ".avi", ".pic", ".bmp", ".brk", ".imc", ".info", ".dcm",
-                                               ".dm3", ".fits", ".sig", ".gif", ".ics", ".hdr", ".jpg", ".lsm", ".ima",
-                                               ".map",
+                                               ".dm3", ".fits", ".sig", ".gedno", ".gif", ".ics", ".hdr", ".jpg",
+                                               ".lsm", ".ima", ".map",
 
                                                // ".bin",
                                                ".log", ".ct", ".mnc", ".mrc", ".img", ".nii",
@@ -57,7 +58,7 @@ public class JDialogUnknownIO extends JDialogBase {
     private static int[] typeInts = new int[] {
                                         FileBase.AFNI, FileBase.ANALYZE, FileBase.AVI, FileBase.BIORAD, FileBase.JIMI,
                                         FileBase.BRUKER, FileBase.CHESHIRE, FileBase.COR, FileBase.DICOM, FileBase.DM3,
-                                        FileBase.FITS, FileBase.GE_GENESIS, FileBase.JIMI,
+                                        FileBase.FITS, FileBase.GE_GENESIS, FileBase.GE_SIGNA4X, FileBase.JIMI,
 
                                         // FileBase.DICOM,
                                         FileBase.ICS, FileBase.INTERFILE, FileBase.JIMI, FileBase.LSM,
