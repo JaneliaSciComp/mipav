@@ -57,7 +57,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     private JPanelStatisticsList statisticList; // collection of items to perform stats on
 
     /** Formatting for float values into strings */
-    private NumberFormat nf;
+    private DecimalFormat nf;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -93,10 +93,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      */
     public AlgorithmVOIProps(ModelImage srcImg, JPanelStatisticsList list, boolean sliceBySlice, int rangeFlag) {
 
-        nf = NumberFormat.getInstance();
+        nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
         nf.setGroupingUsed(false);
+        DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        nf.setDecimalFormatSymbols(dfs);
 
         this.rangeFlag = rangeFlag;
         this.srcImage = srcImg;
