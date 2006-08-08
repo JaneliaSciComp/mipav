@@ -1913,6 +1913,17 @@ public class FileNRRD extends FileBase {
                 matrix.set(1, 3, -matrix.get(1,3));
             }
             
+            /** If the NRRD image is flipped along the j axis, then the
+             *  following code is necessary
+             *  matrix.set(0, 1, -matrix.get(0,1));
+             *  matrix.set(1, 1, -matrix.get(1,1));
+             *  matrix.set(2, 1, -matrix.get(2,1));
+             *  if (origin != null) {
+             *      origin[1] = -origin[1];
+             *      fileInfo.setOrigin(origin[1], 1);
+             *  }
+             */
+            
             axisOrientation = getAxisOrientation(matrix);
             fileInfo.setAxisOrientation(axisOrientation);
             if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
