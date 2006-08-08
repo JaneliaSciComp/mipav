@@ -102,7 +102,101 @@ public class FileInfoNRRD extends FileInfoBase {
 
         dialog.appendPrimaryData("Modality", FileInfoBase.getModalityStr(getModality()));
 
-        dialog.appendPrimaryData("Orientation", getImageOrientationStr(getImageOrientation()));
+        if (extents.length > 2) {
+            dialog.appendPrimaryData("Orientation", getImageOrientationStr(getImageOrientation()));
+    
+            switch (axisOrientation[0]) {
+    
+                case ORI_R2L_TYPE:
+                    dialog.appendPrimaryData("X axis orientation", "right to left");
+                    break;
+    
+                case ORI_L2R_TYPE:
+                    dialog.appendPrimaryData("X axis orientation","left to right");
+                    break;
+    
+                case ORI_A2P_TYPE:
+                    dialog.appendPrimaryData("X axis orientation","anterior to posterior");
+                    break;
+    
+                case ORI_P2A_TYPE:
+                    dialog.appendPrimaryData("X axis orientation","posterior to anterior");
+                    break;
+    
+                case ORI_I2S_TYPE:
+                    dialog.appendPrimaryData("X axis orientation","inferior to superior");
+                    break;
+    
+                case ORI_S2I_TYPE:
+                    dialog.appendPrimaryData("X axis orientation","superior to inferior");
+                    break;
+    
+                default:
+                    dialog.appendPrimaryData("X axis orientation","unknown to unknown");
+            }
+            
+            switch (axisOrientation[1]) {
+            
+                case ORI_R2L_TYPE:
+                    dialog.appendPrimaryData("Y axis orientation", "right to left");
+                    break;
+    
+                case ORI_L2R_TYPE:
+                    dialog.appendPrimaryData("Y axis orientation","left to right");
+                    break;
+    
+                case ORI_A2P_TYPE:
+                    dialog.appendPrimaryData("Y axis orientation","anterior to posterior");
+                    break;
+    
+                case ORI_P2A_TYPE:
+                    dialog.appendPrimaryData("Y axis orientation","posterior to anterior");
+                    break;
+    
+                case ORI_I2S_TYPE:
+                    dialog.appendPrimaryData("Y axis orientation","inferior to superior");
+                    break;
+    
+                case ORI_S2I_TYPE:
+                    dialog.appendPrimaryData("Y axis orientation","superior to inferior");
+                    break;
+    
+                default:
+                    dialog.appendPrimaryData("Y axis orientation","unknown to unknown");
+            }
+            
+            switch (axisOrientation[2]) {
+            
+                case ORI_R2L_TYPE:
+                    dialog.appendPrimaryData("Z axis orientation", "right to left");
+                    break;
+    
+                case ORI_L2R_TYPE:
+                    dialog.appendPrimaryData("Z axis orientation","left to right");
+                    break;
+    
+                case ORI_A2P_TYPE:
+                    dialog.appendPrimaryData("Z axis orientation","anterior to posterior");
+                    break;
+    
+                case ORI_P2A_TYPE:
+                    dialog.appendPrimaryData("Z axis orientation","posterior to anterior");
+                    break;
+    
+                case ORI_I2S_TYPE:
+                    dialog.appendPrimaryData("Z axis orientation","inferior to superior");
+                    break;
+    
+                case ORI_S2I_TYPE:
+                    dialog.appendPrimaryData("Z axis orientation","superior to inferior");
+                    break;
+    
+                default:
+                    dialog.appendPrimaryData("Z axis orientation","unknown to unknown");
+            }
+    
+            
+        } // if (extents.length > 2)
 
         float[] resolutions; // = new float[5];
         resolutions = getResolutions();
