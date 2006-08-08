@@ -355,7 +355,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 //		 PFH		ShowImage(fatImage, "background");
 
 		// apply a fat cardinality filter to get rid of small regions of fat
-		cleanUp(fatImage, FAT, MUSCLE, 60*zDim/20);
+//
+		cleanUp(fatImage, FAT, MUSCLE, 20);
 //		 PFH		ShowImage(fatImage, "fat suppression");
 
 		return fatImage;
