@@ -46,6 +46,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short contrastDescription = -32768;
     
+    private String planeType = null;
+    
     private String imageMode = null;
     
     private short fieldStrength = -32768; // gauss
@@ -382,6 +384,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Contrast description = " + contrastDescription + "\n");
         }
         
+        if (planeType != null) {
+            dialog.append("Plane type = " + planeType + "\n");
+        }
+        
         if (imageMode != null) {
             dialog.append("Image mode = " + imageMode.trim() + "\n");
         }
@@ -463,7 +469,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Image thickness = " + imageThickness + "\n");
         }
         
-        dialog.append("Image spacing " + getSliceSpacing() + "\n");
+        dialog.append("Image spacing = " + getSliceSpacing() + "\n");
         
         if (!Float.isNaN(tr)) {
             dialog.append("tr = " + tr + " usec\n");
@@ -606,6 +612,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setContrastDescription(short contrastDescription) {
         this.contrastDescription = contrastDescription;
+    }
+    
+    public void setPlaneType(String planeType) {
+        this.planeType = planeType;
     }
     
     /**
