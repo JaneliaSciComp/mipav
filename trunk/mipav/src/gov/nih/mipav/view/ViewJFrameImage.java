@@ -510,6 +510,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     if (this.canCloseImageBAfterLoad()) {
                         menuBuilder.setMenuItemEnabled("Close image(B)", true);
+                        menuBuilder.setMenuItemEnabled("Extract image(B)", true);
                     }
 
                     setControls();
@@ -545,6 +546,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (this.canCloseImageBAfterLoad()) {
                     menuBuilder.setMenuItemEnabled("Close image(B)", true);
+                    menuBuilder.setMenuItemEnabled("Extract image(B)", true);
                 }
 
                 if (command.equals("OpenMask") && !imageA.isColorImage()) {
@@ -623,6 +625,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
+            menuBuilder.setMenuItemEnabled("Clone/extract image(B)", true);
 
             setActiveImage(ViewJFrameImage.IMAGE_B); // set image B to active by default, for convenience of user
             controls.setActiveImage(ViewJFrameImage.IMAGE_B); // set the controls to show that image B is active
@@ -638,6 +641,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     setImageB(imgB);
                     menuBuilder.setMenuItemEnabled("Close image(B)", true);
+                    menuBuilder.setMenuItemEnabled("Extract image(B)", true);
                     setControls();
                     setTitle();
                 } else {
@@ -646,6 +650,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     if (blankImageDialog.isCancelled() == false) {
                         setImageB(blankImageDialog.getImage());
                         menuBuilder.setMenuItemEnabled("Close image(B)", true);
+                        menuBuilder.setMenuItemEnabled("Extract image(B)", true);
                         setControls();
                         setTitle();
                         getLUTb().resetTransferLine(0, 255);
@@ -733,6 +738,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 closeImageB();
 
                 menuBuilder.setMenuItemEnabled("Close image(B)", false);
+                menuBuilder.setMenuItemEnabled("Extract image(B)", false);
                 setControls();
                 setTitle();
                 updateImages(null, null, true, -1);
@@ -753,7 +759,53 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
             }
-        } else if (command.equals("EditImageInfo")) {
+        } else if (command.equals("ExtractImageB")) {
+            ModelImage clonedImage = null;
+
+            try {
+                clonedImage = (ModelImage) getImageB().clone();
+
+                ModelLUT lutClone = null;
+
+                    lutClone = (ModelLUT) LUTb.clone();
+
+                new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200),
+                                    getImageB().getLogMagDisplay());
+                System.gc();
+
+                if (userInterface.isScriptRecording()) {
+
+                    // check to see if the image is already in the ImgTable
+                    if (userInterface.getScriptDialog().getImgTableVar(getImageB().getImageName()) == null) {
+
+                        if (userInterface.getScriptDialog().getActiveImgTableVar(getImageB().getImageName()) ==
+                                null) {
+                            userInterface.getScriptDialog().putActiveVar(getImageB().getImageName());
+                        }
+                    }
+
+                    userInterface.getScriptDialog().append("ExtractImageB " +
+                                                           userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
+                                                           " ");
+                    userInterface.getScriptDialog().putVar(clonedImage.getImageName());
+                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(clonedImage.getImageName()) +
+                                                           "\n");
+                }
+            } catch (OutOfMemoryError error) {
+
+                if (clonedImage != null) {
+                    clonedImage.disposeLocal();
+                }
+
+                clonedImage = null;
+                System.gc();
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+
+                return;
+            }
+        }
+          else if (command.equals("EditImageInfo")) {
+        
             showEditImageInfo();
         } else if (command.equals("Exit")) {
             userInterface.windowClosing(null);
@@ -2996,6 +3048,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     public void enableImageB(boolean enable) {
         menuBuilder.setMenuItemEnabled("Close image(B)", enable);
+        menuBuilder.setMenuItemEnabled("Extract image(B)", enable);
     }
 
     /**
@@ -3720,6 +3773,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
 
             setControls();
             setTitle();
