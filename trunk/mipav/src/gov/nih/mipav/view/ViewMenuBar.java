@@ -555,8 +555,11 @@ public class ViewMenuBar {
         JMenu dicomMenu = makeDicomMenu();
 
         JMenuItem closeImageBItem = menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true);
-        menuBuilder.setMenuItemEnabled("Close image(B)", isAnImageOpen);
+        menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
+        JMenuItem extractImageBItem = menuBuilder.buildMenuItem("Extract image(B)", "ExtractImageB", 0, null, true);
+        menuBuilder.setMenuItemEnabled("Extract image(B)", false);
+        
         JMenuItem saveImageItem = menuBuilder.buildMenuItem("Save image", "SaveImage", 0, "save.gif", true);
         JMenuItem saveImageAsItem = menuBuilder.buildMenuItem("Save image as", "SaveImageAs", 0, "save.gif", true);
         menuBuilder.setMenuItemEnabled("Save image", isAnImageOpen);
@@ -579,7 +582,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Image browser",
                                                                                            "BrowseImages", 0, null,
                                                                                            true),
-                                                             }), separator, loadMenu, closeImageBItem, separator,
+                                                             }), separator, loadMenu, extractImageBItem, closeImageBItem, separator,
                                         saveImageItem, saveImageAsItem, captureMenu, separator, dicomMenu, separator,
                                         srbMenu, separator, menuBuilder.buildQuickList(), separator,
                                         menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null,
