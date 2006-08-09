@@ -428,8 +428,13 @@ public class AlgorithmRotate extends AlgorithmBase {
         if (srcImage.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
             FileInfoDicom newDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0).clone();
 
-            newDicomInfo.setValue("0028,0011", new Short((short) newDimExtents[0]), 2); // columns
-            newDicomInfo.setValue("0028,0010", new Short((short) newDimExtents[1]), 2); // rows
+            if (newDicomInfo.getValue("0028,0011") != null) {
+                newDicomInfo.setValue("0028,0011", new Short((short) newDimExtents[0]), 2); // columns
+            }
+            
+            if (newDicomInfo.getValue("0028,0010") != null) {
+                newDicomInfo.setValue("0028,0010", new Short((short) newDimExtents[1]), 2); // rows
+            }
 
             // set image orientation too!
             destImage.setFileInfo(newDicomInfo, 0);
@@ -1587,7 +1592,9 @@ public class AlgorithmRotate extends AlgorithmBase {
                     newDicomInfo[i].setValue("0018,0088", newTagSliceSpc.toString(), newTagSliceSpc.length()); // spacing between slices
                 }
 
-                newDicomInfo[i].setValue("0020,0037", imageOrient, imageOrient.length());
+                if (newDicomInfo[i].getValue("0020,0037") != null) {
+                    newDicomInfo[i].setValue("0020,0037", imageOrient, imageOrient.length());
+                }
 
                 String position = null;
                 DecimalFormat nf = new DecimalFormat("##0.000000");
@@ -1606,9 +1613,12 @@ public class AlgorithmRotate extends AlgorithmBase {
                     position = positionToDICOMString(newStartLocations[0], newStartLocations[1], fSliceLocation);
                     sliceLocation = nf.format(fSliceLocation);
                 }
-
-                newDicomInfo[i].setValue("0020,1041", sliceLocation, sliceLocation.length()); // image location
-                newDicomInfo[i].setValue("0020,0032", position, position.length());
+                if (newDicomInfo[i].getValue("0020,1041") != null) {
+                    newDicomInfo[i].setValue("0020,1041", sliceLocation, sliceLocation.length()); // image location
+                }
+                if (newDicomInfo[i].getValue("0020,0032") != null) {
+                    newDicomInfo[i].setValue("0020,0032", position, position.length());
+                }
             }
 
             destImage.setFileInfo(newDicomInfo);
