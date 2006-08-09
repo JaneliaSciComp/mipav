@@ -139,6 +139,8 @@ public class FileGESigna4X extends FileBase {
 
     /** DOCUMENT ME! */
     private String fileName;
+    
+    private int axisOrientation[] = new int[3];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -276,27 +278,43 @@ public class FileGESigna4X extends FileBase {
         
         raFile.seek(8*512 + 2*138);
         planeType = (short)getSignedShort(endianess);
+        axisOrientation[0] = FileInfoBase.ORI_UNKNOWN_TYPE;
+        axisOrientation[1] = FileInfoBase.ORI_UNKNOWN_TYPE;
+        axisOrientation[2] = FileInfoBase.ORI_UNKNOWN_TYPE;
         if (planeType == 0) {
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+            fileInfo.setPlaneType("axial");
+            axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+            axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+            axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
         }
         else if (planeType == 1) {
             fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+            fileInfo.setPlaneType("sagittal");
+            axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+            axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+            axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
         }
         else if (planeType == 2) {
             fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+            fileInfo.setPlaneType("coronal");
+            axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+            axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+            axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
         }
         else if (planeType == 3) {
-            Preferences.debug("Plane type = oblique\n");
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
+            fileInfo.setPlaneType("oblique");
         }
         else if (planeType == 4) {
-            Preferences.debug("Plane type = screen save\n");
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
+            fileInfo.setPlaneType("screen save");
         }
         else {
             Preferences.debug("Plane type had an illegal value of " + planeType + "\n");
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
         }
+        fileInfo.setAxisOrientation(axisOrientation);
         
         raFile.seek(8*512 + 2*147);
         imageMode = (short)getSignedShort(endianess);
@@ -505,6 +523,9 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*79
         imageSpacing = getFloat(endianess);
+        if (imageSpacing == 0.0f) {
+            imageSpacing = 1.0f;
+        }
         fileInfo.setSliceSpacing(imageSpacing);
         fileInfo.setResolutions(imageSpacing, 2);
         
