@@ -4661,19 +4661,14 @@ public class FileIO {
         ModelImage image = null;
         FileGESigna4X imageFile;
         FileInfoBase myFileInfo;
-        FileInfoBase myFileInfo0 = null;
         ViewJProgressBar progressBar = null;
         String[] fileList;
         float[] buffer;
         int[] extents;
         int length = 0;
         int i;
-        int imageSize = 0;
         int width, height;
         int nImages;
-        int[] orient = { 0, 0, 0 };
-        float slice0Pos = 0.0f;
-        float slice1Pos = 0.0f;
 
         try {
 
@@ -4681,34 +4676,6 @@ public class FileIO {
             imageFile = new FileGESigna4X(fileName, fileDir);
 
             imageFile.setFileName(fileList[0]);
-            imageSize = imageFile.readImageFileData();
-
-            if (imageSize == -1) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
-                }
-
-                return null;
-            }
-
-            if (imageSize == -2) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
-                }
-
-                return null;
-            }
-
-            if (imageSize == 0) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Image length.");
-                }
-
-                return null;
-            }
 
             progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
                                                UI.getProgressBarPrefix() + "GE formatted image(s) ...", 0, 100, false,
@@ -4723,12 +4690,12 @@ public class FileIO {
             }
 
             progressBar.updateValue(0, true);
-            width = imageFile.getWidth();
-            height = imageFile.getHeight();
+            width = 256;
+            height = 256;
             length = width * height;
             buffer = new float[length];
 
-            if ((fileList.length == 1) || (imageFile.getStartAdjust() > 0)) {
+            if (fileList.length == 1) {
                 extents = new int[2];
                 extents[0] = width;
                 extents[1] = height;
@@ -4771,11 +4738,8 @@ public class FileIO {
             return null;
         }
 
-        if (imageFile.getStartAdjust() > 0) {
-            nImages = 1;
-        } else {
-            nImages = fileList.length;
-        }
+        
+        nImages = fileList.length;
 
         // loop through files, place them in image array
         for (i = 0; i < nImages; i++) {
@@ -4786,81 +4750,13 @@ public class FileIO {
 
                 if (fileList[i] != null) {
                     imageFile.setFileName(fileList[i]);
-                    imageFile.readImageFileData();
                     imageFile.readImage(buffer);
 
                     myFileInfo = imageFile.getFileInfo(); // Needed to set index
 
-                    if (i == 0) {
-                        myFileInfo0 = imageFile.getFileInfo();
-                        orient = myFileInfo.getAxisOrientation();
-
-                        switch (myFileInfo.getImageOrientation()) {
-
-                            case FileInfoBase.AXIAL:
-                                slice0Pos = ((FileInfoGESigna4X) myFileInfo).imgTLHC_S;
-                                break;
-
-                            case FileInfoBase.CORONAL:
-                                slice0Pos = ((FileInfoGESigna4X) myFileInfo).imgTLHC_A;
-                                break;
-
-                            case FileInfoBase.SAGITTAL:
-                                slice0Pos = ((FileInfoGESigna4X) myFileInfo).imgTLHC_R;
-                                break;
-                        }
-                    } // if (i == 0)
-                    else if (i == 1) {
-                        orient = myFileInfo.getAxisOrientation();
-
-                        switch (myFileInfo.getImageOrientation()) {
-
-                            case FileInfoBase.AXIAL:
-                                slice1Pos = ((FileInfoGESigna4X) myFileInfo).imgTLHC_S;
-                                if (slice1Pos > slice0Pos) {
-                                    orient[2] = FileInfoBase.ORI_I2S_TYPE;
-                                } else {
-                                    orient[2] = FileInfoBase.ORI_S2I_TYPE;
-                                }
-
-                                break;
-
-                            case FileInfoBase.CORONAL:
-                                slice1Pos = ((FileInfoGESigna4X) myFileInfo).imgTLHC_A;
-                                if (slice1Pos > slice0Pos) {
-                                    orient[2] = FileInfoBase.ORI_P2A_TYPE;
-                                } else {
-                                    orient[2] = FileInfoBase.ORI_A2P_TYPE;
-                                }
-
-                                break;
-
-                            case FileInfoBase.SAGITTAL:
-                                slice1Pos = ((FileInfoGESigna4X) myFileInfo).imgTLHC_R;
-                                if (slice1Pos > slice0Pos) {
-                                    orient[2] = FileInfoBase.ORI_L2R_TYPE;
-                                } else {
-                                    orient[2] = FileInfoBase.ORI_R2L_TYPE;
-                                }
-
-                                break;
-                        } // switch (myFileInfo.getImageOrientation())
-
-                        if (myFileInfo0 != null) {
-                            image.setFileInfo(myFileInfo0, 0);
-                            myFileInfo0.setAxisOrientation(orient);
-                        }
-                    } // else if (i == 1)
-
-                    if (i != 0) {
-                        myFileInfo.setAxisOrientation(orient);
-                    }
-
                     myFileInfo.setExtents(extents);
-                    myFileInfo.setOrigin(((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
-                                                                                             1));
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    /** image.setImageName(((FileInfoGESigna4X) (myFileInfo)).patientName); */
+                    image.setImageName(imageFile.getPatientName());
                     image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
             } // try
@@ -6774,42 +6670,13 @@ public class FileIO {
         float[] buffer;
         int[] extents;
         int width, height;
-        int imageSize = 0;
 
         try {
             imageFile = new FileGESigna4X(fileName, fileDir);
-            imageFile.setFileName(fileName);
-            imageSize = imageFile.readImageFileData();
+            imageFile.setFileName(fileName);    
 
-            if (imageSize == -1) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
-                }
-
-                return null;
-            }
-
-            if (imageSize == -2) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
-                }
-
-                return null;
-            }
-
-            if (imageSize == 0) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Image length.");
-                }
-
-                return null;
-            }
-
-            width = imageFile.getWidth();
-            height = imageFile.getHeight();
+            width = 256;
+            height = 256;
             buffer = new float[width * height];
 
             extents = new int[2];
@@ -6821,7 +6688,7 @@ public class FileIO {
             myFileInfo = imageFile.getFileInfo();
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            /** image.setImageName(((FileInfoGESigna4X) (myFileInfo)).patientName);*/
+            image.setImageName(imageFile.getPatientName());
             image.importData(0, buffer, false);
         } catch (OutOfMemoryError error) {
 
