@@ -55,7 +55,17 @@ public class FileGESigna4X extends FileBase {
     
     private String patientSex = null;
     
+    private String studyDescription = null;
+    
+    private String history = null;
+    
+    private String hospitalName = null;
+    
     private String seriesNumber = null;
+    
+    private String seriesDate = null;
+    
+    private String seriesTime = null;
     
     private String seriesDescription = null;
     
@@ -129,6 +139,24 @@ public class FileGESigna4X extends FileBase {
     
     private short flipAngle;
     
+    private float imgTLHC_R;
+    
+    private float imgTLHC_A;
+    
+    private float imgTLHC_S;
+    
+    private float imgTRHC_R;
+    
+    private float imgTRHC_A;
+    
+    private float imgTRHC_S;
+    
+    private float imgBLHC_R;
+    
+    private float imgBLHC_A;
+    
+    private float imgBLHC_S;
+    
     /** DOCUMENT ME! */
     private byte[] byteBuffer = null;
 
@@ -144,7 +172,9 @@ public class FileGESigna4X extends FileBase {
     /** DOCUMENT ME! */
     private String fileName;
     
-    private int axisOrientation[] = new int[3];
+    private int[] orient = new int[3];
+
+    private float[] start = new float[3];
     
 //  The data types are Sun, hence the byte order is big-endian.
     private boolean endianess = BIG_ENDIAN;
@@ -226,6 +256,78 @@ public class FileGESigna4X extends FileBase {
     public float getImageLocation() {
         return imageLocation;
     }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgTLHC_R() {
+         return imgTLHC_R;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgTLHC_A() {
+         return imgTLHC_A;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgTLHC_S() {
+         return imgTLHC_S;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgTRHC_R() {
+         return imgTRHC_R;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgTRHC_A() {
+         return imgTRHC_A;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgTRHC_S() {
+         return imgTRHC_S;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgBLHC_R() {
+         return imgBLHC_R;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgBLHC_A() {
+         return imgBLHC_A;
+    }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImgBLHC_S() {
+         return imgBLHC_S;
+    }
 
     /**
      * reads the Signa 4X file header and data.
@@ -267,10 +369,30 @@ public class FileGESigna4X extends FileBase {
         patientSex = getString(1);
         fileInfo.setPatientSex(patientSex);
         
+        raFile.seek(6*512 + 2*131);
+        studyDescription = getString(60);
+        fileInfo.setStudyDescription(studyDescription);
+        
+        // 6*512 + 2*161
+        history = getString(120);
+        fileInfo.setHistory(history);
+        
+        raFile.seek(6*512 + 2*223);
+        hospitalName = getString(32);
+        fileInfo.setHospitalName(hospitalName);
+        
         // Block 8 - series header
         raFile.seek(8*512 + 2*31);
         seriesNumber = getString(3);
         fileInfo.setSeriesNumber(seriesNumber);
+        
+        raFile.seek(8*512 + 2*37);
+        seriesDate = getString(9); // (dd-mmm-yy)
+        fileInfo.setSeriesDate(seriesDate);
+        
+        raFile.seek(8*512 + 2*45);
+        seriesTime = getString(8); // (hh:mm:ss)
+        fileInfo.setSeriesTime(seriesTime);
         
         raFile.seek(8*512 + 2*52);
         seriesDescription = getString(120);
@@ -316,29 +438,17 @@ public class FileGESigna4X extends FileBase {
         
         raFile.seek(8*512 + 2*138);
         planeType = (short)getSignedShort(endianess);
-        axisOrientation[0] = FileInfoBase.ORI_UNKNOWN_TYPE;
-        axisOrientation[1] = FileInfoBase.ORI_UNKNOWN_TYPE;
-        axisOrientation[2] = FileInfoBase.ORI_UNKNOWN_TYPE;
         if (planeType == 0) {
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
             fileInfo.setPlaneType("axial");
-            axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
-            axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
-            axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
         }
         else if (planeType == 1) {
             fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
             fileInfo.setPlaneType("sagittal");
-            axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
-            axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
-            axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
         }
         else if (planeType == 2) {
             fileInfo.setImageOrientation(FileInfoBase.CORONAL);
             fileInfo.setPlaneType("coronal");
-            axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
-            axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
-            axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
         }
         else if (planeType == 3) {
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
@@ -352,7 +462,6 @@ public class FileGESigna4X extends FileBase {
             Preferences.debug("Plane type had an illegal value of " + planeType + "\n");
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
         }
-        fileInfo.setAxisOrientation(axisOrientation);
         
         raFile.seek(8*512 + 2*147);
         imageMode = (short)getSignedShort(endianess);
@@ -481,11 +590,11 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setResolutions(fieldOfView/height,1);
         
         // 8*512 + 2*153
-        rlCenter = -getFloat(endianess); // R+L-  MIPAV is R to L
+        rlCenter = getFloat(endianess); // R+L-  MIPAV is R to L
         fileInfo.setRLCenter(rlCenter);
         
         // 8*512 + 2*155
-        apCenter = -getFloat(endianess); // A+P-  MIPAV is A to P
+        apCenter = getFloat(endianess); // A+P-  MIPAV is A to P
         fileInfo.setAPCenter(apCenter);
         
         // 8*512 + 2*157
@@ -606,6 +715,97 @@ public class FileGESigna4X extends FileBase {
         raFile.seek(10*512 + 2*175);
         flipAngle = (short)getSignedShort(endianess);
         fileInfo.setFlipAngle(flipAngle);
+        
+        raFile.seek(10*512 + 2*209);
+        imgTLHC_R = getFloat(endianess);
+        fileInfo.setImgTLHC_R(imgTLHC_R);
+        
+        // 10*512 + 2*211
+        imgTLHC_A = getFloat(endianess);
+        fileInfo.setImgTLHC_A(imgTLHC_A);
+        
+        // 10*512 + 2*213
+        imgTLHC_S = getFloat(endianess);
+        fileInfo.setImgTLHC_S(imgTLHC_S);
+        
+        // 10*512 + 2*215
+        imgTRHC_R = getFloat(endianess);
+        fileInfo.setImgTRHC_R(imgTRHC_R);
+        
+        // 10*512 + 2*217
+        imgTRHC_A = getFloat(endianess);
+        fileInfo.setImgTRHC_A(imgTRHC_A);
+        
+        // 10*512 + 2*219
+        imgTRHC_S = getFloat(endianess);
+        fileInfo.setImgTRHC_S(imgTRHC_S);
+        
+        // 10*512 + 2*221
+        imgBLHC_R = getFloat(endianess);
+        fileInfo.setImgBLHC_R(imgBLHC_R);
+        
+        // 10*512 + 2*223
+        imgBLHC_A = getFloat(endianess);
+        fileInfo.setImgBLHC_A(imgBLHC_A);
+        
+        // 10*512 + 2*225
+        imgBLHC_S = getFloat(endianess);
+        fileInfo.setImgBLHC_S(imgBLHC_S);
+        
+        if (fileInfo.imageOrientation == FileInfoBase.CORONAL) {
+            start[0] = -imgTLHC_R;
+            start[1] = imgTLHC_S;
+            start[2] = -imgTLHC_A;
+
+            if (imgTLHC_R > imgTRHC_R) {
+                orient[0] = FileInfoBase.ORI_R2L_TYPE;
+            } else {
+                orient[0] = FileInfoBase.ORI_L2R_TYPE;
+            }
+
+            if (imgTLHC_S > imgBLHC_S) {
+                orient[1] = FileInfoBase.ORI_S2I_TYPE;
+            } else {
+                orient[1] = FileInfoBase.ORI_I2S_TYPE;
+            }
+        } else if (fileInfo.imageOrientation == FileInfoBase.SAGITTAL) {
+            start[0] = -imgTLHC_A;
+            start[1] = imgTLHC_S;
+            start[2] = -imgTLHC_R;
+
+            if (imgTLHC_A > imgTRHC_A) {
+                orient[0] = FileInfoBase.ORI_A2P_TYPE;
+            } else {
+                orient[0] = FileInfoBase.ORI_P2A_TYPE;
+            }
+
+            if (imgTLHC_S > imgBLHC_S) {
+                orient[1] = FileInfoBase.ORI_S2I_TYPE;
+            } else {
+                orient[1] = FileInfoBase.ORI_I2S_TYPE;
+            }
+        } else { // AXIAL
+            start[0] = -imgTLHC_R;
+            start[1] = -imgTLHC_A;
+            start[2] = imgTLHC_S;
+
+            if (imgTLHC_R > imgTRHC_R) {
+                orient[0] = FileInfoBase.ORI_R2L_TYPE;
+            } else {
+                orient[0] = FileInfoBase.ORI_L2R_TYPE;
+            }
+
+            if (imgTLHC_A > imgBLHC_A) {
+                orient[1] = FileInfoBase.ORI_A2P_TYPE;
+            } else {
+                orient[1] = FileInfoBase.ORI_P2A_TYPE;
+            }
+        }
+
+        // orient[2] is calculated in FileIo.java by comparing position values
+        // of the top left hand corner between slice 0 and slice 1.
+        fileInfo.setAxisOrientation(orient);
+        fileInfo.setOrigin(start);
         
         raFile.seek(14336);
         readBuffer(buffer);
