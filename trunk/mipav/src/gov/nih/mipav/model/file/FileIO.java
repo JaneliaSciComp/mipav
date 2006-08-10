@@ -4660,6 +4660,7 @@ public class FileIO {
 
         ModelImage image = null;
         FileGESigna4X imageFile;
+        FileInfoBase myFileInfo0 = null;
         FileInfoBase myFileInfo;
         ViewJProgressBar progressBar = null;
         String[] fileList;
@@ -4670,6 +4671,9 @@ public class FileIO {
         int width, height;
         int nImages;
         int imageSize;
+        float firstLocation;
+        float secondLocation;
+        float resZ = 0.0f;
 
         try {
 
@@ -4721,6 +4725,7 @@ public class FileIO {
             progressBar.updateValue(0, true);
             width = imageFile.getWidth();
             height = imageFile.getHeight();
+            firstLocation = imageFile.getImageLocation();
             length = width * height;
             buffer = new float[length];
 
@@ -4779,12 +4784,27 @@ public class FileIO {
 
                 if (fileList[i] != null) {
                     imageFile.setFileName(fileList[i]);
+                    imageFile.readImageFileData();
+                    if (i == 1) {
+                        secondLocation = imageFile.getImageLocation();
+                        resZ = Math.abs(secondLocation - firstLocation);
+                        if (resZ != 0.0f) {
+                            myFileInfo0.setResolutions(resZ, 2);
+                            image.setFileInfo(myFileInfo0,0);
+                        }
+                    }
                     imageFile.readImage(buffer);
 
                     myFileInfo = imageFile.getFileInfo(); // Needed to set index
 
                     myFileInfo.setExtents(extents);
+                    if (resZ != 0.0f) {
+                        myFileInfo.setResolutions(resZ, 2);
+                    }
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
+                    if (i == 0) {
+                        myFileInfo0 = imageFile.getFileInfo();
+                    }
                     image.setImageName(imageFile.getPatientName());
                     image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
