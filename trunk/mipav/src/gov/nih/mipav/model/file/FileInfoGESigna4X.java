@@ -78,7 +78,11 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short imageMatrix = -32768;
     
+    private String scanSequence = null;
+    
     private String imageNumber = null;
+    
+    private String series = null;
     
     private float imageLocation = Float.NaN;
     
@@ -306,7 +310,64 @@ public class FileInfoGESigna4X extends FileInfoBase {
         fileInfo.setValue("0020,0010", studyNumber, studyNumber.length());
 
         // series Number (IS integer string)
-        fileInfo.setValue("0020,0011", seriesNumber, seriesNumber.length());              
+        fileInfo.setValue("0020,0011", seriesNumber, seriesNumber.length());  
+        
+        // int[] orients = getAxisOrientation();
+        float[] dicomOrients = new float[6];
+
+        for (int j = 0; j < 6; j++) {
+            dicomOrients[j] = 0;
+        }
+
+        if (imageOrientation == SAGITTAL) {
+
+            if (axisOrientation[0] == ORI_A2P_TYPE) {
+                dicomOrients[1] = 1f;
+            } else {
+                dicomOrients[1] = -1f;
+            }
+
+            if (axisOrientation[1] == ORI_I2S_TYPE) {
+                dicomOrients[5] = 1f;
+            } else {
+                dicomOrients[5] = -1f;
+            }
+        } else if (imageOrientation == CORONAL) {
+
+            if (axisOrientation[0] == ORI_R2L_TYPE) {
+                dicomOrients[0] = 1f;
+            } else {
+                dicomOrients[0] = -1f;
+            }
+
+            if (axisOrientation[1] == ORI_I2S_TYPE) {
+                dicomOrients[5] = 1f;
+            } else {
+                dicomOrients[5] = -1f;
+            }
+        } else { // AXIAL, default
+
+            if (axisOrientation[0] == ORI_R2L_TYPE) {
+                dicomOrients[0] = 1f;
+            } else {
+                dicomOrients[0] = -1f;
+            }
+
+            if (axisOrientation[1] == ORI_A2P_TYPE) {
+                dicomOrients[4] = 1f;
+            } else {
+                dicomOrients[4] = -1f;
+            }
+        }
+
+        s = "";
+
+        for (int j = 0; j < 5; j++) {
+            s += dicomOrients[j] + "\\";
+        }
+
+        s += dicomOrients[5];
+        fileInfo.setValue("0020,0037", s, s.length()); // image orientation
 
         s = String.valueOf(imageLocation);
         fileInfo.setValue("0020,1041", s, s.length()); // slice location
@@ -451,10 +512,18 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Image matrix = " + imageMatrix + "\n");
         }
         
+        if (scanSequence != null) {
+            dialog.append("Scan sequence = " + scanSequence.trim() + "\n");
+        }
+        
         dialog.append("\nImage header\n");
         
         if (imageNumber != null) {
             dialog.append("Image number = " + imageNumber.trim() + "\n");
+        }
+        
+        if (series != null) {
+            dialog.append("Series = " + series.trim() + "\n");
         }
         
         if (!Float.isNaN(imageLocation)) {
@@ -736,10 +805,26 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param scanSequence
+     */
+    public void setScanSequence(String scanSequence) {
+        this.scanSequence = scanSequence;
+    }
+    
+    /**
+     * 
      * @param imageNumber
      */
     public void setImageNumber(String imageNumber) {
         this.imageNumber = imageNumber;
+    }
+    
+    /**
+     * 
+     * @param series
+     */
+    public void setSeries(String series) {
+        this.series = series;
     }
     
     /**
