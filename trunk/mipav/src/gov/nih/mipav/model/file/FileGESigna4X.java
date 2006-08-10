@@ -218,6 +218,14 @@ public class FileGESigna4X extends FileBase {
     public int getHeight() {
         return height;
     }
+    
+    /**
+     * 
+     * @return
+     */
+    public float getImageLocation() {
+        return imageLocation;
+    }
 
     /**
      * reads the Signa 4X file header and data.
@@ -469,6 +477,8 @@ public class FileGESigna4X extends FileBase {
         // 8*512 + 2*151
         fieldOfView = getFloat(endianess); // mm
         fileInfo.setFieldOfView(fieldOfView);
+        fileInfo.setResolutions(fieldOfView/width,0);
+        fileInfo.setResolutions(fieldOfView/height,1);
         
         // 8*512 + 2*153
         rlCenter = -getFloat(endianess); // R+L-  MIPAV is R to L
@@ -561,11 +571,9 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*79
         imageSpacing = getFloat(endianess);
-        if (imageSpacing == 0.0f) {
-            imageSpacing = 1.0f;
+        if (imageSpacing != 0.0f) {
+            fileInfo.setSliceSpacing(imageSpacing);
         }
-        fileInfo.setSliceSpacing(imageSpacing);
-        fileInfo.setResolutions(imageSpacing, 2);
         
         raFile.seek(10*512 + 2*82);
         tr = getFloat(endianess); // usec
@@ -690,6 +698,16 @@ public class FileGESigna4X extends FileBase {
             if (depth != 16) {
                 Preferences.debug("Pixel depth = " + depth + " instead of the required 16\n");
             }
+            
+            raFile.seek(10*512 + 2*44);
+            imageNumber = getString(3);
+
+            if (Integer.valueOf(imageNumber).intValue() == 0) {
+                imageNumber = "001";
+            }
+            
+            raFile.seek(10*512 + 2*73);
+            imageLocation = getFloat(endianess);
 
             byteBuffer = new byte[2 * width * height];
         } catch (IOException e) {
