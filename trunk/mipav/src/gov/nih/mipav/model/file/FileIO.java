@@ -4669,6 +4669,7 @@ public class FileIO {
         int i;
         int width, height;
         int nImages;
+        int imageSize;
 
         try {
 
@@ -4676,6 +4677,34 @@ public class FileIO {
             imageFile = new FileGESigna4X(fileName, fileDir);
 
             imageFile.setFileName(fileList[0]);
+            imageSize = imageFile.readImageFileData();
+
+            if (imageSize == -1) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
+                }
+
+                return null;
+            }
+
+            if (imageSize == -2) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
+                }
+
+                return null;
+            }
+
+            if (imageSize == 0) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Image length.");
+                }
+
+                return null;
+            }
 
             progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
                                                UI.getProgressBarPrefix() + "GE formatted image(s) ...", 0, 100, false,
@@ -4690,8 +4719,8 @@ public class FileIO {
             }
 
             progressBar.updateValue(0, true);
-            width = 256;
-            height = 256;
+            width = imageFile.getWidth();
+            height = imageFile.getHeight();
             length = width * height;
             buffer = new float[length];
 
@@ -6670,13 +6699,42 @@ public class FileIO {
         float[] buffer;
         int[] extents;
         int width, height;
+        int imageSize;
 
         try {
             imageFile = new FileGESigna4X(fileName, fileDir);
-            imageFile.setFileName(fileName);    
+            imageFile.setFileName(fileName);
+            imageSize = imageFile.readImageFileData();
 
-            width = 256;
-            height = 256;
+            if (imageSize == -1) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
+                }
+
+                return null;
+            }
+
+            if (imageSize == -2) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
+                }
+
+                return null;
+            }
+
+            if (imageSize == 0) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Image length.");
+                }
+
+                return null;
+            }
+
+            width = imageFile.getWidth();
+            height = imageFile.getHeight();
             buffer = new float[width * height];
 
             extents = new int[2];
