@@ -327,8 +327,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
   */
    	public ModelImage processHardFat(ModelImage Hard4Classes) {
 // PFH   		ShowImage(Hard4Classes, "hard segmentation");
-   		//ShowImage(obMask,"obMask");
-   		//ShowImage(voiMask,"voiMask");
+ //  		ShowImage(obMask,"obMask");
+//   		ShowImage(voiMask,"voiMask");
    		progressBar.setMessage("Processing bundle fat");
 	 	ModelImage fatImage = (ModelImage)Hard4Classes.clone();
 	 	
