@@ -4674,6 +4674,9 @@ public class FileIO {
         float firstLocation;
         float secondLocation;
         float resZ = 0.0f;
+        int[] orient = { 0, 0, 0 };
+        float slice0Pos = 0.0f;
+        float slice1Pos = 0.0f;
 
         try {
 
@@ -4785,26 +4788,89 @@ public class FileIO {
                 if (fileList[i] != null) {
                     imageFile.setFileName(fileList[i]);
                     imageFile.readImageFileData();
-                    if (i == 1) {
-                        secondLocation = imageFile.getImageLocation();
-                        resZ = Math.abs(secondLocation - firstLocation);
-                        if (resZ != 0.0f) {
-                            myFileInfo0.setResolutions(resZ, 2);
-                            image.setFileInfo(myFileInfo0,0);
-                        }
-                    }
                     imageFile.readImage(buffer);
 
                     myFileInfo = imageFile.getFileInfo(); // Needed to set index
-
-                    myFileInfo.setExtents(extents);
-                    if (resZ != 0.0f) {
-                        myFileInfo.setResolutions(resZ, 2);
-                    }
-                    image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
                     if (i == 0) {
                         myFileInfo0 = imageFile.getFileInfo();
+                        orient = myFileInfo.getAxisOrientation();
+
+                        switch (myFileInfo.getImageOrientation()) {
+
+                            case FileInfoBase.AXIAL:
+                                slice0Pos = imageFile.getImgTLHC_S();
+                                break;
+
+                            case FileInfoBase.CORONAL:
+                                slice0Pos = imageFile.getImgTLHC_A();
+                                break;
+
+                            case FileInfoBase.SAGITTAL:
+                                slice0Pos = imageFile.getImgTLHC_R();
+                                break;
+                        }
+                    } // if (i == 0)
+                    else if (i == 1) {
+                        orient = myFileInfo.getAxisOrientation();
+
+                        switch (myFileInfo.getImageOrientation()) {
+
+                            case FileInfoBase.AXIAL:
+                                slice1Pos = imageFile.getImgTLHC_S();
+                                if (slice1Pos > slice0Pos) {
+                                    orient[2] = FileInfoBase.ORI_I2S_TYPE;
+                                } else {
+                                    orient[2] = FileInfoBase.ORI_S2I_TYPE;
+                                }
+
+                                break;
+
+                            case FileInfoBase.CORONAL:
+                                slice1Pos = imageFile.getImgTLHC_A();
+                                if (slice1Pos > slice0Pos) {
+                                    orient[2] = FileInfoBase.ORI_P2A_TYPE;
+                                } else {
+                                    orient[2] = FileInfoBase.ORI_A2P_TYPE;
+                                }
+
+                                break;
+
+                            case FileInfoBase.SAGITTAL:
+                                slice1Pos = imageFile.getImgTLHC_R();
+                                if (slice1Pos > slice0Pos) {
+                                    orient[2] = FileInfoBase.ORI_L2R_TYPE;
+                                } else {
+                                    orient[2] = FileInfoBase.ORI_R2L_TYPE;
+                                }
+
+                                break;
+                        } // switch (myFileInfo.getImageOrientation())
+                        
+                        secondLocation = imageFile.getImageLocation();
+                        resZ = Math.abs(secondLocation - firstLocation);
+                        
+
+                        if (myFileInfo0 != null) {
+                            image.setFileInfo(myFileInfo0, 0);
+                            myFileInfo0.setAxisOrientation(orient);
+                            if (resZ != 0.0f) {
+                                myFileInfo0.setResolutions(resZ, 2);
+                            }
+                        }
+                    } // else if (i == 1)
+
+                    if (i != 0) {
+                        myFileInfo.setAxisOrientation(orient);
+                        if (resZ != 0.0f) {
+                            myFileInfo.setResolutions(resZ, 2);
+                        }
                     }
+
+                    myFileInfo.setExtents(extents);
+                    myFileInfo.setOrigin(((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
+                                                                                             1));
+                    
+                    image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
                     image.setImageName(imageFile.getPatientName());
                     image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
