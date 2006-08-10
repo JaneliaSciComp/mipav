@@ -217,7 +217,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         // Slice thickness
         s = String.valueOf(imageThickness);
         fileInfo.setValue("0018,0050", s, s.length()); // slice thickness
-        s = String.valueOf(getSliceSpacing());
+        s = String.valueOf(getResolutions()[2]);
         fileInfo.setValue("0018,0088", s, s.length()); // spacing between slices
 
         
@@ -538,7 +538,9 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Image thickness = " + imageThickness + "\n");
         }
         
-        dialog.append("Image spacing = " + getSliceSpacing() + "\n");
+        if (getSliceSpacing() != 0.0) {
+            dialog.append("Image spacing = " + getSliceSpacing() + "\n");
+        }
         
         if (!Float.isNaN(tr)) {
             dialog.append("tr = " + tr + " usec\n");
