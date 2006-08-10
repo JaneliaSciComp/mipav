@@ -99,7 +99,11 @@ public class FileGESigna4X extends FileBase {
     
     private short imageMatrix;
     
+    private String scanSequence = null;
+    
     private String imageNumber = null;
+    
+    private String series = null;
     
     private float imageLocation;
     
@@ -126,7 +130,7 @@ public class FileGESigna4X extends FileBase {
     private short flipAngle;
     
     /** DOCUMENT ME! */
-    private byte[] byteBuffer = new byte[2 * 256 * 256];
+    private byte[] byteBuffer = null;
 
     /** DOCUMENT ME! */
     private String fileDir;
@@ -141,6 +145,17 @@ public class FileGESigna4X extends FileBase {
     private String fileName;
     
     private int axisOrientation[] = new int[3];
+    
+//  The data types are Sun, hence the byte order is big-endian.
+    private boolean endianess = BIG_ENDIAN;
+    
+    private short width;
+    
+    private short height;
+    
+    private short compression;
+    
+    private short depth;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -185,6 +200,24 @@ public class FileGESigna4X extends FileBase {
     public String getPatientName() {
         return patientName;
     }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  int width
+     */
+    public int getWidth() {
+        return width;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  int height
+     */
+    public int getHeight() {
+        return height;
+    }
 
     /**
      * reads the Signa 4X file header and data.
@@ -194,9 +227,6 @@ public class FileGESigna4X extends FileBase {
      * @exception  IOException  if there is an error reading the file
      */
     public void readImage(float[] buffer) throws IOException {
-
-        // The data types are Sun, hence the byte order is big-endian.
-        boolean endianess = BIG_ENDIAN;
 
         // try {
         // Read in fields from the block 6 study header
@@ -504,10 +534,18 @@ public class FileGESigna4X extends FileBase {
         imageMatrix = (short)getSignedShort(endianess);
         fileInfo.setImageMatrix(imageMatrix);
         
+        raFile.seek(8*512 + 2*205);
+        scanSequence = getString(12);
+        fileInfo.setScanSequence(scanSequence);
+        
         // block 10 - image header
         raFile.seek(10*512 + 2*44);
         imageNumber = getString(3);
         fileInfo.setImageNumber(imageNumber);
+        
+        raFile.seek(10*512 + 2*46);
+        series = getString(6);
+        fileInfo.setSeries(series);
         
         raFile.seek(10*512 + 2*73);
         imageLocation = getFloat(endianess);
@@ -622,5 +660,44 @@ public class FileGESigna4X extends FileBase {
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  int size of image file data
+     */
+    public int readImageFileData() {
 
+        try {
+
+            raFile.seek(10*512 + 2*137);
+            width = (short)getSignedShort(endianess);
+            // 10*512 + 2*138
+            height = (short)getSignedShort(endianess);
+            
+            raFile.seek(10*512 + 2*141);
+            compression = (short)getSignedShort(endianess);
+            if (compression != 0) {
+                Preferences.debug("compression = " + compression + 
+                                  " instead of the required 0 for uncompressed\n");
+                return - 1;
+            }
+            
+            // 10*512 + 2*142
+            depth = (short)getSignedShort(endianess);
+            if (depth <= 0) {
+                depth = 16;
+            }
+            if (depth != 16) {
+                Preferences.debug("Pixel depth = " + depth + " instead of the required 16\n");
+            }
+
+            byteBuffer = new byte[2 * width * height];
+        } catch (IOException e) {
+            return -2;
+        } catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory in FileGESigna4x.");
+        }
+
+        return (width * height);
+    }
 }
