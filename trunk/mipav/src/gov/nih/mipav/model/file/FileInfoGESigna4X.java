@@ -34,7 +34,17 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String patientSex = null;
     
+    private String studyDescription = null;
+    
+    private String history = null;
+    
+    private String hospitalName = null;
+    
     private String seriesNumber = null;
+    
+    private String seriesDate = null;
+    
+    private String seriesTime = null;
     
     private String seriesDescription = null;
     
@@ -105,6 +115,24 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private float nexFloat = Float.NaN;
     
     private short flipAngle = -32768;
+    
+    private float imgTLHC_R = Float.NaN;
+    
+    private float imgTLHC_A = Float.NaN;
+    
+    private float imgTLHC_S = Float.NaN;
+    
+    private float imgTRHC_R = Float.NaN;
+    
+    private float imgTRHC_A = Float.NaN;
+    
+    private float imgTRHC_S = Float.NaN;
+    
+    private float imgBLHC_R = Float.NaN;
+    
+    private float imgBLHC_A = Float.NaN;
+    
+    private float imgBLHC_S = Float.NaN;
 
     /** DOCUMENT ME! */
     private int year;
@@ -290,13 +318,74 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
         s = hhStr + mmStr + ssStr + ".0";
         fileInfo.setValue("0008,0030", s, s.length()); // Study time
+        
+        year = Integer.valueOf(seriesDate.substring(7)).intValue();
+        if (year < 50) {
+            yearStr = "20".concat(seriesDate.substring(7));
+        }
+        else {
+            yearStr = "19".concat(seriesDate.substring(7)); 
+        }
+        
+        mmStr = seriesDate.substring(3,6);
+        if (mmStr.equalsIgnoreCase("JAN")) {
+            mmStr = "01";
+        }
+        else if (mmStr.equalsIgnoreCase("FEB")) {
+            mmStr = "02";
+        }
+        else if (mmStr.equalsIgnoreCase("MAR")) {
+            mmStr = "03";
+        }
+        else if (mmStr.equalsIgnoreCase("APR")) {
+            mmStr = "04";
+        }
+        else if (mmStr.equalsIgnoreCase("MAY")) {
+            mmStr = "05";
+        }
+        else if (mmStr.equalsIgnoreCase("JUN")) {
+            mmStr = "06";
+        }
+        else if (mmStr.equalsIgnoreCase("JUL")) {
+            mmStr = "07";
+        }
+        else if (mmStr.equalsIgnoreCase("AUG")) {
+            mmStr = "08";
+        }
+        else if (mmStr.equalsIgnoreCase("SEP")) {
+            mmStr = "09";
+        }
+        else if (mmStr.equalsIgnoreCase("OCT")) {
+            mmStr = "10";
+        }
+        else if (mmStr.equalsIgnoreCase("NOV")) {
+            mmStr = "11";
+        }
+        else {
+            mmStr = "12";
+        }
+        
+        ddStr = seriesDate.substring(0,2);
+
+        s = yearStr + mmStr + ddStr;
+        fileInfo.setValue("0008,0021", s, s.length()); // Series date
+        
+        hhStr = seriesTime.substring(0,2);
+        mmStr = seriesTime.substring(3,5);
+        ssStr = seriesTime.substring(6);
+
+        s = hhStr + mmStr + ssStr + ".0";
+        fileInfo.setValue("0008,0031", s, s.length()); // Series time
 
         fileInfo.setValue("0008,0050", "123456", 6);
+        fileInfo.setValue("0008,0080", hospitalName.trim(), hospitalName.trim().length()); // Institution name
+        fileInfo.setValue("0008,1030", studyDescription.trim(), studyDescription.trim().length()); // Study description
         fileInfo.setValue("0008,103E", seriesDescription.trim(), seriesDescription.trim().length()); // Series description
 
         fileInfo.setValue("0010,0010", patientName.trim(), patientName.trim().length());
         fileInfo.setValue("0010,0020", patientID.trim(), patientID.trim().length());
         fileInfo.setValue("0010,1010", "0" + String.valueOf(patientAge), String.valueOf(patientAge).length() + 1);
+        fileInfo.setValue("0010,21B0", history.trim(), history.trim().length());
 
         RandomNumberGen randomNum = new RandomNumberGen();
         randomNum.genUniformRandomNum(1, 100000);
@@ -310,7 +399,12 @@ public class FileInfoGESigna4X extends FileInfoBase {
         fileInfo.setValue("0020,0010", studyNumber, studyNumber.length());
 
         // series Number (IS integer string)
-        fileInfo.setValue("0020,0011", seriesNumber, seriesNumber.length());  
+        fileInfo.setValue("0020,0011", seriesNumber, seriesNumber.length());
+        
+        s = -imgTLHC_R + "\\" + -imgTLHC_A + "\\" + imgTLHC_S;
+
+        // s = imgTLHC_R + "\\" + imgTLHC_A + "\\" + imgTLHC_S;
+        fileInfo.setValue("0020,0032", s, s.length()); // image position Right center .....
         
         // int[] orients = getAxisOrientation();
         float[] dicomOrients = new float[6];
@@ -420,9 +514,29 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Patient sex = " + patientSex.trim() + "\n");
         }
         
+        if (studyDescription != null) {
+            dialog.append("Study description = " + studyDescription.trim() + "\n");
+        }
+        
+        if (history != null) {
+            dialog.append("History = " + history.trim() + "\n");
+        }
+        
+        if (hospitalName != null) {
+            dialog.append("Hospital name = " + hospitalName.trim() + "\n");
+        }
+        
         dialog.append("\nSeries header\n");
         if (seriesNumber != null) {
             dialog.append("Series number = " + seriesNumber.trim() + "\n");
+        }
+        
+        if (seriesDate != null) {
+            dialog.append("Series date = " + seriesDate.trim() + "\n");
+        }
+        
+        if (seriesTime != null) {
+            dialog.append("Series time = " + seriesTime.trim() + "\n");
         }
         
         if (seriesDescription != null) {
@@ -471,15 +585,15 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(rlCenter)) {
-            dialog.append("R+L- center = " + rlCenter + "\n");
+            dialog.append("R+L- center = " + rlCenter + "\n"); // MIPAV is R to L
         }
         
         if (!Float.isNaN(apCenter)) {
-            dialog.append("A+P- center = " + apCenter + "\n");
+            dialog.append("A+P- center = " + apCenter + "\n"); // MIPAV is A to P
         }
         
         if (!Float.isNaN(siCenter)) {
-            dialog.append("S+I- center = " + siCenter + "\n");
+            dialog.append("S+I- center = " + siCenter + "\n"); // MIPAV is I to S
         }
         
         if (orientation != null) {
@@ -574,11 +688,76 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Flip angle = " + flipAngle + "\n");
         }
         
+        if (!Float.isNaN(imgTLHC_R)) { 
+            dialog.append("Right top left hand corner = " + imgTLHC_R + "\n");
+        }
+        
+        if (!Float.isNaN(imgTLHC_A)) {
+            dialog.append("Anterior top left hand corner = " + imgTLHC_A + "\n");
+        }
+        
+        if (!Float.isNaN(imgTLHC_S)) {
+            dialog.append("Superior top left hand corner = " + imgTLHC_S + "\n");
+        }
+        
+        if (!Float.isNaN(imgTRHC_R)) {
+            dialog.append("Right top right hand corner = " + imgTRHC_R + "\n");
+        }
+        
+        if (!Float.isNaN(imgTRHC_A)) {
+            dialog.append("Anterior top right hand corner = " + imgTRHC_A + "\n");
+        }
+        
+        if (!Float.isNaN(imgTRHC_S)) {
+            dialog.append("Superior top right hand corner = " + imgTRHC_S + "\n");
+        }
+        
+        if (!Float.isNaN(imgBLHC_R)) {
+            dialog.append("Right bottom left hand corner = " + imgBLHC_R + "\n");
+        }
+        
+        if (!Float.isNaN(imgBLHC_A)) {
+            dialog.append("Anterior bottom left hand corner = " + imgBLHC_A + "\n");
+        }
+        
+        if (!Float.isNaN(imgBLHC_S)) {
+            dialog.append("Superior bottom left hand corner = " + imgBLHC_S + "\n");
+        }
+        
         dialog.setSize(600, 500);
     }
 
     
+    /**
+     * Gets the origin of a particular slice; resets for the z dimension.
+     *
+     * @return  New start locations
+     */
+    public float[] getOriginAtSlice() {
+        float[] newOrigin = new float[3];
 
+        for (int i = 0; i < 3; i++) {
+            newOrigin[i] = origin[i];
+        }
+
+        switch (imageOrientation) {
+
+            case CORONAL:
+                newOrigin[2] = -imgTLHC_A;
+                break;
+
+            case SAGITTAL:
+                newOrigin[2] = -imgTLHC_R;
+                break;
+
+            case AXIAL:
+            default:
+                newOrigin[2] = imgTLHC_S;
+                break;
+        }
+
+        return newOrigin;
+    }
     
     
     /**
@@ -637,12 +816,48 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.patientSex = patientSex;
     }
     
+    public void setStudyDescription(String studyDescription) {
+        this.studyDescription = studyDescription;
+    }
+    
+    /**
+     * 
+     * @param history
+     */
+    public void setHistory(String history) {
+        this.history = history;
+    }
+    
+    /**
+     * 
+     * @param hospitalName
+     */
+    public void setHospitalName(String hospitalName) {
+        this.hospitalName = hospitalName;
+    }
+    
     /**
      * 
      * @param seriesNumber
      */
     public void setSeriesNumber(String seriesNumber) {
         this.seriesNumber = seriesNumber;
+    }
+    
+    /**
+     * 
+     * @param seriesDate
+     */
+    public void setSeriesDate (String seriesDate){
+        this.seriesDate = seriesDate;
+    }
+    
+    /**
+     * 
+     * @param seriesTime
+     */
+    public void setSeriesTime (String seriesTime){
+        this.seriesTime = seriesTime;
     }
     
     /**
@@ -909,8 +1124,84 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.nexFloat = nexFloat;
     }
     
+    /**
+     * 
+     * @param flipAngle
+     */
     public void setFlipAngle(short flipAngle) {
         this.flipAngle = flipAngle;
+    }
+    
+    /**
+     * 
+     * @param imgTLHC_R
+     */
+    public void setImgTLHC_R(float imgTLHC_R) {
+        this.imgTLHC_R = imgTLHC_R;
+    }
+    
+    /**
+     * 
+     * @param imgTLHC_A
+     */
+    public void setImgTLHC_A(float imgTLHC_A) {
+        this.imgTLHC_A = imgTLHC_A;
+    }
+    
+    /**
+     * 
+     * @param imgTLHC_S
+     */
+    public void setImgTLHC_S(float imgTLHC_S) {
+        this.imgTLHC_S = imgTLHC_S;
+    }
+    
+    /**
+     * 
+     * @param imgTRHC_R
+     */
+    public void setImgTRHC_R(float imgTRHC_R) {
+        this.imgTRHC_R = imgTRHC_R;
+    }
+    
+    /**
+     * 
+     * @param imgTRHC_A
+     */
+    public void setImgTRHC_A(float imgTRHC_A) {
+        this.imgTRHC_A = imgTRHC_A;
+    }
+    
+    /**
+     * 
+     * @param imgTRHC_S
+     */
+    public void setImgTRHC_S(float imgTRHC_S) {
+        this.imgTRHC_S = imgTRHC_S;
+    }
+    
+    /**
+     * 
+     * @param imgBLHC_R
+     */
+    public void setImgBLHC_R(float imgBLHC_R) {
+        this.imgBLHC_R = imgBLHC_R;
+    }
+    
+    /**
+     * 
+     * @param imgBLHC_A
+     */
+    public void setImgBLHC_A(float imgBLHC_A) {
+        this.imgBLHC_A = imgBLHC_A;
+    }
+    
+    /**
+     * 
+     * @param imgBLHC_S
+     */
+    public void setImgBLHC_S(float imgBLHC_S) {
+        this.imgBLHC_S = imgBLHC_S;
     }
 
 }
