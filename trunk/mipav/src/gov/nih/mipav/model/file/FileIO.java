@@ -4671,9 +4671,6 @@ public class FileIO {
         int width, height;
         int nImages;
         int imageSize;
-        float firstLocation;
-        float secondLocation;
-        float resZ = 0.0f;
         int[] orient = { 0, 0, 0 };
         float slice0Pos = 0.0f;
         float slice1Pos = 0.0f;
@@ -4728,7 +4725,6 @@ public class FileIO {
             progressBar.updateValue(0, true);
             width = imageFile.getWidth();
             height = imageFile.getHeight();
-            firstLocation = imageFile.getImageLocation();
             length = width * height;
             buffer = new float[length];
 
@@ -4846,24 +4842,15 @@ public class FileIO {
                                 break;
                         } // switch (myFileInfo.getImageOrientation())
                         
-                        secondLocation = imageFile.getImageLocation();
-                        resZ = Math.abs(secondLocation - firstLocation);
-                        
 
                         if (myFileInfo0 != null) {
                             image.setFileInfo(myFileInfo0, 0);
                             myFileInfo0.setAxisOrientation(orient);
-                            if (resZ != 0.0f) {
-                                myFileInfo0.setResolutions(resZ, 2);
-                            }
                         }
                     } // else if (i == 1)
 
                     if (i != 0) {
                         myFileInfo.setAxisOrientation(orient);
-                        if (resZ != 0.0f) {
-                            myFileInfo.setResolutions(resZ, 2);
-                        }
                     }
 
                     myFileInfo.setExtents(extents);
