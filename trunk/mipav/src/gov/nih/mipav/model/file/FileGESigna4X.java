@@ -35,6 +35,14 @@ import java.io.*;
  
  16 bit big endian shorts are used.  Ascii strings are FORTRAN style
  specifications with length in bytes.  4 byte floats are used.
+ 
+ Spacing between slices was seen to vary so resolution[2] cannot be obtained
+ by checking the difference between slice spacing.  The field called pixel
+ size actually gives 20 * resolution[2], so this field is used to obtain the
+ resolution[2].  resolution[0] and resolution[1] can be calculated in 3 different
+ ways with 3 slightly different results.  fov/256, difference between corners/255, or
+ using the fact that the thickness field = 20 * resolution[0] = 20 * resolution[1].
+ I have used the difference between corners since this provides actual coordinates.
  */
 
 public class FileGESigna4X extends FileBase {
@@ -54,6 +62,14 @@ public class FileGESigna4X extends FileBase {
     private String patientAge = null;
     
     private String patientSex = null;
+    
+    private int patientWeight;
+    
+    private String referringPhysician = null;
+    
+    private String diognostician = null;
+    
+    private String operator = null;
     
     private String studyDescription = null;
     
@@ -109,7 +125,15 @@ public class FileGESigna4X extends FileBase {
     
     private short imageMatrix;
     
+    private short imagesAllocated;
+    
     private String scanSequence = null;
+    
+    private String scanProtocolName = null;
+    
+    private String imageCreationDate = null;
+    
+    private String imageCreationTime = null;
     
     private String imageNumber = null;
     
@@ -119,11 +143,13 @@ public class FileGESigna4X extends FileBase {
     
     private float tablePosition;
     
-    private float imageThickness;
+    private float thickness; // 20*res[0] = 20*res[1]
     
     private float imageSpacing;
     
     private float tr; // usec
+    
+    private float ts;
     
     private float te; // usec
     
@@ -133,11 +159,33 @@ public class FileGESigna4X extends FileBase {
     
     private short echoNumber;
     
-    private short nexShort;
+    private short averagesNumber;
     
-    private float nexFloat;
+    private float pixelSize; // 20*res[2]
+    
+    private float excitationsNumber;
+    
+    private float peakSAR;
+    
+    private float averageSAR;
+    
+    private short SARMonitored;
+    
+    private short contiguousSlices;
     
     private short flipAngle;
+    
+    private float rCenter;
+    
+    private float aCenter;
+    
+    private float sCenter;
+    
+    private float rNormal;
+    
+    private float aNormal;
+    
+    private float sNormal;
     
     private float imgTLHC_R;
     
@@ -186,6 +234,10 @@ public class FileGESigna4X extends FileBase {
     private short compression;
     
     private short depth;
+    
+    private float resX;
+    
+    private float resY;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -369,7 +421,23 @@ public class FileGESigna4X extends FileBase {
         patientSex = getString(1);
         fileInfo.setPatientSex(patientSex);
         
-        raFile.seek(6*512 + 2*131);
+        raFile.seek(6*512 + 2*81);
+        patientWeight = getInt(endianess); // grams
+        fileInfo.setPatientWeight(patientWeight);
+        
+        // 6*512 + 2*83
+        referringPhysician = getString(32);
+        fileInfo.setReferringPhysician(referringPhysician);
+        
+        // 6*512 + 2*99
+        diognostician = getString(32);
+        fileInfo.setDiognostician(diognostician);
+        
+        // 6*512 + 2*115
+        operator = getString(32);
+        fileInfo.setOperator(operator);
+        
+        // 6*512 + 2*131
         studyDescription = getString(60);
         fileInfo.setStudyDescription(studyDescription);
         
@@ -432,7 +500,7 @@ public class FileGESigna4X extends FileBase {
         coilName = getString(16);
         fileInfo.setCoilName(coilName);
         
-        // 8*512 + 2*112
+        // 8*512 + 2*122
         contrastDescription = (short)getSignedShort(endianess);
         fileInfo.setContrastDescription(contrastDescription);
         
@@ -586,8 +654,6 @@ public class FileGESigna4X extends FileBase {
         // 8*512 + 2*151
         fieldOfView = getFloat(endianess); // mm
         fileInfo.setFieldOfView(fieldOfView);
-        fileInfo.setResolutions(fieldOfView/width,0);
-        fileInfo.setResolutions(fieldOfView/height,1);
         
         // 8*512 + 2*153
         rlCenter = getFloat(endianess); // R+L-  MIPAV is R to L
@@ -653,11 +719,27 @@ public class FileGESigna4X extends FileBase {
         imageMatrix = (short)getSignedShort(endianess);
         fileInfo.setImageMatrix(imageMatrix);
         
+        // 8*512 + 2*202
+        imagesAllocated = (short)getSignedShort(endianess);
+        fileInfo.setImagesAllocated(imagesAllocated);
+        
         raFile.seek(8*512 + 2*205);
         scanSequence = getString(12);
         fileInfo.setScanSequence(scanSequence);
         
+        raFile.seek(8*512 + 2*213);
+        scanProtocolName = getString(20);
+        fileInfo.setScanProtocolName(scanProtocolName);
+        
         // block 10 - image header
+        raFile.seek(10*512 + 2*29);
+        imageCreationDate = getString(9); // (dd-mmm-yy)
+        fileInfo.setImageCreationDate(imageCreationDate);
+        
+        raFile.seek(10*512 + 2*37);
+        imageCreationTime = getString(8); // (hh:mm:ss)
+        fileInfo.setImageCreationTime(imageCreationTime);
+        
         raFile.seek(10*512 + 2*44);
         imageNumber = getString(3);
         fileInfo.setImageNumber(imageNumber);
@@ -675,8 +757,8 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setTablePosition(tablePosition);
         
         // 10*512 + 2*77
-        imageThickness = getFloat(endianess);
-        fileInfo.setImageThickness(imageThickness);
+        thickness = getFloat(endianess);  // 20*res[0] = 20*res[1]
+        fileInfo.setThickness(thickness);
         
         // 10*512 + 2*79
         imageSpacing = getFloat(endianess);
@@ -685,15 +767,19 @@ public class FileGESigna4X extends FileBase {
         }
         
         raFile.seek(10*512 + 2*82);
-        tr = getFloat(endianess); // usec
+        tr = getFloat(endianess); // repetition/recovery time usec
         fileInfo.setTR(tr);
         
+        // 10*512 + 2*84
+        ts = getFloat(endianess); // scan time
+        fileInfo.setTS(ts);
+        
         raFile.seek(10*512 + 2*86);
-        te = getFloat(endianess); //usec
+        te = getFloat(endianess); //  Echo delay usec
         fileInfo.setTE(te);
         
         // 10*512 + 2*88
-        ti = getFloat(endianess); // usec
+        ti = getFloat(endianess); // Inversion time usec
         fileInfo.setTI(ti);
         
         raFile.seek(10*512 + 2*98);
@@ -705,18 +791,73 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setEchoNumber(echoNumber);
         
         raFile.seek(10*512 + 2*101);
-        nexShort = (short)getSignedShort(endianess); // NEX (if not fractional)
-        fileInfo.setNexShort(nexShort);
+        averagesNumber = (short)getSignedShort(endianess); // Number of averages
+        fileInfo.setAveragesNumber(averagesNumber);
+        
+        raFile.seek(10*512 + 2*139);
+        pixelSize = getFloat(endianess); // 20*res[2]
+        fileInfo.setPixelSize(pixelSize);
+        fileInfo.setResolutions(pixelSize/20.0f, 2);
         
         raFile.seek(10*512 + 2*146);
-        nexFloat = getFloat(endianess); // NEX
-        fileInfo.setNexFloat(nexFloat);
+        excitationsNumber = getFloat(endianess); // Number of excitations
+        fileInfo.setExcitationsNumber(excitationsNumber);
+        
+        // 10*512 + 2*148
+        peakSAR = getFloat(endianess);
+        fileInfo.setPeakSAR(peakSAR);
+        
+        // 10*512 + 2*150
+        averageSAR = getFloat(endianess);
+        fileInfo.setAverageSAR(averageSAR);
+        
+        // 10*512 + 2*152
+        SARMonitored = (short)getSignedShort(endianess);
+        if (SARMonitored != 0) {
+            fileInfo.setSARMonitored("SAR monitored");
+        }
+        else {
+            fileInfo.setSARMonitored("SAR not monitored");
+        }
+        
+        // 10*512 + 2*153
+        contiguousSlices = (short)getSignedShort(endianess);
+        if (contiguousSlices != 0) {
+            fileInfo.setContiguousSlices("Slices are contiguous");
+        }
+        else {
+            fileInfo.setContiguousSlices("Slices are not contiguous");
+        }
         
         raFile.seek(10*512 + 2*175);
         flipAngle = (short)getSignedShort(endianess);
         fileInfo.setFlipAngle(flipAngle);
         
-        raFile.seek(10*512 + 2*209);
+        raFile.seek(10*512 + 2*197);
+        rCenter = getFloat(endianess);
+        fileInfo.setRCenter(rCenter);
+        
+        // 10*512 + 2*199
+        aCenter = getFloat(endianess);
+        fileInfo.setACenter(aCenter);
+        
+        // 10*512 + 2*201
+        sCenter = getFloat(endianess);
+        fileInfo.setSCenter(sCenter);
+        
+        // 10*512 + 2*203
+        rNormal = getFloat(endianess);
+        fileInfo.setRNormal(rNormal);
+        
+        // 10*512 + 2*205
+        aNormal = getFloat(endianess);
+        fileInfo.setANormal(aNormal);
+        
+        // 10*512 + 2*207
+        sNormal = getFloat(endianess);
+        fileInfo.setSNormal(sNormal);
+        
+        // 10*512 + 2*209
         imgTLHC_R = getFloat(endianess);
         fileInfo.setImgTLHC_R(imgTLHC_R);
         
@@ -768,6 +909,8 @@ public class FileGESigna4X extends FileBase {
             } else {
                 orient[1] = FileInfoBase.ORI_I2S_TYPE;
             }
+            resX = Math.abs(imgTLHC_R - imgTRHC_R)/(width-1);
+            resY = Math.abs(imgTLHC_S = imgBLHC_S)/(height-1);
         } else if (fileInfo.imageOrientation == FileInfoBase.SAGITTAL) {
             start[0] = -imgTLHC_A;
             start[1] = imgTLHC_S;
@@ -784,6 +927,8 @@ public class FileGESigna4X extends FileBase {
             } else {
                 orient[1] = FileInfoBase.ORI_I2S_TYPE;
             }
+            resX = Math.abs(imgTLHC_A - imgTRHC_A)/(width-1);
+            resY = Math.abs(imgTLHC_S - imgBLHC_S)/(height-1);
         } else { // AXIAL
             start[0] = -imgTLHC_R;
             start[1] = -imgTLHC_A;
@@ -800,7 +945,11 @@ public class FileGESigna4X extends FileBase {
             } else {
                 orient[1] = FileInfoBase.ORI_P2A_TYPE;
             }
+            resX = Math.abs(imgTLHC_R - imgTRHC_R)/(width-1);
+            resY = Math.abs(imgTLHC_A - imgBLHC_A)/(height-1);
         }
+        fileInfo.setResolutions(resX, 0);
+        fileInfo.setResolutions(resY, 1);
 
         // orient[2] is calculated in FileIo.java by comparing position values
         // of the top left hand corner between slice 0 and slice 1.
