@@ -34,6 +34,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String patientSex = null;
     
+    private int patientWeight = -1;
+    
+    private String referringPhysician = null;
+    
+    private String diognostician = null;
+    
+    private String operator = null;
+    
     private String studyDescription = null;
     
     private String history = null;
@@ -88,7 +96,15 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short imageMatrix = -32768;
     
+    private short imagesAllocated = -32768;
+    
     private String scanSequence = null;
+    
+    private String scanProtocolName = null;
+    
+    private String imageCreationDate = null;
+    
+    private String imageCreationTime = null;
     
     private String imageNumber = null;
     
@@ -98,9 +114,11 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private float tablePosition = Float.NaN;
     
-    private float imageThickness = Float.NaN;
+    private float thickness = Float.NaN; // 20 * resolution[0] = 20 * resolution[2]
     
     private float tr = Float.NaN;
+    
+    private float ts = Float.NaN;
     
     private float te = Float.NaN;
     
@@ -110,11 +128,33 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short echoNumber = -32768;
     
-    private short nexShort = -32768;
+    private float pixelSize = Float.NaN; // 20 * res[2]
     
-    private float nexFloat = Float.NaN;
+    private short averagesNumber = -32768;
+    
+    private float excitationsNumber = Float.NaN;
+    
+    private float peakSAR = Float.NaN;
+    
+    private float averageSAR = Float.NaN;
+    
+    private String SARMonitored = null;
+    
+    private String contiguousSlices = null;
     
     private short flipAngle = -32768;
+    
+    private float rCenter = Float.NaN;
+    
+    private float aCenter = Float.NaN;
+    
+    private float sCenter = Float.NaN;
+    
+    private float rNormal = Float.NaN;
+    
+    private float aNormal = Float.NaN;
+    
+    private float sNormal = Float.NaN;
     
     private float imgTLHC_R = Float.NaN;
     
@@ -243,7 +283,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         fileInfo.setValue("0028,0030", s, s.length());
 
         // Slice thickness
-        s = String.valueOf(imageThickness);
+        s = String.valueOf(getResolutions()[2]);
         fileInfo.setValue("0018,0050", s, s.length()); // slice thickness
         s = String.valueOf(getResolutions()[2]);
         fileInfo.setValue("0018,0088", s, s.length()); // spacing between slices
@@ -376,6 +416,64 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
         s = hhStr + mmStr + ssStr + ".0";
         fileInfo.setValue("0008,0031", s, s.length()); // Series time
+        
+        year = Integer.valueOf(imageCreationDate.substring(7)).intValue();
+        if (year < 50) {
+            yearStr = "20".concat(imageCreationDate.substring(7));
+        }
+        else {
+            yearStr = "19".concat(imageCreationDate.substring(7)); 
+        }
+        
+        mmStr = imageCreationDate.substring(3,6);
+        if (mmStr.equalsIgnoreCase("JAN")) {
+            mmStr = "01";
+        }
+        else if (mmStr.equalsIgnoreCase("FEB")) {
+            mmStr = "02";
+        }
+        else if (mmStr.equalsIgnoreCase("MAR")) {
+            mmStr = "03";
+        }
+        else if (mmStr.equalsIgnoreCase("APR")) {
+            mmStr = "04";
+        }
+        else if (mmStr.equalsIgnoreCase("MAY")) {
+            mmStr = "05";
+        }
+        else if (mmStr.equalsIgnoreCase("JUN")) {
+            mmStr = "06";
+        }
+        else if (mmStr.equalsIgnoreCase("JUL")) {
+            mmStr = "07";
+        }
+        else if (mmStr.equalsIgnoreCase("AUG")) {
+            mmStr = "08";
+        }
+        else if (mmStr.equalsIgnoreCase("SEP")) {
+            mmStr = "09";
+        }
+        else if (mmStr.equalsIgnoreCase("OCT")) {
+            mmStr = "10";
+        }
+        else if (mmStr.equalsIgnoreCase("NOV")) {
+            mmStr = "11";
+        }
+        else {
+            mmStr = "12";
+        }
+        
+        ddStr = imageCreationDate.substring(0,2);
+
+        s = yearStr + mmStr + ddStr;
+        fileInfo.setValue("0008,0023", s, s.length()); // Image date
+        
+        hhStr = imageCreationTime.substring(0,2);
+        mmStr = imageCreationTime.substring(3,5);
+        ssStr = imageCreationTime.substring(6);
+
+        s = hhStr + mmStr + ssStr + ".0";
+        fileInfo.setValue("0008,0033", s, s.length()); // Image time
 
         fileInfo.setValue("0008,0050", "123456", 6);
         fileInfo.setValue("0008,0080", hospitalName.trim(), hospitalName.trim().length()); // Institution name
@@ -514,6 +612,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Patient sex = " + patientSex.trim() + "\n");
         }
         
+        if (patientWeight != -1) {
+            dialog.append("Patient weight = " + patientWeight + " grams\n");
+        }
+        
+        if (referringPhysician != null) {
+            dialog.append("Referring physician = " + referringPhysician.trim() + "\n");
+        }
+        
+        if (diognostician != null) {
+            dialog.append("Diognostician = " + diognostician.trim() + "\n");
+        }
+        
+        if (operator != null) {
+            dialog.append("Operator = " + operator.trim() + "\n");
+        }
+        
         if (studyDescription != null) {
             dialog.append("Study description = " + studyDescription.trim() + "\n");
         }
@@ -626,11 +740,27 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Image matrix = " + imageMatrix + "\n");
         }
         
+        if (imagesAllocated != -32768) {
+            dialog.append("Number of images allocated = " + imagesAllocated + "\n");
+        }
+        
         if (scanSequence != null) {
             dialog.append("Scan sequence = " + scanSequence.trim() + "\n");
         }
         
+        if (scanProtocolName != null) {
+            dialog.append("Protocol name for scan = " + scanProtocolName.trim() + "\n");
+        }
+        
         dialog.append("\nImage header\n");
+        
+        if (imageCreationDate != null) {
+            dialog.append("Image creation date = " + imageCreationDate.trim() + "\n");
+        }
+        
+        if (imageCreationTime != null) {
+            dialog.append("Image creation time = " + imageCreationTime.trim() + "\n");
+        }
         
         if (imageNumber != null) {
             dialog.append("Image number = " + imageNumber.trim() + "\n");
@@ -648,8 +778,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Table position = " + tablePosition + "\n");
         }
         
-        if (!Float.isNaN(imageThickness)) {
-            dialog.append("Image thickness = " + imageThickness + "\n");
+        if (!Float.isNaN(thickness)) {
+            dialog.append("20*resolution[0] = 20*resolution[1] = " + thickness + "\n");
         }
         
         if (getSliceSpacing() != 0.0) {
@@ -657,15 +787,19 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(tr)) {
-            dialog.append("tr = " + tr + " usec\n");
+            dialog.append("Repetition/recovery time tr = " + tr + " usec\n");
+        }
+        
+        if (!Float.isNaN(ts)) {
+            dialog.append("Scan time ts = " + ts + "\n");
         }
         
         if (!Float.isNaN(te)) {
-            dialog.append("te = " + te + " usec\n");
+            dialog.append("Echo delay te = " + te + " usec\n");
         }
         
         if (!Float.isNaN(ti)) {
-            dialog.append("ti = " + ti + " usec\n");
+            dialog.append("Inversion time ti = " + ti + " usec\n");
         }
         
         if (numberOfEchos != -32768) {
@@ -676,16 +810,60 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Echo number = " + echoNumber + "\n");
         }
         
-        if (nexShort != -32768) {
-            dialog.append("NEX (if not fractional) = " + nexShort + "\n");
+        if (!Float.isNaN(pixelSize)) {
+            dialog.append("20 * pixel resolution[2] = " + pixelSize + "\n");
         }
         
-        if (!Float.isNaN(nexFloat)) {
-            dialog.append("NEX = " + nexFloat + "\n");
+        if (averagesNumber != -32768) {
+            dialog.append("Number of averages = " + averagesNumber + "\n");
+        }
+        
+        if (!Float.isNaN(excitationsNumber)) {
+            dialog.append("Number of excitations = " + excitationsNumber + "\n");
+        }
+        
+        if (!Float.isNaN(peakSAR)) {
+            dialog.append("Value of peak SAR = " + peakSAR + "\n");
+        }
+        
+        if (!Float.isNaN(averageSAR)) {
+            dialog.append("Value of average SAR = " + averageSAR + "\n");
+        }
+        
+        if (SARMonitored != null) {
+            dialog.append(SARMonitored + "\n");
+        }
+        
+        if (contiguousSlices != null) {
+            dialog.append(contiguousSlices + "\n");
         }
         
         if (flipAngle != -32768) {
             dialog.append("Flip angle = " + flipAngle + "\n");
+        }
+        
+        if (!Float.isNaN(rCenter)) {
+            dialog.append("R center coordinate = " + rCenter + "\n");
+        }
+        
+        if (!Float.isNaN(aCenter)) {
+            dialog.append("A center coordinate = " + aCenter + "\n");
+        }
+        
+        if (!Float.isNaN(sCenter)) {
+            dialog.append("S center coordinate = " + sCenter + "\n");
+        }
+        
+        if (!Float.isNaN(rNormal)) {
+            dialog.append("R normal coordinate = " + rNormal + "\n");
+        }
+        
+        if (!Float.isNaN(aNormal)) {
+            dialog.append("A normal coordinate = " + aNormal + "\n");
+        }
+        
+        if (!Float.isNaN(sNormal)) {
+            dialog.append("S normal coordinate = " + sNormal + "\n");
         }
         
         if (!Float.isNaN(imgTLHC_R)) { 
@@ -816,6 +994,42 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.patientSex = patientSex;
     }
     
+    /**
+     * 
+     * @param patientWeight
+     */
+    public void setPatientWeight(int patientWeight) {
+        this.patientWeight = patientWeight;
+    }
+    
+    /**
+     * 
+     * @param referringPhysician
+     */
+    public void setReferringPhysician(String referringPhysician) {
+        this.referringPhysician = referringPhysician;
+    }
+    
+    /**
+     * 
+     * @param diognostician
+     */
+    public void setDiognostician(String diognostician) {
+        this.diognostician = diognostician;
+    }
+    
+    /**
+     * 
+     * @param operator
+     */
+    public void setOperator(String operator) {
+        this.operator = operator;
+    }
+    
+    /**
+     * 
+     * @param studyDescription
+     */
     public void setStudyDescription(String studyDescription) {
         this.studyDescription = studyDescription;
     }
@@ -1022,10 +1236,42 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param imagesAllocated
+     */
+    public void setImagesAllocated(short imagesAllocated) {
+        this.imagesAllocated = imagesAllocated;
+    }
+    
+    /**
+     * 
      * @param scanSequence
      */
     public void setScanSequence(String scanSequence) {
         this.scanSequence = scanSequence;
+    }
+    
+    /**
+     * 
+     * @param scanProtocolName
+     */
+    public void setScanProtocolName(String scanProtocolName) {
+        this.scanProtocolName = scanProtocolName;
+    }
+    
+    /**
+     * 
+     * @param imageCreationDate
+     */
+    public void setImageCreationDate (String imageCreationDate){
+        this.imageCreationDate = imageCreationDate;
+    }
+    
+    /**
+     * 
+     * @param imageCreationTime
+     */
+    public void setImageCreationTime (String imageCreationTime){
+        this.imageCreationTime = imageCreationTime;
     }
     
     /**
@@ -1062,10 +1308,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param imageThickness
+     * @param imageThickness = 20*res[0] = 20*res[1]
      */
-    public void setImageThickness(float imageThickness) {
-        this.imageThickness = imageThickness;
+    public void setThickness(float thickness) {
+        this.thickness = thickness;
     }
     
     /**
@@ -1074,6 +1320,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setTR(float tr) {
         this.tr = tr;
+    }
+    
+    /**
+     * 
+     * @param ts
+     */
+    public void setTS(float ts) {
+        this.ts = ts;
     }
     
     /**
@@ -1110,18 +1364,58 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param nexShort
+     * @param pixelSize // 20 * pixel resolution[2]
      */
-    public void setNexShort(short nexShort) {
-        this.nexShort = nexShort;
+    public void setPixelSize(float pixelSize) {
+        this.pixelSize = pixelSize;
     }
     
     /**
      * 
-     * @param nexFloat
+     * @param averagesNumber
      */
-    public void setNexFloat(float nexFloat) {
-        this.nexFloat = nexFloat;
+    public void setAveragesNumber(short averagesNumber) {
+        this.averagesNumber = averagesNumber;
+    }
+    
+    /**
+     * 
+     * @param excitationsNumber
+     */
+    public void setExcitationsNumber(float excitationsNumber) {
+        this.excitationsNumber = excitationsNumber;
+    }
+    
+    /**
+     * 
+     * @param peakSAR
+     */
+    public void setPeakSAR(float peakSAR) {
+        this.peakSAR = peakSAR;
+    }
+    
+    /**
+     * 
+     * @param averageSAR
+     */
+    public void setAverageSAR(float averageSAR) {
+        this.averageSAR = averageSAR;
+    }
+    
+    /**
+     * 
+     * @param SARMonitored
+     */
+    public void setSARMonitored(String SARMonitored) {
+        this.SARMonitored = SARMonitored;
+    }
+    
+    /**
+     * 
+     * @param contiguousSlices
+     */
+    public void setContiguousSlices(String contiguousSlices) {
+        this.contiguousSlices = contiguousSlices;
     }
     
     /**
@@ -1130,6 +1424,54 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setFlipAngle(short flipAngle) {
         this.flipAngle = flipAngle;
+    }
+    
+    /**
+     * 
+     * @param rCenter
+     */
+    public void setRCenter(float rCenter) {
+        this.rCenter = rCenter;
+    }
+    
+    /**
+     * 
+     * @param aCenter
+     */
+    public void setACenter(float aCenter) {
+        this.aCenter = aCenter;
+    }
+    
+    /**
+     * 
+     * @param sCenter
+     */
+    public void setSCenter(float sCenter) {
+        this.sCenter = sCenter;
+    }
+    
+    /**
+     * 
+     * @param rNormal
+     */
+    public void setRNormal(float rNormal) {
+        this.rNormal = rNormal;
+    }
+    
+    /**
+     * 
+     * @param aNormal
+     */
+    public void setANormal(float aNormal) {
+        this.aNormal = aNormal;
+    }
+    
+    /**
+     * 
+     * @param sNormal
+     */
+    public void setSNormal(float sNormal) {
+        this.sNormal = sNormal;
     }
     
     /**
