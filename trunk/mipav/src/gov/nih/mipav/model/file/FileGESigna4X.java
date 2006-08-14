@@ -38,17 +38,22 @@ import java.io.*;
  
  Spacing between slices was seen to vary so resolution[2] cannot be obtained
  by checking the difference between slice spacing.  The field called pixel
- size actually gives 20 * resolution[2], so this field is used to obtain the
- resolution[2].  resolution[0] and resolution[1] can be calculated in 3 different
+ size int theory should give give 20 *resolution[2] but actually gives 5 * resolution[2],
+ so with a kludge factor of 4 this field is used to obtain the resolution[2]. 
+ resolution[0] and resolution[1] can in theory be calculated in 3 different
  ways with 3 slightly different results.  fov/256, difference between corners/255, or
  using the fact that the thickness field = 20 * resolution[0] = 20 * resolution[1].
- I have used the difference between corners since this provides actual coordinates.
+ Use fov/256 multiplied by a kludge factor of 2 to obtain the right answer.
  */
 
 public class FileGESigna4X extends FileBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    private String systemID = null;
+    
+    private String systemConfigHospitalName = null;
+    
     private String studyNumber = null;
     
     private String studyDate = null;
@@ -94,6 +99,8 @@ public class FileGESigna4X extends FileBase {
     private short contrastDescription;
     
     private short planeType;
+    
+    private String planeName;
     
     private short imageMode;
     
@@ -143,7 +150,8 @@ public class FileGESigna4X extends FileBase {
     
     private float tablePosition;
     
-    private float thickness; // 20*res[0] = 20*res[1]
+    private float thickness; // 20*res[0] = 20*res[1] in theory
+                             // In practice 10*res[0] = 10*res[1]
     
     private float imageSpacing;
     
@@ -159,9 +167,22 @@ public class FileGESigna4X extends FileBase {
     
     private short echoNumber;
     
+    private short sliceQuantity;
+    
     private short averagesNumber;
     
-    private float pixelSize; // 20*res[2]
+    private short researchMode;
+    
+    private String psdFileName;
+    
+    private short graphicallyPrescribed;
+    
+    private String prescribedSeriesNumbers;
+    
+    private String prescribedImageNumbers;
+    
+    private float pixelSize; // In theory 20 * res[2]
+                             // In practice 5 * res[2]
     
     private float excitationsNumber;
     
@@ -172,6 +193,22 @@ public class FileGESigna4X extends FileBase {
     private short SARMonitored;
     
     private short contiguousSlices;
+    
+    private short cardiacHeartRate;
+    
+    private float totalPostTriggerDelayTime;
+    
+    private short arrythmiaRejectionRatio;
+    
+    private short cardiacRepTime;
+    
+    private short imagesPerCardiacCycle;
+    
+    private int scanARRs;
+    
+    private short transmitAttenuatorSetting;
+    
+    private short receiveAttenuatorSetting;
     
     private short flipAngle;
     
@@ -391,6 +428,15 @@ public class FileGESigna4X extends FileBase {
     public void readImage(float[] buffer) throws IOException {
 
         // try {
+        // Block 0 system configuration header
+        raFile.seek(0*512 + 2*6);
+        systemID = getString(4);
+        fileInfo.setSystemID(systemID);
+        
+        raFile.seek(0*512 + 2*16);
+        systemConfigHospitalName = getString(32);
+        fileInfo.setSystemConfigHospitalName(systemConfigHospitalName);
+        
         // Read in fields from the block 6 study header
         raFile.seek(6*512 + 2*32);
         studyNumber = getString(5);
@@ -531,6 +577,10 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
         }
         
+        // 8*512 + 2*139
+        planeName = getString(16);
+        fileInfo.setPlaneName(planeName);
+        
         raFile.seek(8*512 + 2*147);
         imageMode = (short)getSignedShort(endianess);
         if (imageMode == 0) {
@@ -654,6 +704,9 @@ public class FileGESigna4X extends FileBase {
         // 8*512 + 2*151
         fieldOfView = getFloat(endianess); // mm
         fileInfo.setFieldOfView(fieldOfView);
+        // Multiply by a kludge factor of 2 for the right answer
+        fileInfo.setResolutions(fieldOfView*2/width, 0);
+        fileInfo.setResolutions(fieldOfView*2/height, 1);
         
         // 8*512 + 2*153
         rlCenter = getFloat(endianess); // R+L-  MIPAV is R to L
@@ -757,7 +810,8 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setTablePosition(tablePosition);
         
         // 10*512 + 2*77
-        thickness = getFloat(endianess);  // 20*res[0] = 20*res[1]
+        thickness = getFloat(endianess);  // In theory 20*res[0] = 20*res[1]
+                                          // In practice 10*res[0] = 10*res[1]
         fileInfo.setThickness(thickness);
         
         // 10*512 + 2*79
@@ -790,14 +844,53 @@ public class FileGESigna4X extends FileBase {
         echoNumber = (short)getSignedShort(endianess);
         fileInfo.setEchoNumber(echoNumber);
         
-        raFile.seek(10*512 + 2*101);
+        // 19*512 + 2*100
+        sliceQuantity = (short)getSignedShort(endianess);
+        fileInfo.setSliceQuantity(sliceQuantity);
+        
+        // 10*512 + 2*101
         averagesNumber = (short)getSignedShort(endianess); // Number of averages
         fileInfo.setAveragesNumber(averagesNumber);
+       
+        // 10*512 + 2*102
+        researchMode = (short)getSignedShort(endianess);
+        if (researchMode != 0) {
+            fileInfo.setResearchMode("Research mode used");
+        }
+        else {
+            fileInfo.setResearchMode("Research mode not used");
+        }
+        
+        // 10*512 + 2*103
+        psdFileName = getString(32);
+        fileInfo.setPSDFileName(psdFileName);
+        
+        raFile.seek(10*512 + 2*125);
+        graphicallyPrescribed = (short)getSignedShort(endianess);
+        if (graphicallyPrescribed != 0) {
+            fileInfo.setGraphicallyPrescribed("Graphically prescribed");
+        }
+        else {
+            fileInfo.setGraphicallyPrescribed("Not graphically prescribed");
+        }
+        
+        if (graphicallyPrescribed != 0) {
+            // 10*512 + 2*126
+            prescribedSeriesNumbers = getString(10);
+            fileInfo.setPrescribedSeriesNumbers(prescribedSeriesNumbers);
+            
+            // 10*512 + 2*131
+            prescribedImageNumbers = getString(10);
+            fileInfo.setPrescribedImageNumbers(prescribedImageNumbers);
+        } // if (graphicallyPrescribed != 0)
         
         raFile.seek(10*512 + 2*139);
-        pixelSize = getFloat(endianess); // 20*res[2]
+        pixelSize = getFloat(endianess); // In theory 20*res[2]
+                                         // In practice 5*res[2]
         fileInfo.setPixelSize(pixelSize);
-        fileInfo.setResolutions(pixelSize/20.0f, 2);
+        // Note that you must multiply by a kludge factor of 4 to obtain the
+        // right answer
+        fileInfo.setResolutions(pixelSize* 4.0f/20.0f, 2);
         
         raFile.seek(10*512 + 2*146);
         excitationsNumber = getFloat(endianess); // Number of excitations
@@ -828,6 +921,38 @@ public class FileGESigna4X extends FileBase {
         else {
             fileInfo.setContiguousSlices("Slices are not contiguous");
         }
+        
+        // 10*512 + 2*154
+        cardiacHeartRate = (short)getSignedShort(endianess);
+        fileInfo.setCardiacHeartRate(cardiacHeartRate);
+        
+        // 10*512 + 2*155
+        totalPostTriggerDelayTime = getFloat(endianess);
+        fileInfo.setTotalPostTriggerDelayTime(totalPostTriggerDelayTime);
+        
+        // 10*512 + 2*157
+        arrythmiaRejectionRatio = (short)getSignedShort(endianess);
+        fileInfo.setArrythmiaRejectionRatio(arrythmiaRejectionRatio);
+        
+        // 10*512 + 2*158
+        cardiacRepTime = (short)getSignedShort(endianess);
+        fileInfo.setCardiacRepTime(cardiacRepTime);
+        
+        // 10*512 + 2*159
+        imagesPerCardiacCycle = (short)getSignedShort(endianess);
+        fileInfo.setImagesPerCardiacCycle(imagesPerCardiacCycle);
+        
+        // 10*512 + 2*160
+        scanARRs = getInt(endianess);
+        fileInfo.setScanARRs(scanARRs);
+        
+        // 10*512 + 2*162
+        transmitAttenuatorSetting = (short)getSignedShort(endianess);
+        fileInfo.setTransmitAttenuatorSetting(transmitAttenuatorSetting);
+        
+        // 10*512 + 2*163
+        receiveAttenuatorSetting = (short)getSignedShort(endianess);
+        fileInfo.setReceiveAttenuatorSetting(receiveAttenuatorSetting);
         
         raFile.seek(10*512 + 2*175);
         flipAngle = (short)getSignedShort(endianess);
@@ -948,11 +1073,10 @@ public class FileGESigna4X extends FileBase {
             resX = Math.abs(imgTLHC_R - imgTRHC_R)/(width-1);
             resY = Math.abs(imgTLHC_A - imgBLHC_A)/(height-1);
         }
-        fileInfo.setResolutions(resX, 0);
-        fileInfo.setResolutions(resY, 1);
 
         // orient[2] is calculated in FileIo.java by comparing position values
         // of the top left hand corner between slice 0 and slice 1.
+        // Must multiply resX and resY by kludge factors of 2 for the right answers.
         fileInfo.setAxisOrientation(orient);
         fileInfo.setOrigin(start);
         
