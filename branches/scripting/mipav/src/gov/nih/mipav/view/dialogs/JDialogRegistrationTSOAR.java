@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,9 +21,9 @@ import javax.swing.*;
  * etc.
  *
  * @author  Neva Cherniavsky
- * @see     AlgorithmRegistrationTSOAR
+ * @see     gov.nih.mipav.model.algorithms.registration#AlgorithmRegistrationTSOAR
  */
-public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -120,20 +122,6 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
         image = img;
         UI = ((ViewJFrameBase) parent).getUserInterface();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  img  Source image.
-     */
-    public JDialogRegistrationTSOAR(ViewUserInterface _UI, ModelImage img) {
-        super();
-        UI = _UI;
-        image = img;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -269,7 +257,9 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
                 posT = null;
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
     }
 
@@ -283,42 +273,52 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if (resultImage != null) {
-                    UI.getScriptDialog().putVar(resultImage.getImageName());
-                }
-
-                UI.getScriptDialog().append("RegistrationTSOAR " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                            " ");
-
-                if (resultImage != null) {
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " ");
-                } else {
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(image.getImageName()) + " ");
-                }
-
-                UI.getScriptDialog().append(cost + " " + DOF + " " + interp + " " + reference + " " + refImageNum +
-                                            " " + sincNormalizedCrossCorrelation + " " + doGraph + " " + doSubsample +
-                                            " " + finalRegistrationAtLevel2 + " " + displayTransform + " " + interp2 +
-                                            "\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (getResultImage() != null));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_avg_volume_as_reference", reference));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_norm_cross_correlation_sinc", sincNormalizedCrossCorrelation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_final_reg_at_level_2", finalRegistrationAtLevel2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setUseAverageVolumeRef(scriptParameters.getParams().getBoolean("do_use_avg_volume_as_reference"));
+        setRefImageNum(scriptParameters.getParams().getInt("reference_volume_num"));
+        setFinalCostXCorrSinc(scriptParameters.getParams().getBoolean("do_use_norm_cross_correlation_sinc"));
+        setGraph(scriptParameters.getParams().getBoolean("do_graph_transform"));
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setFinalRegistrationAtLevel2(scriptParameters.getParams().getBoolean("do_final_reg_at_level_2"));
+        setDisplayResult(scriptParameters.getParams().getBoolean("do_display_transform"));
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (getResultImage() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -348,60 +348,6 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
                 graphCheckBox.setEnabled(false);
                 graphCheckBox.setSelected(false);
             }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        UI = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setCostChoice(parser.getNextInteger());
-            setDOF(parser.getNextInteger());
-            setInterp(parser.getNextInteger());
-            setUseAverageVolumeRef(parser.getNextBoolean());
-            setRefImageNum(parser.getNextInteger());
-            setFinalCostXCorrSinc(parser.getNextBoolean());
-            setGraph(parser.getNextBoolean());
-            setSubsample(parser.getNextBoolean());
-            setFinalRegistrationAtLevel2(parser.getNextBoolean());
-            setDisplayResult(parser.getNextBoolean());
-            setInterp2(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
         }
     }
 
@@ -638,39 +584,39 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
         Insets insets = new Insets(0, 2, 0, 2);
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = insets;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(labelDOF, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(comboBoxDOF, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(labelInterp, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(comboBoxInterp, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(labelCost, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(comboBoxCostFunct, gbc);
 
         gbc.gridx = 0;
@@ -680,13 +626,13 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(sampleCheckBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panel.add(sampleCheckBoxLevel2, gbc);
 
         gbc.gridx = 0;
@@ -739,22 +685,22 @@ public class JDialogRegistrationTSOAR extends JDialogBase implements AlgorithmIn
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(transformCheckbox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         outPanel.add(labelInterp2, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(comboBoxInterp2, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(graphCheckBox, gbc);
 
         JPanel mainPanel = new JPanel(new BorderLayout());

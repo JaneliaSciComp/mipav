@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -43,7 +44,7 @@ import javax.swing.*;
  * <p>This software does not yet provide a general coplanar solution for 3D images. However, special handling does exist
  * for the case where the z values of the corresponding point landmarks are identical.</p>
  */
-public class JDialogRegistrationTPSpline extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegistrationTPSpline extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -152,8 +153,7 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
         int i;
-        ViewJFrameImage imageFrame = null;
-
+        
         if (algorithm instanceof AlgorithmTPSpline) {
 
             if (spline.isCompleted() == true) {
@@ -182,7 +182,7 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
                     try {
 
                         // resultImage.setImageName("Transformed image");
-                        imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
@@ -193,7 +193,7 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
                 closingLog();
 
                 Preferences.debug("Done.");
-                insertScriptLine(algorithm);
+                insertScriptLine();
             }
 
         }
@@ -211,74 +211,37 @@ public class JDialogRegistrationTPSpline extends JDialogBase implements Algorith
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+        scriptParameters.storeImage(baseImage, "reference_image");
 
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(matchImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(matchImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(matchImage.getImageName());
-                    }
-                }
-
-                // do the same for the reference image
-                if (UI.getScriptDialog().getImgTableVar(baseImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(baseImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(baseImage.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().putVar(resultImage.getImageName());
-
-                UI.getScriptDialog().append("RegistrationTPSpline ");
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(matchImage.getImageName()) + " ");
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(baseImage.getImageName()) + " ");
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + "\n");
-
-            }
-        }
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-            image2Key = parser.getNextString();
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        baseImage = scriptParameters.retrieveImage("reference_image");
+        
+        if (matchImage.getNDims() == 2) {
+            DIM = 2;
+        } else if (matchImage.getNDims() == 3) {
+            DIM = 3;
         }
-
-        matchImage = parser.getImage(srcImageKey);
-
-        baseImage = parser.getImage(image2Key);
 
         UI = matchImage.getUserInterface();
         parentFrame = matchImage.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        parser.putVariable(destImageKey, getResultImage().getImageName());
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
