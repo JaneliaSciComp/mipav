@@ -178,7 +178,15 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short receiveAttenuatorSetting = -32768;
     
+    private short imageOffset = -32768;
+    
+    private float interImageDelay = Float.NaN;
+    
+    private String psdName = null;
+    
     private short flipAngle = -32768;
+    
+    private String extremityCoil = null;
     
     private float rCenter = Float.NaN;
     
@@ -209,6 +217,24 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private float imgBLHC_A = Float.NaN;
     
     private float imgBLHC_S = Float.NaN;
+    
+    private short minimumDelay = -32768;
+    
+    private short sliceMultiplier = -32768;
+    
+    private short pauseInterval = -32768;
+    
+    private float pauseTime = Float.NaN;
+    
+    private String contrastUsed = null;
+    
+    private String contrastAgent = null;
+    
+    private float contrastAmount = Float.NaN;
+    
+    private short fileFormat = -32768;
+    
+    private short autoCenterFrequency = -32768;
 
     /** DOCUMENT ME! */
     private int year;
@@ -959,8 +985,24 @@ public class FileInfoGESigna4X extends FileInfoBase {
                            receiveAttenuatorSetting + "\n");
         }
         
+        if (imageOffset != -32768) {
+            dialog.append("Image offset = " + imageOffset + "\n");
+        }
+        
+        if (!Float.isNaN(interImageDelay)) {
+            dialog.append("Inter image/ inter location delay = " + interImageDelay + "\n");
+        }
+        if ((psdName != null) && (psdName.trim() != null) &&
+            (psdName.trim().length() != 0)) {
+            dialog.append("PSD name = " + psdName.trim() + "\n");
+        }
+        
         if (flipAngle != -32768) {
             dialog.append("Flip angle = " + flipAngle + "\n");
+        }
+        
+        if (extremityCoil != null) {
+            dialog.append(extremityCoil + "\n");
         }
         
         if (!Float.isNaN(rCenter)) {
@@ -1021,6 +1063,43 @@ public class FileInfoGESigna4X extends FileInfoBase {
         
         if (!Float.isNaN(imgBLHC_S)) {
             dialog.append("Superior bottom left hand corner = " + imgBLHC_S + "\n");
+        }
+        
+        if (minimumDelay != -32768) {
+            dialog.append("Minimum delay after trigger = " + minimumDelay + "\n");
+        }
+        
+        if (sliceMultiplier != -32768) {
+            dialog.append("Multiplier of slices to obtain phase = " + 
+                           sliceMultiplier + "\n");
+        }
+        
+        if (pauseInterval != -32768) {
+            dialog.append("Pause interval = " + pauseInterval + "\n");   
+        }
+        
+        if (!Float.isNaN(pauseTime)) {
+            dialog.append("Pause time = " + pauseTime + "\n");
+        }
+        
+        if (contrastUsed != null) {
+            dialog.append(contrastUsed + "\n");
+        }
+        
+        if (contrastAgent != null) {
+            dialog.append("Contrast agent = " + contrastAgent + "\n");
+        }
+        
+        if (!Float.isNaN(contrastAmount)) {
+            dialog.append("Contrast amount = " + contrastAmount + "\n");
+        }
+        
+        if (fileFormat > 0) {
+            dialog.append("File format = " + fileFormat + "\n");
+        }
+        
+        if (autoCenterFrequency != -32768) {
+            dialog.append("Auto center frequency = " + autoCenterFrequency + "\n");
         }
         
         dialog.setSize(600, 500);
@@ -1457,7 +1536,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param imageThickness = 20*res[0] = 20*res[1]
+     * @param imageThickness = in theory 20*res[0] = 20*res[1]
+     *                       = in practice 10*res[0] = 10 *res[1]
      */
     public void setThickness(float thickness) {
         this.thickness = thickness;
@@ -1681,10 +1761,42 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param imageOffset
+     */
+    public void setImageOffset(short imageOffset) {
+        this.imageOffset = imageOffset;
+    }
+    
+    /**
+     * 
+     * @param interImageDelay
+     */
+    public void setInterImageDelay(float interImageDelay) {
+        this.interImageDelay = interImageDelay;
+    }
+    
+    public void setPSDName(String psdName) {
+        this.psdName = psdName;
+    }
+    
+    /**
+     * 
      * @param flipAngle
      */
     public void setFlipAngle(short flipAngle) {
         this.flipAngle = flipAngle;
+    }
+    
+    /**
+     * 
+     * @param extremityCoil
+     */
+    public void setExtremityCoil(String extremityCoil) {
+        this.extremityCoil = extremityCoil;
+    }
+    
+    public void setMinimumDelay(short minimumDelay) {
+        this.minimumDelay = minimumDelay;
     }
     
     /**
@@ -1805,6 +1917,70 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setImgBLHC_S(float imgBLHC_S) {
         this.imgBLHC_S = imgBLHC_S;
+    }
+    
+    /**
+     * 
+     * @param sliceMultiplier
+     */
+    public void setSliceMultiplier(short sliceMultiplier) {
+        this.sliceMultiplier = sliceMultiplier;
+    }
+    
+    /**
+     * 
+     * @param pauseInterval
+     */
+    public void setPauseInterval(short pauseInterval) {
+        this.pauseInterval = pauseInterval;
+    }
+    
+    /**
+     * 
+     * @param pauseTime
+     */
+    public void setPauseTime(float pauseTime) {
+        this.pauseTime = pauseTime;
+    }
+    
+    /**
+     * 
+     * @param contrastUsed
+     */
+    public void setContrastUsed(String contrastUsed) {
+        this.contrastUsed = contrastUsed;
+    }
+    
+    /**
+     * 
+     * @param contrastAgent
+     */
+    public void setContrastAgent(String contrastAgent) {
+        this.contrastAgent = contrastAgent;
+    }
+    
+    /**
+     * 
+     * @param contrastAmount
+     */
+    public void setContrastAmount(float contrastAmount) {
+        this.contrastAmount = contrastAmount;
+    }
+    
+    /**
+     * 
+     * @param fileFormat
+     */
+    public void setFileFormat(short fileFormat) {
+        this.fileFormat = fileFormat;
+    }
+    
+    /**
+     * 
+     * @param autoCenterFrequency
+     */
+    public void setAutoCenterFrequency(short autoCenterFrequency) {
+        this.autoCenterFrequency = autoCenterFrequency;
     }
 
 }
