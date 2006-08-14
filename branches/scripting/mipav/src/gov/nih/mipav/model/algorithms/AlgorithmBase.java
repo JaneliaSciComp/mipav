@@ -257,6 +257,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @see     #computeElapsedTime()
      */
     public double getElapsedTime() {
+        if (elapsedTime == 0) {
+            computeElapsedTime();
+        }
         return (double) (elapsedTime / 1000.0); // convert from milliseconds to seconds
     }
 

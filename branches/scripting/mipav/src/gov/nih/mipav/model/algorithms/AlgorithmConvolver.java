@@ -1038,8 +1038,6 @@ public class AlgorithmConvolver extends AlgorithmBase {
         destImage.releaseLock();
         destImage.notifyImageDisplayListeners(null, true);
         setCompleted(true);
-
-        computeElapsedTime();
     }
 
     /**

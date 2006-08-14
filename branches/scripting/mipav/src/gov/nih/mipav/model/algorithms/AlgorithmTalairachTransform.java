@@ -285,10 +285,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             // main algorithm
             transformTalairachVolume(buffer, result);
         }
-
-        // compute the elapsed time
-        computeElapsedTime();
-
+        
         if (!threadStopped) {
             closingLog();
         }
