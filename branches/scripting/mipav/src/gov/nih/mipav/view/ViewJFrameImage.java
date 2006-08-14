@@ -1728,8 +1728,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("There are no other images to register.");
             }
         } else if (command.equals("BSplineReg")) {
-            String[] akNamesCompatibleTargetImages = JDialogRegistrationBSpline.getNamesCompatibleTargetImages(componentImage.getActiveImage(),
-                                                                                                               userInterface);
+            String[] akNamesCompatibleTargetImages = JDialogRegistrationBSpline.getNamesCompatibleTargetImages(componentImage.getActiveImage());
 
             if (akNamesCompatibleTargetImages.length > 0) {
 
