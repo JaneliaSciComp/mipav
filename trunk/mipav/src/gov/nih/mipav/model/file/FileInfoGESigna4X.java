@@ -20,6 +20,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    private String systemID = null;
+    
+    private String systemConfigHospitalName = null;
+    
     private String studyNumber = null;
     
     private String studyDate = null;
@@ -65,6 +69,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private short contrastDescription = -32768;
     
     private String planeType = null;
+    
+    private String planeName = null;
     
     private String imageMode = null;
     
@@ -114,7 +120,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private float tablePosition = Float.NaN;
     
-    private float thickness = Float.NaN; // 20 * resolution[0] = 20 * resolution[2]
+    private float thickness = Float.NaN; // In theory 20 * resolution[0] = 20 * resolution[1]
+                                         // In practice 10 * res[0] = 10 * res[1]
     
     private float tr = Float.NaN;
     
@@ -128,9 +135,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short echoNumber = -32768;
     
-    private float pixelSize = Float.NaN; // 20 * res[2]
+    private short sliceQuantity = -32768;
+    
+    private float pixelSize = Float.NaN; // In theory 20 * res[2]
+                                         // In practice 5 * res[2]
     
     private short averagesNumber = -32768;
+    
+    private String researchMode = null;
+    
+    private String psdFileName = null;
+    
+    private String graphicallyPrescribed = null;
+    
+    private String prescribedSeriesNumbers = null;
+    
+    private String prescribedImageNumbers = null;
     
     private float excitationsNumber = Float.NaN;
     
@@ -141,6 +161,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private String SARMonitored = null;
     
     private String contiguousSlices = null;
+    
+    private short cardiacHeartRate = -32768;
+    
+    private float totalPostTriggerDelayTime = Float.NaN;
+    
+    private short arrythmiaRejectionRatio = -32768;
+    
+    private short cardiacRepTime = -32768;
+    
+    private short imagesPerCardiacCycle = -32768;
+    
+    private int scanARRs = Integer.MIN_VALUE;
+    
+    private short transmitAttenuatorSetting = -32768;
+    
+    private short receiveAttenuatorSetting = -32768;
     
     private short flipAngle = -32768;
     
@@ -582,6 +618,15 @@ public class FileInfoGESigna4X extends FileInfoBase {
         dialog.append("Image width  = " + 256 + "\n");
         dialog.append("Image height = " + 256 + "\n");
         dialog.append("Number of bits  = " + 12 + "\n");
+        
+        dialog.append("\nSystem configuration header\n");
+        if (systemID != null) {
+            dialog.append("System ID = " + systemID.trim() + "\n");
+        }
+        
+        if (systemConfigHospitalName != null) {
+            dialog.append("Hospital name = " + systemConfigHospitalName.trim() + "\n");
+        }
 
         dialog.append("\nStudy header\n");
         if (studyNumber != null) {
@@ -665,7 +710,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Coil type = " + coilType.trim() + "\n");
         }
         
-        if (coilName != null) {
+        if ((coilName != null) && (coilName.trim() != null) &&
+            (coilName.trim().length() != 0)) {
             dialog.append("Coil name = " + coilName.trim() + "\n");
         }
         
@@ -675,6 +721,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
         
         if (planeType != null) {
             dialog.append("Plane type = " + planeType + "\n");
+        }
+        
+        if (planeName != null) {
+            dialog.append("Plane name = " + planeName.trim() + "\n");
         }
         
         if (imageMode != null) {
@@ -723,7 +773,9 @@ public class FileInfoGESigna4X extends FileInfoBase {
                            longitudinalAnatomicalReference.trim() + "\n");
         }
         
-        if (verticalAnatomicalReference != null) {
+        if ((verticalAnatomicalReference != null) &&
+            (verticalAnatomicalReference.trim() != null) &&
+            (verticalAnatomicalReference.trim().length() != 0)) {
             dialog.append("Vertical anatomical reference = " +
                            verticalAnatomicalReference.trim() + "\n");
         }
@@ -744,7 +796,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Number of images allocated = " + imagesAllocated + "\n");
         }
         
-        if (scanSequence != null) {
+        if ((scanSequence != null) && (scanSequence.trim() != null) &&
+            (scanSequence.trim().length() != 0)) {
             dialog.append("Scan sequence = " + scanSequence.trim() + "\n");
         }
         
@@ -779,7 +832,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(thickness)) {
-            dialog.append("20*resolution[0] = 20*resolution[1] = " + thickness + "\n");
+            dialog.append("10*resolution[0] = 10*resolution[1] equals approximately " + thickness + "\n");
         }
         
         if (getSliceSpacing() != 0.0) {
@@ -810,13 +863,44 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Echo number = " + echoNumber + "\n");
         }
         
+        if (sliceQuantity > 0) {
+            dialog.append("Number of slices in scan group = " + sliceQuantity + "\n");
+        }
+        
         if (!Float.isNaN(pixelSize)) {
-            dialog.append("20 * pixel resolution[2] = " + pixelSize + "\n");
+            dialog.append("5 * pixel resolution[2] = " + pixelSize + "\n");
         }
         
         if (averagesNumber != -32768) {
             dialog.append("Number of averages = " + averagesNumber + "\n");
         }
+        
+        if (researchMode != null) {
+            dialog.append(researchMode + "\n");
+        }
+        
+        if ((psdFileName != null) && (psdFileName.trim() != null) &&
+            (psdFileName.trim().length() != 0)) {
+            dialog.append("PSD file name = " + psdFileName.trim() + "\n");
+        }
+        
+        if (graphicallyPrescribed != null) {
+            dialog.append(graphicallyPrescribed + "\n");
+        }
+        
+        if ((prescribedSeriesNumbers != null) && 
+           (prescribedSeriesNumbers.trim() != null) &&
+           (prescribedSeriesNumbers.trim().length() != 0)) {
+            dialog.append("Prescribed series numbers = " +
+                           prescribedSeriesNumbers.trim() + "\n");
+        }
+        
+        if ((prescribedImageNumbers != null) && 
+                (prescribedImageNumbers.trim() != null) &&
+                (prescribedImageNumbers.trim().length() != 0)) {
+                 dialog.append("Prescribed image numbers = " +
+                                prescribedImageNumbers.trim() + "\n");
+             }
         
         if (!Float.isNaN(excitationsNumber)) {
             dialog.append("Number of excitations = " + excitationsNumber + "\n");
@@ -836,6 +920,43 @@ public class FileInfoGESigna4X extends FileInfoBase {
         
         if (contiguousSlices != null) {
             dialog.append(contiguousSlices + "\n");
+        }
+        
+        if (cardiacHeartRate != -32768) {
+            dialog.append("Cardiac heart rate = " + cardiacHeartRate + "\n");
+        }
+        
+        if (!Float.isNaN(totalPostTriggerDelayTime)) {
+            dialog.append("Total delay time after trigger = " +
+                           totalPostTriggerDelayTime + "\n");
+        }
+        
+        if (arrythmiaRejectionRatio != -32768) {
+            dialog.append("Arrythmia rejection ratio = " + 
+                           arrythmiaRejectionRatio + "\n");
+        }
+        
+        if (cardiacRepTime != -32768) {
+            dialog.append("Cardiac rep time = " + cardiacRepTime + "\n");
+        }
+        
+        if (imagesPerCardiacCycle != -32768) {
+            dialog.append("Images per cardiac cycle = " +
+                           imagesPerCardiacCycle + "\n");
+        }
+        
+        if (scanARRs != Integer.MIN_VALUE) {
+            dialog.append("Number of ARR's during the scan = " + scanARRs + "\n");
+        }
+        
+        if (transmitAttenuatorSetting != -32768) {
+            dialog.append("Transmit attenuator setting = " +
+                           transmitAttenuatorSetting + "\n");
+        }
+        
+        if (receiveAttenuatorSetting != -32768) {
+            dialog.append("Receive attenuator setting = " +
+                           receiveAttenuatorSetting + "\n");
         }
         
         if (flipAngle != -32768) {
@@ -935,6 +1056,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
 
         return newOrigin;
+    }
+    
+    /**
+     * 
+     * @param systemID
+     */
+    public void setSystemID(String systemID) {
+        this.systemID = systemID;
+    }
+    
+    /**
+     * 
+     * @param systemConfigHospitalName
+     */
+    public void setSystemConfigHospitalName(String systemConfigHospitalName) {
+        this.systemConfigHospitalName = systemConfigHospitalName;
     }
     
     
@@ -1114,8 +1251,20 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.contrastDescription = contrastDescription;
     }
     
+    /**
+     * 
+     * @param planeType
+     */
     public void setPlaneType(String planeType) {
         this.planeType = planeType;
+    }
+    
+    /**
+     * 
+     * @param planeName
+     */
+    public void setPlaneName(String planeName) {
+        this.planeName = planeName;
     }
     
     /**
@@ -1364,6 +1513,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param sliceQuantity
+     */
+    public void setSliceQuantity(short sliceQuantity) {
+        this.sliceQuantity  = sliceQuantity;
+    }
+    
+    /**
+     * 
      * @param pixelSize // 20 * pixel resolution[2]
      */
     public void setPixelSize(float pixelSize) {
@@ -1376,6 +1533,46 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setAveragesNumber(short averagesNumber) {
         this.averagesNumber = averagesNumber;
+    }
+    
+    /**
+     * 
+     * @param researchMode
+     */
+    public void setResearchMode(String researchMode) {
+        this.researchMode = researchMode;
+    }
+    
+    /**
+     * 
+     * @param psdFileName
+     */
+    public void setPSDFileName(String psdFileName) {
+        this.psdFileName = psdFileName;
+    }
+    
+    /**
+     * 
+     * @param graphicallyPrescribed
+     */
+    public void setGraphicallyPrescribed(String graphicallyPrescribed) {
+        this.graphicallyPrescribed = graphicallyPrescribed;
+    }
+    
+    /**
+     * 
+     * @param prescribedSeriesNumbers
+     */
+    public void setPrescribedSeriesNumbers(String prescribedSeriesNumbers) {
+        this.prescribedSeriesNumbers = prescribedSeriesNumbers;
+    }
+    
+    /**
+     * 
+     * @param prescribedImageNumbers
+     */
+    public void setPrescribedImageNumbers(String prescribedImageNumbers) {
+        this.prescribedImageNumbers = prescribedImageNumbers;
     }
     
     /**
@@ -1416,6 +1613,70 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setContiguousSlices(String contiguousSlices) {
         this.contiguousSlices = contiguousSlices;
+    }
+    
+    /**
+     * 
+     * @param cardiacHeartRate
+     */
+    public void setCardiacHeartRate(short cardiacHeartRate) {
+        this.cardiacHeartRate = cardiacHeartRate;
+    }
+    
+    /**
+     * 
+     * @param totalPostTriggerDelayTime
+     */
+    public void setTotalPostTriggerDelayTime(float totalPostTriggerDelayTime) {
+        this.totalPostTriggerDelayTime = totalPostTriggerDelayTime;
+    }
+    
+    /**
+     * 
+     * @param arrythmiaRejectionRatio
+     */
+    public void setArrythmiaRejectionRatio(short arrythmiaRejectionRatio) {
+        this.arrythmiaRejectionRatio = arrythmiaRejectionRatio;
+    }
+    
+    /**
+     * 
+     * @param cardiacRepTime
+     */
+    public void setCardiacRepTime(short cardiacRepTime) {
+        this.cardiacRepTime = cardiacRepTime;
+    }
+    
+    /**
+     * 
+     * @param imagesPerCardiacCycle
+     */
+    public void setImagesPerCardiacCycle(short imagesPerCardiacCycle) {
+        this.imagesPerCardiacCycle = imagesPerCardiacCycle;
+    }
+    
+    /**
+     * 
+     * @param scanARRs
+     */
+    public void setScanARRs(int scanARRs) {
+        this.scanARRs = scanARRs;
+    }
+    
+    /**
+     * 
+     * @param transmitAttenuatorSetting
+     */
+    public void setTransmitAttenuatorSetting(short transmitAttenuatorSetting) {
+        this.transmitAttenuatorSetting = transmitAttenuatorSetting;
+    }
+    
+    /**
+     * 
+     * @param receiveAttenuatorSetting
+     */
+    public void setReceiveAttenuatorSetting(short receiveAttenuatorSetting) {
+        this.receiveAttenuatorSetting = receiveAttenuatorSetting;
     }
     
     /**
