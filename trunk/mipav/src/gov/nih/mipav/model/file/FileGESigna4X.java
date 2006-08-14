@@ -210,7 +210,17 @@ public class FileGESigna4X extends FileBase {
     
     private short receiveAttenuatorSetting;
     
+    private short imageOffset;
+    
+    private float interImageDelay;
+    
+    private String psdName;
+    
     private short flipAngle;
+    
+    private short extremityCoil;
+    
+    private short minimumDelay;
     
     private float rCenter;
     
@@ -241,6 +251,22 @@ public class FileGESigna4X extends FileBase {
     private float imgBLHC_A;
     
     private float imgBLHC_S;
+    
+    private short sliceMultiplier;
+    
+    private short pauseInterval;
+    
+    private float pauseTime;
+    
+    private short contrastUsed;
+    
+    private String contrastAgent;
+    
+    private float contrastAmount;
+    
+    private short fileFormat;
+    
+    private short autoCenterFrequency;
     
     /** DOCUMENT ME! */
     private byte[] byteBuffer = null;
@@ -954,9 +980,30 @@ public class FileGESigna4X extends FileBase {
         receiveAttenuatorSetting = (short)getSignedShort(endianess);
         fileInfo.setReceiveAttenuatorSetting(receiveAttenuatorSetting);
         
+        raFile.seek(10*512 + 2*166);
+        imageOffset = (short)getSignedShort(endianess);
+        fileInfo.setImageOffset(imageOffset);
+        
+        // 10*512 + 2*167
+        interImageDelay = getFloat(endianess);
+        fileInfo.setInterImageDelay(interImageDelay);
+        
         raFile.seek(10*512 + 2*175);
         flipAngle = (short)getSignedShort(endianess);
         fileInfo.setFlipAngle(flipAngle);
+        
+        // 10*512 + 2*176
+        psdName = getString(12);
+        fileInfo.setPSDName(psdName);
+        
+        raFile.seek(10*512 + 2*182);
+        extremityCoil = (short)getSignedShort(endianess);
+        if (extremityCoil != 0) {
+            fileInfo.setExtremityCoil("Extremity coil present");
+        }
+        else {
+            fileInfo.setExtremityCoil("Extremity coil not present");
+        }
         
         raFile.seek(10*512 + 2*197);
         rCenter = getFloat(endianess);
@@ -1079,6 +1126,49 @@ public class FileGESigna4X extends FileBase {
         // Must multiply resX and resY by kludge factors of 2 for the right answers.
         fileInfo.setAxisOrientation(orient);
         fileInfo.setOrigin(start);
+        
+        raFile.seek(10*512 + 2*228);
+        minimumDelay = (short)getSignedShort(endianess);
+        fileInfo.setMinimumDelay(minimumDelay);
+        
+        // 10*512 + 2*229
+        sliceMultiplier = (short)getSignedShort(endianess);
+        fileInfo.setSliceMultiplier(sliceMultiplier);
+        
+        raFile.seek(10*512 + 2*233);
+        pauseInterval = (short)getSignedShort(endianess);
+        fileInfo.setPauseInterval(pauseInterval);
+        
+        // 10*512 + 2*234
+        pauseTime = getFloat(endianess);
+        fileInfo.setPauseTime(pauseTime);
+        
+        raFile.seek(10*512 + 2*258);
+        contrastUsed = (short)getSignedShort(endianess);
+        if (contrastUsed != 0) {
+            fileInfo.setContrastUsed("Contrast used");
+        }
+        else {
+            fileInfo.setContrastUsed("Contrast not used");
+        }
+        
+        if (contrastUsed != 0) {
+            // 10*512 + 2*259
+            contrastAgent = getString(10);
+            fileInfo.setContrastAgent(contrastAgent);
+            
+            // 10*512 + 2*264
+            contrastAmount = getFloat(endianess);
+            fileInfo.setContrastAmount(contrastAmount);
+        } // if (contrastUsed != 0)
+        
+        raFile.seek(10*512 + 2*266);
+        fileFormat = (short)getSignedShort(endianess);
+        fileInfo.setFileFormat(fileFormat);
+        
+        // 10*512 + 2*267
+        autoCenterFrequency = (short)getSignedShort(endianess);
+        fileInfo.setAutoCenterFrequency(autoCenterFrequency);
         
         raFile.seek(14336);
         readBuffer(buffer);
