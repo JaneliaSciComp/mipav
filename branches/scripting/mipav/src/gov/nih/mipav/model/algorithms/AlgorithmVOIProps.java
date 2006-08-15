@@ -29,15 +29,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    public static final int PROCESS_PER_VOI            = 0;
+    public static final int PROCESS_PER_SLICE_AND_CONTOUR        = 1;
+    public static final int PROCESS_PER_SLICE          = 2;
+    
     /** The VOI on which to perform the calculations */
     private VOI activeVOI;
 
-    /** Whether to perform calculations on per-contour basis */
-    private boolean perContour = false;
-
-    /** Whether to perform calculations on per-slice basis */
-    private boolean perSlice = false;
-
+    /** How the VOI calculations should be performed (entire, contour, slice) */
+    private int processType = PROCESS_PER_VOI;
+    
     /** Vector to hold all properties calculated within the algorithm for later access */
     private Vector propertyList;
 
@@ -53,11 +54,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     /** both of these have graphic resources, but useful information and references. */
     private ModelImage srcImage; // references to the VOI curves we wlll act on.
 
-    /** Panel determines which statistics to calculate */
-    private JPanelStatisticsList statisticList; // collection of items to perform stats on
-
     /** Formatting for float values into strings */
-    private NumberFormat nf;
+    private DecimalFormat nf;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -68,7 +66,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  srcImg  image model that contain the VOI
      */
     public AlgorithmVOIProps(ModelImage srcImg) {
-        this(srcImg, false);
+        this(srcImg, PROCESS_PER_VOI);
     }
 
     /**
@@ -78,8 +76,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      * @param  sliceBySlice  perform the property calculations for each slice, rather than for whole volume of interest
      *                       (VOI).
      */
-    public AlgorithmVOIProps(ModelImage srcImg, boolean sliceBySlice) {
-        this(srcImg, null, sliceBySlice, 0);
+    public AlgorithmVOIProps(ModelImage srcImg, int processType) {
+        this(srcImg, processType, 0);
     }
 
     /**
@@ -91,17 +89,25 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      *                       (VOI).
      * @param  rangeFlag     DOCUMENT ME!
      */
-    public AlgorithmVOIProps(ModelImage srcImg, JPanelStatisticsList list, boolean sliceBySlice, int rangeFlag) {
-
-        nf = NumberFormat.getInstance();
+    public AlgorithmVOIProps(ModelImage srcImg,int pType,int rangeFlag) {
+        nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
         nf.setMinimumFractionDigits(0);
         nf.setGroupingUsed(false);
-
+        DecimalFormatSymbols dfs = nf.getDecimalFormatSymbols();
+        dfs.setDecimalSeparator('.');
+        nf.setDecimalFormatSymbols(dfs);
+        
+        
+        
         this.rangeFlag = rangeFlag;
         this.srcImage = srcImg;
-        this.statisticList = list;
-        perSlice = (srcImage.getNDims() == 2) ? true : sliceBySlice;
+        this.processType = pType;
+        
+        if (srcImage.getNDims() == 2) {
+            pType = PROCESS_PER_SLICE;
+        }
+  
         selectedVOIset = getActiveVOIs();
 
         if (selectedVOIset.size() == 0) {
@@ -121,7 +127,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
      */
     public void finalize() {
         srcImage = null;
-        statisticList = null;
         super.finalize();
     }
 
@@ -389,26 +394,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         return Float.valueOf(((VOIStatisticalProperties) propertyList.firstElement()).getProperty(VOIStatisticalProperties.volumeDescription)).floatValue();
     } // {return volume;}
 
+    
     /**
-     * reports if this algorithm is performing property calculations for each slice, rather than on the volume of
-     * interest (VOI) as a whole.
-     *
-     * @return  boolean
+     * Reports if algorithm is performing calcs per slice, per contour, or for entire VOI
+     * @return processType (int for process type)
      */
-    public boolean isCalculatedByContour() {
-        return perContour;
+    public int getProcessType() {
+        return processType;
     }
-
-    /**
-     * reports if this algorithm is performing property calculations for each slice, rather than on the volume of
-     * interest (VOI) as a whole.
-     *
-     * @return  boolean
-     */
-    public boolean isCalculatedBySlice() {
-        return perSlice;
-    }
-
+    
     /**
      * Accessor that indicates if the source image is a color image.
      *
@@ -464,15 +458,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
     }
 
     /**
-     * sets the list of items to calculate statistics for.
-     *
-     * @param  list  DOCUMENT ME!
-     */
-    public void setCalculationList(JPanelStatisticsList list) {
-        statisticList = list;
-    }
-
-    /**
      * Sets the String float formatter to trim to numDecimal number of decimals
      * @param numDecimal int number of decimals
      * @param doForce boolean force numDecimal or allow zero
@@ -485,27 +470,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         } else {
             nf.setMinimumFractionDigits(0);
         }
-    }
-
-    /**
-     * tells the algorithm to perform property calculations for each contour, rather than for the whole volume of
-     * interest (VOI).
-     *
-     * @param  byContour  DOCUMENT ME!
-     */
-    public void setPerContour(boolean byContour) {
-        perContour = byContour;
-    }
-
-    /**
-     * tells the algorithm to perform property calculations for each slice, rather than for the whole volume of interest
-     * (VOI). This method is not applicable to 2D images, and will merely reset the algorithm to act on each slice for
-     * 2D images.
-     *
-     * @param  bySlices  DOCUMENT ME!
-     */
-    public void setPerSlice(boolean bySlices) {
-        perSlice = (srcImage.getNDims() == 2) ? true : bySlices;
     }
 
     /**
@@ -579,14 +543,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float avgIntenB = 0;
         float stdDev = 0, stdDevR = 0, stdDevG = 0, stdDevB = 0;
         float totalStdDev = 0, totalStdDevR = 0, totalStdDevG = 0, totalStdDevB = 0;
-        float volume = 0;
         float sum = 0, sumR = 0, sumG = 0, sumB = 0, area = 0;
         float totalSum = 0, totalSumR = 0, totalSumG = 0, totalSumB = 0, totalArea = 0;
         float totalAxis = 0, totalEcc = 0;
         float totalMajorAxis = 0;
         float totalMinorAxis = 0;
         int nVox = 0, totalNVox = 0;
-        Point3Df cMass = new Point3Df(0, 0, 0);
         Point3Df totalC = new Point3Df(0, 0, 0);
         float[] imgBuffer;
         float[] tmpPAxis = null;
@@ -636,7 +598,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
         contours = selectedVOI.getCurves();
 
-        if (perContour == true) {
+        if (processType == PROCESS_PER_SLICE_AND_CONTOUR) {
             // since we're in a 2D image, contours.length should = 1
 
             for (int q = 0; q < contours.length; q++) {
@@ -657,12 +619,12 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                                                     srcImage.getFileInfo(0).getUnitsOfMeasure()[1],
                                                                                     tmpPAxis, tmpEcc, tmpMajorAxis,
                                                                                     tmpMinorAxis);
-                    statProperty.setProperty(statProperty.axisDescription + "0;" + r, nf.format(tmpPAxis[0]));
-                    statProperty.setProperty(statProperty.eccentricityDescription + "0;" + r,
+                    statProperty.setProperty(VOIStatisticList.axisDescription + "0;" + r, nf.format(tmpPAxis[0]));
+                    statProperty.setProperty(VOIStatisticList.eccentricityDescription + "0;" + r,
                                              nf.format(tmpEcc[0]));
-                    statProperty.setProperty(statProperty.majorAxisDescription + "0;" + r,
+                    statProperty.setProperty(VOIStatisticList.majorAxisDescription + "0;" + r,
                                              nf.format(tmpMajorAxis[0]));
-                    statProperty.setProperty(statProperty.minorAxisDescription + "0;" + r,
+                    statProperty.setProperty(VOIStatisticList.minorAxisDescription + "0;" + r,
                                              nf.format(tmpMinorAxis[0]));
 
                     Point3Df centerOfMass = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass();
@@ -674,7 +636,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
 
                     String comStr = nf.format(centerOfMass.x) + "\t" + nf.format(centerOfMass.y) + "\t" + nf.format(centerOfMass.z);
-                    statProperty.setProperty(statProperty.centerDescription + "0;" + r, comStr);
+                    statProperty.setProperty(VOIStatisticList.centerDescription + "0;" + r, comStr);
 
 
                     totalEcc += tmpEcc[0];
@@ -774,25 +736,25 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             totalMaxIntenBlue = maxIntenBlue;
                         }
 
-                        statProperty.setProperty(statProperty.minIntensity + "Red" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + "0;" + r,
                                                  nf.format(minIntenRed));
-                        statProperty.setProperty(statProperty.maxIntensity + "Red" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + "0;" + r,
                                                  nf.format(maxIntenRed));
-                        statProperty.setProperty(statProperty.minIntensity + "Green" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.minIntensity + "Green" + "0;" + r,
                                                  nf.format(minIntenGreen));
-                        statProperty.setProperty(statProperty.maxIntensity + "Green" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.maxIntensity + "Green" + "0;" + r,
                                                  nf.format(maxIntenGreen));
-                        statProperty.setProperty(statProperty.minIntensity + "Blue" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.minIntensity + "Blue" + "0;" + r,
                                                  nf.format(minIntenBlue));
-                        statProperty.setProperty(statProperty.maxIntensity + "Blue" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.maxIntensity + "Blue" + "0;" + r,
                                                  nf.format(maxIntenBlue));
-                        statProperty.setProperty(statProperty.avgIntensity + "Red" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.avgIntensity + "Red" + "0;" + r,
                                                  nf.format(avgIntenR));
-                        statProperty.setProperty(statProperty.avgIntensity + "Green" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.avgIntensity + "Green" + "0;" + r,
                                                  nf.format(avgIntenG));
-                        statProperty.setProperty(statProperty.avgIntensity + "Blue" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "0;" + r,
                                                  nf.format(avgIntenB));
-                        statProperty.setProperty(statProperty.quantityDescription + "0;" + r, nf.format(nVox));
+                        statProperty.setProperty(VOIStatisticList.quantityDescription + "0;" + r, nf.format(nVox));
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
@@ -826,18 +788,18 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             totalMaxIntensity = maxIntensity;
                         }
 
-                        statProperty.setProperty(statProperty.minIntensity + "0;" + r, nf.format(minIntensity));
-                        statProperty.setProperty(statProperty.maxIntensity + "0;" + r, nf.format(maxIntensity));
-                        statProperty.setProperty(statProperty.avgIntensity + "0;" + r, nf.format(avgInten));
-                        statProperty.setProperty(statProperty.quantityDescription + "0;" + r, nf.format(nVox));
+                        statProperty.setProperty(VOIStatisticList.minIntensity + "0;" + r, nf.format(minIntensity));
+                        statProperty.setProperty(VOIStatisticList.maxIntensity + "0;" + r, nf.format(maxIntensity));
+                        statProperty.setProperty(VOIStatisticList.avgIntensity + "0;" + r, nf.format(avgInten));
+                        statProperty.setProperty(VOIStatisticList.quantityDescription + "0;" + r, nf.format(nVox));
                     }
 
                     area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
-                    statProperty.setProperty(statProperty.areaDescription + "0;" + r, nf.format(area));
-                    statProperty.setProperty(statProperty.volumeDescription + "0;" + r, nf.format(area));
+                    statProperty.setProperty(VOIStatisticList.areaDescription + "0;" + r, nf.format(area));
+                    statProperty.setProperty(VOIStatisticList.volumeDescription + "0;" + r, nf.format(area));
 
                     // add perimeter
-                    statProperty.setProperty(statProperty.perimeterDescription + "0;" + r, nf.format(perimeter));
+                    statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;" + r, nf.format(perimeter));
 
                     totalArea += area;
 
@@ -863,11 +825,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         stdDevR = (float) Math.sqrt(sumR / cnt);
                         stdDevG = (float) Math.sqrt(sumG / cnt);
                         stdDevB = (float) Math.sqrt(sumB / cnt);
-                        statProperty.setProperty(statProperty.deviationDescription + "Red" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "0;" + r,
                                                  nf.format(stdDevR));
-                        statProperty.setProperty(statProperty.deviationDescription + "Green" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "0;" + r,
                                                  nf.format(stdDevG));
-                        statProperty.setProperty(statProperty.deviationDescription + "Blue" + "0;" + r,
+                        statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "0;" + r,
                                                  nf.format(stdDevB));
 
                         totalStdDevR += sumR;
@@ -884,7 +846,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         }
 
                         stdDev = (float) Math.sqrt(sum / cnt);
-                        statProperty.setProperty(statProperty.deviationDescription + "0;" + r, nf.format(stdDev));
+                        statProperty.setProperty(VOIStatisticList.deviationDescription + "0;" + r, nf.format(stdDev));
                         totalStdDev += sum;
                     }
                 }
@@ -892,52 +854,52 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
 
             if (showTotals == true) {
-                statProperty.setProperty(statProperty.axisDescription + "Total", nf.format(totalAxis));
-                statProperty.setProperty(statProperty.eccentricityDescription + "Total", nf.format(totalEcc));
-                statProperty.setProperty(statProperty.majorAxisDescription + "Total", nf.format(totalMajorAxis));
-                statProperty.setProperty(statProperty.minorAxisDescription + "Total", nf.format(totalMinorAxis));
+                statProperty.setProperty(VOIStatisticList.axisDescription + "Total", nf.format(totalAxis));
+                statProperty.setProperty(VOIStatisticList.eccentricityDescription + "Total", nf.format(totalEcc));
+                statProperty.setProperty(VOIStatisticList.majorAxisDescription + "Total", nf.format(totalMajorAxis));
+                statProperty.setProperty(VOIStatisticList.minorAxisDescription + "Total", nf.format(totalMinorAxis));
 
                 totalC.x *= srcImage.getFileInfo(0).getResolutions()[0];
                 totalC.y *= srcImage.getFileInfo(0).getResolutions()[1];
 
                 String comStr = nf.format(totalC.x) + "\t" + nf.format(totalC.y);
 
-                statProperty.setProperty(statProperty.centerDescription + "Total", comStr);
-                statProperty.setProperty(statProperty.areaDescription + "Total", nf.format(totalArea));
-                statProperty.setProperty(statProperty.volumeDescription + "Total", nf.format(totalArea));
-                statProperty.setProperty(statProperty.quantityDescription + "Total", nf.format(totalNVox));
-                statProperty.setProperty(statProperty.perimeterDescription + "Total", nf.format(totalPerimeter));
+                statProperty.setProperty(VOIStatisticList.centerDescription + "Total", comStr);
+                statProperty.setProperty(VOIStatisticList.areaDescription + "Total", nf.format(totalArea));
+                statProperty.setProperty(VOIStatisticList.volumeDescription + "Total", nf.format(totalArea));
+                statProperty.setProperty(VOIStatisticList.quantityDescription + "Total", nf.format(totalNVox));
+                statProperty.setProperty(VOIStatisticList.perimeterDescription + "Total", nf.format(totalPerimeter));
 
                 if (srcImage.isColorImage()) {
-                    statProperty.setProperty(statProperty.deviationDescription + "Red" + "Total",
+                    statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "Total",
                                              nf.format((float) Math.sqrt(totalStdDevR / totalNVox)));
-                    statProperty.setProperty(statProperty.deviationDescription + "Green" + "Total",
+                    statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "Total",
                                              nf.format((float) Math.sqrt(totalStdDevG / totalNVox)));
-                    statProperty.setProperty(statProperty.deviationDescription + "Blue" + "Total",
+                    statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "Total",
                                              nf.format((float) Math.sqrt(totalStdDevB / totalNVox)));
-                    statProperty.setProperty(statProperty.minIntensity + "Red" + "Total",
+                    statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + "Total",
                                              nf.format(totalMinIntenRed));
-                    statProperty.setProperty(statProperty.maxIntensity + "Red" + "Total",
+                    statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + "Total",
                                              nf.format(totalMaxIntenRed));
-                    statProperty.setProperty(statProperty.minIntensity + "Green" + "Total",
+                    statProperty.setProperty(VOIStatisticList.minIntensity + "Green" + "Total",
                                              nf.format(totalMinIntenGreen));
-                    statProperty.setProperty(statProperty.maxIntensity + "Green" + "Total",
+                    statProperty.setProperty(VOIStatisticList.maxIntensity + "Green" + "Total",
                                              nf.format(totalMaxIntenGreen));
-                    statProperty.setProperty(statProperty.minIntensity + "Blue" + "Total",
+                    statProperty.setProperty(VOIStatisticList.minIntensity + "Blue" + "Total",
                                              nf.format(totalMinIntenBlue));
-                    statProperty.setProperty(statProperty.maxIntensity + "Blue" + "Total",
+                    statProperty.setProperty(VOIStatisticList.maxIntensity + "Blue" + "Total",
                                              nf.format(totalMaxIntenBlue));
-                    statProperty.setProperty(statProperty.avgIntensity + "Red" + "Total",
+                    statProperty.setProperty(VOIStatisticList.avgIntensity + "Red" + "Total",
                                              nf.format(totalSumR / totalNVox));
-                    statProperty.setProperty(statProperty.avgIntensity + "Green" + "Total",
+                    statProperty.setProperty(VOIStatisticList.avgIntensity + "Green" + "Total",
                                              nf.format(totalSumG / totalNVox));
-                    statProperty.setProperty(statProperty.avgIntensity + "Blue" + "Total",
+                    statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "Total",
                                              nf.format(totalSumB / totalNVox));
                 } else {
-                    statProperty.setProperty(statProperty.minIntensity + "Total", nf.format(totalMinIntensity));
-                    statProperty.setProperty(statProperty.maxIntensity + "Total", nf.format(totalMaxIntensity));
-                    statProperty.setProperty(statProperty.avgIntensity + "Total", nf.format(totalSum / totalNVox));
-                    statProperty.setProperty(statProperty.deviationDescription + "Total",
+                    statProperty.setProperty(VOIStatisticList.minIntensity + "Total", nf.format(totalMinIntensity));
+                    statProperty.setProperty(VOIStatisticList.maxIntensity + "Total", nf.format(totalMaxIntensity));
+                    statProperty.setProperty(VOIStatisticList.avgIntensity + "Total", nf.format(totalSum / totalNVox));
+                    statProperty.setProperty(VOIStatisticList.deviationDescription + "Total",
                                              nf.format((float) Math.sqrt(totalStdDev / totalNVox)));
                 }
             }
@@ -950,10 +912,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                               srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
                                               srcImage.getFileInfo(0).getUnitsOfMeasure()[1], tmpPAxis, tmpEcc,
                                               tmpMajorAxis, tmpMinorAxis);
-            statProperty.setProperty(statProperty.axisDescription + "0;", nf.format(tmpPAxis[0]));
-            statProperty.setProperty(statProperty.eccentricityDescription + "0;", nf.format(tmpEcc[0]));
-            statProperty.setProperty(statProperty.majorAxisDescription + "0;", nf.format(tmpMajorAxis[0]));
-            statProperty.setProperty(statProperty.minorAxisDescription + "0;", nf.format(tmpMinorAxis[0]));
+            statProperty.setProperty(VOIStatisticList.axisDescription + "0;", nf.format(tmpPAxis[0]));
+            statProperty.setProperty(VOIStatisticList.eccentricityDescription + "0;", nf.format(tmpEcc[0]));
+            statProperty.setProperty(VOIStatisticList.majorAxisDescription + "0;", nf.format(tmpMajorAxis[0]));
+            statProperty.setProperty(VOIStatisticList.minorAxisDescription + "0;", nf.format(tmpMinorAxis[0]));
 
             Point3Df selectedCOM = selectedVOI.getCenterOfMass();
 
@@ -961,13 +923,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             selectedCOM.y *= srcImage.getFileInfo(0).getResolutions()[1];
 
             String comStr = nf.format(selectedCOM.x) + "\t" + nf.format(selectedCOM.y);
-            statProperty.setProperty(statProperty.centerDescription + "0;", comStr);
+            statProperty.setProperty(VOIStatisticList.centerDescription + "0;", comStr);
 
-            statProperty.setProperty(statProperty.axisDescription, nf.format(tmpPAxis[0]));
-            statProperty.setProperty(statProperty.eccentricityDescription, nf.format(tmpEcc[0]));
-            statProperty.setProperty(statProperty.majorAxisDescription, nf.format(tmpMajorAxis[0]));
-            statProperty.setProperty(statProperty.minorAxisDescription, nf.format(tmpMinorAxis[0]));
-            statProperty.setProperty(statProperty.centerDescription, comStr);
+            statProperty.setProperty(VOIStatisticList.axisDescription, nf.format(tmpPAxis[0]));
+            statProperty.setProperty(VOIStatisticList.eccentricityDescription, nf.format(tmpEcc[0]));
+            statProperty.setProperty(VOIStatisticList.majorAxisDescription, nf.format(tmpMajorAxis[0]));
+            statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(tmpMinorAxis[0]));
+            statProperty.setProperty(VOIStatisticList.centerDescription, comStr);
 
             selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                                          srcImage.getParentFrame().useXOR(), false);
@@ -984,8 +946,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
             }
 
-            statProperty.setProperty(statProperty.perimeterDescription, nf.format(totalPerimeter));
-            statProperty.setProperty(statProperty.perimeterDescription + "0;", nf.format(totalPerimeter));
+            statProperty.setProperty(VOIStatisticList.perimeterDescription, nf.format(totalPerimeter));
+            statProperty.setProperty(VOIStatisticList.perimeterDescription + "0;", nf.format(totalPerimeter));
 
             if (srcImage.isColorImage()) {
 
@@ -1029,27 +991,27 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 avgIntenG = sumG / nVox;
                 avgIntenB = sumB / nVox;
 
-                statProperty.setProperty(statProperty.minIntensity + "Red" + "0;", nf.format(minIntenRed));
-                statProperty.setProperty(statProperty.maxIntensity + "Red" + "0;", nf.format(maxIntenRed));
-                statProperty.setProperty(statProperty.minIntensity + "Green" + "0;", nf.format(minIntenGreen));
-                statProperty.setProperty(statProperty.maxIntensity + "Green" + "0;", nf.format(maxIntenGreen));
-                statProperty.setProperty(statProperty.minIntensity + "Blue" + "0;", nf.format(minIntenBlue));
-                statProperty.setProperty(statProperty.maxIntensity + "Blue" + "0;", nf.format(maxIntenBlue));
-                statProperty.setProperty(statProperty.avgIntensity + "Red" + "0;", nf.format(avgIntenR));
-                statProperty.setProperty(statProperty.avgIntensity + "Green" + "0;", nf.format(avgIntenG));
-                statProperty.setProperty(statProperty.avgIntensity + "Blue" + "0;", nf.format(avgIntenB));
-                statProperty.setProperty(statProperty.quantityDescription + "0;", nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Red" + "0;", nf.format(minIntenRed));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Red" + "0;", nf.format(maxIntenRed));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Green" + "0;", nf.format(minIntenGreen));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Green" + "0;", nf.format(maxIntenGreen));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Blue" + "0;", nf.format(minIntenBlue));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Blue" + "0;", nf.format(maxIntenBlue));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Red" + "0;", nf.format(avgIntenR));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Green" + "0;", nf.format(avgIntenG));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue" + "0;", nf.format(avgIntenB));
+                statProperty.setProperty(VOIStatisticList.quantityDescription + "0;", nf.format(nVox));
 
-                statProperty.setProperty(statProperty.minIntensity + "Red", nf.format(minIntenRed));
-                statProperty.setProperty(statProperty.maxIntensity + "Red", nf.format(maxIntenRed));
-                statProperty.setProperty(statProperty.minIntensity + "Green", nf.format(minIntenGreen));
-                statProperty.setProperty(statProperty.maxIntensity + "Green", nf.format(maxIntenGreen));
-                statProperty.setProperty(statProperty.minIntensity + "Blue", nf.format(minIntenBlue));
-                statProperty.setProperty(statProperty.maxIntensity + "Blue", nf.format(maxIntenBlue));
-                statProperty.setProperty(statProperty.avgIntensity + "Red", nf.format(avgIntenR));
-                statProperty.setProperty(statProperty.avgIntensity + "Green", nf.format(avgIntenG));
-                statProperty.setProperty(statProperty.avgIntensity + "Blue", nf.format(avgIntenB));
-                statProperty.setProperty(statProperty.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Red", nf.format(minIntenRed));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Red", nf.format(maxIntenRed));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Green", nf.format(minIntenGreen));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Green", nf.format(maxIntenGreen));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "Blue", nf.format(minIntenBlue));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "Blue", nf.format(maxIntenBlue));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Red", nf.format(avgIntenR));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Green", nf.format(avgIntenG));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "Blue", nf.format(avgIntenB));
+                statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
             } else {
 
                 for (int i = 0; i < length; i++) {
@@ -1070,23 +1032,23 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 avgInten = sum / nVox;
 
-                statProperty.setProperty(statProperty.minIntensity + "0;", nf.format(minIntensity));
-                statProperty.setProperty(statProperty.maxIntensity + "0;", nf.format(maxIntensity));
-                statProperty.setProperty(statProperty.avgIntensity + "0;", nf.format(avgInten));
-                statProperty.setProperty(statProperty.quantityDescription + "0;", nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.minIntensity + "0;", nf.format(minIntensity));
+                statProperty.setProperty(VOIStatisticList.maxIntensity + "0;", nf.format(maxIntensity));
+                statProperty.setProperty(VOIStatisticList.avgIntensity + "0;", nf.format(avgInten));
+                statProperty.setProperty(VOIStatisticList.quantityDescription + "0;", nf.format(nVox));
 
-                statProperty.setProperty(statProperty.minIntensity, nf.format(minIntensity));
-                statProperty.setProperty(statProperty.maxIntensity, nf.format(maxIntensity));
-                statProperty.setProperty(statProperty.avgIntensity, nf.format(avgInten));
-                statProperty.setProperty(statProperty.quantityDescription, nf.format(nVox));
+                statProperty.setProperty(VOIStatisticList.minIntensity, nf.format(minIntensity));
+                statProperty.setProperty(VOIStatisticList.maxIntensity, nf.format(maxIntensity));
+                statProperty.setProperty(VOIStatisticList.avgIntensity, nf.format(avgInten));
+                statProperty.setProperty(VOIStatisticList.quantityDescription, nf.format(nVox));
             }
 
             area = nVox * (fileInfo[0].getResolutions()[0] * fileInfo[0].getResolutions()[1]);
-            statProperty.setProperty(statProperty.areaDescription + "0;", nf.format(area));
-            statProperty.setProperty(statProperty.volumeDescription + "0;", nf.format(area));
+            statProperty.setProperty(VOIStatisticList.areaDescription + "0;", nf.format(area));
+            statProperty.setProperty(VOIStatisticList.volumeDescription + "0;", nf.format(area));
 
-            statProperty.setProperty(statProperty.areaDescription, nf.format(area));
-            statProperty.setProperty(statProperty.volumeDescription, nf.format(area));
+            statProperty.setProperty(VOIStatisticList.areaDescription, nf.format(area));
+            statProperty.setProperty(VOIStatisticList.volumeDescription, nf.format(area));
 
             // calculate standard deviation
             sum = sumR = sumG = sumB = 0;
@@ -1110,13 +1072,13 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stdDevR = (float) Math.sqrt(sumR / cnt);
                 stdDevG = (float) Math.sqrt(sumG / cnt);
                 stdDevB = (float) Math.sqrt(sumB / cnt);
-                statProperty.setProperty(statProperty.deviationDescription + "Red" + "0;", nf.format(stdDevR));
-                statProperty.setProperty(statProperty.deviationDescription + "Green" + "0;", nf.format(stdDevG));
-                statProperty.setProperty(statProperty.deviationDescription + "Blue" + "0;", nf.format(stdDevB));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Red" + "0;", nf.format(stdDevR));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Green" + "0;", nf.format(stdDevG));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue" + "0;", nf.format(stdDevB));
 
-                statProperty.setProperty(statProperty.deviationDescription + "Red", nf.format(stdDevR));
-                statProperty.setProperty(statProperty.deviationDescription + "Green", nf.format(stdDevG));
-                statProperty.setProperty(statProperty.deviationDescription + "Blue", nf.format(stdDevB));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Red", nf.format(stdDevR));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Green", nf.format(stdDevG));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "Blue", nf.format(stdDevB));
             } else {
 
                 for (int i = 0; i < length; i++) {
@@ -1128,8 +1090,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
 
                 stdDev = (float) Math.sqrt(sum / cnt);
-                statProperty.setProperty(statProperty.deviationDescription + "0;", nf.format(stdDev));
-                statProperty.setProperty(statProperty.deviationDescription, nf.format(stdDev));
+                statProperty.setProperty(VOIStatisticList.deviationDescription + "0;", nf.format(stdDev));
+                statProperty.setProperty(VOIStatisticList.deviationDescription, nf.format(stdDev));
             }
 
 
@@ -1224,20 +1186,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
         float ignoreMax = selectedVOI.getMaximumIgnore();
 
         contours = selectedVOI.getCurves();
-        if ( perSlice == true || perContour == true ) {
+        if ( processType == PROCESS_PER_SLICE || processType == PROCESS_PER_SLICE_AND_CONTOUR ) {
             // since we're in a 3D image, contours.length is how many slices this VOI is on
             for ( int q = 0; q < contours.length; q++ ) {
                 int stop = 1;
                 String end = q + ";";
 
-                if ( perContour == true ) {
+                if ( processType == PROCESS_PER_SLICE_AND_CONTOUR ) {
                     stop = contours[q].size();
                 }
                 if ( contours[q].size() < 1 ) {
                     stop = 0;
                 }
                 for ( int r = 0; r < stop; r++ ) {
-                    if ( perContour == true ) {
+                    if ( processType == PROCESS_PER_SLICE_AND_CONTOUR ) {
                         end = q + ";" + r;
                     }
 
@@ -1256,10 +1218,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                       srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
                       srcImage.getFileInfo(0).getUnitsOfMeasure()[1],
                       tmpPAxis, tmpEcc, tmpMajorAxis, tmpMinorAxis );
-                    statProperty.setProperty( statProperty.axisDescription + end, nf.format( tmpPAxis[0] ) );
-                    statProperty.setProperty( statProperty.eccentricityDescription + end, nf.format( tmpEcc[0] ) );
-                    statProperty.setProperty( statProperty.majorAxisDescription + end, nf.format( tmpMajorAxis[0] ) );
-                    statProperty.setProperty( statProperty.minorAxisDescription + end, nf.format( tmpMinorAxis[0] ) );
+                    statProperty.setProperty( VOIStatisticList.axisDescription + end, nf.format( tmpPAxis[0] ) );
+                    statProperty.setProperty( VOIStatisticList.eccentricityDescription + end, nf.format( tmpEcc[0] ) );
+                    statProperty.setProperty( VOIStatisticList.majorAxisDescription + end, nf.format( tmpMajorAxis[0] ) );
+                    statProperty.setProperty( VOIStatisticList.minorAxisDescription + end, nf.format( tmpMinorAxis[0] ) );
 
                     Point3Df centerOfMass = ((VOIContour) (contours[q].elementAt(r))).getCenterOfMass();
                     centerOfMass.x *= srcImage.getFileInfo(0).getResolutions()[0];
@@ -1270,7 +1232,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     String comStr = nf.format(centerOfMass.x) + "\t" + nf.format(centerOfMass.y) + "\t" + nf.format(centerOfMass.z);
 
-                    statProperty.setProperty( statProperty.centerDescription + end, comStr );
+                    statProperty.setProperty( VOIStatisticList.centerDescription + end, comStr );
 
 
                     totalEcc += tmpEcc[0];
@@ -1288,7 +1250,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     //for ( int m = 0; m < mask.size(); m++ ) {
                     //    mask.clear( m );
                     //}
-                    if ( perSlice == true ) {
+                    if ( processType == PROCESS_PER_SLICE ) {
                         for ( int rr = 0; rr < contours[q].size(); rr++ ) {
                             ( (VOIContour) ( contours[q].elementAt( rr ) ) ).setActive( true );
                         }
@@ -1297,7 +1259,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     }
                     selectedVOI.createActiveContourBinaryMask( srcImage.getExtents()[0], srcImage.getExtents()[1], q,
                             mask, true );
-                    if ( perSlice == true ) {
+                    if ( processType == PROCESS_PER_SLICE ) {
                         for ( int rr = 0; rr < contours[q].size(); rr++ ) {
                             ( (VOIContour) ( contours[q].elementAt( rr ) ) ).setActive( false );
                         }
@@ -1307,7 +1269,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                     Point3Df[] pts = selectedVOI.maxWidth();
 
-                    statProperty.setProperty( statProperty.maxWidthDescription + end,
+                    statProperty.setProperty( VOIStatisticList.maxWidthDescription + end,
                             nf.format(
                             Math.sqrt(
                                     ( pts[1].x - pts[0].x ) * fileInfo[q].getResolutions()[0] * ( pts[1].x - pts[0].x )
@@ -1384,20 +1346,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             totalMaxIntenBlue = maxIntenBlue;
                         }
 
-                        statProperty.setProperty( statProperty.minIntensity + "Red" + end, nf.format( minIntenRed ) );
-                        statProperty.setProperty( statProperty.maxIntensity + "Red" + end, nf.format( maxIntenRed ) );
-                        statProperty.setProperty( statProperty.minIntensity + "Green" + end,
+                        statProperty.setProperty( VOIStatisticList.minIntensity + "Red" + end, nf.format( minIntenRed ) );
+                        statProperty.setProperty( VOIStatisticList.maxIntensity + "Red" + end, nf.format( maxIntenRed ) );
+                        statProperty.setProperty( VOIStatisticList.minIntensity + "Green" + end,
                                 nf.format( minIntenGreen ) );
-                        statProperty.setProperty( statProperty.maxIntensity + "Green" + end,
+                        statProperty.setProperty( VOIStatisticList.maxIntensity + "Green" + end,
                                 nf.format( maxIntenGreen ) );
-                        statProperty.setProperty( statProperty.minIntensity + "Blue" + end,
+                        statProperty.setProperty( VOIStatisticList.minIntensity + "Blue" + end,
                                 nf.format( minIntenBlue ) );
-                        statProperty.setProperty( statProperty.maxIntensity + "Blue" + end,
+                        statProperty.setProperty( VOIStatisticList.maxIntensity + "Blue" + end,
                                 nf.format( maxIntenBlue ) );
-                        statProperty.setProperty( statProperty.avgIntensity + "Red" + end, nf.format( avgIntenR ) );
-                        statProperty.setProperty( statProperty.avgIntensity + "Green" + end, nf.format( avgIntenG ) );
-                        statProperty.setProperty( statProperty.avgIntensity + "Blue" + end, nf.format( avgIntenB ) );
-                        statProperty.setProperty( statProperty.quantityDescription + end, nf.format( nVox ) );
+                        statProperty.setProperty( VOIStatisticList.avgIntensity + "Red" + end, nf.format( avgIntenR ) );
+                        statProperty.setProperty( VOIStatisticList.avgIntensity + "Green" + end, nf.format( avgIntenG ) );
+                        statProperty.setProperty( VOIStatisticList.avgIntensity + "Blue" + end, nf.format( avgIntenB ) );
+                        statProperty.setProperty( VOIStatisticList.quantityDescription + end, nf.format( nVox ) );
                     } else {
                         minIntensity = Float.MAX_VALUE;
                         maxIntensity = -Float.MAX_VALUE;
@@ -1426,21 +1388,21 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             totalMaxIntensity = maxIntensity;
                         }
 
-                        statProperty.setProperty( statProperty.minIntensity + end, nf.format( minIntensity ) );
-                        statProperty.setProperty( statProperty.maxIntensity + end, nf.format( maxIntensity ) );
-                        statProperty.setProperty( statProperty.avgIntensity + end, nf.format( avgInten ) );
-                        statProperty.setProperty( statProperty.quantityDescription + end, nf.format( nVox ) );
+                        statProperty.setProperty( VOIStatisticList.minIntensity + end, nf.format( minIntensity ) );
+                        statProperty.setProperty( VOIStatisticList.maxIntensity + end, nf.format( maxIntensity ) );
+                        statProperty.setProperty( VOIStatisticList.avgIntensity + end, nf.format( avgInten ) );
+                        statProperty.setProperty( VOIStatisticList.quantityDescription + end, nf.format( nVox ) );
                     }
                     area = nVox * ( fileInfo[q].getResolutions()[0] * fileInfo[q].getResolutions()[1] );
-                    statProperty.setProperty( statProperty.areaDescription + end, nf.format( area ) );
+                    statProperty.setProperty( VOIStatisticList.areaDescription + end, nf.format( area ) );
                     volume = area * fileInfo[q].getResolutions()[2];
-                    statProperty.setProperty( statProperty.volumeDescription + end, nf.format( volume ) );
+                    statProperty.setProperty( VOIStatisticList.volumeDescription + end, nf.format( volume ) );
 
                     totalArea += area;
                     totalVolume += volume;
 
                     //add perimeter
-                    statProperty.setProperty( statProperty.perimeterDescription + end, nf.format(perimeter));
+                    statProperty.setProperty( VOIStatisticList.perimeterDescription + end, nf.format(perimeter));
 
                     // calculate standard deviation
                     sum = sumR = sumG = sumB = 0;
@@ -1465,11 +1427,11 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                         stdDevR = (float) Math.sqrt( sumR / cnt );
                         stdDevG = (float) Math.sqrt( sumG / cnt );
                         stdDevB = (float) Math.sqrt( sumB / cnt );
-                        statProperty.setProperty( statProperty.deviationDescription + "Red" + end,
+                        statProperty.setProperty( VOIStatisticList.deviationDescription + "Red" + end,
                                 nf.format( stdDevR ) );
-                        statProperty.setProperty( statProperty.deviationDescription + "Green" + end,
+                        statProperty.setProperty( VOIStatisticList.deviationDescription + "Green" + end,
                                 nf.format( stdDevG ) );
-                        statProperty.setProperty( statProperty.deviationDescription + "Blue" + end,
+                        statProperty.setProperty( VOIStatisticList.deviationDescription + "Blue" + end,
                                 nf.format( stdDevB ) );
 
                         totalStdDevR += sumR;
@@ -1485,7 +1447,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                             }
                         }
                         stdDev = (float) Math.sqrt( sum / cnt );
-                        statProperty.setProperty( statProperty.deviationDescription + end, nf.format( stdDev ) );
+                        statProperty.setProperty( VOIStatisticList.deviationDescription + end, nf.format( stdDev ) );
                         totalStdDev += sum;
                     }
                 }
@@ -1500,47 +1462,47 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
                 String comStr = nf.format(totalC.x) + "\t" + nf.format(totalC.y) + "\t" + nf.format(totalC.z);
 
-                statProperty.setProperty( statProperty.axisDescription + "Total", nf.format( totalAxis ) );
-                statProperty.setProperty( statProperty.eccentricityDescription + "Total", nf.format( totalEcc ) );
-                statProperty.setProperty( statProperty.majorAxisDescription + "Total", nf.format( totalMajorAxis ) );
-                statProperty.setProperty( statProperty.minorAxisDescription + "Total", nf.format( totalMinorAxis ) );
-                statProperty.setProperty( statProperty.centerDescription + "Total", comStr );
-                statProperty.setProperty( statProperty.areaDescription + "Total", nf.format( totalArea ) );
-                statProperty.setProperty( statProperty.volumeDescription + "Total", nf.format( totalVolume ) );
-                statProperty.setProperty( statProperty.quantityDescription + "Total", nf.format( totalNVox ) );
-                statProperty.setProperty( statProperty.perimeterDescription + "Total", nf.format( totalPerimeter ) );
+                statProperty.setProperty( VOIStatisticList.axisDescription + "Total", nf.format( totalAxis ) );
+                statProperty.setProperty( VOIStatisticList.eccentricityDescription + "Total", nf.format( totalEcc ) );
+                statProperty.setProperty( VOIStatisticList.majorAxisDescription + "Total", nf.format( totalMajorAxis ) );
+                statProperty.setProperty( VOIStatisticList.minorAxisDescription + "Total", nf.format( totalMinorAxis ) );
+                statProperty.setProperty( VOIStatisticList.centerDescription + "Total", comStr );
+                statProperty.setProperty( VOIStatisticList.areaDescription + "Total", nf.format( totalArea ) );
+                statProperty.setProperty( VOIStatisticList.volumeDescription + "Total", nf.format( totalVolume ) );
+                statProperty.setProperty( VOIStatisticList.quantityDescription + "Total", nf.format( totalNVox ) );
+                statProperty.setProperty( VOIStatisticList.perimeterDescription + "Total", nf.format( totalPerimeter ) );
 
                 if ( srcImage.isColorImage() ) {
-                    statProperty.setProperty( statProperty.deviationDescription + "Red" + "Total",
+                    statProperty.setProperty( VOIStatisticList.deviationDescription + "Red" + "Total",
                             nf.format( (float) Math.sqrt( totalStdDevR / totalNVox ) ) );
-                    statProperty.setProperty( statProperty.deviationDescription + "Green" + "Total",
+                    statProperty.setProperty( VOIStatisticList.deviationDescription + "Green" + "Total",
                             nf.format( (float) Math.sqrt( totalStdDevG / totalNVox ) ) );
-                    statProperty.setProperty( statProperty.deviationDescription + "Blue" + "Total",
+                    statProperty.setProperty( VOIStatisticList.deviationDescription + "Blue" + "Total",
                             nf.format( (float) Math.sqrt( totalStdDevB / totalNVox ) ) );
-                    statProperty.setProperty( statProperty.minIntensity + "Red" + "Total",
+                    statProperty.setProperty( VOIStatisticList.minIntensity + "Red" + "Total",
                             nf.format( totalMinIntenRed ) );
-                    statProperty.setProperty( statProperty.maxIntensity + "Red" + "Total",
+                    statProperty.setProperty( VOIStatisticList.maxIntensity + "Red" + "Total",
                             nf.format( totalMaxIntenRed ) );
-                    statProperty.setProperty( statProperty.minIntensity + "Green" + "Total",
+                    statProperty.setProperty( VOIStatisticList.minIntensity + "Green" + "Total",
                             nf.format( totalMinIntenGreen ) );
-                    statProperty.setProperty( statProperty.maxIntensity + "Green" + "Total",
+                    statProperty.setProperty( VOIStatisticList.maxIntensity + "Green" + "Total",
                             nf.format( totalMaxIntenGreen ) );
-                    statProperty.setProperty( statProperty.minIntensity + "Blue" + "Total",
+                    statProperty.setProperty( VOIStatisticList.minIntensity + "Blue" + "Total",
                             nf.format( totalMinIntenBlue ) );
-                    statProperty.setProperty( statProperty.maxIntensity + "Blue" + "Total",
+                    statProperty.setProperty( VOIStatisticList.maxIntensity + "Blue" + "Total",
                             nf.format( totalMaxIntenBlue ) );
-                    statProperty.setProperty( statProperty.avgIntensity + "Red" + "Total",
+                    statProperty.setProperty( VOIStatisticList.avgIntensity + "Red" + "Total",
                             nf.format( totalSumR / totalNVox ) );
-                    statProperty.setProperty( statProperty.avgIntensity + "Green" + "Total",
+                    statProperty.setProperty( VOIStatisticList.avgIntensity + "Green" + "Total",
                             nf.format( totalSumG / totalNVox ) );
-                    statProperty.setProperty( statProperty.avgIntensity + "Blue" + "Total",
+                    statProperty.setProperty( VOIStatisticList.avgIntensity + "Blue" + "Total",
                             nf.format( totalSumB / totalNVox ) );
                 } else {
-                    statProperty.setProperty( statProperty.minIntensity + "Total", nf.format( totalMinIntensity ) );
-                    statProperty.setProperty( statProperty.maxIntensity + "Total", nf.format( totalMaxIntensity ) );
-                    statProperty.setProperty( statProperty.avgIntensity + "Total",
+                    statProperty.setProperty( VOIStatisticList.minIntensity + "Total", nf.format( totalMinIntensity ) );
+                    statProperty.setProperty( VOIStatisticList.maxIntensity + "Total", nf.format( totalMaxIntensity ) );
+                    statProperty.setProperty( VOIStatisticList.avgIntensity + "Total",
                             nf.format( totalSum / totalNVox ) );
-                    statProperty.setProperty( statProperty.deviationDescription + "Total",
+                    statProperty.setProperty( VOIStatisticList.deviationDescription + "Total",
                             nf.format( (float) Math.sqrt( totalStdDev / totalNVox ) ) );
                 }
             }
@@ -1559,10 +1521,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                                                srcImage.getFileInfo(0).getUnitsOfMeasure()[0],
                                                srcImage.getFileInfo(0).getUnitsOfMeasure()[1],
                                                tmpPAxis, tmpEcc, tmpMajorAxis, tmpMinorAxis );
-            statProperty.setProperty( statProperty.axisDescription, nf.format( tmpPAxis[0] ) );
-            statProperty.setProperty( statProperty.eccentricityDescription, nf.format( tmpEcc[0] ) );
-            statProperty.setProperty( statProperty.majorAxisDescription, nf.format( tmpMajorAxis[0] ) );
-            statProperty.setProperty( statProperty.minorAxisDescription, nf.format( tmpMinorAxis[0] ) );
+            statProperty.setProperty( VOIStatisticList.axisDescription, nf.format( tmpPAxis[0] ) );
+            statProperty.setProperty( VOIStatisticList.eccentricityDescription, nf.format( tmpEcc[0] ) );
+            statProperty.setProperty( VOIStatisticList.majorAxisDescription, nf.format( tmpMajorAxis[0] ) );
+            statProperty.setProperty( VOIStatisticList.minorAxisDescription, nf.format( tmpMinorAxis[0] ) );
 
             Point3Df selectedCOM = selectedVOI.getCenterOfMass();
             selectedCOM.x *= srcImage.getFileInfo(0).getResolutions()[0];
@@ -1573,7 +1535,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
             String comStr = nf.format(selectedCOM.x) + "\t" + nf.format(selectedCOM.y) + "\t" + nf.format(selectedCOM.z);
 
-            statProperty.setProperty( statProperty.centerDescription, comStr );
+            statProperty.setProperty( VOIStatisticList.centerDescription, comStr );
 
             mask = new BitSet( imgBuffer.length );
             selectedVOI.createBinaryMask( mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
@@ -1614,16 +1576,16 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 avgIntenG = sumG / nVox;
                 avgIntenB = sumB / nVox;
 
-                statProperty.setProperty( statProperty.minIntensity + "Red", nf.format( minIntenRed ) );
-                statProperty.setProperty( statProperty.maxIntensity + "Red", nf.format( maxIntenRed ) );
-                statProperty.setProperty( statProperty.minIntensity + "Green", nf.format( minIntenGreen ) );
-                statProperty.setProperty( statProperty.maxIntensity + "Green", nf.format( maxIntenGreen ) );
-                statProperty.setProperty( statProperty.minIntensity + "Blue", nf.format( minIntenBlue ) );
-                statProperty.setProperty( statProperty.maxIntensity + "Blue", nf.format( maxIntenBlue ) );
-                statProperty.setProperty( statProperty.avgIntensity + "Red", nf.format( avgIntenR ) );
-                statProperty.setProperty( statProperty.avgIntensity + "Green", nf.format( avgIntenG ) );
-                statProperty.setProperty( statProperty.avgIntensity + "Blue", nf.format( avgIntenB ) );
-                statProperty.setProperty( statProperty.quantityDescription, nf.format( nVox ) );
+                statProperty.setProperty( VOIStatisticList.minIntensity + "Red", nf.format( minIntenRed ) );
+                statProperty.setProperty( VOIStatisticList.maxIntensity + "Red", nf.format( maxIntenRed ) );
+                statProperty.setProperty( VOIStatisticList.minIntensity + "Green", nf.format( minIntenGreen ) );
+                statProperty.setProperty( VOIStatisticList.maxIntensity + "Green", nf.format( maxIntenGreen ) );
+                statProperty.setProperty( VOIStatisticList.minIntensity + "Blue", nf.format( minIntenBlue ) );
+                statProperty.setProperty( VOIStatisticList.maxIntensity + "Blue", nf.format( maxIntenBlue ) );
+                statProperty.setProperty( VOIStatisticList.avgIntensity + "Red", nf.format( avgIntenR ) );
+                statProperty.setProperty( VOIStatisticList.avgIntensity + "Green", nf.format( avgIntenG ) );
+                statProperty.setProperty( VOIStatisticList.avgIntensity + "Blue", nf.format( avgIntenB ) );
+                statProperty.setProperty( VOIStatisticList.quantityDescription, nf.format( nVox ) );
             } else {
                 for ( int i = 0; i < imgBuffer.length; i++ ) {
                     if ( mask.get( i ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i] ) ) {
@@ -1639,10 +1601,10 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
                 avgInten = sum / nVox;
 
-                statProperty.setProperty( statProperty.minIntensity, nf.format( minIntensity ) );
-                statProperty.setProperty( statProperty.maxIntensity, nf.format( maxIntensity ) );
-                statProperty.setProperty( statProperty.avgIntensity, nf.format( avgInten ) );
-                statProperty.setProperty( statProperty.quantityDescription, nf.format( nVox ) );
+                statProperty.setProperty( VOIStatisticList.minIntensity, nf.format( minIntensity ) );
+                statProperty.setProperty( VOIStatisticList.maxIntensity, nf.format( maxIntensity ) );
+                statProperty.setProperty( VOIStatisticList.avgIntensity, nf.format( avgInten ) );
+                statProperty.setProperty( VOIStatisticList.quantityDescription, nf.format( nVox ) );
             }
 
             //calc the perimeter
@@ -1655,14 +1617,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 }
             }
 
-            statProperty.setProperty( statProperty.perimeterDescription, nf.format(totalPerimeter));
-            statProperty.setProperty( statProperty.perimeterDescription + "0;", nf.format(totalPerimeter));
+            statProperty.setProperty( VOIStatisticList.perimeterDescription, nf.format(totalPerimeter));
+            statProperty.setProperty( VOIStatisticList.perimeterDescription + "0;", nf.format(totalPerimeter));
 
 
             area = nVox * ( fileInfo[fileInfo.length/2].getResolutions()[0] * fileInfo[fileInfo.length/2].getResolutions()[1] );
             volume = area * fileInfo[fileInfo.length/2].getResolutions()[2];
-            statProperty.setProperty( statProperty.areaDescription, nf.format( area ) );
-            statProperty.setProperty( statProperty.volumeDescription, nf.format( volume ) );
+            statProperty.setProperty( VOIStatisticList.areaDescription, nf.format( area ) );
+            statProperty.setProperty( VOIStatisticList.volumeDescription, nf.format( volume ) );
 
             // calculate standard deviation
             sum = sumR = sumG = sumB = 0;
@@ -1682,9 +1644,9 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                 stdDevR = (float) Math.sqrt( sumR / cnt );
                 stdDevG = (float) Math.sqrt( sumG / cnt );
                 stdDevB = (float) Math.sqrt( sumB / cnt );
-                statProperty.setProperty( statProperty.deviationDescription + "Red", nf.format( stdDevR ) );
-                statProperty.setProperty( statProperty.deviationDescription + "Green", nf.format( stdDevG ) );
-                statProperty.setProperty( statProperty.deviationDescription + "Blue", nf.format( stdDevB ) );
+                statProperty.setProperty( VOIStatisticList.deviationDescription + "Red", nf.format( stdDevR ) );
+                statProperty.setProperty( VOIStatisticList.deviationDescription + "Green", nf.format( stdDevG ) );
+                statProperty.setProperty( VOIStatisticList.deviationDescription + "Blue", nf.format( stdDevB ) );
             } else {
                 for ( int i = 0; i < imgBuffer.length; i++ ) {
                     if ( mask.get( i ) && !inRange( ignoreMin, ignoreMax, imgBuffer[i] ) ) {
@@ -1693,7 +1655,7 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     }
                 }
                 stdDev = (float) Math.sqrt( sum / cnt );
-                statProperty.setProperty( statProperty.deviationDescription, nf.format( stdDev ) );
+                statProperty.setProperty( VOIStatisticList.deviationDescription, nf.format( stdDev ) );
             }
         }
         setCompleted( true );
@@ -1784,30 +1746,6 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             }
         }
 
-    }
-
-    /**
-     * method to decide if a particular string is in the list. case insensitive.
-     *
-     * @param   str   string
-     * @param   list  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    private boolean isStatistic(String str, ViewList[] list) {
-
-        if (statisticList != null) {
-            return statisticList.getSelectedList(str);
-        }
-
-        for (int a = 0; a < list.length; a++) {
-
-            if (list[a].getString().equalsIgnoreCase(str) && (list[a].getState() == true)) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
 }
