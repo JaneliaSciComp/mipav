@@ -57,7 +57,7 @@ import javax.vecmath.*;
  *           operation followed by an erosion operation.</p>
  *
  *           <p>6.) Erode blueSegImage with iters erosion iterations so as to be able to ID separate cells which are
- *           touching. iters is a user specified variable with a default of 6.</p>
+ *           touching. iters is a user specified variable with a default of 8 for 2D and 6 for 3D.</p>
  *
  *           <p>7.) Assign positive integer IDs to each object between blueMin and 200,000 pixels in size in the 2D
  *           program or between blueMin and 2,000,000 pixels in size in the 3D program. blueSegImage now has 0 for
@@ -84,25 +84,23 @@ import javax.vecmath.*;
  *           order geometric centers and the first order centers of mass are found. d.) Expand the nucleus to which the
  *           VOI belongs to include the VOI.</p>
  *
- *           <p>14.) Process IDArray objects one at a time. a.) Find the xCenter, yCenter, zCenter of each ID object
- *           where these centers are zero order moments or geometric centers. b.) Create a byteArray with pixels for
- *           that ID object equal to 1 and all the other pixels = 0. c.) Import byteArray into blueSegImage. d.) Run a
- *           dilation on blueSegImage and export the result to dilateArray. e.) At every point where dilateArray = 1 and
- *           byteArray = 0, set boundaryArray = to the id of that object. For every point on the boundary find the
- *           square of the distance to the center of the object and if this square distance is the lowest yet noted, put
- *           the value in lowestSquare. If this square distance is the highest yet noted, put the value in
- *           highestSquare. f.) After examining all points in the image, the program records the Rmin distance from the
- *           center to edge as the square root of lowestSquare and the Rmax distance from the center to the edge as the
- *           square root of highestSquare. g.) The program finds the radius that a sphere of the same volume would have
- *           using radius = cube root of (volume/(4/3*PI)). 15.) Determine nucleus-VOI distances a.) Determine the
- *           distance from the center of the ID object to the zero order center of the VOI. Find the distance of the
- *           line segment that passes thru these 2 points and terminates at the cell surface. Find the distance from the
- *           center of the ID object to the first order center of the VOI. Find the distance of the line segment that
- *           passes thru these 2 points and terminates at the cell surface. b.) For each point in boundaryArray equal to
- *           obectID calculate the square of the distance between the center of the VOI and the current boundary point
- *           and if the square distance is the lowest yet noted, put the value in lowestSquare. Done for both zero and
- *           first order VOI centers. c.) After examining all the points in the image, the program records the distance
- *           from the center of the VOI to the edge of the object as the square root of lowestSquare.</p>
+ *           <p>14.) Process IDArray objects one at a time. a.) Ellipse fit blue IDArray objects with first and second
+ *           moments to calculate the length of the 3 semiaxes.  b.) Find the zero order moments of each blue IDArray
+ *           object. c.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0.
+ *           d.) Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray.
+ *           e.) At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that object.
+ *           For every point on the boundary find the square of the distance to the center of the object and if this
+ *           square distance is the lowest yet noted, put the value in lowestSquare. If this square distance is the
+ *           highest yet noted, put the value in highestSquare. f.) After examining all points in the image, the program
+ *           records the Rmin distance from the center to edge as the square root of lowestSquare and the Rmax distance
+ *           from the center to the edge as the square root of highestSquare. g.) Put points on the boundary of each blue
+ *           ID object into a second ellipsoid fitting program that uses the peripheral points to find the 3 semiaxes.
+ *           h.) Nuclei volumes are found from the blue count multiplied by the x, y, and z resolutions.
+ *           15.) Determine nucleus-VOI distances a.) Determine the distance from the center of the ID object to
+ *           the zero order center of the VOI. Find the distance of the line segment that passes thru these 2 points
+ *           and terminates at the cell surface. b.) Find the distance from the center of the ID object to the first
+ *           order center of the VOI. Find the distance of the line segment that passes thru these 2 points and
+ *           terminates at the cell surface. </p>
  *
  *           <p>Scheme for automatic VOI generation: 1.) Create a red image. 2.) Median filter the red image. 3.) Obtain
  *           histogram information on the red image. Set the threshold so that the redFraction portion of the
@@ -117,9 +115,10 @@ import javax.vecmath.*;
  *           holes from green VOIs. 15.) Smooth green with a morphological opening followed by a closing. 16.) ID
  *           objects in green segmented image which have at least greenMin pixels. Split greenIDArray objects apart into 2
  *           or 3 greenIDArray objects if they go between 2 or 3 cells. 17.) Sort red objects by red intensity count into
- *           a sorted red array. Have a separate sorted array for each nucleus. Put no more than 10 red objects into the
+ *           a sorted red array. Have a separate sorted array for each nucleus. Put no more than redNumber red objects into the
  *           sorted red array for each nucleus. 18.) Sort green objects by green intensity count into a sorted green
- *           array. Have a separate sorted green array for each nucleus. 19.) Create byteBuffer with value = 0 if no
+ *           array. Have a separate sorted green array for each nucleus. Put no more than greenNumber green objects
+ *           into the sorted green array for each nucleus.  19.) Create byteBuffer with value = 0 if no
  *           sorted object is present at that position and use a separate positive index for each red or green voi.
  *           Create an accompanying color table to set for each nucleus the largest red voi to color yellow, the other
  *           red vois to a color yellow.darker(), the largest green voi to color pink, and the other green vois to color
