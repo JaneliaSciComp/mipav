@@ -347,11 +347,14 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 //		 PFH		ShowImage(fatImage, "fatB");
 		
 		// label all pixels outside the VOI as subcutaneous fat
+//		 PFH		ShowImage(fatImage, "BEFORE outside fat");
 		convert(fatImage, voiMask, fatImage, 0, SUB_CUT_FAT);
-//		 PFH		ShowImage(fatImage, "outside fat");
+//		 PFH		ShowImage(fatImage, "AFTER outside fat");
+//		 PFH		ShowImage(voiMask, "voiMask");
 		
 		// relabel pixels outside the outer boundary mask as background
 		convert(fatImage, obMask, fatImage, 0, BACKGROUND_NEW);	/**all outside obMask labeled background*/
+//		 PFH		ShowImage(obMask, "obMask");
 //		 PFH		ShowImage(fatImage, "background");
 
 		// apply a fat cardinality filter to get rid of small regions of fat
@@ -1060,6 +1063,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             voiMask = null;
             obMask.disposeLocal();
             obMask = null;
+//          PFH            ShowImage(fatSeg, "FAT seg");
 
             //STEP 7: MERGING PROCESSED THIGH IMAGES
             mergeImages(fatSeg, boneSeg, fatSeg);			//ShowImage(destImage3b, "after 'merge'");
