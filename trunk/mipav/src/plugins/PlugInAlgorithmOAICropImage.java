@@ -671,7 +671,12 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         
         
         // This just smooths out the boundaries of the mask image
-        Close(obMask, 24);  /*section added to eliminate results of shading artifact on obMask*/
+//      PFH        ShowImage(obMask, "OBM before");
+        // PFH I commented this out because the first three slices of obMask
+        //     were the same after this operation.  It looked like the mask was dilated
+        //     but not eroded back properly.  The last slices did not have this problem
+//        Close(obMask, 24);  /*section added to eliminate results of shading artifact on obMask*/
+//      PFH        ShowImage(obMask, "OBM after");
 
         int[] extentA = new int[3];
         int[] extentB = new int[3];
