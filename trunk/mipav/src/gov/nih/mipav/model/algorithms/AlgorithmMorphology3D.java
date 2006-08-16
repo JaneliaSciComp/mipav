@@ -1713,9 +1713,11 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         startZ = offsetZ * sliceSize;
                         endZ = startZ + stepZ;
 
-                        if (startZ < 0) {
-                            startZ = 0;
-                        }
+                        // Took this out and check it later.  This caused the a subtle error by setting
+                        // a pixel on an incorrect slice
+//                        if (startZ < 0) {
+//                            startZ = 0;
+//                        }
 
                         if (endZ > imgSize) {
                             endZ = imgSize;
@@ -1739,23 +1741,31 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
 kernelLoop:
                         for (k = startZ; k < endZ; k += sliceSize) {
-                            startY = k + indexY;
-                            endY = k + indexYU;
+                        	// only work on valid pixels
+                        	// essentially process only the overlap between
+                        	// valid image and kernel slices                       	if (k >= 0) {
+                        		startY = k + indexY;
+                        		endY = k + indexYU;
 
-                            for (j = startY; j < endY; j += xDim) {
-                                startX = j + offsetX;
-                                endX = j + offsetXU;
+                        		for (j = startY; j < endY; j += xDim) {
+                        			startX = j + offsetX;
+                        			endX = j + offsetXU;
 
-                                for (i = startX; i < endX; i++) {
+                        			for (i = startX; i < endX; i++) {
 
-                                    if (kernel.get(count) == true) {
-                                        processBuffer[i] = value;
-                                    }
+                        				if (kernel.get(count) == true) {
+                        					processBuffer[i] = value;
+                        				}
 
-                                    count++;
-                                }
-                            }
-                        }
+                        				count++;
+                        			}
+                        		}
+                        	} else {
+                        		// jump to the next kernel slice as the current slice
+                        		// overlaps invalid image slices
+                        		count += kDimXY * kDimXY;
+                        	}  // end if (k > 0) {} else {}
+                        } // end for (k = startZ; ...)
                     }
                 } else {
                     processBuffer[pix] = imgBuffer[pix];
@@ -2086,9 +2096,11 @@ kernelLoop:
                         startZ = offsetZ * sliceSize;
                         endZ = startZ + stepZ;
 
-                        if (startZ < 0) {
-                            startZ = 0;
-                        }
+                        // Took this out and check it later.  This caused the a subtle error by setting
+                        // a pixel on an incorrect slice
+//                        if (startZ < 0) {
+//                            startZ = 0;
+//                        }
 
                         if (endZ > imgSize) {
                             endZ = imgSize;
@@ -2112,24 +2124,33 @@ kernelLoop:
 
 kernelLoop:
                         for (k = startZ; k < endZ; k += sliceSize) {
-                            startY = k + indexY;
-                            endY = k + indexYU;
+                        	// only process on valid image slices
+                        	// essentially process only the overlap between
+                        	// valid image and kernel slices
+                        	if (k >= 0) {
+                        		startY = k + indexY;
+                        		endY = k + indexYU;
 
-                            for (j = startY; j < endY; j += xDim) {
-                                startX = j + offsetX;
-                                endX = j + offsetXU;
+                        		for (j = startY; j < endY; j += xDim) {
+                        			startX = j + offsetX;
+                        			endX = j + offsetXU;
 
-                                for (i = startX; i < endX; i++) {
+                        			for (i = startX; i < endX; i++) {
 
-                                    if ((kernel.get(count) == true) && (imgBuffer[i] == 0)) {
-                                        clear = true;
+                        				if ((kernel.get(count) == true) && (imgBuffer[i] == 0)) {
+                        					clear = true;
 
-                                        break kernelLoop;
-                                    }
+                        					break kernelLoop;
+                        				}
 
-                                    count++;
-                                }
-                            }
+                        				count++;
+                        			}
+                        		}
+                        	}  else {
+                        		// jump to the next kernel slice as the current 
+                        		// image slice overlaps invalid image slices
+                        		count += kDimXY * kDimXY;
+                        	}  // end if (k > 0) {} else {}
                         }
                     }
 
