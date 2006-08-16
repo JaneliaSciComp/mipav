@@ -1743,7 +1743,8 @@ kernelLoop:
                         for (k = startZ; k < endZ; k += sliceSize) {
                         	// only work on valid pixels
                         	// essentially process only the overlap between
-                        	// valid image and kernel slices                       	if (k >= 0) {
+                        	// valid image and kernel slices
+                        	if (k >= 0) {
                         		startY = k + indexY;
                         		endY = k + indexYU;
 
