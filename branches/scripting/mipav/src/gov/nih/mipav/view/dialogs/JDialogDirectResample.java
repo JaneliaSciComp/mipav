@@ -2,9 +2,15 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubsample;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.JPanelColorChannels;
+import gov.nih.mipav.view.components.JPanelSigmas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -17,7 +23,7 @@ import javax.swing.*;
  *
  * @author  Ruida Cheng
  */
-public class JDialogDirectResample extends JDialogBase {
+public class JDialogDirectResample extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -25,9 +31,6 @@ public class JDialogDirectResample extends JDialogBase {
     private static final long serialVersionUID = 2885627426314170051L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** Component image. */
-    ViewJComponentEditImage componentImage;
 
     /** Number of available dimension. */
     int dim;
@@ -48,7 +51,7 @@ public class JDialogDirectResample extends JDialogBase {
     boolean forceResample = false;
 
     /** Model images A and B. */
-    ModelImage imageA, imageB;
+    ModelImage image, imageB;
 
     /** Left panel and right panels corresponding to original and expected extents. */
     JPanel leftPanel, rightPanel;
@@ -63,13 +66,9 @@ public class JDialogDirectResample extends JDialogBase {
     float[] res;
 
     /** Temp Model image. */
-    ModelImage resampledImage = null;
-
-    /** Parent ViewJFrameImage. */
-    ViewJFrameImage resampledImageFrame;
-
-    /** Resampled model images A and B. */
-    ModelImage resImageA, resImageB;
+    ModelImage resultImage = null;
+    
+    ModelImage resultImageB = null;
 
     /** Parent ui. */
     ViewUserInterface userInterface;
@@ -80,40 +79,13 @@ public class JDialogDirectResample extends JDialogBase {
     /** Volume size X*Y*Z. */
     int volSize = 1;
 
+    ViewJFrameImage resampledImageFrame = null;
+    
+    /** The algorithm */
+    AlgorithmTransform algoTransform;
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
-    /**
-     * Creates a new JDialogDirectResample object.
-     *
-     * @param  _imageA          DOCUMENT ME!
-     * @param  _imageB          DOCUMENT ME!
-     * @param  _userInterface   DOCUMENT ME!
-     * @param  _componentImage  DOCUMENT ME!
-     */
-    public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB, ViewUserInterface _userInterface,
-                                 ViewJComponentEditImage _componentImage) {
-        super(_userInterface.getMainFrame(), false);
-        this.imageA = _imageA;
-        this.imageB = _imageB;
-        resImageA = _imageA;
-        resImageB = _imageB;
-        this.userInterface = _userInterface;
-        this.componentImage = _componentImage;
-        extents = imageA.getExtents();
-        res = imageA.getFileInfo(0).getResolutions();
-        this.dim = extents.length;
-
-        for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = dimPowerOfTwo(extents[i]);
-            volSize *= volExtents[i];
-
-            if (volExtents[i] != extents[i]) {
-                originalVolPowerOfTwo = false;
-            }
-
-            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
-        }
-    }
 
     /**
      * Creates the dialog, using the input parameters to place it on the screen.
@@ -124,18 +96,13 @@ public class JDialogDirectResample extends JDialogBase {
      * @param  _componentImage       Dicom converted to Java image.
      * @param  _resampledImageFrame  Parent image frame ViewJFrameImage.
      */
-    public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB, ViewUserInterface _userInterface,
-                                 ViewJComponentEditImage _componentImage, ViewJFrameImage _resampledImageFrame) {
+    public JDialogDirectResample(ModelImage _imageA, ModelImage _imageB, ViewUserInterface _userInterface) {
         super(_userInterface.getMainFrame(), false);
-        this.imageA = _imageA;
+        this.image = _imageA;
         this.imageB = _imageB;
-        resImageA = _imageA;
-        resImageB = _imageB;
         this.userInterface = _userInterface;
-        this.componentImage = _componentImage;
-        this.resampledImageFrame = _resampledImageFrame;
-        extents = imageA.getExtents();
-        res = imageA.getFileInfo(0).getResolutions();
+        extents = image.getExtents();
+        res = image.getFileInfo(0).getResolutions();
         this.dim = extents.length;
 
         for (int i = 0; i < extents.length; i++) {
@@ -152,6 +119,12 @@ public class JDialogDirectResample extends JDialogBase {
         init();
     }
 
+    /**
+     * Empty Contructor for script running
+     *
+     */
+    public JDialogDirectResample() { }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -189,7 +162,7 @@ public class JDialogDirectResample extends JDialogBase {
                 }
             }
 
-            doResample();
+            callAlgorithm();
             dispose();
         } else if (command.equals("Cancel")) {
             dispose();
@@ -240,85 +213,168 @@ public class JDialogDirectResample extends JDialogBase {
     /**
      * Resample images to power of 2.
      */
-    public void doResample() {
-        AlgorithmTransform transformImg;
+    public void callAlgorithm() {
 
-        if (forceResample) {
-
-            // resample imageA
+        if (forceResample && resultImage == null) {
+            // resample image
             if (dim >= 3) {
-                transformImg = new AlgorithmTransform(imageA, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
+                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
                                                       newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
                                                       volExtents[2], false, true, false);
             } else {
-                transformImg = new AlgorithmTransform(imageA, new TransMatrix(4), AlgorithmTransform.BILINEAR,
+                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), AlgorithmTransform.BILINEAR,
                                                       newRes[0], newRes[1], volExtents[0], volExtents[1], false, true,
                                                       false);
             }
-
-            transformImg.setRunningInSeparateThread(false);
+            algoTransform.addListener(this);
 
             if (!userInterface.isAppFrameVisible()) {
-                transformImg.setProgressBarVisible(false);
+                algoTransform.setProgressBarVisible(false);
             }
 
-            transformImg.run();
+            if (isRunInSeparateThread()) {
 
-            if (transformImg.isCompleted() == false) {
-                // What to do
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (algoTransform.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                if (!userInterface.isAppFrameVisible()) {
+                    algoTransform.setProgressBarVisible(false);
+                }
+
+                algoTransform.run();
             }
-
-            resampledImage = transformImg.getTransformedImage();
-            resampledImage.calcMinMax();
-
-            resampledImageFrame = new ViewJFrameImage(resampledImage, null, new Dimension(200, 200));
-            resImageA = resampledImage;
-            transformImg.disposeLocal();
-            transformImg = null;
+            return;
         }
 
         // resample imageB
         if ((imageB != null) && forceResample) {
-
             // Resample image into volume that is a power of two !
             Preferences.debug("ViewJFrameSurfaceRenderer.buildTexture: Volume resampled.");
 
             if (dim >= 3) {
-                transformImg = new AlgorithmTransform(imageB, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
+                algoTransform = new AlgorithmTransform(imageB, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
                                                       newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
                                                       volExtents[2], false, true, false);
             } else {
-                transformImg = new AlgorithmTransform(imageA, new TransMatrix(4),
+                algoTransform = new AlgorithmTransform(imageB, new TransMatrix(4),
 
                                                       // AlgorithmTransform.CUBIC_LAGRANGIAN,
                                                       AlgorithmTransform.BILINEAR, newRes[0], newRes[1], volExtents[0],
                                                       volExtents[1], false, true, false);
 
             }
+            algoTransform.addListener(this);
 
-            transformImg.setRunningInSeparateThread(false);
+            if (isRunInSeparateThread()) {
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (algoTransform.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                if (!userInterface.isAppFrameVisible()) {
+                    algoTransform.setProgressBarVisible(false);
+                }
 
-            if (!userInterface.isAppFrameVisible()) {
-                transformImg.setProgressBarVisible(false);
+                algoTransform.run();
             }
-
-            transformImg.run();
-
-            if (transformImg.isCompleted() == false) {
-                // What to do
-            }
-
-            resampledImage = transformImg.getTransformedImage();
-            resampledImage.calcMinMax();
-
-            resImageB = resampledImage;
-            resampledImageFrame.setImageB(resImageB);
-            transformImg.disposeLocal();
-            transformImg = null;
         }
-
     }
 
+    /**
+     * Algorithm notifies dialog of status
+     */
+    public void algorithmPerformed(AlgorithmBase algo) {
+        if (algo instanceof AlgorithmTransform) {
+            if (algoTransform.isCompleted()) {
+
+                
+                if (resultImage == null) {
+                    resultImage = algoTransform.getTransformedImage();
+                    resultImage.calcMinMax();
+
+                    
+                    algoTransform.disposeLocal();
+                    algoTransform = null;
+                    
+                    if (imageB != null) {
+                        callAlgorithm();
+                        return;
+                    } else {
+                        resampledImageFrame = new ViewJFrameImage(resultImage, null, new Dimension(200, 200));
+                        insertScriptLine();
+                    }
+                    return;
+                } else if (imageB != null) {
+                    resultImageB = algoTransform.getTransformedImage();
+                    resultImageB.calcMinMax();
+                    
+                    algoTransform.disposeLocal();
+                    algoTransform = null;
+                    
+                    resampledImageFrame = new ViewJFrameImage(resultImage, null, new Dimension(200, 200));
+                    resampledImageFrame.setImageB(resultImageB);
+                    resampledImageFrame.setControls();
+                    resampledImageFrame.setTitle();
+                    insertScriptLine();
+                }   
+            }
+        }
+    }
+    
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+        if (resultImageB != null) {
+            AlgorithmParameters.storeImageInRunner(resultImageB);
+        }
+    }
+
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        
+        image = scriptParameters.retrieveInputImage();
+       
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        imageB = ((ViewJFrameImage)parentFrame).getImageB(); // can be null      
+        
+        extents = image.getExtents();
+        res = image.getFileInfo(0).getResolutions();
+        dim = extents.length;
+
+        for (int i = 0; i < extents.length; i++) {
+            volExtents[i] = dimPowerOfTwo(extents[i]);
+            volSize *= volExtents[i];
+
+            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
+        }
+
+        this.originalVolPowerOfTwo = false;  //force this to act regardless (script expects a result image)
+        forceResample = true;
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     * 
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.storeOutputImageParams(resultImage, true);
+        if (resultImageB != null) {
+            scriptParameters.storeOutputImageParams(resultImageB, true);
+        }
+        
+    }
+    
     /**
      * Build the resample dialog.
      */
