@@ -1986,7 +1986,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("TransformNL")) {
             new JDialogTransformBSpline(this, getActiveImage());
         } else if (command.equals("Transform to power of 2")) {
-            new JDialogDirectResample(imageA, imageB, userInterface, componentImage, this);
+            new JDialogDirectResample(imageA, imageB, userInterface);
         } else if (command.equals("TransformNL")) {
             new JDialogTransformNL(this, getActiveImage());
         }
