@@ -11,7 +11,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-import java.io.*;
 
 import java.util.*;
 
@@ -116,7 +115,7 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         super(theParentFrame, true);
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         ViewVOIVector VOIs = null;
 
@@ -149,22 +148,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             voiColor = VOIs.VOIAt(groupNum).getColor();
             srcVOI = VOIs.VOIAt(groupNum);
         } // if (nVOI > 0)
-
-        init();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui  User interface.
-     * @param  im  Source image.
-     */
-    public JDialogExtractObject(ViewUserInterface ui, ModelImage im) {
-        super();
-        setForeground(Color.black);
-        image = im;
-        this.userInterface = ui;
 
         init();
     }
@@ -286,13 +269,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
 
             image.calcMinMax();
             image.notifyImageDisplayListeners(null, true);
-
-            if (extractObjectAlgo.isCompleted() == true) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().append("ExtractObject" + "\n");
-                }
-            }
         }
     }
 
@@ -428,11 +404,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         }
 
         if (image.getNDims() != testImage.getNDims()) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Error! " + image.getImageName() + " is " + image.getNDims() + "D, while " +
                                    testImage.getImageName() + " is " + testImage.getNDims() + "D");
 
@@ -442,11 +413,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         for (int i = 0; i < image.getNDims(); i++) {
 
             if ((testImage != null) && (image.getExtents()[i] != testImage.getExtents()[i])) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().removeLine();
-                }
-
                 MipavUtil.displayError("Error! For dimension = " + i + " " + image.getImageName() + " has length = " +
                                        image.getExtents()[i] + " while " + testImage.getImageName() + " has length = " +
                                        testImage.getExtents()[i]);
@@ -477,9 +443,9 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(justInitCheckbox, gbc);
 
@@ -488,9 +454,9 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         saveGVFCheckBox.setSelected(false);
         saveGVFCheckBox.addItemListener(this);
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(saveGVFCheckBox, gbc);
 
@@ -525,9 +491,9 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         surPanel.add(chooserPanel, BorderLayout.SOUTH);
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(surPanel, gbc);
 
@@ -562,9 +528,9 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
         gvfPanel.add(chooserPanel2, BorderLayout.SOUTH);
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 3;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(gvfPanel, gbc);
 

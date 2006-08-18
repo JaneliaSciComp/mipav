@@ -6,7 +6,6 @@ import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
-import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
 import gov.nih.mipav.view.*;
 
@@ -130,45 +129,52 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         init();
     }
 
-   
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    public void storeParamsFromGUI(){
-        try{
-            scriptParameters.storeInputImage(image);
-            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight",distWeight));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb",radiusCb));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr",radiusCr));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY",radiusY));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("reduce",reduce)); 
-        }catch (ParserException pe){
-            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
-        }  
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight",distWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb",radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr",radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY",radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reduce",reduce));
      }
     
-    public void setGUIFromParams(){
-        // TODO ModelImage image;   does this need to be retreived??
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
         distWeight = scriptParameters.getParams().getFloat("distWeight");
         radiusCb = scriptParameters.getParams().getFloat("radiusCb");
         radiusCr = scriptParameters.getParams().getFloat("radiusCr");
         radiusY = scriptParameters.getParams().getFloat("radiusY");
         reduce = scriptParameters.getParams().getBoolean("reduce");
     }
- 
     
     /**
      * {@inheritDoc}
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
     
-     
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
      *
@@ -187,7 +193,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10005");
         }
-
     }
 
     // ************************************************************************
@@ -201,8 +206,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAdaptiveNR) {
             image.clearMask();
 
@@ -213,7 +216,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -459,7 +462,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -474,7 +477,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.gridx = 0;

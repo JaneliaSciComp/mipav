@@ -164,7 +164,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
     public JDialogUnsharpMask(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
     }
@@ -324,7 +324,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
@@ -764,7 +764,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -840,7 +840,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc2.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.gridx = 0;

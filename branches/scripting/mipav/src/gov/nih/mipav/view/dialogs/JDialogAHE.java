@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -42,12 +43,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
     private AlgorithmAHE aheAlgo = null;
 
     /** DOCUMENT ME! */
-    private boolean blue = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox blueChannel;
-
-    /** DOCUMENT ME! */
     private boolean clamp = false;
 
     /** DOCUMENT ME! */
@@ -75,28 +70,13 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
     private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
-    private boolean green = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox greenChannel;
-
-    /** DOCUMENT ME! */
     private int heightDivisions; // divide image into number of images (say, into threes)
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private boolean isColorImage = false; // indicates the image is a color image
-
-    /** DOCUMENT ME! */
     private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private boolean red = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox redChannel;
 
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
@@ -112,6 +92,8 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private int widthDivisions;
+    
+    private JPanelColorChannels colorPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -136,32 +118,9 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
             return;
         }
 
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAHE(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -221,9 +180,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAHE) {
             image.clearMask();
 
@@ -234,7 +190,7 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -269,7 +225,10 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         aheAlgo.finalize();
         aheAlgo = null;
         dispose();
@@ -285,58 +244,52 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         return resultImage;
     }
 
-  
-
-
-
-    
+    /**
+     * {@inheritDoc}
+     */
     protected void storeParamsFromGUI() throws ParserException{
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blue",blue));
+        scriptParameters.storeColorOptions(colorPanel);
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("clamp",clamp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("clampValue",clampValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("green",green));
         scriptParameters.getParams().put(ParameterFactory.newParameter("heightDivisions",heightDivisions));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isColorImage",isColorImage));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("red",red));
         scriptParameters.getParams().put(ParameterFactory.newParameter("widthDivisions",widthDivisions));
-     }
-    
+    }
 
-
-
-/**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+    /**
+     * {@inheritDoc}
      */
-    protected  void setGUIFromParams(){
-        blue = scriptParameters.getParams().getBoolean("blue");
+    protected  void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        colorPanel = new JPanelColorChannels(image);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+        
         clamp = scriptParameters.getParams().getBoolean("clamp");
         clampValue = scriptParameters.getParams().getInt("clampValue");
-        displayLoc = scriptParameters.getParams().getInt("displayLoc");
-        green = scriptParameters.getParams().getBoolean("green");
         heightDivisions = scriptParameters.getParams().getInt("heightDivisions");
-        isColorImage = scriptParameters.getParams().getBoolean("isColorImage");
-        red = scriptParameters.getParams().getBoolean("red");
         widthDivisions = scriptParameters.getParams().getInt("widthDivisions");
     }
-    
 
-    
-    
-    
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-     public void doPostAlgorithmActions() {
+     protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }    
-    
     
     /**
      * Accessor that sets the clamp flag.
@@ -381,21 +334,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
     }
 
     /**
-     * RGB images are histogram equalized by 'channel.' That is, each color, red, blue and green, is run independently
-     * of the other two colors. This permits selectively filtering any combination of the three channels instead of
-     * simply trying to handle all three at once. True filters that channel.
-     *
-     * @param  r  DOCUMENT ME!
-     * @param  g  DOCUMENT ME!
-     * @param  b  DOCUMENT ME!
-     */
-    public void setRGBChannelFilter(boolean r, boolean g, boolean b) {
-        red = r;
-        green = g;
-        blue = b;
-    }
-
-    /**
      * Accessor that sets the width divisions.
      *
      * @param  value  Value to set width divisions to.
@@ -412,8 +350,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
     protected void makeNumericsOnly(JTextField txt) {
         txt.addKeyListener(new KeyAdapter() { // make the field
                 public void keyTyped(KeyEvent evt) { // not accept letters
-
-                    JTextField t = (JTextField) evt.getComponent();
                     char ch = evt.getKeyChar();
 
                     if (((ch < '0') || (ch > '9')) && ((ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE))) {
@@ -495,7 +431,7 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
 
                 // Make algorithm
                 aheAlgo = new AlgorithmAHE(resultImage, image, heightDivisions, widthDivisions);
-                aheAlgo.setRGBChannelFilter(red, green, blue);
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -538,7 +474,7 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 aheAlgo = new AlgorithmAHE(image, heightDivisions, widthDivisions);
-                aheAlgo.setRGBChannelFilter(red, green, blue);
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -708,40 +644,7 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         setupBox.add(paramPanel);
 
         // color channel selection goes here...
-        JPanel colorPanel = new JPanel();
-        colorPanel.setLayout(gbl);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 0;
-        colorPanel.setForeground(Color.black);
-
-        // set the border ... "color channel Selection"
-        colorPanel.setBorder(buildTitledBorder("Color channel selection"));
-        redChannel = new JCheckBox("Red channel", true);
-        redChannel.setFont(serif12);
-        gbl.setConstraints(redChannel, gbc);
-        colorPanel.add(redChannel);
-
-        greenChannel = new JCheckBox("Green channel", true);
-        greenChannel.setFont(serif12);
-        gbl.setConstraints(greenChannel, gbc);
-        colorPanel.add(greenChannel);
-
-        blueChannel = new JCheckBox("Blue channel", true);
-        blueChannel.setFont(serif12);
-        gbl.setConstraints(blueChannel, gbc);
-        colorPanel.add(blueChannel);
-
-        // if not a color image, block access to the channel switches
-        // since they don't mean anything
-        if (!isColorImage) {
-            redChannel.setEnabled(false);
-            greenChannel.setEnabled(false);
-            blueChannel.setEnabled(false);
-        }
-
-        colorPanel.setToolTipText("Each color channel can be equalized in any combination");
+        colorPanel = new JPanelColorChannels(image);
         setupBox.add(colorPanel);
 
         Box lowerBox = new Box(BoxLayout.X_AXIS);
@@ -809,10 +712,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
-
-        red = redChannel.isEnabled() && redChannel.isSelected();
-        green = greenChannel.isEnabled() && greenChannel.isSelected();
-        blue = blueChannel.isEnabled() && blueChannel.isSelected();
 
         if (clampImage.isSelected()) {
 

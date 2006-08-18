@@ -159,13 +159,6 @@ public class FFTUtility extends AlgorithmBase {
 
     /**
      * DOCUMENT ME!
-     */
-    public void setFunctionType() {
-        this.functionType = functionType;
-    }
-
-    /**
-     * DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */

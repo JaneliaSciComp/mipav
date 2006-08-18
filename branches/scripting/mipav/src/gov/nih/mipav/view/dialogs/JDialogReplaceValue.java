@@ -174,7 +174,7 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if (scriptParameters.getParams().containsParameter("replace_value")) {

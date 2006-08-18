@@ -8,9 +8,6 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
-import gov.nih.mipav.view.components.JPanelColorChannels;
-import gov.nih.mipav.view.components.JPanelSigmas;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -135,28 +132,30 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
     /**
      * {@inheritDoc}
      */
-    public void storeParamsFromGUI(){
-        try {
-            scriptParameters.storeInputImage(image);
-            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight", distWeight));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
-        } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered storing parameters for " + JDialogScriptableBase.getDialogActionString(getClass()) + "\n" + pe);
-        }  
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight", distWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
     }
 
     /**
      * {@inheritDoc}
      */
-    public void setGUIFromParams(){
+    protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
         
         distWeight = scriptParameters.getParams().getFloat("distWeight");
         radiusY = scriptParameters.getParams().getFloat("radiusY");
@@ -164,11 +163,11 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
         radiusCb = scriptParameters.getParams().getFloat("radiusCb");
         reduce = scriptParameters.getParams().getBoolean("reduce");
     }
-    
+
     /**
      * {@inheritDoc}
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
@@ -176,8 +175,8 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
     
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -206,8 +205,6 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAdaptiveSmooth) {
             image.clearMask();
 
@@ -218,7 +215,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -463,7 +460,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -478,7 +475,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.gridx = 0;

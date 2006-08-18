@@ -307,7 +307,7 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         panel.add(colorButton, gbc);
         gbc.gridx = 1;
@@ -361,7 +361,7 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
 
         cubePanel = new JPanel(new GridBagLayout());
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         cubePanel.add(cubicCheck, gbc);
         cubePanel.setBorder(buildTitledBorder("Orientation"));
@@ -390,7 +390,7 @@ public class JPanelDisplay extends JPanelRendererBase implements KeyListener {
         fineLabel.setForeground(Color.black);
         fineLabel.setRequestFocusEnabled(false);
         gbc.weightx = 0.5;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.insets = new Insets(1, 1, 1, 1);
         gbc.gridx = 0;
         gbc.gridy = 0;

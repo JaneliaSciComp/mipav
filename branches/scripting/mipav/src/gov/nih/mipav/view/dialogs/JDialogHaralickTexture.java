@@ -195,7 +195,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public JDialogHaralickTexture(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
@@ -362,7 +362,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         resultNumber = scriptParameters.getParams().getInt("number_of_result_images");

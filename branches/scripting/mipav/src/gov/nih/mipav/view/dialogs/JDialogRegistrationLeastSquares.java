@@ -87,7 +87,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
     public JDialogRegistrationLeastSquares(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         matchImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 

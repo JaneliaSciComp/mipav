@@ -128,8 +128,8 @@ public class JDialogGridOptions extends JDialogBase {
         gbc.weightx = 1;
         gbc.gridwidth = 1;
 
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
 
@@ -196,7 +196,7 @@ public class JDialogGridOptions extends JDialogBase {
 
         gbc.gridx = 5;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(colorButton, gbc);
 
         gbc.gridx = 0;

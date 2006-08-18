@@ -260,12 +260,12 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param  unequalDim     if true allow unequal FFT dimensions
      * @param  freqU          Frequency along U axis before rotation by theta range -1 to 1
      * @param  freqV          Frequency along V axis before rotation by theta range -1 to 1
-     * @param  simgaU         Destination image model
+     * @param  sigmaU         Destination image model
      * @param  sigmaV         Standard deviation along prerotated V axis
      * @param  theta          Rotation in radians
      */
     public AlgorithmFFT(ModelImage srcImg, int transformDir, boolean logMagDisplay, boolean unequalDim, float freqU,
-                        float freqV, float simgaU, float sigmaV, float theta) {
+                        float freqV, float sigmaU, float sigmaV, float theta) {
 
         super(null, srcImg);
 

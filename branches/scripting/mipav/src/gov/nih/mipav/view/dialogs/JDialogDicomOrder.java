@@ -76,7 +76,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
      */
     public JDialogDicomOrder(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         setForeground(Color.black);
         image = im;
         orient = image.getFileInfo()[0].getAxisOrientation();
@@ -452,7 +452,7 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
 
         setModal(false);
         image = im;
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         setForeground(Color.black);
         doClose = false;

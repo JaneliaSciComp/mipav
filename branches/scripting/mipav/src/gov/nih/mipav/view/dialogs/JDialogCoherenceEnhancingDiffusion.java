@@ -145,7 +145,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
      * Defaults to no action, override to actually have it do something.
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
             AlgorithmParameters.storeImageInRunner(getResultImage());
      }
     
@@ -327,7 +327,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(6, 6, 6, 6);
@@ -444,7 +444,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
 

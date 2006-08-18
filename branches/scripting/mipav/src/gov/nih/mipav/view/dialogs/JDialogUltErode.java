@@ -118,7 +118,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -308,7 +308,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
             setDisplayLocNew();
         } else {
@@ -634,7 +634,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);
@@ -670,7 +670,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(destinationPanel, gbc);
         gbc.gridx = 1;
         mainPanel.add(imageVOIPanel, gbc);

@@ -246,7 +246,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 

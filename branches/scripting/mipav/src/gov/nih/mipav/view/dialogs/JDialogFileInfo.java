@@ -525,14 +525,14 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
             secondaryModel.addColumn(columnNames[i]);
         }
 
-        primaryTable.setAutoResizeMode(primaryTable.AUTO_RESIZE_ALL_COLUMNS);
+        primaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         primaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         primaryTable.getColumn("Name").setMinWidth(160);
         primaryTable.getColumn("Name").setMaxWidth(500);
         primaryTable.getColumn("Value").setMinWidth(50);
         primaryTable.getColumn("Value").setMaxWidth(1000);
 
-        secondaryTable.setAutoResizeMode(secondaryTable.AUTO_RESIZE_ALL_COLUMNS);
+        secondaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         secondaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         secondaryTable.getColumn("Name").setMinWidth(160);
         secondaryTable.getColumn("Name").setMaxWidth(500);

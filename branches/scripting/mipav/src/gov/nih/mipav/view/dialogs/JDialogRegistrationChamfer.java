@@ -92,7 +92,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
     public JDialogRegistrationChamfer(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         matchImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -290,7 +290,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
         gbc.gridy = 0;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         regPanel.add(register2Dor3D, gbc);
         gbc.gridx = 1;
         regPanel.add(comboBox2or3D, gbc);

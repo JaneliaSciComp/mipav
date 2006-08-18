@@ -3,7 +3,6 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -83,11 +82,9 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
     public JDialogAutoCovariance(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
-
-   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -108,58 +105,61 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
             dispose();
         }
     }
-
-    
     
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected  void storeParamsFromGUI() throws ParserException{
-        try{
+        scriptParameters.storeInputImage(image);
+        
+        if (image.isColorImage()) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageR());
+            AlgorithmParameters.storeImageInRecorder(getResultImageG());
+            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        } else {
+            AlgorithmParameters.storeImageInRecorder(getResultImage());
+        }
+    }
 
-            scriptParameters.storeInputImage(image);
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("haveBlue",haveBlue));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("haveGreen",haveGreen));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("haveRed",haveRed));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("maxR",maxR));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("maxG",maxG));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("maxB",maxB));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("minR",minR));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("minG",minG));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("minB",minB));
-        }catch (ParserException pe){
-            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
-        }  
-    }
-    
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
-        haveBlue = scriptParameters.getParams().getBoolean("haveBlue");
-        haveGreen = scriptParameters.getParams().getBoolean("haveGreen");
-        haveRed = scriptParameters.getParams().getBoolean("haveRed");
-        maxR = scriptParameters.getParams().getDouble("maxR");
-        maxG = scriptParameters.getParams().getDouble("maxG");
-        maxB = scriptParameters.getParams().getDouble("maxB");
-        minR = scriptParameters.getParams().getDouble("minR");
-        minG = scriptParameters.getParams().getDouble("minG");
-        minB = scriptParameters.getParams().getDouble("minB");
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (image.isColorImage()) {
+            minR = image.getMinR();
+            maxR = image.getMaxR();
+            if (minR != maxR) {
+                haveRed = true;
+            }
+            minG = image.getMinG();
+            maxG = image.getMaxG();
+            if (minG != maxG) {
+                haveGreen = true;
+            }
+            minB = image.getMinB();
+            maxB = image.getMaxB();
+            if (minB != maxB) {
+                haveBlue = true;
+            }
+        }
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Register the result image(s) in the script runner.
      */
-    public void doPostAlgorithmActions() {
-             AlgorithmParameters.storeImageInRunner(getResultImage());
-             AlgorithmParameters.storeImageInRunner(getResultImageB());
-             AlgorithmParameters.storeImageInRunner(getResultImageG());
-             AlgorithmParameters.storeImageInRunner(getResultImageR());
-                }
+    protected void doPostAlgorithmActions() {
+        if (image.isColorImage()) {
+            AlgorithmParameters.storeImageInRunner(getResultImageB());
+            AlgorithmParameters.storeImageInRunner(getResultImageG());
+            AlgorithmParameters.storeImageInRunner(getResultImageR());
+        } else {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -172,10 +172,6 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-        ViewJFrameImage imageFrameR = null;
-        ViewJFrameImage imageFrameG = null;
-        ViewJFrameImage imageFrameB = null;
         int verticalPosition = 200;
 
         if (algorithm instanceof AlgorithmAutoCovariance) {
@@ -205,7 +201,7 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                     if (resultImageR != null) {
 
                         try {
-                            imageFrameR = new ViewJFrameImage(resultImageR, null, new Dimension(610, verticalPosition));
+                            new ViewJFrameImage(resultImageR, null, new Dimension(610, verticalPosition));
                             verticalPosition += 20;
                         } catch (OutOfMemoryError error) {
                             System.gc();
@@ -216,7 +212,7 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                     if (resultImageG != null) {
 
                         try {
-                            imageFrameG = new ViewJFrameImage(resultImageG, null, new Dimension(610, verticalPosition));
+                            new ViewJFrameImage(resultImageG, null, new Dimension(610, verticalPosition));
                             verticalPosition += 20;
                         } catch (OutOfMemoryError error) {
                             System.gc();
@@ -227,7 +223,7 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                     if (resultImageB != null) {
 
                         try {
-                            imageFrameB = new ViewJFrameImage(resultImageB, null, new Dimension(610, verticalPosition));
+                            new ViewJFrameImage(resultImageB, null, new Dimension(610, verticalPosition));
                         } catch (OutOfMemoryError error) {
                             System.gc();
                             MipavUtil.displayError("Out of memory: unable to open imageFrameB");
@@ -286,7 +282,7 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                     resultImage.clearMask();
 
                     try {
-                        imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -324,7 +320,10 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
             } // else image black and white
         } // if ( algorithm instanceof AlgorithmAutoCovariance)
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         dispose();
     }
 
@@ -513,9 +512,9 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 gbc.weightx = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 gbc.gridwidth = 1;
-                gbc.fill = gbc.BOTH;
+                gbc.fill = GridBagConstraints.BOTH;
                 gbc.insets = new Insets(5, 5, 5, 5);
 
                 if (haveRed) {
@@ -536,9 +535,9 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 gbc.weightx = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 gbc.gridwidth = 1;
-                gbc.fill = gbc.BOTH;
+                gbc.fill = GridBagConstraints.BOTH;
                 gbc.insets = new Insets(5, 5, 5, 5);
 
                 if (haveRed && haveGreen) {

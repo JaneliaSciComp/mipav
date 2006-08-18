@@ -138,7 +138,7 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
     public JDialogGaborFilter(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -261,7 +261,7 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {

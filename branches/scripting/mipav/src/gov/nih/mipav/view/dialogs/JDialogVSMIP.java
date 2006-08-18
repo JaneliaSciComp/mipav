@@ -96,7 +96,7 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
         }
 
         srcImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogVSMIP(...)
 

@@ -319,7 +319,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         scriptParameters.setOutputOptionsGUI(outputPanel);

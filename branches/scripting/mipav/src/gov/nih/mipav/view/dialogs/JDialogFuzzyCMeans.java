@@ -208,7 +208,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
     public JDialogFuzzyCMeans(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -338,7 +338,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         resultNumber = scriptParameters.getParams().getInt("number_of_result_images");

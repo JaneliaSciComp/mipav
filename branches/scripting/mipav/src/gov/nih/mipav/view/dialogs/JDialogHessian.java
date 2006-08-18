@@ -81,7 +81,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         super(frame, false);
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogHessian(...)
 
@@ -377,7 +377,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         hessianPanel.setForeground(Color.black);
         hessianPanel.setBorder(buildTitledBorder("Hessian"));
 
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
 

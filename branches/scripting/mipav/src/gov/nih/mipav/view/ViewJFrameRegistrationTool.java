@@ -2422,11 +2422,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         bothPanel.add(scrollPane, gbc);
 
         // the reference image will be displayed in this scrollpane
@@ -2752,7 +2752,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         bothPanel.add(topPanel, gbc);
 
         toolBarSep = buildRegistrationToolBar(this, false);
@@ -2762,7 +2762,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         separatePanel.add(toolBarSep, gbc);
 
         xfrm = new TransMatrix(3);

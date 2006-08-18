@@ -2391,7 +2391,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
-        if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
+        if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {

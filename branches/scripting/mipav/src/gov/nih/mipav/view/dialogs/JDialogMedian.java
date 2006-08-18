@@ -145,7 +145,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -306,7 +306,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
         scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iterations", iters));
+        scriptParameters.storeNumIterations(iters);
         scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
@@ -319,7 +319,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if (image.getType() == ModelImage.BOOLEAN) {
@@ -332,14 +332,14 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         scriptParameters.setOutputOptionsGUI(outputPanel);
         
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        setIters(scriptParameters.getParams().getInt("num_iterations"));
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        setIters(scriptParameters.getNumIterations());
         setStdDev(scriptParameters.getParams().getFloat("std_dev"));
         setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
         setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
         setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
         
-        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        boolean[] rgb = scriptParameters.doProcessRGB();
         setRed(rgb[0]);
         setGreen(rgb[1]);
         setBlue(rgb[2]);

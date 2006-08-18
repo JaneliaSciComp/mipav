@@ -267,7 +267,7 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         int tSlices = image.getExtents()[3];

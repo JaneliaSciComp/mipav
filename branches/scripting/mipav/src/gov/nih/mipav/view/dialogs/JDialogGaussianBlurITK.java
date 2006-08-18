@@ -88,7 +88,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
     public JDialogGaussianBlurITK(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
@@ -635,7 +635,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);

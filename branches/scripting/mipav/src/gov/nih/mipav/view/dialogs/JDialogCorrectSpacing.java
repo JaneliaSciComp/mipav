@@ -80,7 +80,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     public JDialogCorrectSpacing(JFrame parent, ModelImage image) {
         super(parent, false);
         this.image = image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         setVisible(false);
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();

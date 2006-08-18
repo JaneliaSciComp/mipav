@@ -452,7 +452,7 @@ public class JDialogExtractSurface extends JDialogScriptableBase implements Algo
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -464,7 +464,7 @@ public class JDialogExtractSurface extends JDialogScriptableBase implements Algo
         gbc.weightx = 0;
         imageVOIPanel.add(intensityLevelRB, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         imageVOIPanel.add(intensityTF, gbc);
 
@@ -474,7 +474,7 @@ public class JDialogExtractSurface extends JDialogScriptableBase implements Algo
         gbc.weightx = 0;
         imageVOIPanel.add(blurCheck, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         imageVOIPanel.add(blurTF, gbc);
 
@@ -491,7 +491,7 @@ public class JDialogExtractSurface extends JDialogScriptableBase implements Algo
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         JPanel filePanel = new JPanel(new GridBagLayout());
 
@@ -510,12 +510,12 @@ public class JDialogExtractSurface extends JDialogScriptableBase implements Algo
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         filePanel.add(fileButton, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         filePanel.add(fileTF, gbc);
 

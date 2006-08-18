@@ -4,7 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
@@ -22,7 +22,7 @@ import javax.swing.*;
  * require user input and to be consistent with the dialog/algorithm paradigm. In should be noted, that the algorithms
  * are executed in their own thread.** replaces image
  */
-public class JDialogConvert3Dto4D extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogConvert3Dto4D extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -39,13 +39,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private AlgorithmConvert3Dto4D convert3Dto4DAlgo;
-
-    /**
-     * Script records a closeFrame from the line ((ViewJFrameBase) parentFrame).close(); which calls
-     * ViewJFrameImage.close(). If executing script, don't call close() here or both this close() and the closeFrame
-     * would occur.
-     */
-    private boolean doClose = true;
 
     /** DOCUMENT ME! */
     private ModelImage image = null; // source image
@@ -75,9 +68,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
     private JTextField textVolumeLength;
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
@@ -100,13 +90,11 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         super(theParentFrame, false);
         image = im;
         imageName = image.getImageName();
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
-    
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
     
     /**
      * Record the parameters just used to run this algorithm in a script.
@@ -114,24 +102,29 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
      * @throws  ParserException  If there is a problem creating/recording the new parameters.
      */
     protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(image);       
-        scriptParameters.getParams().put(ParameterFactory.newParameter("volumeLength",volumeLength));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("res3",res3));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("res4",res4));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("measure3",measure3));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("measure4",measure4));
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("volume_length", volumeLength));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_resolution", res3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_resolution", res4));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_unit", measure3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_unit", measure4));
         
     }
     
     /**
      * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
-    protected void setGUIFromParams(){
-        volumeLength = scriptParameters.getParams().getInt("volumeLength");
-        res3 = scriptParameters.getParams().getFloat("res3");
-        res4 = scriptParameters.getParams().getFloat("res4");
-        measure3 = scriptParameters.getParams().getInt("measure3");
-        measure4 = scriptParameters.getParams().getInt("measure4");        
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        volumeLength = scriptParameters.getParams().getInt("volume_length");
+        res3 = scriptParameters.getParams().getFloat("3_dim_resolution");
+        res4 = scriptParameters.getParams().getFloat("4_dim_resolution");
+        measure3 = scriptParameters.getParams().getInt("3_dim_unit");
+        measure4 = scriptParameters.getParams().getInt("4_dim_unit");        
     }
     
     /**
@@ -141,7 +134,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
     protected void doPostAlgorithmActions() {        
          AlgorithmParameters.storeImageInRunner(getResultImage());
     }
-
     
     /**
      * Calls run on the algorithm from the script parser.
@@ -174,8 +166,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmConvert3Dto4D) {
             resultImage = convert3Dto4DAlgo.getResultImage();
 
@@ -193,7 +183,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
                 }
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, parentLocation);
+                    new ViewJFrameImage(resultImage, null, parentLocation);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -205,9 +195,11 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
-        if ((parentFrame != null) && doClose && !userInterface.isScriptRecording()) {
+        if ((parentFrame != null) && ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.RECORDING) {
             ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
             ((ViewJFrameBase) (parentFrame)).close();
         }
@@ -329,7 +321,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

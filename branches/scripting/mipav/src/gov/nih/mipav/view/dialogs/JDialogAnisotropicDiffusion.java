@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -41,9 +42,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private AlgorithmAnisotropicDiffusion diffusionAlgo;
 
-    /** DOCUMENT ME! */
-    private int displayLoc;
-
     /** Source image. */
     private ModelImage image;
 
@@ -58,51 +56,9 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private float konst;
-
-    /** DOCUMENT ME! */
-    private JLabel labelCorrected;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussZ;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /**
-     * Normalization factor to adjust for resolution difference between x,y resolutions (in plane) and z resolution
-     * (between planes).
-     */
-    private float normFactor = 1;
-
-    /** DOCUMENT ME! */
-    private boolean regionFlag;
-
-    /** GUI variables that need to be global in order to get info when the OK button is pressed. */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
-    private JCheckBox resolutionCheckbox;
-
+    
     /** Result image. */
     private ModelImage resultImage = null;
-
-    /** DOCUMENT ME! */
-    private float scaleX;
-
-    /** DOCUMENT ME! */
-    private float scaleY;
-
-    /** DOCUMENT ME! */
-    private float scaleZ;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussX;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussY;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussZ;
 
     /** DOCUMENT ME! */
     private JTextField textIters;
@@ -115,12 +71,10 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    private JPanelSigmas sigmaPanel;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -138,24 +92,10 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
     public JDialogAnisotropicDiffusion(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAnisotropicDiffusion(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -181,65 +121,52 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
             MipavUtil.showHelp("10007");
         }
     }
-
-    
-    
      
-   /** Record the parameters just used to run this algorithm in a script.
-    * 
-    * @throws  ParserException  If there is a problem creating/recording the new parameters.
-    */
-   protected void storeParamsFromGUI() throws ParserException{
-       
-       scriptParameters.storeInputImage(image);
-       scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-       
-       scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("image25D",image25D));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("iters",iters));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("konst",konst));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("normFactor",normFactor));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("regionFlag",regionFlag));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX",scaleX));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY",scaleY));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ",scaleZ));
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws ParserException If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+        
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        
+        scriptParameters.storeSigmas(sigmaPanel);
+        
+        scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusion_k", konst));
+    }
 
-   }
-   
-   /**
-    * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-    */
-   protected void setGUIFromParams(){
-       displayLoc = scriptParameters.getParams().getInt("displayLoc");
-       image25D = scriptParameters.getParams().getBoolean("image25D");
-       iters = scriptParameters.getParams().getInt("iters");
-       konst = scriptParameters.getParams().getFloat("konst");
-       normFactor = scriptParameters.getParams().getFloat("normFactor");
-       konst = scriptParameters.getParams().getFloat("konst");
-       regionFlag = scriptParameters.getParams().getBoolean("regionFlag");
-       scaleX = scriptParameters.getParams().getFloat("scaleX");
-       scaleY = scriptParameters.getParams().getFloat("scaleY");
-       scaleZ = scriptParameters.getParams().getFloat("scaleZ");
-             
-   }
-   
-   /**
-    * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-    * Defaults to no action, override to actually have it do something.
-    */
-    public void doPostAlgorithmActions() {
-       if (displayLoc == NEW) {
-           AlgorithmParameters.storeImageInRunner(getResultImage());
-       }
-   }
-    
-    
-    
-    
-    
-    
-    
-    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        parentFrame = image.getParentFrame();
+        userInterface = ViewUserInterface.getReference();
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        sigmaPanel = new JPanelSigmas(image);
+        scriptParameters.setSigmasGUI(sigmaPanel);
+        
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setIters(scriptParameters.getNumIterations());
+        setK(scriptParameters.getParams().getFloat("diffusion_k"));
+    }
+
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
+     * image table). Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -252,9 +179,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -269,7 +193,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -301,61 +225,14 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                 resultImage = null;
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         diffusionAlgo.finalize();
         diffusionAlgo = null;
         dispose();
-    }
-
-    /**
-     * When the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  Event that triggers this function.
-     */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
-        JTextField field;
-        String text;
-        float tempNum;
-
-        if (source == textGaussZ) {
-            field = (JTextField) source;
-            text = field.getText();
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        }
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += regionFlag + delim;
-        str += image25D + delim;
-        str += scaleX + delim;
-        str += scaleY + delim;
-        str += textGaussZ.getText() + delim;
-        str += iters + delim;
-        str += konst;
-
-        return str;
     }
 
     /**
@@ -365,43 +242,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().append("AnisotropicDiffusion " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                } else {
-                    userInterface.getScriptDialog().append("AnisotropicDiffusion " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                }
-            }
-        }
     }
 
     // *******************************************************************
@@ -415,29 +255,9 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        float tempNum;
-
-        if (source == resolutionCheckbox) {
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        } else if (source == image25DCheckbox) {
-
-            if (image25DCheckbox.isSelected()) {
-                resolutionCheckbox.setEnabled(false); // Image is only 2D or 2.5D, thus this checkbox
-                labelGaussZ.setEnabled(false); // is not relevent
-                textGaussZ.setEnabled(false);
-                labelCorrected.setEnabled(false);
-            } else {
-                resolutionCheckbox.setEnabled(true);
-                labelGaussZ.setEnabled(true);
-                textGaussZ.setEnabled(true);
-                labelCorrected.setEnabled(true);
-            }
+        
+        if (source == image25DCheckbox) {
+            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
     }
 
@@ -447,32 +267,23 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
     public void loadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
-        if ((defaultsString != null) && (VOIRegions != null)) {
+        if (defaultsString != null && outputPanel != null) {
 
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 
-                if (MipavUtil.getBoolean(st)) {
-                    wholeImage.setSelected(true);
-                } else {
-                    VOIRegions.setSelected(true);
-                }
-
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                textGaussX.setText("" + MipavUtil.getFloat(st));
-                textGaussY.setText("" + MipavUtil.getFloat(st));
-                textGaussZ.setText("" + MipavUtil.getFloat(st));
-
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+                
                 textIters.setText("" + MipavUtil.getInt(st));
                 textK.setText("" + MipavUtil.getFloat(st));
 
-                resolutionCheckbox.setSelected(MipavUtil.getBoolean(st));
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
 
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -488,83 +299,19 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + resolutionCheckbox.isSelected() + "," +
-                                           newImage.isSelected());
+        String delim = ",";
+        
+        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
+        defaultsString += image25D + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
+        defaultsString += iters + delim;
+        defaultsString += konst + delim;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += outputPanel.isOutputNewImageSet();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setScaleX(parser.getNextFloat());
-            setScaleY(parser.getNextFloat());
-            setScaleZ(parser.getNextFloat());
-            setIters(parser.getNextInteger());
-            setK(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
     }
 
     /**
@@ -595,42 +342,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
     }
 
     /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
-     * Accessor that sets the x scale.
-     *
-     * @param  scale  Value to set x scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleX(float scale) {
-        scaleX = scale;
-    }
-
-    /**
-     * Accessor that sets the y scale.
-     *
-     * @param  scale  Value to set y scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleY(float scale) {
-        scaleY = scale;
-    }
-
-    /**
-     * Accessor that sets the z scale.
-     *
-     * @param  scale  Value to set z scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleZ(float scale) {
-        scaleZ = scale;
-    }
-
-    /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
@@ -643,11 +354,9 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            float[] sigmas = new float[2];
-            sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-            sigmas[1] = scaleY;
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -656,7 +365,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(resultImage, image, sigmas, iters, konst,
-                                                                      regionFlag, false);
+                                                                      outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -695,7 +404,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    diffusionAlgo = new AlgorithmAnisotropicDiffusion(image, sigmas, iters, konst, regionFlag, false);
+                    diffusionAlgo = new AlgorithmAnisotropicDiffusion(image, sigmas, iters, konst, outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -744,12 +453,9 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            float[] sigmas = new float[3];
-            sigmas[0] = scaleX;
-            sigmas[1] = scaleY;
-            sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -758,7 +464,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(resultImage, image, sigmas, iters, konst,
-                                                                      regionFlag, image25D);
+                                                                      outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -796,7 +502,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                 try {
 
                     // Make algorithm
-                    diffusionAlgo = new AlgorithmAnisotropicDiffusion(image, sigmas, iters, konst, regionFlag,
+                    diffusionAlgo = new AlgorithmAnisotropicDiffusion(image, sigmas, iters, konst, outputPanel.isProcessWholeImageSet(),
                                                                       image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -848,16 +554,9 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      * Initializes dialog by setting up components and placing them in dialog frame.
      */
     private void init() {
-        JPanel scalePanel;
-        JLabel labelGaussX;
-        JLabel labelGaussY;
         JPanel paramPanel;
         JLabel labelIters;
         JLabel labelK;
-        JPanel destinationPanel;
-        ButtonGroup destinationGroup;
-        JPanel imageVOIPanel;
-        ButtonGroup imageVOIGroup;
         JPanel mainPanel;
 
         mainPanel = new JPanel();
@@ -867,7 +566,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -876,69 +575,25 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
         setTitle("Anisotropic Diffusion");
 
-        scalePanel = new JPanel(new GridLayout(3, 2));
-        scalePanel.setForeground(Color.black);
-        scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
-        mainPanel.add(scalePanel, gbc);
-
-        labelGaussX = createLabel("X dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussX);
-        textGaussX = createTextField("1.0");
-        scalePanel.add(textGaussX);
-
-        labelGaussY = createLabel("Y dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussY);
-        textGaussY = createTextField("1.0");
-        scalePanel.add(textGaussY);
-
-        labelGaussZ = createLabel("Z dimension (0.0 - 10.0) ");
-        ;
-        scalePanel.add(labelGaussZ);
-        textGaussZ = createTextField("1.0");
-        scalePanel.add(textGaussZ);
-
+        sigmaPanel = new JPanelSigmas(image);
+        mainPanel.add(sigmaPanel, gbc);
+        
         gbc.gridx = 0;
         gbc.gridy = 1;
 
-        JPanel resPanel = new JPanel(new BorderLayout());
-        resPanel.setBorder(buildTitledBorder("Resolution options"));
-        resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale");
-        resolutionCheckbox.setFont(serif12);
-        resPanel.add(resolutionCheckbox, BorderLayout.NORTH);
-        resolutionCheckbox.setSelected(true);
+        JPanel optionPanel = new JPanel(new BorderLayout());
 
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
         image25DCheckbox.setFont(serif12);
-        resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
+        optionPanel.add(image25DCheckbox, BorderLayout.SOUTH);
         image25DCheckbox.setSelected(false);
         image25DCheckbox.addItemListener(this);
 
-        if (image.getNDims() == 3) { // if the source image is 3D then allow
-            resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
-            resolutionCheckbox.addItemListener(this); // use the correction factor
-            textGaussZ.addFocusListener(this);
-            textGaussZ.setEnabled(true);
-        } else {
-            resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
-            labelGaussZ.setEnabled(false); // is not relevent
-            textGaussZ.setEnabled(false);
+        if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
         }
 
-        if (image.getNDims() == 3) { // Source image is 3D, thus show correction factor
-
-            int index = image.getExtents()[2] / 2;
-            float xRes = image.getFileInfo(index).getResolutions()[0];
-            float zRes = image.getFileInfo(index).getResolutions()[2];
-            normFactor = xRes / zRes; // Calculate correction factor
-            labelCorrected = new JLabel("      Corrected scale = " +
-                                        String.valueOf(normFactor * Float.valueOf(textGaussZ.getText()).floatValue()));
-            labelCorrected.setForeground(Color.black);
-            labelCorrected.setFont(serif12);
-            resPanel.add(labelCorrected, BorderLayout.CENTER);
-        }
-
-        mainPanel.add(resPanel, gbc);
+        mainPanel.add(optionPanel, gbc);
 
         paramPanel = new JPanel(new GridLayout(2, 2));
         paramPanel.setForeground(Color.black);
@@ -959,50 +614,11 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         gbc.gridx = 0;
         gbc.gridy = 2;
         mainPanel.add(paramPanel, gbc);
-
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-        destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        imageVOIPanel = new JPanel();
-        imageVOIPanel.setLayout(new BorderLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Process"));
-        outputOptPanel.add(imageVOIPanel);
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-        imageVOIPanel.add(wholeImage, BorderLayout.NORTH);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-        imageVOIPanel.add(VOIRegions, BorderLayout.CENTER);
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
         gbc.gridx = 0;
         gbc.gridy = 3;
-        mainPanel.add(outputOptPanel, gbc);
+        mainPanel.add(outputPanel, gbc);
 
         mainDialogPanel.add(mainPanel, BorderLayout.CENTER);
         mainDialogPanel.add(buildButtons(), BorderLayout.SOUTH);
@@ -1024,52 +640,11 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
         System.gc();
 
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
-
         if (image25DCheckbox.isSelected()) {
             image25D = true;
         }
 
-        tmpStr = textGaussX.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleX = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussX.requestFocus();
-            textGaussX.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussY.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleY = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussY.requestFocus();
-            textGaussY.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussZ.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleZ = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussZ.requestFocus();
-            textGaussZ.selectAll();
-
+        if (!sigmaPanel.testSigmaValues()) {
             return false;
         }
 
@@ -1095,12 +670,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
             return false;
         }
 
-        // Apply normalization if requested!
-        if (resolutionCheckbox.isSelected()) {
-            scaleZ = scaleZ * normFactor;
-        }
-
         return true;
     }
-
 }

@@ -3,10 +3,10 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -34,15 +34,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
     private AlgorithmMorphology2D distanceMapAlgo2D = null;
 
     /** DOCUMENT ME! */
@@ -52,21 +43,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag = false;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -74,12 +50,8 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -106,11 +78,9 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
-
-   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -132,7 +102,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
         }
     }
 
- 
     /**
      * Record the parameters just used to run this algorithm in a script.
      * 
@@ -140,30 +109,32 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
      */
     protected void storeParamsFromGUI() throws ParserException{
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("regionFlag",regionFlag));
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
      }
     
     /**
      * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
     protected void setGUIFromParams(){        
-        displayLoc = scriptParameters.getParams().getInt("displayLoc");
-        regionFlag = scriptParameters.getParams().getBoolean("regionFlag");
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
     }
     
     /**
      * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
      * Defaults to no action, override to actually have it do something.
      */
-    public void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
-    
     
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -176,9 +147,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -189,7 +157,7 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     resultImage.setImageName("Bg. distance map image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -220,8 +188,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
             }
-
-            insertScriptLine();
         } else if (algorithm instanceof AlgorithmMorphology3D) {
             image.clearMask();
 
@@ -232,7 +198,7 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     resultImage.setImageName("Bg. distance map");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -263,7 +229,9 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
             }
-
+        }
+        
+        if (algorithm.isCompleted()) {
             insertScriptLine();
         }
 
@@ -291,35 +259,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
         return resultImage;
     }
 
-  
-
-
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is used for a background distance map, <code>
-     *               false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
@@ -334,7 +273,7 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -345,14 +284,14 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // Make algorithm
                     distanceMapAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, 0,
                                                                   AlgorithmMorphology2D.BG_DISTANCE_MAP, 0, 0, 0, 0,
-                                                                  regionFlag);
+                                                                  outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo2D.addListener(this);
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         distanceMapAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -381,14 +320,14 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // Make the algorithm class
                     distanceMapAlgo2D = new AlgorithmMorphology2D(image, kernel, 0,
                                                                   AlgorithmMorphology2D.BG_DISTANCE_MAP, 0, 0, 0, 0,
-                                                                  regionFlag);
+                                                                  outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo2D.addListener(this);
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         distanceMapAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -425,7 +364,7 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -436,9 +375,9 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // Make algorithm
                     distanceMapAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, 0,
                                                                   AlgorithmMorphology3D.BG_DISTANCE_MAP, 0, 0, 0, 0,
-                                                                  regionFlag);
+                                                                  outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         distanceMapAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -471,9 +410,9 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // Make algorithm
                     distanceMapAlgo3D = new AlgorithmMorphology3D(image, kernel, 0,
                                                                   AlgorithmMorphology3D.BG_DISTANCE_MAP, 0, 0, 0, 0,
-                                                                  regionFlag);
+                                                                  outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         distanceMapAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -519,65 +458,19 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
         setForeground(Color.black);
 
         setTitle("Background Distance map");
-
-        destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Distance map"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        
         JPanel mainPanel = new JPanel(new GridBagLayout());
 
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(5, 5, 5, 5);
-        mainPanel.add(destinationPanel, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
+        mainPanel.add(outputPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -601,18 +494,6 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
      */
     private boolean setVariables() {
         System.gc();
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         return true;
     }

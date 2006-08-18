@@ -650,7 +650,6 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         super(component);
         component.addMouseMotionListener(this);
         component.addMouseListener(this);
-        this.selection = selection;
         this.grad_weight = grad_weight;
         this.smoothVOIFlag = smoothVOIFlag;
 

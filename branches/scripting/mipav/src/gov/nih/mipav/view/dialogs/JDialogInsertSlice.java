@@ -311,7 +311,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         setInsertSliceNumber(scriptParameters.getParams().getInt("insert_slice_at_position"));

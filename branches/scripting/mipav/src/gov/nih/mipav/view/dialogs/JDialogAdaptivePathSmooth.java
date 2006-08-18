@@ -148,61 +148,56 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         setVisible(true);
     }
 
+    //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    
     /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
+     * {@inheritDoc}
      */
-    public JDialogAdaptivePathSmooth(ViewUserInterface UI, ModelImage im) {
-        super();
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("includeNeighbors", includeNeighbors));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
+        scriptParameters.storeProcess3DAs25D(image25D);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
-        image = im;
         parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        radiusY = scriptParameters.getParams().getFloat("radiusY");
+        radiusCr = scriptParameters.getParams().getFloat("radiusCr");
+        radiusCb = scriptParameters.getParams().getFloat("radiusCb");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        includeNeighbors = scriptParameters.getParams().getBoolean("includeNeighbors");
+        reduce = scriptParameters.getParams().getBoolean("reduce");
+        image25D = scriptParameters.doProcess3DAs25D();
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    //resultImage, image, float radiusY, float radiusCr,float radiusCb, 
-    //float threshold, boolean includeNeighbors, boolean reduce, boolean image25D
-    
-    
-    public void storeParamsFromGUI(){
-        try{
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("includeNeighbors", includeNeighbors));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("image25D", image25D));
-        }catch (ParserException pe){
-            pe.printStackTrace();
-        }  
-     }
- 
-   public void setGUIFromParams(){
-       radiusY = scriptParameters.getParams().getFloat("radiusY");
-       radiusCr = scriptParameters.getParams().getFloat("radiusCr");
-       radiusCb = scriptParameters.getParams().getFloat("radiusCb");
-       threshold = scriptParameters.getParams().getFloat("threshold");
-       includeNeighbors = scriptParameters.getParams().getBoolean("includeNeighbors");
-       reduce = scriptParameters.getParams().getBoolean("reduce");
-       image25D = scriptParameters.getParams().getBoolean("image25D");
-   }
-   
-   public void doPostAlgorithmActions() {
-       try{
-           scriptParameters.storeOutputImageParams(resultImage, true);
-           }catch (ParserException pe){
-               MipavUtil.displayError("Error encountered saving output image:\n" + pe);
-           }       
-   }
-    
-    
-    
-    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
@@ -222,7 +217,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("filtersspatialAdaptivePathSmooth_filters_(spatial)_AdaptivePathSmooth_htm_toc_applying_the_AdaptivePathSmooth");
         }
-
     }
 
     // ************************************************************************
@@ -236,8 +230,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -252,7 +244,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -285,7 +277,10 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         adaptivePathSmoothAlgo.finalize();
         adaptivePathSmoothAlgo = null;
         dispose();
@@ -324,8 +319,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-    
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -592,7 +585,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -607,7 +600,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.gridx = 0;

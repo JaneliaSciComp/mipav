@@ -127,7 +127,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
     private JToolBar toolBar;
 
     /** Icon and log access. */
-    private ViewUserInterface ui;
+    private ViewUserInterface userInterface;
 
     // actual things we can see...
     /** List of available VOIs. */
@@ -168,7 +168,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      * <p>install the panels of source directory, destination directory, the checkbox for approving the
      * translation-table file and the panel containing the ok and cancel buttons. Installs the checkbox panel.</p>
      *
-     * @param  ui  DOCUMENT ME!
+     * @param  userInterface  DOCUMENT ME!
      */
     public JDialogVOIStatistics(ViewUserInterface ui) {
         this(ui, ui.getActiveImageFrame().getComponentImage().getActiveImage().getVOIs());
@@ -188,7 +188,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         setTitle("Calculate Statistics on VOI groups");
         setJMenuBar(buildMenuEntries());
         buildToolBar();
-        this.ui = ui;
+        this.userInterface = ui;
         image = ui.getActiveImageFrame().getComponentImage().getActiveImage();
         xUnits = image.getFileInfo(0).getUnitsOfMeasure()[0];
         yUnits = image.getFileInfo(0).getUnitsOfMeasure()[1];
@@ -794,7 +794,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         setScriptRunning(true); 
         image = scriptParameters.retrieveInputImage();
         
-        ui = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         VOIVector voiVec = image.getVOIs();
         for (int i = 0; i < voiVec.size(); i++) {
@@ -803,7 +803,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         
         selectedList.setListData(image.getVOIs());
         
-        //createDialog(ui, true);
+        //createDialog(userInterface, true);
         
         rangeFlag = scriptParameters.getParams().getInt("rangeFlag");
         if (rangeFlag != NO_RANGE) {
@@ -1137,7 +1137,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         
         calculator.setRunningInSeparateThread(false);
 
-        if (!ui.isAppFrameVisible()) {
+        if (!userInterface.isAppFrameVisible()) {
             calculator.setProgressBarVisible(false);
         }
 
@@ -2177,8 +2177,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
                 }
             }
 
-            // ui.getActiveImageFrame().repaint();
-            ui.getActiveImageFrame().updateImages();
+            // userInterface.getActiveImageFrame().repaint();
+            userInterface.getActiveImageFrame().updateImages();
         }
     }
 

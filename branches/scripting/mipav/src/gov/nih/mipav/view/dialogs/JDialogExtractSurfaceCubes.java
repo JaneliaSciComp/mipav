@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -39,7 +41,7 @@ import javax.swing.*;
  * @see      ModelSurfaceDecimator
  * @see      ModelTriangleMesh
  */
-public class JDialogExtractSurfaceCubes extends JDialogBase implements AlgorithmInterface {
+public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -114,6 +116,11 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Empty constructor needed for dynamic instantiation (during script execution).
+     */
+    public JDialogExtractSurfaceCubes() { }
+    
+    /**
      * Create a dialog to set variables to extract surface.
      *
      * @param  theParentFrame  Parent frame.
@@ -122,21 +129,8 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
     public JDialogExtractSurfaceCubes(JFrame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogExtractSurfaceCubes(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -233,9 +227,6 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmExtractSurface) {
             image.clearMask();
             System.gc();
@@ -244,26 +235,7 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
         if (extractSurAlgo.isCompleted() == true) {
             attachSurface(image);
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("ExtractSurface " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + decimateFlag + " " + fileName + " ");
-
-                String modeStr;
-
-                if (mode == AlgorithmExtractSurface.VOI_MODE) {
-                    modeStr = "VOI ";
-                } else if (mode == AlgorithmExtractSurface.MASK_MODE) {
-                    modeStr = "MASK ";
-                } else {
-                    modeStr = "LEVEL " + level + " ";
-                }
-
-                String triModeStr = "ADJACIENT ";
-
-                modeStr = modeStr + triModeStr + blurFlag + " " + blurValue + "\n";
-                userInterface.getScriptDialog().append(modeStr);
-            }
+            insertScriptLine();
         }
 
         // Fix VOI IDs
@@ -284,6 +256,55 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
         // }
 
         dispose();
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        if (mode == AlgorithmExtractSurface.VOI_MODE) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("extraction_type", "VOI"));
+        } else if (mode == AlgorithmExtractSurface.MASK_MODE) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("extraction_type", "MASK"));
+        } else {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("extraction_type", "LEVEL"));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("extraction_level", level));
+        }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_decimate", decimateFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("file_name", fileName));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_blur_before_extraction", blurFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blur_std_dev", blurValue));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        String extractionModeStr = scriptParameters.getParams().getString("extraction_type");
+        if (extractionModeStr.equalsIgnoreCase("VOI")) {
+            setMode(AlgorithmExtractSurface.VOI_MODE);
+        } else if (extractionModeStr.equalsIgnoreCase("MASK")) {
+            setMode(AlgorithmExtractSurface.MASK_MODE);
+            // from setVariables()...it may not be needed...
+            setLevel(50);
+        } else if (extractionModeStr.equalsIgnoreCase("LEVEL")) {
+            setMode(AlgorithmExtractSurface.LEVEL_MODE);
+            setLevel(scriptParameters.getParams().getInt("extraction_level"));
+        } else {
+            throw new ParameterException("extraction_type", "Unrecognized extraction type.  Select either VOI, MASK, or LEVEL.");
+        }
+        
+        setDecimationFlag(scriptParameters.getParams().getBoolean("do_decimate"));
+        setFileName(scriptParameters.getParams().getString("file_name"));
+        setBlurFlag(scriptParameters.getParams().getBoolean("do_blur_before_extraction"));
+        setBlurValue(scriptParameters.getParams().getFloat("blur_std_dev"));
     }
 
     // *******************************************************************
@@ -477,11 +498,10 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
         blurTF.setEnabled(false);
 
         GridBagConstraints gbc = new GridBagConstraints();
-
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -493,7 +513,7 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
         gbc.weightx = 0;
         imageVOIPanel.add(intensityLevelRB, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         imageVOIPanel.add(intensityTF, gbc);
 
@@ -503,7 +523,7 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
         gbc.weightx = 0;
         imageVOIPanel.add(blurCheck, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         imageVOIPanel.add(blurTF, gbc);
 
@@ -520,7 +540,7 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         JPanel filePanel = new JPanel(new GridBagLayout());
 
@@ -561,22 +581,22 @@ public class JDialogExtractSurfaceCubes extends JDialogBase implements Algorithm
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         filePanel.add(fileButton, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         filePanel.add(fileTF, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.fill = gbc.LINE_END;
+        gbc.fill = GridBagConstraints.LINE_END;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         filePanel.add(formatLabel, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         filePanel.add(fileTypeList, gbc);
 

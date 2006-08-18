@@ -593,8 +593,8 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         automaticPanel.add(automaticCheckBox, gbc);
         gbc.gridy = 1;
         automaticPanel.add(sourceVOICheckBox, gbc);

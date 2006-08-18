@@ -61,7 +61,7 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
     public JDialogConvert4Dto3D(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
     }
 
     

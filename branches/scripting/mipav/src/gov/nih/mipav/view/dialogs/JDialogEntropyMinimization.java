@@ -441,8 +441,8 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
         gbc.weightx = 1;
 
         int yPos = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Input parameters"));

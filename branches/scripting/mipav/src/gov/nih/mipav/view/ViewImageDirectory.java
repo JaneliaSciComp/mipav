@@ -1112,7 +1112,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(brightSlider, gbc);
 
@@ -1120,19 +1120,19 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel.add(maximum, gbc);
@@ -1170,7 +1170,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel2.add(contSlider, gbc);
 
@@ -1178,19 +1178,19 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel2.add(minimum2, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel2.add(current2, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel2.add(maximum2, gbc);
@@ -1202,7 +1202,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        gbc2.fill = gbc.BOTH;
+        gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 1;
         gbc2.gridheight = 2;
         centerPanel.add(sliderPanel2, gbc2);
@@ -1263,9 +1263,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         primaryModel.addColumn("Name");
         primaryModel.addColumn("Value");
 
-        primaryTable.setAutoResizeMode(primaryTable.AUTO_RESIZE_ALL_COLUMNS);
-        primaryTable
-                .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        primaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        primaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         primaryTable.getColumn("Name").setMinWidth(160);
         primaryTable.getColumn("Name").setMaxWidth(500);
         primaryTable.getColumn("Value").setMinWidth(50);
@@ -1284,7 +1283,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         secondaryModel.addColumn("Value");
 
         secondaryTable
-                .setAutoResizeMode(secondaryTable.AUTO_RESIZE_ALL_COLUMNS);
+                .setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         secondaryTable
                 .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         secondaryTable.getColumn("Tag").setMinWidth(90);

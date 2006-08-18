@@ -98,7 +98,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
     public JDialogSubset(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -239,7 +239,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         setModal(false);

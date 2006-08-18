@@ -127,7 +127,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         font12B = MipavUtil.font12B;
         image = im;
         resampleImage = im;
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -358,7 +358,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         targetXDim = scriptParameters.getParams().getInt("targetXDim");
@@ -417,7 +417,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
     public String parametersFileMenu() {
         String fileName, directory;
         JFileChooser chooser;
-        ViewUserInterface UI = image.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         fileName = null;
 
         // bring up file dialog
@@ -460,7 +460,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
      */
     public void readTransformParameters(String fileName) {
         int i, j;
-        ViewUserInterface UI = image.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
 
         if (fileName == null) {
             MipavUtil.displayError("filename = null");
@@ -656,7 +656,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 0, 2, 0);
 
         gbc.gridx = 0;
@@ -669,7 +669,7 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         optionPanel.add(comboBoxInterp, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         optionPanel.add(clipCheckbox, gbc);
         gbc.gridy = 3;

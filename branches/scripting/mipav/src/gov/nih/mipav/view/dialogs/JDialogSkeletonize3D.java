@@ -11,7 +11,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-import java.io.*;
 
 import java.util.*;
 
@@ -143,7 +142,7 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         super(theParentFrame, true);
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
 
         init();
@@ -271,13 +270,6 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
 
             image.calcMinMax();
             image.notifyImageDisplayListeners(null, true);
-
-            if (skeletonize3DAlgo.isCompleted() == true) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().append("Skeletonize3D" + "\n");
-                }
-            }
         }
     }
 
@@ -417,11 +409,6 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         }
 
         if (image.getNDims() != testImage.getNDims()) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Error! " + image.getImageName() + " is " + image.getNDims() + "D, while " +
                                    testImage.getImageName() + " is " + testImage.getNDims() + "D");
 
@@ -431,11 +418,6 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         for (int i = 0; i < image.getNDims(); i++) {
 
             if ((testImage != null) && (image.getExtents()[i] != testImage.getExtents()[i])) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().removeLine();
-                }
-
                 MipavUtil.displayError("Error! For dimension = " + i + " " + image.getImageName() + " has length = " +
                                        image.getExtents()[i] + " while " + testImage.getImageName() + " has length = " +
                                        testImage.getExtents()[i]);
@@ -462,7 +444,7 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 3;
         gbc.weightx = 1;
 
@@ -643,7 +625,7 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
         String directory;
         String fileSKF;
         RandomAccessFile raFile;
-        int i, j, k;
+        int i, j;
 
         try {
 
@@ -740,7 +722,7 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
      */
     private boolean setVariables() {
         String tmpStr;
-        int i, j;
+        int i;
 
         if (!loadButton.isSelected()) {
 

@@ -187,7 +187,7 @@ public class JDialogConvertType extends JDialogScriptableBase
     public JDialogConvertType(Frame theParentFrame, ModelImage _image) {
         super(theParentFrame, false);
         image = _image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
@@ -1112,9 +1112,9 @@ public class JDialogConvertType extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 5, 0, 5);
 
         if (image.isColorImage()) {
@@ -1215,7 +1215,7 @@ public class JDialogConvertType extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         panelInRange.add(fullRangeRadio, gbc);
         gbc.gridx = 1;
         panelInRange.add(userRangeRadio, gbc);
@@ -1231,8 +1231,8 @@ public class JDialogConvertType extends JDialogScriptableBase
         panelInRange.add(inEnd, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = normal;
         panelInRange.add(textInStart, gbc);
         gbc.gridy = 2;
@@ -1264,15 +1264,15 @@ public class JDialogConvertType extends JDialogScriptableBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         panelOutRange.add(outStart, gbc);
         gbc.gridy = 1;
         panelOutRange.add(outEnd, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.fill = gbc.NONE;
-        gbc.gridwidth = gbc.REMAINDER;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelOutRange.add(textOutStart, gbc);
         gbc.gridy = 1;
         panelOutRange.add(textOutEnd, gbc);
@@ -1303,11 +1303,11 @@ public class JDialogConvertType extends JDialogScriptableBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);
@@ -1343,11 +1343,11 @@ public class JDialogConvertType extends JDialogScriptableBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         endianessPanel.add(littleEnd, gbc);
         gbc.gridy = 1;
         endianessPanel.add(bigEnd, gbc);

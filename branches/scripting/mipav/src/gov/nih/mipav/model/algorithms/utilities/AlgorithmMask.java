@@ -201,7 +201,7 @@ public class AlgorithmMask extends AlgorithmBase {
             try {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
-                // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+                buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
             } catch (OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
@@ -210,7 +210,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            // initProgressBar();
+            initProgressBar();
 
             if (progressBar != null) {
                 MipavUtil.centerOnScreen(progressBar);
@@ -253,7 +253,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     }
 
                     if ((srcImage.getNDims() > 2) && isProgressBarVisible()) {
-                        // progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+                        progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
                     }
 
                     offset = z * imgLength;
@@ -263,7 +263,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                         if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                            // progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
+                            progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                         }
 
                         if (((mask.get(offset + i) == true) && (polarity == true)) ||
@@ -311,7 +311,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
                 bufferI = new float[imgLength];
-                // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+                buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
             } catch (OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
@@ -320,7 +320,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            // initProgressBar();
+            initProgressBar();
 
             if (progressBar != null) {
                 MipavUtil.centerOnScreen(progressBar);
@@ -353,7 +353,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-                    // progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
                 }
 
                 offset = z * imgLength;
@@ -363,7 +363,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-                        // progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
+                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
                     }
 
                     if (((mask.get(offset + i) == true) && (polarity == true)) ||
@@ -411,11 +411,8 @@ public class AlgorithmMask extends AlgorithmBase {
             srcImage.calcMinMaxMag(logMagDisplay);
         } // else COMPLEX
 
-        // disposeProgressBar();
+        disposeProgressBar();
 
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
         if (threadStopped) {
             finalize();
 
@@ -451,7 +448,7 @@ public class AlgorithmMask extends AlgorithmBase {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
             buffer = new byte[imgLength];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -459,11 +456,11 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        // initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         if (srcImage.getNDims() == 4) {
             end = srcImage.getExtents()[2];
@@ -491,9 +488,9 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
-//            }
+            if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+            }
 
             offset = z * paintLength;
 
@@ -501,9 +498,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
-//                if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-//                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
-//                }
+                if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
+                }
 
                 if (((mask.get(offset + j) == true) && (polarity == true)) ||
                         ((mask.get(offset + j) == false) && (polarity == false))) {
@@ -531,10 +528,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -563,7 +557,7 @@ public class AlgorithmMask extends AlgorithmBase {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
             buffer = new byte[imgLength];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -571,11 +565,11 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        // initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         if (srcImage.getNDims() == 4) {
             end = srcImage.getExtents()[2];
@@ -603,9 +597,9 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
-//            }
+            if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+            }
 
             offset = z * paintLength;
 
@@ -613,9 +607,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
-//                if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-//                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
-//                }
+                if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
+                }
 
                 if ((mask.get(offset + j) == true) && (polarity == true)) {
                     buffer[i] = (byte) 255;
@@ -652,10 +646,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -713,7 +704,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
-                // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+                buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
             } catch (OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
@@ -722,11 +713,11 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            initProgressBar();
+            initProgressBar();
 
-//            if (progressBar != null) {
-//                MipavUtil.centerOnScreen(progressBar);
-//            }
+            if (progressBar != null) {
+                MipavUtil.centerOnScreen(progressBar);
+            }
 
             if (srcImage.getNDims() == 4) {
                 end = srcImage.getExtents()[2];
@@ -755,9 +746,9 @@ public class AlgorithmMask extends AlgorithmBase {
                     return;
                 }
 
-//                if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-//                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
-//                }
+                if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+                }
 
                 offset = z * imgLength;
 
@@ -765,9 +756,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
-//                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-//                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
-//                    }
+                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
+                    }
 
                     if (((mask.get(offset + i) == true) && (polarity == true)) ||
                             ((mask.get(offset + i) == false) && (polarity == false))) {
@@ -813,7 +804,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
                 bufferI = new float[imgLength];
-//                buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+                buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
             } catch (OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
@@ -822,11 +813,11 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            initProgressBar();
+            initProgressBar();
 
-//            if (progressBar != null) {
-//                MipavUtil.centerOnScreen(progressBar);
-//            }
+            if (progressBar != null) {
+                MipavUtil.centerOnScreen(progressBar);
+            }
 
             if (srcImage.getNDims() == 4) {
                 end = srcImage.getExtents()[2];
@@ -854,9 +845,9 @@ public class AlgorithmMask extends AlgorithmBase {
                     return;
                 }
 
-//                if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
-//                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
-//                }
+                if ((srcImage.getNDims() == 3) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+                }
 
                 offset = z * imgLength;
 
@@ -864,9 +855,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
-//                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
-//                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
-//                    }
+                    if ((srcImage.getNDims() == 2) && ((i % mod) == 0) && isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) i / (imgLength - 1)) * 100, runningInSeparateThread);
+                    }
                     
 //                  Must preserve phase information so make values 1000 times the
                     // minimum float instead of zero
@@ -923,11 +914,8 @@ public class AlgorithmMask extends AlgorithmBase {
             srcImage.calcMinMaxMag(logMagDisplay);
         } // else COMPLEX
 
-//        disposeProgressBar();
+        disposeProgressBar();
 
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
         if (threadStopped) {
             finalize();
 
@@ -1013,7 +1001,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1028,17 +1016,17 @@ public class AlgorithmMask extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-//        initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFill;
@@ -1064,10 +1052,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1084,7 +1069,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportRGBData(1, 0, length, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1099,17 +1084,17 @@ public class AlgorithmMask extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-//        initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillR;
@@ -1151,9 +1136,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillG;
@@ -1195,9 +1180,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillB;
@@ -1223,10 +1208,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1242,7 +1224,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1250,11 +1232,11 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-//        initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
@@ -1269,9 +1251,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1299,10 +1281,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1318,7 +1297,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1326,11 +1305,11 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        // initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
@@ -1345,10 +1324,10 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) * 100),
-//                                        runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) * 100),
+                                        runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1385,10 +1364,10 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-//                                                       100), runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
+                                                       100), runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1425,10 +1404,10 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-//                                                       100), runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
+                                                       100), runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1459,10 +1438,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1489,7 +1465,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1504,17 +1480,17 @@ public class AlgorithmMask extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        //initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == false)) {
                 destImage.set(i, buffer[i]);
@@ -1538,10 +1514,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         // destImage.notifyImageDisplayListeners(null, true);
         setCompleted(true);
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
     }
 
     /**
@@ -1558,7 +1531,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportRGBData(1, 0, length, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1573,17 +1546,17 @@ public class AlgorithmMask extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        // initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) i / (length - 1) * 33), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillR;
@@ -1623,9 +1596,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round(33 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillG;
@@ -1665,9 +1638,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-//            if (((i % mod) == 0) && isProgressBarVisible()) {
-//                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
-//            }
+            if (((i % mod) == 0) && isProgressBarVisible()) {
+                progressBar.updateValue(Math.round(67 + ((float) i / (length - 1) * 33)), runningInSeparateThread);
+            }
 
             if ((mask.get(i) == true) && (polarity == true)) {
                 buffer[i] = imageFillB;
@@ -1691,10 +1664,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1719,7 +1689,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1727,11 +1697,11 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        // initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (z = 0; (z < srcImage.getExtents()[2]) && !threadStopped; z++) {
 
@@ -1746,9 +1716,9 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1774,10 +1744,7 @@ public class AlgorithmMask extends AlgorithmBase {
         destImage.releaseLock();
 
         // destImage.notifyImageDisplayListeners(null, true);
-//        disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1794,7 +1761,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1802,11 +1769,11 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        // initProgressBar();
+        initProgressBar();
 
-//        if (progressBar != null) {
-//            MipavUtil.centerOnScreen(progressBar);
-//        }
+        if (progressBar != null) {
+            MipavUtil.centerOnScreen(progressBar);
+        }
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
@@ -1821,10 +1788,10 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) * 100),
-//                                        runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) * 100),
+                                        runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1859,10 +1826,10 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-//                                                       100), runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
+                                                       100), runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1897,10 +1864,10 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-//            if ((pBarVisible == true) && (progressBar != null)) {
-//                progressBar.updateValue(Math.round((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
-//                                                       100), runningInSeparateThread);
-//            }
+            if ((pBarVisible == true) && (progressBar != null)) {
+                progressBar.updateValue(Math.round((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2) *
+                                                       100), runningInSeparateThread);
+            }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1929,10 +1896,7 @@ public class AlgorithmMask extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        // disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
 
     }

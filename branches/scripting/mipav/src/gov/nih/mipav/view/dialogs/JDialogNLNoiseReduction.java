@@ -250,7 +250,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         setDefaults();

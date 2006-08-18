@@ -445,48 +445,4 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
             setUserInstructions("The script is now paused.  Press Resume to resume recording.");
         }
     }
-    
-    // TODO: REMOVE ME!!!
-    public String getImgTableVar(String str) {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.getImgTableVar()).");
-        return null;
-    }
-    
-    // TODO: REMOVE ME!!!
-    public String getActiveImgTableVar(String str) {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.getActiveImgTableVar()).");
-        return null;
-    }
-    
-    // TODO: REMOVE ME!!!
-    public void putActiveVar(String str) {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.putActiveVar()).");
-    }
-    
-    // TODO: REMOVE ME!!!
-    public void putVar(String str) {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.putVar()).");
-    }
-    
-    // TODO: REMOVE ME!!!
-    public String getVar(String str) {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.getVar()).");
-        return null;
-    }
-    
-    // TODO: REMOVE ME!!!
-    public void append(String str) {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.append()).");
-    }
-    
-    // TODO: REMOVE ME!!!
-    public void removeLine() {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.removeLine()).");
-    }
-    
-    // TODO: REMOVE ME!!!
-    public boolean getActiveImageFlag() {
-        MipavUtil.displayError("This class is trying to call an old JDialogScriptRecorder method. (JDSR.getActiveImageFlag()).");
-        return false;
-    }
 }

@@ -23,42 +23,47 @@ public class AlgorithmParameters {
      *
      * @see  #getInputImageLabel(int)
      */
-    protected static final String INPUT_IMAGE_LABEL_BASE = "input_image";
+    public static final String INPUT_IMAGE_LABEL_BASE = "input_image";
 
     /** Label used for the parameter indicating whether an algorithm should output a new image. */
-    protected static final String DO_OUTPUT_NEW_IMAGE = "do_output_new_image";
+    public static final String DO_OUTPUT_NEW_IMAGE = "do_output_new_image";
 
     /**
      * Label used for the parameter indicating whether the whole image should be processed (<code>true</code>), or just
      * areas within VOIs (<code>false</code>).
      */
-    protected static final String DO_PROCESS_WHOLE_IMAGE = "do_process_whole_image";
+    public static final String DO_PROCESS_WHOLE_IMAGE = "do_process_whole_image";
 
     /** Label used for the parameter indicating whether separable convolution kernels should be used in an algorithm. */
-    protected static final String DO_PROCESS_SEPARABLE = "do_separable_convolution";
+    public static final String DO_PROCESS_SEPARABLE = "do_separable_convolution";
 
     /**
      * Label used for the parameter indicating whether an algorithm should process a 3D image as a set of 2D slices
      * instead of a 3D volume.
      */
-    protected static final String DO_PROCESS_3D_AS_25D = "do_process_in_2.5D";
+    public static final String DO_PROCESS_3D_AS_25D = "do_process_in_2.5D";
 
     /**
      * Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used.
      */
-    protected static final String SIGMAS = "gauss_std_dev";
+    public static final String SIGMAS = "gauss_std_dev";
 
     /**
      * Label used for the parameter indicating whether to correct the gaussian's standard deviation Z dimension using
      * the ratio of the X and Z resolutions.
      */
-    protected static final String SIGMA_DO_Z_RES_CORRECTION = "gauss_do_z_resolution_correction";
+    public static final String SIGMA_DO_Z_RES_CORRECTION = "gauss_do_z_resolution_correction";
 
     /**
      * Label used for the parameter indicating whether to process the each channel of an RGB image (ignored for
      * grayscale images).
      */
-    protected static final String DO_PROCESS_RGB = "do_process_r_g_b_channel";
+    public static final String DO_PROCESS_RGB = "do_process_r_g_b_channel";
+    
+    /**
+     * Label used for the parameter indicating the number of iterations to perform in a script action.
+     */
+    public static final String NUM_ITERATIONS = "num_iterations";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -167,8 +172,8 @@ public class AlgorithmParameters {
      * @param  outputOptionsPanel  The algorithm output options panel to set the values of.
      */
     public void setOutputOptionsGUI(JPanelAlgorithmOutputOptions outputOptionsPanel) {
-        outputOptionsPanel.setOutputNewImage(params.getBoolean(DO_OUTPUT_NEW_IMAGE));
-        outputOptionsPanel.setProcessWholeImage(params.getBoolean(DO_PROCESS_WHOLE_IMAGE));
+        outputOptionsPanel.setOutputNewImage(doOutputNewImage());
+        outputOptionsPanel.setProcessWholeImage(doProcessWholeImage());
     }
 
     /**
@@ -308,9 +313,9 @@ public class AlgorithmParameters {
      *
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
-    protected void storeProcessingOptions(boolean doWholeImage, boolean do25D) throws ParserException {
+    public void storeProcessingOptions(boolean doWholeImage, boolean do25D) throws ParserException {
         storeProcessWholeImage(doWholeImage);
-        params.put(ParameterFactory.newBoolean(DO_PROCESS_3D_AS_25D, do25D));
+        storeProcess3DAs25D(do25D);
     }
 
     /**
@@ -320,7 +325,7 @@ public class AlgorithmParameters {
      *
      * @throws  ParserException  If there is a problem creating one of the new parameter.
      */
-    protected void storeProcessWholeImage(boolean doWholeImage) throws ParserException {
+    public void storeProcessWholeImage(boolean doWholeImage) throws ParserException {
         params.put(ParameterFactory.newBoolean(DO_PROCESS_WHOLE_IMAGE, doWholeImage));
     }
 
@@ -331,7 +336,7 @@ public class AlgorithmParameters {
      *
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
-    protected void storeSigmas(JPanelSigmas sigmaPanel) throws ParserException {
+    public void storeSigmas(JPanelSigmas sigmaPanel) throws ParserException {
         storeSigmas(sigmaPanel.getUnnormalized3DSigmas(), sigmaPanel.isResolutionCorrectionEnabled());
     }
 
@@ -343,8 +348,58 @@ public class AlgorithmParameters {
      *
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
-    protected void storeSigmas(float[] sigmas, boolean isZCorrectionEnabled) throws ParserException {
+    public void storeSigmas(float[] sigmas, boolean isZCorrectionEnabled) throws ParserException {
         params.put(ParameterFactory.newParameter(SIGMAS, sigmas));
         params.put(ParameterFactory.newBoolean(SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
+    }
+    
+    public void tryToStoreResultImageInRunner(ModelImage resultImage) throws ParserException {
+        if (params.containsParameter(DO_OUTPUT_NEW_IMAGE) && doOutputNewImage()) {
+            if (resultImage == null) {
+                throw new ParserException("", 0, "A script action wants to register a result image, but none was found after executing the action.");
+            }
+            
+            storeImageInRunner(resultImage);
+        }
+    }
+    
+    public void storeNumIterations(int numIters) throws ParserException {
+        params.put(ParameterFactory.newParameter(NUM_ITERATIONS, numIters));
+    }
+    
+    public void storeProcess3DAs25D(boolean doProcess3DAs25D) throws ParserException {
+        params.put(ParameterFactory.newParameter(DO_PROCESS_3D_AS_25D, doProcess3DAs25D));
+    }
+    
+    public boolean doProcess3DAs25D() {
+        return params.getBoolean(DO_PROCESS_3D_AS_25D);
+    }
+    
+    public boolean doProcessWholeImage() {
+        return params.getBoolean(DO_PROCESS_WHOLE_IMAGE);
+    }
+    
+    public boolean doOutputNewImage() {
+        return params.getBoolean(DO_OUTPUT_NEW_IMAGE);
+    }
+    
+    public boolean doProcessSeparable() {
+        return params.getBoolean(DO_PROCESS_SEPARABLE);
+    }
+    
+    public boolean[] doProcessRGB() {
+        return params.getList(DO_PROCESS_RGB).getAsBooleanArray();
+    }
+    
+    public boolean doSigmaResolutionCorrection() {
+        return params.getBoolean(SIGMA_DO_Z_RES_CORRECTION);
+    }
+    
+    public float[] getUnnormalizedSigmas() {
+        return params.getList(SIGMAS).getAsFloatArray();
+    }
+    
+    public int getNumIterations() {
+        return params.getInt(NUM_ITERATIONS);
     }
 }

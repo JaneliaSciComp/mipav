@@ -185,7 +185,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
      */
     public JDialogAGVF(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         VOIs = im.getVOIs();
 
@@ -793,8 +793,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         iterationsPanel.add(labelGVFIterations);
         iterationsPanel.add(textGVFIterations);
         iterationsPanel.add(labelBoundaryIterations);
@@ -803,8 +803,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.weightx = 1;
-        gbc2.anchor = gbc2.WEST;
-        gbc2.fill = gbc2.HORIZONTAL;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel parametersPanel = new JPanel(new GridBagLayout());
         parametersPanel.setForeground(Color.black);

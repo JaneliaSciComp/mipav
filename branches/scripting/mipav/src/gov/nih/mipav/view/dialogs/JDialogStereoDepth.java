@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +18,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input Dialog to input left and right stereo images for calculating stereo depth.
  */
-public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterface, ItemListener {
+public class JDialogStereoDepth extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -51,13 +52,15 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
     private AlgorithmStereoDepth stereoDepthAlgo = null;
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Empty constructor needed for dynamic instantiation (during script execution).
+     */
+    public JDialogStereoDepth() { }
+    
     /**
      * Creates new dialog.
      *
@@ -111,9 +114,6 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmStereoDepth) {
             firstImage.clearMask();
             secondImage.clearMask();
@@ -125,7 +125,7 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -136,35 +136,11 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
                 System.gc();
-
             }
         }
 
-        if (stereoDepthAlgo.isCompleted() == true) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(leftImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(leftImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(leftImage.getImageName());
-                    }
-                }
-
-                // check to see if the image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(rightImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(rightImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(rightImage.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("Stereo Depth " + UI.getScriptDialog().getVar(leftImage.getImageName()) +
-                                            " " + UI.getScriptDialog().getVar(rightImage.getImageName()) + " " +
-                                            UI.getScriptDialog().getVar(resultImage.getImageName()) + "\n");
-
-            }
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
         }
 
         dispose();
@@ -178,14 +154,13 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
      * @return  Newly created combo box.
      */
     private JComboBox buildComboBox(ModelImage image) {
-        ViewUserInterface UI;
         ModelImage nextImage;
 
         JComboBox comboBox = new JComboBox();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -273,7 +248,7 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -371,5 +346,31 @@ public class JDialogStereoDepth extends JDialogBase implements AlgorithmInterfac
 
         return true;
     }
-
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeImage(leftImage, "left_image");
+        scriptParameters.storeImage(rightImage, "right_image");
+        scriptParameters.storeOutputImageParams(resultImage, true);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        leftImage = scriptParameters.retrieveImage("left_image");
+        rightImage = scriptParameters.retrieveImage("right_image");
+        
+        UI = ViewUserInterface.getReference();
+        parentFrame = leftImage.getParentFrame();
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
 }

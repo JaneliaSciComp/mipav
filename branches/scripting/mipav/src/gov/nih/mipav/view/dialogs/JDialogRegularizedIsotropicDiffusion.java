@@ -145,8 +145,8 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
         scriptParameters.storeInputImage(srcImage);
         scriptParameters.storeOutputImageParams(getResultImage(), true);
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, do25D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iterations", numIterations));
+        scriptParameters.storeProcess3DAs25D(do25D);
+        scriptParameters.storeNumIterations(numIterations);
         scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, stdDev));
         scriptParameters.getParams().put(ParameterFactory.newParameter("diffusion_contrast", contrast));
     }
@@ -159,8 +159,8 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
         userInterface = srcImage.getUserInterface();
         parentFrame = srcImage.getParentFrame();
         
-        setDo25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        setNumIterations(scriptParameters.getParams().getInt("num_iterations"));
+        setDo25D(scriptParameters.doProcess3DAs25D());
+        setNumIterations(scriptParameters.getNumIterations());
         setStdDev(scriptParameters.getParams().getFloat(AlgorithmParameters.SIGMAS));
         setContrast(scriptParameters.getParams().getFloat("diffusion_contrast"));
     }

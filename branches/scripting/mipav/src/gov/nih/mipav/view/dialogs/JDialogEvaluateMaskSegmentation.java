@@ -270,7 +270,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase imple
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -433,13 +433,13 @@ public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase imple
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         imagePanel.add(labelTrue, gbc);
         gbc.gridy = 1;
         imagePanel.add(labelTest, gbc);

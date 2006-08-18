@@ -303,7 +303,7 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if (image.getType() == ModelImage.BOOLEAN) {

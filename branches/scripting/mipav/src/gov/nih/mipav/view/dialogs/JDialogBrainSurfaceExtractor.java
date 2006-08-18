@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 
 import gov.nih.mipav.view.*;
 
@@ -14,6 +16,8 @@ import java.util.*;
 import javax.swing.*;
 
 
+
+
 /**
  * This dialog collects parameters for the BSE algorithm and then starts it up.
  *
@@ -21,8 +25,7 @@ import javax.swing.*;
  * @author   Evan McCreedy
  * @see      AlgorithmBrainSurfaceExtractor
  */
-public class JDialogBrainSurfaceExtractor extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -114,13 +117,13 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
 
     /** Checkbox to elect to use the separable convolver in the edge detection algorithm. */
     private JCheckBox useSeparableCB;
-
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogBrainSurfaceExtractor() { }
+    public JDialogBrainSurfaceExtractor() {}
 
     /**
      * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
@@ -137,7 +140,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
         setForeground(Color.black);
         imgName = im.getImageName();
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface =  ViewUserInterface.getReference();
 
         // make the kernel encompas about 6 pixels total (diameter) (+1 to make sure that we get the last pixel inside
         // the kernel)
@@ -196,7 +199,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
                                           (extractBrainAlgo.getBrainVolume() / 1000.0f) + " cc\n");
                 resultImage = extractBrainAlgo.getResultImage();
 
-                insertScriptLine(algorithm);
+                insertScriptLine();
 
                 if (extractPaint) {
                     BitSet paintMask = extractBrainAlgo.getComputedPaintMask();
@@ -227,7 +230,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();
@@ -250,14 +253,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
             // This is made possible by implementing AlgorithmedPerformed interface
             extractBrainAlgo.addListener(this);
 
-            /**
-             * Creates the progress bar and make it listen to the FileBase.
-             */
-            ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Extracting brain...", 0, 100, true);
-            progressBar.setSeparateThread(runInSeparateThread);
-            extractBrainAlgo.addProgressChangeListener(progressBar);
-            progressBar.setVisible(true);
-           
             // Hide dialog
             setVisible(false);
 
@@ -313,43 +308,57 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "BrainSurfaceExtractor " + userInterface.getScriptDialog().getVar(image.getImageName()) +
-                              " ";
-
-                // if extracting brain to paint, there is no result image
-                if (!extractPaint) {
-
-                    // put the result image into the image variable table
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " ";
-                } else {
-                    line += userInterface.getScriptDialog().getVar(image.getImageName()) + " ";
-                }
-
-                line += getParameterString(" ") + "\n";
-                userInterface.getScriptDialog().append(line);
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        if (!extractPaint) {
+            AlgorithmParameters.storeImageInRecorder(resultImage);
+        }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_iterations", filterIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel_size", edgeKernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", erosionIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("close_kernel_size", closeKernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_gaussian_std_dev", filterGaussianStdDev));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_intermediate_images", showIntermediateImages));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_do_separable_convolution", useSeparable));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_erosion_2.5d", erosion25D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_fill_interior_holes", fillHoles));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_extract_paint", extractPaint));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */    
+    protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        
+        filterIterations = scriptParameters.getParams().getInt("filter_iterations");
+        erosionIterations = scriptParameters.getParams().getInt("erosion_iterations");
+        edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel_size");
+        closeKernelSize = scriptParameters.getParams().getFloat("close_kernel_size");
+        filterGaussianStdDev  = scriptParameters.getParams().getFloat("filter_gaussian_std_dev");
+        showIntermediateImages = scriptParameters.getParams().getBoolean("do_show_intermediate_images");
+        useSeparable = scriptParameters.getParams().getBoolean("edge_do_separable_convolution");
+        erosion25D = scriptParameters.getParams().getBoolean("do_erosion_2.5d");
+        fillHoles = scriptParameters.getParams().getBoolean("do_fill_interior_holes");
+        extractPaint = scriptParameters.getParams().getBoolean("do_extract_paint");
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (!extractPaint) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
         }
     }
-
+    
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
@@ -388,57 +397,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
         String defaultsString = new String(getParameterString(","));
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-        imgName = im.getImageName();
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        try {
-            destImageKey = parser.getNextString();
-            setFilterIterations(parser.getNextInteger());
-            setFilterGaussianStdDev(parser.getNextFloat());
-            setEdgeKernelSize(parser.getNextFloat());
-            setErosionIterations(parser.getNextInteger());
-            closeKernelSize = parser.getNextFloat();
-            parser.getNextInteger(); // placeholder for close iterations
-            setShowIntermediateImages(parser.getNextBoolean());
-            setUseSeparable(parser.getNextBoolean());
-            parser.getNextFloat(); // placeholder for erosion kernel size
-            erosion25D = parser.getNextBoolean();
-            fillHoles = parser.getNextBoolean();
-            extractPaint = parser.getNextBoolean();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, resultImage.getImageName());
-        }
     }
 
     /**
@@ -733,4 +691,9 @@ public class JDialogBrainSurfaceExtractor extends JDialogBase
 
         return true;
     }
+    
+    
+    
+
+
 }

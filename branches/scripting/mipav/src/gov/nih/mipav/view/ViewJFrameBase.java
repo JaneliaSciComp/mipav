@@ -4220,14 +4220,14 @@ public abstract class ViewJFrameBase extends JFrame
         newResUnit[2] = imageAInfo.getUnitsOfMeasure()[2];
 
         int imageType = image.getType();
-        ViewUserInterface imageUserInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         image.disposeLocal();
         image = null;
         System.gc();
 
         try {
-            image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), imageUserInterface);
+            image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), userInterface);
         } catch (OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage");
@@ -4513,7 +4513,7 @@ public abstract class ViewJFrameBase extends JFrame
             afniProgressBar.setMessage("Transforming to match ACPC image ...");
 
             try {
-                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), imageUserInterface);
+                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), userInterface);
             } catch (OutOfMemoryError e) {
                 System.gc();
                 MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage for ACPC rotation");
@@ -4752,7 +4752,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
                 image.disposeLocal();
-                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), imageUserInterface);
+                image = new ModelImage(imageType, newExtents, imageBInfo.getFileName(), userInterface);
             } catch (OutOfMemoryError e) {
                 System.gc();
                 MipavUtil.displayError("ViewJFrameBase: Out of memory on new ModelImage for Talairach conversion");

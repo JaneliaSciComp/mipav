@@ -90,7 +90,7 @@ public class JDialogOverlay extends JDialogBase {
         super(theParentFrame, false);
 
         this.isDicom = isDicom;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         this.headerString = headerStr;
         init();
     }
@@ -204,7 +204,7 @@ public class JDialogOverlay extends JDialogBase {
 
         for (int i = start; i < end; i++) {
             gbc.gridx = 0;
-            gbc.fill = gbc.VERTICAL;
+            gbc.fill = GridBagConstraints.VERTICAL;
             gbc.weightx = 0;
             gbc.weighty = 1;
             buttonArray[i] = new JButton();
@@ -214,7 +214,7 @@ public class JDialogOverlay extends JDialogBase {
             panel.add(buttonArray[i], gbc);
 
             gbc.weightx = 1;
-            gbc.fill = gbc.BOTH;
+            gbc.fill = GridBagConstraints.BOTH;
             nameArray[i] = new JTextField(7);
             nameArray[i].setFont(MipavUtil.font12);
 
@@ -408,7 +408,7 @@ public class JDialogOverlay extends JDialogBase {
             model = new ViewTableModel();
             table = new JTable(model);
             table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-            table.setAutoResizeMode(table.AUTO_RESIZE_ALL_COLUMNS);
+            table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             table.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             if (isDicom) {

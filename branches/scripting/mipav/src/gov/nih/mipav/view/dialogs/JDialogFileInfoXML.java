@@ -1255,21 +1255,21 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             subjectEditorHolder = new Hashtable();
             subjectModel = new ViewTableModel();
             subjectTable = new JTable(subjectModel);
-            subjectTable.setAutoResizeMode(subjectTable.AUTO_RESIZE_ALL_COLUMNS);
+            subjectTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             subjectTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             scanTypeHolder = new Hashtable();
             scanEditorHolder = new Hashtable();
             scanModel = new ViewTableModel();
             scanTable = new JTable(scanModel);
-            scanTable.setAutoResizeMode(scanTable.AUTO_RESIZE_ALL_COLUMNS);
+            scanTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             scanTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             investigatorTypeHolder = new Hashtable();
             investigatorEditorHolder = new Hashtable();
             investigatorModel = new ViewTableModel();
             investigatorTable = new JTable(investigatorModel);
-            investigatorTable.setAutoResizeMode(investigatorTable.AUTO_RESIZE_ALL_COLUMNS);
+            investigatorTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             investigatorTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             // for the diff tables inside the scrollpanel:
@@ -1298,7 +1298,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
             investigatorModel.addColumn(columnNames[i]);
         }
 
-        primaryTable.setAutoResizeMode(primaryTable.AUTO_RESIZE_ALL_COLUMNS);
+        primaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         primaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         primaryTable.getColumn("Name").setMinWidth(160);
         primaryTable.getColumn("Name").setMaxWidth(500);
@@ -1577,7 +1577,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 setModel.addColumn(parameterColumnNames[i]);
             }
 
-            setTable.setAutoResizeMode(setTable.AUTO_RESIZE_ALL_COLUMNS);
+            setTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             setTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             setTable.getColumn("Name").setMinWidth(160);
@@ -1745,8 +1745,6 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
          * Creates surface display table.
          */
         public SurfaceDisplay() {
-            this.file = file;
-
             surLabel = new JLabel("Surfaces");
             surLabel.setForeground(Color.black);
             surModel = new ViewTableModel();
@@ -1756,7 +1754,7 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                 surModel.addColumn(surfaceColumnNames[i]);
             }
 
-            surTable.setAutoResizeMode(surTable.AUTO_RESIZE_ALL_COLUMNS);
+            surTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             surTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             surTable.getColumn("Path").setMinWidth(160);

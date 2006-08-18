@@ -1159,7 +1159,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(brightnessSlider, gbc);
 
@@ -1167,19 +1167,19 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel.add(maximum, gbc);
@@ -1217,7 +1217,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel2.add(contrastSlider, gbc);
 
@@ -1225,19 +1225,19 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel2.add(minimum2, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel2.add(current2, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel2.add(maximum2, gbc);
@@ -1249,7 +1249,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        gbc2.fill = gbc.BOTH;
+        gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 1;
         gbc2.gridheight = 2;
         centerPanel.add(sliderPanel2, gbc2);
@@ -1360,7 +1360,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         setSeriesTableMinMax();
 
-        seriesTable.setAutoResizeMode(seriesTable.AUTO_RESIZE_ALL_COLUMNS);
+        seriesTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         seriesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         seriesTable.addMouseListener(tableListener);
         seriesTable.getTableHeader().addMouseListener(tableListener);
@@ -1388,7 +1388,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         studyTable.setColumnSelectionAllowed(false);
 
-        studyTable.setAutoResizeMode(studyTable.AUTO_RESIZE_ALL_COLUMNS);
+        studyTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         studyTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         studyTable.addMouseListener(tableListener);
         studyTable.getTableHeader().addMouseListener(tableListener);

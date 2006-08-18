@@ -147,7 +147,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
     public JDialogThresholdRGB(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
 
         this.setResizable(false);
@@ -340,7 +340,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
@@ -615,34 +615,34 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 5, 0, 5);
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(thresholdLabels1[panelNum], gbc);
 
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 1;
         panel.add(textThreshold1[panelNum], gbc);
 
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy++;
 
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         panel.add(thresholdLabels2[panelNum], gbc);
 
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 1;
         panel.add(textThreshold2[panelNum], gbc);
 
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy++;
 
         gbc.gridwidth = 1;
         panel.add(labelFill, gbc);
 
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx = 1;
         panel.add(textFills[panelNum], gbc);
 
@@ -820,8 +820,8 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.weightx = 1;
-        gbc2.anchor = gbc2.WEST;
-        gbc2.fill = gbc2.NONE;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.NONE;
 
         applyToAllBox = new JCheckBox("Apply same threshold to all channels");
         applyToAllBox.addItemListener(this);
@@ -886,7 +886,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);

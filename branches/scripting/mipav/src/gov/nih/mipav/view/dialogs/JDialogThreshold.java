@@ -32,7 +32,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 8143576591075984708L;
 
-
     /** DOCUMENT ME! */
     private static int DEFAULT = 0;
 
@@ -153,7 +152,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     public JDialogThreshold(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         min = (float) im.getMin();
         max = (float) im.getMax();
         init();
@@ -206,9 +205,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmThresholdDual) {
             image.clearMask();
 
@@ -219,7 +215,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -316,14 +312,17 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         scriptParameters.getParams().put(ParameterFactory.newParameter("fillValue", fillValue));  
         scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
     }
-
+    
     /**
      * {@inheritDoc}
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
+        
+        min = (float) image.getMin();
+        max = (float) image.getMax();
         
         if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
             displayLoc = NEW;
@@ -333,15 +332,37 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         
         regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
         thresholdType = scriptParameters.getParams().getInt("thresholdType");
+
+        setFillValue(scriptParameters.getParams().getFloat("fillValue"));
+        setBinaryFlag(scriptParameters.getParams().getBoolean("binaryFlag"));
+        isInverse = scriptParameters.getParams().getBoolean("isInverse");
         
         if (thresholdType == DEFAULT) {
-            thres1 = scriptParameters.getParams().getFloat("thres1");
-            thres2 = scriptParameters.getParams().getFloat("thres2");
+            setThres1(scriptParameters.getParams().getFloat("thres1"));
+            setThres2(scriptParameters.getParams().getFloat("thres2"));
+        } else {
+            // using otsu or max entropy threshold, so calculate histogram
+            calcHistogram();
+
+            if (isInverse) {
+
+                if (thresholdType == OTSU) {
+                    setThres1(histogram.getOtsuThreshold());
+                } else {
+                    setThres1(histogram.getMaxEntropyThreshold());
+                }
+
+                setThres2((float) image.getMax());
+            } else {
+                setThres1((float) image.getMin());
+
+                if (thresholdType == OTSU) {
+                    setThres2(histogram.getOtsuThreshold());
+                } else {
+                    setThres2(histogram.getMaxEntropyThreshold());
+                }
+            }
         }
-        
-        binaryFlag = scriptParameters.getParams().getBoolean("binaryFlag");
-        fillValue = scriptParameters.getParams().getFloat("fillValue");
-        isInverse = scriptParameters.getParams().getBoolean("isInverse");
     }
    
     /**
@@ -484,95 +505,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         setSeparateThread(true);
         callAlgorithm();
     }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        min = (float) image.getMin();
-        max = (float) image.getMax();
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            thresholdType = parser.getNextInteger();
-
-            if (thresholdType == DEFAULT) {
-                setThres1(parser.getNextFloat());
-                setThres2(parser.getNextFloat());
-                setFillValue(parser.getNextFloat());
-                setBinaryFlag(parser.getNextBoolean());
-                isInverse = parser.getNextBoolean();
-            } else {
-
-                // using otsu or max entropy threshold, so calculate histogram
-                calcHistogram();
-                setFillValue(parser.getNextFloat());
-                setBinaryFlag(parser.getNextBoolean());
-                isInverse = parser.getNextBoolean();
-
-                if (isInverse) {
-
-                    if (thresholdType == OTSU) {
-                        setThres1(histogram.getOtsuThreshold());
-                    } else {
-                        setThres1(histogram.getMaxEntropyThreshold());
-                    }
-
-                    setThres2((float) image.getMax());
-                } else {
-                    setThres1((float) image.getMin());
-
-                    if (thresholdType == OTSU) {
-                        setThres2(histogram.getOtsuThreshold());
-                    } else {
-                        setThres2(histogram.getMaxEntropyThreshold());
-                    }
-                }
-            }
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
+    
     /**
      * Accessor that sets the "write binary image" flag.
      *
@@ -911,31 +844,31 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0.5f;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 5, 0, 5);
         scalePanel.add(labelThres1, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         scalePanel.add(textThres1, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         scalePanel.add(labelThres2, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         scalePanel.add(textThres2, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         scalePanel.add(labelFill, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         scalePanel.add(textFill, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         scalePanel.add(binaryCheckbox, gbc);
 
         gbc.gridy = 4;
@@ -962,7 +895,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);

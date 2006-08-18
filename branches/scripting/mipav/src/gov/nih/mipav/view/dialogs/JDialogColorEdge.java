@@ -133,7 +133,7 @@ public class JDialogColorEdge extends JDialogScriptableBase
      * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
      * Defaults to no action, override to actually have it do something.
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
@@ -417,74 +417,74 @@ public class JDialogColorEdge extends JDialogScriptableBase
         colorPanel.setLayout(gbl);
         colorPanel.setBorder(buildTitledBorder("Colors at edge"));
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Red 1:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         red1Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(red1Text, true);
         colorPanel.add(red1Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Green 1:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         green1Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(green1Text, true);
         colorPanel.add(green1Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Blue 1:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         blue1Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(blue1Text, true);
         colorPanel.add(blue1Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Red 2:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         red2Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(red2Text, true);
         colorPanel.add(red2Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Green 2:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         green2Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(green2Text, true);
         colorPanel.add(green2Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Blue 2:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         blue2Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(blue2Text, true);
         colorPanel.add(blue2Text, gbc);

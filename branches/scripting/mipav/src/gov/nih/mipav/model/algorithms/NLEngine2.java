@@ -1167,7 +1167,6 @@ FIND_AMAX:
                     sum = sum + (4 * t1) + (2 * t2);
 
                     // cout << x << "   " << t2 << "  " << sum <<  endl;
-                    x = x;
                 }
 
                 break;
@@ -1182,7 +1181,6 @@ FIND_AMAX:
                     sum = sum + (4 * t1) + (2 * t2);
 
                     // cout << x << "   " << t2 << "  " << sum <<  endl;
-                    x = x;
                 }
 
                 break;
@@ -1197,7 +1195,6 @@ FIND_AMAX:
                     sum = sum + (4 * t1) + (2 * t2);
 
                     // cout << x << "   " << t2 << "  " << sum <<  endl;
-                    x = x;
                 }
 
                 break;
@@ -1212,7 +1209,6 @@ FIND_AMAX:
                     sum = sum + (4 * t1) + (2 * t2);
 
                     // cout << x << "   " << t2 << "  " << sum <<  endl;
-                    x = x;
                 }
 
                 break;
@@ -1227,7 +1223,6 @@ FIND_AMAX:
                     sum = sum + (4 * t1) + (2 * t2);
 
                     // cout << x << "   " << t2 << "  " << sum <<  endl;
-                    x = x;
                 }
 
                 break;

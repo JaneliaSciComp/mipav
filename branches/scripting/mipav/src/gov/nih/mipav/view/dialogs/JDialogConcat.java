@@ -90,7 +90,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
     public JDialogConcat(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         imageA = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -568,19 +568,19 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 0;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
         inputPanel.add(labelUse, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(labelImageA, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(labelImageB, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(comboBoxImage, gbc);
 
         JPanel dimensionPanel = new JPanel(new GridBagLayout());

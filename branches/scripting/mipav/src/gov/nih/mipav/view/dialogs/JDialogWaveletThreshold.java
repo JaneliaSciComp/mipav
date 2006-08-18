@@ -265,7 +265,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
             this.setDisplayLocReplace();
         }
         
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         cNum = scriptParameters.getParams().getInt("cNum");
@@ -585,8 +585,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));

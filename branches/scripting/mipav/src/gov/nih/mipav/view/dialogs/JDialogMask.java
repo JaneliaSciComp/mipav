@@ -258,7 +258,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         setMinMax();

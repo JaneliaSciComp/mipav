@@ -703,8 +703,8 @@ public class JDialogVolViewResample extends JDialogBase {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
         radioButtonPanelLeft.add(radioSurfaceL, gbc);
         gbc.gridy++;
         radioButtonPanelLeft.add(emptyLabelUp, gbc);
@@ -753,8 +753,8 @@ public class JDialogVolViewResample extends JDialogBase {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
         radioButtonPanelRight.add(radioSurfaceR, gbc);
         gbc.gridy++;
         radioButtonPanelRight.add(radioRaycastR, gbc);

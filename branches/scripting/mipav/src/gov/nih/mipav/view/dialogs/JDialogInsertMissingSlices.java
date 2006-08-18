@@ -246,7 +246,7 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         findMissingSlices();
@@ -268,64 +268,6 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
-    
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        
-        if (allPresent) {
-            destImageKey = srcImageKey;
-        }
-        
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            insertBlank = parser.getNextBoolean();
-            setInsertBlank(insertBlank);
-
-            
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
     
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -351,8 +293,6 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
     public void setInsertBlank(boolean insertBlank) {
         this.insertBlank = insertBlank;
     }
-
-    
 
     /**
      * Once all the necessary variables are set, call the Insert Slice algorithm based on what type of image this is and

@@ -139,7 +139,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
      */
     public JDialogCrop(Frame theParentFrame, ModelImage im, int _zSlice) {
         super(theParentFrame, false);
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         int i;
         ViewVOIVector VOIs = im.getVOIs();

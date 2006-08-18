@@ -80,7 +80,6 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
                                   boolean useRed, boolean useGreen, boolean useBlue) {
 
         super(destImg, srcImg);
-        this.baseImage = baseImage;
         this.doLinearRescale = doLinearRescale;
         this.bin1 = bin1;
         this.bin2 = bin2;

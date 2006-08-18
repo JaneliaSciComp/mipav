@@ -307,7 +307,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
     protected void setGUIFromParams() {
         doClose = false;
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         // TODO: why do we reg the parent frame?  shouldn't it already be registered?

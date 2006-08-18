@@ -111,7 +111,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         super(theParentFrame, false);
         image = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -289,7 +289,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -390,7 +390,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         GridBagConstraints gbc5 = new GridBagConstraints();
         gbc5.gridwidth = 1;
         gbc5.gridheight = 1;
-        gbc5.anchor = gbc5.WEST;
+        gbc5.anchor = GridBagConstraints.WEST;
         gbc5.weightx = 1;
         gbc5.insets = new Insets(3, 3, 3, 3);
         gbc5.fill = GridBagConstraints.HORIZONTAL;
@@ -430,7 +430,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -468,7 +468,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         GridBagConstraints gbc3 = new GridBagConstraints();
         gbc3.gridwidth = 1;
         gbc3.gridheight = 1;
-        gbc3.anchor = gbc3.WEST;
+        gbc3.anchor = GridBagConstraints.WEST;
         gbc3.weightx = 1;
         gbc3.insets = new Insets(3, 3, 3, 3);
         gbc3.fill = GridBagConstraints.HORIZONTAL;
@@ -486,7 +486,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;

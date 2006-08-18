@@ -117,7 +117,7 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
     public JDialogPointArea(Frame theParentFrame, ModelImage image, boolean showGraph) {
         super(theParentFrame, false);
         srcImage = image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         this.showGraph = showGraph;
         init();
     }
@@ -134,7 +134,7 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
     public JDialogPointArea(Frame theParentFrame, ModelImage image, int xLoc, int yLoc, boolean showGraph) {
         super(theParentFrame, false);
         setSeparateThread(false);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         // setLocation(xLoc, yLoc);
         setXLoc(xLoc);

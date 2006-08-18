@@ -343,7 +343,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
      * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
      * Defaults to no action, override to actually have it do something.
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
             AlgorithmParameters.storeImageInRunner(getResultImage());
      }
     
@@ -823,7 +823,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -1137,7 +1137,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
                 GridBagConstraints gbc2 = new GridBagConstraints();
                 gbc2.gridwidth = 1;
                 gbc2.gridheight = 1;
-                gbc2.anchor = gbc2.WEST;
+                gbc2.anchor = GridBagConstraints.WEST;
                 gbc2.weightx = 1;
                 gbc2.insets = new Insets(3, 3, 3, 3);
                 gbc2.fill = GridBagConstraints.HORIZONTAL;
@@ -1281,7 +1281,7 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;

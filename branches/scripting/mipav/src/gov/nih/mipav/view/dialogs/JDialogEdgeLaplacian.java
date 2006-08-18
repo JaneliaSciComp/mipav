@@ -769,7 +769,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -817,7 +817,7 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
         gbc3.gridwidth = 1;
         gbc3.gridheight = 1;
-        gbc3.anchor = gbc.WEST;
+        gbc3.anchor = GridBagConstraints.WEST;
         gbc3.weightx = 1;
         gbc3.insets = new Insets(3, 3, 3, 3);
         gbc3.fill = GridBagConstraints.HORIZONTAL;

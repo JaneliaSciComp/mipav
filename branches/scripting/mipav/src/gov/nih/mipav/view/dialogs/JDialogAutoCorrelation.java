@@ -2,8 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +18,7 @@ import javax.swing.*;
 /**
  * Dialog to call AlgorithmAutoCorrelation.
  */
-public class JDialogAutoCorrelation extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogAutoCorrelation extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -83,11 +82,9 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
     public JDialogAutoCorrelation(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
-
-   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -108,78 +105,61 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
             dispose();
         }
     }
-
- 
-    
-/*    
-    private boolean haveBlue = false;
-    private boolean haveGreen = false;
-    private boolean haveRed = false;
-    private double maxR, maxG, maxB;
-    private double minR, minG, minB;*/
- 
-    
-    
-    
     
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected  void storeParamsFromGUI() throws ParserException{
-        try{
+        scriptParameters.storeInputImage(image);
+        
+        if (image.isColorImage()) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageR());
+            AlgorithmParameters.storeImageInRecorder(getResultImageG());
+            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        } else {
+            AlgorithmParameters.storeImageInRecorder(getResultImage());
+        }
+    }
 
-            scriptParameters.storeInputImage(image);
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("haveBlue",haveBlue));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("haveGreen",haveGreen));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("haveRed",haveRed));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("maxR",maxR));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("maxG",maxG));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("maxB",maxB));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("minR",minR));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("minG",minG));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("minB",minB));
-        }catch (ParserException pe){
-            MipavUtil.displayError("Error encountered saving script params:\n" + pe);
-        }  
-    }
-    
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
-        haveBlue = scriptParameters.getParams().getBoolean("haveBlue");
-        haveGreen = scriptParameters.getParams().getBoolean("haveGreen");
-        haveRed = scriptParameters.getParams().getBoolean("haveRed");
-        maxR = scriptParameters.getParams().getDouble("maxR");
-        maxG = scriptParameters.getParams().getDouble("maxG");
-        maxB = scriptParameters.getParams().getDouble("maxB");
-        minR = scriptParameters.getParams().getDouble("minR");
-        minG = scriptParameters.getParams().getDouble("minG");
-        minB = scriptParameters.getParams().getDouble("minB");
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (image.isColorImage()) {
+            minR = image.getMinR();
+            maxR = image.getMaxR();
+            if (minR != maxR) {
+                haveRed = true;
+            }
+            minG = image.getMinG();
+            maxG = image.getMaxG();
+            if (minG != maxG) {
+                haveGreen = true;
+            }
+            minB = image.getMinB();
+            maxB = image.getMaxB();
+            if (minB != maxB) {
+                haveBlue = true;
+            }
+        }
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Register the result image(s) in the script runner.
      */
-    public void doPostAlgorithmActions() {
-             AlgorithmParameters.storeImageInRunner(getResultImage());
-             AlgorithmParameters.storeImageInRunner(getResultImageB());
-             AlgorithmParameters.storeImageInRunner(getResultImageG());
-             AlgorithmParameters.storeImageInRunner(getResultImageR());
-                }
-       
-    
-    
-    
-    
-    
-    
-    
-    
+    protected void doPostAlgorithmActions() {
+        if (image.isColorImage()) {
+            AlgorithmParameters.storeImageInRunner(getResultImageB());
+            AlgorithmParameters.storeImageInRunner(getResultImageG());
+            AlgorithmParameters.storeImageInRunner(getResultImageR());
+        } else {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -192,10 +172,6 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-        ViewJFrameImage imageFrameR = null;
-        ViewJFrameImage imageFrameG = null;
-        ViewJFrameImage imageFrameB = null;
         int verticalPosition = 200;
 
         if (algorithm instanceof AlgorithmAutoCorrelation) {
@@ -225,7 +201,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                     if (resultImageR != null) {
 
                         try {
-                            imageFrameR = new ViewJFrameImage(resultImageR, null, new Dimension(610, verticalPosition));
+                            new ViewJFrameImage(resultImageR, null, new Dimension(610, verticalPosition));
                             verticalPosition += 20;
                         } catch (OutOfMemoryError error) {
                             System.gc();
@@ -237,7 +213,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                     if (resultImageG != null) {
 
                         try {
-                            imageFrameG = new ViewJFrameImage(resultImageG, null, new Dimension(610, verticalPosition));
+                            new ViewJFrameImage(resultImageG, null, new Dimension(610, verticalPosition));
                             verticalPosition += 20;
                         } catch (OutOfMemoryError error) {
                             System.gc();
@@ -248,7 +224,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                     if (resultImageB != null) {
 
                         try {
-                            imageFrameB = new ViewJFrameImage(resultImageB, null, new Dimension(610, verticalPosition));
+                            new ViewJFrameImage(resultImageB, null, new Dimension(610, verticalPosition));
                         } catch (OutOfMemoryError error) {
                             System.gc();
                             MipavUtil.displayError("Out of memory: unable to open imageFrameB");
@@ -307,7 +283,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                     resultImage.clearMask();
 
                     try {
-                        imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -345,7 +321,9 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
             } // else image black and white
         } // if ( algorithm instanceof AlgorithmAutoCorrelation)
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         algoAutoCorrelation.finalize();
         algoAutoCorrelation = null;
@@ -386,100 +364,6 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
      */
     public ModelImage getResultImageR() {
         return resultImageR;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("AutoCorrelation " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                            " ");
-                UI.getScriptDialog().putVar(resultImageR.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImageR.getImageName()) + " ");
-                UI.getScriptDialog().putVar(resultImageG.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImageG.getImageName()) + " ");
-                UI.getScriptDialog().putVar(resultImageB.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImageB.getImageName()) + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String imageRKey = null;
-        String imageGKey = null;
-        String imageBKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-            imageRKey = parser.getNextString();
-            imageGKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        UI = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        if (image.isColorImage()) {
-            minR = image.getMinR();
-            maxR = image.getMaxR();
-
-            if (minR != maxR) {
-                haveRed = true;
-            }
-
-            minG = image.getMinG();
-            maxG = image.getMaxG();
-
-            if (minG != maxG) {
-                haveGreen = true;
-            }
-
-            minB = image.getMinB();
-            maxB = image.getMaxB();
-
-            if (minB != maxB) {
-                haveBlue = true;
-            }
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (image.isColorImage()) {
-            parser.putVariable(imageRKey, getResultImageR().getImageName());
-            parser.putVariable(imageGKey, getResultImageG().getImageName());
-            parser.putVariable(imageBKey, getResultImageB().getImageName());
-        } else {
-            parser.putVariable(imageRKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -628,9 +512,9 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 gbc.weightx = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 gbc.gridwidth = 1;
-                gbc.fill = gbc.BOTH;
+                gbc.fill = GridBagConstraints.BOTH;
                 gbc.insets = new Insets(5, 5, 5, 5);
 
                 if (haveRed) {
@@ -651,9 +535,9 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                 gbc.gridx = 0;
                 gbc.gridy = 0;
                 gbc.weightx = 1;
-                gbc.anchor = gbc.WEST;
+                gbc.anchor = GridBagConstraints.WEST;
                 gbc.gridwidth = 1;
-                gbc.fill = gbc.BOTH;
+                gbc.fill = GridBagConstraints.BOTH;
                 gbc.insets = new Insets(5, 5, 5, 5);
 
                 if (haveRed && haveGreen) {
@@ -686,7 +570,6 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
 
         pack();
         setVisible(true);
-
     }
 
     /**

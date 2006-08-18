@@ -169,7 +169,7 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
      */
     public JDialogLevelSet(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         image = im;
 
         ViewVOIVector VOIs = image.getVOIs();
@@ -562,7 +562,7 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -630,7 +630,7 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
         paramPanel.setBorder(buildTitledBorder("Algorithm parameters"));
         gbc2.gridwidth = 2;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.gridx = 0;

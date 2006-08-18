@@ -1775,7 +1775,7 @@ public class ViewJPanelLUT extends JPanel
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 5, 0, -5);
         controlPanel.add(updateCheckBoxA, gbc);
 
@@ -2051,7 +2051,7 @@ public class ViewJPanelLUT extends JPanel
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.insets = new Insets(0, 5, 0, -5);
         controlPanelB.add(updateCheckBoxB, gbc);

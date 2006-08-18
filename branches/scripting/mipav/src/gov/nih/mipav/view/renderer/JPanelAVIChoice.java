@@ -239,7 +239,7 @@ public class JPanelAVIChoice extends JDialogBase {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 20, 0, 0);
         createPanel.add(compressionBox);
 

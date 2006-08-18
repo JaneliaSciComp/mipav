@@ -63,7 +63,7 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
         super(theParentFrame, false);
         image = im;
         imageName = image.getImageName();
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
     }
 
     /**
@@ -206,7 +206,7 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         imageName = image.getImageName();

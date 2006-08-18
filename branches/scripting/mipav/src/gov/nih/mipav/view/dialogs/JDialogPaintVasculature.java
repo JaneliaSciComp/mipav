@@ -796,8 +796,8 @@ public class JDialogPaintVasculature extends JDialogBase
         buttonPanel.add(doneButton);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
@@ -916,7 +916,7 @@ public class JDialogPaintVasculature extends JDialogBase
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         lowerDeltaPanel.add(lowerDeltaSlider, gbc);
 
@@ -989,7 +989,7 @@ public class JDialogPaintVasculature extends JDialogBase
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         deltaPanel.add(upperDeltaSlider, gbc);
 

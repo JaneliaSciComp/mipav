@@ -750,6 +750,8 @@ public class ViewMenuBar {
     /**
      * Create the srb File submenu.
      *
+     * @param   imageOpened  Whether an image is currently open in mipav; this determines whether the 'save' menu items are enabled.
+     *
      * @return  The new submenu
      *
      * @see     #makeFileMenu(boolean)

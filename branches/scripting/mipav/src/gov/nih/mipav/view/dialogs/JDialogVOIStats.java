@@ -128,23 +128,23 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         JPanel namePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5,5,5,5);
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         namePanel.add(labelName, gbc);
 
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         namePanel.add(VOIName, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
         gbc.weighty = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         namePanel.add(labelColor, gbc);
 
         gbc.gridx = 1;
@@ -202,7 +202,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(opacitySlider, gbc);
 
@@ -210,19 +210,19 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel.add(maximum, gbc);
@@ -235,14 +235,14 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelVOIProps.add(namePanel, gbc);
         gbc.gridy = 1;
         panelVOIProps.add(checkboxPanel, gbc);
         gbc.gridy = 2;
         gbc.weighty = 1;
-        gbc.anchor = gbc.NORTH; //gbc.fill = gbc.BOTH;
+        gbc.anchor = GridBagConstraints.NORTH; //gbc.fill = GridBagConstraints.BOTH;
         panelVOIProps.add(sliderPanel, gbc);
 
         listPanel = new JPanelStatisticsList();
@@ -330,11 +330,11 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         JPanel mainTreePanel = new JPanel(new GridBagLayout());
         mainTreePanel.setBorder(buildTitledBorder("VOI Tree"));
 
-        gb.anchor = gb.CENTER;
+        gb.anchor = GridBagConstraints.CENTER;
         gb.gridx = 0; gbc.gridy = 0;
         gb.weightx = 1.0;
         gb.weighty = 1.0;
-        gb.fill = gbc.BOTH;
+        gb.fill = GridBagConstraints.BOTH;
 
         mainTreePanel.add(voiTreePane, gb);
 
@@ -350,13 +350,13 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gb.gridy = 1;
         gb.weightx = 1;
         gb.weighty = 0;
-        gb.fill = gbc.HORIZONTAL;
+        gb.fill = GridBagConstraints.HORIZONTAL;
         mainTreePanel.add(treeOptionPanel, gb);
 
         gb.gridy = 2;
         gb.weightx = .5;
         gb.weighty = .5;
-        gb.fill = gb.BOTH;
+        gb.fill = GridBagConstraints.BOTH;
         mainTreePanel.add(voiContourPane, gb);
 
         JPanel leftButton = new JPanel();
@@ -388,7 +388,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         gb.gridy = 0;
         gb.weightx = 1;
         gb.weighty = 1;
-        gb.fill = gb.BOTH;
+        gb.fill = GridBagConstraints.BOTH;
         mainDialogPanel.add(leftPanel, gb);
 
         gb.gridx = 1;

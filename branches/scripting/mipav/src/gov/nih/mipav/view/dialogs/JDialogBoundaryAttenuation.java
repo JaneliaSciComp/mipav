@@ -22,8 +22,7 @@ import javax.swing.*;
  *
  * @author  Evan McCreedy
  */
-public class JDialogBoundaryAttenuation extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -99,39 +98,34 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException{
         scriptParameters.storeInputImage(srcImage);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("maxAttenuation",maxAttenuation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("numErosions",numErosions));
+        scriptParameters.storeOutputImageParams(destImage, true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_attenuation", maxAttenuation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_erosions", numErosions));
     }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
     protected void setGUIFromParams(){
-        maxAttenuation = scriptParameters.getParams().getFloat("maxAttenuation");
-        numErosions = scriptParameters.getParams().getInt("numErosions");
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+        
+        maxAttenuation = scriptParameters.getParams().getFloat("max_attenuation");
+        numErosions = scriptParameters.getParams().getInt("num_erosions");
     }
     
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-   public void doPostAlgorithmActions() {
-            AlgorithmParameters.storeImageInRunner(destImage);
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(destImage);
     }
-    
-    
-    
-    
-    
-    
-    
-    
     
     /**
      * Handle action events from the GUI.
@@ -195,8 +189,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
         return str;
     }
 
-  
-
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
@@ -226,8 +218,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
-
-
 
     /**
      * Construct and run the algorithm.

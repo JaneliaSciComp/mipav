@@ -116,7 +116,7 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
     public JDialogWatershed(JFrame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 

@@ -1696,7 +1696,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         GridBagConstraints gbc = new GridBagConstraints();
 
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;

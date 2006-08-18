@@ -156,7 +156,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         setMode(scriptParameters.getParams().getInt("interpolation_type"));

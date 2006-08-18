@@ -255,7 +255,7 @@ public class JDialogSaveDicom extends JDialogBase {
         cancelFlag = false;
 
         gbc = new GridBagConstraints();
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(1, 1, 1, 1);
         layout = new GridBagLayout();
 

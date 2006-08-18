@@ -96,7 +96,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
     public JDialogRegVOILandmark(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -540,19 +540,19 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
         maxSum.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 5, 0, 5);
         gbc.weightx = 1;
         optionPanel.add(labelOpt, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(comboBoxOpt, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         optionPanel.add(labelStep, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(textStep, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
@@ -635,7 +635,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(scalePanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(optionPanel, gbc);

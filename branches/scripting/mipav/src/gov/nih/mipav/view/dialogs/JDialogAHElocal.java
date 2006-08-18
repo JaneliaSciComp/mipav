@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -40,12 +41,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     private AlgorithmAHElocal aheAlgo = null;
 
     /** DOCUMENT ME! */
-    private boolean blue = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox blueChannel;
-
-    /** DOCUMENT ME! */
     private boolean clamp = false;
 
     /** DOCUMENT ME! */
@@ -70,25 +65,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     private JComboBox comboBoxScaleMax;
 
     /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** black and white and "Image" for color. */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
-    private boolean green = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox greenChannel;
-
-    /** DOCUMENT ME! */
     private ModelImage image; // source image
-
-    /** or if the source image is to be replaced. */
-    private ButtonGroup imageVOIgroup;
-
-    /** DOCUMENT ME! */
-    private boolean isColorImage = false; // indicates the image is a color image
 
     /** DOCUMENT ME! */
     private int kernelShape;
@@ -104,18 +81,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private float minThresholdValue;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private boolean red = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox redChannel;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -134,15 +99,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
-
-    /** DOCUMENT ME! */
-    private boolean wholeImageSelected = true;
+    
+    private JPanelColorChannels colorPanel;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -167,31 +127,9 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
             return;
         }
 
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAHElocal(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -254,70 +192,60 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-
-    
-    
-    
-   /**
-    * Record the parameters just used to run this algorithm in a script.
-    * 
-    * @throws  ParserException  If there is a problem creating/recording the new parameters.
-    */
-   protected void storeParamsFromGUI() throws ParserException{
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
        
-       scriptParameters.storeInputImage(image);
- 
-       scriptParameters.getParams().put(ParameterFactory.newParameter("blue",blue));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("clamp",clamp));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("clampValue",clampValue));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("green",green));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("isColorImage",isColorImage));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("kernelShape",kernelShape));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("kernelSize",kernelSize));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("minThresholdValue",minThresholdValue));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("red",red));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("scaleMaxValue",scaleMaxValue));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("threshold",threshold));
-       scriptParameters.getParams().put(ParameterFactory.newParameter("wholeImageSelected",wholeImageSelected));
-     
-       
-       
-   }
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+        
+        scriptParameters.storeColorOptions(colorPanel);
   
-   /**
-    * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-    */
-   protected void setGUIFromParams(){
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clamp", clamp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clampValue", clampValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelShape", kernelShape));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelSize", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("minThresholdValue", minThresholdValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleMaxValue", scaleMaxValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+    }
+  
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        colorPanel = new JPanelColorChannels(image);
+        scriptParameters.setColorOptionsGUI(colorPanel);
        
-       blue = scriptParameters.getParams().getBoolean("blue");
-       clamp = scriptParameters.getParams().getBoolean("clamp");
-       clampValue= scriptParameters.getParams().getInt("clampValue");
-       displayLoc = scriptParameters.getParams().getInt("displayLoc");
-       green = scriptParameters.getParams().getBoolean("green");
-       isColorImage = scriptParameters.getParams().getBoolean("isColorImage");
-       kernelShape = scriptParameters.getParams().getInt("kernelShape");
-       kernelSize = scriptParameters.getParams().getInt("kernelSize");
-       minThresholdValue = scriptParameters.getParams().getFloat("minThresholdValue");
-       red = scriptParameters.getParams().getBoolean("red");
-       scaleMaxValue = scriptParameters.getParams().getInt("scaleMaxValue");
-       threshold = scriptParameters.getParams().getBoolean("threshold");
-       wholeImageSelected = scriptParameters.getParams().getBoolean("wholeImageSelected");
-   }
+        clamp = scriptParameters.getParams().getBoolean("clamp");
+        clampValue= scriptParameters.getParams().getInt("clampValue");
+        kernelShape = scriptParameters.getParams().getInt("kernelShape");
+        kernelSize = scriptParameters.getParams().getInt("kernelSize");
+        minThresholdValue = scriptParameters.getParams().getFloat("minThresholdValue");
+        scaleMaxValue = scriptParameters.getParams().getInt("scaleMaxValue");
+        threshold = scriptParameters.getParams().getBoolean("threshold");
+    }
    
-   /**
-    * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-    * Defaults to no action, override to actually have it do something.
-    */
-    public void doPostAlgorithmActions() {
-       if (displayLoc == NEW) {
-           AlgorithmParameters.storeImageInRunner(getResultImage());
-       }
-   }
-     
-    
-    
-    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+     protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
@@ -325,9 +253,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAHElocal) {
             image.clearMask();
 
@@ -351,7 +276,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                     // else {      // not clipping the histogram
                     // resultImage.setImageName("AHElocal ("+shape+", "+kernelSize+"): " +image.getImageName());
                     // }
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
 
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -393,7 +318,10 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         aheAlgo.finalize();
         aheAlgo = null;
         dispose();
@@ -430,21 +358,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     }
 
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
      * Accessor that sets the kernel shape.
      *
      * @param  value  Value to set kernel shape to.
@@ -460,21 +373,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      */
     public void setKernelSize(int value) {
         kernelSize = value;
-    }
-
-    /**
-     * RGB images are histogram equalized by 'channel.' That is, each color, red, blue and green, is run independently
-     * of the other two colors. This permits selectively filtering any combination of the three channels instead of
-     * simply trying to handle all three at once. True filters that channel.
-     *
-     * @param  r  DOCUMENT ME!
-     * @param  g  DOCUMENT ME!
-     * @param  b  DOCUMENT ME!
-     */
-    public void setRGBChannelFilter(boolean r, boolean g, boolean b) {
-        red = r;
-        green = g;
-        blue = b;
     }
 
     /**
@@ -502,15 +400,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      */
     public void setThresholdValue(float value) {
         minThresholdValue = value;
-    }
-
-    /**
-     * Accessor that sets the wholeImageSelected flag.
-     *
-     * @param  flag  <code>true</code> indicates wholeImageSelected, <code>false</code> otherwise.
-     */
-    public void setWholeImageSelectedFlag(boolean flag) {
-        wholeImageSelected = flag;
     }
 
     /**
@@ -558,90 +447,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
         // return clampingPanel;
     }
-
-    /**
-     * makes the color panel.
-     *
-     * @param   gbc  DOCUMENT ME!
-     * @param   gbl  DOCUMENT ME!
-     *
-     * @return  the color panel with adjustable attributes already added
-     */
-    protected JPanel buildColorPanel(GridBagConstraints gbc, GridBagLayout gbl) {
-        JPanel colorPanel = new JPanel();
-        colorPanel.setLayout(gbl);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        colorPanel.setForeground(Color.black);
-
-        // set the border ... "Color channel Selection"
-        colorPanel.setBorder(buildTitledBorder("Color channel selection"));
-
-        redChannel = new JCheckBox("Red channel", true);
-        redChannel.setFont(serif12);
-        gbl.setConstraints(redChannel, gbc);
-        colorPanel.add(redChannel);
-
-        greenChannel = new JCheckBox("Green channel", true);
-        greenChannel.setFont(serif12);
-        gbl.setConstraints(greenChannel, gbc);
-        colorPanel.add(greenChannel);
-
-        blueChannel = new JCheckBox("Blue channel", true);
-        blueChannel.setFont(serif12);
-        gbl.setConstraints(blueChannel, gbc);
-        colorPanel.add(blueChannel);
-
-        // if not a color image, block access to the channel switches
-        // since they don't mean anything
-        if (!isColorImage) {
-            redChannel.setEnabled(false);
-            greenChannel.setEnabled(false);
-            blueChannel.setEnabled(false);
-        }
-
-        colorPanel.setToolTipText("Color images can be filtered over any combination of color channels");
-
-        return colorPanel;
-    }
-
-    /**
-     * builds the panel which allows user to select which where the algorithm is to display the output, or resultant,
-     * image:
-     *
-     * <ul>
-     *   <li>create a new image</li>
-     *   <li>replace the old image</li>
-     * </ul>
-     *
-     * @return  a fully populated JPanel.
-     */
-    protected JPanel buildDestinationPanel() {
-
-        // destination goes in the left of the lower box
-        JPanel destinationPanel = new JPanel();
-        Box destinationBox = new Box(BoxLayout.Y_AXIS);
-
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage); // add the button to the grouping
-        destinationBox.add(newImage); // add the button to the component
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage); // add the button to the grouping
-        destinationBox.add(replaceImage); // add the button to the component
-        destinationPanel.add(destinationBox);
-
-        return destinationPanel;
-    }
-
+    
     /**
      * Creates the comboBox that allows user to define the way the neighboring pixels are chosen for the histogram. The
      * kernel-shape may be
@@ -737,43 +543,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     }
 
     /**
-     * builds the panel which allows user to select which portion of the image the algorithm is to operate on:
-     *
-     * <ul>
-     *   <li>the entire image</li>
-     *   <li>the currently highlighted volume of interest</li>
-     * </ul>
-     * Although specified elsewhere, it should be noted that if VOI is chosen, although no currently selected VOI
-     * exists, an error notice will be posted to the user at the time of algorithm indicating that no VOI had been
-     * selected.
-     *
-     * @return  a fully populated JPanel.
-     */
-    protected JPanel buildRegionSelectPanel() {
-
-        // filter goes in the right of the lower box
-        JPanel imageVOIPanel = new JPanel();
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Filter"));
-
-        Box imageVOIBox = new Box(BoxLayout.Y_AXIS);
-        imageVOIgroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIgroup.add(wholeImage); // add the button to the grouping
-        imageVOIBox.add(wholeImage); // add the button to the component
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIgroup.add(VOIRegions); // add the button to the grouping
-        imageVOIBox.add(VOIRegions); // add the button to the component
-
-        imageVOIPanel.add(imageVOIBox); // place the box onto a border
-
-        return imageVOIPanel;
-    }
-
-    /**
      * define the possibilities of where the scale max comes from.
      *
      * @param  holder  DOCUMENT ME!
@@ -803,7 +572,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         comboBoxScaleMax.addItem("Slice");
         comboBoxScaleMax.addItem("Image");
 
-        if (isColorImage) {
+        if (image.isColorImage()) {
             comboBoxScaleMax.setSelectedIndex(2);
             scaleMaxValue = 2;
         } else {
@@ -824,7 +593,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      */
     protected void buildThreshold(JPanel holder, GridBagConstraints gbc, GridBagLayout gbl) {
 
-        if (isColorImage) {
+        if (image.isColorImage()) {
             minThresholdValue = (float) Math.min(image.getMinR(), Math.min(image.getMinG(), image.getMinB()));
         } else {
             minThresholdValue = (float) image.getMin();
@@ -922,8 +691,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     protected void makeNumericsOnly(JTextField txt) {
         txt.addKeyListener(new KeyAdapter() { // make the field
                 public void keyTyped(KeyEvent evt) { // not accept letters
-
-                    JTextField t = (JTextField) evt.getComponent();
                     char ch = evt.getKeyChar();
 
                     if (((ch < '0') || (ch > '9')) && ((ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE))) {
@@ -983,7 +750,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
             destExtents[i] = image.getExtents()[i];
         } // E[i] dim
 
-        if (displayLoc == NEW) {
+        if (outputPanel.isOutputNewImageSet()) {
 
             try {
 
@@ -1019,8 +786,8 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 }
 
                 // Make algorithm
-                aheAlgo = new AlgorithmAHElocal(resultImage, image, kernelSize, kernelShape, wholeImageSelected);
-                aheAlgo.setRGBChannelFilter(red, green, blue);
+                aheAlgo = new AlgorithmAHElocal(resultImage, image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -1069,8 +836,8 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, wholeImageSelected);
-                aheAlgo.setRGBChannelFilter(red, green, blue);
+                aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -1142,12 +909,13 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         gbc.insets = new Insets(2, 0, 2, 0); // component width = minwidth + (2ipadx)
 
         setupBox.add(buildKernelPanel(gbc, gbl));
-        setupBox.add(buildColorPanel(gbc, gbl));
-
-        Box lowerBox = new Box(BoxLayout.X_AXIS);
-        lowerBox.add(buildDestinationPanel());
-        lowerBox.add(buildRegionSelectPanel());
-        setupBox.add(lowerBox); // place lowerBox into the setupBox
+        
+        colorPanel = new JPanelColorChannels(image);
+        setupBox.add(colorPanel);
+    
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        setupBox.add(outputPanel);
+        
         mainDialogPanel.add(setupBox, BorderLayout.CENTER);
 
         // OK, Cancel, Help:
@@ -1168,16 +936,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      */
     private boolean setVariables() {
         JTextField fld;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        red = redChannel.isEnabled() && redChannel.isSelected();
-        green = greenChannel.isEnabled() && greenChannel.isSelected();
-        blue = blueChannel.isEnabled() && blueChannel.isSelected();
 
         if (clampCheckBox.isSelected()) {
 
@@ -1242,12 +1000,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
             MipavUtil.displayError("Kernel size must be a number");
 
             return false;
-        }
-
-        if (wholeImage.isSelected()) {
-            wholeImageSelected = true;
-        } else {
-            wholeImageSelected = false;
         }
 
         // get the max scale value

@@ -1553,8 +1553,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHistogram2Dim(this, getActiveImage());
         } else if (command.equals("DENCLUE")) {
             new JDialogDENCLUE(this, getActiveImage());
-        } else if (command.equals("colocDENCLUE")) {
-            new JDialogColocalizationDENCLUE(this, getActiveImage());
         } else if (command.equals("colocEM")) {
             new JDialogColocalizationEM(this, getActiveImage());
         } else if (command.equals("colocRegression")) {
@@ -1815,31 +1813,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 MipavUtil.displayError("There are no other images to register.");
             }
-        } else if (command.equals("MRIShear")) {
-
-            if (isMultipleImages() == true) {
-                new JDialogRegistrationShear(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to register.");
-            }
         } else if (command.equals("TPSpline")) {
 
             if (isMultipleImages() == true) {
                 new JDialogRegistrationTPSpline(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to register.");
-            }
-        } else if (command.equals("AIR linear")) {
-
-            if (isMultipleImages() == true) {
-                new JDialogRegistrationAIR(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to register.");
-            }
-        } else if (command.equals("AIR nonlinear")) {
-
-            if ((isMultipleImages() == true) || (getActiveImage().getNDims() == 3)) {
-                new JDialogRegistrationNonlinear(this, getActiveImage());
             } else {
                 MipavUtil.displayError("There are no other images to register.");
             }

@@ -1063,7 +1063,7 @@ public class JDialogFileInfoProject extends JDialogBase implements ActionListene
             investigatorEditorHolder = new Hashtable();
             investigatorModel = new ViewTableModel();
             investigatorTable = new JTable(investigatorModel);
-            investigatorTable.setAutoResizeMode(investigatorTable.AUTO_RESIZE_ALL_COLUMNS);
+            investigatorTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             investigatorTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             // for the diff tables inside the scrollpanel:
@@ -1089,7 +1089,7 @@ public class JDialogFileInfoProject extends JDialogBase implements ActionListene
             investigatorModel.addColumn(columnNames[i]);
         }
 
-        primaryTable.setAutoResizeMode(primaryTable.AUTO_RESIZE_ALL_COLUMNS);
+        primaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         primaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         primaryTable.getColumn("Name").setMinWidth(160);
         primaryTable.getColumn("Name").setMaxWidth(500);
@@ -1328,7 +1328,7 @@ public class JDialogFileInfoProject extends JDialogBase implements ActionListene
                 imageModel.addColumn(infoColumnNames[i]);
             }
 
-            imageTable.setAutoResizeMode(imageTable.AUTO_RESIZE_ALL_COLUMNS);
+            imageTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             imageTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             imageTable.getColumn("Name").setMinWidth(160);
@@ -1500,7 +1500,7 @@ public class JDialogFileInfoProject extends JDialogBase implements ActionListene
                 setModel.addColumn(parameterColumnNames[i]);
             }
 
-            setTable.setAutoResizeMode(setTable.AUTO_RESIZE_ALL_COLUMNS);
+            setTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
             setTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
             setTable.getColumn("Name").setMinWidth(160);

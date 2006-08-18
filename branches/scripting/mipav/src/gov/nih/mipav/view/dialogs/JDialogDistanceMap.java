@@ -569,7 +569,7 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);
@@ -605,7 +605,7 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(5, 5, 5, 5);
         mainPanel.add(destinationPanel, gbc);
         gbc.gridx = 1;

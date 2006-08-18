@@ -945,7 +945,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
         gbc.gridx = 0;
@@ -1147,21 +1147,21 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(optionsPanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(constructionPanel, gbc);
         gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(destinationPanel, gbc);
         gbc.gridx = 1;
         mainPanel.add(directionPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.gridwidth = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(filterPanel, gbc);
 
         getContentPane().add(mainPanel);

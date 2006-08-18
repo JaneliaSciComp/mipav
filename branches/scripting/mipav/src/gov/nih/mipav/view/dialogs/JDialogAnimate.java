@@ -863,8 +863,8 @@ public class JDialogAnimate extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(scalePanel, gbc);
 
         if (DIM == 4) {

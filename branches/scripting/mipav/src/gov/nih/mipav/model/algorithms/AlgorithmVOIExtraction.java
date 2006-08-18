@@ -234,15 +234,15 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             return;
         }
 
-        // buildProgressBar(srcImage.getImageName(), "VOIExtraction ...", 0, 100);
-        // initProgressBar();
+        buildProgressBar(srcImage.getImageName(), "VOIExtraction ...", 0, 100);
+        initProgressBar();
 
         try {
             srcImage.setLock(ModelStorageBase.W_LOCKED);
         } catch (IOException error) {
             displayError("Algorithm VOI Extraction: Image locked");
             setCompleted(false);
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            disposeProgressBar();
 
             return;
         }
@@ -255,7 +255,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm VOI Extraction: image bounds exceeded");
                 setCompleted(false);
-                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                disposeProgressBar();
                 srcImage.releaseLock();
 
                 return;
@@ -357,7 +357,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                 if (grayScaleNumber >= 10000) {
                                     displayError("Algorithm VOI Extraction: Impossibly high >= 10000 gray scales detected");
                                     setCompleted(false);
-                                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                                    disposeProgressBar();
 
                                     return;
                                 } // end of if (grayScaleNumber >= 1000)
@@ -466,14 +466,14 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     } // end of for (x = 0; x < xDimE; x++)
                 } // end of for (y = 0; y < yDimE; y++)
 
-//                if (progressBar != null) {
-//                    progressBar.updateValue(Math.round((z + 1) * 100.0f / zDim), runningInSeparateThread);
-//                }
+                if (progressBar != null) {
+                    progressBar.updateValue(Math.round((z + 1) * 100.0f / zDim), runningInSeparateThread);
+                }
             } // end of for (z = 0; z < zDim; z++)
         }
 
         if (threadStopped) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -518,8 +518,9 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         } // if (nameTable != null)
 
         srcImage.releaseLock();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+
+        if (progressBar != null) {
+            progressBar.dispose();
         }
 
         setCompleted(true);

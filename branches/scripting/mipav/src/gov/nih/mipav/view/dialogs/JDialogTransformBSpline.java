@@ -106,7 +106,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
         super(theParentFrame, true);
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         init();
     }

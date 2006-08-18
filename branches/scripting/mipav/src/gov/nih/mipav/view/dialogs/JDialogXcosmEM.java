@@ -272,7 +272,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -482,7 +482,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
@@ -610,7 +610,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
 

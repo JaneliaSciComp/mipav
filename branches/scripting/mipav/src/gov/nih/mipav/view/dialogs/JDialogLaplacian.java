@@ -216,7 +216,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);

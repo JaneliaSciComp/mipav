@@ -262,7 +262,7 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("normalization_const", norm));
         scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, new float[] {scaleX, scaleY}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iterations", iters));
+        scriptParameters.storeNumIterations(iters);
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_periphery_threshold", thresholdSelected));
         scriptParameters.getParams().put(ParameterFactory.newParameter("periphery_threshold_level", thresholdLevel));
     }
@@ -272,20 +272,20 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+        if (scriptParameters.doOutputNewImage()) {
             setDisplayLocNew();
         } else {
             setDisplayLocReplace();
         }
         
         setNorm(scriptParameters.getParams().getFloat("normalization_const"));
-        float[] sigmas = scriptParameters.getParams().getList(AlgorithmParameters.SIGMAS).getAsFloatArray();
+        float[] sigmas = scriptParameters.getUnnormalizedSigmas();
         setScaleX(sigmas[0]);
         setScaleY(sigmas[1]);
-        setIters(scriptParameters.getParams().getInt("num_iterations"));
+        setIters(scriptParameters.getNumIterations());
         setThresholdSelected(scriptParameters.getParams().getBoolean("do_periphery_threshold"));
         setThresholdLevel(scriptParameters.getParams().getFloat("periphery_threshold_level"));
     }

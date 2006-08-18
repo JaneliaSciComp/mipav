@@ -84,7 +84,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
     public JDialogMatchImages(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         imageA = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 

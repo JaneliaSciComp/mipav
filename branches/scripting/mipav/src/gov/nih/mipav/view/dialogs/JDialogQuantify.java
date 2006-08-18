@@ -154,7 +154,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         setMaskImage(scriptParameters.retrieveImage("mask_image"));

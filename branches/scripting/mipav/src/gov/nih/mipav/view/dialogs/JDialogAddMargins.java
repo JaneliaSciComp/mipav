@@ -30,7 +30,7 @@ import javax.swing.*;
  * <p>The user chooses a value for the margins, with the image minimum the default. If Color, values are chosen for red,
  * green, and blue. A new image or replacement of the old image may be selected.</p>
  */
-public class JDialogAddMargins extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogAddMargins extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -138,15 +138,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     private Double rv = new Double(0.0);
 
     /** DOCUMENT ME! */
-    private String[] titles; // title of the frame shown when image is NULL
-
-    /** DOCUMENT ME! */
-    private String tmpStr;
-
-    /** DOCUMENT ME! */
-    private JTextField topBottomInput;
-
-    /** DOCUMENT ME! */
     private JTextField topInput;
 
     /** DOCUMENT ME! */
@@ -185,27 +176,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAddMargins(ViewUserInterface UI, ModelImage im) {
-        super();
-        image = im;
-        parentFrame = image.getParentFrame();
-
-        if (image.isColorImage() == false) {
-            colorFactor = 1;
-        } else {
-            colorFactor = 4;
-        }
-
-        userInterface = UI;
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -239,9 +209,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAddMargins) {
 
             if ((imageMarginsAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -250,7 +217,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                 try {
 
                     // put the new image into a new frame
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+                    new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -260,7 +227,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                 image = imageMarginsAlgo.getSrcImage();
 
                 try {
-                    imageFrame = new ViewJFrameImage(image, null, new Dimension(610, 200));
+                    new ViewJFrameImage(image, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -273,10 +240,11 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                 resultImage = null;
                 System.gc();
             }
-
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         imageMarginsAlgo.finalize();
         imageMarginsAlgo = null;
@@ -291,8 +259,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-  
 
     /**
      * Accessor that sets the back value.
@@ -453,45 +419,43 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         }
     }
 
-   
     /**
      * {@inheritDoc}
      */
-    public void storeParamsFromGUI(){
-        try {
-            scriptParameters.storeInputImage(image);
-            scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("blueValue", blueValue));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("bottomSide", bottomSide));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("bv", bv));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("colorFactor", colorFactor));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("defaultValue",defaultValue));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("displayLoc",displayLoc));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("dv",dv));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("front",front));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("greenValue",greenValue));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("gv",gv));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("leftSide",leftSide));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("redValue",redValue));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("rightSide",rightSide));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("rv",rv));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("topSide",topSide));
-       } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered storing parameters for " + JDialogScriptableBase.getDialogActionString(getClass()) + "\n" + pe);
-        }  
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blueValue", blueValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottomSide", bottomSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bv", bv));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("colorFactor", colorFactor));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("defaultValue", defaultValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("dv", dv));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("greenValue", greenValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gv", gv));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("leftSide", leftSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("redValue", redValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rightSide", rightSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rv", rv));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("topSide", topSide));
     }
- 
-   
 
     /**
      * {@inheritDoc}
      */
-    public void setGUIFromParams(){
+    protected void setGUIFromParams(){
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
         
         back = scriptParameters.getParams().getInt("back");
         blueValue = scriptParameters.getParams().getDouble("blueValue");
@@ -499,7 +463,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         bv  = Double.valueOf(scriptParameters.getParams().getDouble("bv"));
         colorFactor = scriptParameters.getParams().getInt("colorFactor");
         defaultValue = scriptParameters.getParams().getDouble("defaultValue");
-        displayLoc = scriptParameters.getParams().getInt("displayLoc");
         dv = Double.valueOf(scriptParameters.getParams().getDouble("dv"));
         front = scriptParameters.getParams().getInt("front");
         greenValue = scriptParameters.getParams().getDouble("greenValue");
@@ -509,18 +472,16 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         rightSide = scriptParameters.getParams().getInt("rightSide");
         rv = Double.valueOf(scriptParameters.getParams().getDouble("rv"));
         topSide = scriptParameters.getParams().getInt("topSide");
-           }
+    }
     
     /**
      * {@inheritDoc}
      */
-    public void doPostAlgorithmActions() {
+    protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
-    
-    
     
     /**
      * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is

@@ -713,7 +713,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                 }// for
             }// source equals imageList
             if ( ((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
-                if (e.getModifiers() == e.BUTTON3_MASK) {
+                if (e.getModifiers() == InputEvent.BUTTON3_MASK) {
                     Point pt = e.getPoint();
                     TreePath pathTarget = tree.getPathForLocation(pt.x, pt.y);
                     selectedNode = (ScriptTreeNode) pathTarget.getLastPathComponent();

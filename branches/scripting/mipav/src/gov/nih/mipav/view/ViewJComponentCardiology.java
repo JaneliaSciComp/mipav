@@ -1509,7 +1509,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             frame.setMessageText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS));
         }
 
-        if ((mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
+        if ((mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {
@@ -1532,7 +1532,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 return;
             }
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 if (mode == NEW_POINT) {
                     ((VOICardiology) (VOIs.VOIAt(0).getCurves()[slice].elementAt(0))).insertElement(xS, yS, slice);
@@ -1569,7 +1569,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             // setMode(DEFAULT);
         } else if (mode == POINT_VOI) {
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 if (voiHandler.isNewVoiNeeded(VOI.POINT)) { // create new VOI
 
@@ -1695,7 +1695,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         } // end of else if (mode == POINT_VOI)
         else if (mode == ANNOTATION) {
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 VOI newTextVOI = null;
 

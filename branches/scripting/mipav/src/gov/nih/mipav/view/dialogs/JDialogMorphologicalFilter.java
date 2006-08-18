@@ -232,7 +232,7 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         outputPanel = new JPanelAlgorithmOutputOptions(image);

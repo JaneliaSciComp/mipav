@@ -68,7 +68,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         setForeground(Color.black);
         this.flipAxis = flipAxis;
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -196,7 +196,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         String axisn = scriptParameters.getParams().getString("flip_axis");

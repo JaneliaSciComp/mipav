@@ -90,24 +90,7 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
         super(theParentFrame, true);
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
-
-
-        init();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui  User interface.
-     * @param  im  Source image.
-     */
-    public JDialogSkelGeom3D(ViewUserInterface ui, ModelImage im) {
-        super();
-        setForeground(Color.black);
-        image = im;
-        this.userInterface = ui;
+        userInterface = ViewUserInterface.getReference();
 
         init();
     }
@@ -170,13 +153,6 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
 
             image.calcMinMax();
             image.notifyImageDisplayListeners(null, true);
-
-            if (skelGeom3DAlgo.isCompleted() == true) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().append("SkelGeom3D" + "\n");
-                }
-            }
         }
     }
 
@@ -250,7 +226,7 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 3;
         gbc.weightx = 1;
 
@@ -345,8 +321,6 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
      */
     private boolean setVariables() {
         String tmpStr;
-        int i, j;
-
 
         tmpStr = textMinObjectValue.getText();
         minObjectValue = Float.parseFloat(tmpStr);

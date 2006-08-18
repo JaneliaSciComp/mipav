@@ -163,7 +163,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(originalImage);
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_iterations", numberIterations));
+        scriptParameters.storeNumIterations(numberIterations);
         scriptParameters.getParams().put(ParameterFactory.newParameter("display_every_n_slices", showProgress));
         scriptParameters.getParams().put(ParameterFactory.newParameter("objective_numerical_aperature", objectiveNumericalAperature));
         scriptParameters.getParams().put(ParameterFactory.newParameter("wavelength_nm", wavelength));
@@ -177,7 +177,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
     protected void setGUIFromParams() {
         originalImage = scriptParameters.retrieveInputImage();
         
-        numberIterations = scriptParameters.getParams().getInt("num_iterations");
+        numberIterations = scriptParameters.getNumIterations();
         showProgress = scriptParameters.getParams().getInt("display_every_n_slices");
         objectiveNumericalAperature = scriptParameters.getParams().getFloat("objective_numerical_aperature");
         wavelength = scriptParameters.getParams().getFloat("wavelength_nm");

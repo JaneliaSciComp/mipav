@@ -54,7 +54,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
     public JDialogMidsagittal(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
 

@@ -165,7 +165,7 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         super(theParentFrame, false);
         srcImage = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         if (im.isColorImage()) {
             doColor = true;
@@ -490,11 +490,6 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         }
 
         if ((srcImage.isColorImage() == false) && (testImage.isColorImage() == true)) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Cannot load a color (" + testImage.getImageName() +
                                    ") unless the original file is color.");
 
@@ -502,11 +497,6 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         }
 
         if (srcImage.getNDims() != testImage.getNDims()) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Error! " + srcImage.getImageName() + " is " + srcImage.getNDims() + "D, while " +
                                    testImage.getImageName() + " is " + testImage.getNDims() + "D");
 
@@ -516,11 +506,6 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         for (int i = 0; i < srcImage.getNDims(); i++) {
 
             if ((testImage != null) && (srcImage.getExtents()[i] != testImage.getExtents()[i])) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().removeLine();
-                }
-
                 MipavUtil.displayError("Error! For dimension = " + i + " " + srcImage.getImageName() +
                                        " has length = " + srcImage.getExtents()[i] + " while " +
                                        testImage.getImageName() + " has length = " + testImage.getExtents()[i]);

@@ -377,7 +377,7 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
         if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
@@ -1108,7 +1108,7 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
         mainPanel.add(maskPanelOpen, gbc);
 
         /*
-         * gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2; gbc.weightx = 1; gbc.fill = gbc.HORIZONTAL; mainPanel.add(
+         * gbc.gridx = 0; gbc.gridy = 1; gbc.gridwidth = 2; gbc.weightx = 1; gbc.fill = GridBagConstraints.HORIZONTAL; mainPanel.add(
          * maskPanelClose, gbc );
          */
 

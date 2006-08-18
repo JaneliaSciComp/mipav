@@ -1,10 +1,11 @@
 package gov.nih.mipav.model.algorithms.filters;
 
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
 
 import java.io.*;
+
 
 /**
  * The application of this algorithm blurs an image or VOI region of the image with a Gaussian function at a user
@@ -40,8 +41,10 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
     /** Storage location of the Gaussian kernel. */
     private float[] GaussData;
 
+
     /** Dimensionality of the kernel. */
     private int[] kExtents;
+
 
     /** Flags indicate which color channel to process. True indicates the channel should be processed. */
     private boolean red, green, blue;
@@ -61,10 +64,14 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
      */
-    public AlgorithmGaussianBlur(ModelImage srcImg, float[] sigmas,
-            boolean maskFlag, boolean img25D) {
-        this(null, srcImg, sigmas, maskFlag, img25D);
+    public AlgorithmGaussianBlur(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D) {
+        super(null, srcImg);
+
+        this.sigmas = sigmas;
+        entireImage = maskFlag;
+        image25D = img25D;
     }
+
 
     /**
      * Creates a new AlgorithmGaussianBlur object.
@@ -77,25 +84,9 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
      */
-    public AlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg,
-            float[] sigmas, boolean maskFlag, boolean img25D) {
-        this(destImg, srcImg, sigmas, maskFlag, img25D, 0, 100);
-    }
-
-    /**
-     * Constructor which sets the source and destination images, the minimum and maximum 
-     * progress value.
-     * @param destImg            the destination image
-     * @param srcImg             the source image
-     * @param sigmas             the sigmas
-     * @param maskFlag           the mask flag
-     * @param img25D             the 2.5D indicator
-     * @param minProgressValue   the minimum progress value.
-     * @param maxProgressValue   the maximum progress value.
-     */
-    public AlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg,
-            float[] sigmas, boolean maskFlag, boolean img25D, int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+                                 boolean img25D) {
+        super(destImg, srcImg);
 
         this.sigmas = sigmas;
         entireImage = maskFlag;
@@ -116,6 +107,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         sigmas = null;
         super.finalize();
     }
+
 
     /**
      * Starts the program.
@@ -140,7 +132,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         }
 
         if (threadStopped) {
-            setCompleted(false);
+            finalize();
+
             return;
         }
 
@@ -198,6 +191,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         red = flag;
     }
 
+
     /**
      * Calculates the blurred image and replaces the source image with the blurred image.
      *
@@ -224,6 +218,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length * nImages];
+            buildProgressBar(srcImage.getImageName(), "Blurring image ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -232,10 +227,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        int mod = totalLength / (maxProgressValue - minProgressValue); // mod is 1 percent of length
-
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(),
-                "Blurring image ...");
+        int mod = totalLength / 100; // mod is 1 percent of length
+        initProgressBar();
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -254,36 +247,36 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                    if (((start + i) % mod) == 0) {
-                        fireProgressStateChanged(minProgressValue + Math.round((float) (start + i) / (totalLength - 1) * (maxProgressValue - minProgressValue)));
+                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
                         resultBuffer[start + i] = buffer[i];
 
                         if (red) {
-                            resultBuffer[start + i + 1] = AlgorithmConvolver
-                                    .convolve2DRGBPt(i + 1, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[start + i + 1] = AlgorithmConvolver.convolve2DRGBPt(i + 1,
+                                                                                             srcImage.getExtents(),
+                                                                                             buffer, kExtents,
+                                                                                             GaussData);
                         } else {
                             resultBuffer[start + i + 1] = buffer[i + 1];
                         }
 
                         if (green) {
-                            resultBuffer[start + i + 2] = AlgorithmConvolver
-                                    .convolve2DRGBPt(i + 2, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[start + i + 2] = AlgorithmConvolver.convolve2DRGBPt(i + 2,
+                                                                                             srcImage.getExtents(),
+                                                                                             buffer, kExtents,
+                                                                                             GaussData);
                         } else {
                             resultBuffer[start + i + 2] = buffer[i + 2];
                         }
 
                         if (blue) {
-                            resultBuffer[start + i + 3] = AlgorithmConvolver
-                                    .convolve2DRGBPt(i + 3, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[start + i + 3] = AlgorithmConvolver.convolve2DRGBPt(i + 3,
+                                                                                             srcImage.getExtents(),
+                                                                                             buffer, kExtents,
+                                                                                             GaussData);
                         } else {
                             resultBuffer[start + i + 3] = buffer[i + 3];
                         }
@@ -298,14 +291,13 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
-                    if ((((start + i) % mod) == 0)) {
-                        fireProgressStateChanged(minProgressValue + Math.round((float) (start + i) / (totalLength - 1) * (maxProgressValue - minProgressValue)));
+                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
-                        resultBuffer[start + i] = AlgorithmConvolver
-                                .convolve2DPt(i, srcImage.getExtents(), buffer,
-                                        kExtents, GaussData);
+                        resultBuffer[start + i] = AlgorithmConvolver.convolve2DPt(i, srcImage.getExtents(), buffer,
+                                                                                  kExtents, GaussData);
                     } else {
                         resultBuffer[start + i] = buffer[i];
                         // resultBuffer[i] = 0;
@@ -314,9 +306,9 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue);
-
         if (threadStopped) {
+            finalize();
+
             return;
         }
 
@@ -334,11 +326,10 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
+
 
     /**
      * Calculates the blurred image and replaces the source image with the blurred image.
@@ -358,11 +349,11 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         }
 
         try {
-            length = cFactor * srcImage.getSliceSize()
-                    * srcImage.getExtents()[2];
+            length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
+            buildProgressBar(srcImage.getImageName(), "Blurring image ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -378,42 +369,38 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        int mod = length / (maxProgressValue - minProgressValue); // mod is 1 percent of length
+        int mod = length / 100; // mod is 1 percent of length
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(),
-                "Blurring image ...");
+        initProgressBar();
 
         if (color == true) {
 
             for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                if ((((i) % mod) == 0)) {
-                    fireProgressStateChanged(minProgressValue + Math.round((float) i / (length - 1) * (maxProgressValue-minProgressValue)));
+                if ((((i) % mod) == 0) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if ((entireImage == true) || mask.get(i / 4)) {
                     resultBuffer[i] = buffer[i];
 
                     if (red) {
-                        resultBuffer[i + 1] = AlgorithmConvolver
-                                .convolve3DRGBPt(i + 1, srcImage.getExtents(),
-                                        buffer, kExtents, GaussData);
+                        resultBuffer[i + 1] = AlgorithmConvolver.convolve3DRGBPt(i + 1, srcImage.getExtents(), buffer,
+                                                                                 kExtents, GaussData);
                     } else {
                         resultBuffer[i + 1] = buffer[i + 1];
                     }
 
                     if (green) {
-                        resultBuffer[i + 2] = AlgorithmConvolver
-                                .convolve3DRGBPt(i + 2, srcImage.getExtents(),
-                                        buffer, kExtents, GaussData);
+                        resultBuffer[i + 2] = AlgorithmConvolver.convolve3DRGBPt(i + 2, srcImage.getExtents(), buffer,
+                                                                                 kExtents, GaussData);
                     } else {
                         resultBuffer[i + 2] = buffer[i + 2];
                     }
 
                     if (blue) {
-                        resultBuffer[i + 3] = AlgorithmConvolver
-                                .convolve3DRGBPt(i + 3, srcImage.getExtents(),
-                                        buffer, kExtents, GaussData);
+                        resultBuffer[i + 3] = AlgorithmConvolver.convolve3DRGBPt(i + 3, srcImage.getExtents(), buffer,
+                                                                                 kExtents, GaussData);
                     } else {
                         resultBuffer[i + 3] = buffer[i + 3];
                     }
@@ -428,21 +415,19 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if (((i % mod) == 0)) {
-                    fireProgressStateChanged(minProgressValue + Math.round((float) i / (length - 1) * (maxProgressValue - minProgressValue)));
+                if (((i % mod) == 0) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
-                    resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i,
-                            srcImage.getExtents(), buffer, kExtents, GaussData);
+                    resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
+                                                                      GaussData);
                 } else {
                     resultBuffer[i] = buffer[i];
                     // resultBuffer[i] = 0;
                 }
             }
         }
-
-        fireProgressStateChanged(maxProgressValue);
 
         if (threadStopped) {
             finalize();
@@ -457,9 +442,8 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
 
             return;
         }
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+
+        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -481,10 +465,10 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
         }
 
         try {
-            length = cFactor * srcImage.getSliceSize()
-                    * srcImage.getExtents()[2];
+            length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             resultBuffer = new float[length];
+            buildProgressBar(srcImage.getImageName(), "Blurring image ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -493,12 +477,11 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(),
-                "Blurring image ...");
+        initProgressBar();
 
         int index;
         int end = srcImage.getExtents()[3];
-        int mod = length * end/(maxProgressValue - minProgressValue);
+
         for (t = 0; (t < end) && !threadStopped; t++) {
 
             try {
@@ -511,42 +494,36 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(minProgressValue + Math.round((float) t / end * (maxProgressValue - minProgressValue)));
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
+            }
 
             index = t * length;
 
             if (color == true) {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(minProgressValue + (t*length+i)/mod);                        
-                    }
+
                     if ((entireImage == true) || mask.get(i / 4)) {
                         resultBuffer[i] = buffer[i];
 
                         if (red) {
-                            resultBuffer[i + 1] = AlgorithmConvolver
-                                    .convolve3DRGBPt(i + 1, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[i + 1] = AlgorithmConvolver.convolve3DRGBPt(i + 1, srcImage.getExtents(),
+                                                                                     buffer, kExtents, GaussData);
                         } else {
                             resultBuffer[i + 1] = buffer[i + 1];
                         }
 
                         if (green) {
-                            resultBuffer[i + 2] = AlgorithmConvolver
-                                    .convolve3DRGBPt(i + 2, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[i + 2] = AlgorithmConvolver.convolve3DRGBPt(i + 2, srcImage.getExtents(),
+                                                                                     buffer, kExtents, GaussData);
                         } else {
                             resultBuffer[i + 2] = buffer[i + 2];
                         }
 
                         if (blue) {
-                            resultBuffer[i + 3] = AlgorithmConvolver
-                                    .convolve3DRGBPt(i + 3, srcImage
-                                            .getExtents(), buffer, kExtents,
-                                            GaussData);
+                            resultBuffer[i + 3] = AlgorithmConvolver.convolve3DRGBPt(i + 3, srcImage.getExtents(),
+                                                                                     buffer, kExtents, GaussData);
                         } else {
                             resultBuffer[i + 3] = buffer[i + 3];
                         }
@@ -560,13 +537,10 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             } else {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(minProgressValue + (t*length+i)/mod);                        
-                    }
+
                     if ((entireImage == true) || mask.get(i)) {
-                        resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i,
-                                srcImage.getExtents(), buffer, kExtents,
-                                GaussData);
+                        resultBuffer[i] = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
+                                                                          GaussData);
                     } else {
                         resultBuffer[i] = buffer[i];
                     }
@@ -588,20 +562,19 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue);
-
         if (threadStopped) {
             finalize();
+
             return;
         }
 
         buffer = null;
         resultBuffer = null;
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        System.gc();
+        disposeProgressBar();
         setCompleted(true);
     }
+
 
     /**
      * This function produces a new image that has been blurred.
@@ -609,7 +582,7 @@ public class AlgorithmGaussianBlur extends AlgorithmBase {
      * @param  nImages  number of images to be blurred. If 2D image then nImage = 1, if 3D image where each image is to
      *                  processed independently then nImages equals the number of images in the volume.
      */
-private void calcStoreInDest2D(int nImages) {
+    private void calcStoreInDest2D(int nImages) {
 
         int i, s, idx;
         int length, totalLength;
@@ -635,6 +608,7 @@ private void calcStoreInDest2D(int nImages) {
             length = cFactor * srcImage.getSliceSize();
             totalLength = length * nImages;
             buffer = new float[length];
+            buildProgressBar(srcImage.getImageName(), "Blurring image ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Gaussian Blur:  Out of memory", true);
@@ -642,8 +616,8 @@ private void calcStoreInDest2D(int nImages) {
             return;
         }
 
-        int mod = totalLength / (maxProgressValue - minProgressValue); // mod is 1 percent of length
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Blurring image ...");
+        int mod = totalLength / 100; // mod is 1 percent of length
+        initProgressBar();
 
         for (s = 0; s < nImages; s++) {
             start = s * length;
@@ -660,8 +634,8 @@ private void calcStoreInDest2D(int nImages) {
 
                 for (i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
 
-                    if ( ((start + i) % mod) == 0) {
-                        fireProgressStateChanged(minProgressValue + Math.round((float) (start + i) / (totalLength - 1) * (maxProgressValue - minProgressValue)));
+                    if (isProgressBarVisible() && (((start + i) % mod) == 0)) {
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
@@ -701,8 +675,8 @@ private void calcStoreInDest2D(int nImages) {
 
                 for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
-                    if (((start + i) % mod) == 0) {
-                        fireProgressStateChanged(minProgressValue + Math.round((float) (start + i) / (totalLength - 1) * (maxProgressValue - minProgressValue)));
+                    if (isProgressBarVisible() && (((start + i) % mod) == 0)) {
+                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
@@ -716,8 +690,6 @@ private void calcStoreInDest2D(int nImages) {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue);
-        
         if (threadStopped) {
             finalize();
 
@@ -726,15 +698,14 @@ private void calcStoreInDest2D(int nImages) {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
+
     /**
      * Produces a new image that has been blurred.
      */
-private void calcStoreInDest3D() {
+    private void calcStoreInDest3D() {
 
         int i;
         int length;
@@ -761,6 +732,7 @@ private void calcStoreInDest3D() {
             // System.out.println ("sliceSize = " + srcImage.getSliceSize() + "  Length = " + length);
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
+            buildProgressBar(srcImage.getImageName(), "Blurring image ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Gaussian Blur: Image(s) locked", true);
@@ -773,15 +745,15 @@ private void calcStoreInDest3D() {
             return;
         }
 
-        int mod = length / (maxProgressValue - minProgressValue); // mod is 1 percent of length
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Blurring image ...");
+        int mod = length / 100; // mod is 1 percent of length
+        initProgressBar();
 
         if (color == true) {
 
             for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                if ((i % mod) == 0) {
-                    fireProgressStateChanged(minProgressValue + Math.round((float) (i) / (length - 1) * (maxProgressValue - minProgressValue)));
+                if (isProgressBarVisible() && ((i % mod) == 0)) {
+                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 if ((entireImage == true) || mask.get(i / 4)) {
@@ -821,8 +793,8 @@ private void calcStoreInDest3D() {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((i % mod) == 0) {
-                    fireProgressStateChanged(minProgressValue + Math.round((float) i / (length - 1) * (maxProgressValue - minProgressValue)));
+                if (((i % mod) == 0) && isProgressBarVisible()) {
+                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     // System.out.println("Entire = " + entireImage);
                 }
 
@@ -836,8 +808,6 @@ private void calcStoreInDest3D() {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue);
-
         if (threadStopped) {
             finalize();
 
@@ -846,15 +816,14 @@ private void calcStoreInDest3D() {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
+
     /**
      * Produces a new image that has been blurred.
      */
-private void calcStoreInDest4D() {
+    private void calcStoreInDest4D() {
 
         int i, t;
         int length;
@@ -879,6 +848,7 @@ private void calcStoreInDest4D() {
         try {
             length = cFactor * srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
+            buildProgressBar(srcImage.getImageName(), "Blurring image ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Gaussian Blur: Out of memory", true);
@@ -886,13 +856,11 @@ private void calcStoreInDest4D() {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Blurring image ...");
+        initProgressBar();
 
         int index;
         int end = srcImage.getExtents()[3];
 
-        int mod = length*end / (maxProgressValue - minProgressValue);
-        float progressRange = (maxProgressValue - minProgressValue)/end;
         for (t = 0; (t < end) && !threadStopped; t++) {
 
             try {
@@ -900,22 +868,22 @@ private void calcStoreInDest4D() {
             } catch (IOException error) {
                 displayError("Algorithm Gaussian Blur: Image(s) locked");
                 setCompleted(false);
-                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                disposeProgressBar();
                 destImage.releaseLock();
 
                 return;
             }
 
-            fireProgressStateChanged(minProgressValue + Math.round((float) t / end * (maxProgressValue - minProgressValue)));
+            if (isProgressBarVisible()) {
+                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
+            }
 
             index = t * length;
 
             if (color == true) {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(minProgressValue + Math.round((t*length+i)/mod));                        
-                    }
+
                     if ((entireImage == true) || mask.get(i / 4)) {
                         destImage.set(i + index, buffer[i]); // alpha
 
@@ -952,9 +920,7 @@ private void calcStoreInDest4D() {
             } else {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
-                    if(i % mod == 0){
-                        fireProgressStateChanged(minProgressValue + Math.round((t*length+i)/mod));                        
-                    }
+
                     if ((entireImage == true) || mask.get(i)) {
                         destImage.set(index + i,
                                       AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), buffer, kExtents,
@@ -965,7 +931,7 @@ private void calcStoreInDest4D() {
                 }
             }
         }
-        fireProgressStateChanged(maxProgressValue);
+
         if (threadStopped) {
             finalize();
 
@@ -974,11 +940,11 @@ private void calcStoreInDest4D() {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        disposeProgressBar();
         setCompleted(true);
     }
+
+
     /**
      * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
      * logging procedure is turned on.
@@ -991,16 +957,14 @@ private void calcStoreInDest4D() {
         }
 
         if (srcImage.isColorImage()) {
-            historyString = new String("GaussianBlur(" + sigmaStr
-                    + String.valueOf(entireImage) + ", "
-                    + String.valueOf(image25D) + ", " + red + ", " + green
-                    + ", " + blue + ")\n");
+            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(entireImage) + ", " +
+                                       String.valueOf(image25D) + ", " + red + ", " + green + ", " + blue + ")\n");
         } else {
-            historyString = new String("GaussianBlur(" + sigmaStr
-                    + String.valueOf(entireImage) + ", "
-                    + String.valueOf(image25D) + ")\n");
+            historyString = new String("GaussianBlur(" + sigmaStr + String.valueOf(entireImage) + ", " +
+                                       String.valueOf(image25D) + ")\n");
         }
     }
+
 
     /**
      * Creates 2D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (6X) to the
@@ -1032,12 +996,12 @@ private void calcStoreInDest4D() {
 
         GaussData = new float[xkDim * ykDim];
 
-        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents,
-                sigmas, derivOrder);
+        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents, sigmas, derivOrder);
         Gauss.calc(false);
         Gauss.finalize();
         Gauss = null;
     }
+
 
     /**
      * Creates 3D Gaussian kernels for the blurring process. The kernel size is always odd and proportional (6X) to the
@@ -1081,8 +1045,7 @@ private void calcStoreInDest4D() {
 
         GaussData = new float[xkDim * ykDim * zkDim];
 
-        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents,
-                sigmas, derivOrder);
+        GenerateGaussian Gauss = new GenerateGaussian(GaussData, kExtents, sigmas, derivOrder);
         Gauss.calc(false);
         Gauss.finalize();
         Gauss = null;

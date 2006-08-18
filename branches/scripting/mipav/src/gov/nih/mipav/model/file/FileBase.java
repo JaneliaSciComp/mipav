@@ -9,8 +9,6 @@ import javax.swing.event.EventListenerList;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ChangeEvent;
 
-import java.util.EventListener;
-
 /**
  * FileBase is an abstract class that has many methods that support the reading/writing of files.
  *
@@ -153,12 +151,6 @@ public abstract class FileBase{
 
     /** Gatan's Digital Micrograph version 3 file format. */
     public static final int DM3 = 41;
-    
-    /** Nearly raw raster data */
-    public static final int NRRD = 42;
-    
-    /** GE Signa 4.x */
-    public static final int GE_SIGNA4X = 43;
 
     /** Arrary of strings describing the file formats. */
     private static String[] fileFormatStr = {
@@ -166,7 +158,7 @@ public abstract class FileBase{
         "MINC", "Avi", "Analyze multifile", "QT", "Chesire", "Chesire Overlay", "Afni", "FITS", "STK",
         "Magnetom Vision", "GE Genesis", "MRC", "Interfile", "Raw multifile", "Micro CAT", "LSM", "Bio-Rad", "COR",
         "BRUKER", "XML", "XML multifile", "SPM", "Project", "NIFTI", "NIFTI multifile", "ICS", "LSM multifile", "TMG",
-        "OSM", "Surface XML", "DM3", "NRRD", "GE Signa4x"
+        "OSM", "Surface XML", "DM3"
     };
 
     /** Byte order. Rightmost byte is most significant. */
@@ -808,19 +800,11 @@ public abstract class FileBase{
         raFile.write(buffer);
     }
     
-    /**
-     * Returns the progress change event listener list.
-     * @return the progress change event listener list.
-     */
-    public ProgressChangeListener[] getProgressChangeListeners(){{
-        return (ProgressChangeListener[])listenerList.getListeners(ProgressChangeListener.class);
-    }
-        
-    }
+    // public abstract String[] getExtensions();
     /**
      * Adds the ProgressChangeListener to this FileBase object.
      * 
-     * @param l  the ProgressChangeListener object
+     * @param l
      */
     public void addProgressChangeListener(ProgressChangeListener l){
         listenerList.add(ProgressChangeListener.class, l);
@@ -829,7 +813,7 @@ public abstract class FileBase{
     /**
      * Removes the ChangeListener from the FileBase object.
      * 
-     * @param l the ProgressChangeListener object
+     * @param l
      */
     public void removeProgressChangeListener(ProgressChangeListener l){
         listenerList.remove(ProgressChangeListener.class, l);

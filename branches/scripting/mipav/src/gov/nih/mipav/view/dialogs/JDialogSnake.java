@@ -130,7 +130,7 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
      */
     public JDialogSnake(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         VOIs = im.getVOIs();
 
         int nVOI;
@@ -576,7 +576,7 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
