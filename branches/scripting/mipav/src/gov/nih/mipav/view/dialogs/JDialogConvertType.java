@@ -207,6 +207,7 @@ public class JDialogConvertType extends JDialogScriptableBase
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
+        scriptParameters.getParams().put(ParameterFactory.newParameter("dataType", dataType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("inTempMin",inTempMin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("inTempMax",inTempMax));
         scriptParameters.getParams().put(ParameterFactory.newParameter("outTempMin",outTempMin));
@@ -218,6 +219,17 @@ public class JDialogConvertType extends JDialogScriptableBase
      * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
     protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+        
+        dataType = scriptParameters.getParams().getInt("dataType");
         inTempMin = scriptParameters.getParams().getDouble("inTempMin");
         inTempMax = scriptParameters.getParams().getDouble("inTempMax");
         outTempMin = scriptParameters.getParams().getDouble("outTempMin");
