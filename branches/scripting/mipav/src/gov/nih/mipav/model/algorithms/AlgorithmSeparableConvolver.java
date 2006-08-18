@@ -36,9 +36,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     /** Flag to indicate if the source image is color. */
     private boolean colorImage = false;
 
-    /** How much to advance the progress bar (used if updating the progress bar of another algorithm). */
-    private int curPercent = 0;
-
+    int curPercent;
+    
+    int incIndex;
     /** Holds the result image data. */
     private double[] destBuffer;
 
@@ -53,9 +53,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
     /** The dimensions of the both source and destination images. */
     private int[] imgExtents;
-
-    /** DOCUMENT ME! */
-    private int incIndex = -1;
 
     /** Holds the kernel image. */
     private ModelImage kernel;
@@ -88,7 +85,20 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param  kern     kernel image (kernel must be symmetric)
      */
     public AlgorithmSeparableConvolver(ModelImage destImg, ModelImage srcImg, ModelImage kern) {
-        super(destImg, srcImg);
+        this(destImg, srcImg, kern, 0, 100);
+    }
+
+    /**
+     * Sets destination, source, and kernel images. Call run() to convolve image.
+     *
+     * @param  destImg  destination image
+     * @param  srcImg   source image
+     * @param  kern     kernel image (kernel must be symmetric)
+     * @param  minProgressValue the minimum progress value.
+     * @param  maxProgressValue the maximum progress value.
+     */
+    public AlgorithmSeparableConvolver(ModelImage destImg, ModelImage srcImg, ModelImage kern, int minProgressValue, int maxProgressValue) {
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
         kernel = kern;
 
         imgExtents = srcImg.getExtents();
@@ -119,7 +129,24 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      */
     public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernBuffer,
                                        int[] kExtents, boolean color) {
-        super(null, null);
+        this(destBuffer, srcBuffer, iExtents, kernBuffer, kExtents, color, 0, 100);
+    }
+
+    /**
+     * Sets destination, source, and kernel buffers. Call run() to convolve image.
+     *
+     * @param  destBuffer  destination image data buffer
+     * @param  srcBuffer   source image data buffer
+     * @param  iExtents    source and destination image dimensions
+     * @param  kernBuffer  kernel image data buffer (kernel must be symmetric)
+     * @param  kExtents    kernel dimensions
+     * @param  color       whether the image is color
+     * @param  minProgressValue the minimum progress value.
+     * @param  maxProgressValue the maximum progress value.
+     */
+    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernBuffer,
+                                       int[] kExtents, boolean color, int minProgressValue, int maxProgressValue) {
+        super(null, null, minProgressValue, maxProgressValue);
 
         imgBuffer = new double[srcBuffer.length];
 
@@ -194,7 +221,24 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      */
     public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
                                        float[] kernYBuffer, boolean color) {
-        super(null, null);
+        this(destBuffer, srcBuffer, iExtents, kernXBuffer, kernYBuffer, color, 0, 100);
+    }
+
+    /**
+     * Sets destination, source, and kernel buffers. Call run() to convolve image.
+     *
+     * @param  destBuffer   destination image data buffer
+     * @param  srcBuffer    source image data buffer
+     * @param  iExtents     source and destination image dimensions
+     * @param  kernXBuffer  kernel image data buffer in X dimension (kernel must be symmetric)
+     * @param  kernYBuffer  kernel image data buffer in Y dimension (kernel must be symmetric)
+     * @param  color        whether the image is color
+     * @param  minProgressValue the minimum progress value.
+     * @param  maxProgressValue the maximum progress value.
+     */
+    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
+                                       float[] kernYBuffer, boolean color, int minProgressValue, int maxProgressValue) {
+        super(null, null, minProgressValue, maxProgressValue);
 
         imgBuffer = new double[srcBuffer.length];
 
@@ -233,7 +277,25 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      */
     public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
                                        float[] kernYBuffer, float[] kernZBuffer, boolean color) {
-        super(null, null);
+        this(destBuffer, srcBuffer, iExtents, kernXBuffer, kernYBuffer, kernZBuffer, color, 0, 100);
+    }
+
+    /**
+     * Sets destination, source, and kernel buffers. Call run() to convolve image.
+     *
+     * @param  destBuffer   destination image data buffer
+     * @param  srcBuffer    source image data buffer
+     * @param  iExtents     source and destination image dimensions
+     * @param  kernXBuffer  kernel image data buffer in X dimension (kernel must be symmetric)
+     * @param  kernYBuffer  kernel image data buffer in Y dimension (kernel must be symmetric)
+     * @param  kernZBuffer  kernel image data buffer in Z dimension (kernel must be symmetric)
+     * @param  color        whether the image is color
+     * @param  minProgressValue the minimum progress value.
+     * @param  maxProgressValue the maximum progress value.
+     */
+    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
+                                       float[] kernYBuffer, float[] kernZBuffer, boolean color, int minProgressValue, int maxProgressValue) {
+        super(null, null, minProgressValue, maxProgressValue);
 
         imgBuffer = new double[srcBuffer.length];
 
@@ -288,7 +350,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     public void run2D() {
         double sum = 0;
         double norm = 0;
-        int i, pix, count;
 
         int offsetX, offsetY;
         int startX, endX;
@@ -333,12 +394,15 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
         int halfXKDimTimesCFactor = halfxKDim * cFactor;
 
-        // convolve the image with the X dimension kernel
-        for (pix = 0; pix < imageLength; pix++) {
+        int stepProgressValue = (imgExtents[0] * imgExtents[1] * cFactor * 2) /(maxProgressValue - minProgressValue);
 
-            if ((incIndex != -1) && ((pix % incIndex) == 0) && (pix > 0)) {
-                progressBar.updateValue(curPercent, runningInSeparateThread);
-                curPercent++;
+        int progress = 0;
+        int index = 0;
+        // convolve the image with the X dimension kernel
+        for (int pix = 0; (pix < imageLength) && !threadStopped; pix++, index++) {
+
+            if (index % stepProgressValue == 0) {
+                fireProgressStateChanged(minProgressValue + progress++);
             }
 
             if (skipRed && ((pix % 4) == 1)) {
@@ -355,7 +419,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 offsetYTimesOffset = offset * offsetY;
 
                 sum = 0;
-                count = 0;
+                int count = 0;
                 norm = 0;
                 startX = offsetX;
                 endX = startX + ((xKDim - 1) * cFactor);
@@ -372,7 +436,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 // Evan do we really need to recalc the norm all the time?
                 // Also can (offsetY * offset) be precalced.
                 // Other speedups ?
-                for (i = startX; i <= endX; i += cFactor) {
+                for (int i = startX; i <= endX; i += cFactor) {
                     sum += kernelXBuffer[count] * imgBuffer[i + offsetYTimesOffset];
 
                     if (kernelXBuffer[count] >= 0) {
@@ -398,11 +462,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         stepY = (yKDim - 1) * offset;
 
         // convolve the result image from above with the Y dimension kernel
-        for (pix = 0; pix < imageLength; pix++) {
+        for (int pix = 0; (pix < imageLength) && !threadStopped; pix++, index++) {
 
-            if ((incIndex != -1) && (((pix + imageLength) % incIndex) == 0)) {
-                progressBar.updateValue(curPercent, runningInSeparateThread);
-                curPercent++;
+            if (index % stepProgressValue == 0) {
+                fireProgressStateChanged(minProgressValue + progress++);
             }
 
             if (skipRed && ((pix % 4) == 1)) {
@@ -416,7 +479,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 offsetY = (pix / offset) - halfyKDim;
 
                 sum = 0;
-                count = 0;
+                int count = 0;
                 norm = 0;
                 startY = offsetY * offset;
                 endY = startY + stepY;
@@ -430,7 +493,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     endY = offset * (yDim - 1);
                 }
 
-                for (i = startY; i <= endY; i += offset) {
+                for (int i = startY; i <= endY; i += offset) {
                     sum += kernelYBuffer[count] * tempImgBuffer[offsetX + i];
 
                     if (kernelYBuffer[count] >= 0) {
@@ -447,7 +510,12 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 destBuffer[pix] = tempImgBuffer[pix];
             }
         }
-
+        
+        fireProgressStateChanged(maxProgressValue);
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
+        
         setCompleted(true);
     }
 
@@ -457,7 +525,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
     public void run3D() {
         double sum = 0;
         double norm = 0;
-        int i, pix, count;
         int offsetX, offsetY, offsetZ;
         int start, end;
 
@@ -499,12 +566,14 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
         int halfKDimTimesCFactor = halfKDim * cFactor;
 
+        int stepProgressValue = (imgExtents[0] * imgExtents[1] * imgExtents[2] * cFactor * 3) /(maxProgressValue - minProgressValue);
         // convolve the image with the X dimension kernel
-        for (pix = 0; pix < size; pix++) {
+        int progress  = 0;
+        int index = 0;
+        for (int pix = 0; (pix < size) && !threadStopped; pix++, index++) {
 
-            if ((incIndex != -1) && ((pix % incIndex) == 0) && (pix > 0)) {
-                progressBar.updateValue(curPercent, runningInSeparateThread);
-                curPercent++;
+            if (index % stepProgressValue == 0) {
+                fireProgressStateChanged(minProgressValue + progress++);
             }
 
             if (skipRed && ((pix % 4) == 1)) {
@@ -520,7 +589,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
                 combined = (offsetY * offset) + (offsetZ * sliceSize);
 
-                count = 0;
+                int count = 0;
                 sum = 0;
                 norm = 0;
                 start = offsetX;
@@ -535,7 +604,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     end = offset - 1;
                 }
 
-                for (i = start; i <= end; i += cFactor) {
+                for (int i = start; i <= end; i += cFactor) {
                     sum += kernelXBuffer[count] * imgBuffer[i + combined];
 
                     if (kernelXBuffer[count] >= 0) {
@@ -559,11 +628,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         step = (kDim - 1) * offset;
 
         // convolve the result image from above with the Y dimension kernel
-        for (pix = 0; pix < size; pix++) {
+        for (int pix = 0; (pix < size) && !threadStopped; pix++, index++) {
 
-            if ((incIndex != -1) && (((pix + size) % incIndex) == 0)) {
-                progressBar.updateValue(curPercent, runningInSeparateThread);
-                curPercent++;
+            if (index % stepProgressValue == 0) {
+                fireProgressStateChanged(minProgressValue + progress++);
             }
 
             if (skipRed && ((pix % 4) == 1)) {
@@ -579,7 +647,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
                 combined = offsetX + (offsetZ * sliceSize);
 
-                count = 0;
+                int count = 0;
                 sum = 0;
                 norm = 0;
                 start = offsetY * offset;
@@ -594,7 +662,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     end = offset * (yDim - 1);
                 }
 
-                for (i = start; i <= end; i += offset) {
+                for (int i = start; i <= end; i += offset) {
                     sum += kernelYBuffer[count] * tempImgBuffer[i + combined];
 
                     if (kernelYBuffer[count] >= 0) {
@@ -618,11 +686,10 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         halfKDim = kDim / 2;
         step = (kDim - 1) * sliceSize;
 
-        for (pix = 0; pix < size; pix++) {
+        for (int pix = 0; (pix < size) && !threadStopped; pix++, index++) {
 
-            if ((incIndex != -1) && (((pix + (2 * size)) % incIndex) == 0)) {
-                progressBar.updateValue(curPercent, runningInSeparateThread);
-                curPercent++;
+            if (index % stepProgressValue == 0) {
+                fireProgressStateChanged(minProgressValue + progress++);
             }
 
             if (skipRed && ((pix % 4) == 1)) {
@@ -638,7 +705,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
                 combined = (offsetY * offset) + offsetX;
 
-                count = 0;
+                int count = 0;
                 sum = 0;
                 norm = 0;
                 start = offsetZ * sliceSize;
@@ -653,7 +720,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                     end = sliceSize * (zDim - 1);
                 }
 
-                for (i = start; i <= end; i += sliceSize) {
+                for (int i = start; i <= end; i += sliceSize) {
 
                     // imgBuffer now holds the result of convolving with X and Y kernels
                     sum += kernelZBuffer[count] * imgBuffer[i + combined];
@@ -674,7 +741,11 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
                 destBuffer[pix] = imgBuffer[pix];
             }
         }
-
+        
+        // fireProgressStateChanged(maxProgressValue);
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
         setCompleted(true);
     }
 

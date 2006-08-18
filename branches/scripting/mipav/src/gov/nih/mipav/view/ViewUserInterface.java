@@ -3,8 +3,7 @@ package gov.nih.mipav.view;
 
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.actions.*;
+import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.model.srb.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.*;
@@ -29,7 +28,6 @@ import javax.swing.*;
 
 import org.w3c.dom.Document;
 
-
 /**
  * This class is the _glue_ keeps a record of the present structure of the application. It keeps a list of all the image
  * frames presently being displayed and keeps a hash table of all the images (ModelImage) open in the applicaiton. In
@@ -38,14 +36,14 @@ import org.w3c.dom.Document;
  *
  * @version  1.0 June 1, 2005
  */
-public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener {
+public class ViewUserInterface implements ActionListener, WindowListener, KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /**
      * A reference to the only ViewUserInterface object in MIPAV.
      *
-     * @see  #ViewUserInterface()
+     * @see  #ViewUserInterface(String[])
      * @see  #getReference()
      */
     protected static ViewUserInterface userInterfaceReference;
@@ -83,14 +81,26 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     
     private JXCEDEExplorer xcedeExplorer;
 
+    /** The directories where the image files set from the command line are located. */
+    Vector imageFileDirs = new Vector();
+
     /**
      * A list of image file names and multifile tags, set by the command line, to be opened (and processed by a script,
      * if one is used).
      */
-    protected Vector imageFileNames = new Vector();
+    Vector imageFileNames = new Vector();
+
+    /** The names of the image files set from the command line are located (no paths). */
+    Vector imageNames = new Vector();
 
     /** Whether the mipav GUI should be shown; set by the -hide command line option. */
-    private boolean isAppFrameVisible = true;
+    boolean isAppFrameVisible = true;
+
+    /** A list of script files to be run, set by the command line. */
+    Vector scriptFileNames = new Vector();
+
+    /** A list of voi files, set by the command line, to be used in a script. */
+    Vector voiFileNames = new Vector();
 
     /** Vector to hold the clipped Polygons arrays (is this actually used??). */
     private Vector clippedPolygons = new Vector();
@@ -100,6 +110,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
+
+    /** Command line string argument -- should be image file name. */
+    private String[] commArgs = null;
 
     /** Reference to the DICOM receiver that listens for DICOM formatted images sent by a DICOM server. */
     private DICOM_Receiver DICOMcatcher = null;
@@ -163,6 +176,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = OPENING_STR;
 
+    /** Script cmd line saved image file name. */
+    private String savedImageFileName;
+
+    /** Dialog that records actions in the GUI in a script. */
+    private ScriptRecorderInterface scriptDialog = null;
+
     /** Indicates whether the user is currently recording a new keyboard shortcut using the shortcut editor dialog. */
     private boolean shortcutRecording = false;
 
@@ -173,15 +192,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * in DICOM files and starts the catcher, if appropriate. This method cannot be called directly. To use this
      * constructor, you must call createReference. This class is a singleton, which means that only one type of this
      * class is allowed to be instantiated in a single VM.
+     *
+     * @param  arg  command line arguments to be parsed by MIPAV
      */
-    protected ViewUserInterface() {
+    protected ViewUserInterface(String[] arg) {
+        commArgs = arg;
         mainFrame = new JFrame();
         imageFrameVector = new Vector();
         imageHashtable = new CustomHashtable();
         initialize();
-        
-        // listen to the script recorder so that we can pass along changes in the script recorder status to the script toolbars of individual images
-        ScriptRecorder.getReference().addScriptRecordingListener(this);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -190,12 +209,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * This method should only be called once, and it should only be called by MipavMain to during the initialization of
      * MIPAV.
      *
+     * @param   args  String[]
+     *
      * @return  ViewUserInterface
      */
-    public static ViewUserInterface create() {
+    public static ViewUserInterface create(String[] args) {
 
         if (userInterfaceReference == null) {
-            userInterfaceReference = new ViewUserInterface();
+            userInterfaceReference = new ViewUserInterface(args);
         }
 
         return userInterfaceReference;
@@ -399,6 +420,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
+            // openImageFiles();
         } else if (command.equals("OpenXCEDESchema")) {
             openXCEDESchema();
         } else if (command.equals("SaveXCEDESchema")){
@@ -449,28 +471,32 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     pipeline = null;
                 }
             }
-        } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
-            if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.STOPPED) {
-                new JDialogScriptRecorder();
-            } else {
-                MipavUtil.displayError("Cannot open script recorder dialog.  A script is already being recorded.");
-            }
-        } else if (command.equals("RunScript")) {
-            if (ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING) {
-                MipavUtil.displayError("Cannot run a script while recording a script.");
+        } else if (command.equals("RecordScript")) {
+
+            if (scriptDialog != null) {
+                MipavUtil.displayError("Already recording.  You must save or exit the first script to begin a new one.");
+
                 return;
             } else {
-                JFileChooser chooser = new JFileChooser();
-                chooser.setCurrentDirectory(new File(Preferences.getScriptsDirectory()));
-                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SCRIPT));
-                chooser.setDialogTitle("Choose a script file to execute");
-                
-                if (chooser.showOpenDialog(getMainFrame()) == JFileChooser.APPROVE_OPTION) {
-                    Preferences.setScriptsDirectory(String.valueOf(chooser.getCurrentDirectory()));
-                    
-                    String scriptFile = chooser.getSelectedFile().getAbsolutePath();
-                    new JDialogRunScriptController(scriptFile);
+                scriptDialog = new JDialogScript("Record New Script", this);
+                ((JDialogScript) scriptDialog).setVisible(true);
+
+                if (getActiveImageFrame() != null) {
+                    scriptDialog.setActiveImageFlag(true);
+
+                } else {
+                    scriptDialog.setActiveImageFlag(false);
                 }
+            }
+        } else if (command.equals("RunScript")) {
+
+            if (isScriptRecording()) {
+                MipavUtil.displayError("Cannot run a script within a script.");
+
+                return;
+            } else {
+                JDialogMultiple multiple = new JDialogMultiple("Run script on multiple images", this);
+                multiple.setVisible(true);
             }
         } else if (command.equals("CreateBlankImage")) {
             createBlankImage(null);
@@ -962,7 +988,18 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             MipavUtil.displayError("Out of memory");
         }
 
-        ScriptRecorder.getReference().addLine(new ActionCreateBlankImage(image));
+        if (isScriptRecording()) {
+            scriptDialog.append("CreateBlankImage ");
+            scriptDialog.append("\tattributes " + fileInfo.getDataType() + " " + fileInfo.getEndianess() + " " +
+                                fileInfo.getOffset() + " " + fileInfo.getExtents().length + " ");
+
+            for (int i = 0; i < fileInfo.getExtents().length; i++) {
+                scriptDialog.append(fileInfo.getExtents()[i] + " " + fileInfo.getResolutions()[i] + " " +
+                                    fileInfo.getUnitsOfMeasure()[i] + " ");
+            }
+
+            scriptDialog.append("\n");
+        }
     }
 
     /**
@@ -1299,6 +1336,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     } // end getRegisteredImagesNum()
 
     /**
+     * Accessor that returns the script dialog.
+     *
+     * @return  The script dialog.
+     */
+    public ScriptRecorderInterface getScriptDialog() {
+        return scriptDialog;
+    }
+
+    /**
      * Display image registry frame.
      */
     public void imageRegistryMonitoring() {
@@ -1339,7 +1385,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * Initializes the user interface. Starts by reading out some starting options out of the preferences file; setting
      * up the main frame; building the message frame and setting the message frame into the preferences; building the
      * menu; setting controls; performing a Macintosh JDK check; initialising the DICOM dictionary; setting up the
-     * message field that is used in the main frame; setting the application titles; and showing the main frame.
+     * message field that is used in the main frame; setting the application titles; showing the main frame and acting
+     * on the starting argument.
      *
      * <p>Recommendations for how to most easily perform modifications to the initialisation procedure are included with
      * the individual method comments, although in most cases, it suffices to simply over-ride an individual method.</p>
@@ -1354,6 +1401,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see  DICOMDictionaryBuilder#getDicomTagTable()
      * @see  #initCreateMessageField(String)
      * @see  #initSetTitles(String, String)
+     * @see  #parseArguments(String[])
      */
     public void initialize() {
         initPrefsFile();
@@ -1386,6 +1434,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         mainFrame.setFocusable(true);
         mainFrame.addKeyListener(this);
+
+        parseArguments(commArgs);
     }
 
     /**
@@ -1422,7 +1472,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return imageHashtable.containsKey((Object) imageName);
 
     } // end isImageRegistered()
-    
+
+    /**
+     * Determines if there is a valid script dialog currently recording actions.
+     *
+     * @return  <code>true</code> if recording, <code>false</code> otherwise.
+     */
+    public boolean isScriptRecording() {
+
+        if ((scriptDialog != null) && scriptDialog.isRecording()) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * Determines if the UserInterface is currently recording an action command as a shortcut.
      *
@@ -1501,11 +1565,121 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         memoryFrame = new ViewJFrameMemory(this);
     }
 
+    public void openImageFiles(){
+        /**
+         * Selects the file you want to open
+         */
+        FileSelector selector = FileSelectorImpl.newInstance();
+        selector.showOpenDialog(this.getMainFrame());
+        String[] selectedFileNames = selector.getSelectedFileNames();
+        if(selectedFileNames == null){
+            return;
+        }
+        FileBase file = null;
+        
+        /**
+         * According to different file type, intializes the corresponding FileBase object.
+         */
+        int fileType = FileUtility.ANALYZE;
+        if(fileType == FileUtility.ANALYZE){
+            file = new FileAnalyze(FileUtility.getFileName(selectedFileNames[0]), FileUtility.getFileDirectory(selectedFileNames[0]));
+        }else if(fileType == FileUtility.AFNI){
+//            file = new FileAfni(FileUtility.getFileName(selectedFileNames[0]), FileUtility.getFileDirectory(selectedFileNames[0]));
+        }
+        
+        if(file == null){
+            return;
+        }
+        /**
+         * Creates the progress bar and make it listen to the FileBase.
+         */
+        ViewJProgressBar progressBar = new ViewJProgressBar("", "", 0, 100, false);
+        progressBar.setSeparateThread(false);
+        file.addProgressChangeListener(progressBar);
+        progressBar.setVisible(true);
+
+        try{
+            ModelImage image = ((FileAnalyze)file).createImage();
+
+            if (image == null) {
+                System.err.println("ViewOpenFileUI: image = null");
+            }
+
+            ViewJFrameImage imageFrame = new ViewJFrameImage(image, null, ViewUserInterface.getReference().getNewFrameLocation());
+
+            if (imageFrameVector.size() < 1) {
+                buildMenu();
+                setControls();
+            } else {
+                buildMenu();
+
+                for (int i = 0; i < imageFrameVector.size(); i++) {
+
+                    if (imageFrameVector.elementAt(i) instanceof ViewJFrameImage) {
+                        ((ViewJFrameImage) (imageFrameVector.elementAt(i))).updateMenubar();
+                    }
+                }
+
+                getActiveImageFrame().setControls();
+            }
+            Vector openImageNames = new Vector();
+            openImageNames.add(image.getImageName());
+            // if open failed, then imageNames will be null
+            if (openImageNames == null) {
+                return;
+            } 
+
+            boolean sizeChanged = false;
+
+            // if the SaveAllOnSave preference flag is set, then
+            // load all the files associated with this image (VOIs, LUTs, etc.)
+            if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+                Enumeration e = openImageNames.elements();
+
+                while (e.hasMoreElements()) {
+
+                    try {
+                        String name = (String) e.nextElement();
+                        ModelImage img = this.getRegisteredImageByName(name);
+
+                        // get frame for image
+                        ViewJFrameImage imgFrame = img.getParentFrame();
+
+                        // if the image size was changed to FLOAT, then don't
+                        // load any luts (chances are they won't work)
+                        if (!sizeChanged) {
+
+                            // load any luts
+                            imgFrame.loadLUT(true, true);
+                        }
+
+                        // load any vois
+                        imgFrame.loadAllVOIs(true);
+                    } catch (IllegalArgumentException iae) {
+
+                        // MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                        Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). " +
+                                          "Somehow the Image list sent an incorrect name to " +
+                                          "the image image hashtable. " + "\n", 1);
+                        Preferences.debug("Bad argument.");
+                    }
+                }
+            }
+        } catch(IOException e){
+            
+        } catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory!");
+
+            return;
+        }
+
+
+    }
     /**
      * This method opens an image and puts it into a frame.
      */
     public void openImageFrame() {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(true);
+        ViewOpenFileUI openFile = new ViewOpenFileUI(this, true);
 
         boolean stackFlag = getLastStackFlag();
 
@@ -1596,7 +1770,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  multiFile  If true, the image is composed of image slices each in their own file.
      */
     public void openImageFrame(String imageFile, boolean multiFile) {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(false);
+        ViewOpenFileUI openFile = new ViewOpenFileUI(this, false);
         String imageName;
 
         imageName = openFile.open(imageFile, multiFile, null);
@@ -1671,7 +1845,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             return;
         }
 
-        ViewOpenFileUI fileUI = new ViewOpenFileUI(false);
+        ViewOpenFileUI fileUI = new ViewOpenFileUI(ViewUserInterface.getReference(), false);
 
         String name = fileUI.open(temp, multiFile, null);
 
@@ -1903,39 +2077,69 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * This method is used when running MIPAV from the command line.
      *
-     * @param  scriptFile  The script to run.
-     * @param  imageList   A list of OpenImageFile objects to use in the script.
-     * @param  voiList     A list of VOIs to put into the various images.
-     *
-     * @see    #printUsageAndExit()
+     * @see  #printUsageAndExit()
      */
-    protected void runCmdLine(String scriptFile, Vector imageList, Vector voiList) {
-        ViewOpenFileUI fileOpener = new ViewOpenFileUI(false);
-        Vector imageNames = new Vector();
-        for (int i = 0; i < imageList.size(); i++) {
-            OpenFileInfo file = (OpenFileInfo) imageList.elementAt(i);
-            String fileName = file.getFullFileName();
-            boolean isMulti = file.isMulti();
+    public void runCmdLine() {
+        ViewControlsScript scriptControls = null;
+        String scriptFileName;
+        String fileName;
+        boolean isMulti = false;
 
-            Preferences.debug("cmd line image file: " + fileName + "\n", Preferences.DEBUG_MINOR);
-            fileOpener.open(fileName, isMulti, null);
+        int index;
+        // check to see if there are ANY script files to be loaded...
 
-            imageNames.addElement(fileOpener.getImage().getImageName());
+        if (!scriptFileNames.isEmpty()) {
+            scriptFileName = (String) scriptFileNames.elementAt(0);
+            scriptControls = new ViewControlsScript(this);
+            index = scriptFileName.lastIndexOf(File.separatorChar);
+
+            if (index <= 0) {
+                scriptControls.setScriptDirectory(this.getDefaultScriptDirectory() + File.separatorChar);
+                scriptControls.setScriptFileName(scriptFileName);
+            } else {
+                scriptControls.setScriptDirectory(scriptFileName.substring(0, index + 1));
+                scriptControls.setScriptFileName(scriptFileName.substring(index + 1, scriptFileName.length()));
+            }
+        }
+
+        if (savedImageFileName != null) {
+            scriptControls.setSavedImageFileName(savedImageFileName);
+        }
+
+        ViewOpenFileUI openFileUI = new ViewOpenFileUI(this, false);
+
+        for (int i = 0; i < imageFileNames.size(); i++) {
+            index = 0;
+            fileName = ((OpenFileInfo) imageFileNames.elementAt(i)).getPath();
+            isMulti = ((OpenFileInfo) imageFileNames.elementAt(i)).isMulti();
+
+            Preferences.debug("originally: " + fileName, Preferences.DEBUG_MINOR);
+            index = fileName.lastIndexOf(File.separatorChar);
+
+            if (index < 0) {
+                fileName = (String) imageFileDirs.elementAt(i) + File.separator +
+                           ((OpenFileInfo) imageFileNames.elementAt(i)).getPath();
+            }
+
+            Preferences.debug("FILE NAME: " + fileName, Preferences.DEBUG_MINOR);
+            openFileUI.open(fileName, isMulti, null);
+
+            imageNames.addElement(openFileUI.getImage().getImageName());
 
             this.setDefaultDirectory(new File(fileName).getParent());
 
-            Preferences.debug("Default dir: " + this.getDefaultDirectory() + "\n", Preferences.DEBUG_MINOR);
-            
+            Preferences.debug("Default dir: " + this.getDefaultDirectory(), Preferences.DEBUG_MINOR);
+
             try {
                 VOI[] voi;
                 FileVOI fileVOI;
-                ModelImage image = fileOpener.getImage();
+                ModelImage image = openFileUI.getImage();
 
-                if ((voiList.size() >= 1) && (voiList.elementAt(i) != null)) {
+                if ((voiFileNames.size() >= 1) && (voiFileNames.elementAt(i) != null)) {
 
-                    for (int x = 0; x < ((Vector) (voiList.elementAt(i))).size(); x++) {
-                        String fileNameIn = (String) (((Vector) (voiList.elementAt(i))).elementAt(x));
-                        int index = fileNameIn.lastIndexOf(File.separatorChar);
+                    for (int x = 0; x < ((Vector) (voiFileNames.elementAt(i))).size(); x++) {
+                        String fileNameIn = (String) (((Vector) (voiFileNames.elementAt(i))).elementAt(x));
+                        index = fileNameIn.lastIndexOf(File.separatorChar);
 
                         String directory = fileNameIn.substring(0, index + 1);
                         String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
@@ -1948,14 +2152,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     }
                 }
             } catch (Exception e) {
-                MipavUtil.displayError("Command line executing VOI error, check file names.");
+                MipavUtil.displayError("Command line executing VOI error, check file names");
 
                 return;
             }
+
         }
-        
-        if (scriptFile != null) {
-            ScriptRunner.getReference().runScript(scriptFile, imageNames, new Vector());
+
+        if (scriptControls != null) {
+
+            if (imageNames != null) {
+                scriptControls.setImageNames(imageNames);
+            }
+
+            scriptControls.runScriptFromCmdLine();
         }
     }
 
@@ -1963,10 +2173,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * DOCUMENT ME!
      */
     public void saveSRBFile() {
-        // Gets the active ViewJFrameImage instance.
+
+        /**
+         * Gets the active ViewJFrameImage instance.
+         */
         ViewJFrameImage currentImageFrame = getActiveImageFrame();
 
-        // Gets the current image file opened inside the active ViewJFrameImage.
+        /**
+         * Gets the current image file opened inside the active ViewJFrameImage.
+         */
         if (currentImageFrame == null) {
             return;
         }
@@ -2145,26 +2360,30 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * {@inheritDoc}
+     * Sets whether a script should be recorded.
+     *
+     * @param  isRecording  true if a script should be recorded
      */
-    public void changeRecordingStatus(int recorderStatus) {
+    public void setRecordingScript(boolean isRecording) {
         Enumeration e = this.getRegisteredImages();
 
         while (e.hasMoreElements()) {
 
             try {
-                this.getFrameContainingImage((ModelImage) e.nextElement()).getControls().setRecording(recorderStatus == ScriptRecorder.RECORDING);
-            } catch (NullPointerException ex) {
-                // do nothing
+                this.getFrameContainingImage((ModelImage) e.nextElement()).getControls().setRecording(isRecording);
+            } catch (NullPointerException ex) { // do nothing
             }
         }
     }
-    
+
     /**
-     * Do nothing - required by ScriptRecordingListener interface.
-     * @param  newScriptText  Ignored.
+     * Accessor to set the script dialog.
+     *
+     * @param  d  The script dialog.
      */
-    public void updateScript(String newScriptText) {}
+    public void setScriptDialog(ScriptRecorderInterface d) {
+        scriptDialog = d;
+    }
 
     /**
      * Sets the UI to either be/not be recording action command.
@@ -2474,11 +2693,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void windowActivated(WindowEvent event) { }
 
     /**
-     * Do nothing.
+     * Stop the recording of the script before the window is fully closed.
      *
      * @param  event  the window event.
      */
-    public void windowClosed(WindowEvent event) {}
+    public void windowClosed(WindowEvent event) {
+
+        if (event.getSource() instanceof JDialogScript) {
+            setRecordingScript(false);
+        }
+    }
 
     /**
      * Confirms if the user really wants to exit, then closes the application.
@@ -2486,6 +2710,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param  event  Event that triggered this function.
      */
     public void windowClosing(WindowEvent event) {
+
+        if ((event != null) && (event.getSource() != null) && (event.getSource() instanceof JDialogScript)) {
+            return;
+        }
+
         Toolkit.getDefaultToolkit().beep();
 
         int reply = JOptionPane.showConfirmDialog(mainFrame, "Do you really want to exit?", "MIPAV - Exit",
@@ -2593,6 +2822,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
     }
 
+    // ************************************************************************
+    // **************************** Window Events *****************************
+    // ************************************************************************
+
     /**
      * Do nothing.
      *
@@ -2629,6 +2862,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         return panel;
     }
+
+    // *****
+    // beginning of initialize() sub-methods.
+    // *****
 
     /**
      * Create the panel containing components which show the application title initially, and will later be used to show
@@ -2963,17 +3200,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      * @param  args  command arguments
      */
-    public void parseArguments(String[] args) {
+    protected void parseArguments(String[] args) {
         int i = 0, j, idx, index;
         String arg;
         Vector voiPerImages = new Vector();
         boolean voiFollowImage = false;
         int[] voiCount;
         int imgCount = 0;
-        
-        String scriptFile = null;
-        Vector imageList = new Vector();
-        Vector voiList = new Vector();
 
         if (args.length == 0) {
             return;
@@ -2984,9 +3217,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         System.err.println("Command line argument list:");
         Preferences.debug("Command line argument list:\n");
 
-        for (i = 0; i < args.length; i++) {
-            System.err.println("argument[" + i + "]= " + args[i]);
-            Preferences.debug("argument[" + i + "]= " + args[i] + "\n");
+        for (i = 0; i < commArgs.length; i++) {
+            System.err.println("argument[" + i + "]= " + commArgs[i]);
+            Preferences.debug("argument[" + i + "]= " + commArgs[i] + "\n");
 
         }
 
@@ -3004,7 +3237,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (args.length == 1) {
 
             if (!args[0].startsWith("-")) {
-                ViewOpenFileUI openFileUI = new ViewOpenFileUI(false);
+                ViewOpenFileUI openFileUI = new ViewOpenFileUI(this, false);
 
                 if (openFileUI.open(args[0], false, null) == null) {
                     MipavUtil.displayError("Unable to open image file: " + args[0]);
@@ -3086,23 +3319,23 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         // imgName = this.getDefaultDirectory() + File.separatorChar + imgName;
                         // System.err.println(" ra 1= " + this.getDefaultDirectory());
                         setDefaultDirectory(System.getProperty("user.dir"));
-                        imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
+                        imageFileDirs.add(this.getDefaultDirectory());
+                        imageFileNames.add(new OpenFileInfo(imgName, isMulti));
                     } else {
 
                         // System.err.println(" ra 2 = " + imgName.substring( 0, index + 1 ));
-                        
-                        String dir = imgName.substring(0, index + 1);
-                        String name = imgName.substring(index + 1);
-                        setDefaultDirectory(dir);
-                        imageList.add(new OpenFileInfo(dir, name, isMulti));
+                        imageFileDirs.add(imgName.substring(0, index + 1)); // ends with File.separator
+                        setDefaultDirectory(imgName.substring(0, index + 1));
+                        imageFileNames.add(new OpenFileInfo(imgName.substring(index + 1, imgName.length()), isMulti));
                     }
                     // imageFileNames.add(args[++i]);
 
                 } else if (arg.equalsIgnoreCase("-hide")) {
                     isAppFrameVisible = false;
                 } else if (arg.equalsIgnoreCase("-s")) {
+
                     // System.out.println("script name = " + args[i+1]);
-                    scriptFile = args[++i];
+                    scriptFileNames.add(args[++i]);
                 } else if (arg.equalsIgnoreCase("-v")) {
                     String voiName = args[++i];
                     index = voiName.lastIndexOf(File.separatorChar);
@@ -3117,21 +3350,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         voiIdx++;
 
                         if (voiIdx == voiCount[imgIdx]) {
-                            voiList.add(voiPerImages);
+                            voiFileNames.add(voiPerImages);
                             imgIdx++;
                             voiFollowImage = false;
                             voiPerImages = new Vector();
                         }
                     }
                 } else if (arg.equalsIgnoreCase("-o")) {
-                    String varValue = args[++i];
-                    Preferences.debug("cmd var:\tDefining parameter variable value from -o arg " + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
-                    VariableTable.getReference().storeVariable(ActionSaveBase.SAVE_FILE_NAME, varValue);
-                } else if (arg.equalsIgnoreCase("-d")) {
-                    String varName = args[++i];
-                    String varValue = args[++i];
-                    Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
-                    VariableTable.getReference().storeVariable(varName, varValue);
+                    savedImageFileName = args[++i];
                 } else {
                     printUsageAndExit();
                 }
@@ -3149,9 +3375,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else {
             Preferences.debug("Command line parsing success!", Preferences.DEBUG_MINOR);
         }
-        
-        // scriptFile may be null if we don't have a script to run (e.g., if we just want to open images/vois specified on cmd line)
-        runCmdLine(scriptFile, imageList, voiList);
     }
 
     /**
@@ -3196,12 +3419,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private void printUsageAndExit() {
         String helpInfo = "Usage: mipav " + "[-hH] " + "[-iI] imageFileName " + "[-sS] ScriptFileName " +
-                          "[-vV] voiFileName " + "[-oO] imageFileName " + "[-dD] scriptVariableName scriptVariableValue " + "[-hideHide]" + "\n" +
+                          "[-vV] voiFileName " + "[-oO] imageFileName " + "[-hideHide]" + "\n" +
                           "[-h][-H][--help]  Display this help" + "\n" + "[-hide][-HIDE]    Hide application frame" +
                           "\n" + "[-i][-I]          Image file name" + "\n" + "[-m][-M]          Image multifile name" +
                           "\n" + "[-s][-S]          Script file name" + "\n" + "[-v][-V]          VOI file name" +
-                          "\n" + "[-o][-O]          Saved image file name (sets " + ActionSaveBase.SAVE_FILE_NAME + " parameter)" + 
-                          "\n" + "[-d][-D]          Set the value of a variable used in a script" + "\n" + "\n" + "Examples:" + "\n" +
+                          "\n" + "[-o][-O]          Saved image file name" + "\n" + "\n" + "Examples:" + "\n" +
                           "> mipav" + "\n" + "> mipav imageFileName" + "\n" +
                           "> mipav -i imageFileName -s scriptFileName -hide" + "\n" +
                           "> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3";
@@ -3218,18 +3440,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         System.exit(0);
     }
-    
-    // TODO: REMOVE ME!!!
-    public boolean isScriptRecording() {
-        MipavUtil.displayError("This class uses the old way to check if a script is recording. (VUI.isScriptRecording()).");
-        return false;
-    }
-    
-    // TODO: REMOVE ME!!!
-    public JDialogScriptRecorder getScriptDialog() {
-        MipavUtil.displayError("This class is trying to get the old script recorder dialog. (VUI.getScriptDialog()).");
-        return null;
-    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
@@ -3238,66 +3448,40 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     private class OpenFileInfo {
 
-        /** Whether the file is opened as a multifile image. */
+        /** DOCUMENT ME! */
         private boolean isMulti = false;
 
-        /** Path to the file (no file name). */
-        private String directory;
-        
-        /** The filename (no path). */
-        private String fileName;
+        /** DOCUMENT ME! */
+        private String path;
 
         /**
          * Creates a new OpenFileInfo object.
          *
-         * @param  dir      The directory the file is located in.
-         * @param  name     The file name (no path).
-         * @param  isMulti  Whether the file is opened as a multifile image.
+         * @param  path     DOCUMENT ME!
+         * @param  isMulti  DOCUMENT ME!
          */
-        public OpenFileInfo(String dir, String name, boolean isMulti) {
-            directory = dir;
-            fileName = name;
+        public OpenFileInfo(String path, boolean isMulti) {
+            this.path = path;
             this.isMulti = isMulti;
         }
 
         /**
-         * Get the directory containg the file.
+         * DOCUMENT ME!
          *
-         * @return  The directory containg the file
+         * @return  DOCUMENT ME!
          */
-        public String getDirectory() {
-            return directory;
-        }
-        
-        /**
-         * Get the full file name (path and file name).
-         * 
-         * @return  The full file name (path and file name).
-         */
-        public String getFullFileName() {
-            if (directory.endsWith(File.separator)) {
-                return directory + fileName;
-            } else {
-                return directory + File.separator + fileName;
-            }
-        }
-        
-        /**
-         * Get the file name (no path).
-         * 
-         * @return  The file name (no path).
-         */
-        public String getFileName() {
-            return fileName;
+        public String getPath() {
+            return path;
         }
 
         /**
-         * Return whether the file should be opened as a multifile image.
+         * DOCUMENT ME!
          *
-         * @return  Whether the file should be opened as a multifile image.
+         * @return  DOCUMENT ME!
          */
         public boolean isMulti() {
             return isMulti;
         }
+
     }
 }

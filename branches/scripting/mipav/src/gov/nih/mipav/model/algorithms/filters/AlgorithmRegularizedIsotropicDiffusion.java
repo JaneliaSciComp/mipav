@@ -96,7 +96,22 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      */
     public AlgorithmRegularizedIsotropicDiffusion(ModelImage destImg, ModelImage srcImg, int numI, float stdDev,
                                                   float contrast, boolean do25D) {
-        super(destImg, srcImg);
+        this(destImg, srcImg, numI, stdDev, contrast, do25D, 0, 100);
+    }
+
+    /**
+     * Creates a new AlgorithmRegularizedIsotropicDiffusion object.
+     *
+     * @param  destImg   ModelImage image model where result image is to stored
+     * @param  srcImg    ModelImage source image model
+     * @param  numI      int number of iterations
+     * @param  stdDev    float standard deviation used in the Gaussians
+     * @param  contrast  float diffusion contrast parameter
+     * @param  do25D     boolean If true, process each slice separately
+     */
+    public AlgorithmRegularizedIsotropicDiffusion(ModelImage destImg, ModelImage srcImg, int numI, float stdDev,
+                                                  float contrast, boolean do25D, int minProgressValue, int maxProgressValue) {
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
         numIterations = numI;
         this.stdDev = stdDev;
         this.contrast = contrast;
@@ -154,32 +169,6 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             }
         }
     } // end run()
-
-    /**
-     * Creates the standard progressBar. Stores in the class-global, progressBar.
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Regularized Isotropic Diffusion ...", 0,
-                                                   100, true, this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-                Preferences.debug("AlgorithmRegularizedIsotropicDiffusion: NullPointerException found while building progress bar.");
-
-            }
-        } // end buildProgressBar()
-    }
-
 
     /**
      * Returns the weighting for values used in computing new (diffused) pixel values.
@@ -411,10 +400,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      *                    is to processed independently then nImages equals the number of slices in the volume.
      */
     private void run2D(int numImages) {
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Regularized Isotropic Diffusion ...");
 
-        this.buildProgressBar();
-
-        int totalComputation = numImages * numIterations;
         int computationCount = 0;
 
         // OK, here is where the meat of the algorithm goes
@@ -457,6 +444,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
         int startIndex;
 
+        float stepProgressValue = ((float)(maxProgressValue - minProgressValue))/(numImages * numIterations);
+        
         for (int imgNumber = 0; imgNumber < numImages; imgNumber++) {
             startIndex = imgNumber * length;
 
@@ -474,12 +463,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                                                                yDataRound, srcImage.isColorImage());
 
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(((float) (computationCount) / (totalComputation - 1) * 100)),
-                                            runningInSeparateThread);
-                }
-
+                fireProgressStateChanged(minProgressValue + Math.round(stepProgressValue * computationCount));
                 algoSepConvolver.run();
                 gradientMagnitude(gaussianBuffer, gradientBuffer);
                 upDateImage(resultBuffer, sourceBuffer, gradientBuffer);
@@ -493,6 +477,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                 }
 
                 computationCount++;
+                
             } // end for (int iterNum = 0; ...)
 
             algoSepConvolver.finalize();
@@ -513,7 +498,11 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
         } // end for (imgNumber = 0; ...)
 
-        disposeProgressBar();
+        fireProgressStateChanged(maxProgressValue);
+        
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
 
         if (threadStopped) {
             finalize();
@@ -531,8 +520,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      *                    is to processed independently then nImages equals the number of slices in the volume.
      */
     private void run2DC(int numImages) {
-
-        this.buildProgressBar();
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Regularized Isotropic Diffusion ...");
 
         int totalComputation = numImages * numIterations;
         int computationCount = 0;
@@ -634,6 +622,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
         int startIndex;
 
+        float stepProgressValue = ((float)(maxProgressValue - minProgressValue))/(numImages * numIterations);
+
         for (int imgNumber = 0; imgNumber < numImages; imgNumber++) {
             startIndex = 4 * imgNumber * length;
 
@@ -677,12 +667,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             }
 
             for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(((float) (computationCount) / (totalComputation - 1) * 100)),
-                                            runningInSeparateThread);
-                }
-
+                fireProgressStateChanged(minProgressValue + Math.round(stepProgressValue * computationCount));
                 if (useRed) {
                     algoSepConvolverR.run();
                     gradientMagnitude(gaussianBufferR, gradientBufferR);
@@ -827,10 +812,14 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             } // end try{}-catch{}
 
         } // end for (imgNumber = 0; ...)
-
+        
+        fireProgressStateChanged(maxProgressValue);
+        
         destImage.calcMinMax();
 
-        disposeProgressBar();
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
 
         if (threadStopped) {
             finalize();
@@ -846,8 +835,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      * Iterates the Regularized Isotropic Nonlinear Diffusion algorithm for 3D images.
      */
     private void run3D() {
-
-        this.buildProgressBar();
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Regularized Isotropic Diffusion ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -895,17 +883,26 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             return;
         } // catch()
 
-        // make the magnitude of the gradient image of the gaussian smoothed source image
-        algoSepConvolver = new AlgorithmSeparableConvolver(gaussianBuffer, sourceBuffer, extents, xDataRound,
-                                                           yDataRound, zDataRound, srcImage.isColorImage());
+        float stepProgressValue = ((float)(maxProgressValue - minProgressValue))/numIterations;
+
+        
+        // make the magnitude of the gradient image of the gaussian smoothed
+        // source image
+        algoSepConvolver = new AlgorithmSeparableConvolver(gaussianBuffer,
+                sourceBuffer, extents, xDataRound, yDataRound, zDataRound,
+                srcImage.isColorImage());
+        ProgressChangeListener[] listeners = this.getProgressChangeListeners();
+        if (listeners != null) {
+            for (int i = 0; i < listeners.length; i++) {
+                algoSepConvolver.addProgressChangeListener(listeners[i]);
+            }
+        }
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(((float) (iterNum) / (numIterations - 1) * 100)), runningInSeparateThread);
-            }
-
+            algoSepConvolver.setMinProgressValue(minProgressValue + Math.round(stepProgressValue * iterNum));
+            algoSepConvolver.setMaxProgressValue(minProgressValue + Math.round(stepProgressValue * (iterNum+1)));
             algoSepConvolver.run();
+  
             gradientMagnitude3D(gaussianBuffer, gradientBuffer);
             upDateImage3D(resultBuffer, sourceBuffer, gradientBuffer);
 
@@ -916,9 +913,10 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
                     sourceBuffer[i] = resultBuffer[i];
                 }
             }
-
         } // end for (int iterNum = 0; ...)
 
+        fireProgressStateChanged(maxProgressValue);
+        
         algoSepConvolver.finalize();
         algoSepConvolver = null;
 
@@ -934,8 +932,9 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
-        disposeProgressBar();
-
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
         if (threadStopped) {
             finalize();
 
@@ -949,8 +948,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
      * Iterates the Regularized Isotropic Nonlinear Diffusion algorithm for 3D color images.
      */
     private void run3DC() {
-
-        this.buildProgressBar();
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Regularized Isotropic Diffusion ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -1069,6 +1067,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             return;
         } // catch()
 
+        float stepProgressValue = ((float)(maxProgressValue-minProgressValue))/numIterations;
         // make the magnitude of the gradient image of the gaussian smoothed source image
         if (useRed) {
             algoSepConvolverR = new AlgorithmSeparableConvolver(gaussianBufferR, sourceBufferR, extents, xDataRound,
@@ -1086,11 +1085,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         }
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(((float) (iterNum) / (numIterations - 1) * 100)), runningInSeparateThread);
-            }
-
+            fireProgressStateChanged(minProgressValue + Math.round(stepProgressValue * iterNum));
+            
             if (useRed) {
                 algoSepConvolverR.run();
                 gradientMagnitude3D(gaussianBufferR, gradientBufferR);
@@ -1160,6 +1156,9 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
             } // if (iterNum < (numIterations - 1))
 
         } // end for (int iterNum = 0; ...)
+
+        fireProgressStateChanged(maxProgressValue);
+        
 
         if (useRed) {
             algoSepConvolverR.finalize();
@@ -1233,7 +1232,9 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         } // end try{}-catch{}
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
 
         if (threadStopped) {
             finalize();

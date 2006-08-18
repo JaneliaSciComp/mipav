@@ -16,7 +16,7 @@ import java.awt.Component;
 public class FileSelectorImpl implements FileSelector {
     private JFileChooser fileChooser;
     private FileSelectorImpl(){
-        fileChooser = new JFileChooser(new File(Preferences.getImageDirectory()));
+        fileChooser = new JMipavFileChooser(new File(Preferences.getImageDirectory()));
         fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
         fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
         fileChooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
@@ -56,8 +56,15 @@ public class FileSelectorImpl implements FileSelector {
         if(fileChooser == null){
             return null;
         }
-        
-        File[] selectedFiles = fileChooser.getSelectedFiles();
+        File[] selectedFiles = null;
+        if(fileChooser.isMultiSelectionEnabled()){
+            selectedFiles = fileChooser.getSelectedFiles();
+        }else{
+            if(fileChooser.getSelectedFile() != null){
+                selectedFiles = new File[1];
+                selectedFiles[0] = fileChooser.getSelectedFile();
+            }
+        }
         if(selectedFiles == null || selectedFiles.length == 0){
             return null;
         }
@@ -104,16 +111,26 @@ public class FileSelectorImpl implements FileSelector {
         }
         fileChooser.setDialogTitle(title);
         if(approveButtonName.equals("Open")){
-            fileChooser.setMultiSelectionEnabled(true);
+            fileChooser.setMultiSelectionEnabled(false);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            if(fileChooser instanceof JMipavFileChooser){
+                ((JMipavFileChooser)fileChooser).setSaveAs(false);
+            }
         }else{
             fileChooser.setMultiSelectionEnabled(false);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            if(fileChooser instanceof JMipavFileChooser){
+                ((JMipavFileChooser)fileChooser).setSaveAs(true);
+            }
         }
         int ret = fileChooser.showDialog(parent, approveButtonName);
         if(ret == JFileChooser.APPROVE_OPTION){
             File selectedFile = fileChooser.getSelectedFile();
             Preferences.setImageDirectory(selectedFile);
+            // save the last stack flag to preferences
+            if(fileChooser instanceof JMipavFileChooser){
+                Preferences.setProperty(Preferences.PREF_LAST_STACK_FLAG, Boolean.toString(((JMipavFileChooser)fileChooser).isMulti()));
+            }
         }else{
             fileChooser.setSelectedFiles(null);
         }
