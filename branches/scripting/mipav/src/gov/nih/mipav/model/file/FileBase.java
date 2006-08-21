@@ -837,6 +837,31 @@ public abstract class FileBase{
         }
     }
 
+    public ProgressChangeListener [] getProgressChangeListeners() {
+        Object[] listeners = listenerList.getListenerList();
+        
+        int count = 0;
+        for (int i = 0; i < listeners.length; i++) {
+            if (listeners[i] instanceof ProgressChangeListener) {
+                count++;
+            }
+        }
+        
+        if (count > 0) {
+            ProgressChangeListener [] pcl = new ProgressChangeListener[count];
+            count = 0;
+            for (int i = 0; i < listeners.length; i++) {
+                if (listeners[i] instanceof ProgressChangeListener) {
+                    pcl[count] = (ProgressChangeListener)listeners[i];
+                    count++;
+                }
+            }
+            return pcl;
+        } else {
+            return null;
+        }
+    }
+    
     /**
      * Notifies all listeners that have registered interest for notification
      * on this event type.
