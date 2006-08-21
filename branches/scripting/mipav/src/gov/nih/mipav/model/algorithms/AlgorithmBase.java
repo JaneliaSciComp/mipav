@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.text.*;
 
 import java.util.*;
+import javax.swing.event.EventListenerList;
 
 
 /**
@@ -98,6 +99,17 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** Start time (in milliseconds) to be used to compute elapsed time. */
     private long startTime = 0;
 
+    /**
+     * Used to store the minimum and maximum value of the progress bar.
+     */
+    protected int minProgressValue;
+    protected int maxProgressValue;
+    /**
+     * A list of the ChangeListeners which are interested in the ChangeEvent. 
+     */
+    private EventListenerList listenerList;
+
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -118,6 +130,18 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param  srcImage   Source image, should not be null.
      */
     public AlgorithmBase(ModelImage destImage, ModelImage srcImage) {
+        this(destImage, srcImage, 0, 100);
+    }
+
+    
+    /**
+     * Constructor which sets thread stopped to false and sets source and destination images.
+     *
+     * @param  destImage  Destination image, can be null.
+     * @param  srcImage   Source image, should not be null.
+     */
+    public AlgorithmBase(ModelImage destImage, ModelImage srcImage, int minProgressValue, int maxProgressValue) {
+        listenerList = new EventListenerList();
         this.destImage = destImage;
         this.srcImage = srcImage;
 
@@ -126,6 +150,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         } else {
             destFlag = true;
         }
+
+        this.minProgressValue = minProgressValue;
+        this.maxProgressValue = maxProgressValue;
 
         threadStopped = false;
     }
@@ -680,6 +707,86 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
                 }
             }
         }
+    }
+
+    /**
+     * Returns the progress change event listener list.
+     * @return the progress change event listener list.
+     */
+    public ProgressChangeListener[] getProgressChangeListeners(){{
+        return (ProgressChangeListener[])listenerList.getListeners(ProgressChangeListener.class);
+    }
+        
+    }
+    /**
+     * Adds the ProgressChangeListener to this FileBase object.
+     * 
+     * @param l  the ProgressChangeListener object
+     */
+    public void addProgressChangeListener(ProgressChangeListener l){
+        listenerList.add(ProgressChangeListener.class, l);
+        if(l instanceof ViewJProgressBar){
+            ((ViewJProgressBar)l).addActionListener(this);
+        }
+    }
+    
+    /**
+     * Removes the ChangeListener from the FileBase object.
+     * 
+     * @param l the ProgressChangeListener object
+     */
+    public void removeProgressChangeListener(ProgressChangeListener l){
+        listenerList.remove(ProgressChangeListener.class, l);
+        if(l instanceof ViewJProgressBar){
+            ((ViewJProgressBar)l).removeActionListener(this);
+        }
+    }
+    
+    /**
+     * Notifies all listeners that have registered interest for notification
+     * on this event type.
+     * 
+     * @param value   the value of the progress bar.
+     * @param title   the title of the progress dialog.
+     * @param message the message for that specific progress value.
+     */
+    public void fireProgressStateChanged(int value, String title, String message){
+        Object[] listeners = listenerList.getListenerList();
+        if(listeners == null){
+            return;
+        }
+        for(int i = listeners.length-2; i >= 0; i -= 2){
+            if(listeners[i] == ProgressChangeListener.class){
+                ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
+                ((ProgressChangeListener)listeners[i+1]).progressStateChanged(event);
+            }
+        }
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for notification
+     * on this event type.
+     * 
+     * @param value  the value of the progress bar.
+     */
+    public void fireProgressStateChanged(int value){
+        fireProgressStateChanged(value, null, null);
+    }
+    
+    public int getMinProgressValue(){
+        return minProgressValue;
+    }
+    
+    public void setMinProgressValue(int minProgressValue){
+        this.minProgressValue = minProgressValue;
+    }
+    
+    public int getMaxProgressValue(){
+        return maxProgressValue;
+    }
+    
+    public void setMaxProgressValue(int maxProgressValue){
+        this.maxProgressValue = maxProgressValue;
     }
 
 }
