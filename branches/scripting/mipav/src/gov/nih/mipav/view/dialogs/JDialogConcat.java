@@ -26,7 +26,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmConcat
  */
-public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -43,10 +43,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private boolean do3D = true;
-
-    /** DOCUMENT ME! */
-    private boolean dontOpenFrame = false;
-
+    
     /** DOCUMENT ME! */
     private ModelImage imageA; // source image
 
@@ -94,8 +91,6 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         init();
     }
 
-    
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -117,7 +112,6 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10076");
         }
-
     }
 
     // ************************************************************************
@@ -125,28 +119,45 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
     // ************************************************************************
 
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{        
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(imageA);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        scriptParameters.storeInputImage(imageB);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_3D_concat", do3D));
+    }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do3D",do3D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("dontOpenFrame",dontOpenFrame));
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        imageB = scriptParameters.retrieveInputImage(2);
+        
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = imageA.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            // replace processing not supported..
+            //setDisplayLocReplace();
+            setDisplayLocNew();
+        }
+        
+        do3D = scriptParameters.getParams().getBoolean("do_3D_concat");
     }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    protected void setGUIFromParams(){ 
-        do3D = scriptParameters.getParams().getBoolean("do3D"); 
-        dontOpenFrame = scriptParameters.getParams().getBoolean("dontOpenFrame"); 
-   }
-    
- 
-    
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
     
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
@@ -167,9 +178,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     try {
                         resultImage = mathAlgo.getResultImage();
 
-                        if (!dontOpenFrame) {
-                            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                        }
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -180,55 +189,50 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     // image name so as to indicate that the image is now unlocked!
                     // The image frames are enabled and then registed to the userinterface.
                     resultImage = mathAlgo.getResultImage();
+                    
+                    Vector imageFrames = imageA.getImageFrameVector();
 
-                    if (!dontOpenFrame) {
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                        Vector imageFrames = imageA.getImageFrameVector();
-
-                        for (int i = 0; i < imageFrames.size(); i++) {
-                            ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                            ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-
-                            if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
-                                userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                            }
+                        if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
+                            userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
                         }
+                    }
 
-                        Point pt;
+                    Point pt;
 
-                        if (parentFrame != null) {
-                            pt = ((ViewJFrameBase) parentFrame).getLocation();
-                        } else {
-                            pt = new Point(Toolkit.getDefaultToolkit().getScreenSize().width / 2,
-                                           Toolkit.getDefaultToolkit().getScreenSize().height / 2);
-                        }
+                    if (parentFrame != null) {
+                        pt = ((ViewJFrameBase) parentFrame).getLocation();
+                    } else {
+                        pt = new Point(Toolkit.getDefaultToolkit().getScreenSize().width / 2,
+                                       Toolkit.getDefaultToolkit().getScreenSize().height / 2);
+                    }
 
-                        imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(pt.x, pt.y));
+                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(pt.x, pt.y));
 
-                        if (parentFrame != null) {
-                            ((ViewJFrameBase) parentFrame).close();
-                        } else {
-                            ((ViewJFrameBase) imageA.getParentFrame()).close();
-                        }
+                    if (parentFrame != null) {
+                        ((ViewJFrameBase) parentFrame).close();
+                    } else {
+                        ((ViewJFrameBase) imageA.getParentFrame()).close();
+                    }
 
-                        // Not so sure about this.
-                        if (imageA.getLightBoxFrame() != null) {
-                            ViewJFrameLightBox lightBoxFrame;
-
-                            try {
-                                pt = imageA.getLightBoxFrame().getLocation();
-                                imageA.getLightBoxFrame().close();
-                                lightBoxFrame = new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
-                                                                       imageFrame.getComponentImage().getLUTa(),
-                                                                       imageFrame.getComponentImage().getImageB(),
-                                                                       imageFrame.getComponentImage().getLUTb(),
-                                                                       imageFrame.getComponentImage().getResolutionX(),
-                                                                       imageFrame.getComponentImage().getResolutionY(),
-                                                                       new Dimension(pt.x, pt.y),
-                                                                       imageFrame.getControls());
-                            } catch (OutOfMemoryError error) {
-                                MipavUtil.displayError("Out of memory: unable to open new frame");
-                            }
+                    // Not so sure about this.
+                    if (imageA.getLightBoxFrame() != null) {
+                        try {
+                            pt = imageA.getLightBoxFrame().getLocation();
+                            imageA.getLightBoxFrame().close();
+                            new ViewJFrameLightBox(imageFrame, "LightBox", resultImage,
+                                                   imageFrame.getComponentImage().getLUTa(),
+                                                   imageFrame.getComponentImage().getImageB(),
+                                                   imageFrame.getComponentImage().getLUTb(),
+                                                   imageFrame.getComponentImage().getResolutionX(),
+                                                   imageFrame.getComponentImage().getResolutionY(),
+                                                   new Dimension(pt.x, pt.y),
+                                                   imageFrame.getControls());
+                        } catch (OutOfMemoryError error) {
+                            MipavUtil.displayError("Out of memory: unable to open new frame");
                         }
                     }
                 }
@@ -262,7 +266,10 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+        
         mathAlgo.finalize();
         mathAlgo = null;
         dispose();
@@ -305,7 +312,6 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-
  
     /**
      * DOCUMENT ME!
@@ -341,22 +347,10 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
     }
 
     /**
- 
-
-    /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
     public void setDisplayLocNew() {
         displayLoc = NEW;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  dontOpenFrame  DOCUMENT ME!
-     */
-    public void setDontOpenFrame(boolean dontOpenFrame) {
-        this.dontOpenFrame = dontOpenFrame;
     }
 
     /**
@@ -650,7 +644,6 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         }
 
         displayLoc = NEW;
-
 
         return true;
     }

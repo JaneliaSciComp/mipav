@@ -4,7 +4,6 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -37,9 +36,6 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
     private ModelImage image = null; // source image
 
     /** DOCUMENT ME! */
-    private boolean successful = false; // indicates status of algorithm
-
-    /** DOCUMENT ME! */
     private String[] titles; // title of the frame shown when image is NULL
 
     /** DOCUMENT ME! */
@@ -64,38 +60,30 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
         userInterface = ViewUserInterface.getReference();
     }
 
-    
-
     //~ Methods --------------------------------------------------------------------------------------------------------
  
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(image);       
-        scriptParameters.getParams().put(ParameterFactory.newParameter("successful",successful));
+        scriptParameters.storeInputImage(image);
     }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
     protected void setGUIFromParams(){
-        successful = scriptParameters.getParams().getBoolean("successful");
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
     }
-    
-   
-    
     
     /**
      * Calls run on the algorithm from the script parser.
      *
      * @param  event  Event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -133,12 +121,13 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
 
             // this won't really work until the notifyImageExtentsListeners has been
             // fully implemented.
-            successful = true;
             image.notifyImageExtentsListeners();
 
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         convert4Dto3DAlgo.finalize();
         convert4Dto3DAlgo = null;
@@ -198,20 +187,4 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
             return;
         }
     }
-
-
-  
-
-    /**
-     * Accessor that returns the whether or not the algorithm completed successfully.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public boolean isSuccessful() {
-        return successful;
-    }
-
-
-   
-
 }

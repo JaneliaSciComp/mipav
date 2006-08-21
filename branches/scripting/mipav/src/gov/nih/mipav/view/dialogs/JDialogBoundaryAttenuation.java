@@ -116,6 +116,20 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
         userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage.getParentFrame();
         
+        if (srcImage.getNDims() != 3) {
+            MipavUtil.displayError("The Boundary Attenuation algorithm can only be applied to 3D images.");
+            dispose();
+
+            return;
+        }
+
+        if (srcImage.getVOIs().size() == 0) {
+            MipavUtil.displayError("The Boundary Attenuation algorithm requires at least one VOI within the image.");
+            dispose();
+
+            return;
+        }
+        
         maxAttenuation = scriptParameters.getParams().getFloat("max_attenuation");
         numErosions = scriptParameters.getParams().getInt("num_erosions");
     }

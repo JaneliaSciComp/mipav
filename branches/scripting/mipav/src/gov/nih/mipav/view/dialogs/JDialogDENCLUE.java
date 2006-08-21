@@ -2,18 +2,14 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-
-import java.util.*;
 
 import javax.swing.*;
 
@@ -23,11 +19,6 @@ import javax.swing.*;
  * should be noted that the algorithms are executed in their own thread.
  */
 public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmInterface{
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -57,9 +48,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -83,44 +71,45 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         init();
     }
 
-   
-
     //~ Methods --------------------------------------------------------------------------------------------------------
- //   new AlgorithmDENCLUE(resultImage, image, isGaussian, distance,
- //           threshold, isArbitrary);
-    
+
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isGaussian",isGaussian));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("distance",distance));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold",threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isArbitrary",isArbitrary));
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussian_std_dev_or_influence_distance", distance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_gaussian_function", isGaussian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_arbitrary_shape_cluster", isArbitrary));
     }
-    
+
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
-        distance = scriptParameters.getParams().getFloat("distance");
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        distance = scriptParameters.getParams().getFloat("gaussian_std_dev_or_influence_distance");
         threshold = scriptParameters.getParams().getFloat("threshold");
-        isGaussian = scriptParameters.getParams().getBoolean("isGaussian");
-        isArbitrary = scriptParameters.getParams().getBoolean("isArbitrary");
+        isGaussian = scriptParameters.getParams().getBoolean("do_use_gaussian_function");
+        isArbitrary = scriptParameters.getParams().getBoolean("do_use_arbitrary_shape_cluster");
+        
+        if (distance <= 0) {
+            throw new ParameterException("gaussian_std_dev_or_influence_distance", "Distance/standard deviation must be greater than 0 (found " + distance + ").");
+        }
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
-    
-    
     
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
@@ -162,9 +151,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmDENCLUE) {
             image.clearMask();
 
@@ -175,7 +161,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -189,7 +175,9 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         denAlgo.finalize();
         denAlgo = null;
@@ -204,9 +192,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
     public ModelImage getResultImage() {
         return resultImage;
     }
-
- 
-
 
     /**
      * Accessor that sets whether the influence function is gaussian or square wave
@@ -256,8 +241,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             resultImage     = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name, userInterface);
 
             // Make algorithm
-            denAlgo = new AlgorithmDENCLUE(resultImage, image, isGaussian, distance,
-                                        threshold, isArbitrary);
+            denAlgo = new AlgorithmDENCLUE(resultImage, image, isGaussian, distance, threshold, isArbitrary);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -287,12 +271,8 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             }
 
             return;
-        }
-            
-        
+        }   
     }
-
-    
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.

@@ -42,10 +42,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
     /** DOCUMENT ME! */
     private boolean do25D = true;
-
-    /** DOCUMENT ME! */
-    private long end;
-
+    
     /** DOCUMENT ME! */
     private boolean entireImage = true;
 
@@ -63,9 +60,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
     /** DOCUMENT ME! */
     private ModelImage srcImage;
-
-    /** DOCUMENT ME! */
-    private long start;
 
     /** DOCUMENT ME! */
     private JTextField textDerivative, textGaussian;
@@ -95,60 +89,47 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
         srcImage = im;
         userInterface = ViewUserInterface.getReference();
         init();
-    } // end JDialogDiffusion(...)
-
-    
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
-    try{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
         
-        
-       
-        scriptParameters.getParams().put(ParameterFactory.newParameter("derivativeScale",derivativeScale));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusitivityDenom",diffusitivityDenom));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do25D",do25D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("end",end));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("entireImage",entireImage));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussianScale",gaussianScale));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("numIterations",numIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("start",start));
-        
-    }catch (ParserException pe){
-        MipavUtil.displayError("Error encountered saving script params:\n" + pe);
-    }  
+        scriptParameters.storeProcess3DAs25D(do25D);
+        scriptParameters.storeProcessWholeImage(entireImage);
+        scriptParameters.storeNumIterations(numIterations);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussianScale", gaussianScale));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("derivativeScale", derivativeScale));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusitivityDenom", diffusitivityDenom));
     }
 
-    
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+        
+        do25D = scriptParameters.doProcess3DAs25D();
+        entireImage = scriptParameters.doProcessWholeImage();
+        numIterations = scriptParameters.getNumIterations();
+        gaussianScale = scriptParameters.getParams().getFloat("gaussianScale");
         derivativeScale = scriptParameters.getParams().getFloat("derivativeScale");
         diffusitivityDenom = scriptParameters.getParams().getFloat("diffusitivityDenom");
-        do25D = scriptParameters.getParams().getBoolean("do25D");
-        end = scriptParameters.getParams().getLong("end");
-        entireImage = scriptParameters.getParams().getBoolean("entireImage");
-        gaussianScale = scriptParameters.getParams().getFloat("gaussianScale");
-        numIterations = scriptParameters.getParams().getInt("numIterations");
-        start = scriptParameters.getParams().getLong("start");
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-     }
-    
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
     
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
@@ -176,11 +157,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      * @param  algorithm  DOCUMENT ME!
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
-        end = System.currentTimeMillis();
-        Preferences.debug("CoherenceEnhancingDiffusion time: " + (end - start));
-
         if (((algorithm instanceof AlgorithmCoherenceEnhancingDiffusion) &&
                  (coherenceEnhancingDiffusionAlgo.isCompleted() == true)) && (resultImage != null)) {
 
@@ -188,7 +164,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
             resultImage.clearMask();
 
             try {
-                imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -210,8 +186,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
         return resultImage;
     }
 
-
- 
     /**
      * Accessor that sets the derivativeScale.
      *
@@ -376,9 +350,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      * or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        start = System.currentTimeMillis();
-
-        float[] sigmas = null;
         String name;
 
         name = makeImageName(srcImage.getImageName(), "_ce");
@@ -488,5 +459,4 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
         return true;
     } // end setVariables()
-
-} // end class JDialogCohEnhDiffusion
+}

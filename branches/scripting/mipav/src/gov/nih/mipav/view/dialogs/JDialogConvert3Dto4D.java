@@ -97,12 +97,11 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
     //~ Methods --------------------------------------------------------------------------------------------------------
     
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException{
         scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("volume_length", volumeLength));
         scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_resolution", res3));
@@ -113,7 +112,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
     }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
@@ -128,8 +127,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
     }
     
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {        
          AlgorithmParameters.storeImageInRunner(getResultImage());

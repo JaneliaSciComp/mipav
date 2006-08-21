@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -120,48 +119,70 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
- //numRepIm, numBlank
     
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
-            scriptParameters.storeInputImage(image);            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("numRepIm",numRepIm));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("numBlank",numBlank));
-      }
-    
-    /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-     */
-    protected void setGUIFromParams(){
-        numRepIm =  scriptParameters.getParams().getInt("numRepIm");
-        numBlank =  scriptParameters.getParams().getInt("numBlank"); 
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
+        fileFormat = fileInfoBuffer.getFileFormat();
+        space = fileInfoBuffer.getSliceSpacing();
+        thick = fileInfoBuffer.getResolutions()[2];
+        
+        if (image.getNDims() == 3) {
+            extents = new int[4];
+        } else if (image.getNDims() == 4) {
+            extents = new int[3];
+        } else {
+            MipavUtil.displayError("This utility only works with 3D and 4D files.");
+            return;
+        }
+        
+        if (fileFormat != FileBase.XML) {
+            MipavUtil.displayError("This utility only works with XML files.");
+            return;
+        }
+        
+        if (space > thick) {
+            extents = image.getExtents();
+            numIm = extents[2];
+            gap = space - thick;
+            Preferences.debug("\nIn original image set, slice thickness is " + thick + " and gap between slices is "
+                    + gap + ".");
+            zStart = fileInfoBuffer.getOrigin(2);
+            getNewInfo();
+            Preferences.debug("New slice thickness: " + newThick
+                    + ".  To create new images, each original image is repeated " + numRepIm + " times and " + numBlank
+                    + " blanks are inserted.");
+            generateNewImages();
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
         AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
-    
-    
-    
-    
     /**
      * Have to define actionPerformed b/c this dialog extends JDialogBase.
-     *
-     * @param  event  Event that triggered this function.
+     * 
+     * @param event Event that triggered this function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     /**
      * This method is required if the AlgorithmInterface is implemented.
@@ -169,8 +190,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmCorrectSpacing) {
 
             // resultImage = correctSpaceAlgo.getResultImage();
@@ -198,7 +217,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                 }
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -224,7 +243,9 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (parentFrame != null) {
             ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
@@ -303,26 +324,24 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
         return resultImage;
     }
 
- 
-
     /**
      * This method corrects spacing for cases where the space is less than the thickness, by assigning space value to
      * the z direction resolution.
      *
-     * @param  image     DOCUMENT ME!
-     * @param  newThick  DOCUMENT ME!
+     * @param  im           DOCUMENT ME!
+     * @param  newThickVal  DOCUMENT ME!
      */
-    private void correctSpaceLTthick(ModelImage image, float newThick) {
+    private void correctSpaceLTthick(ModelImage im, float newThickVal) {
         FileInfoBase[] arrayOfFileInfo;
-        arrayOfFileInfo = (FileInfoBase[]) image.getFileInfo();
+        arrayOfFileInfo = (FileInfoBase[]) im.getFileInfo();
 
-        int zExtent = image.getExtents()[2];
+        int zExtent = im.getExtents()[2];
 
         for (int i = 0; i < zExtent; i++) {
-            arrayOfFileInfo[i].setResolutions(newThick, 2);
+            arrayOfFileInfo[i].setResolutions(newThickVal, 2);
         }
 
-        MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" + newThick +
+        MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" + newThickVal +
                               ").");
         dispose();
 

@@ -4,7 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -137,48 +137,137 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
         init();
     }
 
-  
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("borderSize",borderSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("xBounds",xBounds));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("yBounds",yBounds));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("zBounds",zBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("border_size", borderSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
     }
-    
+
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
-        borderSize = scriptParameters.getParams().getInt("borderSize");         
-       xBounds = scriptParameters.getParams().getList("xBounds").getAsIntArray();
-       yBounds = scriptParameters.getParams().getList("yBounds").getAsIntArray();
-       zBounds = scriptParameters.getParams().getList("zBounds").getAsIntArray();
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        borderSize = scriptParameters.getParams().getInt("border_size");
+        setRight(scriptParameters.getParams().getInt("right_side"));
+        setLeft(scriptParameters.getParams().getInt("left_side"));
+        setTop(scriptParameters.getParams().getInt("top_side"));
+        setBottom(scriptParameters.getParams().getInt("bottom_side"));
+        setFront(scriptParameters.getParams().getInt("front"));
+        setBack(scriptParameters.getParams().getInt("back"));
+        
+        if (rightSide < 0) {
+            throw new ParameterException("right_side", "Cannot have rightSide < 0");
+        }
+
+        if (rightSide >= image.getExtents()[0]) {
+            throw new ParameterException("right_side", "Cannot have rightSide >= image.getExtents()[0]");
+        }
+
+        if (leftSide < 0) {
+            throw new ParameterException("left_side", "Cannot have leftSide < 0");
+        }
+
+        if (leftSide >= image.getExtents()[0]) {
+            throw new ParameterException("left_side", "Cannot have leftSide >= image.getExtents()[0]");
+        }
+
+        if (topSide < 0) {
+            throw new ParameterException("top_side", "Cannot have topSide < 0");
+        }
+
+        if (topSide >= image.getExtents()[1]) {
+            throw new ParameterException("top_side", "Cannot have topSide >= image.getExtents()[1]");
+        }
+
+        if (bottomSide < 0) {
+            throw new ParameterException("bottom_side", "Cannot have bottomSide < 0");
+        }
+
+        if (bottomSide >= image.getExtents()[1]) {
+            throw new ParameterException("bottom_side", "Cannot have bottomSide >= image.getExtents()[1]");
+        }
+
+
+        if (image.getNDims() >= 3) {
+
+            if (front < 0) {
+                throw new ParameterException("front", "Cannot have front < 0");
+            }
+
+            if (front >= image.getExtents()[2]) {
+                throw new ParameterException("front", "Cannot have front >= image.getExtents()[2]");
+            }
+
+            if (back < 0) {
+                throw new ParameterException("back", "Cannot have back < 0");
+            }
+
+            if (back >= image.getExtents()[2]) {
+                throw new ParameterException("back", "Cannot have back >= image.getExtents()[2]");
+            }
+
+        } // if (image.getNDims() >= 3)
+
+        if ((image.getExtents()[0] - rightSide - leftSide) <= 0) {
+            throw new ParameterException("right_side", "Cannot have image.getExtents()[0] - rightSide - leftSide <= 0");
+        }
+
+        if ((image.getExtents()[1] - topSide - bottomSide) <= 0) {
+            throw new ParameterException("top_side", "Cannot have image.getExtents()[1] - topSide - bottomSide <= 0");
+        }
+
+        if (image.getNDims() >= 3) {
+            if ((image.getExtents()[2] - front - back) <= 0) {
+                throw new ParameterException("front", "Cannot have image.getExtents()[2] - front - back <= 0");
+            }
+        }
+
+        xBounds[0] = leftSide;
+        xBounds[1] = image.getExtents()[0] - 1 - rightSide;
+        yBounds[0] = topSide;
+        yBounds[1] = image.getExtents()[1] - 1 - bottomSide;
+
+        if (image.getNDims() >= 3) {
+            zBounds[0] = front;
+            zBounds[1] = image.getExtents()[2] - 1 - back;
+        }
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -206,15 +295,12 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmCrop) {
 
             if ((cropAlgo.isCompleted() == true) && (resultImage != null)) { // in StoreInDest; "new Image"
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -226,7 +312,7 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
                 image = cropAlgo.getSrcImage();
 
                 try {
-                    imageFrame = new ViewJFrameImage(image, null, new Dimension(610, 200));
+                    new ViewJFrameImage(image, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -391,9 +477,6 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
         return resultImage;
     }
 
-  
-
-  
     /**
      * Accessor that sets the back value.
      *
@@ -692,7 +775,6 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
          *
          * cancelButton = buildCancelButton(); OKCancelPanel.add(cancelButton); contentBox.add(OKCancelPanel);
          */
-        JPanel buttonPanel = new JPanel(new FlowLayout());
         contentBox.add(buildButtons());
 
         // if this is a 2D image, turn off slice margins
