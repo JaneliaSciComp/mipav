@@ -234,18 +234,19 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "VOIExtraction ...", 0, 100);
-        initProgressBar();
+        // buildProgressBar(srcImage.getImageName(), "VOIExtraction ...", 0, 100);
+        // initProgressBar();
 
         try {
             srcImage.setLock(ModelStorageBase.W_LOCKED);
         } catch (IOException error) {
             displayError("Algorithm VOI Extraction: Image locked");
             setCompleted(false);
-            disposeProgressBar();
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
             return;
         }
+
 
 
         for (z = 0; z < zDim; z++) {
@@ -357,9 +358,10 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                 if (grayScaleNumber >= 10000) {
                                     displayError("Algorithm VOI Extraction: Impossibly high >= 10000 gray scales detected");
                                     setCompleted(false);
-                                    disposeProgressBar();
+                                    fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
                                     return;
+
                                 } // end of if (grayScaleNumber >= 1000)
                             } // end of if (newGrayScale)
                         } // end of if ((!mask.get(scanPos)) && (expImgBuffer[scanPos] != 0))
@@ -473,7 +475,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         }
 
         if (threadStopped) {
-            progressBar.dispose();
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
             setCompleted(false);
 
             return;
@@ -519,9 +521,10 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
         srcImage.releaseLock();
 
-        if (progressBar != null) {
-            progressBar.dispose();
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
         }
+
 
         setCompleted(true);
     }
