@@ -24,7 +24,23 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String systemConfigHospitalName = null;
     
+    private String studyHeaderID = null;
+    
+    private String studyHeaderRevisionNumber = null;
+    
+    private short studyHeaderBlocks = -32768;
+    
+    private String MRIProcessName = null;
+    
+    private short studyTaskID = -32768;
+    
+    private String rawDataStudyNumber = null;
+    
     private String studyNumber = null;
+    
+    private String rawDataSystemID = null;
+    
+    private String systemGenerationID = null;
     
     private String studyDate = null;
     
@@ -52,7 +68,27 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String hospitalName = null;
     
+    private String patientStatus = null;
+    
+    private String requestedNumber = null;
+    
+    private String seriesHeaderID = null;
+    
+    private String seriesHeaderRevisionNumber = null;
+    
+    private short seriesHeaderBlocks = -32768;
+    
+    private String seriesProcessName = null;
+    
+    private short seriesTaskID = -32768;
+    
+    private String originalSeriesNumber = null;
+    
     private String seriesNumber = null;
+    
+    private String seriesRawDataSystemID = null;
+    
+    private String seriesSystemGenerationID = null;
     
     private String seriesDate = null;
     
@@ -66,7 +102,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String coilName = null;
     
-    private short contrastDescription = -32768;
+    private String contrastDescription = null;
     
     private String planeType = null;
     
@@ -96,6 +132,12 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String verticalAnatomicalReference = null;
     
+    private float verticalLandmark = Float.NaN;
+    
+    private float horizontalLandmark = Float.NaN;
+    
+    private float tableLocation = Float.NaN;
+    
     private short scanMatrixX = -32768;
     
     private short scanMatrixY = -32768;
@@ -104,9 +146,49 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short imagesAllocated = -32768;
     
-    private String scanSequence = null;
+    private String gatingType = null;
+    
+    private String pulseSequenceMode = null;
+    
+    private String seriesPSDName = null;
+    
+    private int landmarkCounter = Integer.MIN_VALUE;
     
     private String scanProtocolName = null;
+    
+    private String surfaceCoilType = null;
+    
+    private String suppressionTechnique = null;
+    
+    private String satSelections = null;
+    
+    private String surfaceCoilIntensityCorrection = null;
+    
+    private short satXLoc1 = -32768;
+    
+    private short satXLoc2 = -32768;
+    
+    private short satYLoc1 = -32768;
+    
+    private short satYLoc2 = -32768;
+    
+    private short satZLoc1 = -32768;
+    
+    private short satZLoc2 = -32768;
+    
+    private short satXThick = -32768;
+    
+    private short satYThick = -32768;
+    
+    private short satZThick = -32768;
+    
+    private String vasMode = null;
+    
+    private String phaseContrastFlowAxis = null;
+    
+    private String imageHeaderID = null;
+    
+    private String imageHeaderRevisionNumber = null;
     
     private String imageCreationDate = null;
     
@@ -655,8 +737,41 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
 
         dialog.append("\nStudy header\n");
+        if (studyHeaderID != null) {
+            dialog.append("Study header ID = " + studyHeaderID.trim() + "\n");
+        }
+        
+        if (studyHeaderRevisionNumber != null) {
+            dialog.append("Study header revision number = " + studyHeaderRevisionNumber.trim() + "\n");
+        }
+        
+        if (studyHeaderBlocks >= 0) {
+            dialog.append("Number of study header blocks = " + studyHeaderBlocks + "\n");
+        }
+        
+        if (MRIProcessName != null) {
+            dialog.append("MRI process name = " + MRIProcessName.trim() + "\n");
+        }
+        
+        if (studyTaskID != -32768) {
+            dialog.append("Unique processes task ID of creator = " + studyTaskID + "\n");
+        }
+        
+        if (rawDataStudyNumber != null) {
+            dialog.append("Raw data study number = " + rawDataStudyNumber.trim() + "\n");
+        }
+        
         if (studyNumber != null) {
             dialog.append("Study number = " + studyNumber.trim() + "\n");
+        }
+        
+        if ((rawDataSystemID != null) && (rawDataSystemID.trim() != null) &&
+            (rawDataSystemID.trim().length() != 0)) {
+            dialog.append("Raw data ID from original study number = " + rawDataSystemID.trim() + "\n");
+        }
+        
+        if (systemGenerationID != null) {
+            dialog.append("System generation ID = " + systemGenerationID.trim() + "\n");
         }
         
         if (studyDate != null) {
@@ -711,9 +826,50 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Hospital name = " + hospitalName.trim() + "\n");
         }
         
+        if (patientStatus != null) {
+            dialog.append("Patient status = " + patientStatus + "\n");
+        }
+        
+        if ((requestedNumber != null) && (requestedNumber.trim() != null) &&
+            (requestedNumber.trim().length() != 0)) {
+            dialog.append("Requested number for patient logging system = " + requestedNumber.trim() + "\n");
+        }
+        
         dialog.append("\nSeries header\n");
+        if (seriesHeaderID != null) {
+            dialog.append("Series header ID = " + seriesHeaderID.trim() + "\n");
+        }
+        
+        if (seriesHeaderRevisionNumber != null) {
+            dialog.append("Series header revision number = " + seriesHeaderRevisionNumber.trim() + "\n");
+        }
+        
+        if (seriesHeaderBlocks >= 0) {
+            dialog.append("Number of series header blocks = " + seriesHeaderBlocks + "\n");
+        }
+        
+        if (seriesProcessName != null) {
+            dialog.append("MRI process name = " + seriesProcessName.trim() + "\n");    
+        }
+        
+        if (seriesTaskID != -32768) {
+            dialog.append("Task ID of creating task within process = " + seriesTaskID + "\n");
+        }
+        
+        if (originalSeriesNumber != null) {
+            dialog.append("Original series number = " + originalSeriesNumber.trim() + "\n");
+        }
+        
         if (seriesNumber != null) {
             dialog.append("Series number = " + seriesNumber.trim() + "\n");
+        }
+        
+        if (seriesRawDataSystemID != null) {
+            dialog.append("Raw data system ID from study = " + seriesRawDataSystemID.trim() + "\n");
+        }
+        
+        if (seriesSystemGenerationID != null) {
+            dialog.append("System generation ID = " + seriesSystemGenerationID.trim() + "\n");
         }
         
         if (seriesDate != null) {
@@ -741,8 +897,9 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Coil name = " + coilName.trim() + "\n");
         }
         
-        if (contrastDescription != -32768) {
-            dialog.append("Contrast description = " + contrastDescription + "\n");
+        if ((contrastDescription != null) && (contrastDescription.trim() != null) &&
+            (contrastDescription.trim().length() != 0)) {
+            dialog.append("Contrast description = " + contrastDescription.trim() + "\n");
         }
         
         if (planeType != null) {
@@ -773,6 +930,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
         if (!Float.isNaN(fieldOfView)) {
             dialog.append("Field of view = " + fieldOfView + " mm\n");
         }
+        
+        dialog.append("Center is relative to patient landmark\n");
         
         if (!Float.isNaN(rlCenter)) {
             dialog.append("R+L- center = " + rlCenter + "\n"); // MIPAV is R to L
@@ -806,6 +965,18 @@ public class FileInfoGESigna4X extends FileInfoBase {
                            verticalAnatomicalReference.trim() + "\n");
         }
         
+        if (!Float.isNaN(verticalLandmark)) {
+            dialog.append("Vertical landmark = " + verticalLandmark + " relative to table top in millimeters\n");
+        }
+        
+        if (!Float.isNaN(horizontalLandmark)) {
+            dialog.append("Horizontal landmark = " + horizontalLandmark + " relative to table center in millimeters\n");
+        }
+        
+        if (!Float.isNaN(tableLocation)) {
+            dialog.append("Physical table location relative to home = " + tableLocation + "\n");
+        }
+        
         if (scanMatrixX != -32768) {
             dialog.append("Scan matrix X = " + scanMatrixX + "\n");
         }
@@ -822,16 +993,102 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Number of images allocated = " + imagesAllocated + "\n");
         }
         
-        if ((scanSequence != null) && (scanSequence.trim() != null) &&
-            (scanSequence.trim().length() != 0)) {
-            dialog.append("Scan sequence = " + scanSequence.trim() + "\n");
+        if (gatingType != null) {
+            dialog.append("Gating type = " + gatingType + "\n");
+        }
+        
+        if (pulseSequenceMode != null) {
+            dialog.append("Pulse sequence mode = " + pulseSequenceMode + "\n");
+        }
+        
+        if ((seriesPSDName != null) && (seriesPSDName.trim() != null) &&
+            (seriesPSDName.trim().length() != 0)) {
+            dialog.append("PSD name = " + seriesPSDName.trim() + "\n");
+        }
+        
+        if (landmarkCounter >= 0) {
+            dialog.append("Number of times landmark established = " + landmarkCounter + "\n");
         }
         
         if (scanProtocolName != null) {
             dialog.append("Protocol name for scan = " + scanProtocolName.trim() + "\n");
         }
         
+        if (surfaceCoilType != null) {
+            dialog.append("Surface coil type = " + surfaceCoilType + "\n");
+        }
+        
+        if (suppressionTechnique != null) {
+            dialog.append("Suppression technique = " + suppressionTechnique + "\n");
+        }
+        
+        if (satSelections != null) {
+            dialog.append("SAT selections = " + satSelections + "\n");
+        }
+        
+        if (surfaceCoilIntensityCorrection != null) {
+            dialog.append("Surface coil intensity correction = " + surfaceCoilIntensityCorrection + "\n");
+        }
+        
+        if (satXLoc1 != -32768) {
+            dialog.append("R-side SAT pulse location relative to landmark = " + satXLoc1 + 
+                          " millimeters\n");
+        }
+        
+        if (satXLoc2 != -32768) {
+            dialog.append("L-side SAT pulse location relative to landmark = " + satXLoc2 + 
+                          " millimeters\n");
+        }
+        
+        if (satYLoc1 != -32768) {
+            dialog.append("A-side SAT pulse location relative to landmark = " + satYLoc1 + 
+                          " millimeters\n");
+        }
+        
+        if (satYLoc2 != -32768) {
+            dialog.append("P-side SAT pulse location relative to landmark = " + satYLoc2 + 
+                          " millimeters\n");
+        }
+        
+        if (satZLoc1 != -32768) {
+            dialog.append("S-side SAT pulse location relative to landmark = " + satZLoc1 + 
+                          " millimeters\n");
+        }
+        
+        if (satZLoc2 != -32768) {
+            dialog.append("I-side SAT pulse location relative to landmark = " + satZLoc2 + 
+                          " millimeters\n");
+        }
+        
+        if (satXThick != -32768) {
+            dialog.append("Thickness of X-axis SAT pulses = " + satXThick + " millimeters\n");
+        }
+        
+        if (satYThick != -32768) {
+            dialog.append("Thickness of Y-axis SAT pulses = " + satYThick + " millimeters\n");
+        }
+        
+        if (satZThick != -32768) {
+            dialog.append("Thickness of Z-axis SAT pulses = " + satZThick + " millimeters\n");
+        }
+        
+        if (vasMode != null) {
+            dialog.append("TOF/PC image = " + vasMode + "\n");
+        }
+        
+        if (phaseContrastFlowAxis != null) {
+            dialog.append("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n");
+        }
+        
         dialog.append("\nImage header\n");
+        
+        if (imageHeaderID != null) {
+            dialog.append("Image header ID = " + imageHeaderID.trim() + "\n");
+        }
+        
+        if (imageHeaderRevisionNumber != null) {
+            dialog.append("Image header revision number = " + imageHeaderRevisionNumber.trim() + "\n");
+        }
         
         if (imageCreationDate != null) {
             dialog.append("Image creation date = " + imageCreationDate.trim() + "\n");
@@ -1153,13 +1410,76 @@ public class FileInfoGESigna4X extends FileInfoBase {
         this.systemConfigHospitalName = systemConfigHospitalName;
     }
     
+    /**
+     * 
+     * @param studyHeaderID
+     */
+    public void setStudyHeaderID(String studyHeaderID) {
+        this.studyHeaderID = studyHeaderID;
+    }
     
+    /**
+     * 
+     * @param studyHeaderRevisionNumber
+     */
+    public void setStudyHeaderRevisionNumber(String studyHeaderRevisionNumber) {
+        this.studyHeaderRevisionNumber = studyHeaderRevisionNumber;
+    }
+    
+    /**
+     * 
+     * @param studyHeaderBlocks
+     */
+    public void setStudyHeaderBlocks(short studyHeaderBlocks) {
+        this.studyHeaderBlocks = studyHeaderBlocks;
+    }
+    
+    /**
+     * 
+     * @param MRIProcessName
+     */
+    public void setMRIProcessName(String MRIProcessName) {
+        this.MRIProcessName = MRIProcessName;
+    }
+    
+    /**
+     * 
+     * @param studyTaskID
+     */
+    public void setStudyTaskID(short studyTaskID) {
+        this.studyTaskID = studyTaskID;
+    }
+    
+    /**
+     * 
+     * @param rawDataStudyNumber
+     */
+    public void setRawDataStudyNumber(String rawDataStudyNumber) {
+        this.rawDataStudyNumber = rawDataStudyNumber;
+    }
+       
     /**
      * 
      * @param studyNumber
      */
     public void setStudyNumber (String studyNumber){
         this.studyNumber = studyNumber;
+    }
+    
+    /**
+     * 
+     * @param rawDataSystemID
+     */
+    public void setRawDataSystemID(String rawDataSystemID) {
+        this.rawDataSystemID = rawDataSystemID;
+    }
+    
+    /**
+     * 
+     * @param systemGenerationID
+     */
+    public void setSystemGenerationID(String systemGenerationID) {
+        this.systemGenerationID = systemGenerationID;
     }
     
     /**
@@ -1268,10 +1588,90 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param patientStatus
+     */
+    public void setPatientStatus(String patientStatus) {
+        this.patientStatus = patientStatus;
+    }
+    
+    /**
+     * 
+     * @param requestedNumber
+     */
+    public void setRequestedNumber(String requestedNumber) {
+        this.requestedNumber = requestedNumber;
+    }
+    
+    /**
+     * 
+     * @param seriesHeaderID
+     */
+    public void setSeriesHeaderID(String seriesHeaderID) {
+        this.seriesHeaderID = seriesHeaderID;
+    }
+    
+    /**
+     * 
+     * @param seriesHeaderRevisionNumber
+     */
+    public void setSeriesHeaderRevisionNumber(String seriesHeaderRevisionNumber) {
+        this.seriesHeaderRevisionNumber = seriesHeaderRevisionNumber;
+    }
+    
+    /**
+     * 
+     * @param seriesHeaderBlocks
+     */
+    public void setSeriesHeaderBlocks(short seriesHeaderBlocks) {
+        this.seriesHeaderBlocks = seriesHeaderBlocks;
+    }
+    
+    /**
+     * 
+     * @param seriesProcessName
+     */
+    public void setSeriesProcessName(String seriesProcessName) {
+        this.seriesProcessName = seriesProcessName;
+    }
+    
+    /**
+     * 
+     * @param seriesTaskID
+     */
+    public void setSeriesTaskID(short seriesTaskID) {
+        this.seriesTaskID = seriesTaskID;
+    }
+    
+    /**
+     * 
+     * @param originalSeriesNumber
+     */
+    public void setOriginalSeriesNumber(String originalSeriesNumber) {
+        this.originalSeriesNumber = originalSeriesNumber;
+    }
+    
+    /**
+     * 
      * @param seriesNumber
      */
     public void setSeriesNumber(String seriesNumber) {
         this.seriesNumber = seriesNumber;
+    }
+    
+    /**
+     * 
+     * @param seriesRawDataSystemID
+     */
+    public void setSeriesRawDataSystemID(String seriesRawDataSystemID) {
+        this.seriesRawDataSystemID = seriesRawDataSystemID;
+    }
+    
+    /**
+     * 
+     * @param seriesSystemGenerationID
+     */
+    public void setSeriesSystemGenerationID(String seriesSystemGenerationID) {
+        this.seriesSystemGenerationID = seriesSystemGenerationID;
     }
     
     /**
@@ -1326,7 +1726,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
      * 
      * @param contrastDescription
      */
-    public void setContrastDescription(short contrastDescription) {
+    public void setContrastDescription(String contrastDescription) {
         this.contrastDescription = contrastDescription;
     }
     
@@ -1440,6 +1840,30 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param verticalLandmark
+     */
+    public void setVerticalLandmark(float verticalLandmark) {
+        this.verticalLandmark = verticalLandmark;
+    }
+    
+    /**
+     * 
+     * @param horizontalLandmark
+     */
+    public void setHorizontalLandmark(float horizontalLandmark) {
+        this.horizontalLandmark = horizontalLandmark;
+    }
+    
+    /**
+     * 
+     * @param tableLocation
+     */
+    public void setTableLocation(float tableLocation) {
+        this.tableLocation = tableLocation;
+    }
+    
+    /**
+     * 
      * @param scanMatrixX
      */
     public void setScanMatrixX(short scanMatrixX) {
@@ -1472,10 +1896,34 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param scanSequence
+     * @param gatingType
      */
-    public void setScanSequence(String scanSequence) {
-        this.scanSequence = scanSequence;
+    public void setGatingType(String gatingType) {
+        this.gatingType = gatingType;
+    }
+    
+    /**
+     * 
+     * @param pulseSequenceMode
+     */
+    public void setPulseSequenceMode(String pulseSequenceMode) {
+        this.pulseSequenceMode = pulseSequenceMode;
+    }
+    
+    /**
+     * 
+     * @param seriesPSDName
+     */
+    public void setSeriesPSDName(String seriesPSDName) {
+        this.seriesPSDName = seriesPSDName;
+    }
+    
+    /**
+     * 
+     * @param landmarkCounter
+     */
+    public void setLandmarkCounter(int landmarkCounter) {
+        this.landmarkCounter = landmarkCounter;
     }
     
     /**
@@ -1484,6 +1932,142 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setScanProtocolName(String scanProtocolName) {
         this.scanProtocolName = scanProtocolName;
+    }
+    
+    /**
+     * 
+     * @param surfaceCoilType
+     */
+    public void setSurfaceCoilType(String surfaceCoilType) {
+        this.surfaceCoilType = surfaceCoilType;
+    }
+    
+    /**
+     * 
+     * @param suppressionTechnique
+     */
+    public void setSuppressionTechnique(String suppressionTechnique) {
+        this.suppressionTechnique = suppressionTechnique;
+    }
+    
+    /**
+     * 
+     * @param satSelections
+     */
+    public void setSATSelections(String satSelections) {
+        this.satSelections = satSelections;
+    }
+    
+    /**
+     * 
+     * @param surfaceCoilIntensityCorrection
+     */
+    public void setSurfaceCoilIntensityCorrection(String surfaceCoilIntensityCorrection) {
+        this.surfaceCoilIntensityCorrection = surfaceCoilIntensityCorrection;
+    }
+    
+    /**
+     * 
+     * @param satXLoc1
+     */
+    public void setSATXLoc1(short satXLoc1) {
+        this.satXLoc1 = satXLoc1;
+    }
+    
+    /**
+     * 
+     * @param satXLoc2
+     */
+    public void setSATXLoc2(short satXLoc2) {
+        this.satXLoc2 = satXLoc2;
+    }
+    
+    /**
+     * 
+     * @param satYLoc1
+     */
+    public void setSATYLoc1(short satYLoc1) {
+        this.satYLoc1 = satYLoc1;
+    }
+    
+    /**
+     * 
+     * @param satYLoc2
+     */
+    public void setSATYLoc2(short satYLoc2) {
+        this.satYLoc2 = satYLoc2;
+    }
+    
+    /**
+     * 
+     * @param satZLoc1
+     */
+    public void setSATZLoc1(short satZLoc1) {
+        this.satZLoc1 = satZLoc1;
+    }
+    
+    /**
+     * 
+     * @param satZLoc2
+     */
+    public void setSATZLoc2(short satZLoc2) {
+        this.satZLoc2 = satZLoc2;
+    }
+    
+    /**
+     * 
+     * @param satXThick
+     */
+    public void setSATXThick(short satXThick) {
+        this.satXThick = satXThick;
+    }
+    
+    /**
+     * 
+     * @param satYThick
+     */
+    public void setSATYThick(short satYThick) {
+        this.satYThick = satYThick;
+    }
+    
+    /**
+     * 
+     * @param satZThick
+     */
+    public void setSATZThick(short satZThick) {
+        this.satZThick = satZThick;
+    }
+    
+    /**
+     * 
+     * @param vasMode
+     */
+    public void setVasMode(String vasMode) {
+        this.vasMode = vasMode;
+    }
+    
+    /**
+     *
+     * @param phaseContrastFlowAxis
+     */
+    public void setPhaseContrastFlowAxis(String phaseContrastFlowAxis) {
+        this.phaseContrastFlowAxis = phaseContrastFlowAxis;
+    }
+    
+    /**
+     * 
+     * @param imageHeaderID
+     */
+    public void setImageHeaderID(String imageHeaderID) {
+        this.imageHeaderID = imageHeaderID;
+    }
+    
+    /**
+     * 
+     * @param imageHeaderRevisionNumber
+     */
+    public void setImageHeaderRevisionNumber(String imageHeaderRevisionNumber) {
+        this.imageHeaderRevisionNumber = imageHeaderRevisionNumber;
     }
     
     /**
