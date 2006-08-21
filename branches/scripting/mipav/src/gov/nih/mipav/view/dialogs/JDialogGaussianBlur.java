@@ -417,6 +417,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide dialog
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -467,6 +476,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     // These next lines set the titles in all frames where the source image is displayed to
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
@@ -561,6 +579,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide dialog
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -606,6 +633,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide dialog
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     // These next lines set the titles in all frames where the source image is displayed to
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
@@ -693,6 +729,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide dialog
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     if (isRunInSeparateThread()) {
 
                         // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -738,6 +783,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     // These next lines set the titles in all frames where the source image is displayed to
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
@@ -820,6 +874,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     if (!outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
@@ -871,6 +934,15 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
                     // Hide dialog
                     setVisible(false);
 
+                    /**
+                     * Creates the progress bar and make it listen to the FileBase.
+                     */
+                    ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the gaussian blur of slice ...", 0, 100, true);
+                    progressBar.setSeparateThread(runInSeparateThread);
+                    gaussianBlurSepAlgo.addProgressChangeListener(progressBar);
+                    progressBar.setVisible(true);
+
+                    
                     // These next lines set the titles in all frames where the source image is displayed to
                     // "locked - " image name so as to indicate that the image is now read/write locked!
                     // The image frames are disabled and then unregisted from the userinterface until the
