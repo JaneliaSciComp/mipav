@@ -54,7 +54,23 @@ public class FileGESigna4X extends FileBase {
     
     private String systemConfigHospitalName = null;
     
+    private String studyHeaderID = null;
+    
+    private String studyHeaderRevisionNumber = null;
+    
+    private short studyHeaderBlocks;
+    
+    private String MRIProcessName = null;
+    
+    private short studyTaskID = -32768;
+    
+    private String rawDataStudyNumber = null;
+    
     private String studyNumber = null;
+    
+    private String rawDataSystemID = null;
+    
+    private String systemGenerationID = null;
     
     private String studyDate = null;
     
@@ -82,7 +98,27 @@ public class FileGESigna4X extends FileBase {
     
     private String hospitalName = null;
     
+    private short patientStatus;
+    
+    private String requestedNumber = null;
+    
+    private String seriesHeaderID = null;
+    
+    private String seriesHeaderRevisionNumber = null;
+    
+    private short seriesHeaderBlocks;
+    
+    private String seriesProcessName = null;
+    
+    private short seriesTaskID;
+    
+    private String originalSeriesNumber = null;
+    
     private String seriesNumber = null;
+    
+    private String seriesRawDataSystemID = null;
+    
+    private String seriesSystemGenerationID = null;
     
     private String seriesDate = null;
     
@@ -96,7 +132,7 @@ public class FileGESigna4X extends FileBase {
     
     private String coilName = null;
     
-    private short contrastDescription;
+    private String contrastDescription = null;
     
     private short planeType;
     
@@ -126,6 +162,12 @@ public class FileGESigna4X extends FileBase {
     
     private String verticalAnatomicalReference = null;
     
+    private float verticalLandmark;
+    
+    private float horizontalLandmark;
+    
+    private float tableLocation;
+    
     private short scanMatrixX;
     
     private short scanMatrixY;
@@ -134,9 +176,53 @@ public class FileGESigna4X extends FileBase {
     
     private short imagesAllocated;
     
-    private String scanSequence = null;
+    private short gatingType;
+    
+    private short pulseSequenceMode;
+    
+    private String gatingTypeString = null;
+    
+    private String seriesPSDName = null;
+    
+    private int landmarkCounter;
     
     private String scanProtocolName = null;
+    
+    private short surfaceCoilType;
+    
+    private short suppressionTechnique;
+    
+    private short satSelections;
+    
+    private String satSelectionsString = null;
+    
+    private short surfaceCoilIntensityCorrection;
+    
+    private short satXLoc1;
+    
+    private short satXLoc2;
+    
+    private short satYLoc1;
+    
+    private short satYLoc2;
+    
+    private short satZLoc1;
+    
+    private short satZLoc2;
+    
+    private short satXThick;
+    
+    private short satYThick;
+    
+    private short satZThick;
+    
+    private short vasMode;
+    
+    private short phaseContrastFlowAxis;
+    
+    private String imageHeaderID = null;
+    
+    private String imageHeaderRevisionNumber = null;
     
     private String imageCreationDate = null;
     
@@ -453,7 +539,7 @@ public class FileGESigna4X extends FileBase {
      */
     public void readImage(float[] buffer) throws IOException {
 
-        // try {
+        int i;
         // Block 0 system configuration header
         raFile.seek(0*512 + 2*6);
         systemID = getString(4);
@@ -464,9 +550,49 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setSystemConfigHospitalName(systemConfigHospitalName);
         
         // Read in fields from the block 6 study header
+        raFile.seek(6*512 + 2*0);
+        studyHeaderID = getString(14); // "STUDY HEADER", 14 bytes allocated
+        fileInfo.setStudyHeaderID(studyHeaderID);
+        
+        // 6*512 + 2*7
+        // Character string containing the release revision number of the header in
+        // the form xx.xx.xx
+        studyHeaderRevisionNumber = getString(8);
+        fileInfo.setStudyHeaderRevisionNumber(studyHeaderRevisionNumber);
+         
+        // 6*512 + 2*11
+        // Number of study header blocks in units of 512 bytes; Value of 2 expected
+        studyHeaderBlocks = (short)getSignedShort(endianess);
+        fileInfo.setStudyHeaderBlocks(studyHeaderBlocks);
+        
+        // 6*512 + 2*12
+        // Unique MRI process name(Proc Name: PID)
+        MRIProcessName = getString(32);
+        fileInfo.setMRIProcessName(MRIProcessName);
+        
+        // 6*512 + 2*28
+        // Unique processes task ID of creator
+        studyTaskID = (short)getSignedShort(endianess);
+        fileInfo.setStudyTaskID(studyTaskID);
+        
+        // 6*512 + 2*29
+        // Original study number from which the data was produced.
+        // Included only if raw data from different study, else null
+        rawDataStudyNumber = getString(5);
+        fileInfo.setRawDataStudyNumber(rawDataStudyNumber);
+        
         raFile.seek(6*512 + 2*32);
         studyNumber = getString(5);
         fileInfo.setStudyNumber(studyNumber);
+        
+        raFile.seek(6*512 + 2*35);
+        // Three digit raw data ID from original study number
+        rawDataSystemID = getString(3);
+        fileInfo.setRawDataSystemID(rawDataSystemID);
+        
+        raFile.seek(6*512 + 2*37);
+        systemGenerationID = getString(3);
+        fileInfo.setSystemGenerationID(systemGenerationID);
         
         raFile.seek(6*512 + 2*39);
         studyDate = getString(9); // (dd-mmm-yy)
@@ -521,10 +647,76 @@ public class FileGESigna4X extends FileBase {
         hospitalName = getString(32);
         fileInfo.setHospitalName(hospitalName);
         
+        // 6*512 + 2*239
+        patientStatus = (short)getSignedShort(endianess);
+        if (patientStatus == 0) {
+            fileInfo.setPatientStatus("in-patient");
+        }
+        else if (patientStatus == 1) {
+            fileInfo.setPatientStatus("out-patient");
+        }
+        else if (patientStatus == 2) {
+            fileInfo.setPatientStatus("emergency");
+        }
+        else if (patientStatus == 3) {
+            fileInfo.setPatientStatus("referral");
+        }
+        else if (patientStatus == 4) {
+            fileInfo.setPatientStatus("blank");
+        }
+        else {
+            Preferences.debug("Patient status = " + patientStatus + "\n");
+        }
+        
+        // 6*512 + 2*240
+        // Requested number from Scan Rx first page used for patient logging system
+        requestedNumber = getString(12);
+        fileInfo.setRequestedNumber(requestedNumber);
+        
         // Block 8 - series header
+        raFile.seek(8*512 + 2*0);
+        // "SERIES HEADER"
+        seriesHeaderID = getString(14);
+        fileInfo.setSeriesHeaderID(seriesHeaderID);
+        
+        // 8*512 + 2*7
+        // Character string containing the release revision number of the header in the
+        // form xx.xx.xx
+        seriesHeaderRevisionNumber = getString(8);
+        fileInfo.setSeriesHeaderRevisionNumber(seriesHeaderRevisionNumber);
+        
+        // 8*512 + 2*11
+        // Number of series header blocks in units of 512 bytes; Value of 2 expected
+        seriesHeaderBlocks = (short)getSignedShort(endianess);
+        fileInfo.setSeriesHeaderBlocks(seriesHeaderBlocks);
+        
+        // 8*512 + 2*12
+        // Unique MRI process name(Proc Name: PID)
+        seriesProcessName = getString(32);
+        fileInfo.setSeriesProcessName(seriesProcessName);
+        
+        // 8*512 + 2*28
+        seriesTaskID = (short)getSignedShort(endianess);
+        fileInfo.setSeriesTaskID(seriesTaskID);
+        
+        // 8*512 + 2*29
+        // Original data for which raw data was produced
+        originalSeriesNumber = getString(3);
+        fileInfo.setOriginalSeriesNumber(originalSeriesNumber);
+        
         raFile.seek(8*512 + 2*31);
         seriesNumber = getString(3);
         fileInfo.setSeriesNumber(seriesNumber);
+        
+        raFile.seek(8*512 + 2*33);
+        // Raw data system ID from study
+        seriesRawDataSystemID = getString(3);
+        fileInfo.setSeriesRawDataSystemID(seriesRawDataSystemID);
+        
+        raFile.seek(8*512 + 2*35);
+        // System generation ID
+        seriesSystemGenerationID = getString(3);
+        fileInfo.setSeriesSystemGenerationID(seriesSystemGenerationID);
         
         raFile.seek(8*512 + 2*37);
         seriesDate = getString(9); // (dd-mmm-yy)
@@ -573,10 +765,10 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setCoilName(coilName);
         
         // 8*512 + 2*122
-        contrastDescription = (short)getSignedShort(endianess);
+        contrastDescription = getString(32);
         fileInfo.setContrastDescription(contrastDescription);
         
-        raFile.seek(8*512 + 2*138);
+        // 8*512 + 2*138
         planeType = (short)getSignedShort(endianess);
         if (planeType == 0) {
             fileInfo.setImageOrientation(FileInfoBase.AXIAL);
@@ -734,6 +926,7 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setResolutions(fieldOfView*2/width, 0);
         fileInfo.setResolutions(fieldOfView*2/height, 1);
         
+        // Centers are relative to patient landmark
         // 8*512 + 2*153
         rlCenter = getFloat(endianess); // R+L-  MIPAV is R to L
         fileInfo.setRLCenter(rlCenter);
@@ -755,10 +948,10 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setOrientation("prone");
         }
         else if (orientation == 2) {
-            fileInfo.setOrientation("left");
+            fileInfo.setOrientation("decubitus left");
         }
         else if (orientation == 3) {
-            fileInfo.setOrientation("right");
+            fileInfo.setOrientation("decubitus right");
         }
         else {
             Preferences.debug("orientation had an illegal value of " +
@@ -779,14 +972,33 @@ public class FileGESigna4X extends FileBase {
         }
         
         // 8*512 + 2*161
+        // Character string contains whole name in plasma button. 'Naision, 'Sternal',
+        // 'Xyphoid', 'Iliac', 'Sym-Pub', or other entered name.
         longitudinalAnatomicalReference = getString(32);
         fileInfo.setLongitudinalAnatomicalReference(longitudinalAnatomicalReference);
         
         // 8*512 + 2*177
+        // Obsolete  Same format as longitudinalAnatomicalReference
+        // 'TNTIP_OF_NOSE', BTBIG-TOE', NBNAUGHTY-BITS', 'EMEXTERNAL-MEATUS', 'MAMID_AXIS'
         verticalAnatomicalReference = getString(32);
         fileInfo.setVerticalAnatomicalReference(verticalAnatomicalReference);
         
-        raFile.seek(8*512 + 2*199);
+        // 8*512 + 2*193
+        // Relative to table top (Y) in millimeters
+        verticalLandmark = getFloat(endianess);
+        fileInfo.setVerticalLandmark(verticalLandmark);
+        
+        // 8*512 + 2*195
+        // Relative to table center (X) in millimeters
+        horizontalLandmark = getFloat(endianess);
+        fileInfo.setHorizontalLandmark(horizontalLandmark);
+        
+        // 8*512 + 2*197
+        // Physcial table location relative to home
+        tableLocation = getFloat(endianess);
+        fileInfo.setTableLocation(tableLocation);
+        
+        // 8*512 + 2*199
         scanMatrixX = (short)getSignedShort(endianess);
         fileInfo.setScanMatrixX(scanMatrixX);
         
@@ -795,22 +1007,274 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setScanMatrixY(scanMatrixY);
         
         // 8*512 + 2*201
+        // 256 or 512
         imageMatrix = (short)getSignedShort(endianess);
         fileInfo.setImageMatrix(imageMatrix);
         
         // 8*512 + 2*202
+        // 1 to 512.  Number of images allocated when the series was originally created.
         imagesAllocated = (short)getSignedShort(endianess);
         fileInfo.setImagesAllocated(imagesAllocated);
         
-        raFile.seek(8*512 + 2*205);
-        scanSequence = getString(12);
-        fileInfo.setScanSequence(scanSequence);
+        // 8*512 + 2*203
+        gatingType = (short)getSignedShort(endianess);
+        gatingTypeString = new String("none");
+        if ((gatingType & 1) != 0) {
+            gatingTypeString = gatingTypeString.concat("_ECG");
+        }
+        if ((gatingType & 2) != 0) {
+            gatingTypeString = gatingTypeString.concat("_RESP");
+        }
+        if ((gatingType & 4) != 0) {
+            gatingTypeString = gatingTypeString.concat("_RCOMP");
+        }
+        if ((gatingType & 8) != 0) {
+            gatingTypeString = gatingTypeString.concat("_FC");
+        }
+        if ((gatingType & 16) != 0) {
+            gatingTypeString = gatingTypeString.concat("_CI");
+        }
+        if ((gatingType & 32) != 0) {
+            gatingTypeString = gatingTypeString.concat("_St");
+        }
+        if ((gatingType & 64) != 0) {
+            gatingTypeString = gatingTypeString.concat("_PG");
+        }
+        if ((gatingType & 128) != 0) {
+            gatingTypeString = gatingTypeString.concat("_NP");
+        }
+        if ((gatingType & 256) != 0) {
+            gatingTypeString = gatingTypeString.concat("_RF");
+        }
+        if ((gatingType & 512) != 0) {
+            gatingTypeString = gatingTypeString.concat("_Rt");
+        }
+        if ((gatingType & 1024) != 0) {
+            gatingTypeString = gatingTypeString.concat("_VB");
+        }
+        if ((gatingType & 2048) != 0) {
+            gatingTypeString = gatingTypeString.concat("_ED");
+        }
+        if ((gatingType & 4096) != 0) {
+            gatingTypeString = gatingTypeString.concat("_PM");
+        }
+        if (gatingType < 0) {
+            gatingTypeString = gatingTypeString.concat("_MP");
+        }
+        if (gatingType != 0) {
+            i = gatingTypeString.indexOf("_");
+            gatingTypeString = gatingTypeString.substring(i+1);
+        }
+        fileInfo.setGatingType(gatingTypeString);
         
-        raFile.seek(8*512 + 2*213);
+        // 8*512 + 2*204
+        pulseSequenceMode = (short)getSignedShort(endianess);
+        if (pulseSequenceMode == 0) {
+            fileInfo.setPulseSequenceMode("PRD");
+        }
+        else if (pulseSequenceMode == 1) {
+            fileInfo.setPulseSequenceMode("RM");
+        }
+        else if (pulseSequenceMode == 2) {
+            fileInfo.setPulseSequenceMode("RMGE");
+        }
+        else {
+            Preferences.debug("Pulse sequence mode = " + pulseSequenceMode + "\n");
+        }
+        
+        // 8*512 + 2*205
+        seriesPSDName = getString(12);
+        fileInfo.setSeriesPSDName(seriesPSDName);
+        
+        // 8*512 + 2*211
+        landmarkCounter = getInt(endianess);
+        fileInfo.setLandmarkCounter(landmarkCounter);
+        
+        // 8*512 + 2*213
         scanProtocolName = getString(20);
         fileInfo.setScanProtocolName(scanProtocolName);
         
+        // 8*512 + 2*223
+        surfaceCoilType = (short)getSignedShort(endianess);
+        if (surfaceCoilType == 0) {
+            fileInfo.setSurfaceCoilType("receive");
+        }
+        else if (surfaceCoilType == 1) {
+            fileInfo.setSurfaceCoilType("transmit/receive");
+        }
+        else {
+            Preferences.debug("Surface coil type = " + surfaceCoilType + "\n");
+        }
+        
+        // 8*512 + 2*224
+        suppressionTechnique = (short)getSignedShort(endianess);
+        if (suppressionTechnique == 0) {
+            fileInfo.setSuppressionTechnique("none");
+        }
+        else if (suppressionTechnique == 1) {
+            fileInfo.setSuppressionTechnique("fat");
+        }
+        else if (suppressionTechnique == 2) {
+            fileInfo.setSuppressionTechnique("water");
+        }
+        else {
+            Preferences.debug("Suppresion technique = " + suppressionTechnique + "\n");
+        }
+        
+        // 8*512 + 2*225
+        satSelections = (short)getSignedShort(endianess);
+        satSelectionsString = new String("none");
+        if ((satSelections & 1) != 0) {
+            satSelectionsString = satSelectionsString.concat("_S");
+        }
+        if ((satSelections & 2) != 0) {
+            satSelectionsString = satSelectionsString.concat("_I");
+        }
+        if ((satSelections & 4) != 0) {
+            satSelectionsString = satSelectionsString.concat("_R");
+        }
+        if ((satSelections & 8) != 0) {
+            satSelectionsString = satSelectionsString.concat("_L");
+        }
+        if ((satSelections & 16) != 0) {
+            satSelectionsString = satSelectionsString.concat("_A");
+        }
+        if ((satSelections & 32) != 0) {
+            satSelectionsString = satSelectionsString.concat("_P");
+        }
+        if ((satSelections & 64) != 0) {
+            satSelectionsString = satSelectionsString.concat("_s");
+        }
+        if ((satSelections & 128) != 0) {
+            satSelectionsString = satSelectionsString.concat("_i");
+        }
+        if ((satSelections & 256) != 0) {
+            satSelectionsString = satSelectionsString.concat("_r");
+        }
+        if ((satSelections & 512) != 0) {
+            satSelectionsString = satSelectionsString.concat("_l");
+        }
+        if ((satSelections & 1024) != 0) {
+            satSelectionsString = satSelectionsString.concat("_a");
+        }
+        if ((satSelections & 2048) != 0) {
+            satSelectionsString = satSelectionsString.concat("_p");
+        }
+        if (satSelections != 0) {
+            i = satSelectionsString.indexOf("_");
+            satSelectionsString = satSelectionsString.substring(i+1);
+        }
+        fileInfo.setSATSelections(satSelectionsString);
+        
+        // 8*512 + 2*226
+        surfaceCoilIntensityCorrection = (short)getSignedShort(endianess);
+        if (surfaceCoilIntensityCorrection == 0) {
+            fileInfo.setSurfaceCoilIntensityCorrection("off");
+        }
+        else if (surfaceCoilIntensityCorrection == 1) {
+            fileInfo.setSurfaceCoilIntensityCorrection("on");
+        }
+        else {
+            Preferences.debug("Surface coil intensity correction = " + surfaceCoilIntensityCorrection + "\n");
+        }
+        
+        // 8*512 + 2*227
+        // R-side SAT pulse location relative to landmark in millimeters
+        satXLoc1 = (short)getSignedShort(endianess);
+        fileInfo.setSATXLoc1(satXLoc1);
+        
+        // 8*512 + 2*228
+        // L-side SAT pulse location relative to landmark in millimeters
+        satXLoc2 = (short)getSignedShort(endianess);
+        fileInfo.setSATXLoc2(satXLoc2);
+        
+        // 8*512 + 2*229
+        // A-side SAT pulse location relative to landmark in millimeters
+        satYLoc1 = (short)getSignedShort(endianess);
+        fileInfo.setSATYLoc1(satYLoc1);
+        
+        // 8*512 + 2*230
+        // P-side SAT pulse location relative to landmark in millimeters
+        satYLoc2 = (short)getSignedShort(endianess);
+        fileInfo.setSATYLoc2(satYLoc2);
+        
+        // 8*512 + 2*231
+        // S-side SAT pulse location relative to landmark in millimeters
+        satZLoc1 = (short)getSignedShort(endianess);
+        fileInfo.setSATZLoc1(satZLoc1);
+        
+        // 8*512 + 2*232
+        // I-side SAT pulse location relative to landmark in millimeters
+        satZLoc2 = (short)getSignedShort(endianess);
+        fileInfo.setSATZLoc2(satZLoc2);
+        
+        // 8*512 + 2*233
+        // Thickness of X-axis SAT pulses in millimeters
+        satXThick = (short)getSignedShort(endianess);
+        fileInfo.setSATXThick(satXThick);
+        
+        // 8*512 + 2*234
+        // Thickness of Y-axis SAT pulses in millimeters
+        satYThick = (short)getSignedShort(endianess);
+        fileInfo.setSATYThick(satYThick);
+        
+        // 8*512 + 2*235
+        // Thickness of Z-axis SAT pulses in millimeters
+        satZThick = (short)getSignedShort(endianess);
+        fileInfo.setSATZThick(satZThick);
+        
+        // 8*512 + 2*236
+        // TOF/PC image
+        vasMode = (short)getSignedShort(endianess);
+        if (vasMode == 0) {
+            fileInfo.setVasMode("none");
+        }
+        else if (vasMode == 1) {
+            fileInfo.setVasMode("TOF");
+        }
+        else if (vasMode == 2) {
+            fileInfo.setVasMode("PC");
+        }
+        else {
+            Preferences.debug("vasMode = " + vasMode + "\n");
+        }
+        
+        // 8*512 + 2*237
+        phaseContrastFlowAxis = (short)getSignedShort(endianess);
+        if (phaseContrastFlowAxis == 0) {
+            fileInfo.setPhaseContrastFlowAxis("none");
+        }
+        else if (phaseContrastFlowAxis == 1) {
+            fileInfo.setPhaseContrastFlowAxis("S/I");
+        }
+        else if (phaseContrastFlowAxis == 2) {
+            fileInfo.setPhaseContrastFlowAxis("R/L");
+        }
+        else if (phaseContrastFlowAxis == 4) {
+            fileInfo.setPhaseContrastFlowAxis("A/P");
+        }
+        else if (phaseContrastFlowAxis == 7) {
+            fileInfo.setPhaseContrastFlowAxis("all");
+        }
+        else if (phaseContrastFlowAxis == 8) {
+            fileInfo.setPhaseContrastFlowAxis("slice");
+        }
+        else {
+            Preferences.debug("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n");
+        }
+        
         // block 10 - image header
+        raFile.seek(10*512 + 2*0);
+        // "IMAGE HEADER"
+        imageHeaderID = getString(14);
+        fileInfo.setImageHeaderID(imageHeaderID);
+        
+        // 10*512 + 2*7
+        // Character string containing the revision number of the string in the
+        // form xx.xx.xx
+        imageHeaderRevisionNumber = getString(8);
+        fileInfo.setImageHeaderRevisionNumber(imageHeaderRevisionNumber);
+        
         raFile.seek(10*512 + 2*29);
         imageCreationDate = getString(9); // (dd-mmm-yy)
         fileInfo.setImageCreationDate(imageCreationDate);
