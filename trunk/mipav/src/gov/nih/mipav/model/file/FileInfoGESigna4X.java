@@ -190,6 +190,12 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String imageHeaderRevisionNumber = null;
     
+    private short imageHeaderBlocks = -32768;
+    
+    private String imageHeaderCreatorProcess = null;
+    
+    private short imageHeaderCreatorTask = -32768;
+    
     private String imageCreationDate = null;
     
     private String imageCreationTime = null;
@@ -198,12 +204,32 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String series = null;
     
+    private String imageRawDataSystemID = null;
+    
+    private String imageSystemGenerationID = null;
+    
+    private float startX = Float.NaN;
+    
+    private float endX = Float.NaN;
+    
+    private float startY = Float.NaN;
+    
+    private float endY = Float.NaN;
+    
+    private float startZ = Float.NaN;
+    
+    private float endZ = Float.NaN;
+    
     private float imageLocation = Float.NaN;
     
     private float tablePosition = Float.NaN;
     
     private float thickness = Float.NaN; // In theory 20 * resolution[0] = 20 * resolution[1]
                                          // In practice 10 * res[0] = 10 * res[1]
+    
+    private float imageSpacing = Float.NaN;
+    
+    private String round = null;
     
     private float tr = Float.NaN;
     
@@ -219,6 +245,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short sliceQuantity = -32768;
     
+    private String imageShape = null;
+    
     private float pixelSize = Float.NaN; // In theory 20 * res[2]
                                          // In practice 5 * res[2]
     
@@ -233,6 +261,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private String prescribedSeriesNumbers = null;
     
     private String prescribedImageNumbers = null;
+
+    private short bitsPerPixel;
+    
+    private short defaultWindow = -32768;
+    
+    private short defaultLevel = -32768;
+    
+    private short fileBlocks = -32768;
     
     private float excitationsNumber = Float.NaN;
     
@@ -250,7 +286,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short arrythmiaRejectionRatio = -32768;
     
-    private short cardiacRepTime = -32768;
+    private String cardiacRepTime = null;
     
     private short imagesPerCardiacCycle = -32768;
     
@@ -260,6 +296,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private short receiveAttenuatorSetting = -32768;
     
+    private int imageFieldStrength = Integer.MIN_VALUE;
+    
     private short imageOffset = -32768;
     
     private float interImageDelay = Float.NaN;
@@ -267,6 +305,16 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private String psdName = null;
     
     private short flipAngle = -32768;
+    
+    private String surfaceCoilsCorrectionType = null;
+    
+    private String scSer = null;
+    
+    private String scIma = null;
+    
+    private String pSeries2 = null;
+    
+    private String pImage2 = null;
     
     private String extremityCoil = null;
     
@@ -300,13 +348,21 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private float imgBLHC_S = Float.NaN;
     
+    private short imageHeaderDisclaimer = -32768;
+    
     private short minimumDelay = -32768;
     
-    private short sliceMultiplier = -32768;
+    private short cPhase = -32768;
+    
+    private float TE2 = Float.NaN;
+    
+    private String swapPF = null;
     
     private short pauseInterval = -32768;
     
     private float pauseTime = Float.NaN;
+    
+    private String obliquePlane = null;
     
     private String contrastUsed = null;
     
@@ -314,9 +370,35 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private float contrastAmount = Float.NaN;
     
-    private short fileFormat = -32768;
+    private String fileFormat = null;
     
-    private short autoCenterFrequency = -32768;
+    private String autoCenterFrequency = null;
+    
+    private int actualTransmitFrequency = Integer.MIN_VALUE;
+    
+    private int actualReceiveFrequency = Integer.MIN_VALUE;
+    
+    private int recommendedTransmitFrequency = Integer.MIN_VALUE;
+    
+    private int recommendedReceiveFrequency = Integer.MIN_VALUE;
+    
+    private int recommendedTransmitAttenuation = Integer.MIN_VALUE;
+    
+    private int recommendedReceiveAttenuation = Integer.MIN_VALUE;
+    
+    private String histogramPresent = null;
+    
+    private String pfSwapped = null;
+    
+    private short R1 = -32768;
+    
+    private short R2 = -32768;
+    
+    private String variableBandwidth = null;
+    
+    private short prescanReceiveAttenuation1 = -32768;
+    
+    private short prescanReceiveAttenuation2 = -32768;
 
     /** DOCUMENT ME! */
     private int year;
@@ -720,12 +802,6 @@ public class FileInfoGESigna4X extends FileInfoBase {
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
-
-        dialog.append("\n\n                Other information\n\n");
-
-        dialog.append("Image width  = " + 256 + "\n");
-        dialog.append("Image height = " + 256 + "\n");
-        dialog.append("Number of bits  = " + 12 + "\n");
         
         dialog.append("\nSystem configuration header\n");
         if (systemID != null) {
@@ -1090,6 +1166,18 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Image header revision number = " + imageHeaderRevisionNumber.trim() + "\n");
         }
         
+        if (imageHeaderBlocks >= 0) {
+            dialog.append("Number of image header blocks = " + imageHeaderBlocks + "\n");
+        }
+        
+        if (imageHeaderCreatorProcess != null) {
+            dialog.append("Image header creator process = " + imageHeaderCreatorProcess.trim() + "\n");
+        }
+        
+        if (imageHeaderCreatorTask != -32768) {
+            dialog.append("Image header creator task = " + imageHeaderCreatorTask + "\n");
+        }
+        
         if (imageCreationDate != null) {
             dialog.append("Image creation date = " + imageCreationDate.trim() + "\n");
         }
@@ -1103,11 +1191,43 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (series != null) {
-            dialog.append("Series = " + series.trim() + "\n");
+            dialog.append("Image series number = " + series.trim() + "\n");
+        }
+        
+        if (imageRawDataSystemID != null) {
+            dialog.append("Raw data system ID = " + imageRawDataSystemID.trim() + "\n");
+        }
+        
+        if (imageSystemGenerationID != null) {
+            dialog.append("System generation ID = " + imageSystemGenerationID.trim() + "\n");
+        }
+        
+        if (!Float.isNaN(startX)) {
+            dialog.append("Start location X, right minimum = " + startX + "\n");
+        }
+        
+        if (!Float.isNaN(endX)) {
+            dialog.append("End location X, right maximum = " + endX + "\n");
+        }
+        
+        if (!Float.isNaN(startY)) {
+            dialog.append("Start location Y, anterior minimum = " + startY + "\n");
+        }
+        
+        if (!Float.isNaN(endY)) {
+            dialog.append("End location Y, anterior maximum = " + endY + "\n");
+        }
+        
+        if (!Float.isNaN(startZ)) {
+            dialog.append("Start location Z, superior minimum = " + startZ + "\n");
+        }
+        
+        if (!Float.isNaN(endZ)) {
+            dialog.append("End location Z, superior maximum = " + endZ + "\n");
         }
         
         if (!Float.isNaN(imageLocation)) {
-            dialog.append("Image location = " + imageLocation + "\n");
+            dialog.append("Image location relative to landmark = " + imageLocation + "\n");
         }
         
         if (!Float.isNaN(tablePosition)) {
@@ -1115,11 +1235,15 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(thickness)) {
-            dialog.append("10*resolution[0] = 10*resolution[1] equals approximately " + thickness + "\n");
+            dialog.append("Image thickness = " + thickness + "\n");
         }
         
-        if (getSliceSpacing() != 0.0) {
-            dialog.append("Image spacing = " + getSliceSpacing() + "\n");
+        if (!Float.isNaN(imageSpacing)) {
+            dialog.append("Spacing between slices = " + imageSpacing + "\n");
+        }
+        
+        if (round != null) {
+            dialog.append(round + "\n");
         }
         
         if (!Float.isNaN(tr)) {
@@ -1127,31 +1251,27 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(ts)) {
-            dialog.append("Scan time ts = " + ts + "\n");
+            dialog.append("Scan time ts = " + ts + " usec\n");
         }
         
         if (!Float.isNaN(te)) {
-            dialog.append("Echo delay te = " + te + " usec\n");
+            dialog.append("Echo delay time te = " + te + " usec\n");
         }
         
         if (!Float.isNaN(ti)) {
-            dialog.append("Inversion time ti = " + ti + " usec\n");
+            dialog.append("Inversion recovery time ti = " + ti + " usec\n");
         }
         
         if (numberOfEchos != -32768) {
-            dialog.append("Number of echos = " + numberOfEchos + "\n");
+            dialog.append("Total number of echos = " + numberOfEchos + "\n");
         }
         
         if (echoNumber != -32768) {
-            dialog.append("Echo number = " + echoNumber + "\n");
+            dialog.append("Echo number of current image = " + echoNumber + "\n");
         }
         
         if (sliceQuantity > 0) {
-            dialog.append("Number of slices in scan group = " + sliceQuantity + "\n");
-        }
-        
-        if (!Float.isNaN(pixelSize)) {
-            dialog.append("5 * pixel resolution[2] = " + pixelSize + "\n");
+            dialog.append("Number of slices in this scan group = " + sliceQuantity + "\n");
         }
         
         if (averagesNumber != -32768) {
@@ -1174,27 +1294,55 @@ public class FileInfoGESigna4X extends FileInfoBase {
         if ((prescribedSeriesNumbers != null) && 
            (prescribedSeriesNumbers.trim() != null) &&
            (prescribedSeriesNumbers.trim().length() != 0)) {
-            dialog.append("Prescribed series numbers = " +
+            dialog.append("Series numbers from which image was prescribed = " +
                            prescribedSeriesNumbers.trim() + "\n");
         }
         
         if ((prescribedImageNumbers != null) && 
                 (prescribedImageNumbers.trim() != null) &&
                 (prescribedImageNumbers.trim().length() != 0)) {
-                 dialog.append("Prescribed image numbers = " +
+                 dialog.append("Image numbers from which image was prescribed = " +
                                 prescribedImageNumbers.trim() + "\n");
-             }
+        }
+        
+        if (imageShape != null) {
+            dialog.append("Image shape = " + imageShape + "\n");
+        }
+        
+        dialog.append("X size in pixels = " + getExtents()[0] + "\n");
+        
+        dialog.append("Y size in pixels = " + getExtents()[1] + "\n");
+        
+        if (!Float.isNaN(pixelSize)) {
+            dialog.append("Pixel size = " + pixelSize + " millimeters\n");
+        }
+        
+        dialog.append("Image not compressed\n");
+        
+        dialog.append("Bits per pixel = " + bitsPerPixel + "\n");
+        
+        if (defaultWindow != -32768) {
+            dialog.append("Default window = " + defaultWindow + "\n");
+        }
+        
+        if (defaultLevel != -32768) {
+            dialog.append("Default level = " + defaultLevel + "\n");
+        }
+        
+        if (fileBlocks != -32768) {
+            dialog.append("Number of blocks in file including headers = " + fileBlocks + "\n");
+        }
         
         if (!Float.isNaN(excitationsNumber)) {
             dialog.append("Number of excitations = " + excitationsNumber + "\n");
         }
         
         if (!Float.isNaN(peakSAR)) {
-            dialog.append("Value of peak SAR = " + peakSAR + "\n");
+            dialog.append("Value of peak SAR = " + peakSAR + " watts/kg\n");
         }
         
         if (!Float.isNaN(averageSAR)) {
-            dialog.append("Value of average SAR = " + averageSAR + "\n");
+            dialog.append("Value of average SAR = " + averageSAR + " watts/kg\n");
         }
         
         if (SARMonitored != null) {
@@ -1210,44 +1358,49 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(totalPostTriggerDelayTime)) {
-            dialog.append("Total delay time after trigger = " +
-                           totalPostTriggerDelayTime + "\n");
+            dialog.append("Time between QRS signal trigger (peak) and the first excitation pulse = " +
+                           totalPostTriggerDelayTime + " milliseconds\n");
         }
         
         if (arrythmiaRejectionRatio != -32768) {
-            dialog.append("Arrythmia rejection ratio = " + 
+            dialog.append("Percentage of average R-R interval in which excitation pulse trigger is recognized = " + 
                            arrythmiaRejectionRatio + "\n");
         }
         
-        if (cardiacRepTime != -32768) {
-            dialog.append("Cardiac rep time = " + cardiacRepTime + "\n");
+        if (cardiacRepTime != null) {
+            dialog.append(cardiacRepTime + "\n");
         }
         
         if (imagesPerCardiacCycle != -32768) {
-            dialog.append("Images per cardiac cycle = " +
+            dialog.append("Number of images to be acquired after initial trigger = " +
                            imagesPerCardiacCycle + "\n");
         }
         
         if (scanARRs != Integer.MIN_VALUE) {
-            dialog.append("Number of ARR's during the scan = " + scanARRs + "\n");
+            dialog.append("Number of R-R intervals during the scan = " + scanARRs + "\n");
         }
         
         if (transmitAttenuatorSetting != -32768) {
             dialog.append("Transmit attenuator setting = " +
-                           transmitAttenuatorSetting + "\n");
+                           transmitAttenuatorSetting + " 1/10 DB\n");
         }
         
         if (receiveAttenuatorSetting != -32768) {
             dialog.append("Receive attenuator setting = " +
-                           receiveAttenuatorSetting + "\n");
+                           receiveAttenuatorSetting + " 1/10 DB\n");
+        }
+        
+        if (imageFieldStrength != Integer.MIN_VALUE) {
+            dialog.append("Magnetic field strength = " + imageFieldStrength + " 10 microgauss\n");
         }
         
         if (imageOffset != -32768) {
-            dialog.append("Image offset = " + imageOffset + "\n");
+            dialog.append("Frequency/phase offset for image = " + imageOffset + "\n");
         }
         
         if (!Float.isNaN(interImageDelay)) {
-            dialog.append("Inter image/ inter location delay = " + interImageDelay + "\n");
+            dialog.append("Time between excitation pulses within the R-R interval = " +
+                           interImageDelay + " milliseconds\n");
         }
         if ((psdName != null) && (psdName.trim() != null) &&
             (psdName.trim().length() != 0)) {
@@ -1255,23 +1408,45 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (flipAngle != -32768) {
-            dialog.append("Flip angle = " + flipAngle + "\n");
+            dialog.append("Flip angle for GRASS = " + flipAngle + " degrees\n");
+        }
+        
+        if ((surfaceCoilsCorrectionType != null) && (surfaceCoilsCorrectionType.trim() != null) &&
+            (surfaceCoilsCorrectionType.trim().length() != 0)) {
+            dialog.append("Type of correction for surface coils = " +
+                           surfaceCoilsCorrectionType.trim() + "\n");
+        }
+        
+        if ((scSer != null) && (scSer.trim() != null) && (scSer.trim().length() != 0)) {
+            dialog.append("Series number of corrected/uncorrected image = " + scSer.trim() + "\n");
+        }
+        
+        if ((scIma != null) && (scIma.trim() != null) && (scIma.trim().length() != 0)) {
+            dialog.append("Image number of corrected/uncorrected image = " + scIma.trim() + "\n");
         }
         
         if (extremityCoil != null) {
             dialog.append(extremityCoil + "\n");
         }
         
+        if ((pSeries2 != null) && (pSeries2.trim() != null) && (pSeries2.trim().length() != 0)) {
+            dialog.append("Series number of second localizer = " + pSeries2.trim() + "\n");
+        }
+        
+        if ((pImage2 != null) && (pImage2.trim() != null) && (pImage2.trim().length() != 0)) {
+            dialog.append("Image number of corrected/uncorrected image = " + pImage2.trim() + "\n");
+        }
+        
         if (!Float.isNaN(rCenter)) {
-            dialog.append("R center coordinate = " + rCenter + "\n");
+            dialog.append("R center coordinate on plane image = " + rCenter + " millimeters\n");
         }
         
         if (!Float.isNaN(aCenter)) {
-            dialog.append("A center coordinate = " + aCenter + "\n");
+            dialog.append("A center coordinate on plane image = " + aCenter + " millimeters\n");
         }
         
         if (!Float.isNaN(sCenter)) {
-            dialog.append("S center coordinate = " + sCenter + "\n");
+            dialog.append("S center coordinate on plane image = " + sCenter + " millimeters\n");
         }
         
         if (!Float.isNaN(rNormal)) {
@@ -1287,56 +1462,72 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
         
         if (!Float.isNaN(imgTLHC_R)) { 
-            dialog.append("Right top left hand corner = " + imgTLHC_R + "\n");
+            dialog.append("Right top left hand corner = " + imgTLHC_R + " millimeters\n");
         }
         
         if (!Float.isNaN(imgTLHC_A)) {
-            dialog.append("Anterior top left hand corner = " + imgTLHC_A + "\n");
+            dialog.append("Anterior top left hand corner = " + imgTLHC_A + " millimeters\n");
         }
         
         if (!Float.isNaN(imgTLHC_S)) {
-            dialog.append("Superior top left hand corner = " + imgTLHC_S + "\n");
+            dialog.append("Superior top left hand corner = " + imgTLHC_S + " millimeters\n");
         }
         
         if (!Float.isNaN(imgTRHC_R)) {
-            dialog.append("Right top right hand corner = " + imgTRHC_R + "\n");
+            dialog.append("Right top right hand corner = " + imgTRHC_R + " millimeters\n");
         }
         
         if (!Float.isNaN(imgTRHC_A)) {
-            dialog.append("Anterior top right hand corner = " + imgTRHC_A + "\n");
+            dialog.append("Anterior top right hand corner = " + imgTRHC_A + " millimeters\n");
         }
         
         if (!Float.isNaN(imgTRHC_S)) {
-            dialog.append("Superior top right hand corner = " + imgTRHC_S + "\n");
+            dialog.append("Superior top right hand corner = " + imgTRHC_S + " millimeters\n");
         }
         
         if (!Float.isNaN(imgBLHC_R)) {
-            dialog.append("Right bottom left hand corner = " + imgBLHC_R + "\n");
+            dialog.append("Right bottom left hand corner = " + imgBLHC_R + " millimeters\n");
         }
         
         if (!Float.isNaN(imgBLHC_A)) {
-            dialog.append("Anterior bottom left hand corner = " + imgBLHC_A + "\n");
+            dialog.append("Anterior bottom left hand corner = " + imgBLHC_A + " millimeters\n");
         }
         
         if (!Float.isNaN(imgBLHC_S)) {
-            dialog.append("Superior bottom left hand corner = " + imgBLHC_S + "\n");
+            dialog.append("Superior bottom left hand corner = " + imgBLHC_S + " millimeters\n");
+        }
+        
+        if (imageHeaderDisclaimer != -32768) {
+            dialog.append("Image header disclaimer = " + imageHeaderDisclaimer + "\n");
         }
         
         if (minimumDelay != -32768) {
-            dialog.append("Minimum delay after trigger = " + minimumDelay + "\n");
+            dialog.append("Minimum delay after cardiac trigger = " + minimumDelay + " milliseconds\n");
         }
         
-        if (sliceMultiplier != -32768) {
-            dialog.append("Multiplier of slices to obtain phase = " + 
-                           sliceMultiplier + "\n");
+        if (cPhase != -32768) {
+            dialog.append("Number of cardiac phases to reconstruct = " + 
+                           cPhase + "\n");
+        }
+        
+        if (!Float.isNaN(TE2)) {
+            dialog.append("TE2 (VEMP) = " + TE2 + " milliseconds\n");
+        }
+        
+        if (swapPF != null) {
+            dialog.append(swapPF + "\n");
         }
         
         if (pauseInterval != -32768) {
-            dialog.append("Pause interval = " + pauseInterval + "\n");   
+            dialog.append("Pause interval = " + pauseInterval + " milliseconds\n");   
         }
         
         if (!Float.isNaN(pauseTime)) {
-            dialog.append("Pause time = " + pauseTime + "\n");
+            dialog.append("Pause time = " + pauseTime + " milliseconds\n");
+        }
+        
+        if (obliquePlane != null) {
+            dialog.append("Oblique plane = " + obliquePlane + "\n");
         }
         
         if (contrastUsed != null) {
@@ -1351,12 +1542,68 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Contrast amount = " + contrastAmount + "\n");
         }
         
-        if (fileFormat > 0) {
+        if (fileFormat != null) {
             dialog.append("File format = " + fileFormat + "\n");
         }
         
-        if (autoCenterFrequency != -32768) {
+        if (autoCenterFrequency != null) {
             dialog.append("Auto center frequency = " + autoCenterFrequency + "\n");
+        }
+        
+        if (actualTransmitFrequency >= 0) {
+            dialog.append("Actual transmit frequency used on scan = " + actualTransmitFrequency + "\n");
+        }
+        
+        if (actualReceiveFrequency >= 0) {
+            dialog.append("Actual receive frequency used on scan = " + actualReceiveFrequency + "\n");
+        }
+        
+        if (recommendedTransmitFrequency >= 0) {
+            dialog.append("Recommended automated transmit frequency = "
+                          + recommendedTransmitFrequency + "\n");
+        }
+        
+        if (recommendedReceiveFrequency >= 0) {
+            dialog.append("Recommended automated receive frequency = " 
+                          + recommendedReceiveFrequency + "\n");
+        }
+        
+        if (recommendedTransmitAttenuation >= 0) {
+            dialog.append("Recommended automated transmit attenuation = "
+                          + recommendedTransmitAttenuation + " 1/10 db\n");
+        }
+        
+        if (recommendedReceiveAttenuation >= 0) {
+            dialog.append("Recommended automated receive attenuation = " 
+                          + recommendedReceiveAttenuation + " 1/10 db\n");
+        }
+        
+        if (histogramPresent != null) {
+            dialog.append(histogramPresent + "\n");
+        }
+        
+        if (pfSwapped != null) {
+            dialog.append(pfSwapped + "\n");
+        }
+        
+        if (R1 != -32768) {
+            dialog.append("R1 = " + R1 + "\n");
+        }
+        
+        if (R2 != -32768) {
+            dialog.append("R2 = " + R2 + "\n");
+        }
+        
+        if (variableBandwidth != null) {
+            dialog.append("Variable bandwidth = " + variableBandwidth + "\n");
+        }
+        
+        if (prescanReceiveAttenuation1 > 0) {
+            dialog.append("Prescan Receive Attenuation 1 = " + prescanReceiveAttenuation1 + "\n");
+        }
+        
+        if (prescanReceiveAttenuation2 > 0) {
+            dialog.append("Prescan Receive Attenuation 2 = " + prescanReceiveAttenuation2 + "\n");
         }
         
         dialog.setSize(600, 500);
@@ -2072,6 +2319,30 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param imageHeaderBlocks
+     */
+    public void setImageHeaderBlocks(short imageHeaderBlocks) {
+        this.imageHeaderBlocks = imageHeaderBlocks;
+    }
+    
+    /**
+     * 
+     * @param imageHeaderCreatorProcess
+     */
+    public void setImageHeaderCreatorProcess(String imageHeaderCreatorProcess) {
+        this.imageHeaderCreatorProcess = imageHeaderCreatorProcess;
+    }
+    
+    /**
+     * 
+     * @param imageHeaderCreatorTask
+     */
+    public void setImageHeaderCreatorTask(short imageHeaderCreatorTask) {
+        this.imageHeaderCreatorTask = imageHeaderCreatorTask;
+    }
+    
+    /**
+     * 
      * @param imageCreationDate
      */
     public void setImageCreationDate (String imageCreationDate){
@@ -2104,6 +2375,70 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param imageRawDataSystemID
+     */
+    public void setImageRawDataSystemID(String imageRawDataSystemID) {
+        this.imageRawDataSystemID = imageRawDataSystemID;
+    }
+    
+    /**
+     * 
+     * @param imageSystemGenerationID
+     */
+    public void setImageSystemGenerationID(String imageSystemGenerationID) {
+        this.imageSystemGenerationID = imageSystemGenerationID;
+    }
+    
+    /**
+     * 
+     * @param startX
+     */
+    public void setStartX(float startX) {
+        this.startX = startX;
+    }
+    
+    /**
+     * 
+     * @param endX
+     */
+    public void setEndX(float endX) {
+        this.endX = endX;
+    }
+    
+    /**
+     * 
+     * @param startY
+     */
+    public void setStartY(float startY) {
+        this.startY = startY;
+    }
+    
+    /**
+     * 
+     * @param endY
+     */
+    public void setEndY(float endY) {
+        this.endY = endY;
+    }
+    
+    /**
+     * 
+     * @param startZ
+     */
+    public void setStartZ(float startZ) {
+        this.startZ = startZ;
+    }
+    
+    /**
+     * 
+     * @param endZ
+     */
+    public void setEndZ(float endZ) {
+        this.endZ = endZ;
+    }
+    
+    /**
+     * 
      * @param imageLocation
      */
     public void setImageLocation(float imageLocation) {
@@ -2125,6 +2460,22 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setThickness(float thickness) {
         this.thickness = thickness;
+    }
+    
+    /**
+     * 
+     * @param imageSpacing
+     */
+    public void setImageSpacing(float imageSpacing) {
+        this.imageSpacing = imageSpacing;
+    }
+    
+    /**
+     * 
+     * @param round
+     */
+    public void setRound(String round) {
+        this.round = round;
     }
     
     /**
@@ -2185,7 +2536,16 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param pixelSize // 20 * pixel resolution[2]
+     * @param imageShape
+     */
+    public void setImageShape(String imageShape) {
+        this.imageShape = imageShape;
+    }
+    
+    /**
+     * 
+     * @param pixelSize // In theory 20 * pixel resolution[2]
+     *                  // In practice 5 * pixel resolution[2]
      */
     public void setPixelSize(float pixelSize) {
         this.pixelSize = pixelSize;
@@ -2237,6 +2597,38 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPrescribedImageNumbers(String prescribedImageNumbers) {
         this.prescribedImageNumbers = prescribedImageNumbers;
+    }
+    
+    /**
+     * 
+     * @param bitsPerPixel
+     */
+    public void setBitsPerPixel(short bitsPerPixel) {
+        this.bitsPerPixel = bitsPerPixel;
+    }
+    
+    /**
+     * 
+     * @param defaultWindow
+     */
+    public void setDefaultWindow(short defaultWindow) {
+        this.defaultWindow = defaultWindow;
+    }
+    
+    /**
+     * 
+     * @param defaultLevel
+     */
+    public void setDefaultLevel(short defaultLevel) {
+        this.defaultLevel = defaultLevel;
+    }
+    
+    /**
+     * 
+     * @param fileBlocks
+     */
+    public void setFileBlocks(short fileBlocks) {
+        this.fileBlocks = fileBlocks;
     }
     
     /**
@@ -2307,7 +2699,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
      * 
      * @param cardiacRepTime
      */
-    public void setCardiacRepTime(short cardiacRepTime) {
+    public void setCardiacRepTime(String cardiacRepTime) {
         this.cardiacRepTime = cardiacRepTime;
     }
     
@@ -2345,6 +2737,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param imageFieldStrength
+     */
+    public void setImageFieldStrength(int imageFieldStrength) {
+        this.imageFieldStrength = imageFieldStrength;
+    }
+    
+    /**
+     * 
      * @param imageOffset
      */
     public void setImageOffset(short imageOffset) {
@@ -2373,14 +2773,50 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param surfaceCoilsCorrectionType
+     */
+    public void setSurfaceCoilsCorrectionType(String surfaceCoilsCorrectionType) {
+        this.surfaceCoilsCorrectionType = surfaceCoilsCorrectionType;
+    }
+    
+    /**
+     * 
+     * @param scSer
+     */
+    public void setScSer(String scSer) {
+        this.scSer = scSer;
+    }
+    
+    /**
+     * 
+     * @param scIma
+     */
+    public void setScIma(String scIma) {
+        this.scIma = scIma;
+    }
+    
+    /**
+     * 
      * @param extremityCoil
      */
     public void setExtremityCoil(String extremityCoil) {
         this.extremityCoil = extremityCoil;
     }
     
-    public void setMinimumDelay(short minimumDelay) {
-        this.minimumDelay = minimumDelay;
+    /**
+     * 
+     * @param pSeries2
+     */
+    public void setPSeries2(String pSeries2) {
+        this.pSeries2 = pSeries2;
+    }
+    
+    /**
+     * 
+     * @param pImage2
+     */
+    public void setPImage2(String pImage2) {
+        this.pImage2 = pImage2;
     }
     
     /**
@@ -2505,10 +2941,42 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param sliceMultiplier
+     * @param imageHeaderDisclaimer
      */
-    public void setSliceMultiplier(short sliceMultiplier) {
-        this.sliceMultiplier = sliceMultiplier;
+    public void setImageHeaderDisclaimer(short imageHeaderDisclaimer) {
+        this.imageHeaderDisclaimer = imageHeaderDisclaimer;
+    }
+    
+    /**
+     * 
+     * @param minimumDelay
+     */
+    public void setMinimumDelay(short minimumDelay) {
+        this.minimumDelay = minimumDelay;
+    }
+    
+    /**
+     * 
+     * @param cPhase
+     */
+    public void setCPhase(short cPhase) {
+        this.cPhase = cPhase;
+    }
+    
+    /**
+     * 
+     * @param TE2
+     */
+    public void setTE2(float TE2) {
+        this.TE2 = TE2;
+    }
+    
+    /**
+     * 
+     * @param swapPF
+     */
+    public void setSwapPF(String swapPF) {
+        this.swapPF = swapPF;
     }
     
     /**
@@ -2525,6 +2993,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPauseTime(float pauseTime) {
         this.pauseTime = pauseTime;
+    }
+    
+    /**
+     * 
+     * @param obliquePlane
+     */
+    public void setObliquePlane(String obliquePlane) {
+        this.obliquePlane = obliquePlane;
     }
     
     /**
@@ -2555,7 +3031,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
      * 
      * @param fileFormat
      */
-    public void setFileFormat(short fileFormat) {
+    public void setFileFormat(String fileFormat) {
         this.fileFormat = fileFormat;
     }
     
@@ -2563,8 +3039,112 @@ public class FileInfoGESigna4X extends FileInfoBase {
      * 
      * @param autoCenterFrequency
      */
-    public void setAutoCenterFrequency(short autoCenterFrequency) {
+    public void setAutoCenterFrequency(String autoCenterFrequency) {
         this.autoCenterFrequency = autoCenterFrequency;
+    }
+    
+    /**
+     * 
+     * @param actualTransmitFrequency
+     */
+    public void setActualTransmitFrequency(int actualTransmitFrequency) {
+        this.actualTransmitFrequency = actualTransmitFrequency;
+    }
+    
+    /**
+     * 
+     * @param actualReceiveFrequency
+     */
+    public void setActualReceiveFrequency(int actualReceiveFrequency) {
+        this.actualReceiveFrequency = actualReceiveFrequency;
+    }
+    
+    /**
+     * 
+     * @param recommendedTransmitFrequency
+     */
+    public void setRecommendedTransmitFrequency(int recommendedTransmitFrequency) {
+        this.recommendedTransmitFrequency = recommendedTransmitFrequency;
+    }
+    
+    /**
+     * 
+     * @param recommendedReceiveFrequency
+     */
+    public void setRecommendedReceiveFrequency(int recommendedReceiveFrequency) {
+        this.recommendedReceiveFrequency = recommendedReceiveFrequency;
+    }
+    
+    /**
+     * 
+     * @param recommendedTransmitAttenuation
+     */
+    public void setRecommendedTransmitAttenuation(int recommendedTransmitAttenuation) {
+        this.recommendedTransmitAttenuation = recommendedTransmitAttenuation;
+    }
+    
+    /**
+     * 
+     * @param recommendedReceiveAttenuation
+     */
+    public void setRecommendedReceiveAttenuation(int recommendedReceiveAttenuation) {
+        this.recommendedReceiveAttenuation = recommendedReceiveAttenuation;
+    }
+    
+    /**
+     * 
+     * @param histogramPresent
+     */
+    public void setHistogramPresent(String histogramPresent) {
+        this.histogramPresent = histogramPresent;
+    }
+    
+    /**
+     * 
+     * @param pfSwapped
+     */
+    public void setPFSwapped(String pfSwapped) {
+        this.pfSwapped = pfSwapped;
+    }
+    
+    /**
+     * 
+     * @param R1
+     */
+    public void setR1(short R1) {
+        this.R1 = R1;
+    }
+    
+    /**
+     * 
+     * @param R2
+     */
+    public void setR2(short R2) {
+        this.R2 = R2;
+    }
+    
+    /**
+     * 
+     * @param variableBandwidth
+     */
+    public void setVariableBandwidth(String variableBandwidth) {
+        this.variableBandwidth = variableBandwidth;
+    }
+    
+    /**
+     * 
+     * @param prescanReceiveAttenuation1
+     */
+    public void setPrescanReceiveAttenuation1(short prescanReceiveAttenuation1) {
+        this.prescanReceiveAttenuation1 = prescanReceiveAttenuation1;
+    }
+    
+    /**
+     * 
+     * @param prescanReceiveAttenuation2
+     */
+    public void setPrescanReceiveAttenuation2(short prescanReceiveAttenuation2) {
+        this.prescanReceiveAttenuation2 = prescanReceiveAttenuation2;
     }
 
 }
