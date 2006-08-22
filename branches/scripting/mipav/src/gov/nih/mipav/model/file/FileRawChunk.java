@@ -955,6 +955,14 @@ public class FileRawChunk extends FileBase {
         planarConfig = _planarConfig;
     }
 
+    public void setNumColors(int numC ) {
+        //purpose of this? i have no idea (BEN)
+    }
+    
+    public void setRGBAOrder(boolean rgbaOrder) {
+        //once again, why's this here?
+    }
+    
     /**
      * This method writes a raw byte buffer to a file.
      *

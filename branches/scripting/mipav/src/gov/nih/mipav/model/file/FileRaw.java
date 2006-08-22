@@ -130,6 +130,64 @@ public class FileRaw extends FileBase {
         this(fileDir + fileName, fInfo, rwFlag);
     }
 
+    /**
+     * Raw reader/writer constructor.
+     *
+     * @param      fileName         Complete file name
+     * @param      fInfo            Information that describes the image.
+     * @param      showProgressBar  Boolean indicating if progess bar should be displayed.
+     * @param      rwFlag           Read/write flag.
+     *
+     * @exception  IOException  if there is an error making the files
+     */
+    public FileRaw(String fileName, FileInfoBase fInfo, boolean showProgressBar, int rwFlag) throws IOException {
+        fileInfo = fInfo;
+
+        compressionType = fInfo.getCompressionType();
+
+        // check to see if compression handling is to be used
+        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+            file = new File(fileName);
+
+            if (raFile != null) {
+
+                try {
+                    raFile.close();
+                } catch (IOException ioex) { }
+            }
+
+            if (rwFlag == READ) {
+                raFile = new RandomAccessFile(file, "r");
+            } else if (rwFlag == READ_WRITE) {
+                raFile = new RandomAccessFile(file, "rw");
+            }
+        }
+
+        this.fileName = fileName;
+
+        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+            fileRW = new FileRawChunk(raFile, fileInfo);
+        } else {
+            fileRW = new FileRawChunk(fileName, fileInfo, rwFlag, compressionType);
+        }
+    }
+
+    /**
+     * Raw reader/writer constructor..
+     *
+     * @param      fileName         File name (no path)
+     * @param      fileDir          File directory (with trailing file separator).
+     * @param      fInfo            Information that describes the image.
+     * @param      showProgressBar  Boolean indicating if progess bar should be displayed.
+     * @param      rwFlag           Read/write flag.
+     *
+     * @exception  IOException  if there is an error making the files
+     */
+    public FileRaw(String fileName, String fileDir, FileInfoBase fInfo, boolean showProgressBar, int rwFlag)
+            throws IOException {
+        this(fileDir + fileName, fInfo, showProgressBar, rwFlag);
+    }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**

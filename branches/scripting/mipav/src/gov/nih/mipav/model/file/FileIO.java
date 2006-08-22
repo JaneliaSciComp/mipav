@@ -3674,7 +3674,7 @@ public class FileIO {
 
             // most likely an Analyze file
             try {
-                imageFile = new FileAnalyze(UI, fileName, fileDir, showProgressBar);
+                imageFile = new FileAnalyze(fileName, fileDir);
                 image = imageFile.readImage(one);
             } catch (IOException error) {
 
@@ -3778,7 +3778,7 @@ public class FileIO {
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
-        imageFile = new FileAnalyze(UI, fileList[0], fileDir, false);
+        imageFile = new FileAnalyze(fileList[0], fileDir);
 
         try {
 
@@ -3830,7 +3830,7 @@ public class FileIO {
             try {
                 progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
-                imageFile = new FileAnalyze(UI, fileList[i], fileDir, false);
+                imageFile = new FileAnalyze(fileList[i], fileDir);
 
                 if (!((FileAnalyze) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" Analyze header file error"));
@@ -7903,7 +7903,7 @@ public class FileIO {
         }
 
         try { // Construct a new file object
-            analyzeFile = new FileAnalyze(UI, options.getFileName(), options.getFileDirectory(), true);
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
             analyzeFile.writeImage(image, options);
         } catch (IOException error) {
 
