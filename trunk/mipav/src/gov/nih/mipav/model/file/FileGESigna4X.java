@@ -224,6 +224,12 @@ public class FileGESigna4X extends FileBase {
     
     private String imageHeaderRevisionNumber = null;
     
+    private short imageHeaderBlocks;
+    
+    private String imageHeaderCreatorProcess = null;
+    
+    private short imageHeaderCreatorTask;
+    
     private String imageCreationDate = null;
     
     private String imageCreationTime = null;
@@ -231,6 +237,22 @@ public class FileGESigna4X extends FileBase {
     private String imageNumber = null;
     
     private String series = null;
+    
+    private String imageRawDataSystemID = null;
+    
+    private String imageSystemGenerationID = null;
+    
+    private float startX;
+    
+    private float endX;
+    
+    private float startY;
+    
+    private float endY;
+    
+    private float startZ;
+    
+    private float endZ;
     
     private float imageLocation;
     
@@ -240,6 +262,8 @@ public class FileGESigna4X extends FileBase {
                              // In practice 10*res[0] = 10*res[1]
     
     private float imageSpacing;
+    
+    private short round;
     
     private float tr; // usec
     
@@ -267,8 +291,16 @@ public class FileGESigna4X extends FileBase {
     
     private String prescribedImageNumbers;
     
+    private short imageShape;
+    
     private float pixelSize; // In theory 20 * res[2]
                              // In practice 5 * res[2]
+    
+    private short defaultWindow;
+    
+    private short defaultLevel;
+    
+    private short fileBlocks;
     
     private float excitationsNumber;
     
@@ -296,6 +328,8 @@ public class FileGESigna4X extends FileBase {
     
     private short receiveAttenuatorSetting;
     
+    private int imageFieldStrength;
+    
     private short imageOffset;
     
     private float interImageDelay;
@@ -304,9 +338,17 @@ public class FileGESigna4X extends FileBase {
     
     private short flipAngle;
     
+    private String surfaceCoilsCorrectionType;
+    
+    private String scSer;
+    
+    private String scIma;
+    
     private short extremityCoil;
     
-    private short minimumDelay;
+    private String pSeries2;
+    
+    private String pImage2;
     
     private float rCenter;
     
@@ -338,11 +380,21 @@ public class FileGESigna4X extends FileBase {
     
     private float imgBLHC_S;
     
-    private short sliceMultiplier;
+    private short imageHeaderDisclaimer;
+    
+    private short minimumDelay;
+    
+    private short cPhase;
+    
+    private float TE2;
+    
+    private short swapPF;
     
     private short pauseInterval;
     
     private float pauseTime;
+    
+    private short obliquePlane;
     
     private short contrastUsed;
     
@@ -353,6 +405,32 @@ public class FileGESigna4X extends FileBase {
     private short fileFormat;
     
     private short autoCenterFrequency;
+    
+    private int actualTransmitFrequency;
+    
+    private int actualReceiveFrequency;
+    
+    private int recommendedTransmitFrequency;
+    
+    private int recommendedReceiveFrequency;
+    
+    private int recommendedTransmitAttenuation;
+    
+    private int recommendedReceiveAttenuation;
+    
+    private short histogramPresent;
+    
+    private short pfSwapped;
+    
+    private short R1;
+    
+    private short R2;
+    
+    private short variableBandwidth;
+    
+    private short prescanReceiveAttenuation1;
+    
+    private short prescanReceiveAttenuation2;
     
     /** DOCUMENT ME! */
     private byte[] byteBuffer = null;
@@ -382,7 +460,7 @@ public class FileGESigna4X extends FileBase {
     
     private short compression;
     
-    private short depth;
+    private short bitsPerPixel;
     
     private float resX;
     
@@ -1275,7 +1353,22 @@ public class FileGESigna4X extends FileBase {
         imageHeaderRevisionNumber = getString(8);
         fileInfo.setImageHeaderRevisionNumber(imageHeaderRevisionNumber);
         
-        raFile.seek(10*512 + 2*29);
+        // 10*512 + 2*11
+        // Number of image header blocks in units of 512 bytes; value of 2 expected
+        imageHeaderBlocks = (short)getSignedShort(endianess);
+        fileInfo.setImageHeaderBlocks(imageHeaderBlocks);
+        
+        // 10*512 + 2*12
+        // Unique MRI process ID
+        imageHeaderCreatorProcess = getString(32);
+        fileInfo.setImageHeaderCreatorProcess(imageHeaderCreatorProcess);
+        
+        // 10*512 + 2*28
+        // Task ID of creating task in process
+        imageHeaderCreatorTask = (short)getSignedShort(endianess);
+        fileInfo.setImageHeaderCreatorTask(imageHeaderCreatorTask);
+        
+        // 10*512 + 2*29
         imageCreationDate = getString(9); // (dd-mmm-yy)
         fileInfo.setImageCreationDate(imageCreationDate);
         
@@ -1288,10 +1381,55 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setImageNumber(imageNumber);
         
         raFile.seek(10*512 + 2*46);
-        series = getString(6);
+        // Image series number
+        series = getString(3);
         fileInfo.setSeries(series);
         
+        raFile.seek(10*512 + 2*48);
+        imageRawDataSystemID = getString(3);
+        fileInfo.setImageRawDataSystemID(imageRawDataSystemID);
+        
+        raFile.seek(10*512 + 2*50);
+        imageSystemGenerationID = getString(3);
+        fileInfo.setImageSystemGenerationID(imageSystemGenerationID);
+        
+        // The next six entries startX to endZ define the starting and ending
+        // location for the current scan sequence.  Depending on the plane
+        // type, some information can also be calculated from the field of view
+        // and its center coordinates
+        
+        raFile.seek(10*512 + 2*52);
+        // start location X, right minimum
+        startX = getFloat(endianess);
+        fileInfo.setStartX(startX);
+        
+        // 10*512 + 2*54
+        // end location X, right maximum
+        endX = getFloat(endianess);
+        fileInfo.setEndX(endX);
+        
+        // 10*512 + 2*56
+        // start location Y, anterior minimum
+        startY = getFloat(endianess);
+        fileInfo.setStartY(startY);
+        
+        // 10*512 + 2*58
+        // end location Y, anterior maximum
+        endY = getFloat(endianess);
+        fileInfo.setEndY(endY);
+        
+        // 10*512 + 2*60
+        // start location Z, superior minimum
+        startZ = getFloat(endianess);
+        fileInfo.setStartZ(startZ);
+        
+        // 10*512 + 2*62
+        // End location Z, superior maximum
+        endZ = getFloat(endianess);
+        fileInfo.setEndZ(endZ);
+        
         raFile.seek(10*512 + 2*73);
+        // image location relative to landmark
         imageLocation = getFloat(endianess);
         fileInfo.setImageLocation(imageLocation);
         
@@ -1300,14 +1438,26 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setTablePosition(tablePosition);
         
         // 10*512 + 2*77
+        // image thickness
         thickness = getFloat(endianess);  // In theory 20*res[0] = 20*res[1]
                                           // In practice 10*res[0] = 10*res[1]
         fileInfo.setThickness(thickness);
         
         // 10*512 + 2*79
+        // spacing between slices
         imageSpacing = getFloat(endianess);
         if (imageSpacing != 0.0f) {
             fileInfo.setSliceSpacing(imageSpacing);
+        }
+        fileInfo.setImageSpacing(imageSpacing);
+        
+        // 10*512 + 2*81
+        round = (short)getSignedShort(endianess);
+        if (round != 0) {
+            fileInfo.setRound("Round to nearest slice");
+        }
+        else {
+            fileInfo.setRound("Round to zero");
         }
         
         raFile.seek(10*512 + 2*82);
@@ -1315,7 +1465,7 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setTR(tr);
         
         // 10*512 + 2*84
-        ts = getFloat(endianess); // scan time
+        ts = getFloat(endianess); // scan time usec
         fileInfo.setTS(ts);
         
         raFile.seek(10*512 + 2*86);
@@ -1323,18 +1473,21 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setTE(te);
         
         // 10*512 + 2*88
-        ti = getFloat(endianess); // Inversion time usec
+        ti = getFloat(endianess); // Inversion Recovery time usec
         fileInfo.setTI(ti);
         
         raFile.seek(10*512 + 2*98);
+        // Total number of echos
         numberOfEchos = (short)getSignedShort(endianess);
         fileInfo.setNumberOfEchos(numberOfEchos);
         
         // 10*512 + 2*99
+        // Echo number of current image
         echoNumber = (short)getSignedShort(endianess);
         fileInfo.setEchoNumber(echoNumber);
         
         // 19*512 + 2*100
+        // Number of slices in this scan group
         sliceQuantity = (short)getSignedShort(endianess);
         fileInfo.setSliceQuantity(sliceQuantity);
         
@@ -1366,31 +1519,58 @@ public class FileGESigna4X extends FileBase {
         
         if (graphicallyPrescribed != 0) {
             // 10*512 + 2*126
-            prescribedSeriesNumbers = getString(10);
+            prescribedSeriesNumbers = getString(9);
             fileInfo.setPrescribedSeriesNumbers(prescribedSeriesNumbers);
             
-            // 10*512 + 2*131
-            prescribedImageNumbers = getString(10);
+            raFile.seek(10*512 + 2*131);
+            prescribedImageNumbers = getString(9);
             fileInfo.setPrescribedImageNumbers(prescribedImageNumbers);
         } // if (graphicallyPrescribed != 0)
+        
+        raFile.seek(10*512 + 2*136);
+        imageShape = (short)getSignedShort(endianess);
+        if (imageShape == 0) {
+            fileInfo.setImageShape("box");
+        }
+        else if (imageShape == 1) {
+            fileInfo.setImageShape("ellipse");
+        }
+        else {
+            Preferences.debug("Image shape = " + imageShape + "\n");
+        }
         
         raFile.seek(10*512 + 2*139);
         pixelSize = getFloat(endianess); // In theory 20*res[2]
                                          // In practice 5*res[2]
-        fileInfo.setPixelSize(pixelSize);
+        fileInfo.setPixelSize(pixelSize); // millimeters
         // Note that you must multiply by a kludge factor of 4 to obtain the
         // right answer
         fileInfo.setResolutions(pixelSize* 4.0f/20.0f, 2);
         
-        raFile.seek(10*512 + 2*146);
+        raFile.seek(10*512 + 2*143);
+        defaultWindow = (short)getSignedShort(endianess);
+        fileInfo.setDefaultWindow(defaultWindow);
+        
+        // 10*512 + 2*144
+        defaultLevel = (short)getSignedShort(endianess);
+        fileInfo.setDefaultLevel(defaultLevel);
+        
+        // 10*512 + 2*145
+        // Number of blocks in file including headers; value of 28 + 256 = 284 expected
+        fileBlocks = (short)getSignedShort(endianess);
+        fileInfo.setFileBlocks(fileBlocks);
+        
+        // 10*512 + 2*146
         excitationsNumber = getFloat(endianess); // Number of excitations
         fileInfo.setExcitationsNumber(excitationsNumber);
         
         // 10*512 + 2*148
+        // watts/kg
         peakSAR = getFloat(endianess);
         fileInfo.setPeakSAR(peakSAR);
         
         // 10*512 + 2*150
+        // watts/kg
         averageSAR = getFloat(endianess);
         fileInfo.setAverageSAR(averageSAR);
         
@@ -1406,59 +1586,102 @@ public class FileGESigna4X extends FileBase {
         // 10*512 + 2*153
         contiguousSlices = (short)getSignedShort(endianess);
         if (contiguousSlices != 0) {
-            fileInfo.setContiguousSlices("Slices are contiguous");
+            fileInfo.setContiguousSlices("Slices are selected");
         }
         else {
-            fileInfo.setContiguousSlices("Slices are not contiguous");
+            fileInfo.setContiguousSlices("Slices are not selected");
         }
         
         // 10*512 + 2*154
+        // Heart rate taken from cardiac monitor
         cardiacHeartRate = (short)getSignedShort(endianess);
         fileInfo.setCardiacHeartRate(cardiacHeartRate);
         
         // 10*512 + 2*155
+        // Time in milliseconds between QRS signal trigger (peak) and the first
+        // excitation pulse
         totalPostTriggerDelayTime = getFloat(endianess);
         fileInfo.setTotalPostTriggerDelayTime(totalPostTriggerDelayTime);
         
         // 10*512 + 2*157
+        // Percentage of average R-R interval in which excitation pulse
+        // trigger is recognized
         arrythmiaRejectionRatio = (short)getSignedShort(endianess);
         fileInfo.setArrythmiaRejectionRatio(arrythmiaRejectionRatio);
         
         // 10*512 + 2*158
+        // Frequency of data acquisition with respect to cardiac rate.
+        // 1 - Pulse every beat, 2 - Pulse every other beat, etc.
         cardiacRepTime = (short)getSignedShort(endianess);
-        fileInfo.setCardiacRepTime(cardiacRepTime);
+        if (cardiacRepTime == 1) {
+            fileInfo.setCardiacRepTime("Frequency of data acquisition with respect to cardiac rate is every beat");
+        }
+        else if (cardiacRepTime > 1) {
+            fileInfo.setCardiacRepTime("Frequency of data acquisition with respect to cardiac rate is every " +
+                                        cardiacRepTime + " beats");
+        }
+        else {
+            Preferences.debug("cardiacRepTime = " + cardiacRepTime + "\n");
+        }
         
         // 10*512 + 2*159
+        // Number of images to be acquired after initial trigger
+        // Single scan only!
         imagesPerCardiacCycle = (short)getSignedShort(endianess);
         fileInfo.setImagesPerCardiacCycle(imagesPerCardiacCycle);
         
         // 10*512 + 2*160
+        // Number of R-R intervals during scan
         scanARRs = getInt(endianess);
         fileInfo.setScanARRs(scanARRs);
         
         // 10*512 + 2*162
+        // 1/10 DB in range 0-319.
         transmitAttenuatorSetting = (short)getSignedShort(endianess);
         fileInfo.setTransmitAttenuatorSetting(transmitAttenuatorSetting);
         
         // 10*512 + 2*163
+        // 1/10 DB in range 0-629
         receiveAttenuatorSetting = (short)getSignedShort(endianess);
         fileInfo.setReceiveAttenuatorSetting(receiveAttenuatorSetting);
         
-        raFile.seek(10*512 + 2*166);
+        // 10*512 + 2*164
+        // Magnetic field strength in 10 microgauss
+        imageFieldStrength = getInt(endianess);
+        fileInfo.setImageFieldStrength(imageFieldStrength);
+        
+        // 10*512 + 2*166
+        // Frequency/phase offset for image [-256...256]
         imageOffset = (short)getSignedShort(endianess);
         fileInfo.setImageOffset(imageOffset);
         
         // 10*512 + 2*167
+        // Time in milliseconds between excitiation pulses within the R-R interval
         interImageDelay = getFloat(endianess);
         fileInfo.setInterImageDelay(interImageDelay);
         
-        raFile.seek(10*512 + 2*175);
+        // 10*512 + 2*169
+        psdName = getString(12);
+        fileInfo.setPSDName(psdName);
+        
+        // 10*512 + 2*175
+        // Flip angle for GRASS in degrees
         flipAngle = (short)getSignedShort(endianess);
         fileInfo.setFlipAngle(flipAngle);
         
         // 10*512 + 2*176
-        psdName = getString(12);
-        fileInfo.setPSDName(psdName);
+        surfaceCoilsCorrectionType = getString(4);
+        fileInfo.setSurfaceCoilsCorrectionType(surfaceCoilsCorrectionType);
+        
+        // 10*512 + 2*178
+        // Series number of corrected/uncorrected image
+        scSer = getString(3);
+        fileInfo.setScSer(scSer);
+        
+        raFile.seek(10*512 + 2*180);
+        // Image number of corrected/uncorrected image
+        scIma = getString(3);
+        fileInfo.setScIma(scIma);
         
         raFile.seek(10*512 + 2*182);
         extremityCoil = (short)getSignedShort(endianess);
@@ -1469,29 +1692,48 @@ public class FileGESigna4X extends FileBase {
             fileInfo.setExtremityCoil("Extremity coil not present");
         }
         
+        raFile.seek(10*512 + 2*193);
+        // Series number of second localizer for double oblique GRx.
+        pSeries2 = getString(3);
+        fileInfo.setPSeries2(pSeries2);
+        
+        raFile.seek(10*512 + 2*195);
+        // Image number of second localizer for double oblique GRx.
+        pImage2 = getString(3);
+        fileInfo.setPImage2(pImage2);
+        
         raFile.seek(10*512 + 2*197);
+        // R center coordinate on plane image in millimeters
         rCenter = getFloat(endianess);
         fileInfo.setRCenter(rCenter);
         
         // 10*512 + 2*199
+        // A center coordinate on plane image in millimeters
         aCenter = getFloat(endianess);
         fileInfo.setACenter(aCenter);
         
         // 10*512 + 2*201
+        // S center coordinate on plane image in millimeters
         sCenter = getFloat(endianess);
         fileInfo.setSCenter(sCenter);
         
         // 10*512 + 2*203
+        // Unit vector used in Graphic Rx and Display
         rNormal = getFloat(endianess);
         fileInfo.setRNormal(rNormal);
         
         // 10*512 + 2*205
+        // Unit vector used in Graphic Rx and Display
         aNormal = getFloat(endianess);
         fileInfo.setANormal(aNormal);
         
         // 10*512 + 2*207
+        // Unit vector used in Graphic Rx and Display
         sNormal = getFloat(endianess);
         fileInfo.setSNormal(sNormal);
+        
+        // The next 9 fields define the 3 corners of the image.  
+        // Used in display features.  In millimeters.
         
         // 10*512 + 2*209
         imgTLHC_R = getFloat(endianess);
@@ -1591,23 +1833,73 @@ public class FileGESigna4X extends FileBase {
         fileInfo.setAxisOrientation(orient);
         fileInfo.setOrigin(start);
         
-        raFile.seek(10*512 + 2*228);
+        // 10*512 + 2*227
+        imageHeaderDisclaimer = (short)getSignedShort(endianess);
+        fileInfo.setImageHeaderDisclaimer(imageHeaderDisclaimer);
+        
+        // 10*512 + 2*228
+        // Minimum delay after cardiac trigger in milliseconds
         minimumDelay = (short)getSignedShort(endianess);
         fileInfo.setMinimumDelay(minimumDelay);
         
         // 10*512 + 2*229
-        sliceMultiplier = (short)getSignedShort(endianess);
-        fileInfo.setSliceMultiplier(sliceMultiplier);
+        // User type-in.  Number of cardiac phases to reconstruct [1...32]
+        cPhase = (short)getSignedShort(endianess);
+        fileInfo.setCPhase(cPhase);
         
-        raFile.seek(10*512 + 2*233);
+        // 10*512 + 2*230
+        // TE2 (VEMP) in milliseconds
+        TE2 = getFloat(endianess);
+        fileInfo.setTE2(TE2);
+        
+        // 10*512 + 2*232
+        swapPF = (short)getSignedShort(endianess);
+        if (swapPF == 0) {
+            fileInfo.setSwapPF("Phase and frequency swap not selected");
+        }
+        else if (swapPF == 1) {
+            fileInfo.setSwapPF("Operator selects to swap phase and frequency");
+        }
+        else {
+            Preferences.debug("swapPF = " + swapPF + "\n");
+        }
+        
+        // 10*512 + 2*233
+        // milliseconds
         pauseInterval = (short)getSignedShort(endianess);
         fileInfo.setPauseInterval(pauseInterval);
         
         // 10*512 + 2*234
+        // milliseconds
         pauseTime = getFloat(endianess);
         fileInfo.setPauseTime(pauseTime);
         
-        raFile.seek(10*512 + 2*258);
+        raFile.seek(10*512 + 2*257);
+        // Most like normal plane
+        obliquePlane = (short)getSignedShort(endianess);
+        if (obliquePlane == 0) {
+            fileInfo.setObliquePlane("Axial");
+        }
+        else if (obliquePlane == 1) {
+            fileInfo.setObliquePlane("Sagittal");
+        }
+        else if (obliquePlane == 2) {
+            fileInfo.setObliquePlane("Coronal");
+        }
+        else if (obliquePlane == 5) {
+            fileInfo.setObliquePlane("Oax");
+        }
+        else if (obliquePlane == 6) {
+            fileInfo.setObliquePlane("Osag");
+        }
+        else if (obliquePlane == 7) {
+            fileInfo.setObliquePlane("Ocor");
+        }
+        else {
+            Preferences.debug("obliquePlane = " + obliquePlane + "\n");
+        }
+        
+        // 10*512 + 2*258
         contrastUsed = (short)getSignedShort(endianess);
         if (contrastUsed != 0) {
             fileInfo.setContrastUsed("Contrast used");
@@ -1618,21 +1910,129 @@ public class FileGESigna4X extends FileBase {
         
         if (contrastUsed != 0) {
             // 10*512 + 2*259
+            // Operator type in.
             contrastAgent = getString(10);
             fileInfo.setContrastAgent(contrastAgent);
             
             // 10*512 + 2*264
+            // Operator type in.
             contrastAmount = getFloat(endianess);
             fileInfo.setContrastAmount(contrastAmount);
         } // if (contrastUsed != 0)
         
         raFile.seek(10*512 + 2*266);
         fileFormat = (short)getSignedShort(endianess);
-        fileInfo.setFileFormat(fileFormat);
+        if (fileFormat == 0) {
+            fileInfo.setFileFormat("Pre 3.0");
+        }
+        else if (fileFormat == 1) {
+            fileInfo.setFileFormat("Post 3.0");
+        }
+        else {
+            Preferences.debug("fileFormat = " + fileFormat + "\n");
+        }
         
         // 10*512 + 2*267
         autoCenterFrequency = (short)getSignedShort(endianess);
-        fileInfo.setAutoCenterFrequency(autoCenterFrequency);
+        if (autoCenterFrequency == 0) {
+            fileInfo.setAutoCenterFrequency("current");
+        }
+        else if (autoCenterFrequency == 1) {
+            fileInfo.setAutoCenterFrequency("Midpoint");
+        }
+        else if (autoCenterFrequency == 2) {
+            fileInfo.setAutoCenterFrequency("Water");
+        }
+        else if (autoCenterFrequency == 3) {
+            fileInfo.setAutoCenterFrequency("Fat");
+        }
+        else if (autoCenterFrequency == 4) {
+            fileInfo.setAutoCenterFrequency("Peak");
+        }
+        else if (autoCenterFrequency == 5) {
+            fileInfo.setAutoCenterFrequency("Centroid");
+        }
+        else {
+            Preferences.debug("autoCenterFrequency = " + autoCenterFrequency + "\n");
+        }
+        
+        // 10*512 + 2*268
+        // Actual transmit frequency used on scan [310,000,000...640,000,000] (310-640 Mhz)
+        actualTransmitFrequency = getInt(endianess);
+        fileInfo.setActualTransmitFrequency(actualTransmitFrequency);
+        
+        // 10*512 + 2*270
+        // Actual receive frequency used on scan [310,000,000...640,000,000] (310-640 Mhz)
+        actualReceiveFrequency = getInt(endianess);
+        fileInfo.setActualReceiveFrequency(actualReceiveFrequency);
+        
+        // 10*512 + 2*272
+        // Recommended automated transmit frequency [310,000,000...640,000,000] (310-640 Mhz)
+        recommendedTransmitFrequency = getInt(endianess);
+        fileInfo.setRecommendedTransmitFrequency(recommendedTransmitFrequency);
+        
+        // 10*512 + 2*274
+        // Recommended automated receive frequency [310,000,000...640,000,000] (310-640 Mhz)
+        recommendedReceiveFrequency = getInt(endianess);
+        fileInfo.setRecommendedReceiveFrequency(recommendedReceiveFrequency);
+        
+        // 10*512 + 2*276
+        // Recommended automated transmit attenuation 1/10 db [0...319]
+        recommendedTransmitAttenuation = getInt(endianess);
+        fileInfo.setRecommendedTransmitAttenuation(recommendedTransmitAttenuation);
+        
+        // 10*512 + 2*278
+        // Recommended automated receive attenuation 1/10 db [0...629]
+        recommendedReceiveAttenuation = getInt(endianess);
+        fileInfo.setRecommendedReceiveAttenuation(recommendedReceiveAttenuation);
+        
+        // 10*512 + 2*280
+        histogramPresent = (short)getSignedShort(endianess);
+        if (histogramPresent == 0) {
+            fileInfo.setHistogramPresent("Histogram not present in raw header");
+        }
+        else {
+            fileInfo.setHistogramPresent("Histogram present in raw header");
+        }
+        
+        // 10*512 + 2*281
+        // See swapPF
+        pfSwapped = (short)getSignedShort(endianess);
+        if (pfSwapped == 0) {
+            fileInfo.setPFSwapped("Phase and frequency not swapped");
+        }
+        else {
+            fileInfo.setPFSwapped("Geometries swap phase and frequency either by rules or by user selection");
+        }
+        
+        // 10*512 + 2*282
+        // For prescan [1...7]
+        R1 = (short)getSignedShort(endianess);
+        fileInfo.setR1(R1);
+        
+        // 10*512 + 2*283
+        // For prescan [1...30]
+        R2 = (short)getSignedShort(endianess);
+        fileInfo.setR2(R2);
+        
+        // 10*512 + 2*284
+        variableBandwidth = (short)getSignedShort(endianess);
+        if (variableBandwidth == 0) {
+            fileInfo.setVariableBandwidth("Off");
+        }
+        else {
+            fileInfo.setVariableBandwidth("On");
+        }
+        
+        // 10*512 + 2*285
+        // [1...7]
+        prescanReceiveAttenuation1 = (short)getSignedShort(endianess);
+        fileInfo.setPrescanReceiveAttenuation1(prescanReceiveAttenuation1);
+        
+        // 10*512 + 2*286
+        // [1...30]
+        prescanReceiveAttenuation2 = (short)getSignedShort(endianess);
+        fileInfo.setPrescanReceiveAttenuation2(prescanReceiveAttenuation2);
         
         raFile.seek(14336);
         readBuffer(buffer);
@@ -1718,13 +2118,15 @@ public class FileGESigna4X extends FileBase {
             }
             
             // 10*512 + 2*142
-            depth = (short)getSignedShort(endianess);
-            if (depth <= 0) {
-                depth = 16;
+            bitsPerPixel = (short)getSignedShort(endianess);
+            if (bitsPerPixel <= 0) {
+                bitsPerPixel = 16;
             }
-            if (depth != 16) {
-                Preferences.debug("Pixel depth = " + depth + " instead of the required 16\n");
+            if (bitsPerPixel != 16) {
+                Preferences.debug("Number of bits used to represent image = " +
+                                   bitsPerPixel + " instead of the required 16\n");
             }
+            fileInfo.setBitsPerPixel(bitsPerPixel);
             
             raFile.seek(10*512 + 2*44);
             imageNumber = getString(3);
