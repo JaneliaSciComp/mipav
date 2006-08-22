@@ -2,11 +2,14 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -25,7 +28,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogErode extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogErode extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -36,15 +39,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxKernelErode;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroupErode;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanelErode;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
     private boolean do25D = false; // do a 2.5D erode on a 3D image
@@ -63,12 +57,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private JCheckBox image25D;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
 
     /** or if the source image is to be replaced. */
     private int iters;
@@ -92,15 +80,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
     private JPanel maskPanelErode;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private boolean regionFlag = false;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -114,12 +93,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -150,54 +125,61 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         init();
     }
 
-   
-
     //~ Methods --------------------------------------------------------------------------------------------------------
-   // resultImage, kernelErode, kernelSizeErode,AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, regionFlag);
  
     /**
      * Record the parameters just used to run this algorithm in a script.
      * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * @throws ParserException If there is a problem creating/recording the new parameters.
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelErode",kernelErode));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelSizeErode",kernelSizeErode));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("iters",iters));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("regionFlag",regionFlag));        
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), do25D);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernelErode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSizeErode));
+        scriptParameters.storeNumIterations(iters);
     }
-    
-    
+
     /**
      * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
-    protected void setGUIFromParams(){
-        kernelErode = scriptParameters.getParams().getInt("kernelErode");
-        kernelSizeErode = scriptParameters.getParams().getInt("kernelSizeErode");
-        iters = scriptParameters.getParams().getInt("iters");
-        regionFlag = scriptParameters.getParams().getBoolean("regionFlag");              
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if ( (image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE)
+                && (image.getType() != ModelImage.USHORT)) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Boolean or UByte or UShort");
+        }
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        
+        kernelErode = scriptParameters.getParams().getInt("kernel_type");
+        kernelSizeErode = scriptParameters.getParams().getFloat("kernel_size");
+        iters = scriptParameters.getNumIterations();
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
+     * image table). Defaults to no action, override to actually have it do something.
      */
     protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
+        if (outputPanel.isOutputNewImageSet()) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     } 
     
-    
-    
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  event that triggers function
+     * 
+     * @param event event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -223,9 +205,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -237,7 +216,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // resultImage.setImageName("Eroded image");
-                    imageFrame = new ViewJFrameImage(resultImage);
+                    new ViewJFrameImage(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -280,7 +259,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // resultImage.setImageName("Eroded image");
-                    imageFrame = new ViewJFrameImage(resultImage);
+                    new ViewJFrameImage(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -322,7 +301,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // resultImage.setImageName("Eroded image");
-                    imageFrame = new ViewJFrameImage(resultImage);
+                    new ViewJFrameImage(resultImage);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -355,7 +334,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
             }
         }
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -387,8 +368,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         return resultImage;
     }
 
-  
-
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -411,23 +390,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 labelKernelSizeErode.setEnabled(false);
             }
         }
-    }
-
-  
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
     }
 
     /**
@@ -470,15 +432,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
     }
 
     /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is eroded, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
      * Builds kernel combo box.
      */
     private void buildComboBox() {
@@ -507,7 +460,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
         if (image.getNDims() == 2) { // source image is 2D
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -515,9 +468,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
                     // Make algorithm
                     erodeAlgo2D = new AlgorithmMorphology2D(resultImage, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, regionFlag);
+                                                            AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -559,9 +512,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     erodeAlgo2D = new AlgorithmMorphology2D(image, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, regionFlag);
+                                                            AlgorithmMorphology2D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -609,7 +562,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
             }
         } else if ((image.getNDims() == 3) && !do25D) {
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -617,9 +570,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
                     // Make algorithm
                     erodeAlgo3D = new AlgorithmMorphology3D(resultImage, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, regionFlag);
+                                                            AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -660,9 +613,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
                     // Make algorithm
                     erodeAlgo3D = new AlgorithmMorphology3D(image, kernelErode, kernelSizeErode,
-                                                            AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, regionFlag);
+                                                            AlgorithmMorphology3D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -719,7 +672,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                 kernelErode = AlgorithmMorphology25D.SIZED_CIRCLE;
             }
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -727,9 +680,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
                     // Make algorithm
                     erodeAlgo25D = new AlgorithmMorphology25D(resultImage, kernelErode, kernelSizeErode,
-                                                              AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, regionFlag);
+                                                              AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo25D.setMask(image.generateVOIMask());
                     }
 
@@ -771,9 +724,9 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     erodeAlgo25D = new AlgorithmMorphology25D(image, kernelErode, kernelSizeErode,
-                                                              AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, regionFlag);
+                                                              AlgorithmMorphology25D.ERODE, 0, iters, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo25D.setMask(image.generateVOIMask());
                     }
 
@@ -846,7 +799,7 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
         String unitString = null;
 
-        unitString = new String(image.getFileInfo()[0].sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
+        unitString = new String(FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
 
         if (image.getNDims() == 2) {
             labelKernelSizeErode = new JLabel("Circle diameter - " + unitString);
@@ -906,88 +859,29 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanelErode.add(textKernelSizeErode, gbc);
 
-        destinationPanelErode = new JPanel(new GridBagLayout());
-        destinationPanelErode.setForeground(Color.black);
-        destinationPanelErode.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroupErode = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroupErode.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setBounds(10, 42, 120, 25);
-        replaceImage.setFont(serif12);
-        destinationGroupErode.add(replaceImage);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        destinationPanelErode.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanelErode.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Erode"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-
-        image25D = new JCheckBox("Process image in 2.5D", false);
-        image25D.setFont(serif12);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        gbc.gridy = 2;
-        imageVOIPanel.add(image25D, gbc);
-
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        
+        PanelManager optionsPanelManager = new PanelManager("Options");
+        image25D = WidgetFactory.buildCheckBox("Process image in 2.5D", false);
         if (image.getNDims() == 3) {
             image25D.setEnabled(true);
         } else {
             image25D.setEnabled(false);
         }
+        optionsPanelManager.add(image25D);
 
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        mainPanel.add(maskPanelErode, gbc);
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(destinationPanelErode, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
+        PanelManager mainPanelManager = new PanelManager();
+        mainPanelManager.add(maskPanelErode);
+        mainPanelManager.addOnNextLine(outputPanel);
+        mainPanelManager.addOnNextLine(optionsPanelManager.getPanel());
 
         JPanel buttonPanel = new JPanel();
-
         buildOKButton();
         buttonPanel.add(OKButton);
         buildCancelButton();
         buttonPanel.add(cancelButton);
 
-        getContentPane().add(mainPanel);
+        getContentPane().add(mainPanelManager.getPanel());
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
@@ -1002,18 +896,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
         String tmpStr;
 
         System.gc();
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         do25D = image25D.isSelected();
 
@@ -1067,5 +949,4 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
 
         return true;
     }
-
 }

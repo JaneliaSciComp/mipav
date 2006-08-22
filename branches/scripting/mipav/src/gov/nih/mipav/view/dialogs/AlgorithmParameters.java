@@ -363,6 +363,10 @@ public class AlgorithmParameters {
         }
     }
     
+    public void storeProcessSeparable(boolean doProcessSep) throws ParserException {
+        params.put(ParameterFactory.newParameter(DO_PROCESS_SEPARABLE, doProcessSep));
+    }
+    
     public void storeNumIterations(int numIters) throws ParserException {
         params.put(ParameterFactory.newParameter(NUM_ITERATIONS, numIters));
     }

@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -1061,8 +1060,8 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         colorChannelPanel = new JPanelColorChannels(image);
         
         scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
-        setSeparable(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE));
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setSeparable(scriptParameters.doProcessSeparable());
+        setImage25D(scriptParameters.doProcess3DAs25D());
         scriptParameters.setSigmasGUI(sigmaPanel);
         scriptParameters.setColorOptionsGUI(colorChannelPanel);
     }
@@ -1077,7 +1076,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
 
         scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(AlgorithmParameters.DO_PROCESS_SEPARABLE, separable));
+        scriptParameters.storeProcessSeparable(separable);
         scriptParameters.storeSigmas(sigmaPanel);
         scriptParameters.storeColorOptions(colorChannelPanel);
     }

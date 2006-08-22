@@ -333,42 +333,42 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
         facingRightRadio = new JRadioButton("Right");
         facingRightRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_RIGHT) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_RIGHT) {
             facingRightRadio.setSelected(true);
         }
 
         facingLeftRadio = new JRadioButton("Left");
         facingLeftRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_LEFT) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_LEFT) {
             facingLeftRadio.setSelected(true);
         }
 
         facingDownRadio = new JRadioButton("Down");
         facingDownRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_DOWN) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_DOWN) {
             facingDownRadio.setSelected(true);
         }
 
         facingUpRadio = new JRadioButton("Up");
         facingUpRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_UP) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_UP) {
             facingUpRadio.setSelected(true);
         }
 
         facingIntoRadio = new JRadioButton("Into the screen");
         facingIntoRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_INTO_SCREEN) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_INTO_SCREEN) {
             facingIntoRadio.setSelected(true);
         }
 
         facingOutRadio = new JRadioButton("Out of the screen");
         facingOutRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_OUT_OF_SCREEN) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_OUT_OF_SCREEN) {
             facingOutRadio.setSelected(true);
         }
 

@@ -4,7 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +22,7 @@ import java.util.*;
  * @version  0.1 Nov 17, 1998
  * @author   Lynne M. Pusanik
  */
-public class JDialogExtractSlices extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogExtractSlices extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -46,9 +46,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
     /** DOCUMENT ME! */
     private ModelImage srcImage = null; // source image
 
-    /** these are stored as Strings. */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -68,35 +65,46 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
 
         srcImage = image;
         extractList = eList;
-
-        userInterface = ViewUserInterface.getReference();
     }
-    
-    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-//srcImage, resultImage, selected
  
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected void storeParamsFromGUI() throws ParserException{
         scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_convert_4D_to_3D", convert4Dto3D));
+        
+        int[] slices = new int[extractList.size()];
+        for (int i = 0; i < extractList.size(); i++) {
+            slices[i] = Integer.parseInt((String) extractList.elementAt(i));
+        }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slices", slices));
      }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){}
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        parentFrame = srcImage.getParentFrame();
+        
+        convert4Dto3D = scriptParameters.getParams().getBoolean("do_convert_4D_to_3D");
+        
+        int[] slices = scriptParameters.getParams().getList("slices").getAsIntArray();
+        for (int i = 0; i < slices.length; i++) {
+            extractList.addElement("" + slices[i]);
+        }
+    }
     
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
     
     /**
@@ -117,8 +125,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmExtractSlices) {
 
             if ((extractSlicesAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -127,7 +133,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
                 try {
 
                     // resultImage.setImageName("Compressed image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("ExtractSlices: Out of memory: unable to open new frame");
@@ -191,10 +197,11 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
                 ((ViewJFrameBase) parentFrame).updateImages(true);
             }
 
-            insertScriptLine();
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
-
-    } // end algorithmPerformed()
+    }
 
     /**
      * Accessor that returns the result image.
@@ -205,15 +212,12 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
         return resultImage;
     }
 
-  
-
     /**
      * Accessor that returns the whether or not the algorithm completed successfully.
      *
      * @return  DOCUMENT ME!
      */
     public boolean isSuccessful() {
-
         if (extractSlicesAlgo.isCompleted() && (resultImage != null)) {
             return true;
         } else {
@@ -237,11 +241,9 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
             // (if user checked them all) or at least ONE is checked ...
             if (numDestSlices == srcImage.getExtents()[2]) {
                 MipavUtil.displayError("Extract Slices: Cannot extract all slices from image.");
-
                 return;
             } else if (numDestSlices == 0) {
                 MipavUtil.displayError("Extract Slices: Must select slices to extract from image.");
-
                 return;
             }
 
@@ -299,8 +301,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
             } // 4D
 
             // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-            resultImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "Extract",
-                                         srcImage.getUserInterface());
+            resultImage = new ModelImage(srcImage.getType(), destExtents, srcImage.getImageName() + "Extract");
 
             // algorithm needs an array of Strings -- so convert Vector
             String[] selected = new String[extractList.size()];
@@ -329,7 +330,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
+                if (!ViewUserInterface.getReference().isAppFrameVisible()) {
                     extractSlicesAlgo.setProgressBarVisible(false);
                 }
 
@@ -350,8 +351,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
         }
     }
 
-  
-
     /**
      * DOCUMENT ME!
      *
@@ -360,5 +359,4 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
     public void setConvert4Dto3D(boolean doConvert) {
         this.convert4Dto3D = doConvert;
     }
-
-} // end class JDialogExtractSlices
+}

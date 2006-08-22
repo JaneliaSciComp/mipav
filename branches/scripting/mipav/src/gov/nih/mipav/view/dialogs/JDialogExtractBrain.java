@@ -24,8 +24,7 @@ import javax.vecmath.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogExtractBrain extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -131,9 +130,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase
     private JTextField stiffnessTF;
 
     /** DOCUMENT ME! */
-    private Frame theParentFrame;
-
-    /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
@@ -168,8 +164,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase
     public JDialogExtractBrain(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
-        this.theParentFrame = theParentFrame;
-
         setForeground(Color.black);
         image = im;
         userInterface =  ViewUserInterface.getReference();
@@ -197,44 +191,55 @@ public class JDialogExtractBrain extends JDialogScriptableBase
     /**
      * Record the parameters just used to run this algorithm in a script.
      * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * @throws ParserException If there is a problem creating/recording the new parameters.
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("orientation",orientation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("justEllipse",justEllipse));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("useSphere",useSphere));
-      //TODO not sure how to save this properly
-        // scriptParameters.getParams().put(ParameterFactory.newParameter("initCenterPoint",initCenterPoint));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("nIterations",nIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("depth",depth));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("imageRatio",imageRatio));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("stiffness",stiffness));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("secondStageErosion",secondStageErosion));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("aboveMedian",aboveMedian));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("extractToPaint",extractToPaint));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("orientation_type", orientation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_sphere_estimation", useSphere));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_just_init_ellipse", justEllipse));
+        scriptParameters.storeNumIterations(nIterations);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("depth", depth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("image_ratio", imageRatio));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("stiffness", stiffness));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_second_stage_erosion", secondStageErosion));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("factor_above_median_to_erode", aboveMedian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_extract_paint", extractToPaint));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_init_with_center_of_mass", useCenterOfMass));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("init_center_point", new float[] {initCenterPoint.x, initCenterPoint.y, initCenterPoint.z}));
     }
-    
+
     /**
      * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
      */
-    protected void setGUIFromParams(){
-        orientation = scriptParameters.getParams().getInt("orientation"); 
-        justEllipse = scriptParameters.getParams().getBoolean("justEllipse"); 
-        useSphere = scriptParameters.getParams().getBoolean("useSphere"); 
-        //TODO  not sure how to retreive this properly, or if needed.
-       // initCenterPoint = scriptParameters.getParams().getBoolean("initCenterPoint"); 
-        nIterations = scriptParameters.getParams().getInt("nIterations"); 
-        depth = scriptParameters.getParams().getInt("depth"); 
-        imageRatio = scriptParameters.getParams().getFloat("imageRatio"); 
-        stiffness = scriptParameters.getParams().getFloat("stiffness"); 
-        secondStageErosion = scriptParameters.getParams().getBoolean("secondStageErosion"); 
-        aboveMedian = scriptParameters.getParams().getFloat("aboveMedian"); 
-        extractToPaint = scriptParameters.getParams().getBoolean("extractToPaint"); 
-   }
-    
-    
-    
+    protected void setGUIFromParams() {
+        orientation = scriptParameters.getParams().getInt("orientation_type");
+        useSphere = scriptParameters.getParams().getBoolean("do_use_sphere_estimation");
+        justEllipse = scriptParameters.getParams().getBoolean("do_show_just_init_ellipse");
+        nIterations = scriptParameters.getNumIterations();
+        depth = scriptParameters.getParams().getInt("depth");
+        imageRatio = scriptParameters.getParams().getFloat("image_ratio");
+        stiffness = scriptParameters.getParams().getFloat("stiffness");
+        secondStageErosion = scriptParameters.getParams().getBoolean("do_second_stage_erosion");
+        aboveMedian = scriptParameters.getParams().getFloat("factor_above_median_to_erode");
+        extractToPaint = scriptParameters.getParams().getBoolean("do_extract_paint");
+        
+        centerOfMass = computeCenter(image, orientation, useSphere);
+
+        useCenterOfMass = scriptParameters.getParams().getBoolean("do_init_with_center_of_mass");
+        float[] centerPoint = scriptParameters.getParams().getList("init_center_point").getAsFloatArray();
+        initCenterX = centerPoint[0];
+        initCenterY = centerPoint[1];
+        initCenterZ = centerPoint[2];
+        
+        if (useCenterOfMass) {
+            initCenterPoint = centerOfMass;
+        } else {
+            initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
+        }
+    }
     
     /**
      * Calculate the center of the sphere / ellipsoid.
@@ -557,7 +562,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase
                 ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
                 ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                if ((((Frame) (imageFrames.elementAt(i))) != theParentFrame) && (parentFrame != null)) {
+                if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
                     userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
                 }
             }
@@ -579,8 +584,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase
         }
 
         // necessary for paint to appear when using 'extract to paint' option
-        if (theParentFrame != null) {
-            ((ViewJFrameImage) theParentFrame).setActiveImage(ViewJFrameImage.IMAGE_A);
+        if (parentFrame != null) {
+            ((ViewJFrameImage) parentFrame).setActiveImage(ViewJFrameImage.IMAGE_A);
         }
     }
 
@@ -677,8 +682,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase
 
         return str;
     }
-
-  
 
     /**
      * Initial center position checkbox listener.

@@ -1188,7 +1188,7 @@ public class ViewMenuBar {
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("3D rectangle", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
-            menuBuilder.setMenuItemEnabled("Anonymize face", false);
+            menuBuilder.setMenuItemEnabled("Anonymize face (BET)", false);
             menuBuilder.setMenuItemEnabled("Cine (movie)", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
             menuBuilder.setMenuItemEnabled("Evolve surface", false);

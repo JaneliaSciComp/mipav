@@ -7,7 +7,6 @@ import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
-import gov.nih.mipav.model.srb.SRBFileTransferer;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.util.NDARPipeline;
 
@@ -971,7 +970,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage().getVOIs().size() > 0) {
 
                 ViewVOIVector VOIs = getActiveImage().getVOIs();
-                Vector[] curves;
 
                 int i;
                 int nVOI = VOIs.size();
@@ -1444,10 +1442,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogSwap34(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("onlyColor")) { // JDialogOnlyColor onlyColorDialog = new JDialogOnlyColor(this,
                                                   // getActiveImage()); onlyColorDialog.callAlgorithm();
-        } else if (command.equals("extractSurface")) {
-
-            // JDialogExtractSurface eSurface =
-            new JDialogExtractSurface(this, getActiveImage());
         } else if (command.equals("extractSurfaceCubes")) {
 
             // JDialogExtractSurface eSurface =
@@ -1518,8 +1512,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
             }
-        } else if (command.equals("Anonymize face")) {
-            new JDialogFaceAnonymizer(this, getActiveImage());
         } else if (command.equals("Anonymize face (BET)")) {
             new JDialogFaceAnonymizerBET(this, getActiveImage());
         } else if (command.equals("Image math")) {

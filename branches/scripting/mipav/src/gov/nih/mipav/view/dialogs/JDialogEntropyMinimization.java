@@ -31,7 +31,6 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
 
-
     /** DOCUMENT ME! */
     private AlgorithmEntropyMinimization emAlgo;
 
@@ -87,9 +86,6 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private String tmpStr;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -117,48 +113,49 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-  //  thresholdSelected, thresholdLevel,subsample, noiseType
+    
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdSelected",thresholdSelected)); 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdLevel",thresholdLevel)); 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("subsample",subsample)); 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("noiseType",noiseType)); 
-           }
-    
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", thresholdSelected));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", thresholdLevel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", subsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
+    }
+
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
-        thresholdSelected = scriptParameters.getParams().getBoolean("thresholdSelected");    
-        thresholdLevel = scriptParameters.getParams().getFloat("thresholdLevel");    
-        subsample = scriptParameters.getParams().getBoolean("subsample");    
-        noiseType = scriptParameters.getParams().getInt("noiseType");    
-   }
-    
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        thresholdSelected = scriptParameters.getParams().getBoolean("do_threshold");
+        thresholdLevel = scriptParameters.getParams().getFloat("threshold");
+        subsample = scriptParameters.getParams().getBoolean("do_subsample");
+        noiseType = scriptParameters.getParams().getInt("noise_type");
+    }
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
-    
-    
-    
-    
-    
-    
-    
+
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -198,9 +195,6 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmEntropyMinimization) {
             image.clearMask();
 
@@ -212,7 +206,7 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -249,7 +243,9 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         emAlgo.finalize();
         emAlgo = null;
@@ -264,8 +260,6 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
     public ModelImage getResultImage() {
         return resultImage;
     }
-
- 
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -600,8 +594,5 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
         }
 
         return true;
-
     }
-
-
 }

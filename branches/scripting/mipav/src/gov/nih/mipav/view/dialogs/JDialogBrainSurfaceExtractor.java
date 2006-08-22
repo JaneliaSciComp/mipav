@@ -320,7 +320,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_iterations", filterIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel_size", edgeKernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", erosionIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("close_kernel_size", closeKernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_gaussian_std_dev", filterGaussianStdDev));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_intermediate_images", showIntermediateImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("edge_do_separable_convolution", useSeparable));
@@ -337,11 +336,12 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
         
+        closeKernelSize = (Math.max(image.getFileInfo(0).getResolutions()[0], image.getFileInfo(0).getResolutions()[1]) *
+                               closeKernelPixels) + 1;
         
         filterIterations = scriptParameters.getParams().getInt("filter_iterations");
         erosionIterations = scriptParameters.getParams().getInt("erosion_iterations");
         edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel_size");
-        closeKernelSize = scriptParameters.getParams().getFloat("close_kernel_size");
         filterGaussianStdDev  = scriptParameters.getParams().getFloat("filter_gaussian_std_dev");
         showIntermediateImages = scriptParameters.getParams().getBoolean("do_show_intermediate_images");
         useSeparable = scriptParameters.getParams().getBoolean("edge_do_separable_convolution");

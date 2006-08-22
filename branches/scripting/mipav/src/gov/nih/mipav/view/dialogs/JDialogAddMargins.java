@@ -55,9 +55,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     private int bottomSide;
 
     /** DOCUMENT ME! */
-    private Double bv = new Double(0.0);
-
-    /** DOCUMENT ME! */
     private int colorFactor;
 
     /** DOCUMENT ME! */
@@ -84,9 +81,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
     // or if the source image is to be replaced
 
     /** DOCUMENT ME! */
-    private Double dv = new Double(0.0);
-
-    /** DOCUMENT ME! */
     private int front;
 
     /** DOCUMENT ME! */
@@ -94,9 +88,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
     /** DOCUMENT ME! */
     private double greenValue = 0.0;
-
-    /** DOCUMENT ME! */
-    private Double gv = new Double(0.0);
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -133,9 +124,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
     /** DOCUMENT ME! */
     private JTextField rightSideInput;
-
-    /** DOCUMENT ME! */
-    private Double rv = new Double(0.0);
 
     /** DOCUMENT ME! */
     private JTextField topInput;
@@ -426,21 +414,16 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blueValue", blueValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bottomSide", bottomSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bv", bv));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("colorFactor", colorFactor));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("defaultValue", defaultValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("dv", dv));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("greenValue", greenValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("gv", gv));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("leftSide", leftSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("redValue", redValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rightSide", rightSide));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rv", rv));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("topSide", topSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value", defaultValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_rgb", new double[] {redValue, greenValue, blueValue}));
     }
 
     /**
@@ -457,21 +440,26 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             setDisplayLocReplace();
         }
         
-        back = scriptParameters.getParams().getInt("back");
-        blueValue = scriptParameters.getParams().getDouble("blueValue");
-        bottomSide = scriptParameters.getParams().getInt("bottomSide");
-        bv  = Double.valueOf(scriptParameters.getParams().getDouble("bv"));
-        colorFactor = scriptParameters.getParams().getInt("colorFactor");
-        defaultValue = scriptParameters.getParams().getDouble("defaultValue");
-        dv = Double.valueOf(scriptParameters.getParams().getDouble("dv"));
+        if (image.isColorImage() == false) {
+            colorFactor = 1;
+        } else {
+            colorFactor = 4;
+        }
+        
+        rightSide = scriptParameters.getParams().getInt("right_side");
+        leftSide = scriptParameters.getParams().getInt("left_side");
+        topSide = scriptParameters.getParams().getInt("top_side");
+        bottomSide = scriptParameters.getParams().getInt("bottom_side");
+        
         front = scriptParameters.getParams().getInt("front");
-        greenValue = scriptParameters.getParams().getDouble("greenValue");
-        gv = Double.valueOf(scriptParameters.getParams().getDouble("gv"));
-        leftSide = scriptParameters.getParams().getInt("leftSide");
-        redValue = scriptParameters.getParams().getDouble("redValue");
-        rightSide = scriptParameters.getParams().getInt("rightSide");
-        rv = Double.valueOf(scriptParameters.getParams().getDouble("rv"));
-        topSide = scriptParameters.getParams().getInt("topSide");
+        back = scriptParameters.getParams().getInt("back");
+        
+        defaultValue = scriptParameters.getParams().getDouble("margin_value");
+        
+        double[] rgb = scriptParameters.getParams().getList("margin_value_rgb").getAsDoubleArray();
+        redValue = rgb[0];
+        greenValue = rgb[1];
+        blueValue = rgb[2];
     }
     
     /**
@@ -970,7 +958,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
          *
          * cancelButton = buildCancelButton(); OKCancelPanel.add(cancelButton); contentBox.add(OKCancelPanel);
          */
-        JPanel buttonPanel = new JPanel(new FlowLayout());
         contentBox.add(buildButtons());
 
         // if this is a 2D image, turn off slice margins
@@ -1004,12 +991,11 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             back = Integer.parseInt(backInput.getText()); // in slices
 
             if (colorFactor == 1) {
-                dv = new Double(defaultValueInput.getText()); // why does the compiler not find static double
-                                                              // Double.parseInt()?
+                defaultValue = Double.parseDouble(defaultValueInput.getText());
             } else {
-                rv = new Double(defaultRedInput.getText());
-                gv = new Double(defaultGreenInput.getText());
-                bv = new Double(defaultBlueInput.getText());
+                redValue = Double.parseDouble(defaultRedInput.getText());
+                greenValue = Double.parseDouble(defaultGreenInput.getText());
+                blueValue = Double.parseDouble(defaultBlueInput.getText());
             }
         } catch (NumberFormatException nfe) {
 
@@ -1022,14 +1008,6 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             return false;
         }
 
-        if (colorFactor == 1) {
-            defaultValue = dv.doubleValue();
-        } else {
-            redValue = rv.doubleValue();
-            greenValue = gv.doubleValue();
-            blueValue = bv.doubleValue();
-        }
-
         if (newImage.isSelected()) {
             displayLoc = NEW;
         } else {
@@ -1038,5 +1016,4 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
         return true;
     }
-
 }
