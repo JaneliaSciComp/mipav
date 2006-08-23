@@ -16,8 +16,6 @@ import java.util.*;
 import javax.swing.*;
 
 
-
-
 /**
  * This dialog collects parameters for the BSE algorithm and then starts it up.
  *
@@ -25,7 +23,8 @@ import javax.swing.*;
  * @author   Evan McCreedy
  * @see      AlgorithmBrainSurfaceExtractor
  */
-public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -117,13 +116,13 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
 
     /** Checkbox to elect to use the separable convolver in the edge detection algorithm. */
     private JCheckBox useSeparableCB;
-    
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Empty constructor needed for dynamic instantiation (used during scripting).
      */
-    public JDialogBrainSurfaceExtractor() {}
+    public JDialogBrainSurfaceExtractor() { }
 
     /**
      * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
@@ -140,7 +139,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
         setForeground(Color.black);
         imgName = im.getImageName();
         image = im;
-        userInterface =  ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
 
         // make the kernel encompas about 6 pixels total (diameter) (+1 to make sure that we get the last pixel inside
         // the kernel)
@@ -199,7 +198,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
                                           (extractBrainAlgo.getBrainVolume() / 1000.0f) + " cc\n");
                 resultImage = extractBrainAlgo.getResultImage();
 
-                insertScriptLine();
+                
 
                 if (extractPaint) {
                     BitSet paintMask = extractBrainAlgo.getComputedPaintMask();
@@ -216,7 +215,11 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
                     new ViewJFrameImage(resultImage, null, new Dimension(600, 600));
                 }
             }
-
+            
+            if (extractBrainAlgo.isCompleted()) {
+                insertScriptLine();
+            }
+            
             extractBrainAlgo.finalize();
 
             if (imageCopy != null) {
@@ -230,7 +233,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
     /**
      * Calls the algorithm.
      */
-    protected void callAlgorithm() {
+    public void callAlgorithm() {
 
         try {
             System.gc();
@@ -253,6 +256,14 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
             // This is made possible by implementing AlgorithmedPerformed interface
             extractBrainAlgo.addListener(this);
 
+            /**
+             * Creates the progress bar and make it listen to the FileBase.
+             */
+            ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Extracting brain...", 0, 100, true);
+            progressBar.setSeparateThread(runInSeparateThread);
+            extractBrainAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(true);
+           
             // Hide dialog
             setVisible(false);
 
@@ -275,6 +286,47 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
 
             return;
         }
+    }
+
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void loadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                filterIterationsTF.setText("" + MipavUtil.getInt(st));
+                filterGaussianStdDevTF.setText("" + MipavUtil.getFloat(st));
+                edgeKernelSizeTF.setText("" + MipavUtil.getFloat(st));
+                erosionIterationsTF.setText("" + MipavUtil.getInt(st));
+                closeKernelSizeTF.setText("" + MipavUtil.getFloat(st));
+                st.nextToken(); // placeholder for close iterations
+                showIntermediateImagesCB.setSelected(MipavUtil.getBoolean(st));
+                useSeparableCB.setSelected(MipavUtil.getBoolean(st));
+                st.nextToken(); // placeholder for erosion kernel size
+                erosion25DCB.setSelected(MipavUtil.getBoolean(st));
+                fillHolesCB.setSelected(MipavUtil.getBoolean(st));
+                extractPaintCheckBox.setSelected(MipavUtil.getBoolean(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void saveDefaults() {
+        String defaultsString = new String(getParameterString(","));
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**
@@ -357,46 +409,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
         if (!extractPaint) {
             AlgorithmParameters.storeImageInRunner(resultImage);
         }
-    }
-    
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                filterIterationsTF.setText("" + MipavUtil.getInt(st));
-                filterGaussianStdDevTF.setText("" + MipavUtil.getFloat(st));
-                edgeKernelSizeTF.setText("" + MipavUtil.getFloat(st));
-                erosionIterationsTF.setText("" + MipavUtil.getInt(st));
-                closeKernelSizeTF.setText("" + MipavUtil.getFloat(st));
-                st.nextToken(); // placeholder for close iterations
-                showIntermediateImagesCB.setSelected(MipavUtil.getBoolean(st));
-                useSeparableCB.setSelected(MipavUtil.getBoolean(st));
-                st.nextToken(); // placeholder for erosion kernel size
-                erosion25DCB.setSelected(MipavUtil.getBoolean(st));
-                fillHolesCB.setSelected(MipavUtil.getBoolean(st));
-                extractPaintCheckBox.setSelected(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**
@@ -691,9 +703,4 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase implemen
 
         return true;
     }
-    
-    
-    
-
-
 }
