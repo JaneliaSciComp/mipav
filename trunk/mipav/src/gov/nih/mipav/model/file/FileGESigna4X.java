@@ -44,6 +44,11 @@ import java.io.*;
  (difference between corners/255) * kludge factor 2, or
  using the thickness field equals about 10 * resolution[0] = 10 * resolution[1].
  Use fov/256 multiplied by a kludge factor of 2 to obtain the right answer.
+ 
+ On one run SWAP_PF said Operator selects to swap phase and frequency and PF_SWAPPED
+ said Phase and frequency not swapped, a seeming contradiction.  The field strength
+ in the series header was read as -99 gauss.  The 6 values for SAT pulse location
+ relative to landmark were all 9999 millimeters. So there are problems.
  */
 
 public class FileGESigna4X extends FileBase {
