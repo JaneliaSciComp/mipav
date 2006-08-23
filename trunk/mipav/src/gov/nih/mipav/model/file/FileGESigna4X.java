@@ -38,11 +38,11 @@ import java.io.*;
  
  Spacing between slices was seen to vary so resolution[2] cannot be obtained
  by checking the difference between slice spacing.  The field called pixel
- size int theory should give give 20 *resolution[2] but actually gives 5 * resolution[2],
- so with a kludge factor of 4 this field is used to obtain the resolution[2]. 
+ size actually gives 5 * resolution[2]. 
  resolution[0] and resolution[1] can in theory be calculated in 3 different
- ways with 3 slightly different results.  fov/256, difference between corners/255, or
- using the fact that the thickness field = 20 * resolution[0] = 20 * resolution[1].
+ ways with 3 slightly different results.  (fov/256)*kludge factor 2,
+ (difference between corners/255) * kludge factor 2, or
+ using the thickness field equals about 10 * resolution[0] = 10 * resolution[1].
  Use fov/256 multiplied by a kludge factor of 2 to obtain the right answer.
  */
 
@@ -105,6 +105,8 @@ public class FileGESigna4X extends FileBase {
     private String seriesHeaderID = null;
     
     private String seriesHeaderRevisionNumber = null;
+    
+    private int seriesRevisionSubnumber;
     
     private short seriesHeaderBlocks;
     
@@ -220,9 +222,13 @@ public class FileGESigna4X extends FileBase {
     
     private short phaseContrastFlowAxis;
     
+    private short gatingType2;
+    
     private String imageHeaderID = null;
     
     private String imageHeaderRevisionNumber = null;
+    
+    private int imageRevisionSubnumber;
     
     private short imageHeaderBlocks;
     
@@ -258,8 +264,7 @@ public class FileGESigna4X extends FileBase {
     
     private float tablePosition;
     
-    private float thickness; // 20*res[0] = 20*res[1] in theory
-                             // In practice 10*res[0] = 10*res[1]
+    private float thickness; // In practice 10*res[0] = 10*res[1]
     
     private float imageSpacing;
     
@@ -285,6 +290,18 @@ public class FileGESigna4X extends FileBase {
     
     private String psdFileName;
     
+    private short psdDay;
+    
+    private short psdMonth;
+    
+    private short psdYear; // Year - 1900
+    
+    private short psdHour;
+    
+    private short psdMinute;
+    
+    private short psdSeconds;
+    
     private short graphicallyPrescribed;
     
     private String prescribedSeriesNumbers;
@@ -293,8 +310,7 @@ public class FileGESigna4X extends FileBase {
     
     private short imageShape;
     
-    private float pixelSize; // In theory 20 * res[2]
-                             // In practice 5 * res[2]
+    private float pixelSize; // In practice 5 * res[2]
     
     private short defaultWindow;
     
@@ -394,6 +410,28 @@ public class FileGESigna4X extends FileBase {
     
     private float pauseTime;
     
+    private short userBitmap;
+    
+    private float user0;
+    
+    private float user1;
+    
+    private float user2;
+    
+    private float user3;
+    
+    private float user4;
+    
+    private float user5;
+    
+    private float user6;
+    
+    private float user7;
+    
+    private float user8;
+    
+    private float user9;
+    
     private short obliquePlane;
     
     private short contrastUsed;
@@ -431,6 +469,38 @@ public class FileGESigna4X extends FileBase {
     private short prescanReceiveAttenuation1;
     
     private short prescanReceiveAttenuation2;
+    
+    private short autoManualPrescan;
+    
+    private short changedValuesBitmap;
+    
+    private String changedValuesString;
+    
+    private short imageType;
+    
+    private short collapseImage;
+    
+    private short sliceThicknessDisclaimer;
+    
+    private short PCVelocityEncoding;
+    
+    private float projectionAngle;
+    
+    private short concatenatedSATSelection;
+    
+    private short fractionalEffectiveEcho;
+    
+    private int echoTrainLength;
+    
+    private short sliceMultiplier;
+    
+    private short cardiacPhaseNumber;
+    
+    private short scanAcquisitionNumber;
+    
+    private short vascularImagingFlags;
+    
+    private float vencScalingFactor;
     
     /** DOCUMENT ME! */
     private byte[] byteBuffer = null;
@@ -762,6 +832,7 @@ public class FileGESigna4X extends FileBase {
         // form xx.xx.xx
         seriesHeaderRevisionNumber = getString(8);
         fileInfo.setSeriesHeaderRevisionNumber(seriesHeaderRevisionNumber);
+        seriesRevisionSubnumber = Integer.valueOf(seriesHeaderRevisionNumber.substring(3,5)).intValue();
         
         // 8*512 + 2*11
         // Number of series header blocks in units of 512 bytes; Value of 2 expected
@@ -1341,6 +1412,26 @@ public class FileGESigna4X extends FileBase {
             Preferences.debug("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n");
         }
         
+        if (seriesRevisionSubnumber >= 7) {
+            raFile.seek(8*512 + 2*239);
+            gatingType2 = (short)getSignedShort(endianess);
+            if (gatingType2 == 0) {
+                fileInfo.setGatingType2("None");
+            }
+            else if (gatingType2 == 1) {
+                fileInfo.setGatingType2("IR");
+            }
+            else if (gatingType2 == 2) {
+                fileInfo.setGatingType2("DE");
+            }
+            else if (gatingType2 == 3) {
+                fileInfo.setGatingType2("IR_DE");
+            }
+            else {
+                Preferences.debug("gatingType2 = " + gatingType2 + "\n");
+            }
+        } // if (seriesRevisionSubnumber >= 7)
+        
         // block 10 - image header
         raFile.seek(10*512 + 2*0);
         // "IMAGE HEADER"
@@ -1352,6 +1443,7 @@ public class FileGESigna4X extends FileBase {
         // form xx.xx.xx
         imageHeaderRevisionNumber = getString(8);
         fileInfo.setImageHeaderRevisionNumber(imageHeaderRevisionNumber);
+        imageRevisionSubnumber = Integer.valueOf(imageHeaderRevisionNumber.substring(3,5)).intValue();
         
         // 10*512 + 2*11
         // Number of image header blocks in units of 512 bytes; value of 2 expected
@@ -1439,8 +1531,7 @@ public class FileGESigna4X extends FileBase {
         
         // 10*512 + 2*77
         // image thickness
-        thickness = getFloat(endianess);  // In theory 20*res[0] = 20*res[1]
-                                          // In practice 10*res[0] = 10*res[1]
+        thickness = getFloat(endianess);  // In practice 10*res[0] = 10*res[1]
         fileInfo.setThickness(thickness);
         
         // 10*512 + 2*79
@@ -1508,7 +1599,32 @@ public class FileGESigna4X extends FileBase {
         psdFileName = getString(32);
         fileInfo.setPSDFileName(psdFileName);
         
-        raFile.seek(10*512 + 2*125);
+        // 10*512 + 2*119
+        psdDay = (short)getSignedShort(endianess);
+        fileInfo.setPSDDay(psdDay);
+        
+        // 10*512 + 2*120
+        psdMonth = (short)getSignedShort(endianess);
+        fileInfo.setPSDMonth(psdMonth);
+        
+        // 10*512 + 2*121
+        // Year - 1900
+        psdYear = (short)getSignedShort(endianess);
+        fileInfo.setPSDYear(psdYear);
+        
+        // 10*512 + 2*122
+        psdHour = (short)getSignedShort(endianess);
+        fileInfo.setPSDHour(psdHour);
+        
+        // 10*512 + 2*123
+        psdMinute = (short)getSignedShort(endianess);
+        fileInfo.setPSDMinute(psdMinute);
+        
+        // 10*512 + 2*124
+        psdSeconds = (short)getSignedShort(endianess);
+        fileInfo.setPSDSeconds(psdSeconds);
+        
+        // 10*512 + 2*125
         graphicallyPrescribed = (short)getSignedShort(endianess);
         if (graphicallyPrescribed != 0) {
             fileInfo.setGraphicallyPrescribed("Graphically prescribed");
@@ -1540,12 +1656,9 @@ public class FileGESigna4X extends FileBase {
         }
         
         raFile.seek(10*512 + 2*139);
-        pixelSize = getFloat(endianess); // In theory 20*res[2]
-                                         // In practice 5*res[2]
+        pixelSize = getFloat(endianess); // In practice 5*res[2]
         fileInfo.setPixelSize(pixelSize); // millimeters
-        // Note that you must multiply by a kludge factor of 4 to obtain the
-        // right answer
-        fileInfo.setResolutions(pixelSize* 4.0f/20.0f, 2);
+        fileInfo.setResolutions(pixelSize/5.0f, 2);
         
         raFile.seek(10*512 + 2*143);
         defaultWindow = (short)getSignedShort(endianess);
@@ -1874,6 +1987,61 @@ public class FileGESigna4X extends FileBase {
         pauseTime = getFloat(endianess);
         fileInfo.setPauseTime(pauseTime);
         
+        // 10*512 + 2*236
+        // Bitmap defining user CV's.  Bit mask, tells how many scan fields come up
+        userBitmap = (short)getSignedShort(endianess);
+        // User defined variables that are PSD dependent
+        if ((userBitmap & 1) != 0) {
+            // 10*512 + 2*237
+            user0 = getFloat(endianess);
+            fileInfo.setUser0(user0);
+        }
+        if ((userBitmap & 2) != 0) {
+            raFile.seek(10*512 + 2*239);
+            user1 = getFloat(endianess);
+            fileInfo.setUser1(user1);
+        }
+        if ((userBitmap & 4) != 0) {
+            raFile.seek(10*512 + 2*241);
+            user2 = getFloat(endianess);
+            fileInfo.setUser2(user2);
+        }
+        if ((userBitmap & 8) != 0) {
+            raFile.seek(10*512 + 2*243);
+            user3 = getFloat(endianess);
+            fileInfo.setUser3(user3);
+        }
+        if ((userBitmap & 16) != 0) {
+            raFile.seek(10*512 + 2*245);
+            user4 = getFloat(endianess);
+            fileInfo.setUser4(user4);
+        }
+        if ((userBitmap & 32) != 0) {
+            raFile.seek(10*512 + 2*247);
+            user5 = getFloat(endianess);
+            fileInfo.setUser5(user5);
+        }
+        if ((userBitmap & 64) != 0) {
+            raFile.seek(10*512 + 2*249);
+            user6 = getFloat(endianess);
+            fileInfo.setUser6(user6);
+        }
+        if ((userBitmap & 128) != 0) {
+            raFile.seek(10*512 + 2*251);
+            user7 = getFloat(endianess);
+            fileInfo.setUser7(user7);
+        }
+        if ((userBitmap & 256) != 0) {
+            raFile.seek(10*512 + 2*253);
+            user8 = getFloat(endianess);
+            fileInfo.setUser8(user8);
+        }
+        if ((userBitmap & 512) != 0) {
+            raFile.seek(10*512 + 2*255);
+            user9 = getFloat(endianess);
+            fileInfo.setUser9(user9);
+        }
+        
         raFile.seek(10*512 + 2*257);
         // Most like normal plane
         obliquePlane = (short)getSignedShort(endianess);
@@ -1996,7 +2164,7 @@ public class FileGESigna4X extends FileBase {
         }
         
         // 10*512 + 2*281
-        // See swapPF
+        // See swapPF at 10*512 + 2*232
         pfSwapped = (short)getSignedShort(endianess);
         if (pfSwapped == 0) {
             fileInfo.setPFSwapped("Phase and frequency not swapped");
@@ -2034,6 +2202,206 @@ public class FileGESigna4X extends FileBase {
         prescanReceiveAttenuation2 = (short)getSignedShort(endianess);
         fileInfo.setPrescanReceiveAttenuation2(prescanReceiveAttenuation2);
         
+        // 10*512 + 2*287
+        autoManualPrescan = (short)getSignedShort(endianess);
+        if (autoManualPrescan == 0) {
+            fileInfo.setAutoManualPrescan("No auto or manual prescan");
+        }
+        else if (autoManualPrescan == 1) {
+            fileInfo.setAutoManualPrescan("Auto prescan failed.");
+        }
+        else if (autoManualPrescan == 2) {
+            fileInfo.setAutoManualPrescan("Auto prescan succeeded.");
+        }
+        else if (autoManualPrescan == 3) {
+            fileInfo.setAutoManualPrescan("Manual prescan");
+        }
+        else if (autoManualPrescan == 4) {
+            fileInfo.setAutoManualPrescan("Auto prescan failed.  Manual prescan done.");
+        }
+        else if (autoManualPrescan == 5) {
+            fileInfo.setAutoManualPrescan("Auto prescan succeeded.  Manual prescan done.");
+        }
+        else {
+            Preferences.debug("autoManualPrescan = " + autoManualPrescan + "\n");
+        }
+        
+        // 10*512 + 2*288
+        changedValuesBitmap = (short)getSignedShort(endianess);
+        changedValuesString = "none";
+        if ((changedValuesBitmap & 1) != 0) {
+            changedValuesString = changedValuesString.concat("_CF");
+        }
+        if ((changedValuesBitmap & 2) != 0) {
+            changedValuesString = changedValuesString.concat("_TA");
+        }
+        if ((changedValuesBitmap & 4) != 0) {
+            changedValuesString = changedValuesString.concat("_R1");
+        }
+        if ((changedValuesBitmap & 8) != 0) {
+            changedValuesString = changedValuesString.concat("_R2");
+        }
+        
+        if (changedValuesBitmap != 0) {
+            i = changedValuesString.indexOf("_");
+            changedValuesString = changedValuesString.substring(i+1);
+        }
+        fileInfo.setChangedValues(changedValuesString);
+        
+        // 10*512 + 2*289
+        imageType = (short)getSignedShort(endianess);
+        if (imageType == 0) {
+            fileInfo.setImageType("Magnitude");
+        }
+        else if (imageType == 1) {
+            fileInfo.setImageType("Phase");
+        }
+        else if (imageType == 2) {
+            fileInfo.setImageType("Real");
+        }
+        else if (imageType == 3) {
+            fileInfo.setImageType("Imaginary");
+        }
+        else {
+            Preferences.debug("imageType = " + imageType + "\n");
+        }
+        
+        // 10*512 + 2*290
+        collapseImage = (short)getSignedShort(endianess);
+        if (collapseImage == 0) {
+            fileInfo.setCollapseImage("Off");
+        }
+        else if (collapseImage == 1) {
+            fileInfo.setCollapseImage("Col");
+        }
+        else if (collapseImage == 2) {
+            fileInfo.setCollapseImage("Mag");
+        }
+        else if (collapseImage == 3) {
+            fileInfo.setCollapseImage("R/L");
+        }
+        else if (collapseImage == 4) {
+            fileInfo.setCollapseImage("A/P");
+        }
+        else if (collapseImage == 5) {
+            fileInfo.setCollapseImage("S/I");
+        }
+        else if (collapseImage == 6) {
+            fileInfo.setCollapseImage("PJN");
+        }
+        else if (collapseImage == 7) {
+            fileInfo.setCollapseImage("ALL");
+        }
+        else if (collapseImage == 8) {
+            fileInfo.setCollapseImage("Omag");
+        }
+        else if (collapseImage == 9) {
+            fileInfo.setCollapseImage("OR/L");
+        }
+        else if (collapseImage == 10) {
+            fileInfo.setCollapseImage("OA/P");
+        }
+        else if (collapseImage == 11) {
+            fileInfo.setCollapseImage("OS/I");
+        }
+        else if (collapseImage == 12) {
+            fileInfo.setCollapseImage("OALL");
+        }
+        else if (collapseImage == 13) {
+            fileInfo.setCollapseImage("OCOL");
+        }
+        else {
+            Preferences.debug("collapseImage = " + collapseImage + "\n");
+        }
+        
+        // 10*512 + 2*291
+        sliceThicknessDisclaimer = (short)getSignedShort(endianess);
+        if (sliceThicknessDisclaimer == 0) {
+            fileInfo.setSliceThicknessDisclaimer("No");
+        }
+        else {
+            fileInfo.setSliceThicknessDisclaimer("Yes");
+        }
+        
+        // 10*512 + 2*292
+        // Operator type in.  In units of mm/sec.
+        PCVelocityEncoding = (short)getSignedShort(endianess);
+        fileInfo.setPCVelocityEncoding(PCVelocityEncoding);
+        
+        // 10*512 + 2*293
+        // Tardis projection angle in degrees.
+        projectionAngle = getFloat(endianess);
+        fileInfo.setProjectionAngle(projectionAngle);
+        
+        // 10*512 + 2*295
+        concatenatedSATSelection = (short)getSignedShort(endianess);
+        if (concatenatedSATSelection == 0) {
+            fileInfo.setConcatenatedSATSelection("Off");
+        }
+        else {
+            fileInfo.setConcatenatedSATSelection("On");
+        }
+        
+        if (imageRevisionSubnumber >= 7) {
+            // 10*512 + 2*296
+            fractionalEffectiveEcho = (short)getSignedShort(endianess);
+            if (fractionalEffectiveEcho == 0) {
+                fileInfo.setFractionalEffectiveEcho("Fractional/Effective Echo Off");
+            }
+            else if (fractionalEffectiveEcho == 1) {
+                fileInfo.setFractionalEffectiveEcho("Fractional Echo");
+            }
+            else if (fractionalEffectiveEcho == 2) {
+                fileInfo.setFractionalEffectiveEcho("Effective Echo");
+            }
+            else if (fractionalEffectiveEcho == 3) {
+                fileInfo.setFractionalEffectiveEcho("Fractional/Effective Echo");
+            }
+            else {
+                Preferences.debug("fractionalEffectiveEcho = " + fractionalEffectiveEcho + "\n");
+            }
+            
+            // 10*512 + 2*297
+            // Echo train length [4...16]
+            echoTrainLength = getInt(endianess);
+            fileInfo.setEchoTrainLength(echoTrainLength);
+            
+            // 10*512 + 2*299
+            // Slice multiplier to obtain phases for FAST
+            // For multiphase scans(MP option).  Number of phases per location
+            sliceMultiplier = (short)getSignedShort(endianess);
+            fileInfo.setSliceMultiplier(sliceMultiplier);
+        } // if (imageRevisionSubnumber >= 7)
+        
+        if (imageRevisionSubnumber >= 8) {
+            // 10*512 + 2*300
+            // Cardiac phase number that the current image represents
+            cardiacPhaseNumber = (short)getSignedShort(endianess);
+            fileInfo.setCardiacPhaseNumber(cardiacPhaseNumber);
+            
+            // 10*512 + 2*301
+            // Number of acquisitions in scan [1...60]
+            scanAcquisitionNumber = (short)getSignedShort(endianess);
+            fileInfo.setScanAcquisitionNumber(scanAcquisitionNumber);
+            
+            // 10*512 + 2*302
+            vascularImagingFlags = (short)getSignedShort(endianess);
+            if ((vascularImagingFlags & 1) != 0) {
+                fileInfo.setVascularImagingFlags("No Flags");
+            }
+            else if ((vascularImagingFlags & 2) != 0) {
+                fileInfo.setVascularImagingFlags("Magweight");
+            }
+            else {
+                Preferences.debug("vascularImagingFlags = " + vascularImagingFlags + "\n");
+            }
+            
+            // 10*512 + 2*303
+            // Scaling factor for venc. from Recon.
+            vencScalingFactor = getFloat(endianess);
+            fileInfo.setVencScalingFactor(vencScalingFactor);
+        } // if (imageRevisionSubnumber >= 8)
+         
         raFile.seek(14336);
         readBuffer(buffer);
     }
