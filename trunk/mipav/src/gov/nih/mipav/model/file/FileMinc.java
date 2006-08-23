@@ -722,9 +722,10 @@ public class FileMinc extends FileBase {
         progressBar.updateValue(10, options.isRunningInSeparateThread());
 
         try {
+  
             image = new ModelImage(_image.getFileInfo()[0].getDataType(), _image.getFileInfo()[0].getExtents(),
                                    _image.getImageFileName());
-
+     
             image.copyFileTypeInfo(_image);
             
             FileInfoBase fileInfo = _image.getFileInfo(0);
@@ -757,27 +758,38 @@ public class FileMinc extends FileBase {
             double smin, smax; // slice min and max
             for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
                 jp = j - options.getBeginSlice();
-                _image.exportData(j * sliceSize, sliceSize, sliceData);
-                smin = Double.MAX_VALUE;
-                smax = -Double.MAX_VALUE;
 
-                // calculate min max values per slice
-                for (int k = 0; k < sliceData.length; k++) {
-
-                    if (sliceData[k] < smin) {
-                        smin = sliceData[k];
-                    }
-
-                    if (sliceData[k] > smax) {
-                        smax = sliceData[k];
-                    }
+                if (_image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT ||
+                    _image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE   ){
+                    slopes[jp] = 1.0;
+                    intercepts[jp] = 0.0;
+                    mins[jp] = vmin;
+                    maxs[jp] = vmax;
                 }
+                else {
+                    
+                    _image.exportData(j * sliceSize, sliceSize, sliceData);
+                    smin = Double.MAX_VALUE;
+                    smax = -Double.MAX_VALUE;
 
-                mins[jp] = smin;
-                maxs[jp] = smax;
+                    // calculate min max values per slice
+                    for (int k = 0; k < sliceData.length; k++) {
 
-                slopes[jp] = (smax - smin) / slopeDivisor;
-                intercepts[jp] = smin - (slopes[jp] * vmin);
+                        if (sliceData[k] < smin) {
+                            smin = sliceData[k];
+                        }
+
+                        if (sliceData[k] > smax) {
+                            smax = sliceData[k];
+                        }
+                    }
+
+                    mins[jp] = smin;
+                    maxs[jp] = smax;
+
+                    slopes[jp] = (smax - smin) / slopeDivisor;
+                    intercepts[jp] = smin - (slopes[jp] * vmin);
+                }
             }
 
             if (!options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileBase.MINC)) {
