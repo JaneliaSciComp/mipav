@@ -112,8 +112,6 @@ public class FileImageXML extends FileXML {
     /** Thumbnail data and AWT Image. */
     private Thumbnail thumbnail = null;
 
-    /** boolean to determine if LUT was included in header. */
-    private boolean usesLUT = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -388,6 +386,8 @@ public class FileImageXML extends FileXML {
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
 
+        ViewJProgressBar progressBar = null;
+        
         float[][] resolutions = null;
 
         TalairachTransformInfo talairach = new TalairachTransformInfo();
@@ -475,6 +475,15 @@ public class FileImageXML extends FileXML {
                 }
             }
 
+            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
+                    UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null,
+                    null);
+
+            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            rawFile.addProgressChangeListener(progressBar);
+            
+            progressBar.updateValue(0, true);
+            
             rawFile.readImage(image, offset);
 
             if (readFileName.indexOf(".img") == (readFileName.length() - 4)) {
@@ -532,10 +541,12 @@ public class FileImageXML extends FileXML {
             }
 
         } catch (IOException error) {
+            progressBar.dispose();
             image.disposeLocal();
             throw new IOException("FileXML: " + error);
         } catch (OutOfMemoryError e) {
             image.disposeLocal();
+            progressBar.dispose();
             throw (e);
         }
 
@@ -557,7 +568,7 @@ public class FileImageXML extends FileXML {
 
             annotationVector.removeAllElements();
         }
-
+        progressBar.dispose();
         return image;
     }
 
@@ -1922,7 +1933,6 @@ public class FileImageXML extends FileXML {
             LUT.setColor(m, (int) lv.alpha, (int) lv.red, (int) lv.green, (int) lv.blue);
         }
 
-        this.usesLUT = true;
     }
 
     /**
@@ -1951,7 +1961,6 @@ public class FileImageXML extends FileXML {
             modelRGB.set(3, m, lv.blue);
         }
 
-        this.usesLUT = true;
     }
 
     /**
