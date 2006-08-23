@@ -7820,17 +7820,11 @@ public class FileIO {
             showProgressBar = false;
         }
 
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
-
-        if (pInterface != null) {
-            showProgressBar = true;
-        }
+        
 
         try {
             imageFile = new FileImageXML(UI, fileName, fileDir, showProgressBar);
-            imageFile.setPBar(pInterface);
+            //imageFile.addProgressChangeListener(progressBar);
             image = imageFile.readImage(one);
             LUT = imageFile.getModelLUT();
             modelRGB = imageFile.getModelRGB();
