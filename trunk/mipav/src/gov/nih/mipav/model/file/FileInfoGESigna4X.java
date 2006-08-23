@@ -186,6 +186,8 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String phaseContrastFlowAxis = null;
     
+    private String gatingType2 = null;
+    
     private String imageHeaderID = null;
     
     private String imageHeaderRevisionNumber = null;
@@ -224,8 +226,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private float tablePosition = Float.NaN;
     
-    private float thickness = Float.NaN; // In theory 20 * resolution[0] = 20 * resolution[1]
-                                         // In practice 10 * res[0] = 10 * res[1]
+    private float thickness = Float.NaN; // In practice 10 * res[0] = 10 * res[1]
     
     private float imageSpacing = Float.NaN;
     
@@ -247,14 +248,25 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String imageShape = null;
     
-    private float pixelSize = Float.NaN; // In theory 20 * res[2]
-                                         // In practice 5 * res[2]
+    private float pixelSize = Float.NaN; // In practice 5 * res[2]
     
     private short averagesNumber = -32768;
     
     private String researchMode = null;
     
     private String psdFileName = null;
+    
+    private short psdDay;
+    
+    private short psdMonth;
+    
+    private short psdYear; // Year - 1900
+    
+    private short psdHour;
+    
+    private short psdMinute;
+    
+    private short psdSeconds;
     
     private String graphicallyPrescribed = null;
     
@@ -362,6 +374,26 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private float pauseTime = Float.NaN;
     
+    private float user0 = Float.NaN;
+    
+    private float user1 = Float.NaN;
+    
+    private float user2 = Float.NaN;
+    
+    private float user3 = Float.NaN;
+    
+    private float user4 = Float.NaN;
+    
+    private float user5 = Float.NaN;
+    
+    private float user6 = Float.NaN;
+    
+    private float user7 = Float.NaN;
+    
+    private float user8 = Float.NaN;
+    
+    private float user9 = Float.NaN;
+    
     private String obliquePlane = null;
     
     private String contrastUsed = null;
@@ -399,6 +431,36 @@ public class FileInfoGESigna4X extends FileInfoBase {
     private short prescanReceiveAttenuation1 = -32768;
     
     private short prescanReceiveAttenuation2 = -32768;
+    
+    private String autoManualPrescan = null;
+    
+    private String changedValues = null;
+    
+    public String imageType = null;
+    
+    private String collapseImage = null;
+    
+    private String sliceThicknessDisclaimer = null;
+    
+    private short PCVelocityEncoding = -32768;
+    
+    private float projectionAngle = Float.NaN;
+    
+    private String concatenatedSATSelection = null;
+    
+    private String fractionalEffectiveEcho = null;
+    
+    private int echoTrainLength = Integer.MIN_VALUE;
+    
+    private short sliceMultiplier = -32768;
+    
+    private short cardiacPhaseNumber = -32768;
+    
+    private short scanAcquisitionNumber = -32768;
+    
+    private String vascularImagingFlags = null;
+    
+    private float vencScalingFactor = Float.NaN;
 
     /** DOCUMENT ME! */
     private int year;
@@ -1156,6 +1218,10 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Phase contrast flow axis = " + phaseContrastFlowAxis + "\n");
         }
         
+        if (gatingType2 != null) {
+            dialog.append("Gating type - 2nd word = " + gatingType2 + "\n");
+        }
+        
         dialog.append("\nImage header\n");
         
         if (imageHeaderID != null) {
@@ -1402,9 +1468,65 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Time between excitation pulses within the R-R interval = " +
                            interImageDelay + " milliseconds\n");
         }
+        
         if ((psdName != null) && (psdName.trim() != null) &&
             (psdName.trim().length() != 0)) {
             dialog.append("PSD name = " + psdName.trim() + "\n");
+            String monthStr = null;
+            switch(psdMonth) {
+                case 1:
+                    monthStr = "January";
+                    break;
+                case 2:
+                    monthStr = "February";
+                    break;
+                case 3:
+                    monthStr = "March";
+                    break;
+                case 4:
+                    monthStr = "April";
+                    break;
+                case 5:
+                    monthStr = "May";
+                    break;
+                case 6:
+                    monthStr = "June";
+                    break;
+                case 7:
+                    monthStr = "July";
+                    break;
+                case 8:
+                    monthStr = "August";
+                    break;
+                case 9:
+                    monthStr = "September";
+                    break;
+                case 10:
+                    monthStr = "October";
+                    break;
+                case 11:
+                    monthStr = "November";
+                    break;
+                case 12:
+                    monthStr = "December";
+                    break;
+                default:
+                    monthStr = "Unknown month";
+            }
+            
+            String dayStr = String.valueOf(psdDay);
+            String yearStr = String.valueOf(psdYear + 1900);
+            dialog.append("PSD file creation date = " + monthStr + " " + dayStr + ", " + yearStr + "\n");
+            String hourStr = String.valueOf(psdHour);
+            String minuteStr = String.valueOf(psdMinute);
+            if (minuteStr.length() < 2) {
+                minuteStr = "0".concat(minuteStr);
+            }
+            String secondsStr = String.valueOf(psdSeconds);
+            if (secondsStr.length() < 2) {
+                secondsStr = "0".concat(secondsStr);
+            }
+            dialog.append("PSD file creation time = " + hourStr + ":" + minuteStr + ":" + secondsStr + "\n");
         }
         
         if (flipAngle != -32768) {
@@ -1526,6 +1648,46 @@ public class FileInfoGESigna4X extends FileInfoBase {
             dialog.append("Pause time = " + pauseTime + " milliseconds\n");
         }
         
+        if (!Float.isNaN(user0)) {
+            dialog.append("User 0 = " + user0 + "\n");
+        }
+        
+        if (!Float.isNaN(user1)) {
+            dialog.append("User 1 = " + user1 + "\n");
+        }
+        
+        if (!Float.isNaN(user2)) {
+            dialog.append("User 2 = " + user2 + "\n");
+        }
+        
+        if (!Float.isNaN(user3)) {
+            dialog.append("User 3 = " + user3 + "\n");
+        }
+        
+        if (!Float.isNaN(user4)) {
+            dialog.append("User 4 = " + user4 + "\n");
+        }
+        
+        if (!Float.isNaN(user5)) {
+            dialog.append("User 5 = " + user5 + "\n");
+        }
+        
+        if (!Float.isNaN(user6)) {
+            dialog.append("User 6 = " + user6 + "\n");
+        }
+        
+        if (!Float.isNaN(user7)) {
+            dialog.append("User 7 = " + user7 + "\n");
+        }
+        
+        if (!Float.isNaN(user8)) {
+            dialog.append("User 8 = " + user8 + "\n");
+        }
+        
+        if (!Float.isNaN(user9)) {
+            dialog.append("User 9 = " + user9 + "\n");
+        }
+        
         if (obliquePlane != null) {
             dialog.append("Oblique plane = " + obliquePlane + "\n");
         }
@@ -1604,6 +1766,66 @@ public class FileInfoGESigna4X extends FileInfoBase {
         
         if (prescanReceiveAttenuation2 > 0) {
             dialog.append("Prescan Receive Attenuation 2 = " + prescanReceiveAttenuation2 + "\n");
+        }
+        
+        if (autoManualPrescan != null) {
+            dialog.append(autoManualPrescan + "\n");
+        }
+        
+        if (changedValues != null) {
+            dialog.append("Changed values = " + changedValues + "\n");
+        }
+        
+        if (imageType != null) {
+            dialog.append("Type = " + imageType + "\n");
+        }
+        
+        if (collapseImage != null) {
+            dialog.append("Collapse Image = " + collapseImage + "\n");
+        }
+        
+        if (sliceThicknessDisclaimer != null) {
+            dialog.append("Slice thickness disclaimer = " + sliceThicknessDisclaimer + "\n");
+        }
+        
+        if (PCVelocityEncoding != -32768) {
+            dialog.append("PC velocity encoding = " + PCVelocityEncoding + " mm/sec\n"); 
+        }
+        
+        if (!Float.isNaN(projectionAngle)) {
+            dialog.append("Tardis projection angle = " + projectionAngle + " degrees\n");
+        }
+        
+        if (concatenatedSATSelection != null) {
+            dialog.append("Concatenated SAT selection = " + concatenatedSATSelection + "\n");
+        }
+        
+        if (fractionalEffectiveEcho != null) {
+            dialog.append(fractionalEffectiveEcho + "\n");
+        }
+        
+        if (echoTrainLength >= 0) {
+            dialog.append("Echo train length = " + echoTrainLength + "\n");
+        }
+        
+        if (sliceMultiplier != -32768) {
+            dialog.append("Slice multiplier to obtain phases for FAST = " + sliceMultiplier + "\n");
+        }
+        
+        if (cardiacPhaseNumber != -32768) {
+            dialog.append("Cardiac phase number = " + cardiacPhaseNumber + "\n");
+        }
+        
+        if (scanAcquisitionNumber >= 0) {
+            dialog.append("Number of acquisitions in scan = " + scanAcquisitionNumber + "\n");
+        }
+        
+        if (vascularImagingFlags != null) {
+            dialog.append("Vascular imaging flags = " + vascularImagingFlags + "\n");
+        }
+        
+        if (!Float.isNaN(vencScalingFactor)) {
+            dialog.append("Venc scaling factor = " + vencScalingFactor + "\n");
         }
         
         dialog.setSize(600, 500);
@@ -2303,6 +2525,14 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param gatingType2
+     */
+    public void setGatingType2(String gatingType2) {
+        this.gatingType2 = gatingType2;
+    }
+    
+    /**
+     * 
      * @param imageHeaderID
      */
     public void setImageHeaderID(String imageHeaderID) {
@@ -2455,8 +2685,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param imageThickness = in theory 20*res[0] = 20*res[1]
-     *                       = in practice 10*res[0] = 10 *res[1]
+     * @param imageThickness = in practice 10*res[0] = 10 *res[1]
      */
     public void setThickness(float thickness) {
         this.thickness = thickness;
@@ -2544,8 +2773,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param pixelSize // In theory 20 * pixel resolution[2]
-     *                  // In practice 5 * pixel resolution[2]
+     * @param pixelSize // In practice 5 * pixel resolution[2]
      */
     public void setPixelSize(float pixelSize) {
         this.pixelSize = pixelSize;
@@ -2573,6 +2801,54 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPSDFileName(String psdFileName) {
         this.psdFileName = psdFileName;
+    }
+    
+    /**
+     * 
+     * @param psdDay
+     */
+    public void setPSDDay(short psdDay) {
+        this.psdDay = psdDay;
+    }
+    
+    /**
+     * 
+     * @param psdMonth
+     */
+    public void setPSDMonth(short psdMonth) {
+        this.psdMonth = psdMonth;
+    }
+    
+    /**
+     * 
+     * @param psdYear Year - 1900
+     */
+    public void setPSDYear(short psdYear) {
+        this.psdYear = psdYear;
+    }
+    
+    /**
+     * 
+     * @param psdHour
+     */
+    public void setPSDHour(short psdHour) {
+        this.psdHour = psdHour;
+    }
+    
+    /**
+     * 
+     * @param psdMinute
+     */
+    public void setPSDMinute(short psdMinute) {
+        this.psdMinute = psdMinute;
+    }
+    
+    /**
+     * 
+     * @param psdSeconds
+     */
+    public void setPSDSeconds(short psdSeconds) {
+        this.psdSeconds = psdSeconds;
     }
     
     /**
@@ -2997,6 +3273,86 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
+     * @param user0
+     */
+    public void setUser0(float user0) {
+        this.user0 = user0;
+    }
+    
+    /**
+     * 
+     * @param user1
+     */
+    public void setUser1(float user1) {
+        this.user1 = user1;
+    }
+    
+    /**
+     * 
+     * @param user2
+     */
+    public void setUser2(float user2) {
+        this.user2 = user2;
+    }
+    
+    /**
+     * 
+     * @param user3
+     */
+    public void setUser3(float user3) {
+        this.user3 = user3;
+    }
+    
+    /**
+     * 
+     * @param user4
+     */
+    public void setUser4(float user4) {
+        this.user4 = user4;
+    }
+    
+    /**
+     * 
+     * @param user5
+     */
+    public void setUser5(float user5) {
+        this.user5 = user5;
+    }
+    
+    /**
+     * 
+     * @param user6
+     */
+    public void setUser6(float user6) {
+        this.user6 = user6;
+    }
+    
+    /**
+     * 
+     * @param user7
+     */
+    public void setUser7(float user7) {
+        this.user7 = user7;
+    }
+    
+    /**
+     * 
+     * @param user8
+     */
+    public void setUser8(float user8) {
+        this.user8 = user8;
+    }
+    
+    /**
+     * 
+     * @param user9
+     */
+    public void setUser9(float user9) {
+        this.user9 = user9;
+    }
+    
+    /**
+     * 
      * @param obliquePlane
      */
     public void setObliquePlane(String obliquePlane) {
@@ -3145,6 +3501,126 @@ public class FileInfoGESigna4X extends FileInfoBase {
      */
     public void setPrescanReceiveAttenuation2(short prescanReceiveAttenuation2) {
         this.prescanReceiveAttenuation2 = prescanReceiveAttenuation2;
+    }
+    
+    /**
+     * 
+     * @param autoManualPrescan
+     */
+    public void setAutoManualPrescan(String autoManualPrescan) {
+        this.autoManualPrescan = autoManualPrescan;
+    }
+    
+    /**
+     * 
+     * @param changedValues
+     */
+    public void setChangedValues(String changedValues) {
+        this.changedValues = changedValues;
+    }
+    
+    /**
+     * 
+     * @param imageType
+     */
+    public void setImageType(String imageType) {
+        this.imageType = imageType;
+    }
+    
+    /**
+     * 
+     * @param collapseImage
+     */
+    public void setCollapseImage(String collapseImage) {
+        this.collapseImage = collapseImage;
+    }
+    
+    /**
+     * 
+     * @param sliceThicknessDisclaimer
+     */
+    public void setSliceThicknessDisclaimer(String sliceThicknessDisclaimer) {
+        this.sliceThicknessDisclaimer = sliceThicknessDisclaimer;
+    }
+    
+    /**
+     * 
+     * @param PCVelocityEncoding
+     */
+    public void setPCVelocityEncoding(short PCVelocityEncoding) {
+        this.PCVelocityEncoding = PCVelocityEncoding;
+    }
+    
+    /**
+     * 
+     * @param projectionAngle
+     */
+    public void setProjectionAngle(float projectionAngle) {
+        this.projectionAngle = projectionAngle;
+    }
+    
+    /**
+     * 
+     * @param concatenatedSATSelection
+     */
+    public void setConcatenatedSATSelection(String concatenatedSATSelection) {
+        this.concatenatedSATSelection = concatenatedSATSelection;
+    }
+    
+    /**
+     * 
+     * @param fractionalEffectiveEcho
+     */
+    public void setFractionalEffectiveEcho(String fractionalEffectiveEcho) {
+        this.fractionalEffectiveEcho = fractionalEffectiveEcho;
+    }
+    
+    /**
+     * 
+     * @param echoTrainLength
+     */
+    public void setEchoTrainLength(int echoTrainLength) {
+        this.echoTrainLength = echoTrainLength;
+    }
+    
+    /**
+     * 
+     * @param sliceMultiplier
+     */
+    public void setSliceMultiplier(short sliceMultiplier) {
+        this.sliceMultiplier = sliceMultiplier;
+    }
+    
+    /**
+     * 
+     * @param cardiacPhaseNumber
+     */
+    public void setCardiacPhaseNumber(short cardiacPhaseNumber) {
+        this.cardiacPhaseNumber = cardiacPhaseNumber;
+    }
+    
+    /**
+     * 
+     * @param scanAcquisitionNumber
+     */
+    public void setScanAcquisitionNumber(short scanAcquisitionNumber) {
+        this.scanAcquisitionNumber = scanAcquisitionNumber;
+    }
+    
+    /**
+     * 
+     * @param vascularImagingFlags
+     */
+    public void setVascularImagingFlags(String vascularImagingFlags) {
+        this.vascularImagingFlags = vascularImagingFlags;
+    }
+    
+    /**
+     * 
+     * @param vecnScalingFactor
+     */
+    public void setVencScalingFactor(float vecnScalingFactor) {
+        this.vencScalingFactor = vencScalingFactor;
     }
 
 }
