@@ -267,6 +267,7 @@ public abstract class ViewJFrameBase extends JFrame
         boolean analyze = false; // currently displaying analyze differentl;y.  update soon
 
         // does NOT NOT NOT NOT NOT  handle ANALYZE_MULTIFILE files.
+        boolean mgh = false;
         boolean nifti = false;
         boolean nrrd = false;
         boolean spm = false;
@@ -285,6 +286,8 @@ public abstract class ViewJFrameBase extends JFrame
                 xml = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.ANALYZE) && (displayMode == IMAGE_A)) {
                 analyze = true;
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.MGH) && (displayMode == IMAGE_A)) {
+                mgh = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_A)) {
                 nifti = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.NRRD) && (displayMode == IMAGE_A)) {
@@ -317,6 +320,10 @@ public abstract class ViewJFrameBase extends JFrame
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.ANALYZE) && (displayMode == IMAGE_B)) {
                     analyze = true;
+                }
+                
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.MGH) && (displayMode == IMAGE_B)) {
+                    mgh = true;
                 }
 
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_B)) {
@@ -354,6 +361,13 @@ public abstract class ViewJFrameBase extends JFrame
         } else {
 
             if (analyze) {
+
+                if (displayMode == IMAGE_A) {
+                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
+                } else {
+                    aboutDialog = new JDialogFileInfo(this, "Image Information", imageB);
+                }
+            } else if (mgh) {
 
                 if (displayMode == IMAGE_A) {
                     aboutDialog = new JDialogFileInfo(this, "Image Information", imageA);
