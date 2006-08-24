@@ -29,7 +29,12 @@ public class FileInfoMGH extends FileInfoBase {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    private static final long serialVersionUID = -5506021019885109431L;
+    //private static final long serialVersionUID;
+    
+    /** Currently version number is 1 */
+    private int version = 1;
+    
+    private int dof;
 
     /** Default, no intent indicated. */
     public static final short NIFTI_INTENT_NONE = 0;
@@ -460,43 +465,26 @@ public class FileInfoMGH extends FileInfoBase {
 
         dialog.appendPrimaryData("Type", ModelStorageBase.getBufferTypeStr(getDataType()));
 
-        if (ModelImage.isColorImage(getDataType())) {
-            dialog.appendPrimaryData("Min red", Double.toString(getMinR()));
-            dialog.appendPrimaryData("Max red", Double.toString(getMaxR()));
-            dialog.appendPrimaryData("Min green", Double.toString(getMinG()));
-            dialog.appendPrimaryData("Max green", Double.toString(getMaxG()));
-            dialog.appendPrimaryData("Min blue", Double.toString(getMinB()));
-            dialog.appendPrimaryData("Max blue", Double.toString(getMaxB()));
-
-        } else {
-            dialog.appendPrimaryData("Min", Double.toString(getMin()));
-            dialog.appendPrimaryData("Max", Double.toString(getMax()));
-        }
-
-        dialog.appendPrimaryData("Modality", FileInfoBase.getModalityStr(getModality()));
+        
+        dialog.appendPrimaryData("Min", Double.toString(getMin()));
+        dialog.appendPrimaryData("Max", Double.toString(getMax()));
 
         dialog.appendPrimaryData("Orientation", getImageOrientationStr(getImageOrientation()));
 
         float[] resolutions; // = new float[5];
         resolutions = getResolutions();
 
-        int[] measure; // = new int[5];
-        measure = getUnitsOfMeasure();
-
         for (i = 0; i < extents.length; i++) {
 
             if (resolutions[i] > 0.0) {
                 String pixelRes = "Pixel resolution " + i;
                 dialog.appendPrimaryData(pixelRes,
-                                         Float.toString(resolutions[i]) + " " + getUnitsOfMeasureStr(measure[i]));
+                                         Float.toString(resolutions[i]));
             } // end of if (resolutions[i] > 0.0)
         } // for (i=0; i < 5; i++)
 
-        if (getEndianess() == FileBase.LITTLE_ENDIAN) {
-            dialog.appendPrimaryData("Endianess", "Little Endian");
-        } else {
-            dialog.appendPrimaryData("Endianess", "Big Endian");
-        }
+        
+        dialog.appendPrimaryData("Endianess", "Big Endian");
 
         if (matrix != null) {
 
@@ -504,399 +492,7 @@ public class FileInfoMGH extends FileInfoBase {
             // calling prg might use an editing panel to adjust this matrix
             dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
         }
-
-
-        // description
-        try {
-            editorChoice[0] = JDialogEditor.ANALYZE_DESCRIPTION;
-            dialog.appendSecondaryData("Description", descrip.trim(), editorChoice);
-        } catch (NullPointerException npe) {
-            editorChoice[0] = JDialogEditor.ANALYZE_DESCRIPTION;
-            dialog.appendSecondaryData("Description", "", editorChoice);
-        }
-
-
-        if (vox_offset != -1) { // vox offset
-
-            // dialog.append("voxel offset: " + vox_offset + "\n");
-            editorChoice[0] = JDialogEditor.FLOAT_STRING;
-            dialog.appendSecondaryData("Voxel Offset", Float.toString(vox_offset), editorChoice);
-        }
-
-        switch (intentCode) {
-
-            case FileInfoNIFTI.NIFTI_INTENT_NONE:
-                dialog.appendSecondaryData("Intent code", "No intention");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CORREL:
-                dialog.appendSecondaryData("Statistics code", "Correlation coefficient R");
-                dialog.appendSecondaryData("Degrees of freedom", Integer.toString(Math.round(intentP1)));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_TTEST:
-                dialog.appendSecondaryData("Statistics code", "Student t test");
-                dialog.appendSecondaryData("Degrees of freedom", Integer.toString(Math.round(intentP1)));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_FTEST:
-                dialog.appendSecondaryData("Statistics code", "Fisher F statistic");
-                dialog.appendSecondaryData("Numerator degrees of freedom", Integer.toString(Math.round(intentP1)));
-                dialog.appendSecondaryData("Denominator degrees of freedom", Integer.toString(Math.round(intentP2)));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_ZSCORE:
-                dialog.appendSecondaryData("Statistics code", "Standard normal - N(0,1) distributed");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CHISQ:
-                dialog.appendSecondaryData("Statistics code", "Chi - squared");
-                dialog.appendSecondaryData("Degrees of freedom", Integer.toString(Math.round(intentP1)));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_BETA:
-                dialog.appendSecondaryData("Statistics code", "Beta distribution");
-                dialog.appendSecondaryData("a parameter", Float.toString(intentP1));
-                dialog.appendSecondaryData("b parameter", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_BINOM:
-                dialog.appendSecondaryData("Statistics code", "Binomial distribution");
-                dialog.appendSecondaryData("Number of trials", Integer.toString(Math.round(intentP1)));
-                dialog.appendSecondaryData("Probability per trial", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_GAMMA:
-                dialog.appendSecondaryData("Statistics code", "Gamma with PDF = x**(shape-1) * exp(-Scale*x)");
-                dialog.appendSecondaryData("Shape", Float.toString(intentP1));
-                dialog.appendSecondaryData("Scale", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_POISSON:
-                dialog.appendSecondaryData("Statistics code", "Poisson distribution");
-                dialog.appendSecondaryData("Mean", Float.toString(intentP1));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_NORMAL:
-                dialog.appendSecondaryData("Statistics code", "Normal distribution");
-                dialog.appendSecondaryData("Mean", Float.toString(intentP1));
-                dialog.appendSecondaryData("Standard deviation", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_FTEST_NONC:
-                dialog.appendSecondaryData("Statistics code", "Nocentral F statistic");
-                dialog.appendSecondaryData("Numerator degrees of freedom", Integer.toString(Math.round(intentP1)));
-                dialog.appendSecondaryData("Denominator degrees of freedom", Integer.toString(Math.round(intentP2)));
-                dialog.appendSecondaryData("Numerator noncentrality parameter", Float.toString(intentP3));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CHISQ_NONC:
-                dialog.appendSecondaryData("Statistics code", "Nocentral chi-squared statistic");
-                dialog.appendSecondaryData("Degrees of freedom", Integer.toString(Math.round(intentP1)));
-                dialog.appendSecondaryData("Noncentrality parameter", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LOGISTIC:
-                dialog.appendSecondaryData("Statistics code", "Logistic distribution");
-                dialog.appendSecondaryData("Location", Float.toString(intentP1));
-                dialog.appendSecondaryData("Scale", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LAPLACE:
-                dialog.appendSecondaryData("Statistics code", "Laplace distribution");
-                dialog.appendSecondaryData("Location", Float.toString(intentP1));
-                dialog.appendSecondaryData("Scale", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_UNIFORM:
-                dialog.appendSecondaryData("Statistics code", "Uniform distribution");
-                dialog.appendSecondaryData("Start", Float.toString(intentP1));
-                dialog.appendSecondaryData("End", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_TTEST_NONC:
-                dialog.appendSecondaryData("Statistics code", "Nocentral t statistic");
-                dialog.appendSecondaryData("Degrees of freedom", Integer.toString(Math.round(intentP1)));
-                dialog.appendSecondaryData("Noncentrality parameter", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_WEIBULL:
-                dialog.appendSecondaryData("Statistics code", "Weibull distribution");
-                dialog.appendSecondaryData("Location", Float.toString(intentP1));
-                dialog.appendSecondaryData("Scale", Float.toString(intentP2));
-                dialog.appendSecondaryData("Power", Float.toString(intentP3));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CHI:
-                dialog.appendSecondaryData("Statistics code", "Chi distribution");
-
-                int p1 = Math.round(intentP1);
-                dialog.appendSecondaryData("Degrees of freedom", Integer.toString(p1));
-                if (p1 == 1) {
-                    dialog.appendSecondaryData("DOF = 1", "Half normal distribution");
-                } else if (p1 == 2) {
-                    dialog.appendSecondaryData("DOF = 2", "Rayleigh distribution");
-                } else if (p1 == 3) {
-                    dialog.appendSecondaryData("DOF = 3", "Maxwell-Boltzmann distribution");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_INVGAUSS:
-                dialog.appendSecondaryData("Statistics code", "Inverse Gaussian");
-                dialog.appendSecondaryData("Mu", Float.toString(intentP1));
-                dialog.appendSecondaryData("Lambda", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_EXTVAL:
-                dialog.appendSecondaryData("Statistics code", "Extreme value type 1");
-                dialog.appendSecondaryData("Location", Float.toString(intentP1));
-                dialog.appendSecondaryData("Scale", Float.toString(intentP2));
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_PVAL:
-                dialog.appendSecondaryData("Statistics code", "Data is a p-value");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LOGPVAL:
-                dialog.appendSecondaryData("Statistics code", "Data is a ln(p-value)");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LOG10PVAL:
-                dialog.appendSecondaryData("Statistics code", "Data is a log10(p-value)");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_ESTIMATE:
-                dialog.appendSecondaryData("Intent code", "Parameter estimate");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LABEL:
-                dialog.appendSecondaryData("Intent code", "Label index");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_NEURONAME:
-                dialog.appendSecondaryData("Intent code", "NeuroNames labels index");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_GENMATRIX:
-                dialog.appendSecondaryData("Intent code", "M x N matrix");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_SYMMATRIX:
-                dialog.appendSecondaryData("Intent code", "N x N symmetric matrix");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_DISPVECT:
-                dialog.appendSecondaryData("Intent code", "Displacement vector");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_VECTOR:
-                dialog.appendSecondaryData("Intent code", "Vector");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_POINTSET:
-                dialog.appendSecondaryData("Intent code", "Spatial coordinate");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_TRIANGLE:
-                dialog.appendSecondaryData("Intent code", "Triple of indexes");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_QUATERNION:
-                dialog.appendSecondaryData("Intent code", "Quaternion");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_DIMLESS:
-                dialog.appendSecondaryData("Intent code", "Dimless");
-
-            default:
-                dialog.appendSecondaryData("Unrecognized intent code", Short.toString(intentCode));
-        } // switch(intentCode)
-
-        String coordString = null;
-
-        switch (coord_code) {
-
-            case NIFTI_XFORM_UNKNOWN:
-                coordString = "Arbitrary";
-                break;
-
-            case NIFTI_XFORM_SCANNER_ANAT:
-                coordString = "Scanner-based anatomical";
-                break;
-
-            case NIFTI_XFORM_ALIGNED_ANAT:
-                coordString = "Aligned to another anatomy";
-
-            case NIFTI_XFORM_TALAIRACH:
-                coordString = "Talairach-Tournoux Atlas";
-                break;
-
-            case NIFTI_XFORM_MNI_152:
-                coordString = "MNI 152 normalized coordinates";
-                break;
-        }
-
-        dialog.appendSecondaryData("X,Y,Z Coordinate system", coordString);
-
-        String sourceTypeString = null;
-
-        switch (sourceType) {
-
-            case DT_UNKNOWN:
-                sourceTypeString = "UNKNOWN";
-                break;
-
-            case DT_BINARY:
-                sourceTypeString = "BOOLEAN";
-                break;
-
-            case NIFTI_TYPE_UINT8:
-                sourceTypeString = "UNSIGNED BYTE";
-                break;
-
-            case NIFTI_TYPE_INT16:
-                sourceTypeString = "SIGNED SHORT";
-                break;
-
-            case NIFTI_TYPE_INT32:
-                sourceTypeString = "SIGNED INTEGER";
-                break;
-
-            case NIFTI_TYPE_FLOAT32:
-                sourceTypeString = "FLOAT";
-                break;
-
-            case NIFTI_TYPE_COMPLEX64:
-                sourceTypeString = "COMPLEX";
-                break;
-
-            case NIFTI_TYPE_FLOAT64:
-                sourceTypeString = "DOUBLE";
-                break;
-
-            case NIFTI_TYPE_RGB24:
-                sourceTypeString = "RGB";
-                break;
-
-            case NIFTI_TYPE_INT8:
-                sourceTypeString = "SIGNED BYTE";
-                break;
-
-            case NIFTI_TYPE_UINT16:
-                sourceTypeString = "UNSIGNED SHORT";
-                break;
-
-            case NIFTI_TYPE_INT64:
-                sourceTypeString = "SIGNED LONG";
-                break;
-
-            case NIFTI_TYPE_UINT64:
-                sourceTypeString = "UNSIGNED LONG";
-                break;
-
-            case NIFTI_TYPE_FLOAT128:
-                sourceTypeString = "128 BIT FLOAT";
-                break;
-
-            case NIFTI_TYPE_COMPLEX128:
-                sourceTypeString = "DCOMPLEX";
-                break;
-
-            case NIFTI_TYPE_COMPLEX256:
-                sourceTypeString = "256 bit COMPLEX";
-                break;
-        }
-
-        dialog.appendSecondaryData("Source type", sourceTypeString);
-
-        dialog.appendSecondaryData("Slope scale", Float.toString(scl_slope));
-
-        dialog.appendSecondaryData("Added offset", Float.toString(scl_inter));
-
-        switch (freq_dim) {
-
-            case 0:
-                dialog.appendSecondaryData("Frequency encoding direction", "none");
-                break;
-
-            case 1:
-                dialog.appendSecondaryData("Frequency encoding direction", "x dimension");
-                break;
-
-            case 2:
-                dialog.appendSecondaryData("Frequency encoding direction", "y dimension");
-                break;
-
-            case 3:
-                dialog.appendSecondaryData("Frequency encoding direction", "z dimension");
-                break;
-        }
-
-        switch (phase_dim) {
-
-            case 0:
-                dialog.appendSecondaryData("Phase encoding direction", "none");
-                break;
-
-            case 1:
-                dialog.appendSecondaryData("Phase encoding direction", "x dimension");
-                break;
-
-            case 2:
-                dialog.appendSecondaryData("Phase encoding direction", "y dimension");
-                break;
-
-            case 3:
-                dialog.appendSecondaryData("Phase encoding direction", "z dimension");
-                break;
-        }
-
-        switch (slice_dim) {
-
-            case 0:
-                dialog.appendSecondaryData("Slice acquisition direction", "none");
-                break;
-
-            case 1:
-                dialog.appendSecondaryData("Slice acquisition direction", "x dimension");
-                break;
-
-            case 2:
-                dialog.appendSecondaryData("Slice acquisition direction", "y dimension");
-                break;
-
-            case 3:
-                dialog.appendSecondaryData("Slice acquisition direction", "z dimension");
-                break;
-        }
-
-        if (sliceDuration > 0) {
-            dialog.appendSecondaryData("Time used to acquire 1 slice", String.valueOf(sliceDuration));
-        }
-
-        if (sliceCode == NIFTI_SLICE_SEQ_INC) {
-            dialog.appendSecondaryData("Timing pattern of slice acquisition", "sequentially increasing");
-        } else if (sliceCode == NIFTI_SLICE_SEQ_DEC) {
-            dialog.appendSecondaryData("Timing pattern of slice acquisition", "sequentially decreasing");
-        } else if (sliceCode == NIFTI_SLICE_ALT_INC) {
-            dialog.appendSecondaryData("Timing pattern of slice acquisition", "alternately increasing");
-        } else if (sliceCode == NIFTI_SLICE_ALT_DEC) {
-            dialog.appendSecondaryData("Timing pattern of slice acquisition", "alternately decreasing");
-        } else if (sliceCode == NIFTI_SLICE_ALT_INC2) {
-            dialog.appendSecondaryData("Timing pattern of slice acquisition", "alternately increasing #2");
-        } else if (sliceCode == NIFTI_SLICE_ALT_DEC2) {
-            dialog.appendSecondaryData("Timing pattern of slice acquisition", "alternately decreasing #2");
-        }
-
-        if (sliceStart > 0) {
-            dialog.appendSecondaryData("Timing pattern starts", "slice " + String.valueOf(sliceStart + 1));
-        }
-
-        if (sliceEnd > 0) {
-            dialog.appendSecondaryData("Timing pattern ends", "slice " + String.valueOf(sliceEnd + 1));
-        }
-
+        
         editorChoice[0] = JDialogEditor.ANALYZE_AXIS_ORIENTATION;
         dialog.appendSecondaryData("Axis: x-orientation", getAxisOrientationStr(super.getAxisOrientation(0)),
                                    editorChoice);
@@ -911,31 +507,19 @@ public class FileInfoMGH extends FileInfoBase {
         dialog.appendSecondaryData("Y Origin: ", Float.toString(super.getOrigin(1)), editorChoice);
         dialog.appendSecondaryData("Z Origin: ", Float.toString(super.getOrigin(2)), editorChoice);
 
-        if (cal_min != -1) {
-            editorChoice[0] = JDialogEditor.FLOAT_STRING;
-            dialog.appendSecondaryData("cal_min", Float.toString(cal_min), editorChoice);
-        }
-
-        if (cal_max != -1) {
-            editorChoice[0] = JDialogEditor.FLOAT_STRING;
-            dialog.appendSecondaryData("cal_max", Float.toString(cal_max), editorChoice);
-        }
-
-        if (bitpix != -1) {
-            dialog.appendSecondaryData("Bits per Pixel", Integer.toString(bitpix));
-        }
-
-        if (aux_file != null) {
-
-            if (aux_file.trim().length() > 0) {
-                dialog.appendSecondaryData("aux", aux_file.trim());
-            }
-        }
-
-        if (intentName != null) {
-            dialog.appendSecondaryData("Name or meaning of data", intentName);
-        }
-
+        dialog.appendSecondaryData("Version number", String.valueOf(version));
+        
+        dialog.appendSecondaryData("DOF", String.valueOf(dof));
+        
+    }
+    
+    
+    public void setVersion(int version) {
+        this.version = version;
+    }
+    
+    public void setDOF(int dof) {
+        this.dof = dof;
     }
 
     /**
@@ -1500,40 +1084,22 @@ public class FileInfoMGH extends FileInfoBase {
 
 
     /**
-     * Propogates the current file info to another FileInfoNIFTI.
+     * Propogates the current file info to another FileInfoMGH.
      *
      * <p>It does not copy over the datatypeCode. (though, aside from, "it isn't in the about table", I can't think of a
      * reason why it shouldn't. but it doesn't.) Also, copied over is bitPix, aux_file.</p>
      *
      * @param  fInfo  DOCUMENT ME!
      */
-    public void updateFileInfos(FileInfoNIFTI fInfo) {
+    public void updateFileInfos(FileInfoMGH fInfo) {
 
         if (this == fInfo) {
             return;
         }
 
-        // fInfo.setAuxFile            (this.getAuxFile());// not editable by the table!!
-        // fInfo.setBitPix             (this.getBitPix()); // not editable by the table!!
-        fInfo.setIntentCode(this.getIntentCode());
-        fInfo.setIntentP1(this.getIntentP1());
-        fInfo.setIntentP2(this.getIntentP2());
-        fInfo.setIntentP3(this.getIntentP3());
-        fInfo.setCoordCode(this.getCoordCode());
-        fInfo.setCalMin(this.getCalMin());
-        fInfo.setCalMax(this.getCalMax());
-        fInfo.setSliceDuration(this.getSliceDuration());
-
-        // fInfo.setDataTypeCode       (this.getDataTypeCode());//not edited by the table!!
-        fInfo.setDescription(this.getDescription());
-        fInfo.setSliceStart(this.getSliceStart());
-        fInfo.setSliceEnd(this.getSliceEnd());
-        fInfo.setFreqDim(this.getFreqDim());
-        fInfo.setPhaseDim(this.getPhaseDim());
-        fInfo.setSliceDim(this.getSliceDim());
+        
         fInfo.setImageOrientation(this.getImageOrientation());
-        fInfo.setVoxOffset(this.getVoxOffset());
-        fInfo.setIntentName(this.getIntentName());
+        
     }
 
 
