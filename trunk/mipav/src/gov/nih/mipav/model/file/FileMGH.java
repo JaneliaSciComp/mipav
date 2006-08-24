@@ -9,6 +9,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
+import java.util.zip.GZIPInputStream;
 
 
 /**
@@ -32,7 +33,21 @@ import java.io.*;
  */
 
 public class FileMGH extends FileBase {
-
+    //~ Static fields/initializers -------------------------------------------
+    
+    private static final int MRI_UCHAR = 0;
+    
+    private static final int MRI_INT = 1;
+    
+    private static final int MRI_LONG = 2;
+    
+    private static final int MRI_FLOAT = 3;
+    
+    private static final int MRI_SHORT = 4;
+    
+    private static final int MRI_BITMAP = 5;
+    
+    private static final int MRI_TENSOR = 6;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -49,6 +64,12 @@ public class FileMGH extends FileBase {
 
     /** DOCUMENT ME! */
     private String fileDir;
+    
+    private File file;
+    
+    private boolean gunzip;
+    
+    private FileInputStream fis;
 
     /** DOCUMENT ME! */
     private File fileHeader;
@@ -58,6 +79,59 @@ public class FileMGH extends FileBase {
 
     /** DOCUMENT ME! */
     private String fileName;
+    
+    private long fileLength;
+    
+    /** Present version number is 1 */
+    private int version;
+    
+    private int width;
+    
+    private int height;
+    
+    private int depth;
+    
+    private int nFrames;
+    
+    private int nDims;
+    
+    private int extents[];
+    
+    private int mghType;
+    
+    private int dataType = ModelStorageBase.UBYTE;
+    
+    private int dof;
+    
+    private short goodRASFlag;
+    
+    private float resolutions[] = new float[3];
+    
+    private float xr;
+    
+    private float xa;
+    
+    private float xs;
+    
+    private float yr;
+    
+    private float ya;
+    
+    private float ys;
+    
+    private float zr;
+    
+    private float za;
+    
+    private float zs;
+    
+    private float cr;
+    
+    private float ca;
+    
+    private float cs;
+    
+    private TransMatrix matrix = new TransMatrix(4);
 
     /** DOCUMENT ME! */
     private int freq_dim = 0;
@@ -82,9 +156,6 @@ public class FileMGH extends FileBase {
 
     /** DOCUMENT ME! */
     private char[] magic = new char[4];
-
-    /** DOCUMENT ME! */
-    private TransMatrix matrix = new TransMatrix(4);
 
     /** DOCUMENT ME! */
     private double newMax;
@@ -147,9 +218,6 @@ public class FileMGH extends FileBase {
 
     /** DOCUMENT ME! */
     private double r20, r21, r22;
-
-    /** DOCUMENT ME! */
-    private float[] resolutions;
 
     /** DOCUMENT ME! */
     private float scl_inter;
@@ -239,7 +307,7 @@ public class FileMGH extends FileBase {
     }
 
     /**
-     * Reads the NIFTI header and stores the information in fileInfo.
+     * Reads the MGH header and stores the information in fileInfo.
      *
      * @param      imageFileName  File name of image.
      * @param      fileDir        Directory.
@@ -248,12 +316,11 @@ public class FileMGH extends FileBase {
      *
      * @exception  IOException  if there is an error reading the header
      *
-     * @see        FileInfoNIFTI
+     * @see        FileInfoMGH
      */
     public boolean readHeader(String imageFileName, String fileDir) throws IOException {
         int i, j;
         int index;
-        String fileHeaderName;
         boolean endianess;
         int[] niftiExtents = new int[5];
         int numDims = 0;
@@ -264,1100 +331,216 @@ public class FileMGH extends FileBase {
         int unitMeasure;
         int spatialDims;
         double a, b, c, d;
+        int s;
 
-        bufferByte = new byte[headerSize];
-
-        // index         = fileName.toLowerCase().indexOf(".img");
         index = fileName.lastIndexOf(".");
 
-        if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
-            oneFileStorage = true;
-            fileHeaderName = fileName;
+        if ((fileName.substring(index + 1).equalsIgnoreCase("mgz")) ||
+            (fileName.substring(index + 1).equalsIgnoreCase("gz"))) {
+            gunzip = true;
         } else {
-            oneFileStorage = false;
-            fileHeaderName = fileName.substring(0, index) + ".hdr";
+            gunzip = false;
         }
 
-        fileHeader = new File(fileDir + fileHeaderName);
+        file = new File(fileDir + fileName);
 
-        if (fileHeader.exists() == false) {
-            fileHeaderName = fileName.substring(0, index) + ".HDR";
-            fileHeader = new File(fileDir + fileHeaderName);
+        if (gunzip) {
+            int totalBytesRead = 0;
+            progressBar.setVisible(isProgressBarVisible());
+            progressBar.setMessage("Uncompressing GZIP file ...");
+            fis = new FileInputStream(file);
 
-            if (fileHeader.exists() == false) {
-                return false;
+            GZIPInputStream gzin = new GZIPInputStream(new BufferedInputStream(fis));
+            if (fileName.substring(index+1).equalsIgnoreCase("mgz")) {
+                 fileName = fileName.substring(0,index).concat(".mgh");
             }
-        }
+            else {
+                fileName = fileName.substring(0,index);
+            }
+            String uncompressedName = fileDir + fileName;
+            FileOutputStream out = new FileOutputStream(uncompressedName);
+            byte[] buffer = new byte[256];
 
-        // Tagged for removal - Matt 4/17/2003
-        // if (fileInfo == null) { // if the file info does not yet exist: make it
-        // fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileBase.NIFTI);
-        // if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
-        // throw (new IOException(" NIFTI header file error"));
-        // }
-        // }
+            while (true) {
+                int bytesRead = gzin.read(buffer);
 
-        raFile = new RandomAccessFile(fileHeader, "r");
+                if (bytesRead == -1) {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+                out.write(buffer, 0, bytesRead);
+            }
+
+            out.close();
+            file = new File(uncompressedName);
+            fileInfo.setFileName(fileName);
+        } // if (gunzip)
+
+        raFile = new RandomAccessFile(file, "r");
+        fileLength = raFile.length();
         raFile.read(bufferByte);
-        raFile.close();
 
+        // MGH file are always BIG_ENDIAN
+        endianess = BIG_ENDIAN;
         fileInfo.setEndianess(BIG_ENDIAN);
-        fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, BIG_ENDIAN));
-
-        if (fileInfo.getSizeOfHeader() != headerSize) { // Set the endianess based on header size = 348 Big Endian
-            fileInfo.setEndianess(LITTLE_ENDIAN); // or 1,543,569,408 Little endian
-            fileInfo.setSizeOfHeader(getBufferInt(bufferByte, 0, LITTLE_ENDIAN));
-            Preferences.debug("FileNIFTI:readHeader Endianess = Little endian.\n", 2);
-        } else {
-            Preferences.debug("FileNIFTI:readHeader Endianess = Big endian.\n", 2);
+       
+        // Current value of version number is 1
+        version = getInt(endianess); // 0
+        fileInfo.setVersion(version);
+        
+        // First dimension of the image buffer
+        width = getInt(endianess); // 4
+        
+        // Second dimension of the image buffer
+        height = getInt(endianess); // 8
+        
+        // Third dimension of the image buffer
+        depth = getInt(endianess); // 12
+        
+        // Foruth dimension of the image buffer
+        nFrames = getInt(endianess); // 16
+        
+        if (nFrames > 1) {
+            nDims = 4;
+            extents = new int[4];
+            extents[0] = width;
+            extents[1] = height;
+            extents[2] = depth;
+            extents[3] = nFrames;
+        } // if (nFrames > 1)
+        else if (depth > 1) {
+            nDims = 3;
+            extents = new int[3];
+            extents[0] = width;
+            extents[1] = height;
+            extents[2] = depth;
         }
-
-        if (fileInfo.getSizeOfHeader() != headerSize) {
-            Preferences.debug("FileNIFTI:readHeader NIFTI header length != 348.\n", 2);
-
-            return false;
+        else {
+            nDims = 2;
+            extents = new int[2];
+            extents[0] = width;
+            extents[1] = height;
         }
-
-        endianess = fileInfo.getEndianess();
-
-        // bufferByte[39] is the dim_info byte
-        freq_dim = (int) (bufferByte[39] & 0x03);
-
-        switch (freq_dim) {
-
-            case 0:
-                Preferences.debug("No frequency encoding direction is present\n");
-                break;
-
-            case 1:
-                Preferences.debug("Frequency encoding in the x direction\n");
-                break;
-
-            case 2:
-                Preferences.debug("Frequency encoding in the y direction\n");
-                break;
-
-            case 3:
-                Preferences.debug("Frequency encoding in the z direction\n");
-                break;
-        }
-
-        fileInfo.setFreqDim(freq_dim);
-        phase_dim = (int) ((bufferByte[39] >> 2) & 0x03);
-
-        switch (phase_dim) {
-
-            case 0:
-                Preferences.debug("No phase encoding direction is present\n");
-                break;
-
-            case 1:
-                Preferences.debug("Phase encoding in the x direction\n");
-                break;
-
-            case 2:
-                Preferences.debug("Phase encoding in the y direction\n");
-                break;
-
-            case 3:
-                Preferences.debug("Phase encoding in the z direction\n");
-                break;
-        }
-
-        fileInfo.setPhaseDim(phase_dim);
-        slice_dim = (int) ((bufferByte[39] >> 4) & 0x03);
-
-        switch (slice_dim) {
-
-            case 0:
-                Preferences.debug("No slice acquisition direction is present\n");
-                break;
-
-            case 1:
-                Preferences.debug("Slice acquisition in the x direction\n");
-                break;
-
-            case 2:
-                Preferences.debug("Slice acquisition in the y direction\n");
-                break;
-
-            case 3:
-                Preferences.debug("Slice acquisition in the z direction\n");
-                break;
-        }
-
-        fileInfo.setSliceDim(slice_dim);
-
-        // In NIFTI always have x,y,z as dimensions 1, 2, and 3, t as dimension 4,
-        // and any other dimensions as 5, 6, and 7
-        // so that a x, y, t image would have dim[3] = 1
-        int dims = getBufferShort(bufferByte, 40, endianess);
-        Preferences.debug("FileNIFTI:readHeader. Number of dimensions = " + dims + "\n", 2);
-
-        for (i = 0; i < dims; i++) {
-            niftiExtents[i] = getBufferShort(bufferByte, 42 + (2 * i), endianess);
-            Preferences.debug("FileNIFTI:readHeader. Dimension " + (i + 1) + " = " + niftiExtents[i] + "\n", 2);
-
-            if (niftiExtents[i] > 1) {
-                numDims++;
-            }
-        }
-
-        spatialDims = 0;
-
-        for (i = 0; i < Math.min(dims, 3); i++) {
-
-            if (niftiExtents[i] > 1) {
-                spatialDims++;
-            }
-        }
-
-        int[] extents = new int[numDims];
-
-        for (i = 0, j = 0; i < dims; i++) {
-
-            if (niftiExtents[i] > 1) {
-                extents[j++] = niftiExtents[i];
-            }
-        }
-
         fileInfo.setExtents(extents);
-        intentP1 = getBufferFloat(bufferByte, 56, endianess);
-        fileInfo.setIntentP1(intentP1);
-        Preferences.debug("FileNIFTI:readHeader. intentP1 = " + fileInfo.getIntentP1() + "\n");
-        intentP2 = getBufferFloat(bufferByte, 60, endianess);
-        fileInfo.setIntentP2(intentP2);
-        Preferences.debug("FileNIFTI:readHeader. statPar2 = " + fileInfo.getIntentP2() + "\n");
-        intentP3 = getBufferFloat(bufferByte, 64, endianess);
-        fileInfo.setIntentP3(intentP3);
-        Preferences.debug("FileNIFTI:readHeader. intentP3 = " + fileInfo.getIntentP3() + "\n");
-        intentCode = getBufferShort(bufferByte, 68, endianess);
-        fileInfo.setIntentCode(intentCode);
-        Preferences.debug("FileNIFTI:readHeader. intentCode = " + intentCode + "\n");
-
-        switch (intentCode) {
-
-            case FileInfoNIFTI.NIFTI_INTENT_NONE:
-                Preferences.debug("No intention\n");
+        
+        mghType = getInt(endianess); // 20
+        switch (mghType) {
+            case MRI_UCHAR:
+                dataType = ModelStorageBase.UBYTE;
                 break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CORREL:
-                Preferences.debug("Correlation coefficient R\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Correlation Coefficient R\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
-                }
-
+            case MRI_SHORT:
+                dataType = ModelStorageBase.SHORT;
                 break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_TTEST:
-                Preferences.debug("Student t statistic\n");
-                Preferences.debug("Degress of freedom = " + Math.round(intentP1) + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Student t statistic\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
-                }
-
+            case MRI_INT:
+                dataType = ModelStorageBase.INTEGER;
                 break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_FTEST:
-                Preferences.debug("Fisher F statistic\n");
-                Preferences.debug("Numerator degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Denominator degrees of freedom = " + Math.round(intentP2) + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Fisher F statistic\n");
-                    Preferences.debug("in the first data plane, numerator degrees of freedom in the\n");
-                    Preferences.debug("second data plane, and denominator degrees of freedom in the\n");
-                    Preferences.debug("third data plane\n");
-                }
-
+            case MRI_LONG:
+                dataType = ModelStorageBase.LONG;
                 break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_ZSCORE:
-                Preferences.debug("Standard normal - N(0,1) distributed\n");
+            case MRI_FLOAT:
+                dataType = ModelStorageBase.FLOAT;
                 break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CHISQ:
-                Preferences.debug("Chi - squared\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has Chi-squared\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
-                }
-
+            case MRI_TENSOR:
+                dataType = ModelStorageBase.FLOAT;
+                if (nFrames != 9) {
+                    nFrames = 9;
+                    nDims = 4;
+                    extents = new int[4];
+                    extents[0] = width;
+                    extents[1] = height;
+                    extents[2] = depth;
+                    extents[3] = nFrames;
+                    fileInfo.setExtents(extents);
+                } // if (nFrames != 9)
                 break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_BETA:
-                Preferences.debug("Beta distribution\n");
-                Preferences.debug("a parameter = " + intentP1 + "\n");
-                Preferences.debug("b parameter = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Beta distribution\n");
-                    Preferences.debug("in the first data plane, the a parameter in the\n");
-                    Preferences.debug("second data plane, and the b parameter in the third\n");
-                    Preferences.debug("third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_BINOM:
-                Preferences.debug("Binomial distribution\n");
-                Preferences.debug("Number of trials = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Probability per trial = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Binomial distribution\n");
-                    Preferences.debug("in the first data plane, the number of trials in the\n");
-                    Preferences.debug("second data plane, and the probability per trial in the\n");
-                    Preferences.debug("third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_GAMMA:
-                Preferences.debug("Gamma with PDF = x^(shape-1) * exp(-Scale*x)\n");
-                Preferences.debug("for x >= 0\n");
-                Preferences.debug("Shape = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has Gamma\n");
-                    Preferences.debug("in the first data plane, shape in the\n");
-                    Preferences.debug("second data plane, and scale in the third\n");
-                    Preferences.debug("data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_POISSON:
-                Preferences.debug("Poisson distribution\n");
-                Preferences.debug("Mean = " + intentP1 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Poisson distribution\n");
-                    Preferences.debug("in the first data plane and the mean in the\n");
-                    Preferences.debug("second data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_NORMAL:
-                Preferences.debug("Normal distribution\n");
-                Preferences.debug("Mean = " + intentP1 + "\n");
-                Preferences.debug("Standard deviation = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Normal distribution\n");
-                    Preferences.debug("in the first data plane, the mean in the\n");
-                    Preferences.debug("second data plane, and the standard deviation\n");
-                    Preferences.debug("in the third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_FTEST_NONC:
-                Preferences.debug("Noncentral F statistic\n");
-                Preferences.debug("Numerator degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Denominator degrees of freedom = " + Math.round(intentP2) + "\n");
-                Preferences.debug("Numerator noncentrality parameter= " + intentP3 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 4)) {
-                    Preferences.debug("Dimension " + numDims + " has the Noncentral F statistic\n");
-                    Preferences.debug("in the first data plane, numerator degrees of freedom in the\n");
-                    Preferences.debug("second data plane, denominator degrees of freedom in the\n");
-                    Preferences.debug("third data plane, and the numerator noncentrality parameter\n");
-                    Preferences.debug("in the fourth data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CHISQ_NONC:
-                Preferences.debug("Noncentral chi-squared statistic\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Noncentrality parameter = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Noncentral chi-squared\n");
-                    Preferences.debug("statistic in the first data plane, degrees of freedom in the\n");
-                    Preferences.debug("second data plane, and the noncentrality parameter in the\n");
-                    Preferences.debug("third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LOGISTIC:
-                Preferences.debug("Logistic distribution\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Logistic distribution\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, and scale in the third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LAPLACE:
-                Preferences.debug("Laplace distribution\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Laplace distribution\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, and scale in the third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_UNIFORM:
-                Preferences.debug("Uniform distribution\n");
-                Preferences.debug("Start = " + intentP1 + "\n");
-                Preferences.debug("End = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Uniform distribution\n");
-                    Preferences.debug("in the first data plane, start in the second data\n");
-                    Preferences.debug("plane, and end in the third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_TTEST_NONC:
-                Preferences.debug("Noncentral t statistic\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-                Preferences.debug("Noncentrality parameter = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Noncentral t statistic\n");
-                    Preferences.debug("in the first data plane, degrees of freedom in the\n");
-                    Preferences.debug("second data plane, and the noncentrality parameter in\n");
-                    Preferences.debug("third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_WEIBULL:
-                Preferences.debug("Weibull distribution\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
-                Preferences.debug("Power = " + intentP3 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 4)) {
-                    Preferences.debug("Dimension " + numDims + " has the Weibull distribution\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, scale in the third data plane, and power\n");
-                    Preferences.debug("in the fourth data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_CHI:
-                Preferences.debug("Chi distribution\n");
-                Preferences.debug("Degrees of freedom = " + Math.round(intentP1) + "\n");
-
-                int p1 = Math.round(intentP1);
-                if (p1 == 1) {
-                    Preferences.debug("dof = 1 = half normal distribution\n");
-                } else if (p1 == 2) {
-                    Preferences.debug("dof = 2 = Rayleigh distribution\n");
-                } else if (p1 == 3) {
-                    Preferences.debug("dof = 3 = Maxwell-Boltzmann distribution\n");
-                }
-
-                if ((dims == 5) && (extents[numDims - 1] == 2)) {
-                    Preferences.debug("Dimension " + numDims + " has the Chi distribution\n");
-                    Preferences.debug("in the first data plane and degrees of freedom in the\n");
-                    Preferences.debug("second data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_INVGAUSS:
-                Preferences.debug("Inverse Gaussian\n");
-                Preferences.debug("Mu = " + intentP1 + "\n");
-                Preferences.debug("Lambda = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has the Inverse Gaussian\n");
-                    Preferences.debug("in the first data plane, mu in the second data\n");
-                    Preferences.debug("plane, and lambda in the third data plane\n");
-                }
-
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_EXTVAL:
-                Preferences.debug("Extreme value type 1\n");
-                Preferences.debug("Location = " + intentP1 + "\n");
-                Preferences.debug("Scale = " + intentP2 + "\n");
-                if ((dims == 5) && (extents[numDims - 1] == 3)) {
-                    Preferences.debug("Dimension " + numDims + " has Extreme value type 1\n");
-                    Preferences.debug("in the first data plane, location in the second\n");
-                    Preferences.debug("data plane, and scale in the third data plane\n");
-                }
-
-            case FileInfoNIFTI.NIFTI_INTENT_PVAL:
-                Preferences.debug("Data is a p-value\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LOGPVAL:
-                Preferences.debug("Data is ln(p-value)\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LOG10PVAL:
-                Preferences.debug("Data is log10(p-value)\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_ESTIMATE:
-                Preferences.debug("Each voxel is an estimate of some parameter\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_LABEL:
-                Preferences.debug("Each voxel is an index into some set of labels\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_NEURONAME:
-                Preferences.debug("Each voxel is an index into the NeuroNames label set\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_INTENT_GENMATRIX:
-                Preferences.debug("Each voxel has a M x N matrix\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with M X N matrices");
-
+            case MRI_BITMAP:
+                Preferences.debug("Cannot handle type = MRI_BITMAP");
                 return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_SYMMATRIX:
-                Preferences.debug("Each voxel has a NxN symmetric matrix\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with NxN symmetric matrices");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_DISPVECT:
-                Preferences.debug("Each voxel has a displacement vector\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with displacement vectors");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_VECTOR:
-                Preferences.debug("Each voxel has a vector\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with vectors");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_POINTSET:
-                Preferences.debug("Each voxel has a spatial coordinate\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with spatial coordinates");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_TRIANGLE:
-                Preferences.debug("Each voxel has a triple of indexes\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with a triple of indexes");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_QUATERNION:
-                Preferences.debug("Each voxel has a quarternion\n");
-                MipavUtil.displayError("MIPAV cannot handle voxels with quarternions");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_INTENT_DIMLESS:
-                Preferences.debug("Each voxel is a dimensionless value\n");
-                break;
-
-            default:
-                Preferences.debug("intentCode = " + intentCode + " is not a recognized value\n");
+        } // switch (mghType)
+         // raFile.close();
+        fileInfo.setDataType(dataType);
+        
+        dof = getInt(endianess); // 24
+        fileInfo.setDOF(dof);
+        
+        goodRASFlag = (short)getSignedShort(endianess); // 28
+        // The x, y, and z variables define the rotational part
+        // of the affine transform.
+        // The "c_ras" values define where the volume center 
+        // sits in the RAS coordinate system.  That is, c_r,
+        // c_a, c_s are the RAS coordinate values of a voxel
+        // point (width/2, height/2, depth/2).  The convention
+        // used is that the center of a voxel corresponds to 
+        // the integer voxel coordinate position.
+        if (goodRASFlag > 0) {
+            resolutions[0] = getFloat(endianess); // 30
+            resolutions[1] = getFloat(endianess); // 34
+            resolutions[2] = getFloat(endianess); // 38
+            xr = getFloat(endianess); // 42
+            xa = getFloat(endianess); // 46
+            xs = getFloat(endianess); // 50
+            yr = getFloat(endianess); // 54
+            ya = getFloat(endianess); // 58
+            ys = getFloat(endianess); // 62
+            zr = getFloat(endianess); // 66
+            za = getFloat(endianess); // 70
+            zs = getFloat(endianess); // 74
+            cr = getFloat(endianess); // 78
+            ca = getFloat(endianess); // 82
+            cs = getFloat(endianess); // 86
+        } // if (goodRASFlag > 0)
+        else {
+            // Default coronal orientation with z axis to the left,
+            // y axis inferior, and z axis anterior
+            resolutions[0] = 1.0f;
+            resolutions[1] = 1.0f;
+            resolutions[2] = 1.0f;
+            xr = -1.0f;
+            xa = 0.0f;
+            xs = 0.0f;
+            yr = 0.0f;
+            ya = 0.0f;
+            ys = -1.0f;
+            zr = 0.0f;
+            za = 1.0f;
+            zs = 0.0f;
+            cr = 0.0f;
+            ca = 0.0f;
+            cs = 0.0f;
         }
-
-        sourceType = getBufferShort(bufferByte, 70, endianess);
-        fileInfo.setSourceType(sourceType);
-        Preferences.debug("Original unscaled source data type:\n");
-
-        switch (sourceType) {
-
-            case FileInfoNIFTI.DT_UNKNOWN:
-                Preferences.debug("Unknown data type\n");
-                MipavUtil.displayError("Mipav cannot handle data type DT_UNKNOWN");
-
-                return false;
-
-            case FileInfoNIFTI.DT_BINARY:
-                Preferences.debug("Binary data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT8:
-                Preferences.debug("Signed byte data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT8:
-                Preferences.debug("Unsigned byte data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT16:
-                Preferences.debug("Signed short data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT16:
-                Preferences.debug("Unsigned short data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT32:
-                Preferences.debug("Signed integer data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT32:
-                Preferences.debug("Unsigned integer data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT64:
-                Preferences.debug("Signed long data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT64:
-                Preferences.debug("Unsigned long data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_FLOAT32:
-                Preferences.debug("32 bit float data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_FLOAT64:
-                Preferences.debug("64 bit double data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_FLOAT128:
-                Preferences.debug("128 bit float data\n");
-                MipavUtil.displayError("MIPAV cannot handle 128 bit floating point data\n");
-
-                return false;
-
-            case FileInfoNIFTI.NIFTI_TYPE_RGB24:
-                Preferences.debug("RGB 24 bit data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_COMPLEX64:
-                Preferences.debug("64 bit complex data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_COMPLEX128:
-                Preferences.debug("128 bit DCOMPLEX data\n");
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_COMPLEX256:
-                Preferences.debug("256 bit complex data\n");
-                MipavUtil.displayError("MIPAV cannot handle 256 bit complex data\n");
-
-                return false;
-
-            default:
-                Preferences.debug("Unknown datatype code = " + sourceType + "\n");
-                MipavUtil.displayError("Unknown datatype code = " + sourceType);
-
-                return false;
+        matrix.setMatrix((double)-xr*resolutions[0], 0, 0);
+        matrix.setMatrix((double)-yr*resolutions[1], 0, 1);
+        matrix.setMatrix((double)-zr*resolutions[2], 0, 2);
+        if (-xr*resolutions[0]*(width-1)-yr*resolutions[1]*(height-1)-zr*resolutions[2]*(depth-1) > 0) {
+            matrix.setMatrix(-(width/2.0)*resolutions[0], 0, 3);
         }
-
-        sourceBitPix = getBufferShort(bufferByte, 72, endianess);
-        fileInfo.setSourceBitPix(sourceBitPix);
-        Preferences.debug("FileNIFTI:readHeader. source bits per pixel = " + sourceBitPix + "\n", 2);
-
-        sliceStart = getBufferShort(bufferByte, 74, endianess);
-
-        pixdim = new float[dims + 1];
-        resolutions = new float[numDims];
-
-        for (i = 0, j = 0; i < (dims + 1); i++) {
-            pixdim[i] = getBufferFloat(bufferByte, 76 + (4 * i), endianess);
-
-            if ((i >= 1) && (niftiExtents[i - 1] > 1)) {
-                resolutions[j] = Math.abs(pixdim[i]);
-                Preferences.debug("FileNIFTI:readHeader. Resolutions " + (j + 1) + " = " + resolutions[j] + "\n", 2);
-                j++;
-            }
+        else {
+            matrix.setMatrix((width/2.0)*resolutions[0], 0, 3);
         }
-
-        fileInfo.setResolutions(resolutions);
-
-        vox_offset = getBufferFloat(bufferByte, 108, endianess);
-        fileInfo.setVoxOffset(vox_offset);
-
-        scl_slope = getBufferFloat(bufferByte, 112, endianess);
-        fileInfo.setSclSlope(scl_slope);
-        Preferences.debug("Data scaling slope = " + scl_slope + "\n");
-        scl_inter = getBufferFloat(bufferByte, 116, endianess);
-        fileInfo.setSclInter(scl_inter);
-        Preferences.debug("Data offset = " + scl_inter + "\n");
-
-        sliceEnd = getBufferShort(bufferByte, 120, endianess);
-
-        sliceCode = bufferByte[122];
-
-        if ((sliceCode > 0) && (sliceStart > 0)) {
-            fileInfo.setSliceStart(sliceStart);
-            Preferences.debug("Slice timing pattern starts with slice = " + (sliceStart + 1) + "\n");
+        matrix.setMatrix((double)-xa*resolutions[0], 1, 0);
+        matrix.setMatrix((double)-ya*resolutions[1], 1, 1);
+        matrix.setMatrix((double)-za*resolutions[2], 1, 2);
+        if (-xa*resolutions[0]*(width-1)-ya*resolutions[1]*(height-1)-za*resolutions[2]*(depth-1) > 0) {
+            matrix.setMatrix(-(height/2.0)*resolutions[1], 1, 3);
         }
-
-        if ((sliceCode > 0) && (sliceEnd > sliceStart)) {
-            fileInfo.setSliceEnd(sliceEnd);
-            Preferences.debug("Slice timing pattern ends with slice = " + (sliceEnd + 1) + "\n");
+        else {
+            matrix.setMatrix((height/2.0)*resolutions[1], 1, 3);
         }
-
-        if (spatialDims == 0) {
-            Preferences.debug("No x, y, or z dimensions are present\n");
-        } else {
-            spaceUnits = (int) (bufferByte[123] & 0x07);
-
-            switch (spaceUnits) {
-
-                case FileInfoNIFTI.NIFTI_UNITS_UNKNOWN:
-                    Preferences.debug("Spatial units are unknown\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_METER:
-                    Preferences.debug("Spatial units are meters\n");
-                    unitMeasure = FileInfoBase.METERS;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_MM:
-                    Preferences.debug("Spatial units are millimeters\n");
-                    unitMeasure = FileInfoBase.MILLIMETERS;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_MICRON:
-                    Preferences.debug("Spatial units are micrometers\n");
-                    unitMeasure = FileInfoBase.MICROMETERS;
-                    break;
-
-                default:
-                    Preferences.debug("Spatial units are an illegal " + spaceUnits + "\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
-                    break;
-            }
-
-            for (i = 0; i < spatialDims; i++) {
-                fileInfo.setUnitsOfMeasure(unitMeasure, i);
-            }
+        matrix.setMatrix((double)xs*resolutions[0], 2, 0);
+        matrix.setMatrix((double)ys*resolutions[1], 2, 1);
+        matrix.setMatrix((double)zs*resolutions[2], 2, 2);
+        if (xs*resolutions[0]*(width-1)+ys*resolutions[1]*(height-1)+zs*resolutions[2]*(depth-1) > 0) {
+            matrix.setMatrix(-(depth/2.0)*resolutions[2], 2, 3);
         }
-
-        if ((dims >= 4) && (niftiExtents[3] > 1)) {
-            timeUnits = bufferByte[123] & 0x38;
-
-            switch (timeUnits) {
-
-                case FileInfoNIFTI.NIFTI_UNITS_UNKNOWN:
-                    Preferences.debug("Time units are unknown\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_SEC:
-                    Preferences.debug("Time units are seconds\n");
-                    unitMeasure = FileInfoBase.SECONDS;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_MSEC:
-                    Preferences.debug("Time units are milliseconds\n");
-                    unitMeasure = FileInfoBase.MILLISEC;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_USEC:
-                    Preferences.debug("Time units are microseconds\n");
-                    unitMeasure = FileInfoBase.MICROSEC;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_HZ:
-                    Preferences.debug("Time units are hertz\n");
-                    unitMeasure = FileInfoBase.HZ;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_PPM:
-                    Preferences.debug("Time units are part per million\n");
-                    unitMeasure = FileInfoBase.PPM;
-                    break;
-
-                case FileInfoNIFTI.NIFTI_UNITS_RADS:
-                    Preferences.debug("Time units are radians per second\n");
-                    unitMeasure = FileInfoBase.RADS;
-                    break;
-
-                default:
-                    Preferences.debug("Time units are an illegal = " + timeUnits + "\n");
-                    unitMeasure = FileInfoBase.UNKNOWN_MEASURE;
-            }
-
-            fileInfo.setUnitsOfMeasure(unitMeasure, spatialDims);
+        else {
+            matrix.setMatrix((depth/2.0)*resolutions[2], 2, 3);
         }
-
-        fileInfo.setCalMax(getBufferFloat(bufferByte, 124, endianess));
-        fileInfo.setCalMin(getBufferFloat(bufferByte, 128, endianess));
-        sliceDuration = getBufferFloat(bufferByte, 132, endianess);
-
-        if ((sliceDuration > 0) && (slice_dim > 0)) {
-            fileInfo.setSliceDuration(sliceDuration);
-            Preferences.debug("Time used to acquire 1 slice = " + sliceDuration + "\n");
-        }
-
-        if ((sliceCode > 0) && (slice_dim > 0) && (sliceDuration > 0)) {
-
-            if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_SEQ_INC) {
-                Preferences.debug("Slice timing order is sequentially increasing\n");
-            } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_SEQ_DEC) {
-                Preferences.debug("Slice timing order is sequentially decreasing\n");
-            } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_INC) {
-                Preferences.debug("Slice timing order is alternately increasing\n");
-            } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_DEC) {
-                Preferences.debug("Slice timing order is alternately decreasing\n");
-            } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_INC2) {
-                Preferences.debug("Slice timing order is alternately increasing #2\n");
-            } else if (sliceCode == FileInfoNIFTI.NIFTI_SLICE_ALT_DEC2) {
-                Preferences.debug("Slice timing order is alternately decreasing #2\n");
-            } else {
-                Preferences.debug("slice code has an illegal value = " + sliceCode + "\n");
-            }
-        } else {
-            Preferences.debug("Slice timing order is not specified\n");
-        }
-
-        tOffset = getBufferFloat(bufferByte, 136, endianess);
-        fileInfo.setOrigin(tOffset, 3);
-        Preferences.debug("tOffset = " + tOffset + "\n");
-
-        switch (sourceType) {
-
-            case FileInfoNIFTI.DT_NONE:
-                return false;
-
-            case FileInfoNIFTI.DT_BINARY:
-                fileInfo.setDataType(ModelStorageBase.BOOLEAN);
-                fileInfo.setBitPix((short) 1);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT8:
-                fileInfo.setDataType(ModelStorageBase.UBYTE);
-                fileInfo.setBitPix((short) 8);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT16:
-                fileInfo.setDataType(ModelStorageBase.SHORT);
-                fileInfo.setBitPix((short) 16);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT32:
-                fileInfo.setDataType(ModelStorageBase.INTEGER);
-                fileInfo.setBitPix((short) 32);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_FLOAT32:
-                fileInfo.setDataType(ModelStorageBase.FLOAT);
-                fileInfo.setBitPix((short) 32);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_COMPLEX64:
-                fileInfo.setDataType(ModelStorageBase.COMPLEX);
-                fileInfo.setBitPix((short) 64);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_FLOAT64:
-                fileInfo.setDataType(ModelStorageBase.DOUBLE);
-                fileInfo.setBitPix((short) 64);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_RGB24:
-                fileInfo.setDataType(ModelStorageBase.ARGB);
-                fileInfo.setBitPix((short) 24);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT8:
-                fileInfo.setDataType(ModelStorageBase.BYTE);
-                fileInfo.setBitPix((short) 8);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT16:
-                fileInfo.setDataType(ModelStorageBase.USHORT);
-                fileInfo.setBitPix((short) 16);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT32:
-                fileInfo.setDataType(ModelStorageBase.UINTEGER);
-                fileInfo.setBitPix((short) 32);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_INT64:
-                fileInfo.setDataType(ModelStorageBase.LONG);
-                fileInfo.setBitPix((short) 64);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_UINT64:
-                fileInfo.setDataType(ModelStorageBase.LONG);
-                fileInfo.setBitPix((short) 64);
-                break;
-
-            case FileInfoNIFTI.NIFTI_TYPE_COMPLEX128:
-                fileInfo.setDataType(ModelStorageBase.DCOMPLEX);
-                fileInfo.setBitPix((short) 128);
-                break;
-
-            default:
-                return false;
-        }
-
-        fileInfo.setDescription(new String(bufferByte, 148, 80));
-
-        // update the fileInfo modality based on the description
-        // if the description contains something other than modality, then
-        // the modality will be set to unknown.
-        fileInfo.setModality(FileInfoBase.getModalityFromStr(fileInfo.getDescription()));
-
-        fileInfo.setAuxFile(new String(bufferByte, 228, 24));
-
-        if (numDims >= 3) {
-            qform_code = getBufferShort(bufferByte, 252, endianess);
-            sform_code = getBufferShort(bufferByte, 254, endianess);
-
-            if (pixdim[0] >= 0.0f) {
-                qfac = 1.0f;
-            } else {
-                qfac = -1.0f;
-            }
-
-            if ((qform_code == 0) && (sform_code == 0)) {
-
-                // No particular spatial orientation is assigned
-                fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
-                axisOrientation = new int[3];
-                axisOrientation[0] = FileInfoBase.ORI_UNKNOWN_TYPE;
-                axisOrientation[1] = FileInfoBase.ORI_UNKNOWN_TYPE;
-                axisOrientation[2] = FileInfoBase.ORI_UNKNOWN_TYPE;
-                fileInfo.setAxisOrientation(axisOrientation);
-                matrix.setMatrix((double) resolutions[0], 0, 0);
-                matrix.setMatrix((double) resolutions[1], 1, 1);
-                matrix.setMatrix((double) resolutions[2], 2, 2);
-            }
-
-            // Both methods 2 and 3 could be present
-            // However, MIPAV cannot handle 2 different transformation matrices
-            // for the same image.  Method 2 should be the normal case, so give
-            // it priority over method 3.
-            Preferences.debug("qform_code = " + qform_code + "\n");
-            Preferences.debug("sform_code = " + sform_code + "\n");
-
-            if (qform_code > 0) {
-                coord_code = qform_code;
-            } else if (sform_code > 0) {
-                coord_code = sform_code;
-            }
-
-            fileInfo.setCoordCode(coord_code);
-
-            switch (coord_code) {
-
-                case FileInfoNIFTI.NIFTI_XFORM_UNKNOWN:
-                    Preferences.debug("Arbitrary X,Y,Z coordinate system\n", 2);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_SCANNER_ANAT:
-                    Preferences.debug("Scanner based anatomical coordinates\n", 2);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_ALIGNED_ANAT:
-                    Preferences.debug("Coordinates aligned to another file's or to anatomical truth\n", 2);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_TALAIRACH:
-                    Preferences.debug("Talairach X,Y,Z coordinate system\n", 2);
-                    break;
-
-                case FileInfoNIFTI.NIFTI_XFORM_MNI_152:
-                    Preferences.debug("MNI 152 normalized X,Y,Z coordinates\n", 2);
-                    break;
-
-                default:
-                    Preferences.debug("Unknown coord_code = " + coord_code);
-            }
-
-            if (qform_code > 0) {
-                quatern_b = getBufferFloat(bufferByte, 256, endianess);
-                b = quatern_b;
-                quatern_c = getBufferFloat(bufferByte, 260, endianess);
-                c = quatern_c;
-                quatern_d = getBufferFloat(bufferByte, 264, endianess);
-                d = quatern_d;
-                a = 1.0 - (b * b) - (c * c) - (d * d);
-
-                if (a < 1.0e-7) {
-
-                    // special case
-                    a = 1.0 / Math.sqrt((b * b) + (c * c) + (d * d));
-
-                    // normalize b,c,d vector;
-                    b *= a;
-                    c *= a;
-                    d *= a;
-                    a = 0.0;
-                } else {
-                    a = Math.sqrt(a);
-                }
-
-                r00 = (a * a) + (b * b) - (c * c) - (d * d);
-                matrix.setMatrix(-r00 * resolutions[0], 0, 0);
-                r01 = 2.0 * ((b * c) - (a * d));
-                matrix.setMatrix(r01 * resolutions[1], 0, 1);
-                r02 = 2.0 * ((b * d) + (a * c));
-                matrix.setMatrix(-r02 * qfac *resolutions[2], 0, 2);
-                r10 = 2.0 * ((b * c) + (a * d));
-                matrix.setMatrix(-r10 * resolutions[0], 1, 0);
-                r11 = (a * a) + (c * c) - (b * b) - (d * d);
-                matrix.setMatrix(r11 * resolutions[1], 1, 1);
-                r12 = 2.0 * ((c * d) - (a * b));
-                matrix.setMatrix(-r12 * qfac * resolutions[2], 1, 2);
-                r20 = 2.0 * ((b * d) - (a * c));
-                matrix.setMatrix(r20 * resolutions[0], 2, 0);
-                r21 = 2.0 * ((c * d) + (a * b));
-                matrix.setMatrix(-r21 * resolutions[1], 2, 1);
-                r22 = (a * a) + (d * d) - (c * c) - (b * b);
-                matrix.setMatrix(r22 * qfac * resolutions[2], 2, 2);
-                qoffset_x = getBufferFloat(bufferByte, 268, endianess);
-                qoffset_y = getBufferFloat(bufferByte, 272, endianess);
-                qoffset_z = getBufferFloat(bufferByte, 276, endianess);
-                LPSOrigin = new float[3];
-                LPSOrigin[0] = -qoffset_x;
-                LPSOrigin[1] = qoffset_y;
-                LPSOrigin[2] = qoffset_z;
-                axisOrientation = getAxisOrientation(matrix);
-                Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
-                                  axisOrientation[2] + "\n");
-                fileInfo.setAxisOrientation(axisOrientation);
-
-                if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
-                        (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
-                    fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
-                } else if ((axisOrientation[2] == FileInfoBase.ORI_A2P_TYPE) ||
-                               (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
-                    fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-                } else {
-                    fileInfo.setImageOrientation(FileInfoBase.AXIAL);
-                }
-
-                origin = new float[3];
-                for (j = 0; j < 3; j++) {
-
-                    if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE ||
-                        axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){
-                        origin[j] = LPSOrigin[0];
-                       
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE ||
-                             axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){
-                        origin[j] = LPSOrigin[1];
-                           
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE ||
-                             axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){
-                        origin[j] = LPSOrigin[2];
-                           
-                    }
-                }
-
-                
-                fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-                matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-                matrix.setMatrix((double) LPSOrigin[2], 2, 3);
-                Preferences.debug("matrix = \n" + matrix + "\n");
-                fileInfo.setMatrix(matrix);
-
-                Preferences.debug("quatern_a = " + quatern_a + "\n");
-                Preferences.debug("quatern_b = " + quatern_b + "\n");
-                Preferences.debug("quatern_c = " + quatern_c + "\n");
-                Preferences.debug("quatern_d = " + quatern_d + "\n");
-                Preferences.debug("qoffset_x = " + qoffset_x + "\n");
-                Preferences.debug("qoffset_y = " + qoffset_y + "\n");
-                Preferences.debug("qoffset_z = " + qoffset_z + "\n");
-
-            } // if (qform_code > 0)
-            else if (sform_code > 0) {
-                srow_x = new float[4];
-                srow_y = new float[4];
-                srow_z = new float[4];
-                srow_x[0] = getBufferFloat(bufferByte, 280, endianess);
-                srow_x[1] = getBufferFloat(bufferByte, 284, endianess);
-                srow_x[2] = getBufferFloat(bufferByte, 288, endianess);
-                srow_x[3] = getBufferFloat(bufferByte, 292, endianess);
-                srow_y[0] = getBufferFloat(bufferByte, 296, endianess);
-                srow_y[1] = getBufferFloat(bufferByte, 300, endianess);
-                srow_y[2] = getBufferFloat(bufferByte, 304, endianess);
-                srow_y[3] = getBufferFloat(bufferByte, 308, endianess);
-                srow_z[0] = getBufferFloat(bufferByte, 312, endianess);
-                srow_z[1] = getBufferFloat(bufferByte, 316, endianess);
-                srow_z[2] = getBufferFloat(bufferByte, 320, endianess);
-                srow_z[3] = getBufferFloat(bufferByte, 324, endianess);
-                matrix.setMatrix((double) -srow_x[0], 0, 0);
-                matrix.setMatrix((double) srow_x[1], 0, 1);
-                matrix.setMatrix((double) -srow_x[2], 0, 2);
-                matrix.setMatrix((double) -srow_y[0], 1, 0);
-                matrix.setMatrix((double) srow_y[1], 1, 1);
-                matrix.setMatrix((double) -srow_y[2], 1, 2);
-                matrix.setMatrix((double) srow_z[0], 2, 0);
-                matrix.setMatrix((double) -srow_z[1], 2, 1);
-                matrix.setMatrix((double) srow_z[2], 2, 2);
-                LPSOrigin = new float[3];
-                LPSOrigin[0] = -srow_x[3];
-                LPSOrigin[1] = srow_y[3];
-                LPSOrigin[2] = srow_z[3];
-
-                axisOrientation = getAxisOrientation(matrix);
-                Preferences.debug("axisOrientation = " + axisOrientation[0] + "  " + axisOrientation[1] + "  " +
-                                  axisOrientation[2] + "\n");
-                fileInfo.setAxisOrientation(axisOrientation);
-
-                if ((axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) ||
-                        (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE)) {
-                    fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
-                } else if ((axisOrientation[2] == FileInfoBase.ORI_A2P_TYPE) ||
-                               (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE)) {
-                    fileInfo.setImageOrientation(FileInfoBase.CORONAL);
-                } else {
-                    fileInfo.setImageOrientation(FileInfoBase.AXIAL);
-                }
-
-                origin = new float[3];
-                for (j = 0; j < 3; j++) {
-
-                    if (axisOrientation[j] == FileInfoBase.ORI_L2R_TYPE ||
-                        axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE){
-                        origin[j] = LPSOrigin[0];
-                       
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_P2A_TYPE ||
-                             axisOrientation[j] == FileInfoBase.ORI_A2P_TYPE){
-                        origin[j] = LPSOrigin[1];
-                           
-                    }
-                    else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE ||
-                             axisOrientation[j] == FileInfoBase.ORI_I2S_TYPE){
-                        origin[j] = LPSOrigin[2];
-                           
-                    }
-                }
-                
-                fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-                matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-                matrix.setMatrix((double) LPSOrigin[2], 2, 3);
-                Preferences.debug("matrix = \n" + matrix + "\n");
-                fileInfo.setMatrix(matrix);
-
-                Preferences.debug("srow_x = " + srow_x[0] + "  " + srow_x[1] + "  " + srow_x[2] + "  " + srow_x[3] +
-                                  "\n");
-                Preferences.debug("srow_y = " + srow_y[0] + "  " + srow_y[1] + "  " + srow_y[2] + "  " + srow_y[3] +
-                                  "\n");
-                Preferences.debug("srow_z = " + srow_z[0] + "  " + srow_z[1] + "  " + srow_z[2] + "  " + srow_z[3] +
-                                  "\n");
-            } // else if (sform_code > 0)
-        } // if (numDims >= 3)
-
-        intentName = (new String(bufferByte, 328, 16));
-        Preferences.debug("Name or meaning of data = " + intentName + "\n");
-        fileInfo.setIntentName(intentName.trim());
-
         return true; // If it got this far, it has successfully read in the header
     }
 
     /**
-     * Reads a NIFTI image file by reading the header then making a FileRaw to read the image for all filenames in the
+     * Reads a MGH image file by reading the header then making a FileRaw to read the image for all filenames in the
      * file list. Only the one file directory (currently) supported.
      *
      * @param      one  flag indicating one image of a 3D dataset should be read in.
