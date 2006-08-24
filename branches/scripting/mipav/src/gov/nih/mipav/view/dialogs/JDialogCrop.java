@@ -5,7 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 June 10, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -61,8 +61,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
 
     /** DOCUMENT ME! */
     private int resXUnit, // X resolution, Unit of Measure
-                resYUnit, // Y resolution, Unit of Measure
-                resZUnit; // Z resolution, Unit of Measure
+                resYUnit; // Y resolution, Unit of Measure
 
     /** DOCUMENT ME! */
     private JTextField textBorderSize;
@@ -95,9 +94,6 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
     /** DOCUMENT ME! */
     private int[] zBounds = new int[2];
 
-    /** DOCUMENT ME! */
-    private int zSlice;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -118,71 +114,14 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
     }
 
     /**
-     * Creates a new JDialogCrop object.
-     *
-     * @deprecated  Use JDialogCrop(ModelImage) instead Used primarily for the script to store variables and run the
-     *              algorithm.
-     *
-     * @param       UI  The user interface, needed to create the image frame.
-     * @param       im  Source image.
-     */
-    public JDialogCrop(ViewUserInterface UI, ModelImage im) {
-        this(im);
-    }
-
-    /**
      * Creates new dialog for cropping image.
      *
      * @param  theParentFrame  Parent frame
      * @param  im              Source image
-     * @param  _zSlice         Slice of image
      */
-    public JDialogCrop(Frame theParentFrame, ModelImage im, int _zSlice) {
+    public JDialogCrop(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
-
-        int i;
-        ViewVOIVector VOIs = im.getVOIs();
-        int nVOI;
-        int nContourVOI = 0;
-        zSlice = _zSlice;
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            MipavUtil.displayError("Must have a VOI!");
-            dispose();
-
-            return;
-        }
-
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                nContourVOI++;
-            }
-        }
-
-        if (nContourVOI == 0) {
-            MipavUtil.displayError("Must have a contour VOI");
-
-            return;
-        } else if (nContourVOI > 1) {
-
-            for (i = 0; i < nVOI; i++) {
-
-                if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
-                    break;
-                }
-            }
-
-            if (i == nVOI) {
-                MipavUtil.displayError("VOI must be selected");
-                dispose();
-
-                return;
-            }
-        } // else if (nContourVOI > 1)
 
         image = im;
         init();
@@ -190,35 +129,40 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("borderSize",borderSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("xBounds",xBounds));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("yBounds",yBounds));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("zBounds",zBounds));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("border_size", borderSize));
     }
-    
+
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){
-        borderSize = scriptParameters.getParams().getInt("borderSize");         
-       xBounds = scriptParameters.getParams().getList("xBounds").getAsIntArray();
-       yBounds = scriptParameters.getParams().getList("yBounds").getAsIntArray();
-       zBounds = scriptParameters.getParams().getList("zBounds").getAsIntArray();
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        borderSize = scriptParameters.getParams().getInt("border_size");
+        
+        // fill xBounds, yBounds, zBounds
+        if (!findBounds()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Unable to determine image cropping bounds.");
+        }
     }
-    
+
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
@@ -226,24 +170,15 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
         }
     }
 
-    
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  Event that triggers function
+     * 
+     * @param event Event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        String command = event.getActionCommand();
 
         String tmpStr;
-        int i, j;
-
-        ViewVOIVector VOIs = image.getVOIs();
-        Vector[] contours;
-        int nVOI, nContours;
-        int nContourVOI = 0;
 
         if (source == OKButton) {
             System.gc();
@@ -259,69 +194,10 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
                 return;
             }
 
-            nVOI = VOIs.size();
-
-            if (nVOI == 0) {
-                return;
-            }
-
-            for (i = 0; i < nVOI; i++) {
-
-                if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                    nContourVOI++;
-                }
-            }
-
-            if (nContourVOI == 0) {
-                MipavUtil.displayError("Must have a contour VOI");
+            if (!findBounds()) {
                 dispose();
-
                 return;
-            } else if (nContourVOI == 1) {
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                        break;
-                    }
-                }
-            } else {
-
-                for (i = 0; i < nVOI; i++) {
-
-                    if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
-                        break;
-                    }
-                }
-
-                if (i == nVOI) {
-                    MipavUtil.displayError("VOI must be selected");
-                    dispose();
-
-                    return;
-                }
-
-                contours = VOIs.VOIAt(i).getCurves();
-                nContours = contours[zSlice].size();
-
-                for (j = 0; j < nContours; j++) {
-
-                    if (((VOIContour) (contours[zSlice].elementAt(j))).isActive()) {
-                        break;
-                    }
-                }
-
-                if (j == nContours) {
-
-                    // Don't think this should happen under normal operations
-                    dispose();
-
-                    return;
-                }
-
-            } // else if (nContourVOI > 1)
-
-            VOIs.VOIAt(i).getBounds(xBounds, yBounds, zBounds);
+            }
 
             callAlgorithm();
         } else if (source == cancelButton) {
@@ -473,54 +349,57 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
     }
 
     /**
-     * This method finds the bounding box when CROP apply to 2D, 3D VOI images. Init() method will call this method each
-     * time CROP region is selected.
+     * This method finds the bounding box when CROP apply to 2D, 3D VOI images.
+     * 
+     * @return  <code>True</code> if the bounds were calculated successfully, <code>false</code> otherwise.
      */
-    public void findBounds() {
-        int i, nVOI;
+    private boolean findBounds() {
+        int voiNum, nVOI;
         int nContourVOI = 0;
         ViewVOIVector VOIs = image.getVOIs();
         nVOI = VOIs.size();
 
         if (nVOI == 0) {
-            return;
+            MipavUtil.displayError("No VOI found in the image.");
+            return false;
         }
 
-        for (i = 0; i < nVOI; i++) {
+        for (voiNum = 0; voiNum < nVOI; voiNum++) {
 
-            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+            if (VOIs.VOIAt(voiNum).getCurveType() == VOI.CONTOUR) {
                 nContourVOI++;
             }
         }
 
         if (nContourVOI == 0) {
-            return;
+            MipavUtil.displayError("No VOI contours found in the image.");
+            return false;
         } else if (nContourVOI == 1) {
 
-            for (i = 0; i < nVOI; i++) {
+            for (voiNum = 0; voiNum < nVOI; voiNum++) {
 
-                if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                if (VOIs.VOIAt(voiNum).getCurveType() == VOI.CONTOUR) {
                     break;
                 }
             }
         } else {
 
-            for (i = 0; i < nVOI; i++) {
+            for (voiNum = 0; voiNum < nVOI; voiNum++) {
 
-                if ((VOIs.VOIAt(i).isActive() == true) && (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)) {
+                if ((VOIs.VOIAt(voiNum).isActive() == true) && (VOIs.VOIAt(voiNum).getCurveType() == VOI.CONTOUR)) {
                     break;
                 }
             }
 
-            if (i == nVOI) {
-                MipavUtil.displayError("VOI must be selected");
-                dispose();
-
-                return;
+            if (voiNum == nVOI) {
+                MipavUtil.displayError("A VOI must be selected");
+                return false;
             }
         } // else if (nContourVOI > 1)
 
-        VOIs.VOIAt(i).getBounds(xBounds, yBounds, zBounds);
+        VOIs.VOIAt(voiNum).getBounds(xBounds, yBounds, zBounds);
+        
+        return true;
     }
 
     /**
@@ -531,10 +410,7 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-  
- 
-
+    
     /**
      * Accessor that sets the borderSize.
      *
@@ -590,8 +466,11 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
      * This method calculates the lower X, lower Y, and lower Z coordinates(millimeters) for the CROP VOI region.
      */
     private void calcLowerResol() {
-
-        findBounds();
+        if (!findBounds()) {
+            dispose();
+            return;
+        }
+        
         nDims = image.getNDims();
         startPos = (float[]) image.getFileInfo(0).getOrigin();
         imgRes = (float[]) image.getFileInfo(0).getResolutions();
@@ -699,8 +578,6 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
         textLowerYmm.setEnabled(false);
         textLowerYmm.setEditable(false);
         coordinatesPanel.add(textLowerYmm);
-
-        resZUnit = image.getFileInfo(0).getUnitsOfMeasure(2);
 
         JLabel labelLowerZmm = new JLabel("Zmin (" + FileInfoBase.getUnitsOfMeasureAbbrevStr(resYUnit) + ") ",
                                           JLabel.RIGHT);

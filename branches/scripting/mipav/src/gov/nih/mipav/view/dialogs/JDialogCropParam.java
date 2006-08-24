@@ -31,7 +31,7 @@ import javax.swing.*;
  *
  * A new image or replacement of the old image may be selected.
  */
-public class JDialogCropParam extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogCropParam extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 

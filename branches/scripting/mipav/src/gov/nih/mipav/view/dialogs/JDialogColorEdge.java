@@ -3,9 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,24 +18,17 @@ import javax.swing.*;
 
 
 /**
- 
+ * GUI for entering parameters for the Color Edge algorithm and making it scriptable.
  */
-public class JDialogColorEdge extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmColorEdge algoColorEdge;
-
     
     /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    // or if the source image is to be replaced
+    private int displayLoc;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage;
@@ -97,41 +89,50 @@ public class JDialogColorEdge extends JDialogScriptableBase
         setVisible(true);
     }
 
-    
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
     protected  void storeParamsFromGUI() throws ParserException{
         scriptParameters.storeInputImage(sourceImage);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("red1", red1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("green1", green1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blue1",blue1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("red2", red2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("green2", green2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("blue2",blue2));        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_1", new int[] {red1, green1, blue1}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_2", new int[] {red2, green2, blue2}));
     }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected  void setGUIFromParams(){
-        red1 = scriptParameters.getParams().getInt("red1");
-        green1 = scriptParameters.getParams().getInt("green1");
-        blue1 = scriptParameters.getParams().getInt("blue1");
-        red2 = scriptParameters.getParams().getInt("red2");
-        green2 = scriptParameters.getParams().getInt("green2");
-        blue2 = scriptParameters.getParams().getInt("blue2");
+    protected  void setGUIFromParams() {
+        sourceImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = sourceImage.getParentFrame();
         
+        if (!sourceImage.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Must be a color image.");
+        }
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        int[] rgb1 = scriptParameters.getParams().getList("rgb_color_1").getAsIntArray();
+        red1 = rgb1[0];
+        green1 = rgb1[1];
+        blue1 = rgb1[2];
+        
+        int[] rgb2 = scriptParameters.getParams().getList("rgb_color_2").getAsIntArray();
+        red2 = rgb2[0];
+        green2 = rgb2[1];
+        blue2 = rgb2[2];
     }
     
     /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
         if (displayLoc == NEW) {
@@ -228,7 +229,9 @@ public class JDialogColorEdge extends JDialogScriptableBase
                 System.gc();
             }
 
-            insertScriptLine();
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         } // else not a Color Edge algorithm
         else {
             Preferences.debug("JDialogColorEdge caught algorithm performed for: " +
@@ -277,7 +280,6 @@ public class JDialogColorEdge extends JDialogScriptableBase
         return resultImage;
     }
 
-  
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
@@ -312,9 +314,6 @@ public class JDialogColorEdge extends JDialogScriptableBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
- 
-
-    
     /**
      * 
      * @param red1
@@ -380,10 +379,6 @@ public class JDialogColorEdge extends JDialogScriptableBase
         // displayLoc = REPLACE;
         displayLoc = NEW;
     }
-
-    
-    
-
     
     /**
      * creates the planel which contains the OKAY and Cancel buttons. sets their sizes, colours and listeners.
@@ -394,15 +389,13 @@ public class JDialogColorEdge extends JDialogScriptableBase
         return buildButtons();
     }
 
-    
-
     /**
      * part of the algorithm rests on finding the original image minus an estimation of the local mean.
      *
      * <p>This is the same as using as unsharp-mask filter; so, this panel is a recreation of the inputs made in the
      * JDialogUnsharpMask.</p>
      *
-     * <p>The panel is returned to the caller.</p>
+     * @return  The color panel.
      *
      * @see  JDialogUnsharpMask
      */
@@ -556,9 +549,6 @@ public class JDialogColorEdge extends JDialogScriptableBase
          */
         
     } // end callAlgorithm()
-
-    
-
 
     /**
      * Builds a new JTextField, with the given String, sets its font (to MipavUtil.font12), sets the foreground colour
