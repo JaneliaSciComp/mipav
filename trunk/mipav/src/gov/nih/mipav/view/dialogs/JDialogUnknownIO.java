@@ -28,9 +28,9 @@ public class JDialogUnknownIO extends JDialogBase {
                                             "AFNI (.brik, .head)", "Analyze (.img)", "AVI (.avi)", "Biorad (.pic)",
                                             "BMP (.bmp)", "Bruker (.brk)", "Cheshire (.imc)", "COR (.info)",
                                             "DICOM (.dcm, .ima)", "DM3 (.dm3)", "FITS (.fits)", "GE Genesis (.sig)",
-                                            "GE Signa4x (.gedno)",
-                                            "GIF (.gif)", "ICS (.ics, .ids)", "Interfile (.hdr)", "JPEG (.jpg, .jpeg)",
-                                            "LSM (.lsm)", "Magnetom Vision (.ima)", "Map (.map)",
+                                            "GE Signa4x (.gedno)", "GIF (.gif)", "ICS (.ics, .ids)",
+                                            "Interfile (.hdr)", "JPEG (.jpg, .jpeg)", "LSM (.lsm)",
+                                            "Magnetom Vision (.ima)", "Map (.map)", "MGH (.mgh)", "MGH (.mgz)",
 
                                             // "Medvision (.bin)",
                                             "Micro Cat (.log)", "Micro Cat raw (.ct)", "Minc (.mnc)", "MRC (.mrc)",
@@ -45,7 +45,7 @@ public class JDialogUnknownIO extends JDialogBase {
     private static String[] typeSuffices = new String[] {
                                                ".brik", ".img", ".avi", ".pic", ".bmp", ".brk", ".imc", ".info", ".dcm",
                                                ".dm3", ".fits", ".sig", ".gedno", ".gif", ".ics", ".hdr", ".jpg",
-                                               ".lsm", ".ima", ".map",
+                                               ".lsm", ".ima", ".map", ".mgh", ".mgz",
 
                                                // ".bin",
                                                ".log", ".ct", ".mnc", ".mrc", ".img", ".nii",
@@ -62,7 +62,8 @@ public class JDialogUnknownIO extends JDialogBase {
 
                                         // FileBase.DICOM,
                                         FileBase.ICS, FileBase.INTERFILE, FileBase.JIMI, FileBase.LSM,
-                                        FileBase.MAGNETOM_VISION, FileBase.MAP, FileBase.MICRO_CAT, FileBase.MICRO_CAT,
+                                        FileBase.MAGNETOM_VISION, FileBase.MAP, FileBase.MGH, FileBase.MGH,
+                                        FileBase.MICRO_CAT, FileBase.MICRO_CAT,
                                         FileBase.MINC, FileBase.MRC, FileBase.NIFTI, FileBase.NIFTI, 
                                         FileBase.NRRD, FileBase.NRRD, FileBase.OSM,
                                         FileBase.JIMI, FileBase.JIMI, FileBase.JIMI, FileBase.JIMI, FileBase.QT,
