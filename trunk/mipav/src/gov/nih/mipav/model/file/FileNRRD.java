@@ -2652,7 +2652,7 @@ public class FileNRRD extends FileBase {
     }
     
     /**
-     * Helper method to calculate the offset for getting only the middle NIFTI image slice from the 3D file.
+     * Helper method to calculate the offset for getting only the middle NRRD image slice from the 3D file.
      *
      * @param   fileInfo  File info.
      *
