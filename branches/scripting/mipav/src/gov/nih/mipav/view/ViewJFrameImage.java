@@ -461,36 +461,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ComponentLoadB")) {
 
             if (isMultipleImages() == true) {
-                JDialogLoadImage loadImageB = new JDialogLoadImage(this);
-
-                doOrigins = loadImageB.getMatchOrigins();
-                doOrients = loadImageB.getMatchOrients();
-
-                if (loadImage(loadImageB.getImage(), componentImage, false, doOrigins, doOrients)) {
-
-                    if ((imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
-                        removeControls();
-                        controls = new ViewControlsImage(this); // Build controls used in this frame
-                        menuBuilder = new ViewMenuBuilder(this);
-                        tSlice = 0;
-                        nTImage = imageB.getExtents()[3];
-                        zSlice = (imageB.getExtents()[2] - 1) / 2;
-                        nImage = imageB.getExtents()[2];
-                        menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
-                        controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
-                                              menuBuilder.isMenuItemSelected("VOI toolbar"),
-                                              menuBuilder.isMenuItemSelected("Paint toolbar"),
-                                              menuBuilder.isMenuItemSelected("Scripting toolbar"),
-                                              componentImage.getVOIHandler().getVOI_ID());
-                    }
-
-                    if (this.canCloseImageBAfterLoad()) {
-                        menuBuilder.setMenuItemEnabled("Close image(B)", true);
-                    }
-
-                    setControls();
-                    setTitle();
-                }
+                new JDialogLoadImage(this, getImageA(), JDialogLoadImage.LOAD_FROM_FRAME);
+               
             } else {
                 MipavUtil.displayError("There are no other images to load.\n");
             }
@@ -607,34 +579,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
         } else if (command.equals("LoadBlankB")) {
 
-            try {
-
-                if (imageA.isColorImage()) {
-                    ModelImage imgB = new ModelImage(imageA.getType(), imageA.getExtents(), " Blank");
-
-                    setImageB(imgB);
-                    menuBuilder.setMenuItemEnabled("Close image(B)", true);
-                    setControls();
-                    setTitle();
-                } else {
-                    JDialogBlankImage blankImageDialog = new JDialogBlankImage(this);
-
-                    if (blankImageDialog.isCancelled() == false) {
-                        setImageB(blankImageDialog.getImage());
-                        menuBuilder.setMenuItemEnabled("Close image(B)", true);
-                        setControls();
-                        setTitle();
-                        getLUTb().resetTransferLine(0, 255);
-                    }
-
-                    blankImageDialog.dispose();
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Out of memory: unable to open new Image");
-
-                return;
-            }
-
+            new JDialogLoadImage(this, getImageA(), JDialogLoadImage.LOAD_BLANK);
+            
         } else if (command.equals("SaveImage")) {
             saveImageInfo();
             save(new FileWriteOptions(false), -1);
@@ -3458,13 +3404,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  image2load  DOCUMENT ME!
-     */
-    public void setAndLoad(ModelImage image2load) {
-
+    public boolean setAndLoad(ModelImage image2load, boolean doOrigins, boolean doOrients) {
         if (loadImage(image2load, componentImage, false, doOrigins, doOrients)) {
 
             if ((imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
@@ -3486,7 +3426,18 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             setControls();
             setTitle();
+            return true;
         }
+        return false;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  image2load  DOCUMENT ME!
+     */
+    public boolean setAndLoad(ModelImage image2load) {
+        return setAndLoad(image2load, doOrigins, doOrients);
     }
 
     /**
@@ -3500,8 +3451,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void setControls() {
 
         if (getImageB() != null) {
+            menuBuilder.setMenuItemEnabled("Close image(B)", true);
             controls.addActiveImageControl();
         } else {
+            menuBuilder.setMenuItemEnabled("Close image(B)", false);
             controls.removeActiveImageControl();
         }
 
@@ -4953,9 +4906,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
-
-            if (!getActiveImage().getImageName().equals(name)) {
+            
+            if (!imageA.getImageName().equals(name)) {
                 createDialog = true;
+                if (imageB != null && imageB.getImageName().equals(name)) {
+                    createDialog = false;
+                }
             }
         }
 
