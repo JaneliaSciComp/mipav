@@ -813,6 +813,10 @@ public class FileIO {
             fileType = FileBase.JIMI;
         } else if (suffix.equalsIgnoreCase(".cur")) {
             fileType = FileBase.JIMI;
+        } else if (suffix.equalsIgnoreCase(".mgh")) {
+            fileType = FileBase.MGH;
+        } else if (suffix.equalsIgnoreCase(".mgz")) {
+            fileType = FileBase.MGH;
         } else if (suffix.equalsIgnoreCase(".raw")) {
             fileType = FileBase.RAW;
         } else if (suffix.equalsIgnoreCase(".img")) {
@@ -1047,6 +1051,12 @@ public class FileIO {
 
             case FileBase.ANALYZE:
                 suffix = ".img";
+                break;
+                
+            case FileBase.MGH:
+                // Uses .mgh for uncompressed storage
+                // Uses .mgz or .mgh.gz for compressed storage
+                suffix = ".mgh";
                 break;
 
             case FileBase.NIFTI:
@@ -2418,6 +2428,10 @@ public class FileIO {
 
                 case FileBase.ANALYZE:
                     image = readAnalyze(fileName, fileDir, one);
+                    break;
+                    
+                case FileBase.MGH:
+                    image = readMGH(fileName, fileDir, one);
                     break;
 
                 case FileBase.NIFTI:
@@ -6354,6 +6368,62 @@ public class FileIO {
 
         return image;
 
+    }
+    
+    /**
+     * Reads a MGH file by calling the read method of the file. if so, calls that method instead.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+     *                    from 3D dataset.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readMGH(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        boolean showProgressBar = (!quiet) ? true : false;
+        FileMGH imageFile;
+
+        if (!UI.isAppFrameVisible()) {
+            showProgressBar = false;
+        }
+
+        try {
+            imageFile = new FileMGH(UI, fileName, fileDir, showProgressBar);
+            image = imageFile.readImage(one);
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        return image;
     }
 
     /**
