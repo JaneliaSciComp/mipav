@@ -1588,9 +1588,9 @@ public class FileNIFTI extends FileBase {
 
                 
                 fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-                matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-                matrix.setMatrix((double) LPSOrigin[2], 2, 3);
+                matrix.setMatrix((double) origin[0], 0, 3);
+                matrix.setMatrix((double) origin[1], 1, 3);
+                matrix.setMatrix((double) origin[2], 2, 3);
                 Preferences.debug("matrix = \n" + matrix + "\n");
                 fileInfo.setMatrix(matrix);
 
@@ -1669,9 +1669,9 @@ public class FileNIFTI extends FileBase {
                 }
                 
                 fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-                matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-                matrix.setMatrix((double) LPSOrigin[2], 2, 3);
+                matrix.setMatrix((double) origin[0], 0, 3);
+                matrix.setMatrix((double) origin[1], 1, 3);
+                matrix.setMatrix((double) origin[2], 2, 3);
                 Preferences.debug("matrix = \n" + matrix + "\n");
                 fileInfo.setMatrix(matrix);
 
