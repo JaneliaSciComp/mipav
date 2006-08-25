@@ -488,7 +488,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  format     file storage format -- see FileBase.java
      */
     public FileInfoBase(String name, String directory, int format) {
-        fileName = directory + name;
+		if (directory!=null) {
+			fileName = directory + name;
+		} else {
+			fileName = name;
+		}
         fileFormat = format;
         fileSuffix = FileIO.getSuffixFrom(name);
     }
@@ -2007,7 +2011,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         if (fname == null || fname.length() == 0) {
             fileName = FileUtility.getFileDirectory(fileName);
         } else if (FileUtility.getFileDirectory(fname) == null) {
-            fileName = FileUtility.getFileDirectory(fileName) + fname;
+			if (FileUtility.getFileDirectory(fileName)==null) {
+				fileName = fname;
+			} else {
+				fileName = FileUtility.getFileDirectory(fileName) + fname;
+			}
         } else {
             fileName = fname;
         }
