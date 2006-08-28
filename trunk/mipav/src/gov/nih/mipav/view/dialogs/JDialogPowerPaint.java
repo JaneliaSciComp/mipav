@@ -498,10 +498,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY())
                               );
 
+            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
+                                                       image.getTriImageFrame().getAxialComponentSlice() );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
-                                                                image.getTriImageFrame().getAxialComponentSlice() ),
-                                                  pt, screenFactor, image, FileInfoBase.AXIAL );
+            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.AXIAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -518,10 +518,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                               (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())
                               );
+
+            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
+                                                       image.getTriImageFrame().getCoronalComponentSlice() );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
-                                                                image.getTriImageFrame().getCoronalComponentSlice() ),
-                                                  pt, screenFactor, image, FileInfoBase.CORONAL );
+            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.CORONAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -539,10 +540,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY())
                               );
 
+            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
+                                                       image.getTriImageFrame().getSagittalComponentSlice() );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
-                                                                image.getTriImageFrame().getSagittalComponentSlice() ),
-                                                  pt, screenFactor, image, FileInfoBase.SAGITTAL );
+            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.SAGITTAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
