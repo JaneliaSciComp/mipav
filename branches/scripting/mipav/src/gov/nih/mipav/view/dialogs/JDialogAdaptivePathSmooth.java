@@ -457,6 +457,10 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         String name = makeImageName(image.getImageName(), "_AdaptivePathSmooth");
         int[] destExtents;
 
+        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), " ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(userInterface.isAppFrameVisible());
+        
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -484,13 +488,14 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // Make algorithm
                 adaptivePathSmoothAlgo = new AlgorithmAdaptivePathSmooth(resultImage, image, radiusY, radiusCr,
                                                                          radiusCb, threshold, includeNeighbors, reduce,
-                                                                         image25D);
+                                                                         image25D, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
-
+                adaptivePathSmoothAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -501,10 +506,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptivePathSmoothAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptivePathSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -524,13 +525,14 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 adaptivePathSmoothAlgo = new AlgorithmAdaptivePathSmooth(null, image, radiusY, radiusCr, radiusCb,
-                                                                         threshold, includeNeighbors, reduce, image25D);
+                                                                         threshold, includeNeighbors, reduce, image25D, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
-
+                adaptivePathSmoothAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -555,10 +557,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptivePathSmoothAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptivePathSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
