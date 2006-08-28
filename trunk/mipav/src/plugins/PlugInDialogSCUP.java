@@ -41,7 +41,7 @@ public class PlugInDialogSCUP extends JDialogBase implements AlgorithmInterface 
     public PlugInDialogSCUP(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         callAlgorithm();
     }
 

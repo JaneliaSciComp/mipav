@@ -1,5 +1,6 @@
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -10,9 +11,7 @@ import java.util.Vector;
 import javax.swing.*;
 
 
-public class PlugInDialogProcessICG extends JDialogBase implements
-        AlgorithmInterface,
-        ScriptableInterface {
+public class PlugInDialogProcessICG extends JDialogScriptableBase implements AlgorithmInterface {
 
     private PlugInAlgorithmProcessICG icgAlgo;
     private ModelImage image = null; // source image
@@ -32,9 +31,9 @@ public class PlugInDialogProcessICG extends JDialogBase implements
 
 
     /**
-     *  Sets variables needed to call algorithm.
-     *  @param theParentFrame    Parent frame
-     *  @param im                Source image
+     * Sets variables needed to call algorithm.
+     * @param  theParentFrame  Parent frame
+     * @param  imA             Source image
      */
     public PlugInDialogProcessICG(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
@@ -44,7 +43,7 @@ public class PlugInDialogProcessICG extends JDialogBase implements
             MipavUtil.displayError("Image must be 2.5D");
             return;
         }
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         setVisible(true);
     }
@@ -64,75 +63,40 @@ public class PlugInDialogProcessICG extends JDialogBase implements
         setVisible(true);
     }
 
+    /**
+     * Constructor used to dynamically instantiate this class while running it as part of a script.
+     */
     public PlugInDialogProcessICG() {}
 
     /**
-     * Run this algorithm from a script.
-     * @param parser the script parser we get the state from
-     * @throws IllegalArgumentException if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws
-            IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        //setActiveImage(parser.isActiveImage());
-        setSeparateThread(false);
-        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     * @param algo the algorithm to make an entry for
+     * Handle checkbox gui events.
+     * 
+     * @param  e  The check box item event.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-        if (algo.isCompleted()) {
-            if (userInterface.isScriptRecording()) {
-                //check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.
-                        getImageName()) == null) {
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(
-                            image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.
-                                getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append(
-                        "PlugInDialogProcessICG " +
-                        userInterface.getScriptDialog().
-                        getVar(image.getImageName()) +
-                        " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.
-                        getScriptDialog().getVar(resultImage.getImageName()) +
-                        "\n");
-            }
-        }
-    }
-
     public void itemStateChanged(ItemEvent e) {
         if (e.getSource() == distortBox) {
             if (distortBox.isSelected()) {
@@ -299,6 +263,7 @@ public class PlugInDialogProcessICG extends JDialogBase implements
                    }
 
                }
+               
                if (parentFrame != null) {
                    System.err.println("should update title");
                    userInterface.registerFrame(parentFrame);
@@ -307,6 +272,9 @@ public class PlugInDialogProcessICG extends JDialogBase implements
                    ((ViewJFrameImage)parentFrame).updateImageExtents();
                }
 
+               if (algorithm.isCompleted()) {
+                   insertScriptLine();
+               }
            }
        }
 }

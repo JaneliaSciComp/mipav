@@ -102,7 +102,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
