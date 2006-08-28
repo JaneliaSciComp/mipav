@@ -434,7 +434,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged((int)(i * maxProgressValue / zDim), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+            fireProgressStateChanged((int)(i * (maxProgressValue - minProgressValue) / zDim), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
            
             rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
@@ -548,7 +548,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged((int)(i * maxProgressValue / zDim), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+            fireProgressStateChanged((int)(i * (maxProgressValue - minProgressValue) / zDim), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
             
 
             process(imgBuffer, false);
@@ -664,7 +664,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged((int)(maxProgressValue * .95), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .95), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
