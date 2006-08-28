@@ -56,7 +56,7 @@ public class PlugInDialogNCI_LiepinshSeg extends JDialogBase implements Algorith
         }
 
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
     }
 

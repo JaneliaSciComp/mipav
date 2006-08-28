@@ -106,7 +106,7 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
         }
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
     }
 

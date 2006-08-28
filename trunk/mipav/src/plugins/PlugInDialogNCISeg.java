@@ -68,7 +68,7 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
         super(theParentFrame, true);
 
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
     }
 
