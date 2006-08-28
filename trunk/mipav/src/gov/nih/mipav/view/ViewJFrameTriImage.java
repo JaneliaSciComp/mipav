@@ -2315,13 +2315,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
             if (triImage[i] != null)
             {
-                if (imageA.getType() != ModelImage.COMPLEX) {
-                    if ( triImage[i].showUsingOrientation(tSlice, LUTa, LUTb, forceShow, interpMode) == false)
-                    {
-                        return false;
-                    }
-                }
-                else if ( triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false)
+                if ( triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false)
                 {
                     return false;
                 }
@@ -2339,19 +2333,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         if ((triImage == this.triImage[AXIAL_A]) || (triImage == this.triImage[CORONAL_A]) ||
                 (triImage == this.triImage[SAGITTAL_A])) {
-            this.triImage[AXIAL_A].showUsingOrientation(tSlice, null, null, true, -1);
-            this.triImage[CORONAL_A].showUsingOrientation(tSlice, null, null, true, -1);
-            this.triImage[SAGITTAL_A].showUsingOrientation(tSlice, null, null, true, -1);
+            this.triImage[AXIAL_A].show(tSlice, null, null, true, -1);
+            this.triImage[CORONAL_A].show(tSlice, null, null, true, -1);
+            this.triImage[SAGITTAL_A].show(tSlice, null, null, true, -1);
         }
-
-        if ((triImage == this.triImage[AXIAL_B]) || (triImage == this.triImage[CORONAL_B]) ||
+        else if ((triImage == this.triImage[AXIAL_B]) || (triImage == this.triImage[CORONAL_B]) ||
                 (triImage == this.triImage[SAGITTAL_B])) {
-            this.triImage[AXIAL_B].showUsingOrientation(tSlice, null, null, true, -1);
-            this.triImage[CORONAL_B].showUsingOrientation(tSlice, null, null, true, -1);
-            this.triImage[SAGITTAL_B].showUsingOrientation(tSlice, null, null, true, -1);
+            this.triImage[AXIAL_B].show(tSlice, null, null, true, -1);
+            this.triImage[CORONAL_B].show(tSlice, null, null, true, -1);
+            this.triImage[SAGITTAL_B].show(tSlice, null, null, true, -1);
         }
-
-        if ((triImage == this.triImage[AXIAL_AB]) || (triImage == this.triImage[CORONAL_AB]) ||
+        else if ((triImage == this.triImage[AXIAL_AB]) || (triImage == this.triImage[CORONAL_AB]) ||
                 (triImage == this.triImage[SAGITTAL_AB])) {
             updateImages();
         }

@@ -6905,15 +6905,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return fileInfo[0].getUnitsOfMeasure();
     }
 
+    /**
+     * Exports data based on the mapping from ModelImage space to Patient
+     * space. 
+     * @param orientation -- the Patient Orientation of the slice to export
+     * @param tSlice -- for 4D volumes
+     * @param slice -- the constant slice
+     * @param values -- the array to write the data into
+     */
     public final synchronized void export( int orientation,
                                            int tSlice, int slice,
                                            float[] values ) throws IOException
     {
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
-        export( axisOrder, axisFlip, tSlice, slice, values );
+        export( orientation, axisOrder, axisFlip, tSlice, slice, values );
     }
-
 
     /* MipavCoordinateSystems upgrade TODO: : */
     /**
@@ -6928,7 +6935,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param slice -- the constant slice
      * @param values -- the array to write the data into
      */
-    private final synchronized void export( int[] axisOrder, boolean[] axisFlip,
+    private final synchronized void export( int orientation, int[] axisOrder, boolean[] axisFlip,
                                             int tSlice, int slice,
                                             float[] values ) throws IOException
     {
@@ -7009,6 +7016,120 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return;
     }
 
+    public final synchronized void exportDiagonal( int orientation,
+                                                   int tSlice, int slice,
+                                                   int[] extents,
+                                                   Point3Df[] verts,
+                                                   float[] values ) throws IOException
+    {
+        try {
+            setLock(W_LOCKED);
+        } catch (IOException error) {
+            throw error;
+        }
+        int iBound = extents[ 0 ];
+        int jBound = extents[ 1 ];
+
+        /* Get the loop multiplication factors for indexing into the 1D array
+         * with 3 index variables: based on the coordinate-systems:
+         * transformation:  */
+        int iFactor = 1;
+        int jFactor = dimExtents[ 0 ];
+        int kFactor = dimExtents[ 0 ] * dimExtents[ 1 ];
+        int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        /* Calculate the slopes for traversing the data in x,y,z: */
+        float xSlopeX = verts[1].x - verts[0].x;
+        float ySlopeX = verts[1].y - verts[0].y;
+        float zSlopeX = verts[1].z - verts[0].z;
+
+        float xSlopeY = verts[3].x - verts[0].x;
+        float ySlopeY = verts[3].y - verts[0].y;
+        float zSlopeY = verts[3].z - verts[0].z;
+
+        float x0 = verts[0].x;
+        float y0 = verts[0].y;
+        float z0 = verts[0].z;
+
+        xSlopeX /= (float) (iBound - 1);
+        ySlopeX /= (float) (iBound - 1);
+        zSlopeX /= (float) (iBound - 1);
+
+        xSlopeY /= (float) (jBound - 1);
+        ySlopeY /= (float) (jBound - 1);
+        zSlopeY /= (float) (jBound - 1);
+
+        /* loop over the 2D image (values) we're writing into */
+        float x, y, z;
+        for (int j = 0; j < jBound; j++)
+        {
+            /* Initialize the first diagonal point(x,y,z): */
+            x = x0;
+            y = y0;
+            z = z0;
+            for (int i = 0; i < iBound; i++)
+            {
+                int iIndex = (int)x;
+                int jIndex = (int)y;
+                int kIndex = (int)z;
+
+                /* calculate the ModelImage space index: */
+                int index =
+                    (iIndex * iFactor) +
+                    (jIndex * jFactor) +
+                    (kIndex * kFactor) +
+                    (tSlice * tFactor);
+
+                /* if color: */
+                if ((bufferType == ARGB) ||
+                    (bufferType == ARGB_USHORT) ||
+                    (bufferType == ARGB_FLOAT))
+                {
+                    if ( (index >= 0) && (index < dataSize) )
+                    {
+                        values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
+                        values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
+                        values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
+                        values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
+                    }
+                    else
+                    {
+                        values[(j * iBound + i) * 4 + 0] = 0;
+                        values[(j * iBound + i) * 4 + 1] = 0;
+                        values[(j * iBound + i) * 4 + 2] = 0;
+                        values[(j * iBound + i) * 4 + 3] = 0;
+                    }
+                }
+                /* not color: */
+                else
+                {
+                    if ( (index >= 0) && (index < dataSize) )
+                    {
+                        values[j * iBound + i] = getFloat(index);
+                    }
+                    else
+                    {
+                        values[j * iBound + i] = 0;
+                    }
+                }
+                /* Inner loop: Move to the next diagonal point along the
+                 * x-direction of the plane, using the xSlopeX, ySlopeX and
+                 * zSlopeX values: */
+                x = x + xSlopeX;
+                y = y + ySlopeX;
+                z = z + zSlopeX;
+            }
+            
+            /* Outer loop: Move to the next diagonal point along the
+             * y-direction of the plane, using the xSlopeY, ySlopeY and
+             * zSlopeY values: */
+            x0 = x0 + xSlopeY;
+            y0 = y0 + ySlopeY;
+            z0 = z0 + zSlopeY;
+        }
+    }
+
+
     /* MipavCoordinateSystems upgrade TODO: : */
     /** Returns the image width, based on the Patient Coordinates orientation
      * from which the data will be viewed:
@@ -7047,6 +7168,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return null;
         }
         float[] resTemp = fileInfo[index].getResolutions();
+
+        /* MipavCoordinateSystems upgrade: TODO: */
+        if ( resTemp[2] < fileInfo[index].getSliceSpacing())
+        {
+            resTemp[2] = fileInfo[index].getSliceSpacing();
+        }
+
         float[] resReturn = new float[3];
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         for ( int i = 0; i < 3; i++ )

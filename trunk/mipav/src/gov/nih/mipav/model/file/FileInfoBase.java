@@ -336,6 +336,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Unknown orientation. */
     public static final int UNKNOWN_ORIENT = 3;
 
+    /** 3D Model-Based orientation. */
+    public static final int MODEL = 4;
+
     /** Array of image orientation strings. */
     private static final String[] imageOrientationStr = { "Axial", "Coronal", "Sagittal", "Unknown" };
 
@@ -509,7 +512,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the number of bytes per pixel based on the data type.
-     * 
+     *
      * @param dataType  the data type.
      * @return          the number of bytes per pixel.
      */
@@ -1658,9 +1661,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public float[] getOrigin() {
         return origin;
     }
-    
+
     /**
-     * 
+     *
      * @return float[] LPSOrigin
      */
     public float[] getLPSOrigin() {
@@ -1672,17 +1675,17 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             if (getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
                 getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
                 LPSOrigin[0] = getOrigin()[j];
-               
+
             }
             else if (getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
                      getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
                 LPSOrigin[1] = getOrigin()[j];
-                   
+
             }
             else if (getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
                      getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
                 LPSOrigin[2] = getOrigin()[j];
-                   
+
             }
         }
         return LPSOrigin;
@@ -1810,11 +1813,11 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             return -1;
         }
         int dataType = getDataType();
-        
+
         return extents[0] * extents[1] * getNumOfBytesPerPixel(getDataType());
     }
-    
-    
+
+
     /**
      * Returns the space between neighboring slices.
      *
