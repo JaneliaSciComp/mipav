@@ -61,10 +61,6 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
     /** DOCUMENT ME! */
     private ViewVOIVector trueVOIs;
 
-    /** Pointer to GUI. */
-    private ViewUserInterface UI;
-
-
     /** Reference to userface. */
     private ViewUserInterface userInterface;
 
@@ -113,8 +109,6 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
         init();
     }
 
-
-
     //~ Methods --------------------------------------------------------------------------------------------------------
     /**
      * Record the parameters just used to run this algorithm in a script.
@@ -162,8 +156,6 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmEvaluateSegmentation) {
 
             // These next lines set the titles in all frames where the source image is displayed to
@@ -180,7 +172,9 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
                 }
             }
 
-            insertScriptLine();
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
             if (parentFrame != null) {
                 userInterface.registerFrame(parentFrame);
@@ -421,5 +415,4 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
 
         return true;
     }
-
 }
