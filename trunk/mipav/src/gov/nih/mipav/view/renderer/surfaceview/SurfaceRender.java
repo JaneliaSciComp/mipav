@@ -2567,34 +2567,46 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Updates the slice textures based on the Probe position and rotation angle. The ModelImage data is sampled along
-     * the diagonal, not axis-aligned. bInterpolate indicates whether to use nearest-neighbors or to interpolate the
-     * data.
+     * Updates the slice textures based on the Probe position and rotation
+     * angle. The ModelImage data is sampled along the diagonal, not
+     * axis-aligned. bInterpolate indicates whether to use nearest-neighbors
+     * or to interpolate the data.
      *
-     * @param   forceShow     DOCUMENT ME!
-     * @param   bInterpolate  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * @param   forceShow  Forces triSliceImages[i].show to re-calculate the image texture.
+     * @param   bInterpolate  uses nearest-neighbors when false, interpolates data when true
+     * @param bReset when true indicates that the probe navigation has been
+     * reset and the slice bounding boxes should be displayed, when false the
+     * probe is no axis-aligned and the slice bounding boxes are not displayed
      */
-    public boolean updateProbe(boolean forceShow, boolean bInterpolate) {
+    public void updateProbe(boolean forceShow, boolean bInterpolate, boolean bReset)
+    {
 
         for ( int i = 0; i < 3; i++ )
         {
             if ( triSliceImages[i] == null )
             {
-                return false;
+                return;
             }
             /* Set super-sample or nearest-neighbors sampling: */
             triSliceImages[i].Interpolate(bInterpolate);
-
             if (triSliceImages[i].show(slicePanel.tSlice,
                                        slicePanel.getSlice( i ),
                                        null, null, forceShow, boxSliceVertices[i] ) == true)
             {
                 sliceImageComponent2D[i].set(triSliceImages[i].getImage());
             }
+            /* Turn slice bounding boxes on: */
+            if ( bReset )
+            {
+                showBoxSlice( i );
+            }
+            /* Turn slice bounding boxes off: */
+            else
+            {
+                removeBoxSlice( i );
+            }
         }
-        return false;
+        return;
     }
 
     /**

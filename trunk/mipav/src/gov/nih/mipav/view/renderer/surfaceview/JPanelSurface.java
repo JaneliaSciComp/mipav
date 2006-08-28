@@ -2360,7 +2360,7 @@ public class JPanelSurface extends JPanelRendererBase
              * textures need to be updated one last time at the super-sampled
              * high resolution: */
             if (isProbePicked() && (kEvent.getButton() == MouseEvent.BUTTON1)) {
-                ((SurfaceRender) renderBase).updateProbe(true, true);
+                ((SurfaceRender) renderBase).updateProbe(true, true, false);
             }
 
             /* De-select the probe: */
