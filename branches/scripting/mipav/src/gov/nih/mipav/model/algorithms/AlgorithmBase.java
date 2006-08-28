@@ -102,8 +102,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /**
      * Used to store the minimum and maximum value of the progress bar.
      */
-    protected int minProgressValue;
-    protected int maxProgressValue;
+    protected int minProgressValue = 0;
+    protected int maxProgressValue = 100;
     /**
      * A list of the ChangeListeners which are interested in the ChangeEvent. 
      */
@@ -444,6 +444,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void setCompleted(boolean flag) {
         completed = flag;
+        if(maxProgressValue == 100){
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+        }
     }
 
     /**
