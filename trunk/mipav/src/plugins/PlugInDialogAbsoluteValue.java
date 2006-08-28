@@ -43,7 +43,7 @@ public class PlugInDialogAbsoluteValue extends JDialogBase implements AlgorithmI
     public PlugInDialogAbsoluteValue(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         callAlgorithm();
     }
 

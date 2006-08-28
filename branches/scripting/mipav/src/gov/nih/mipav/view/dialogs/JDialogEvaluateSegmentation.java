@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterException;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +20,7 @@ import javax.swing.*;
  * Dialog to get user input, then call AlgorithmEvaluateSegmentation. Selected image is test image, the image that is
  * compared to a gold standard true image. Algorithms are executed in their own thread.
  */
-public class JDialogEvaluateSegmentation extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogEvaluateSegmentation extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -38,13 +39,7 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
     private int imagesFound = 0;
 
     /** DOCUMENT ME! */
-    private int nVOIs;
-
-    /** DOCUMENT ME! */
     private ModelImage testImage;
-
-    /** DOCUMENT ME! */
-    private ViewVOIVector testVOIs;
 
     /** Used to lock and unlock images. */
     private String[] titles;
@@ -57,9 +52,6 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
 
     /** DOCUMENT ME! */
     private ModelImage trueImage;
-
-    /** DOCUMENT ME! */
-    private ViewVOIVector trueVOIs;
 
     /** Reference to userface. */
     private ViewUserInterface userInterface;
@@ -81,13 +73,12 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
         super(theParentFrame, false);
         trueImage = im;
         userInterface = ViewUserInterface.getReference();
-        trueVOIs = trueImage.getVOIs();
-        nVOIs = trueVOIs.size();
-
+        
+        ViewVOIVector trueVOIs = trueImage.getVOIs();
+        int nVOIs = trueVOIs.size();
         for (int i = 0; i < nVOIs; i++) {
 
-            if ((trueVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                    (trueVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+            if ((trueVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (trueVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                 trueID[trueBoundingVOIs++] = trueVOIs.VOIAt(i).getID();
             }
         }
@@ -110,20 +101,49 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
     /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException{
+    protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(trueImage);
-        scriptParameters.storeInputImage(testImage);
+        scriptParameters.storeImage(trueImage, "test_image");
     }
     
     /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     * {@inheritDoc}
      */
-    protected void setGUIFromParams(){}
+    protected void setGUIFromParams() {
+        trueImage = scriptParameters.retrieveInputImage();
+        
+        userInterface = ViewUserInterface.getReference();
+        
+        testImage = scriptParameters.retrieveImage("test_image");
+
+        ViewVOIVector trueVOIs = trueImage.getVOIs();
+        int nVOIs = trueVOIs.size();
+        for (int i = 0; i < nVOIs; i++) {
+
+            if ((trueVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (trueVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                trueID[trueBoundingVOIs++] = trueVOIs.VOIAt(i).getID();
+            }
+        }
+
+        if (trueBoundingVOIs == 0) {
+            throw new ParameterException("test_image", "True image must have at least 1 contour or polyline VOI");
+        }
+        
+        // just make sure the image dims match, not the voi testing done in a run from the dialog.  TODO: the full testing may be added later
+        if (trueImage.getNDims() != testImage.getNDims()) {
+            throw new ParameterException("test_image", "The true image and test image have different dimensionalities.");
+        } else {
+            for (int i = 0; i < trueImage.getNDims(); i++) {
+                if (trueImage.getExtents()[i] != testImage.getExtents()[i]) {
+                    throw new ParameterException("test_image", "The true image and test image extents do not match.");
+                }
+            }
+        }
+    }
     
     /**
      * Closes dialog box when the OK button is pressed, set variables, and calls the algorithm.
@@ -184,8 +204,6 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
         }
     }
 
- 
-
     /**
      * Accessor to set the reference image.
      *
@@ -193,22 +211,6 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
      */
     public void setTestImage(ModelImage im) {
         testImage = im;
-    }
-
-    /**
-     * Constructs a string indicating if the algorithm completed sucessfully.
-     */
-    protected void closingLog() {
-        String logString;
-
-        if (evalSeg.isCompleted() == true) {
-            logString = new String("EvaluateSegmentation " + testImage.getImageName() + " to " +
-                                   trueImage.getImageName() + " Completed successfully!" + "\n");
-        } else {
-            logString = new String("EvaluateSegmentation " + testImage.getImageName() + " to " +
-                                   trueImage.getImageName() + " Algorithm failed!" + "\n");
-        }
-        //        Preferences.log(trueImage.getUserInterface(), logString);
     }
 
     /**
@@ -256,14 +258,10 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
                             }
 
                             if (dimMatch) {
-                                testVOIs = null;
-                                testVOIs = img.getVOIs();
-                                nVOIs = testVOIs.size();
-
+                                ViewVOIVector testVOIs = img.getVOIs();
+                                int nVOIs = testVOIs.size();
                                 for (i = 0; i < nVOIs; i++) {
-
-                                    if ((testVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                                            (testVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                                    if ((testVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (testVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
                                         testID[testBoundingVOIs++] = testVOIs.VOIAt(i).getID();
                                     }
                                 }
@@ -345,17 +343,7 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
             MipavUtil.displayError("A thread is already running on this object");
         }
     }
-
-    /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String logString = new String("EvaluateSegmentation " + testImage.getImageName() + " to " +
-                                      trueImage.getImageName() + "\n");
-        // Preferences.log(trueImage.getUserInterface(), logString);
-    }
-
+    
     /**
      * Initializes GUI components and displays dialog.
      */
@@ -403,15 +391,10 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
      * @return  <code>true</code> if successful in setting variables.
      */
     private boolean setVariables() {
-
         // assign testImage to image selected in comboBox
-        ViewUserInterface UI = trueImage.getUserInterface();
         String selectedName = (String) comboBoxImage.getSelectedItem();
 
-        testImage = UI.getRegisteredImageByName(selectedName);
-
-
-        constructLog();
+        testImage = userInterface.getRegisteredImageByName(selectedName);
 
         return true;
     }

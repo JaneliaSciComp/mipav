@@ -86,7 +86,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase imple
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(trueImage);
-        scriptParameters.storeImage(trueImage, "test_image");
+        scriptParameters.storeImage(testImage, "test_image");
     }
     
     /**
