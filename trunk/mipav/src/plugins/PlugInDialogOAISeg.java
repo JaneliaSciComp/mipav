@@ -73,7 +73,7 @@ public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterfac
         super(theParentFrame, false);
     	System.out.println("name of image: " + imA.getImageName());
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         callAlgorithm(true);
     }
 

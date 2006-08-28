@@ -57,7 +57,7 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
         }
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
     }
 

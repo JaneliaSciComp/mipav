@@ -57,7 +57,7 @@ public class PlugInDialogNEISeg extends JDialogBase implements AlgorithmInterfac
         }
 
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         callAlgorithm();
     }
 

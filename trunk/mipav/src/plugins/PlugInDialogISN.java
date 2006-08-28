@@ -41,7 +41,7 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
     public PlugInDialogISN(Frame theParentFrame, ModelImage imA) {
         super(theParentFrame, true);
         imageA = imA;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         callAlgorithm();
     }
 

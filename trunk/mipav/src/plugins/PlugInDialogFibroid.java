@@ -44,7 +44,7 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
     public PlugInDialogFibroid(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
+        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
     }
 
