@@ -336,6 +336,10 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         String name = makeImageName(image.getImageName(), "_adaptiveNR");
         int[] destExtents;
 
+        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(userInterface.isAppFrameVisible());
+        
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -362,13 +366,15 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 // resultImage.setImageName(name);
                 // Make algorithm
                 adaptiveNRAlgo = new AlgorithmAdaptiveNR(resultImage, image, radiusY, radiusCr, radiusCb, distWeight,
-                                                         reduce);
+                                                         reduce, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveNRAlgo.addListener(this);
 
+                adaptiveNRAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -379,10 +385,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptiveNRAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptiveNRAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -401,13 +403,15 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                adaptiveNRAlgo = new AlgorithmAdaptiveNR(null, image, radiusY, radiusCr, radiusCb, distWeight, reduce);
+                adaptiveNRAlgo = new AlgorithmAdaptiveNR(null, image, radiusY, radiusCr, radiusCb, distWeight, reduce, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveNRAlgo.addListener(this);
 
+                adaptiveNRAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -432,10 +436,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptiveNRAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptiveNRAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
