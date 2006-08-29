@@ -173,12 +173,12 @@ public class JDialogExtractBrain extends JDialogBase
         userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
         init();
         loadDefaults();
-
-        setVariables();
+        
         centerOfMass = computeCenter(image, orientation, useSphere);
-
+        setVariables();
+        
         // use the center of mass if there was a problem with the defaults or the user wants to use it explicitly
-        if (useCenterOfMass || (initCenterX == -1) || (initCenterY == -1) || (initCenterZ == -1)) {
+         if (useCenterOfMass || (initCenterX == -1) || (initCenterY == -1) || (initCenterZ == -1)) {
             initCenterPoint = centerOfMass;
             initCenterX = initCenterPoint.x;
             initCenterY = initCenterPoint.y;
@@ -187,6 +187,7 @@ public class JDialogExtractBrain extends JDialogBase
             initCenterYTF.setText("" + initCenterY);
             initCenterZTF.setText("" + initCenterZ);
         }
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1216,22 +1217,21 @@ public class JDialogExtractBrain extends JDialogBase
         }
 
         extractToPaint = extractToPaintCheckBox.isSelected();
-
-
-        tmpStr = initCenterXTF.getText();
-
-        if (testParameter(tmpStr, 0, image.getExtents()[0])) {
-            initCenterX = Float.valueOf(tmpStr).floatValue();
-        } else {
-            initCenterXTF.requestFocus();
-            initCenterXTF.selectAll();
-
-            return false;
-        }
-
         useCenterOfMass = useCenterOfMassCheckBox.isSelected();
 
         if (!useCenterOfMass) {
+            
+            tmpStr = initCenterXTF.getText();
+
+            if (testParameter(tmpStr, 0, image.getExtents()[0])) {
+                initCenterX = Float.valueOf(tmpStr).floatValue();
+            } else {
+                initCenterXTF.requestFocus();
+                initCenterXTF.selectAll();
+
+                return false;
+            }
+            
             tmpStr = initCenterYTF.getText();
 
             if (testParameter(tmpStr, 0, image.getExtents()[1])) {
@@ -1247,6 +1247,8 @@ public class JDialogExtractBrain extends JDialogBase
 
             if (testParameter(tmpStr, 0, image.getExtents()[2])) {
                 initCenterZ = Float.valueOf(tmpStr).floatValue();
+                
+                System.out.println("\n initCenterZ py = " + initCenterZ );
             } else {
                 initCenterZTF.requestFocus();
                 initCenterZTF.selectAll();
@@ -1257,7 +1259,7 @@ public class JDialogExtractBrain extends JDialogBase
 
 
         if (useCenterOfMass) {
-            initCenterPoint = centerOfMass;
+            initCenterPoint = (Point3f)(centerOfMass.clone());
         } else {
             initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
         }
