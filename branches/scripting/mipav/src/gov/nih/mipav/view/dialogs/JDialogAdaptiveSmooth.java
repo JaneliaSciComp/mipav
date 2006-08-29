@@ -333,6 +333,10 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
         String name = makeImageName(image.getImageName(), "_adaptiveSmooth");
         int[] destExtents;
 
+        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), " ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(userInterface.isAppFrameVisible());
+        
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -359,13 +363,14 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 // resultImage.setImageName(name);
                 // Make algorithm
                 adaptiveSmoothAlgo = new AlgorithmAdaptiveSmooth(resultImage, image, radiusY, radiusCr, radiusCb,
-                                                                 distWeight, reduce);
+                                                                 distWeight, reduce, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveSmoothAlgo.addListener(this);
-
+                adaptiveSmoothAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -376,10 +381,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptiveSmoothAlgo.setProgressBarVisible(false);
-                    }
-
+                 
                     adaptiveSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -399,13 +401,14 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 adaptiveSmoothAlgo = new AlgorithmAdaptiveSmooth(null, image, radiusY, radiusCr, radiusCb, distWeight,
-                                                                 reduce);
+                                                                 reduce, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveSmoothAlgo.addListener(this);
-
+                adaptiveSmoothAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -430,10 +433,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptiveSmoothAlgo.setProgressBarVisible(false);
-                    }
-
+                   
                     adaptiveSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

@@ -502,9 +502,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
         setCompleted(true);
     }
 
@@ -601,9 +598,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+    
         setCompleted(true);
     }
 
@@ -708,9 +703,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+        
         setCompleted(true);
     }
 
@@ -790,9 +783,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+      
         setCompleted(true);
     }
 
@@ -903,9 +894,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+     
         setCompleted(true);
     }
 
@@ -1041,9 +1030,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+      
         setCompleted(true);
     }
 

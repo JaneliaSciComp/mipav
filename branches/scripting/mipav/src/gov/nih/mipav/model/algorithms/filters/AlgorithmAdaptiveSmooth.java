@@ -209,8 +209,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
      * @param  reduce      DOCUMENT ME!
      */
     public AlgorithmAdaptiveSmooth(ModelImage destImage, ModelImage srcImg, float radiusY, float radiusCr,
-                                   float radiusCb, float distWeight, boolean reduce) {
-        super(destImage, srcImg);
+                                   float radiusCb, float distWeight, boolean reduce, int minProgressValue, int maxProgressValue) {
+        super(destImage, srcImg, minProgressValue, maxProgressValue);
         this.radiusY = radiusY;
         this.distWeight = distWeight;
         this.radiusCr = radiusCr;
@@ -306,18 +306,15 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             Cb = new int[length];
             imgBuffer = new int[4 * length];
             srcImage.exportData(0, 4 * length, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true, this,
-                                               this);
+           
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveSmooth: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveSmooth:  Out of Memory");
             setCompleted(false);
 
@@ -325,13 +322,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         }
 
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
 
-        progressBar.setMessage("Converting from RGB to YCrCb");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -350,8 +342,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, runningInSeparateThread);
-        progressBar.setMessage("Converting fromYCrCb to RGB");
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .95), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+     
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -369,7 +361,6 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveSmooth: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -381,13 +372,12 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveSmooth: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
 
         if (threadStopped) {
             cleanup();
@@ -397,7 +387,6 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
         setCompleted(true);
     }
 
@@ -415,18 +404,14 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             length = xDim * yDim;
             imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing median filter ...", 0, 100, true,
-                                               this, this);
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveSmooth: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveSmooth:  Out of Memory");
             setCompleted(false);
 
@@ -434,11 +419,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         }
 
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Performing median filter ...");
 
 
         process(imgBuffer);
@@ -458,8 +439,6 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveSmooth: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
                 return;
             }
         } else {
@@ -476,7 +455,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Performing median filter ...");
 
         if (threadStopped) {
             cleanup();
@@ -486,7 +465,6 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
         setCompleted(true);
     }
 
@@ -1331,14 +1309,18 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        progressBar.updateValue(10, runningInSeparateThread);
-        progressBar.setMessage("Performing median filter");
+        
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .1), srcImage.getImageName(), "Performing median filter ...");
+        
+        
         medianFilter(fY);
-        progressBar.updateValue(30, runningInSeparateThread);
-        progressBar.setMessage("Creating edge graph");
+        
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .3), srcImage.getImageName(), "Creating edge graph ...");
+               
         createEdgeGraph(fY);
-        progressBar.updateValue(50, runningInSeparateThread);
-        progressBar.setMessage("Filtering in Y space");
+        
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .5), srcImage.getImageName(), "Filtering in Y space ...");
+                
         filterProcessBW();
 
         if (threadStopped) {
@@ -1392,14 +1374,14 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        progressBar.updateValue(10, runningInSeparateThread);
-        progressBar.setMessage("Performing median filter");
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .1), srcImage.getImageName(), "Performing median filter ...");
+        
         medianFilter(fY, fR, fB);
-        progressBar.updateValue(30, runningInSeparateThread);
-        progressBar.setMessage("Creating edge graph");
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .3), srcImage.getImageName(), "Creating edge graph ...");
+        
         createEdgeGraph(fY, fR, fB);
-        progressBar.updateValue(50, runningInSeparateThread);
-        progressBar.setMessage("Filtering in Y space");
+        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .5), srcImage.getImageName(), "Filtering in Y space ...");
+        
         filterProcess();
 
         if (threadStopped) {
@@ -1412,8 +1394,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         if (!reduce) {
             data = Cb;
             radius = radiusCb;
-            progressBar.updateValue(70, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cb space");
+            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .7), srcImage.getImageName(), "Filtering in Cb space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -1425,8 +1407,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
 
             data = Cr;
             radius = radiusCr;
-            progressBar.updateValue(90, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cr space");
+            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .9), srcImage.getImageName(), "Filtering in Cr space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -1473,8 +1455,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             createEdgeGraph(newY, newR, newB);
             data = newB;
             radius = radiusCb / 2.0f;
-            progressBar.updateValue(70, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cb space");
+            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .7), srcImage.getImageName(), "Filtering in Cb space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -1486,8 +1468,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
 
             data = newR;
             radius = radiusCr / 2.0f;
-            progressBar.updateValue(90, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cr space");
+            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .9), srcImage.getImageName(), "Filtering in Cr space ...");
+            
             filterProcess();
 
             if (threadStopped) {
