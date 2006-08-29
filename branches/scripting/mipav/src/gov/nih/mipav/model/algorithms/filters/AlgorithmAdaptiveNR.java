@@ -334,7 +334,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged((int) (.95 * maxProgressValue), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(getProgressFromFloat(.95f), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -1198,10 +1198,10 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         width = xDim;
         height = yDim;
         
-        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .1)  , srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(getProgressFromFloat(.1f)  , srcImage.getImageName(), "Performing median filter ...");
         
         medianFilter(fY);
-        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .3)  , srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged(getProgressFromFloat(.3f)  , srcImage.getImageName(), "Creating edge graph ...");
        
         createEdgeGraph(fY);
         fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .5)  , srcImage.getImageName(), "Filtering in Y space ...");
@@ -1260,15 +1260,15 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         height = yDim;
         
         
-        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .1)  , srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(getProgressFromFloat(.1f)  , srcImage.getImageName(), "Performing median filter ...");
        
         medianFilter(fY, fR, fB);
         
-        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .3)  , srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged(getProgressFromFloat(.3f)  , srcImage.getImageName(), "Creating edge graph ...");
         
         createEdgeGraph(fY, fR, fB);
         
-        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .5)  , srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged(getProgressFromFloat(.5f)  , srcImage.getImageName(), "Filtering in Y space ...");
        
         filterProcess();
 
@@ -1282,7 +1282,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         if (!reduce) {
             data = Cb;
             radius = radiusCb;
-            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .7)  , srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged(getProgressFromFloat(.7f)  , srcImage.getImageName(), "Filtering in Cb space ...");
             
             
             filterProcess();
@@ -1296,7 +1296,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
 
             data = Cr;
             radius = radiusCr;
-            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .9)  , srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged(getProgressFromFloat(.9f)  , srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 
@@ -1345,7 +1345,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             data = newB;
             radius = radiusCb / 2.0f;
             
-            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .7)  , srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged(getProgressFromFloat(.7f)  , srcImage.getImageName(), "Filtering in Cb space ...");
             
             filterProcess();
 
@@ -1359,7 +1359,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             data = newR;
             radius = radiusCr / 2.0f;
             
-            fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .9)  , srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged(getProgressFromFloat(.9f)  , srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 
