@@ -269,6 +269,13 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
         title = _title;
     }
 
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+        if (visible) {
+            this.requestFocus();
+        }
+    }
+    
     /**
      * Use this method if you are not running in a separate thread, or, you have already set the value of separateThread
      * through the setSeparateThread method. Otherwise, use updateValue(int, boolean);

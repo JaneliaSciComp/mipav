@@ -261,11 +261,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         if ((imagesDone == IMAGE_A) || (imagesDone == BOTH)) {
 
             if (imageA.isColorImage() == true) {
-                maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
+                maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
-                maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice);
 
@@ -292,11 +292,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         if ((imagesDone == IMAGE_B) || (imagesDone == BOTH)) {
 
             if (imageB.isColorImage() == true) {
-                maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
+                maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
-                maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice);
 

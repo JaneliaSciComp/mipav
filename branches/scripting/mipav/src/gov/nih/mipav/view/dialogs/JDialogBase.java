@@ -84,6 +84,9 @@ public abstract class JDialogBase extends JDialog
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
 
+    /** Progress bar that will listen to a dialog's algorithm (and reflect current progress)*/
+    protected ViewJProgressBar progressBar;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -896,6 +899,16 @@ public abstract class JDialogBase extends JDialog
         return tf;
     }
 
+    /**
+     * Creates the progress bar that will listen to an algorithm's progress changes
+     * @param title the progress bar's title (generally the srcImage's name)
+     */
+    protected void createProgressBar(String title) {
+        progressBar = new ViewJProgressBar(title, " ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+    }
+    
     /**
      * Returns the name of the dialog (e.g. JDialogBase -> Base)
      *

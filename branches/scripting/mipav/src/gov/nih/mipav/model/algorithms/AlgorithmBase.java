@@ -507,6 +507,23 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
+    protected int getProgressFromFloat(float percentage) {
+        return (int)(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
+    }
+    
+    protected int getProgressFromInt(int percentage) {
+        return (int)(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
+    }
+    
+    protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo) {
+        ProgressChangeListener[] listeners = this.getProgressChangeListeners();
+        if (listeners != null) {
+            for (int i = 0; i < listeners.length; i++) {
+                baseAlgo.addProgressChangeListener(listeners[i]);
+            }
+        }
+    }
+    
     /**
      * Sets the start time to the current time. This should be called at the beginning of the run() method.
      */

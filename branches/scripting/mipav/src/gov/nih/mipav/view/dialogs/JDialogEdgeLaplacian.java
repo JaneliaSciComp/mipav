@@ -279,6 +279,9 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
 
         String name = makeImageName(image.getImageName(), "_edgeLap");
 
+        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Calculating the Edge ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(true);
         if ((image.getNDims() == 2) && separable) { // source image is 2D and separable convolution
 
             int[] destExtents = new int[2];
@@ -311,7 +314,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 laplacianSepAlgo.addListener(this);
-
+                laplacianSepAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -375,6 +379,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // This is made possible by implementing AlgorithmedPerformed interface
                 laplacianSepAlgo.addListener(this);
 
+                laplacianSepAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -434,6 +440,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // This is made possible by implementing AlgorithmedPerformed interface
                 laplacianAlgo.addListener(this);
 
+                laplacianSepAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -497,6 +505,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                 // This is made possible by implementing AlgorithmedPerformed interface
                 laplacianAlgo.addListener(this);
 
+                laplacianSepAlgo.addProgressChangeListener(progressBar);
+                
                 // Hide dialog
                 setVisible(false);
 

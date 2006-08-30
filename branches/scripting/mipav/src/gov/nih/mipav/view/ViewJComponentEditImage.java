@@ -707,7 +707,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             float imgMaxOrig = (float) imageA.getMax();
 
             if (imageA.isColorImage() == true) {
-                maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
+                maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
@@ -719,7 +719,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
 
                 if (slice[0] <= 0 ){
-                    maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
+                    maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false, 0, 100);
                     maskAlgo.setRunningInSeparateThread(false);
                     maskAlgo.setProgressBarVisible(showProgressBar);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
@@ -754,7 +754,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (((imagesDone == IMAGE_B) || (imagesDone == BOTH)) && (imageB != null)) {
 
             if (imageB.isColorImage() == true) {
-                maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
+                maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
@@ -764,7 +764,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     JDialogMask3D4D dialog3D4D = new JDialogMask3D4D(frame, slice);
                     if (slice[0] == -1 ) timeSlice = -1;
                 }
-                maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
+                maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false, 0, 100);
                 maskAlgo.setRunningInSeparateThread(false);
                 maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
@@ -807,6 +807,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         byte red, green, blue;
         int i;
 
+        ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
+        progressBar.setSeparateThread(false);
+        
+        
         imageACopy = (ModelImage) imageA.clone();
 
         if (imageB != null) {
@@ -824,36 +828,41 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             if (imageB == null) {
-                maskAlgo = new AlgorithmMask(imageACopy, fillColor, true, false);
+                maskAlgo = new AlgorithmMask(imageACopy, fillColor, true, false, 0, 100);
             } else {
 
                 if (imageActive == imageA) {
 
                     // if( commitMode == IMAGE_A) {
-                    maskAlgo = new AlgorithmMask(imageACopy, fillColor, true, false);
+                    maskAlgo = new AlgorithmMask(imageACopy, fillColor, true, false, 0, 100);
                 } else {
-                    maskAlgo = new AlgorithmMask(imageBCopy, fillColor, true, false);
+                    maskAlgo = new AlgorithmMask(imageBCopy, fillColor, true, false, 0, 100);
                 }
             }
 
             maskAlgo.setRunningInSeparateThread(false);
+            maskAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
             maskAlgo.calcInPlace25DCShortMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
+            
         } else { // not color
 
             if (imageB == null) {
-                maskAlgo = new AlgorithmMask(imageACopy, intensityDropper, true, false);
+                maskAlgo = new AlgorithmMask(imageACopy, intensityDropper, true, false, 0, 100);
             } else {
 
                 if (imageActive == imageA) {
 
                     // if( commitMode == IMAGE_A) {
-                    maskAlgo = new AlgorithmMask(imageACopy, intensityDropper, true, false);
+                    maskAlgo = new AlgorithmMask(imageACopy, intensityDropper, true, false, 0, 100);
                 } else {
-                    maskAlgo = new AlgorithmMask(imageBCopy, intensityDropper, true, false);
+                    maskAlgo = new AlgorithmMask(imageBCopy, intensityDropper, true, false, 0, 100);
                 }
             }
 
             maskAlgo.setRunningInSeparateThread(false);
+            maskAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
             maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
 

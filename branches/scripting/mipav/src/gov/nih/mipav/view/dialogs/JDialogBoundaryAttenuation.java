@@ -239,8 +239,12 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
     protected void callAlgorithm() {
         setVisible(false);
 
-        attenuationAlgo = new AlgorithmBoundaryAttenuation(srcImage, numErosions, maxAttenuation);
+        createProgressBar(srcImage.getImageName());
+        
+        attenuationAlgo = new AlgorithmBoundaryAttenuation(srcImage, numErosions, maxAttenuation,
+                0, 100);
         attenuationAlgo.addListener(this);
+        attenuationAlgo.addProgressChangeListener(progressBar);
 
         if (isRunInSeparateThread()) {
 
@@ -249,10 +253,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                attenuationAlgo.setProgressBarVisible(false);
-            }
-
             attenuationAlgo.run();
         }
     }

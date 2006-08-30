@@ -263,12 +263,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                         do25D,
                         progressValueBounds[0],
                         progressValueBounds[1]);
-                ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-                if (listeners != null) {
-                    for (int i = 0; i < listeners.length; i++) {
-                        filterAlgo.addProgressChangeListener(listeners[i]);
-                    }
-                }
+                linkProgressToAlgorithm(filterAlgo);
             }
             filterAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             filterAlgo.addListener(this);
@@ -313,13 +308,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage,
                         resultImage, edgeSigmas, regionFlag, do25D, 0, 0,
                         progressValueBounds[0], progressValueBounds[1]);
-                ProgressChangeListener[] listeners = this
-                        .getProgressChangeListeners();
-                if (listeners != null) {
-                    for (int i = 0; i < listeners.length; i++) {
-                        edgeAlgo.addProgressChangeListener(listeners[i]);
-                    }
-                }
+                linkProgressToAlgorithm(edgeAlgo);
             }
             ((AlgorithmEdgeLaplacianSep)edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacianSep.NEGATIVE_EDGES);
             edgeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
@@ -338,12 +327,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage,
                         resultImage, edgeSigmas, regionFlag, do25D, 0, 0,
                         progressValueBounds[0], progressValueBounds[1]);
-                ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-                if (listeners != null) {
-                    for (int i = 0; i < listeners.length; i++) {
-                        edgeAlgo.addProgressChangeListener(listeners[i]);
-                    }
-                }
+                linkProgressToAlgorithm(edgeAlgo);
             }
             ((AlgorithmEdgeLaplacian)edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacian.NEGATIVE_EDGES);
             edgeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
@@ -466,12 +450,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                                                        erosionIterations, 0, 0, regionFlag, progressValueBounds[0], progressValueBounds[1]);
             }
 
-            ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-            if (listeners != null) {
-                for (int i = 0; i < listeners.length; i++) {
-                    erodeAlgo.addProgressChangeListener(listeners[i]);
-                }
-            }
+            linkProgressToAlgorithm(erodeAlgo);
         }
         erodeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
         erodeAlgo.addListener(this);
@@ -604,7 +583,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Filling interior mask holes ...");
 
             // make a mask from the voi
-            AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true);
+            AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true, 0,1);
             maskAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             // maskAlgo.setProgressBarVisible(false);
             maskAlgo.addListener(this);
