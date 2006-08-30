@@ -135,7 +135,7 @@ public class FileInfoMGH extends FileInfoBase {
         dialog.appendSecondaryData("Superior center = ", String.valueOf(superiorCenter));
         
         if (!Float.isNaN(tr)) {
-            dialog.appendSecondaryData("Recovery time = ", String.valueOf(tr));
+            dialog.appendSecondaryData("Recovery time = ", String.valueOf(tr).concat( " milliseconds"));
         }
         
         if (!Float.isNaN(flipAngle)) {
@@ -143,11 +143,11 @@ public class FileInfoMGH extends FileInfoBase {
         }
         
         if (!Float.isNaN(te)) {
-            dialog.appendSecondaryData("Echo time = ", String.valueOf(te));
+            dialog.appendSecondaryData("Echo time = ", String.valueOf(te).concat(" milliseconds"));
         }
         
         if (!Float.isNaN(ti)) {
-            dialog.appendSecondaryData("Inversion time = ", String.valueOf(ti));
+            dialog.appendSecondaryData("Inversion time = ", String.valueOf(ti).concat( " milliseconds"));
         }
         
         if (!Float.isNaN(fov)) {
