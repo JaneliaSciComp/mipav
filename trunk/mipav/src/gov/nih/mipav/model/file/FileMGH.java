@@ -28,7 +28,50 @@ import java.util.zip.GZIPInputStream;
  
  A 284 byte header always precedes the data buffer
  In version 1 if the goodRASFlag <= 0, then only the first 30 bytes are read.  
- If the goodRASFlag > 0, then the first 90 bytes are read 
+ If the goodRASFlag > 0, then the first 90 bytes are read
+ 
+  Immediately after the data buffer other optional data structures may be found:
+  They are:
+  Recovery time float
+  Flip angle in radians float
+  Echo time float
+  Inversion time float
+  Field of view float
+  Lastly, tags including the path to a talairach transform, and a list of commands used
+  to create this data(provenance info) may be present.  The reading of the Talairach
+  transformation information is not currently implemented.  I am missing the documentation
+  on TAGreadStart, TAG_OLD_MGH_XFORM, TAG_MGH_XFORM, TAG_CMDLINE, fio_dirname, 
+  input_transform_file, get_linear_transform_ptr, get_inverse_linear_transform_ptr, and
+  TAGskip.
+  
+  What information I have about the Talairach transformation is as follows:
+  "FreeSurfer uses some of the tools developed at the Montreal Neurological Institute (MNI)
+  (http://www.bic.mni.mcgill.ca) to align anatomical volumes (using minctracc) and to compute
+  the linear Talairach transform (using mritotal).  The mritotal documentation says that it
+  generally works well for T1 dominant images.  The transform is contained in a 3x4 matrix
+  file called talairach.xfm and is located in the <subject name>/mri/transforms directory.
+  
+  The content of one talairach.xfm file was:
+  MNI Transform File
+%Tue Feb 28 18:17:20 2006>>> /usr/local/freesurfer/stable3/mni/bin/minctracc -clobber -debug /tmp/
+mritotal_935/src_8_dxyz.mnc /usr/local/freesurfer/stable3/mni/bin/../share/mni_autoreg/
+average_305_8_dxyz.mnc transforms/talairach.auto.xfm -transformation /tmp/mritotal_935/
+src_8tmp2c.xfm -lsq9 -xcorr -model_mask /usr/local/freesurfer/stable3/mni/bin/../share/mni_autoreg/
+average_305_8_mask.mnc -center 6.976350 19.544212 -19.984585 -step 4 4 4 -tol 0.004 -simplex 2
+%(Package MNI AutoReg, version 0.98r, compiled by nicks@minerva (x86_64-unknown-linux-gnu) on
+ 2005-11-15 at 20:38:24)
+
+Transform_Type = Linear;
+Linear_Transform =
+ 1.15497899055481 -0.023911377415061 0.0364909172058105 -5.71282863616943
+ 0.0152252428233624 0.942800223827362 0.13589183986187 -21.7210540771484
+ -0.0388212203979492 -0.161248967051506 1.1230742931366 -0.750320434570312;
+ 
+ mritotal is in the package mni_autoreg.  mritotal uses the MNI average_305
+ template volume to create the linear talairach affine transform.  The template
+ volume average_305.mnc resides in $FREESURFER_HOME/lib/mni/share/mni_autoreg
+ directory in the MGH environment.
+
  </p>
  *
  * @see  FileIO
