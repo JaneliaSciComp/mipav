@@ -485,21 +485,25 @@ public class FileMGH extends FileBase {
         optionalStructuresLocation = 284 + bytesPerValue*width*height*depth*nFrames;
         if (fileLength >= optionalStructuresLocation + 4) {
             raFile.seek(optionalStructuresLocation);
+            // Recovery time in milliseconds
             tr = getFloat(endianess);
             fileInfo.setTR(tr);
         }
         
         if (fileLength >= optionalStructuresLocation + 8) {
+            // Flip angle in radians
             flipAngle = getFloat(endianess);
             fileInfo.setFlipAngle(flipAngle);
         }
         
         if (fileLength >= optionalStructuresLocation + 12) {
+            // Echo time in milliseconds
             te = getFloat(endianess);
             fileInfo.setTE(te);
         }
         
         if (fileLength >= optionalStructuresLocation + 16) {
+            // Inversion time in milliseconds
             ti = getFloat(endianess);
             fileInfo.setTI(ti);
         }
