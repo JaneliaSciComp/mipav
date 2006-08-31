@@ -129,7 +129,7 @@ public class FileInfoMGH extends FileInfoBase {
 
         dialog.appendSecondaryData("Version number", String.valueOf(version));
         
-        dialog.appendSecondaryData("DOF", String.valueOf(dof));
+        dialog.appendSecondaryData("Degrees of freedom", String.valueOf(dof));
         dialog.appendSecondaryData("Left center = ", String.valueOf(leftCenter));
         dialog.appendSecondaryData("Posterior Center", String.valueOf(posteriorCenter));
         dialog.appendSecondaryData("Superior center = ", String.valueOf(superiorCenter));
@@ -147,11 +147,11 @@ public class FileInfoMGH extends FileInfoBase {
         }
         
         if (!Float.isNaN(ti)) {
-            dialog.appendSecondaryData("Inversion time = ", String.valueOf(ti).concat( " milliseconds"));
+            dialog.appendSecondaryData("Inversion time = ", String.valueOf(ti).concat(" milliseconds"));
         }
         
         if (!Float.isNaN(fov)) {
-            dialog.appendSecondaryData("Field of view = ", String.valueOf(fov));
+            dialog.appendSecondaryData("Field of view = ", String.valueOf(fov).concat(" millimeters"));
         }
         
     }
