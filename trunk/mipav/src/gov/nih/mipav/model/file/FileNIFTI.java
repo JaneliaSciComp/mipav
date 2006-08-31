@@ -3648,8 +3648,13 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setDescription(FileInfoBase.getModalityStr(modality));
             }
 
-            setBufferString(bufferByte, fileInfo.getDescription(), 148);
-            setBufferString(bufferByte, fileInfo.getAuxFile(), 228);
+            if (fileInfo.getDescription() != null) {
+                setBufferString(bufferByte, fileInfo.getDescription(), 148);
+            }
+            
+            if (fileInfo.getAuxFile() != null) {
+                setBufferString(bufferByte, fileInfo.getAuxFile(), 228);
+            }
 
             // Write out info for both method 2 and method 3
             // qform_code
@@ -3709,7 +3714,9 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, 0.0f, 324, endianess);
             }
 
-            setBufferString(bufferByte, fileInfo.getIntentName(), 328);
+            if (fileInfo.getIntentName() != null) {
+                setBufferString(bufferByte, fileInfo.getIntentName(), 328);
+            }
         } else { // Not a NIFTI file.  Pad the header with blanks and set all known info
 
             setBufferInt(bufferByte, fileInfo.getSizeOfHeader(), 0, endianess);
