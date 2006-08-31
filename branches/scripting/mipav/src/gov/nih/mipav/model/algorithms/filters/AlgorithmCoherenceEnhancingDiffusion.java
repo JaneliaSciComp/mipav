@@ -892,8 +892,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      */
     private void run2D(int numImages) {
 
-        this.buildProgressBar();
-
         int totalComputation = numImages * numIterations;
         int computationCount = 0;
 
