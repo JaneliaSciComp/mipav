@@ -350,6 +350,8 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      * or not there is a separate destination image.
      */
     protected void callAlgorithm() {
+
+        createProgressBar(srcImage.getImageName());
         String name;
 
         name = makeImageName(srcImage.getImageName(), "_ce");
@@ -366,13 +368,16 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
                                                                                        numIterations,
                                                                                        diffusitivityDenom,
                                                                                        derivativeScale, gaussianScale,
-                                                                                       do25D, entireImage);
+                                                                                       do25D, entireImage,
+                                                                                       0, 100);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             coherenceEnhancingDiffusionAlgo.addListener(this);
-
+            
+            coherenceEnhancingDiffusionAlgo.addProgressChangeListener(progressBar);
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -380,9 +385,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    coherenceEnhancingDiffusionAlgo.setProgressBarVisible(false);
-                }
 
                 coherenceEnhancingDiffusionAlgo.run();
             } // end if (isRunInSeparateThread())
