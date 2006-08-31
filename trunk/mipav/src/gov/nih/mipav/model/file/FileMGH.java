@@ -372,6 +372,7 @@ public class FileMGH extends FileBase {
          // raFile.close();
         fileInfo.setDataType(dataType);
         
+        // Degrees of freedom
         dof = getInt(endianess); // 24
         fileInfo.setDOF(dof);
         
@@ -509,6 +510,7 @@ public class FileMGH extends FileBase {
         }
         
         if (fileLength >= optionalStructuresLocation + 20) {
+            // Field of view in millimeters
             fov = getFloat(endianess);
             fileInfo.setFOV(fov);
         }
