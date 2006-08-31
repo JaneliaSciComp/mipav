@@ -510,7 +510,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
 
             // Make algorithm
             algoColorEdge = new AlgorithmColorEdge(resultImage, sourceImage, red1, green1, blue1,
-                                                   red2, green2, blue2);
+                                                   red2, green2, blue2, 0, 100);
 
             // This is very important. Adding this object as a listener
             // allows the algorithm to notify this object when it
@@ -518,6 +518,9 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
             // This is made possible by implementing
             // AlgorithmedPerformed interface
             algoColorEdge.addListener(this);
+            
+            createProgressBar(sourceImage.getImageName(), algoColorEdge);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -528,9 +531,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    algoColorEdge.setProgressBarVisible(false);
-                }
 
                 algoColorEdge.run();
             }

@@ -56,8 +56,9 @@ public class AlgorithmColorEdge extends AlgorithmBase {
      * @param  blue2
      */
     public AlgorithmColorEdge(ModelImage dest, ModelImage src, int red1int, int green1int, int blue1int,
-                                   int red2int, int green2int, int blue2int) {
-        super(dest, src);
+                                   int red2int, int green2int, int blue2int,
+                                   int minProgressValue, int maxProgressValue) {
+        super(dest, src, minProgressValue, maxProgressValue);
 
         red1 = (double)red1int;
         green1 = (double)green1int;
@@ -152,9 +153,9 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         int index;
         int i;
         
-        buildProgressBar("Finding color edge in " + srcImage.getImageName(), "Color edge..", 0, 100);
-        initProgressBar();
- 
+        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Color edge ...");
+        
+        
         if (srcImage.getType() == ModelStorageBase.ARGB) {
             //midGray = 127.5;
             midGray = 0.001;
@@ -242,9 +243,8 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         
         for (z = 0; z < sliceNum; z++) {
             
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z) / (sliceNum) * 100), runningInSeparateThread);
-            }
+            fireProgressStateChanged(getProgressFromFloat((float) (z) / (sliceNum)), null, null);
+           
             try {
                 srcImage.exportData(z*colorLen, colorLen, imageData);
             } catch (IOException ioe) {
@@ -607,10 +607,11 @@ public class AlgorithmColorEdge extends AlgorithmBase {
                 return;    
             }
         } // for (z = 0; z < sliceNum; z++)
+        
+        
+        fireProgressStateChanged(maxProgressValue, null, null);
         destImage.calcMinMax();
         
-        disposeProgressBar();
-
         setCompleted(true);
 
     } // end calcStoreInDest()
