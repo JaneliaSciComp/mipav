@@ -130,28 +130,28 @@ public class FileInfoMGH extends FileInfoBase {
         dialog.appendSecondaryData("Version number", String.valueOf(version));
         
         dialog.appendSecondaryData("Degrees of freedom", String.valueOf(dof));
-        dialog.appendSecondaryData("Left center = ", String.valueOf(leftCenter));
+        dialog.appendSecondaryData("Left center", String.valueOf(leftCenter));
         dialog.appendSecondaryData("Posterior Center", String.valueOf(posteriorCenter));
-        dialog.appendSecondaryData("Superior center = ", String.valueOf(superiorCenter));
+        dialog.appendSecondaryData("Superior center", String.valueOf(superiorCenter));
         
         if (!Float.isNaN(tr)) {
-            dialog.appendSecondaryData("Recovery time = ", String.valueOf(tr).concat( " milliseconds"));
+            dialog.appendSecondaryData("Recovery time", String.valueOf(tr).concat( " milliseconds"));
         }
         
         if (!Float.isNaN(flipAngle)) {
-            dialog.appendSecondaryData("Flip angle = ", String.valueOf(flipAngle).concat(" radians"));
+            dialog.appendSecondaryData("Flip angle", String.valueOf(flipAngle).concat(" radians"));
         }
         
         if (!Float.isNaN(te)) {
-            dialog.appendSecondaryData("Echo time = ", String.valueOf(te).concat(" milliseconds"));
+            dialog.appendSecondaryData("Echo time", String.valueOf(te).concat(" milliseconds"));
         }
         
         if (!Float.isNaN(ti)) {
-            dialog.appendSecondaryData("Inversion time = ", String.valueOf(ti).concat(" milliseconds"));
+            dialog.appendSecondaryData("Inversion time", String.valueOf(ti).concat(" milliseconds"));
         }
         
         if (!Float.isNaN(fov)) {
-            dialog.appendSecondaryData("Field of view = ", String.valueOf(fov).concat(" millimeters"));
+            dialog.appendSecondaryData("Field of view", String.valueOf(fov).concat(" millimeters"));
         }
         
     }
