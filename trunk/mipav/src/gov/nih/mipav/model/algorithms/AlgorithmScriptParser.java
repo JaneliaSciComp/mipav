@@ -1010,6 +1010,8 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         }
 
         num = tokens.countTokens();
+        
+        opts.setAxisOrientation(image.getAxisOrientation());
 
         // Defaults.  So save entire range of images.  For MINC and TIFF, set respective defaults and set time slice to
         // 0.

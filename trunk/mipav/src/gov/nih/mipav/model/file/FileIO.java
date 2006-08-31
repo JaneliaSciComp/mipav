@@ -1063,7 +1063,7 @@ public class FileIO {
 
                 // uses .hdr and .img for 2 file storage
                 // uses .nii for 1 file storage
-                suffix = ".img";
+                suffix = ".nii";
                 break;
             case FileBase.NRRD:
                 // uses .nhdr for header and any nhdr designated extension for data
