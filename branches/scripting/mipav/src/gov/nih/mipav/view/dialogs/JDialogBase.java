@@ -13,7 +13,7 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 /**
  * This class is the base for all the other dialogs. It has two important functions that are used by almost all the
@@ -907,6 +907,18 @@ public abstract class JDialogBase extends JDialog
         progressBar = new ViewJProgressBar(title, " ...", 0, 100, true);
         progressBar.setSeparateThread(runInSeparateThread);
         progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+    }
+    
+    /**
+     * Creates the progress bar that will listen to an algorithm's progress changes
+     * @param title progress bar's title
+     * @param pListener algorithmbase that will notify progress updates to the pBar
+     */
+    protected void createProgressBar(String title, AlgorithmBase pListener) {
+        progressBar = new ViewJProgressBar(title, " ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        pListener.addProgressChangeListener(progressBar);
     }
     
     /**
