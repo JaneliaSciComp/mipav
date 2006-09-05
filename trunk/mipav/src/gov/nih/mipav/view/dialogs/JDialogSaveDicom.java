@@ -255,7 +255,7 @@ public class JDialogSaveDicom extends JDialogBase {
         cancelFlag = false;
 
         gbc = new GridBagConstraints();
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(1, 1, 1, 1);
         layout = new GridBagLayout();
 
@@ -360,19 +360,56 @@ public class JDialogSaveDicom extends JDialogBase {
                 // tags, though)
                 if (tagsImportedFromNonDicomImage != null) {
                     Enumeration keys = tagsImportedFromNonDicomImage.keys();
-                    String tag, value;
+                    String tag;
+                    String value;
+                    Object[] valueArray;
+                    
                     while (keys.hasMoreElements()) {
                         tag = (String) keys.nextElement();
                         value = (String) tagsImportedFromNonDicomImage.get(tag);
                         tag = tag.replaceAll("[()]", "");
                         tag = tag.toUpperCase();
-                        try {
-                            dicomFileInfo.setValue(tag, value);
-                        } catch (Exception e) {
-                            Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
-                                              Preferences.DEBUG_FILEIO);
-                            Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
-                            Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+                        
+                        // special case for a US tag with VM 4 (0018,1310) which the minc people convert to a strange format
+                        // "0x80, 0, 0, 0, 0, 0, 0x80, 0" -> "128, 0, 0, 128"
+                        if (tag.equals("0018,1310")) {
+                            String[] vals = value.split(", ");
+                            valueArray = new Short[vals.length / 2];
+                            
+                            try {
+                                valueArray[0] = Short.decode(vals[0]);
+                            } catch (NumberFormatException nfe) {
+                                MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " + vals[0]);
+                            }
+                            
+                            for (int i = 1; i < vals.length; i++) {
+                                if ((i % 2) == 0) {
+                                    try {
+                                        valueArray[i / 2] = Short.decode(vals[i]);
+                                    } catch (NumberFormatException nfe) {
+                                        MipavUtil.displayError("Error parsing short values from minc-stored dicom tag (0018,1310): " + vals[i]);
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            try {
+                                dicomFileInfo.setValue(tag, valueArray);
+                            } catch (Exception e) {
+                                Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
+                                                  Preferences.DEBUG_FILEIO);
+                                Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+                            }
+                        } else {
+                            try {
+                                dicomFileInfo.setValue(tag, value);
+                            } catch (Exception e) {
+                                Preferences.debug("Error tranferring tag from non-dicom image to dicom: \n",
+                                                  Preferences.DEBUG_FILEIO);
+                                Preferences.debug("\t" + tag + " = " + value + "\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("\terror: " + e.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+                            }
                         }
                     }
                 }
