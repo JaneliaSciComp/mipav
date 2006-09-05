@@ -66,8 +66,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
      */
-    public AlgorithmGradientMagnitude(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D) {
-        super(null, srcImg);
+    public AlgorithmGradientMagnitude(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, 
+            int minProgressValue, int maxProgressValue) {
+        super(null, srcImg, minProgressValue, maxProgressValue);
 
         this.sigmas = sigmas;
         image25D = img25D;
@@ -89,8 +90,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
      *                   images disregard this flag.
      */
     public AlgorithmGradientMagnitude(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
-                                      boolean img25D) {
-        super(destImg, srcImg);
+                                      boolean img25D, 
+                                      int minProgressValue, int maxProgressValue) {
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
 
         this.sigmas = sigmas;
         entireImage = maskFlag;
@@ -273,7 +275,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -330,8 +332,11 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return null;
         }
 
+        fireProgressStateChanged(minProgressValue, null, null);
+
+        
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        //fireProgressStateChanged(minProgressValue, null, null);
 
         for (s = 0; s < nImages; s++) {
             start = s * length;
@@ -351,8 +356,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    if ((((start + i) % mod) == 0)) {
+                        //progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged( getProgressFromFloat((float) (start + i) / (totalLength - 1) ), null, null);
                     }
 
                     if (entireImage || mask.get(i / 4)) {
@@ -418,8 +424,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
-                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    if ((((start + i) % mod) == 0)) {
+                        fireProgressStateChanged(getProgressFromFloat((float) (start + i) / (totalLength - 1)) , null, null);
+                     //   progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if (entireImage || mask.get(i)) {
@@ -511,7 +518,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        fireProgressStateChanged(minProgressValue, null, null);
 
         for (s = 0; s < nImages; s++) {
             start = s * length;
@@ -531,8 +538,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    if ((((start + i) % mod) == 0)) {
+                        fireProgressStateChanged( getProgressFromFloat((float) (start + i) / (totalLength - 1)), null, null);
+                        //progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
@@ -599,7 +607,8 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
                     if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged( getProgressFromFloat((float) (start + i) / (totalLength - 1)), null, null);
+                      //  progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
@@ -671,7 +680,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        fireProgressStateChanged(minProgressValue, null, null);
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -684,8 +693,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                if ((((i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                if ((((i) % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromFloat((float) i / (length - 1)), null, null);
+                  //  progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -786,8 +796,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                if (((i % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromFloat((float) i / (length - 1)), null, null);
+                    //progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -844,7 +855,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -880,7 +891,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        fireProgressStateChanged(minProgressValue, null, null);
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -898,14 +909,13 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Gradient Magnitude exportData: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
 
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
-            }
+           // progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
+            fireProgressStateChanged( getProgressFromFloat((float) t / end), null, null);
 
             index = t * length;
 
@@ -998,8 +1008,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                    if (((i % mod) == 0)) {
+                        fireProgressStateChanged( getProgressFromFloat((float) i / (length - 1)), null, null);
+                       // progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     offsetZ = (i / sliceSize) - (kExtents[2] / 2);
@@ -1032,7 +1043,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Gradient Magnitude importData: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -1047,7 +1058,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
         resultBuffer = null;
         buffer = null;
         System.gc();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1091,14 +1102,14 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Gradient Magnitude: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
             destImage.releaseLock();
 
             return;
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        fireProgressStateChanged(minProgressValue, null, null);
 
         for (s = 0; s < nImages; s++) {
             start = s * length;
@@ -1116,8 +1127,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0, idx = start; (i < length) && !threadStopped; i += 4, idx += 4) {
 
-                    if (isProgressBarVisible() && (((start + i) % mod) == 0)) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    if ((((start + i) % mod) == 0)) {
+                        fireProgressStateChanged( getProgressFromFloat((float) (start + i) / (totalLength - 1)), null, null);
+                      //  progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i / 4)) {
@@ -1163,8 +1175,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
-                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    if ((((start + i) % mod) == 0)) {
+                        fireProgressStateChanged( getProgressFromFloat((float) (start + i) / (totalLength - 1)), null, null);
+                       // progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
                     }
 
                     if ((entireImage == true) || mask.get(i)) {
@@ -1187,7 +1200,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1239,7 +1252,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        fireProgressStateChanged(minProgressValue, null, null);
 
         int mod = length / 100; // mod is 1 percent of length
         int xDim = srcImage.getExtents()[0];
@@ -1251,8 +1264,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i += 4) {
 
-                if ((((i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
+                if ((((i) % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromFloat((float) (i) / (length - 1)), null, null);
+                  //  progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1355,8 +1369,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                if (((i % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromFloat((float) i / (length - 1)), null, null);
+                  //  progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                 }
 
                 curSlice = i / sliceSize;
@@ -1403,7 +1418,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1444,7 +1459,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        fireProgressStateChanged(minProgressValue, null, null);
 
         int mod = length / 100; // mod is 1 percent of length
         int xDim = srcImage.getExtents()[0];
@@ -1461,15 +1476,14 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Gradient Magnitude exportData: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
                 destImage.releaseLock();
 
                 return;
             }
 
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
-            }
+               // progressBar.updateValue(Math.round((float) t / end * 100), runningInSeparateThread);
+            fireProgressStateChanged(getProgressFromFloat((float) t / end), null, null);
 
             index = t * length;
 
@@ -1565,8 +1579,9 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                    if (((i % mod) == 0)) {
+                        fireProgressStateChanged( getProgressFromFloat((float) i / (length - 1)), null, null);
+                     //   progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
                     }
 
                     offsetZ = (i / sliceSize) - (kExtents[2] / 2);
@@ -1603,7 +1618,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

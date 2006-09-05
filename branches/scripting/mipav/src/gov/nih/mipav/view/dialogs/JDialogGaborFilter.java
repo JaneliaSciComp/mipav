@@ -372,12 +372,14 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
 
                 // Make algorithm
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(resultImage, image, freqU, freqV, sigmaU, sigmaV,
-                                                                   theta, createGabor);
+                                                                   theta, createGabor, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
 
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
@@ -412,13 +414,15 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(image, freqU, freqV, sigmaU, sigmaV, theta,
-                                                                   createGabor);
+                                                                   createGabor, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

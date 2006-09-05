@@ -73,6 +73,9 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int xdim, ydim, tdim;
 
+    private float [] sigmas;
+    private boolean maskFlag;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -95,7 +98,9 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
      */
     public AlgorithmRegVOILandmark(ModelImage volume, ModelImage gradMagVol, float[] sigmas, boolean maskFlag,
                                    Vector3Df[] position, double minTx, double maxTx, double minTy, double maxTy,
-                                   double minRz, double maxRz, double step, int opt, int costFunc) {
+                                   double minRz, double maxRz, double step, int opt, int costFunc,
+                                   int minProgressValue, int maxProgressValue) {
+        super(volume, gradMagVol, minProgressValue, maxProgressValue);
         this.volume = volume;
         this.gradMagVol = gradMagVol;
         this.opt = opt;
@@ -118,7 +123,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         sliceSize = xdim * ydim;
         volLength = sliceSize * tdim;
         simplexDim = 3;
-        gradientMagAlgo = new AlgorithmGradientMagnitude(gradMagVol, volume, sigmas, maskFlag, true);
+        
 
     }
 
@@ -136,7 +141,8 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
      */
     public void runAlgorithm() {
         int i;
-
+        gradientMagAlgo = new AlgorithmGradientMagnitude(gradMagVol, volume, sigmas, maskFlag, true, 
+                minProgressValue, (int)(maxProgressValue * .1));
         try {
             gradientMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradientMagAlgo.run();
@@ -146,15 +152,11 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm: Image(s) locked");
             setCompleted(false);
-            progressBar.dispose();
-
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("Algorithm: Out of memory");
             setCompleted(false);
-            progressBar.dispose();
-
             return;
         }
 
@@ -164,7 +166,6 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
 
         Preferences.debug("baseVOIGradMagSum = " + baseVOIGradMagSum + "\n");
         Search();
-        disposeProgressBar();
     }
 
     /**
@@ -306,23 +307,21 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
             tImgBuf = new float[sliceSize];
             p = new double[simplexDim + 1][simplexDim];
             y = new double[simplexDim + 1];
-            increment = 100.0f / (tdim - 2);
+            increment = 90.0f / (tdim - 2);
             simplex = new AlgorithmSimplexOpt(p, y, simplexDim, func);
-            buildProgressBar(volume.getImageName(), "Registering ...", 0, 100);
-            initProgressBar();
+           
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Reg Kidney:  Out of Memory");
             setCompleted(false);
-            disposeProgressBar();
-
             return;
         }
 
+        fireProgressStateChanged(-1, null, "Registering ...");
+        
         for (int t = 1; t < tdim; t++) {
 
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(increment * t), runningInSeparateThread);
-            }
+            fireProgressStateChanged( getProgressFromFloat(increment * t), null, null);
+        
 
             func.setSlice(t);
 
@@ -377,7 +376,6 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm: Image(s) locked");
             setCompleted(false);
-            progressBar.dispose();
 
             return;
         } catch (OutOfMemoryError e) {
@@ -385,8 +383,6 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
             System.gc();
             displayError("Algorithm: Out of memory");
             setCompleted(false);
-            progressBar.dispose();
-
             return;
         }
 

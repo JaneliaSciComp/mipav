@@ -1874,7 +1874,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             sigmas[0] = 2f;
             sigmas[1] = 2f;
             sigmas[2] = 0.5f;
-            gradMagAlgo = new AlgorithmGradientMagnitude(energyImage, image, sigmas, true, false);
+            gradMagAlgo = new AlgorithmGradientMagnitude(energyImage, image, sigmas, true, false, 0, 100);
             gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradMagAlgo.run();
 

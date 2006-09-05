@@ -355,7 +355,10 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
         if(m != null && m.length() > 0){
             setMessage(m);
         }
-        updateValue(value);
+        /** Put this in here so you can change the message without updating the value */
+        if (value != -1) {
+            updateValue(value);
+        }
     }
     
     /**

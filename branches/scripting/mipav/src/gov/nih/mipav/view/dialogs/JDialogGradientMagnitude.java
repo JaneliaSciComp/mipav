@@ -682,13 +682,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagAlgo = new AlgorithmGradientMagnitude(resultImage, image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     false);
+                                                                     false, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -728,13 +730,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make the algorithm class
                     gradientMagAlgo = new AlgorithmGradientMagnitude(image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     false);
+                                                                     false, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
-
+                    
+                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -763,10 +767,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagAlgo.setProgressBarVisible(false);
-                        }
 
                         gradientMagAlgo.run();
                     }
@@ -818,13 +818,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagAlgo = new AlgorithmGradientMagnitude(resultImage, image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     image25D);
+                                                                     image25D, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -839,9 +841,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagAlgo.setProgressBarVisible(false);
-                        }
 
                         gradientMagAlgo.run();
                     }
@@ -863,13 +862,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagAlgo = new AlgorithmGradientMagnitude(image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     image25D);
+                                                                     image25D, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gradientMagAlgo);
+                    
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -898,10 +899,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagAlgo.setProgressBarVisible(false);
-                        }
-
                         gradientMagAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

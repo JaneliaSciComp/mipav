@@ -684,13 +684,15 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // Make algorithm
                 FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D,
                                            imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                           butterworthOrder);
+                                           butterworthOrder, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FFTAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), FFTAlgo);
+                
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
 
@@ -716,13 +718,15 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // Make the algorithm class
                 FFTAlgo = new AlgorithmFFT(image, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
                                            kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                           butterworthOrder);
+                                           butterworthOrder, 0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FFTAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), FFTAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

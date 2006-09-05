@@ -168,6 +168,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
      * or not there is a separate destination image.
      */
     protected void callAlgorithm() {
+        
         String name;
         name = makeImageName(originalImage.getImageName(), "_ibd");
 
@@ -176,13 +177,15 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
 
             psfImage = new ModelImage(originalImage.getType(), originalImage.getExtents(), name, UI);
 
-            ibdAlgor = new AlgorithmIteratedBlindDeconvolution(resultImage, originalImage, psfImage);
+            ibdAlgor = new AlgorithmIteratedBlindDeconvolution(resultImage, originalImage, psfImage, 0, 100);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             ibdAlgor.addListener(this);
-
+            createProgressBar(originalImage.getImageName(), ibdAlgor);
+            
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -190,10 +193,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!UI.isAppFrameVisible()) {
-                    ibdAlgor.setProgressBarVisible(false);
-                }
-
+              
                 ibdAlgor.run();
             } // end if (runInSeperateThread) {} else {}
 

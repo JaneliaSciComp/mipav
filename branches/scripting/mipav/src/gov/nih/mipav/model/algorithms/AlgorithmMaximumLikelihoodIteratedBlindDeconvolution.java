@@ -515,7 +515,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                                               iDir, logMagDisplay,
                                               unequalDim, image25D, imageCrop,
                                               kernelDiameter, filterType, freq1, freq2,
-                                              constructionMethod, butterworthOrder);
+                                              constructionMethod, butterworthOrder, 0, 100);
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         kFFT.setRunningInSeparateThread(false);
