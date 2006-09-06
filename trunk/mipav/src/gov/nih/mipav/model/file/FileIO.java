@@ -1299,7 +1299,6 @@ public class FileIO {
         int nListImages;
         float[] tPt = new float[3];
         TransMatrix matrix = null;
-        String nameID;
         String studyID = new String();
         String seriesNo = new String();
         String acqNo = new String();
@@ -1391,27 +1390,6 @@ public class FileIO {
         }
 
         try {
-
-            try {
-
-                if (((FileInfoDicom) (myFileInfo)).getValue("0010,0010") != null) {
-
-                    // set imageName to patient name:
-                    nameID = (String) (((FileInfoDicom) myFileInfo).getValue("0010,0010"));
-
-                    if (nameID.length() >= 2) {
-                        nameID = nameID.substring(0, 2);
-                    } else {
-                        nameID = "AA";
-                    }
-                } else {
-                    nameID = "AA";
-                }
-            } catch (NullPointerException noTag) {
-                Preferences.debug("Tag (0010,0010) was not found.  ", 4);
-                Preferences.debug("Using \"AA\" +as name ID\n", 4);
-                nameID = "AA";
-            }
 
             if (((FileInfoDicom) (myFileInfo)).getValue("0020,0010") != null) {
                 studyIDMaster = (String) (((FileInfoDicom) myFileInfo).getValue("0020,0010"));
@@ -1894,8 +1872,7 @@ public class FileIO {
         extents[1] = myFileInfo.getExtents()[1];
 
         myFileInfo.setExtents(extents);
-        image = new ModelImage(((FileInfoDicom) myFileInfo).displayType, extents,
-                               nameID + "_" + studyIDMaster + "_" + seriesNoRef, UI);
+        image = new ModelImage(((FileInfoDicom) myFileInfo).displayType, extents, studyIDMaster.trim() + "_" + seriesNoRef.trim());
 
         if (((FileInfoDicom) (myFileInfo)).isMultiFrame() == true) {
             image.setFileInfo(myFileInfo, 0);
@@ -4872,7 +4849,6 @@ public class FileIO {
                                                                                              1));
                     
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    image.setImageName(imageFile.getPatientName());
                     image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
             } // try
@@ -4909,6 +4885,8 @@ public class FileIO {
                 return null;
             }
         } // for (i = 0; i < nImages; i++)
+        
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
         progressBar.dispose();
 
@@ -5127,7 +5105,6 @@ public class FileIO {
                     myFileInfo.setOrigin(((FileInfoGESigna5X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
                                                                                              1));
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    image.setImageName(((FileInfoGESigna5X) (myFileInfo)).patientName);
                     image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
             } // try
@@ -5164,6 +5141,8 @@ public class FileIO {
                 return null;
             }
         } // for (i = 0; i < nImages; i++)
+        
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
         progressBar.dispose();
 
@@ -5992,7 +5971,6 @@ public class FileIO {
 
                     // myFileInfo.setStartLocations(((FileInfoGESigna5X)(myFileInfo)).getStart(imageFile.getImageNumber()-1));
                     image.setFileInfo(myFileInfo, indicies[i]);
-                    image.setImageName(((FileInfoMagnetomVision) (myFileInfo)).getPatientName());
                     image.importData(indicies[i] * length, buffer, false);
                     image.setFileInfo(myFileInfo, indicies[i]);
                 }
@@ -6031,6 +6009,8 @@ public class FileIO {
 
             return null;
         }
+        
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
         progressBar.dispose();
 
@@ -6889,7 +6869,7 @@ public class FileIO {
             myFileInfo = imageFile.getFileInfo();
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            image.setImageName(imageFile.getPatientName());
+            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
             image.importData(0, buffer, false);
         } catch (OutOfMemoryError error) {
 
@@ -6979,7 +6959,7 @@ public class FileIO {
             myFileInfo = imageFile.getFileInfo();
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            image.setImageName(((FileInfoGESigna5X) (myFileInfo)).patientName);
+            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
             image.importData(0, buffer, false);
         } catch (OutOfMemoryError error) {
 
@@ -7039,7 +7019,7 @@ public class FileIO {
             imageFile.readImage(buffer);
             myFileInfo.setExtents(extents);
             image.setFileInfo(myFileInfo, 0);
-            image.setImageName(((FileInfoMagnetomVision) (myFileInfo)).getPatientName());
+            image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
             image.importData(0, buffer, false);
             imageFile.close();
         } catch (IOException error) {
@@ -7889,8 +7869,6 @@ public class FileIO {
         if (fileName.equals("splash.xml") || (one == true)) {
             showProgressBar = false;
         }
-
-        
 
         try {
             imageFile = new FileImageXML(UI, fileName, fileDir, showProgressBar);

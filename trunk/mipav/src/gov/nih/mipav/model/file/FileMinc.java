@@ -692,6 +692,43 @@ public class FileMinc extends FileBase {
         }
 
         buffer = null;
+        
+        // use the study and series/acquisition numbers for the image name if they are in the header, otherwise leave it as the file name
+        String studyNum = null;
+        String seriesNum = null;
+        FileMincVarElem[] varArray = fileInfo.getVarArray();
+        for (int i = 0; i < varArray.length; i++) {
+            if (varArray[i].name.equalsIgnoreCase("study")) {
+                FileMincAttElem[] attArray = varArray[i].vattArray;
+                for (int j = 0; j < attArray.length; j++) {
+                    if (attArray[j].name.equalsIgnoreCase("study_id")) {
+                        studyNum = attArray[j].toString().trim();
+                    } else if (attArray[j].name.equalsIgnoreCase("acquisition_id")) {
+                        seriesNum = attArray[j].toString().trim();
+                    }
+                }
+            }
+        }
+        
+        // if we didn't find the study and series numbers in the minc vars, then look for dicom-extracted tags
+        if (studyNum != null && seriesNum != null) {
+            for (int i = 0; i < varArray.length; i++) {
+                if (varArray[i].name.equalsIgnoreCase("dicom_0x0020")) {
+                    FileMincAttElem[] attArray = varArray[i].vattArray;
+                    for (int j = 0; j < attArray.length; j++) {
+                        if (attArray[j].name.equalsIgnoreCase("el_0x0010")) {
+                            studyNum = attArray[j].toString().trim();
+                        } else if (attArray[j].name.equalsIgnoreCase("el_0x0011")) {
+                            seriesNum = attArray[j].toString().trim();
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (studyNum != null && seriesNum != null) {
+            image.setImageName(studyNum + "_" + seriesNum);
+        }
 
         return image;
     }
