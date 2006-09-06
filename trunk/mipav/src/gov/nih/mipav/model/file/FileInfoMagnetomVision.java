@@ -2038,12 +2038,11 @@ public class FileInfoMagnetomVision extends FileInfoBase {
     }
 
     /**
-     * Returns the image name which should be used for the image this file info is attached to (studyNum_seriesNum).
+     * Returns the image name which should be used for the image this file info is attached to.
      * 
      * @return  The name to give to this file info's image.
      */
     public String getImageNameFromInfo() {
-        // TODO: use any of these? TextImageNumber TextImageNumber2 TextSequence TextScanNumberB TextStudyNumber2 TextStudyImageNumber3
-        return TextStudyNumber.trim() + "_" + TextScanNumberA.trim();
+        return TextSequence.trim() + "_" + TextScanNumberA.trim() + "_" + TextScanNumberB.trim() + "_" + TextImageNumber.trim();
     }
 }
