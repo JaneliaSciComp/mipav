@@ -44,9 +44,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
-    private ViewVOIVector VOIs;
     
     private int xDim;
     
@@ -96,7 +93,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
