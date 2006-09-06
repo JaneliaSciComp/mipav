@@ -392,13 +392,16 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), false, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isProcessWholeImageSet(), false, ampFactor,
+                            0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -424,10 +427,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            laplacianAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -503,12 +503,14 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 try {
 
                     // Make algorithm
-                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isOutputNewImageSet(), image25D, ampFactor);
+                    laplacianAlgo = new AlgorithmLaplacian(image, sigmas, outputPanel.isOutputNewImageSet(), image25D, ampFactor,
+                            0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), laplacianAlgo);
 
                     // Hide dialog
                     setVisible(false);

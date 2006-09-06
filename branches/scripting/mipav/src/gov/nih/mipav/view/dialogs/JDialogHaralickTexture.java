@@ -730,12 +730,13 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, ns, nesw, ew,
                                                        senw, invariantDir, contrast, dissimilarity, homogeneity,
                                                        inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                                                       variance, standardDeviation, correlation);
+                                                       variance, standardDeviation, correlation, 0, 100);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             textureAlgo.addListener(this);
+            createProgressBar(image.getImageName(), textureAlgo);
 
             // Hide dialog
             setVisible(false);

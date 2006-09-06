@@ -413,13 +413,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(resultImage, image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           false);
+                                                                           false, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagSepAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
+                    
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -459,13 +461,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make the algorithm class
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           false);
+                                                                           false, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagSepAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
+                    
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -549,13 +553,15 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(resultImage, image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           image25D);
+                                                                           image25D, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagSepAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
+                    
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -594,12 +600,14 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           image25D);
+                                                                           image25D, 0, 100);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagSepAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), gradientMagSepAlgo);
 
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());

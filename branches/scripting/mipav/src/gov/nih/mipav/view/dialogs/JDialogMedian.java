@@ -508,7 +508,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     outputPanel.isProcessWholeImageSet());
+                                                     outputPanel.isProcessWholeImageSet(), 0, 100);
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -517,6 +517,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), medianAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -526,10 +529,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         medianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -548,7 +548,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, outputPanel.isProcessWholeImageSet());
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, outputPanel.isProcessWholeImageSet(), 0, 100);
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -557,6 +557,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -582,10 +583,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         medianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -621,7 +619,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     image25D, outputPanel.isProcessWholeImageSet());
+                                                     image25D, outputPanel.isProcessWholeImageSet(), 0, 100);
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -630,6 +628,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -639,9 +639,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
+                     
 
                         medianAlgo.run();
                     }
@@ -661,7 +659,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, image25D,
-                                                     outputPanel.isProcessWholeImageSet());
+                                                     outputPanel.isProcessWholeImageSet(), 0, 100);
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -670,6 +668,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -695,10 +694,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
-
+                     
                         medianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

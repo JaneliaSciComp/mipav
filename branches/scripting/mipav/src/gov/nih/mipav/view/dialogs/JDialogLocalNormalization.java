@@ -726,7 +726,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
 
                 // Make algorithm
                 algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
-                                                            blurringDiameter, blurringFreq);
+                                                            blurringDiameter, blurringFreq, 0, 100);
 
                 // only if the src image is colour will any channel
                 // checkboxes be enabled:
@@ -738,6 +738,8 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
                 // This is made possible by implementing
                 // AlgorithmedPerformed interface
                 algoLocal.addListener(this);
+                
+                createProgressBar(sourceImage.getImageName(), algoLocal);
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -813,7 +815,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
 
                 // Make algorithm
                 algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
-                                                            blurringDiameter, blurringFreq);
+                                                            blurringDiameter, blurringFreq, 0, 100);
 
                 // only if the src image is colour will any channel checkboxes be enabled
                 algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
@@ -822,6 +824,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 algoLocal.addListener(this);
+                createProgressBar(sourceImage.getImageName(), algoLocal);
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
