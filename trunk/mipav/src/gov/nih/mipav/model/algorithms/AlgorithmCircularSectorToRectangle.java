@@ -285,7 +285,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         var = 0.5*Math.log(rmax/rmin)/theta;
         rscale = Math.sqrt(rmax*rmin);
         for (j = 0; j < yDimDest; j++) {
-            progressBar.updateValue(100*j/yDimDest);
+            progressBar.updateValueImmed(100*j/yDimDest);
             index1 = j * xDimDest;
             yp = (2.0 * var * j)/(yDimDest - 1) - var;
             // v = -log(r)/(alpha *PI) -> r = exp(-theta*v), then scale by sqrt(rmax/rmin).
