@@ -456,6 +456,8 @@ public class ViewMenuBar {
                                         
                                         menuBuilder.makeMenu("Transformation tools", false,
                                                              new JMenuItem[] {
+                                                                 menuBuilder.buildMenuItem("Circular sector to rectangle",
+                                                                                           "CirToRec", 0, null, false),
                                                                  menuBuilder.buildMenuItem("Reslice - isotropic voxels",
                                                                                            null, 0, null, false),
                                                                  menuBuilder.buildMenuItem("Subsample", "subsample", 0,
@@ -1176,6 +1178,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Pad with slices", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
+            menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
@@ -1186,6 +1189,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
+            menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("3D rectangle", false);
             menuBuilder.setMenuItemEnabled("Animate", false);
