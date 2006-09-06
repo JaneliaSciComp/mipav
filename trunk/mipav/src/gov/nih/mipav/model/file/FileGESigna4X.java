@@ -5,52 +5,48 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-import java.awt.Dialog.*;
-
 import java.io.*;
 
 
 /**
- Fixed format header
- Image data is not compressed
- Image data fixed offset 14336 bytes
- Data General host
- 
- The image files are of fixed layout, described here as a series of 256 by 16
- bit word blocks (512 bytes), blocks numbered from 0.  The headers start at 
- the following block offsets:
-     block 0  - length 4 blocks    -     System configuration
-     block 4  - length 2 blocks    -     Site customization
-     block 6  - length 2 blocks    -     Study header
-     block 8  - length 2 blocks    -     Series header
-     block 10 - length 2 blocks    -     Image header
-     block 12 - length 4 blocks    -     Raw database header
-     block 16 - length 10 blocks   -     Pulse sequence description
-     block 26 - length 2 blocks    -     Pixel map (? not ever used)
-     block 28 - length 256 blocks  -     Image data
-     
- The header is a fixed length of 14336 bytes, after which the uncompressed
- image data starts.
- 
- 16 bit big endian shorts are used.  Ascii strings are FORTRAN style
- specifications with length in bytes.  4 byte floats are used.
- 
- Spacing between slices was seen to vary so resolution[2] cannot be obtained
- by checking the difference between slice spacing.  The field called pixel
- size actually gives 5 * resolution[2]. 
- resolution[0] and resolution[1] can in theory be calculated in 3 different
- ways with 3 slightly different results.  (fov/256)*kludge factor 2,
- (difference between corners/255) * kludge factor 2, or
- using the thickness field equals about 10 * resolution[0] = 10 * resolution[1].
- Use fov/256 multiplied by a kludge factor of 2 to obtain the right answer.
- 
- On one run SWAP_PF said Operator selects to swap phase and frequency and PF_SWAPPED
- said Phase and frequency not swapped, a seeming contradiction.  The field strength
- in the series header was read as -99 gauss.  The 6 values for SAT pulse location
- relative to landmark were all 9999 millimeters. So there are problems.
+ * Fixed format header
+ * Image data is not compressed
+ * Image data fixed offset 14336 bytes
+ * Data General host
+ * 
+ * The image files are of fixed layout, described here as a series of 256 by 16
+ * bit word blocks (512 bytes), blocks numbered from 0.  The headers start at 
+ * the following block offsets:
+ *     block 0  - length 4 blocks    -     System configuration
+ *     block 4  - length 2 blocks    -     Site customization
+ *     block 6  - length 2 blocks    -     Study header
+ *     block 8  - length 2 blocks    -     Series header
+ *     block 10 - length 2 blocks    -     Image header
+ *     block 12 - length 4 blocks    -     Raw database header
+ *     block 16 - length 10 blocks   -     Pulse sequence description
+ *     block 26 - length 2 blocks    -     Pixel map (? not ever used)
+ *     block 28 - length 256 blocks  -     Image data
+ *     
+ * The header is a fixed length of 14336 bytes, after which the uncompressed
+ * image data starts.
+ * 
+ * 16 bit big endian shorts are used.  Ascii strings are FORTRAN style
+ * specifications with length in bytes.  4 byte floats are used.
+ * 
+ * Spacing between slices was seen to vary so resolution[2] cannot be obtained
+ * by checking the difference between slice spacing.  The field called pixel
+ * size actually gives 5 * resolution[2]. 
+ * resolution[0] and resolution[1] can in theory be calculated in 3 different
+ * ways with 3 slightly different results.  (fov/256)*kludge factor 2,
+ * (difference between corners/255) * kludge factor 2, or
+ * using the thickness field equals about 10 * resolution[0] = 10 * resolution[1].
+ * Use fov/256 multiplied by a kludge factor of 2 to obtain the right answer.
+ * 
+ * On one run SWAP_PF said Operator selects to swap phase and frequency and PF_SWAPPED
+ * said Phase and frequency not swapped, a seeming contradiction.  The field strength
+ * in the series header was read as -99 gauss.  The 6 values for SAT pulse location
+ * relative to landmark were all 9999 millimeters. So there are problems.
  */
-
 public class FileGESigna4X extends FileBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------

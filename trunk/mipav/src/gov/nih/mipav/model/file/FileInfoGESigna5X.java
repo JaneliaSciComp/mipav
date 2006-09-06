@@ -2436,4 +2436,12 @@ public class FileInfoGESigna5X extends FileInfoBase {
         return;
     }
 
+    /**
+     * Returns the image name which should be used for the image this file info is attached to (studyNum_seriesNum).
+     * 
+     * @return  The name to give to this file info's image.
+     */
+    public String getImageNameFromInfo() {
+        return examNum + "_" + seriesNum;
+    }
 }

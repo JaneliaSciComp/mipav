@@ -436,7 +436,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     private String changedValues = null;
     
-    public String imageType = null;
+    private String imageType = null;
     
     private String collapseImage = null;
     
@@ -2685,7 +2685,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param imageThickness = in practice 10*res[0] = 10 *res[1]
+     * @param thickness = in practice 10*res[0] = 10 *res[1]
      */
     public void setThickness(float thickness) {
         this.thickness = thickness;
@@ -3617,10 +3617,18 @@ public class FileInfoGESigna4X extends FileInfoBase {
     
     /**
      * 
-     * @param vecnScalingFactor
+     * @param vencScalingFactor
      */
-    public void setVencScalingFactor(float vecnScalingFactor) {
+    public void setVencScalingFactor(float vencScalingFactor) {
         this.vencScalingFactor = vencScalingFactor;
     }
 
+    /**
+     * Returns the image name which should be used for the image this file info is attached to (studyNum_seriesNum).
+     * 
+     * @return  The name to give to this file info's image.
+     */
+    public String getImageNameFromInfo() {
+        return studyNumber.trim() + "_" + seriesNumber.trim();
+    }
 }
