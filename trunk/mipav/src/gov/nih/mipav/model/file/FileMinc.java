@@ -702,24 +702,40 @@ public class FileMinc extends FileBase {
                 FileMincAttElem[] attArray = varArray[i].vattArray;
                 for (int j = 0; j < attArray.length; j++) {
                     if (attArray[j].name.equalsIgnoreCase("study_id")) {
-                        studyNum = attArray[j].toString().trim();
+                        String str = new String();
+                        for (int k = 0; k < attArray[j].values.length; k++) {
+                            str += attArray[j].values[k];
+                        }
+                        studyNum = str.trim();
                     } else if (attArray[j].name.equalsIgnoreCase("acquisition_id")) {
-                        seriesNum = attArray[j].toString().trim();
+                        String str = new String();
+                        for (int k = 0; k < attArray[j].values.length; k++) {
+                            str += attArray[j].values[k];
+                        }
+                        seriesNum = str.trim();
                     }
                 }
             }
         }
         
         // if we didn't find the study and series numbers in the minc vars, then look for dicom-extracted tags
-        if (studyNum != null && seriesNum != null) {
+        if (studyNum == null || seriesNum == null) {
             for (int i = 0; i < varArray.length; i++) {
                 if (varArray[i].name.equalsIgnoreCase("dicom_0x0020")) {
                     FileMincAttElem[] attArray = varArray[i].vattArray;
                     for (int j = 0; j < attArray.length; j++) {
                         if (attArray[j].name.equalsIgnoreCase("el_0x0010")) {
-                            studyNum = attArray[j].toString().trim();
+                            String str = new String();
+                            for (int k = 0; k < attArray[j].values.length; k++) {
+                                str += attArray[j].values[k];
+                            }
+                            studyNum = str.trim();
                         } else if (attArray[j].name.equalsIgnoreCase("el_0x0011")) {
-                            seriesNum = attArray[j].toString().trim();
+                            String str = new String();
+                            for (int k = 0; k < attArray[j].values.length; k++) {
+                                str += attArray[j].values[k];
+                            }
+                            seriesNum = str.trim();
                         }
                     }
                 }
