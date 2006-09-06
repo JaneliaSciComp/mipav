@@ -13,12 +13,63 @@ import java.util.*;
 
 
 /**
+ * This software performs a 2D conformal mapping of a circular sector defined by
+ * 4 user points at the sector corners to a rectangle of user specified size.
+ * The circular sector has an inner radius rmin, an outer radius rmax, and extends
+ * over an angle theta = alpha * PI radians, with 0 < alpha <= 1.
+ * In a conformal mapping in any small neighborhood the relative angle and shape are
+ * preserved.
  z1 is the upper right point on rmax
  z2 is the upper left point on rmax
  z3 is the lower left point on rmin
  z4 is the lower right point on rmin
- theta is the angle of the sector
- theta = alpha * PI, with 0 < alpha <= 1
+ The mapping to the user specified retangle is performed in 2 steps.  First, a conformal
+ mapping to a rectangle of width 1 and height log(rmax/rmin)/theta occurs.  Then, this
+ rectangle is linearly scaled to a rectangle of user specified xDim and yDim.
+ 
+ Let z4z1 be on the real axis, let the straight line z2z3 be inclined at an angle alpha*PI,
+ 0 < alpha <= 1, z3 and z4 are both on the radius rmin, and z1 and z2 are both on the radius
+ rmax.  For the conformal mapping we require that rmax > 1 and 0 < rmin < 1.  So divide all
+ the distances by sqrt(rmax * rmin).  Then the radii go from sqrt(rmin/rmax) to sqrt(rmax/rmin).
+ 
+ To go from a circular sector to a rectangle use the transformation w = f(z) = u + iv =
+ log(z)/(i*alpha*PI)
+ Let z = r*exp(i*theta)
+ Then, w = log(r*exp(i*theta))/(i*alpha*PI) = theta/(alpha*PI) - i*log(r)/(alpha*PI)
+ so u = theta/(alpha*PI), v = -log(r)/(alpha*PI)
+ 
+ For conformal mapping we require that f(z) be analytic - the Cauchy-Riemann equations 
+ must be satisfied and f'(z) must not equal zero.
+ The Cauchy-Riemann equations in polar form are:
+ du/dr = (1/r)(dv/dtheta); (1/r)du/dtheta = -dv/dr
+ The first equation gives zero on both sides and the second equation
+ gives (alpha*PI)/r on both sides, so the Cauchy Riemann equations hold.
+ f'(z) = 1/(i*alpha*PI*z) does not equal zero.
+ 
+ In the first mapping:
+ rmin -> sqrt(rmin/rmax) -> log(sqrt(rmin/rmax))/(i*alpha*PI) = i*log(sqrt(rmax/rmin))/(alpha*PI)
+ rmin*exp(i*alpha*PI) -> sqrt(rmin/rmax)*exp(i*alpha*PI) -> 1 + i*log(sqrt(rmax/rmin))/(alpha*PI)
+ rmax -> sqrt(rmax/rmin) -> log(sqrt(rmax/rmin))/(i*alpha*PI) = -i*log(sqrt(rmax/rmin))/(alpha*PI)
+ rmax*exp(i*alpha*PI) -> sqrt(rmax/rmin)*exp(i*alpha*PI) -> 1 - i*log(sqrt(rmax/rmin))/(alpha*PI)
+ 
+ Now do a simple linear transformation where both the x axis is inverted and both axes are
+ scaled to obtain:
+ z1" = xDim-1, 0
+ z2" = 0, 0
+ z3" = 0, yDim-1
+ z4" = xDim - 1, yDim-1
+ 
+ x" = (1 - x')*(xDim - 1)
+ Let var = log(sqrt(rmax/rmin))/(alpha*PI)
+ y" = (y' + var)* (yDim - 1)/(2 * var)
+ 
+ References:  1.) Advanced Calculus For Applications Second Edition by F. B. Hildebrand, 
+                  Section 10.4 Analytic Functions of a Complex Variable pages 550-554 and
+                  Section 11.4 Conformal Mapping pages 628-632, Prentice-Hall, Inc., 1976.
+              2.) "A Domain Decomposition Method for Conformal Mapping onto a Rectangle",
+                  N. Papamichael and N. S. Stylianopoulos, Constructive Approximation,
+                  Vol. 7, 1991, pp. 349-379.  Relevant result is given in Remark 4.7 on 
+                  pages 374-375.
  */
 
 public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
@@ -36,10 +87,10 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
     public AlgorithmCircularSectorToRectangle() { }
 
     /**
-     * AlgorithmTPSpline - constructor for 2D case.
+     * AlgorithmCircularSectorToRectangle
      *
-     * @param  x     array with x coordinates of source boundaries
-     * @param  y     array with y coordinates of source boundaries
+     * @param  x     array with x coordinates of 4 sector boundary points
+     * @param  y     array with y coordinates of 4 sector boundary points
      */
     public AlgorithmCircularSectorToRectangle(ModelImage destImg, ModelImage srcImg, 
                                               double x[], double y[]) {
@@ -56,7 +107,8 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
      * finalize -
      */
     public void finalize() {
-        
+        x = null;
+        y = null;
         super.finalize();
     }
     
@@ -67,7 +119,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
     private void constructLog() {
 
         
-            historyString = new String("GaussianBlur(" + String.valueOf(destImage.getExtents()[0]) + ", " +
+            historyString = new String("CircularSectorToRectangle(" + String.valueOf(destImage.getExtents()[0]) + ", " +
                                        String.valueOf(destImage.getExtents()[1]) + ")\n");
     }
     
@@ -88,24 +140,15 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         
         double alpha;
         
-        BitSet mask = null;
-        
         int xDimSource;
         
         int yDimSource;
         
         int sourceSlice;
         
-        int xmin;
-        
-        int xmax;
-        
-        int ymin;
-        
-        double minsq, maxsq;
         int i, j;
         int index, index1;
-        double ry, r;
+        double r;
         double ang;
         
         int xDimDest;
@@ -117,8 +160,15 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         double yp;
         double xp;
         double rscale;
-        double yDest;
-        double xDest;
+        double ySrc;
+        double xSrc;
+        float imageMin;
+        int xBase;
+        float delX;
+        int yBase;
+        float delY;
+        int sIndex;
+        int cf;
         if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
@@ -127,6 +177,16 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         }
 
         constructLog();
+        
+        buildProgressBar(srcImage.getImageName(), "Circular sector to rectangle ...", 0, 100);
+        initProgressBar();
+        
+        if (srcImage.isColorImage()) {
+            cf = 4;
+        }
+        else {
+            cf = 1;
+        }
         
         x1 = x[0];
         x2 = x[1];
@@ -157,17 +217,15 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         Preferences.debug("x center = " + xc + " y center = " + yc + "\n");
         
         rmin = Math.sqrt((x4 - xc)*(x4 - xc) + (y4 - yc)*(y4 - yc));
-        minsq = rmin * rmin;
         
         rmax = Math.sqrt((x1 - xc)*(x1 - xc) + (y1 - yc)*(y1 - yc));
-        maxsq = rmax * rmax;
         Preferences.debug("rmin = " + rmin + " rmax = " + rmax + "\n");
         
         // Calculate angle along line from center to z4 to z1 in -PI to PI radians
         theta1 = Math.atan2((y1 - y4), (x1 - x4));
         
         // Calculate angle along line from center to z3 to z2 in -PI to PI radians
-        theta2 = Math.atan2((y3 - y2), (x3 - x2));
+        theta2 = Math.atan2((y2 - y3), (x2 - x3));
         
         // Angle of sector in radians
         // theta = alpha * PI
@@ -176,70 +234,127 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         alpha = theta/Math.PI;
         Preferences.debug("alpha = " + alpha + "\n");
         
-        // Find the area of the image that is part of the sector
         xDimSource = srcImage.getExtents()[0];
         yDimSource = srcImage.getExtents()[1];
         sourceSlice = xDimSource * yDimSource;
-        // All bits are initially false
-        mask = new BitSet(sourceSlice);
-        for (j = 0; j < yDimSource; j++) {
-            ry = (j - yc)*(j - yc);
-            index1 = j * xDimSource;
-            for (i = 0; i < xDimSource; i++) {
-                r = ry + (i - xc)*(i - xc);
-                if ((r >= minsq) && (r <= maxsq)) {
-                    ang = Math.atan2((j - yc), (i - xc));
-                    if ((ang >= theta1) && (ang <= theta2)) {
-                        index = index1 + i;
-                        mask.set(index);
-                    }
-                }
-            }
-        } // for (j = 0; j < yDimSource; j++)
         
         xDimDest = destImage.getExtents()[0];
         yDimDest = destImage.getExtents()[1];
         destSlice = xDimDest * yDimDest;
-        srcBuffer = new float[sourceSlice];
+        srcBuffer = new float[cf*sourceSlice];
         try {
-            srcImage.exportData(0, sourceSlice, srcBuffer);
+            srcImage.exportData(0, cf*sourceSlice, srcBuffer);
         }
         catch(IOException e) {
             MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
+            disposeProgressBar();
             setCompleted(false);
             return;
         }
-        destBuffer = new float[destSlice];
+        destBuffer = new float[cf*destSlice];
+        if (!srcImage.isColorImage()) {
+            imageMin = (float)srcImage.getMin(); 
+            for (i = 0; i < destSlice; i++) {
+                destBuffer[i] = imageMin;
+            }
+        } // if (!srcImage.isColorImage())
         // 2 mappings
         // Mapping 1 is simply a mapping from 1 rectangle to another in which the
         // x and y axes are scaled and inverted
-        // Map from z1" = (xDimDest-1, yDimDest-1) to z1' = (0,-log(sqrt(rmax/rmin))/theta)
-        // Map from z2" = (0, yDimDest-1) to z2' = (1,-log(sqrt(rmax/rmin))/theta)
-        // Map from z3" = (0, 0) to z3' = (1, log(sqrt(rmax/rmin))/theta)
-        // Map from z4" = (xDimDest-1, 0) to z4' = (0, log(sqrt(rmax/rmin))/theta)
+        // Map from z1" = (xDimDest-1, 0) to z1' = (0,-log(sqrt(rmax/rmin))/theta)
+        // Map from z2" = (0, 0) to z2' = (1,-log(sqrt(rmax/rmin))/theta)
+        // Map from z3" = (0, yDimDest-1) to z3' = (1, log(sqrt(rmax/rmin))/theta)
+        // Map from z4" = (xDimDest-1, yDimDest-1) to z4' = (0, log(sqrt(rmax/rmin))/theta)
         
         // x" = (1 - x')*(xDim - 1)
         // 1 - x' = x"/(xDim - 1)
         // x' - 1 = -x"/(xDim - 1)
         // x' = 1 - x"/(xDim - 1)
         // var = (log(sqrt(rmax/rmin))/theta
-        // y" = (var - y') * (yDim - 1)/(2 * var)
-        // var - y' = (2 * var * y")/(yDim - 1)
-        // y' - var = -(2 * var * y")/(yDim - 1)
-        // y' = var - (2 *var * y")/(yDim - 1)
+        // y" = (y' + var) * (yDim - 1)/(2 * var)
+        // y' + var = (2 * var * y")/(yDim - 1)
+        // y' = (2 * var * y")/(yDim - 1) - var
+        
+        // Mapping 2 occurs from a rectangle with width 1 and length log(rmax/rmin)/theta.
+        // to a circular sector with angle theta, minimum radius rmin, and maximum
+        // radius rmax
+        // z1 = zc + rmax
+        // z2 = zc + rmax*exp(i*theta)
+        // z3 = zc + rmin*exp(i*theta)
+        // z4 = zc + rmin
         var = 0.5*Math.log(rmax/rmin)/theta;
         rscale = Math.sqrt(rmax*rmin);
         for (j = 0; j < yDimDest; j++) {
+            progressBar.updateValue(100*j/yDimDest);
             index1 = j * xDimDest;
-            yp = var - (2.0 * var * j)/(yDimDest - 1);
+            yp = (2.0 * var * j)/(yDimDest - 1) - var;
+            // v = -log(r)/(alpha *PI) -> r = exp(-theta*v), then scale by sqrt(rmax/rmin).
             r = rscale * Math.exp(-theta*yp);
             for (i = 0; i < xDimDest; i++) {
                 xp = 1.0 - (double)i/(xDimDest - 1);
-                ang = theta * xp;
-                xDest = r * Math.cos(ang);
-                yDest = r * Math.sin(ang);
+                // u = theta/(alpha*PI) -> theta = alpha * PI * u, then add in theta1.
+                ang = theta * xp + theta1;
+                xSrc = xc + r * Math.cos(ang);
+                ySrc = yc + r * Math.sin(ang);
+                // Use bilinear interpolation to find the contributions from the 
+                // 4 nearest neighbors in the original circular sector space
+                if ((xSrc >= 0.0) && (xSrc) <= (xDimSource - 1) && (ySrc >= 0.0) &&
+                    (ySrc <= yDimSource - 1)) {
+                    xBase = (int)Math.floor(xSrc);
+                    delX = (float)(xSrc - xBase);
+                    yBase = (int)Math.floor(ySrc);
+                    delY = (float)(ySrc - yBase);
+                    index = index1 + i;
+                    sIndex = yBase * xDimSource + xBase;
+                    if (srcImage.isColorImage()) {
+                        destBuffer[4*index+1] = (1 - delX)*(1 - delY)*srcBuffer[4*sIndex+1];
+                        destBuffer[4*index+2] = (1 - delX)*(1 - delY)*srcBuffer[4*sIndex+2]; 
+                        destBuffer[4*index+3] = (1 - delX)*(1 - delY)*srcBuffer[4*sIndex+3];
+                        if (xSrc < xDimSource - 1) {
+                            destBuffer[4*index+1] += delX*(1 - delY)*srcBuffer[4*sIndex+1];  
+                            destBuffer[4*index+2] += delX*(1 - delY)*srcBuffer[4*sIndex+2];
+                            destBuffer[4*index+3] += delX*(1 - delY)*srcBuffer[4*sIndex+3]; 
+                        }
+                        if (ySrc < yDimSource - 1) {
+                            destBuffer[4*index+1] += (1 - delX)*delY*srcBuffer[4*(sIndex + xDimSource)+1];
+                            destBuffer[4*index+2] += (1 - delX)*delY*srcBuffer[4*(sIndex + xDimSource)+2];
+                            destBuffer[4*index+3] += (1 - delX)*delY*srcBuffer[4*(sIndex + xDimSource)+3];
+                        }
+                        if ((xSrc < xDimSource - 1) && (ySrc < yDimSource - 1)) {
+                            destBuffer[4*index+1] += delX*delY*srcBuffer[4*(sIndex + xDimSource + 1)+1];
+                            destBuffer[4*index+2] += delX*delY*srcBuffer[4*(sIndex + xDimSource + 1)+2];
+                            destBuffer[4*index+3] += delX*delY*srcBuffer[4*(sIndex + xDimSource + 1)+3];
+                        }
+                    } // if (srcImage.isColorImage())
+                    else { // black and white image
+                        destBuffer[index] = (1 - delX)*(1 - delY)*srcBuffer[sIndex];
+                        if (xSrc < xDimSource - 1) {
+                            destBuffer[index] += delX*(1 - delY)*srcBuffer[sIndex+1];   
+                        }
+                        if (ySrc < yDimSource - 1) {
+                            destBuffer[index] += (1 - delX)*delY*srcBuffer[sIndex + xDimSource];
+                        }
+                        if ((xSrc < xDimSource - 1) && (ySrc < yDimSource - 1)) {
+                            destBuffer[index] += delX*delY*srcBuffer[sIndex + xDimSource + 1];
+                        }
+                    } // else black and white image
+                }
             }
+        } // for (j = 0; j < yDimDest; j++)
+        
+        try {
+            destImage.importData(0, destBuffer, true);
         }
+        catch(IOException e) {
+            MipavUtil.displayError("IOException " + e + " on destImage.importData");
+            disposeProgressBar();
+            setCompleted(false);
+            return;   
+        }
+        
+        disposeProgressBar();
+        setCompleted(true);
+        return;
     }
 
 
