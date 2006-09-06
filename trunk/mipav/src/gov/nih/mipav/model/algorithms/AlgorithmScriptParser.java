@@ -1348,8 +1348,14 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 name = (String) variableTable.get(getNextString());
 
                 if (savedImageFileName != null) {
-                    FileWriteOptions fOption = getWriteOptions(prefix + name, true);
-                    fOption.setFileName(savedImageFileName);
+                    FileWriteOptions fOption;
+                    if (prefix == null) {
+                        fOption = getWriteOptions(name, true);
+                    } else {
+                        fOption = getWriteOptions(prefix + name, true);
+                    }
+                    fOption.setFileName(FileUtility.getFileName(savedImageFileName));
+                    fOption.setFileDirectory(FileUtility.getFileDirectory(savedImageFileName));
                     getFrameFromName(name).save(fOption, -1);
                 } else {
                     getFrameFromName(name).saveImageInfo();
