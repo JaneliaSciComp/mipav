@@ -260,7 +260,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         } // if (!srcImage.isColorImage())
         // 2 mappings
         // Mapping 1 is simply a mapping from 1 rectangle to another in which the
-        // x and y axes are scaled and inverted
+        // x axis is inverted and the x and y axes are scaled.
         // Map from z1" = (xDimDest-1, 0) to z1' = (0,-log(sqrt(rmax/rmin))/theta)
         // Map from z2" = (0, 0) to z2' = (1,-log(sqrt(rmax/rmin))/theta)
         // Map from z3" = (0, yDimDest-1) to z3' = (1, log(sqrt(rmax/rmin))/theta)
